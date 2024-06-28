@@ -296,7 +296,7 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
     {
         int64_t timestamp = 0;
         const auto currentTime = QDateTime::currentMSecsSinceEpoch();
-        const auto hasData = geoDb->obtainTileData(tileId, zoom, dateTime, outData, &obtainedTime, &timestamp);
+        const auto hasData = geoDb->obtainTileData(tileId, zoom, dateTime, outData, &obtainedTime, &timestamp) && !outData.isEmpty();
         const bool isFresh = currentTime - timestamp < GEOTIFF_FRESHNESS_PERIOD;
         const bool isExpired = currentTime - obtainedTime > GEOTIFF_RELEVANCE_PERIOD;
         if (forceDownload || (!localData && !isFresh && isExpired))
