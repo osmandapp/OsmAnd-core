@@ -40,6 +40,7 @@ void OsmAnd::AmenitiesInAreaSearch::performSearch(
         criteria.tileFilter,
         criteria.zoomFilter,
         criteria.categoriesFilter.isEmpty() ? nullptr : &criteria.categoriesFilter,
+        &criteria.poiAdditionalFilter,
         visitorFunction,
         queryController);
 }
@@ -81,6 +82,7 @@ void OsmAnd::AmenitiesInAreaSearch::performTravelGuidesSearch(
         criteria.tileFilter,
         criteria.zoomFilter,
         criteria.categoriesFilter.isEmpty() ? nullptr : &criteria.categoriesFilter,
+        &criteria.poiAdditionalFilter,
         visitorFunction,
         queryController);
 }

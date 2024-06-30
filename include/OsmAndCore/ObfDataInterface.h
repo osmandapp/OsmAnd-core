@@ -30,6 +30,10 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(ObfDataInterface);
     private:
+        QPair<int, int> getPoiAdditonalFilter(const QPair<QString, QString>* poitAdditionalFilter,
+                                              const std::shared_ptr<const ObfReader>& obfReader, 
+                                              const Ref<ObfPoiSectionInfo>& poiSection,
+                                              const std::shared_ptr<const IQueryController>& queryController);
     protected:
     public:
         ObfDataInterface(const QList< std::shared_ptr<const ObfReader> >& obfReaders);
@@ -102,6 +106,7 @@ namespace OsmAnd
             const TileAcceptorFunction tileFilter = nullptr,
             const ZoomLevel zoomFilter = InvalidZoomLevel,
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,
+            const QPair<QString, QString>* const poitAdditionalFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
@@ -112,6 +117,7 @@ namespace OsmAnd
             const AreaI* const bbox31 = nullptr,
             const TileAcceptorFunction tileFilter = nullptr,
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,
+            const QPair<QString, QString>* poiAdditionalFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr,
             const bool strictMatch = false);

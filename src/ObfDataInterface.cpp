@@ -535,6 +535,7 @@ bool OsmAnd::ObfDataInterface::loadAmenities(
     const TileAcceptorFunction tileFilter /*= nullptr*/,
     const ZoomLevel zoomFilter /*= InvalidZoomLevel*/,
     const QHash<QString, QStringList>* const categoriesFilter /*= nullptr*/,
+    const QPair<QString, QString>* const poiAdditionalFilter /*= nullptr*/,
     const ObfPoiSectionReader::VisitorFunction visitor /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
@@ -598,6 +599,8 @@ bool OsmAnd::ObfDataInterface::loadAmenities(
                     }
                 }
             }
+            
+            QPair<int, int> poiIntAdditionalFilter = getPoiAdditonalFilter(poiAdditionalFilter, obfReader, poiSection, queryController);
 
             OsmAnd::ObfPoiSectionReader::loadAmenities(
                 obfReader,
@@ -607,6 +610,7 @@ bool OsmAnd::ObfDataInterface::loadAmenities(
                 tileFilter,
                 zoomFilter,
                 categoriesFilter ? &categoriesFilterById : nullptr,
+                (poiIntAdditionalFilter.first >= 0 && poiIntAdditionalFilter.second >= 0) ? &poiIntAdditionalFilter : nullptr,
                 visitor,
                 queryController);
         }
@@ -622,6 +626,7 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
     const AreaI* const pBbox31 /*= nullptr*/,
     const TileAcceptorFunction tileFilter /*= nullptr*/,
     const QHash<QString, QStringList>* const categoriesFilter /*= nullptr*/,
+    const QPair<QString, QString>* poiAdditionalFilter /*= nullptr*/,
     const ObfPoiSectionReader::VisitorFunction visitor /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
     const bool strictMatch /*= false*/)
@@ -725,6 +730,8 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
                 }
             }
         }
+        
+        QPair<int, int> poiIntAdditionalFilter = getPoiAdditonalFilter(poiAdditionalFilter, obfReader, poiSection, queryController);
 
         OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
             obfReader,
@@ -735,6 +742,7 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
             pBbox31,
             tileFilter,
             categoriesFilter ? &categoriesFilterById : nullptr,
+            (poiIntAdditionalFilter.first >= 0 && poiIntAdditionalFilter.second >= 0) ? &poiIntAdditionalFilter : nullptr,
             visitor,
             queryController,
             strictMatch);
@@ -829,6 +837,7 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
                 tileFilter,
                 zoomFilter,
                 nullptr,
+                nullptr,
                 visitorById,
                 subQueryController);
 
@@ -870,6 +879,7 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
                 pBbox31,
                 tileFilter,
                 zoomFilter,
+                nullptr,
                 nullptr,
                 visitorByName,
                 subQueryController);
@@ -1364,4 +1374,42 @@ bool OsmAnd::ObfDataInterface::transportStopBelongsTo(const std::shared_ptr<cons
             return true;
     }
     return false;
+}
+
+QPair<int, int> OsmAnd::ObfDataInterface::getPoiAdditonalFilter(const QPair<QString, QString>* poitAdditionalFilter,
+                                                                const std::shared_ptr<const ObfReader>& obfReader,
+                                                                const Ref<ObfPoiSectionInfo>& poiSection,
+                                                                const std::shared_ptr<const IQueryController>& queryController)
+{
+    QPair<int, int> poiAdditionalFilter(-1, -1);
+    if (poitAdditionalFilter)
+    {
+        std::shared_ptr<const ObfPoiSectionSubtypes> outSubtypes;
+        OsmAnd::ObfPoiSectionReader::loadSubtypes(
+            obfReader,
+            poiSection,
+            outSubtypes,
+            queryController);
+        
+        if (outSubtypes && outSubtypes->topIndexSubtypes.size() > 0)
+        {
+            const QString & name = poitAdditionalFilter->first;
+            const QString & value = poitAdditionalFilter->second;
+            std::shared_ptr<const ObfPoiSectionSubtype> filteredTopIndex = nullptr;
+            for (const std::shared_ptr<const ObfPoiSectionSubtype> & topIndex : constOf(outSubtypes->topIndexSubtypes))
+            {
+                if (topIndex->name == name)
+                {
+                    filteredTopIndex = topIndex;
+                    break;
+                }
+            }
+            if (filteredTopIndex && filteredTopIndex->possibleValues.size() > 0)
+            {
+                poiAdditionalFilter.first = outSubtypes->subtypes.indexOf(filteredTopIndex);
+                poiAdditionalFilter.second = filteredTopIndex->possibleValues.indexOf(value);
+            }
+        }
+    }
+    return poiAdditionalFilter;
 }
