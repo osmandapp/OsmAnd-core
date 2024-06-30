@@ -93,7 +93,9 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
         VSIFCloseL(file);
     }
     else
-        delete colorBuffer;
+    {
+        delete[] colorBuffer;
+    }
 
     _obtainValueThreadPool->setMaxThreadCount(1);
     _obtainCacheDataThreadPool->setMaxThreadCount(1);
@@ -115,6 +117,7 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
             meta.setSpecificated(QStringLiteral("yes"));
             _geoTilesDb->storeMeta(meta);
             _geoTilesDb->enableTileTimeSupport();
+            _geoTilesDb->enableTileTimestampSupport();
         }
     }
 }
