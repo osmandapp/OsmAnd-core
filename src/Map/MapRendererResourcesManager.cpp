@@ -339,6 +339,8 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
                             && resource->setStateIf(MapRendererResourceState::PreparedRenew, newState))
                             LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::PreparedRenew, newState);
                         else if (isPeriodChanged && (state == MapRendererResourceState::ProcessingRequest
+                            || state == MapRendererResourceState::ProcessingUpdate
+                            || state == MapRendererResourceState::ProcessingUpdateWhileRenewing
                             || state == MapRendererResourceState::Unavailable))
                         {
                             resource->markAsJunk();
@@ -349,9 +351,7 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
                             || state == MapRendererResourceState::Uploaded
                             || state == MapRendererResourceState::IsBeingUsed
                             || state == MapRendererResourceState::PreparedRenew
-                            || state == MapRendererResourceState::Renewing
-                            || state == MapRendererResourceState::ProcessingUpdate
-                            || state == MapRendererResourceState::ProcessingUpdateWhileRenewing))
+                            || state == MapRendererResourceState::Renewing))
                         {
                             resource->markAsJunk();
                         }
@@ -981,9 +981,8 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
         if (isCustomVisibility && (activeZoom < minVisibleZoom || currentZoom > maxVisibleZoom))
             return;
 
-        // Don't request any resources when the ones for high detailed tiles can't be shown
-        int currentZoomShift = currentZoom - maxZoom;
-        if (!isCustomVisibility && currentZoomShift > maxMissingDataZoomShift)
+        // Don't request any resources when the ones for low or high detailed tiles can't be shown
+        if (!isCustomVisibility && (currentZoom - maxZoom > maxMissingDataZoomShift || minZoom - currentZoom > maxMissingDataUnderZoomShift))
             return;
     }
     bool metaTiled = tiledProvider && tiledProvider->isMetaTiled();
@@ -1003,7 +1002,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
         for (int absZoomShift = 0; absZoomShift < levelCount; absZoomShift++)
         {
             const int underZoom = neededZoomForTile - absZoomShift;
-            if (underZoom < activeZoom)
+            if (underZoom < activeZoom || underZoom < minZoom || underZoom > maxZoom)
                 break;
 
             auto underTiles = Utilities::getTileIdsUnderscaledByZoomShift(activeTileId, underZoom - activeZoom);

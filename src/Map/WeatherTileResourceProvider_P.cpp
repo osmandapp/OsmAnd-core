@@ -296,7 +296,8 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
     {
         int64_t timestamp = 0;
         const auto currentTime = QDateTime::currentMSecsSinceEpoch();
-        const auto hasData = geoDb->obtainTileData(tileId, zoom, dateTime, outData, &obtainedTime, &timestamp);
+        const bool hasData =
+            geoDb->retrieveTileData(tileId, zoom, dateTime, outData, &obtainedTime, &timestamp) && !outData.isEmpty();
         const bool isFresh = currentTime - timestamp < GEOTIFF_FRESHNESS_PERIOD;
         const bool isExpired = currentTime - obtainedTime > GEOTIFF_RELEVANCE_PERIOD;
         if (forceDownload || (!localData && !isFresh && isExpired))
@@ -1120,7 +1121,7 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
             QByteArray data;
             int64_t rasterTime = 0;
             int64_t rasterTimestamp = 0;
-            if (db->obtainTileData(tileId, zoom, dateTime, data, &rasterTime, &rasterTimestamp) && !data.isEmpty())
+            if (db->retrieveTileData(tileId, zoom, dateTime, data, &rasterTime, &rasterTimestamp) && !data.isEmpty())
             {
                 int64_t geoTileTime = 0;
                 if (provider->obtainGeoTileTime(geoTileId, geoTileZoom, dateTime, geoTileTime)
@@ -1150,7 +1151,7 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
             QByteArray data;
             int64_t rasterTime = 0;
             int64_t rasterTimestamp = 0;
-            if (db->obtainTileData(tileId, zoom, dateTime, data, &rasterTime, &rasterTimestamp) && !data.isEmpty())
+            if (db->retrieveTileData(tileId, zoom, dateTime, data, &rasterTime, &rasterTimestamp) && !data.isEmpty())
             {
                 int64_t geoTileTime = 0;
                 if (provider->obtainGeoTileTime(geoTileId, geoTileZoom, dateTime, geoTileTime)

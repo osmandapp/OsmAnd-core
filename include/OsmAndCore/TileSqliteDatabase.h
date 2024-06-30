@@ -150,8 +150,8 @@ namespace OsmAnd
         bool getTilesSize(QList<TileId> tileIds, uint64_t& size, ZoomLevel zoom, int64_t specification = 0);
         bool containsTileData(TileId tileId, ZoomLevel zoom, int64_t specification = 0) const;
         bool obtainTileTime(TileId tileId, ZoomLevel zoom, int64_t& outTime, int64_t specification = 0) const;
-        bool obtainTileData(TileId tileId, ZoomLevel zoom, QByteArray& outData, int64_t* pOutTime = nullptr) const;
-        bool obtainTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
+        bool retrieveTileData(TileId tileId, ZoomLevel zoom, QByteArray& outData, int64_t* pOutTime = nullptr) const;
+        bool retrieveTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
             QByteArray& outData, int64_t* pOutTime = nullptr, int64_t* pOutTimestamp = nullptr) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, void* outData, int64_t* pOutTime = nullptr) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, void* outData, float& minValue, float& maxValue) const;
