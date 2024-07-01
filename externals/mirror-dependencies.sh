@@ -46,7 +46,7 @@ mkdir -p "$DEPENDENCIES_MIRROR/"
 mkdir -p "$DEPENDENCIES_MIRROR/bak/"
 find "$DEPENDENCIES_MIRROR/" -maxdepth 1 -type f -size +0M -exec mv {} "$DEPENDENCIES_MIRROR/bak/" \;
 
-
+download "https://github.com/geographiclib/geographiclib/archive/refs/tags/v1.46.tar.gz" "$DEPENDENCIES_MIRROR/GeographicLib-1.46.tar.gz"
 download "http://sourceforge.net/projects/boost/files/boost/1.56.0/boost_1_56_0.tar.bz2/download" "$DEPENDENCIES_MIRROR/boost_1_56_0.tar.bz2"
 download "https://github.com/libexpat/libexpat/releases/download/R_2_5_0/expat-2.5.0.tar.gz" "$DEPENDENCIES_MIRROR/expat-2.5.0.tar.gz"
 download "http://sourceforge.net/projects/freetype/files/freetype2/2.5.0/freetype-2.5.0.1.tar.bz2/download" "$DEPENDENCIES_MIRROR/freetype-2.5.0.1.tar.bz2"
@@ -63,5 +63,4 @@ download "https://github.com/google/protobuf/releases/download/v2.5.0/protobuf-2
 download "https://zlib.net/fossils/zlib-1.2.11.tar.gz" "$DEPENDENCIES_MIRROR/zlib-1.2.11.tar.gz"
 download "http://sourceforge.net/projects/giflib/files/giflib-4.x/giflib-4.2.3.tar.bz2/download" "$DEPENDENCIES_MIRROR/giflib-4.2.3.tar.bz2"
 download "http://sourceforge.net/projects/freeglut/files/freeglut/2.8.1/freeglut-2.8.1.tar.gz/download" "$DEPENDENCIES_MIRROR/freeglut-2.8.1.tar.gz"
-download "https://sourceforge.net/projects/geographiclib/files/distrib/archive/GeographicLib-1.46.tar.gz/download" "$DEPENDENCIES_MIRROR/GeographicLib-1.46.tar.gz"
 download "https://download.gnome.org/sources/libxslt/1.1/libxslt-1.1.34.tar.xz" "$DEPENDENCIES_MIRROR/libxslt-1.1.34.tar.xz"
