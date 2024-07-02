@@ -49,6 +49,8 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     , tileSize(tileSize_)
     , densityFactor(densityFactor_)
 {
+    _requestsCount.storeRelease(0);
+
     // Create GDAL color configuration files to use them when rasterized wind vectors are needed
     auto windColorConfig = QStringLiteral(
         "-79.999996,0,0,0,255\n"
@@ -211,6 +213,11 @@ bool OsmAnd::WeatherTileResourceProvider_P::isEvaluatingTiles() const
     QReadLocker scopedLocker(&_lock);
 
     return _currentEvaluatingTileIds.size() > 0;
+}
+
+bool OsmAnd::WeatherTileResourceProvider_P::isProcessingTiles() const
+{
+    return _requestsCount.loadAcquire() > 0;
 }
 
 QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider_P::getCurrentDownloadingTileIds() const
@@ -1383,6 +1390,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
     const auto provider = _provider.lock();
     if (!provider)
         return;
+    provider->_requestsCount.fetchAndAddOrdered(1);
     auto dateTime = std::min(request->dateTimeFirst, request->dateTimeLast);
     auto dateTimeLast = std::max(request->dateTimeFirst, request->dateTimeLast);
     auto timeGap = request->dateTimeStep;
@@ -1405,6 +1413,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         else if (!success)
         {
             callback(false, nullptr, nullptr);
+            provider->_requestsCount.fetchAndSubOrdered(1);
             return;
         }
         else if (cacheOnly)
@@ -1416,6 +1425,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
                 images.insert(dateTime, emptyImage);
             */
             callback(true, nullptr, nullptr);
+            provider->_requestsCount.fetchAndSubOrdered(1);
             return;
         }
         dateTime += timeGap;
@@ -1433,6 +1443,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
     }
     else
         callback(false, nullptr, nullptr);
+    provider->_requestsCount.fetchAndSubOrdered(1);
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()

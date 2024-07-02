@@ -162,6 +162,11 @@ bool OsmAnd::WeatherTileResourceProvider::isEvaluatingTiles() const
     return _p->isEvaluatingTiles();
 }
 
+bool OsmAnd::WeatherTileResourceProvider::isProcessingTiles() const
+{
+    return _p->isProcessingTiles();
+}
+
 QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider::getCurrentDownloadingTileIds() const
 {
     return _p->getCurrentDownloadingTileIds();

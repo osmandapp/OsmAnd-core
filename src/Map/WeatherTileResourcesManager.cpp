@@ -97,6 +97,11 @@ bool OsmAnd::WeatherTileResourcesManager::isEvaluatingTiles(const int64_t dateTi
     return _p->isEvaluatingTiles(dateTime);
 }
 
+bool OsmAnd::WeatherTileResourcesManager::isProcessingTiles()
+{
+    return _p->isProcessingTiles();
+}
+
 QList<OsmAnd::TileId> OsmAnd::WeatherTileResourcesManager::getCurrentDownloadingTileIds(const int64_t dateTime)
 {
     return _p->getCurrentDownloadingTileIds(dateTime);
