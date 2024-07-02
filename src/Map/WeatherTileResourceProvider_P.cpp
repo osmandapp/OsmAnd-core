@@ -627,13 +627,13 @@ QList<OsmAnd::BandIndex> OsmAnd::WeatherTileResourceProvider_P::getAllBandCombin
         WeatherBand::WindWestToEast, // Should always be in the end of this array
         WeatherBand::WindSouthToNorth}; // Should always be in the end of this array
     const auto bandsCount = sizeof(bandNumbers) / sizeof(WeatherBand) - 2;
-    const auto combinationsCount = (1u << bandsCount) - 1;
+    const auto combinationsCount = (1u << bandsCount);
     std::bitset<sizeof(BandIndex)> bits;
     QList<BandIndex> values;
     for (BandIndex i = 0; i < combinationsCount; i++)
     {
         BandIndex combination = 0;
-        bits = i + 1;
+        bits = i;
         for (BandIndex j = 0; j < bandsCount; j++)
             combination |= bits[j] ? 1u << static_cast<int>(bandNumbers[j]) : 0;
         values.append(combination << 8);
