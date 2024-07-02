@@ -249,6 +249,7 @@ namespace OsmAnd
             bool localData = false,
             std::shared_ptr<const IQueryController> queryController = nullptr);
 
+        bool preLockGeoTile(const TileId tileId, const ZoomLevel zoom);
         void lockGeoTile(const TileId tileId, const ZoomLevel zoom);
         void unlockGeoTile(const TileId tileId, const ZoomLevel zoom);
         void lockRasterTile(const TileId tileId, const ZoomLevel zoom);

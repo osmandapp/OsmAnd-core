@@ -177,6 +177,36 @@ namespace OsmAnd
             return longitude;
         }
 
+        inline static int32_t metersTo31(const double positionInMeters)
+        {
+            auto earthInMeters = 2.0 * M_PI * 6378137;
+            auto earthIn31 = 1.0 + INT32_MAX;
+            auto positionIn31 = static_cast<int64_t>(std::floor((positionInMeters / earthInMeters + 0.5) * earthIn31));
+            if (positionIn31 > INT32_MAX)
+                positionIn31 = positionIn31 - INT32_MAX - 1;
+            else if (positionIn31 < 0)
+                positionIn31 = positionIn31 + INT32_MAX + 1;
+            return static_cast<int32_t>(positionIn31);
+        }
+
+        inline static PointI metersTo31(const PointD& locationInMeters)
+        {
+            return PointI(metersTo31(locationInMeters.x), INT32_MAX - metersTo31(locationInMeters.y));
+        }
+
+        inline static double metersFrom31(const double position31)
+        {
+            auto earthInMeters = 2.0 * M_PI * 6378137;
+            auto earthIn31 = 1.0 + INT32_MAX;
+            return (position31 / earthIn31 - 0.5) * earthInMeters;
+        }
+
+        inline static PointD metersFrom31(const PointD& location31)
+        {
+            auto earthIn31 = 1.0 + INT32_MAX;
+            return PointD(metersFrom31(location31.x), metersFrom31(earthIn31 - location31.y));
+        }
+
         inline static double getPowZoom(const float zoom)
         {
             if (zoom >= 0.0f && qFuzzyCompare(zoom, static_cast<uint8_t>(zoom)))

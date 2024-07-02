@@ -126,10 +126,6 @@ namespace OsmAnd
         void invalidateCollectedSources();
         void clearCollectedSources() const;
         void collectSources() const;
-        int32_t metersTo31(const double positionInMeters) const;
-        PointI metersTo31(const PointD& locationInMeters) const;
-        double metersFrom31(const double position31) const;
-        PointD metersFrom31(const double positionX, const double positionY) const;
         bool containsTile(const AreaI& region31, const AreaI& area31) const;
         bool isPartOfTile(const AreaI& region31, const AreaI& area31) const;
         ZoomLevel calcMaxZoom(const int32_t pixelSize31, const uint32_t tileSize) const;
