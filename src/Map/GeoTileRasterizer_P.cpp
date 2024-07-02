@@ -70,8 +70,8 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
 
     GlobalMercator mercator;
         
-    double latExtent = 2.0;
-    double lonExtent = 2.0;
+    double latExtent = zoom == ZoomLevel7 ? 0.5 : 3.0;
+    double lonExtent = latExtent;
     auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
     auto tlLatLon = Utilities::convert31ToLatLon(tileBBox31.topLeft);
     auto brLatLon = Utilities::convert31ToLatLon(tileBBox31.bottomRight);

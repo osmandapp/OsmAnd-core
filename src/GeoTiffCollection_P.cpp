@@ -200,31 +200,6 @@ QList<OsmAnd::GeoTiffCollection::SourceOriginId> OsmAnd::GeoTiffCollection_P::ge
     return _sourcesOrigins.keys();
 }
 
-inline int32_t OsmAnd::GeoTiffCollection_P::metersTo31(const double positionInMeters) const
-{
-    auto positionIn31 = static_cast<int64_t>(std::floor((positionInMeters / earthInMeters + 0.5) * earthIn31));
-    if (positionIn31 > INT32_MAX)
-        positionIn31 = positionIn31 - INT32_MAX - 1;
-    else if (positionIn31 < 0)
-        positionIn31 = positionIn31 + INT32_MAX + 1;
-    return static_cast<int32_t>(positionIn31);
-}
-
-inline OsmAnd::PointI OsmAnd::GeoTiffCollection_P::metersTo31(const PointD& locationInMeters) const
-{
-    return PointI(metersTo31(locationInMeters.x), INT32_MAX - metersTo31(locationInMeters.y));
-}
-
-inline double OsmAnd::GeoTiffCollection_P::metersFrom31(const double position31) const
-{
-    return (position31 / earthIn31 - 0.5) * earthInMeters;
-}
-
-inline OsmAnd::PointD OsmAnd::GeoTiffCollection_P::metersFrom31(const double positionX, const double positionY) const
-{
-    return PointD(metersFrom31(positionX), metersFrom31(earthIn31 - positionY));
-}
-
 inline bool OsmAnd::GeoTiffCollection_P::containsTile(
     const AreaI& region31, const AreaI& area31) const
 {
@@ -299,9 +274,9 @@ inline OsmAnd::GeoTiffCollection_P::GeoTiffProperties OsmAnd::GeoTiffCollection_
         if (result && dataset->GetGeoTransform(geoTransform) == CE_None &&
             geoTransform[2] == 0.0 && geoTransform[4] == 0.0)
         {
-            auto upperLeft31 = metersTo31(PointD(geoTransform[0], geoTransform[3]));
+            auto upperLeft31 = Utilities::metersTo31(PointD(geoTransform[0], geoTransform[3]));
             const auto rasterSize = PointI(dataset->GetRasterXSize(), dataset->GetRasterYSize());
-            auto lowerRight31 = metersTo31(PointD(
+            auto lowerRight31 = Utilities::metersTo31(PointD(
                 geoTransform[0] + geoTransform[1] * rasterSize.x,
                 geoTransform[3] + geoTransform[5] * rasterSize.y));
             if (upperLeft31.x > lowerRight31.x)
@@ -1127,8 +1102,8 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                         {
                             const auto gcpCount = dataset->GetGCPCount();
                             const auto gcpList = dataset->GetGCPs();
-                            auto upperLeft = metersFrom31(upperLeftNative.x, upperLeftNative.y);
-                            auto lowerRight = metersFrom31(lowerRightNative.x, lowerRightNative.y);
+                            auto upperLeft = Utilities::metersFrom31(upperLeftNative);
+                            auto lowerRight = Utilities::metersFrom31(lowerRightNative);
                             const auto tileOrigin = upperLeft;
                             const auto tileResolution = (lowerRight - upperLeft) / tileSize;
                             upperLeft.x = (upperLeft.x - geoTransform[0]) / geoTransform[1];
@@ -1260,8 +1235,8 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                                 // Check value in the center of top overscaled tile
                                 if (result && zoomShift > 0 && minZoom > MinZoomLevel)
                                 {
-                                    upperLeft = metersFrom31(upperLeftOverscaled.x, upperLeftOverscaled.y);
-                                    lowerRight = metersFrom31(lowerRightOverscaled.x, lowerRightOverscaled.y);
+                                    upperLeft = Utilities::metersFrom31(upperLeftOverscaled);
+                                    lowerRight = Utilities::metersFrom31(lowerRightOverscaled);
                                     upperLeft.x = qMax((upperLeft.x - geoTransform[0]) / geoTransform[1], 0.0);
                                     upperLeft.y = qMax((upperLeft.y - geoTransform[3]) / geoTransform[5], 0.0);
                                     lowerRight.x = (lowerRight.x - geoTransform[0]) / geoTransform[1];

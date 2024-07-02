@@ -288,8 +288,10 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
 
     int64_t obtainedTime = 0;
 
+    bool withLock = true;
+    
     if (forceDownload || !localData)
-        lockGeoTile(tileId, zoom);
+        withLock = preLockGeoTile(tileId, zoom);
 
     auto geoDb = getGeoTilesDatabase();
     if (geoDb->isOpened())
@@ -302,6 +304,8 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
         const bool isExpired = currentTime - obtainedTime > GEOTIFF_RELEVANCE_PERIOD;
         if (forceDownload || (!localData && !isFresh && isExpired))
         {
+            if (!withLock)
+                lockGeoTile(tileId, zoom);
             auto filePath = localCachePath
                 + QDir::separator()
                 + dateTimeStr + QStringLiteral("_")
@@ -372,6 +376,24 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
         unlockGeoTile(tileId, zoom);
     
     return outData.isEmpty() ? -1 : obtainedTime;
+}
+
+bool OsmAnd::WeatherTileResourceProvider_P::preLockGeoTile(const TileId tileId, const ZoomLevel zoom)
+{
+    QMutexLocker scopedLocker(&_geoTilesInProcessMutex);
+
+    bool lock = true;
+
+    while(_geoTilesInProcess[zoom].contains(tileId))
+    {
+        lock = false;
+        _waitUntilAnyGeoTileIsProcessed.wait(&_geoTilesInProcessMutex);
+    }
+
+    if (!lock)
+        _geoTilesInProcess[zoom].insert(tileId);
+
+    return lock;
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::lockGeoTile(const TileId tileId, const ZoomLevel zoom)
