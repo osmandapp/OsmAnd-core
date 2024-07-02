@@ -248,6 +248,12 @@ bool OsmAnd::WeatherTileResourcesManager_P::isEvaluatingTiles(const int64_t date
     return resourceProvider && resourceProvider->isEvaluatingTiles();
 }
 
+bool OsmAnd::WeatherTileResourcesManager_P::isProcessingTiles()
+{
+    auto resourceProvider = getResourceProvider();
+    return resourceProvider && resourceProvider->isProcessingTiles();
+}
+
 QList<OsmAnd::TileId> OsmAnd::WeatherTileResourcesManager_P::getCurrentDownloadingTileIds(const int64_t dateTime)
 {
     auto resourceProvider = getResourceProvider();

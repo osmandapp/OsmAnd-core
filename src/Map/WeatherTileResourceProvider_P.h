@@ -125,6 +125,7 @@ namespace OsmAnd
 
         QList<TileId> _currentDownloadingTileIds;
         QList<TileId> _currentEvaluatingTileIds;
+        mutable QAtomicInteger<int32_t> _requestsCount;
 
         ZoomLevel _lastRequestedZoom;
         QList<BandIndex> _lastRequestedBands;
@@ -231,6 +232,7 @@ namespace OsmAnd
 
         bool isDownloadingTiles() const;
         bool isEvaluatingTiles() const;
+        bool isProcessingTiles() const;
         QList<TileId> getCurrentDownloadingTileIds() const;
         QList<TileId> getCurrentEvaluatingTileIds() const;
 

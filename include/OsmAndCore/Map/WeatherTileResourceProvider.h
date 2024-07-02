@@ -208,6 +208,7 @@ namespace OsmAnd
 
         bool isDownloadingTiles() const;
         bool isEvaluatingTiles() const;
+        bool isProcessingTiles() const;
         QList<TileId> getCurrentDownloadingTileIds() const;
         QList<TileId> getCurrentEvaluatingTileIds() const;
 

@@ -183,6 +183,7 @@ namespace OsmAnd
 
         bool isDownloadingTiles(const int64_t dateTime);
         bool isEvaluatingTiles(const int64_t dateTime);
+        bool isProcessingTiles();
         QList<TileId> getCurrentDownloadingTileIds(const int64_t dateTime);
         QList<TileId> getCurrentEvaluatingTileIds(const int64_t dateTime);
 
