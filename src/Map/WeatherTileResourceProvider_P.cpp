@@ -1088,8 +1088,6 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
         bands.removeOne(static_cast<BandIndex>(WeatherBand::WindAnimation));
         withWindAnimation = withWindVectors;
     }
-    else if (bands.contains(static_cast<BandIndex>(WeatherBand::WindSpeed)))
-        withWindAnimation = withWindVectors;
 
     BandIndex combination = 0;
     if (withWindVectors)
