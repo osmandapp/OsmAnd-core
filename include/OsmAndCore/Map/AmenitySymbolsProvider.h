@@ -80,6 +80,7 @@ namespace OsmAnd
         const float displayDensityFactor;
         const float referenceTileSizeOnScreenInPixels;
         const Nullable< QHash<QString, QStringList> > categoriesFilter;
+        const Nullable< QPair<QString, QString> > poiAdditionalFilter;
         const ObfPoiSectionReader::VisitorFunction amentitiesFilter;
         const std::shared_ptr<IAmenityIconProvider> amenityIconProvider;
         const int baseOrder;

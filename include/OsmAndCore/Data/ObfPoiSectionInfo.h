@@ -55,6 +55,7 @@ namespace OsmAnd
         virtual ~ObfPoiSectionSubtypes();
 
         QList< std::shared_ptr<const ObfPoiSectionSubtype> > subtypes;
+        QList< std::shared_ptr<const ObfPoiSectionSubtype> > topIndexSubtypes;
 
         // "opening_hours" OSM tag
         int openingHoursSubtypeIndex;

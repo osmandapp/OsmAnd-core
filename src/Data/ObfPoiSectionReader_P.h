@@ -73,6 +73,7 @@ namespace OsmAnd
             const TileAcceptorFunction tileFilter,
             const ZoomLevel zoomFilter,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
+            const QPair<int, int>* poiAdditionalFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController);
         static bool scanTiles(
@@ -84,10 +85,12 @@ namespace OsmAnd
             const AreaI* const bbox31,
             const TileAcceptorFunction tileFilter,
             const ZoomLevel zoomFilter,
-            const QSet<ObfPoiCategoryId>* const categoriesFilter);
+            const QSet<ObfPoiCategoryId>* const categoriesFilter,
+            const QPair<int, int>* poiAdditionalFilter);
         static bool scanTileForMatchingCategories(
             const ObfReader_P& reader,
-            const QSet<ObfPoiCategoryId>& categories);
+            const QSet<ObfPoiCategoryId>& categories,
+            const QPair<int, int>* poiAdditionalFilter);
 
         static void readAmenitiesByName(
             const ObfReader_P& reader,
@@ -98,6 +101,7 @@ namespace OsmAnd
             const AreaI* const bbox31,
             const TileAcceptorFunction tileFilter,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
+            const QPair<int, int>* poiAdditionalFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController,
             const bool strictMatch);
@@ -132,6 +136,7 @@ namespace OsmAnd
             const ZoomLevel zoomFilter,
             const std::shared_ptr<QSet<uint64_t>> pTilesToSkip,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
+            const QPair<int, int>* poiAdditionalFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController);
         static void readAmenity(
@@ -143,6 +148,7 @@ namespace OsmAnd
             const ZoomLevel boxZoom,
             const AreaI* const bbox31,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
+            const QPair<int, int>* poiAdditionalFilter,
             const std::shared_ptr<const IQueryController>& queryController);
     public:
         static void loadCategories(
@@ -165,6 +171,7 @@ namespace OsmAnd
             const TileAcceptorFunction tileFilter,
             const ZoomLevel zoomFilter,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
+            const QPair<int, int>* poiAdditionalFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController);
 
@@ -177,6 +184,7 @@ namespace OsmAnd
             const AreaI* const bbox31,
             const TileAcceptorFunction tileFilter,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
+            const QPair<int, int>* poiAdditionalFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController,
             const bool strictMatch);
