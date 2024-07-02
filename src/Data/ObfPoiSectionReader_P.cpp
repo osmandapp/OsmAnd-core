@@ -979,7 +979,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     return;
                 }
                 
-                if (poiAdditionalFilter && hasSubcategoriesField && !topIndexAdditonalFound)
+                if (poiAdditionalFilter && (!hasSubcategoriesField || !topIndexAdditonalFound))
                 {
                     return;
                 }

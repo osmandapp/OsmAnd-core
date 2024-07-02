@@ -610,7 +610,7 @@ bool OsmAnd::ObfDataInterface::loadAmenities(
                 tileFilter,
                 zoomFilter,
                 categoriesFilter ? &categoriesFilterById : nullptr,
-                (poiIntAdditionalFilter.first >= 0 && poiIntAdditionalFilter.second >= 0) ? &poiIntAdditionalFilter : nullptr,
+                poiAdditionalFilter ? &poiIntAdditionalFilter : nullptr,
                 visitor,
                 queryController);
         }
@@ -742,7 +742,7 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
             pBbox31,
             tileFilter,
             categoriesFilter ? &categoriesFilterById : nullptr,
-            (poiIntAdditionalFilter.first >= 0 && poiIntAdditionalFilter.second >= 0) ? &poiIntAdditionalFilter : nullptr,
+            poiAdditionalFilter ? &poiIntAdditionalFilter : nullptr,
             visitor,
             queryController,
             strictMatch);
