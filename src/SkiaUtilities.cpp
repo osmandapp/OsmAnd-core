@@ -288,9 +288,6 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::stackImages(
     const sk_sp<const SkImage>& extraBottom,
     const SkAlphaType alphaType)
 {
-    if (!top || top->width() <= 0 || top->height() <= 0)
-        return nullptr;
-
     if (!bottom || bottom->width() <= 0 || bottom->height() <= 0)
         return nullptr;
 
@@ -300,21 +297,22 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::stackImages(
     if (extraBottom->imageInfo().bytesPerPixel() != 4)
         return nullptr;
 
-    const auto maxWidth = qMax(top->width(), qMax(bottom->width(), extraBottom->width()));
+    const auto maxWidth = qMax(bottom->width(), extraBottom->width());
     const auto maxHeight = qMax(bottom->height(), extraBottom->height());
 
     SkBitmap target;
     if (!target.tryAllocPixels(SkImageInfo::Make(
         maxWidth,
-        top->height() + maxHeight,
+        maxHeight * 2,
         SkColorType::kRGBA_8888_SkColorType,
         alphaType)))
         return nullptr;
     target.eraseColor(SK_ColorTRANSPARENT);
 
     SkCanvas canvas(target);
-    canvas.drawImage(top.get(), 0, 0);
-    canvas.drawImage(bottom.get(), 0, top->height());
+    if (top && top->width() > 0 && top->height() > 0)
+        canvas.drawImage(top.get(), 0, 0);
+    canvas.drawImage(bottom.get(), 0, maxHeight);
     canvas.flush();
 
     if (extraBottom->width() == maxWidth)
@@ -342,7 +340,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::stackImages(
 #endif
             const auto quadsInRow = maxWidth >> 1;
             const auto quadCount = extraBottom->height() * quadsInRow;
-            auto pResult = reinterpret_cast<uint64_t*>(target.getPixels()) + top->height() * quadsInRow;
+            auto pResult = reinterpret_cast<uint64_t*>(target.getPixels()) + maxHeight * quadsInRow;
             auto pSource = reinterpret_cast<const uint64_t*>(imagePixmap.addr());
             for (int i = 0; i < quadCount; i++)
             {
@@ -363,7 +361,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::stackImages(
             const uint32_t mask = 0xFFFF0000U;
 #endif
             const auto dwordCount = extraBottom->height() * maxWidth;
-            auto pResult = reinterpret_cast<uint32_t*>(target.getPixels()) + top->height() * maxWidth;
+            auto pResult = reinterpret_cast<uint32_t*>(target.getPixels()) + maxHeight * maxWidth;
             auto pSource = reinterpret_cast<const uint32_t*>(imagePixmap.addr());
             for (int i = 0; i < dwordCount; i++)
             {
