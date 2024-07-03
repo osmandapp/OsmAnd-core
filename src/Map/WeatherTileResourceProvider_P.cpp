@@ -100,7 +100,7 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     }
 
     _obtainValueThreadPool->setMaxThreadCount(1);
-    _obtainCacheDataThreadPool->setMaxThreadCount(1);
+    _obtainCacheDataThreadPool->setMaxThreadCount(4);
     _obtainOnlineDataThreadPool->setMaxThreadCount(4);
     
     auto geoDbCachePath = localCachePath
@@ -372,7 +372,7 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
                 QFile(filePath).remove();
             }
             else if (hasData)
-                geoDb->storeTileData(tileId, zoom, dateTime, outData, obtainedTime, currentTime);
+                geoDb->updateTileTimestamp(tileId, zoom, dateTime, currentTime);
 
             {
                 QWriteLocker scopedLocker(&_lock);
@@ -423,25 +423,6 @@ void OsmAnd::WeatherTileResourceProvider_P::unlockGeoTile(const TileId tileId, c
     _geoTilesInProcess[zoom].remove(tileId);
 
     _waitUntilAnyGeoTileIsProcessed.wakeAll();
-}
-
-void OsmAnd::WeatherTileResourceProvider_P::lockRasterTile(const TileId tileId, const ZoomLevel zoom)
-{
-    QMutexLocker scopedLocker(&_rasterTilesInProcessMutex);
-
-    while(_rasterTilesInProcess[zoom].contains(tileId))
-        _waitUntilAnyRasterTileIsProcessed.wait(&_rasterTilesInProcessMutex);
-
-    _rasterTilesInProcess[zoom].insert(tileId);
-}
-
-void OsmAnd::WeatherTileResourceProvider_P::unlockRasterTile(const TileId tileId, const ZoomLevel zoom)
-{
-    QMutexLocker scopedLocker(&_rasterTilesInProcessMutex);
-
-    _rasterTilesInProcess[zoom].remove(tileId);
-
-    _waitUntilAnyRasterTileIsProcessed.wakeAll();
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::lockContourTile(const TileId tileId, const ZoomLevel zoom)
@@ -1116,16 +1097,10 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
         return nullptr;
     }
 
-    if (!localData)
-        provider->lockRasterTile(tileId, zoom);
-
     ZoomLevel geoTileZoom = WeatherTileResourceProvider::getGeoTileZoom();
     TileId geoTileId;
     if (zoom < geoTileZoom)
     {
-        if (!localData)
-            provider->unlockRasterTile(tileId, zoom);
-
         // Underzoom for geo tiles currently not supported
         LogPrintf(LogSeverityLevel::Error,
             "Failed to resolve geoTileId for weather tile %dx%dx%d. Geo tile zoom (%d) > tile zoom (%d).",
@@ -1162,9 +1137,6 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
                         withWindAnimation ? SkAlphaType::kOpaque_SkAlphaType : SkAlphaType::kPremul_SkAlphaType);
                     if (image && (localData || isFreshRaster))
                     {
-                        if (!localData)
-                            provider->unlockRasterTile(tileId, zoom);
-
                         success = isFreshRaster; // without "success" to initiate second reqiuest for a fresh data
                         return image;
                     }
@@ -1227,9 +1199,6 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
             }
         }
 
-        if (!localData)
-            provider->unlockRasterTile(tileId, zoom);
-
         if (image)
         {
             success = isFreshRaster; // without "success" to initiate second reqiuest for a fresh data
@@ -1249,9 +1218,6 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
         geoTileId, geoTileZoom, dateTime, geoTileData, false, localData, request->queryController);
     if (geoTileTime <= 0)
     {
-        if (!localData)
-            provider->unlockRasterTile(tileId, zoom);
-
         if (!cacheOnly)
         {
             LogPrintf(LogSeverityLevel::Error,
@@ -1268,18 +1234,15 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
         {
             auto db = provider->getRasterTilesDatabase(band);
             if (db && db->isOpened())
-                db->updateTileTimestamp(tileId, zoom, currentTime);
+                db->updateTileTimestamp(tileId, zoom, dateTime, currentTime);
         }
 
         if (withWindVectors)
         {
             auto db = provider->getRasterTilesDatabase(combination);
             if (db && db->isOpened())
-                db->updateTileTimestamp(tileId, zoom, currentTime);
+                db->updateTileTimestamp(tileId, zoom, dateTime, currentTime);
         }
-
-        if (!localData)
-            provider->unlockRasterTile(tileId, zoom);
 
         auto image = createTileImage(images, bands, withWindAnimation);
         if (image)
@@ -1337,17 +1300,11 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
 
     if (request->queryController && request->queryController->isAborted())
     {
-        if (!localData)
-            provider->unlockRasterTile(tileId, zoom);
-
         LogPrintf(LogSeverityLevel::Debug,
             "Stop requesting tile image of weather tile %dx%dx%d.", tileId.x, tileId.y, zoom);
 
         return nullptr;
     }
-
-    if (!localData)
-        provider->unlockRasterTile(tileId, zoom);
 
     if (request->version != provider->getCurrentRequestVersion())
     {
@@ -1377,9 +1334,6 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
     }
     else
     {
-        if (!localData)
-            provider->unlockRasterTile(tileId, zoom);
-
         LogPrintf(LogSeverityLevel::Error,
             "Failed to create tile image of non rasterized weather tile %dx%dx%d", tileId.x, tileId.y, zoom);
         return nullptr;

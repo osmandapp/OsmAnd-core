@@ -2019,6 +2019,7 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
 bool OsmAnd::TileSqliteDatabase_P::updateTileTimestamp(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
+    int64_t specification,
     int64_t timestamp)
 {
     if (!isOpened())
@@ -2036,15 +2037,16 @@ bool OsmAnd::TileSqliteDatabase_P::updateTileTimestamp(
         QWriteLocker scopedLocker(&_lock);
 
         const auto statement = prepareStatement(_database,
-            QStringLiteral("UPDATE tiles SET timestamp=:timestamp WHERE x=:x AND y=:y AND z=:z"));
-        if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileId, zoom))
+            QStringLiteral("UPDATE tiles SET timestamp=:timestamp WHERE x=:x AND y=:y AND z=:z AND s=:s"));
+        if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileId, zoom, specification))
         {
             LogPrintf(
                 LogSeverityLevel::Error,
-                "Failed to configure query for %dx%d@%d",
+                "Failed to configure query for %dx%d@%d,%lld",
                 tileId.x,
                 tileId.y,
-                zoom);
+                zoom,
+                specification);
             return false;
         }
         if (!bindStatementParameter(
@@ -2052,10 +2054,11 @@ bool OsmAnd::TileSqliteDatabase_P::updateTileTimestamp(
         {
             LogPrintf(
                 LogSeverityLevel::Error,
-                "Failed to bind timestamp for %dx%d@%d",
+                "Failed to bind timestamp for %dx%d@%d,%lld",
                 tileId.x,
                 tileId.y,
-                zoom);
+                zoom,
+                specification);
             return false;
         }
         
@@ -2063,10 +2066,11 @@ bool OsmAnd::TileSqliteDatabase_P::updateTileTimestamp(
         {
             LogPrintf(
                 LogSeverityLevel::Error,
-                "Failed to update timestamp for %dx%d@%d: %s",
+                "Failed to update timestamp for %dx%d@%d,%lld: %s",
                 tileId.x,
                 tileId.y,
                 zoom,
+                specification,
                 sqlite3_errmsg(_database.get()));
             return false;
         }
