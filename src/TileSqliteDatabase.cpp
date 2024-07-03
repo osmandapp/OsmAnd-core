@@ -257,9 +257,10 @@ bool OsmAnd::TileSqliteDatabase::storeTileData(
 bool OsmAnd::TileSqliteDatabase::updateTileTimestamp(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
+    int64_t specification,
     int64_t timestamp)
 {
-    return _p->updateTileTimestamp(tileId, zoom, timestamp);
+    return _p->updateTileTimestamp(tileId, zoom, specification, timestamp);
 }
 
 bool OsmAnd::TileSqliteDatabase::updateTileDataFrom(

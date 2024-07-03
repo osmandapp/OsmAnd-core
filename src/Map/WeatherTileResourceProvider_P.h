@@ -142,10 +142,6 @@ namespace OsmAnd
         mutable QReadWriteLock _geoDbLock;
         std::shared_ptr<TileSqliteDatabase> _geoTilesDb;
 
-        mutable QMutex _rasterTilesInProcessMutex;
-        std::array< QSet< TileId >, ZoomLevelsCount > _rasterTilesInProcess;
-        QWaitCondition _waitUntilAnyRasterTileIsProcessed;
-
         mutable QReadWriteLock _rasterDbLock;
         QHash<BandIndex, std::shared_ptr<TileSqliteDatabase>> _rasterTilesDbMap;
         std::shared_ptr<OsmAnd::TileSqliteDatabase> createRasterTilesDatabase(BandIndex band);
@@ -254,8 +250,6 @@ namespace OsmAnd
         bool preLockGeoTile(const TileId tileId, const ZoomLevel zoom);
         void lockGeoTile(const TileId tileId, const ZoomLevel zoom);
         void unlockGeoTile(const TileId tileId, const ZoomLevel zoom);
-        void lockRasterTile(const TileId tileId, const ZoomLevel zoom);
-        void unlockRasterTile(const TileId tileId, const ZoomLevel zoom);
         void lockContourTile(const TileId tileId, const ZoomLevel zoom);
         void unlockContourTile(const TileId tileId, const ZoomLevel zoom);
 
