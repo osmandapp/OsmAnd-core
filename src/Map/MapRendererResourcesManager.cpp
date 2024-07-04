@@ -330,7 +330,7 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
                     {
                         bool withData = resource->_sourceData && resource->_sourceData->images.size() > 1;
                         auto state = resource->getState();
-                        if (!isPeriodChanged && (state == MapRendererResourceState::Uploading
+                        if (withData && !isPeriodChanged && (state == MapRendererResourceState::Uploading
                             || state == MapRendererResourceState::Renewing))
                         {
                             resource->markAsOldTime();
