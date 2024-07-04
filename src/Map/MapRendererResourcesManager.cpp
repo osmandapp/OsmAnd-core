@@ -3366,6 +3366,8 @@ void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const
 
 float OsmAnd::MapRendererResourcesManager::getBasicThreadsCPULoad()
 {
+    reportActiveThread(0);
+    
     QMutexLocker scopedLocker(&_threadCountLock);
 
     float result = NAN;
