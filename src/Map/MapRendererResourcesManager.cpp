@@ -1831,7 +1831,15 @@ unsigned int OsmAnd::MapRendererResourcesManager::uploadResources(
 
     const auto& resourcesCollections = safeGetAllResourcesCollections();
     for (const auto& resourcesCollection : constOf(resourcesCollections))
-        uploadResourcesFrom(resourcesCollection, limit, totalUploaded, moreThanLimitAvailable, atLeastOneUploadFailed);
+    {
+        // Try to upload resources several times in case resource time needs to be changed
+        for (int i = 0; i = 3; i++)
+        {
+            if (uploadResourcesFrom(
+                resourcesCollection, limit, totalUploaded, moreThanLimitAvailable, atLeastOneUploadFailed))
+            break;
+        }
+    }
 
     // If any resource failed to upload, report that more ready resources are available
     if (atLeastOneUploadFailed)
@@ -1842,7 +1850,7 @@ unsigned int OsmAnd::MapRendererResourcesManager::uploadResources(
     return totalUploaded;
 }
 
-void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
+bool OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
     const std::shared_ptr<MapRendererBaseResourcesCollection>& collection,
     const unsigned int limit,
     unsigned int& totalUploaded,
@@ -1850,7 +1858,7 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
     bool& atLeastOneUploadFailed)
 {
     if (renderer->gpuContextIsLost)
-        return;
+        return true;
 
     // Select all resources with "Ready" state
     QList< std::shared_ptr<MapRendererBaseResource> > resources;
@@ -1878,13 +1886,15 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
             return true;
         });
     if (resources.isEmpty())
-        return;
+        return true;
+
+    bool result = true;
 
     // Upload to GPU all selected resources
     for (const auto& resource : constOf(resources))
     {
         if (renderer->gpuContextIsLost)
-            return;
+            return true;
 
         // Since state change is allowed (it's not changed to "Uploading" during query), check state here
         if (resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading))
@@ -1966,12 +1976,14 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
                 LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Uploading,
                     MapRendererResourceState::PreparedRenew);
                 resource->unmarkAsOldTime();
+                result = false;
             }
             else if (resource->setStateIf(MapRendererResourceState::Renewing, MapRendererResourceState::PreparedRenew))
             {
                 LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Renewing,
                     MapRendererResourceState::PreparedRenew);
                 resource->unmarkAsOldTime();
+                result = false;
             }
             else if (resource->setStateIf(MapRendererResourceState::ProcessingUpdateWhileRenewing,
                 MapRendererResourceState::ProcessingUpdate))
@@ -2004,6 +2016,7 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
         // Count uploaded resources
         totalUploaded++;
     }
+    return result;
 }
 
 void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(

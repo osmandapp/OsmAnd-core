@@ -226,7 +226,7 @@ namespace OsmAnd
             const std::shared_ptr<MapRendererBaseResourcesCollection>& collection,
             unsigned int& totalUnloaded);
         unsigned int uploadResources(const unsigned int limit = 0u, bool* const outMoreThanLimitAvailable = nullptr);
-        void uploadResourcesFrom(
+        bool uploadResourcesFrom(
             const std::shared_ptr<MapRendererBaseResourcesCollection>& collection,
             const unsigned int limit,
             unsigned int& totalUploaded,
