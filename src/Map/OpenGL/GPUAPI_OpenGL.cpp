@@ -933,7 +933,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
                 const auto imgTimePrevious = (dateTime - timeFirst) / timeStep * timeStep + timeFirst;
                 const auto imgTimeNext = imgTimePrevious + timeStep;
                 const auto timeLast = rasterMapLayerData->images.lastKey();
-                if (!isOldInGPU && resource && resource->getState() == MapRendererResourceState::Renewing)
+                if (!isOldInGPU)
                 {
                     const auto currentResourceInGPU = resourceInGPU;
                     if (currentResourceInGPU

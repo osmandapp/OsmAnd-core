@@ -6,12 +6,14 @@ OsmAnd::MapRendererBaseResource::MapRendererBaseResource(
     : _isJunk(false)
     , _isOld(false)
     , _isOldInGPU(false)
+    , _isOldTime(false)
     , _leaveQuietly(false)
     , resourcesManager(owner_)
     , type(type_)
     , isJunk(_isJunk)
     , isOld(_isOld)
     , isOldInGPU(_isOldInGPU)
+    , isOldTime(_isOldTime)
     , leaveQuietly(_leaveQuietly)
 {
 }
@@ -39,6 +41,16 @@ void OsmAnd::MapRendererBaseResource::markAsFresh()
 void OsmAnd::MapRendererBaseResource::markAsFreshInGPU()
 {
     _isOldInGPU = false;
+}
+
+void OsmAnd::MapRendererBaseResource::markAsOldTime()
+{
+    _isOldTime = true;
+}
+
+void OsmAnd::MapRendererBaseResource::unmarkAsOldTime()
+{
+    _isOldTime = false;
 }
 
 void OsmAnd::MapRendererBaseResource::shouldLeaveQuietly()

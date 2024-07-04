@@ -330,6 +330,11 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
                     {
                         bool withData = resource->_sourceData && resource->_sourceData->images.size() > 1;
                         auto state = resource->getState();
+                        if (!isPeriodChanged && (state == MapRendererResourceState::Uploading
+                            || state == MapRendererResourceState::Renewing))
+                        {
+                            resource->markAsOldTime();
+                        }
                         if (withData && resource->setStateIf(MapRendererResourceState::Uploaded, newState))
                         {
                             atLeastOneMarked = true;
@@ -1952,6 +1957,28 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
             {
                 LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::ProcessingUpdateWhileRenewing,
                     MapRendererResourceState::ProcessingUpdate);
+            }
+        }
+        else if (resource->isOldTime)
+        {
+            if (resource->setStateIf(MapRendererResourceState::Uploading, MapRendererResourceState::PreparedRenew))
+            {
+                LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Uploading,
+                    MapRendererResourceState::PreparedRenew);
+                resource->unmarkAsOldTime();
+            }
+            else if (resource->setStateIf(MapRendererResourceState::Renewing, MapRendererResourceState::PreparedRenew))
+            {
+                LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Renewing,
+                    MapRendererResourceState::PreparedRenew);
+                resource->unmarkAsOldTime();
+            }
+            else if (resource->setStateIf(MapRendererResourceState::ProcessingUpdateWhileRenewing,
+                MapRendererResourceState::ProcessingUpdate))
+            {
+                LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::ProcessingUpdateWhileRenewing,
+                    MapRendererResourceState::ProcessingUpdate);
+                resource->unmarkAsOldTime();
             }
         }
         else
