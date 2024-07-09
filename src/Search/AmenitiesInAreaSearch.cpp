@@ -40,7 +40,7 @@ void OsmAnd::AmenitiesInAreaSearch::performSearch(
         criteria.tileFilter,
         criteria.zoomFilter,
         criteria.categoriesFilter.isEmpty() ? nullptr : &criteria.categoriesFilter,
-        &criteria.poiAdditionalFilter,
+        criteria.poiAdditionalFilter.first.isEmpty() ? nullptr : &criteria.poiAdditionalFilter,
         visitorFunction,
         queryController);
 }
