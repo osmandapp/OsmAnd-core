@@ -392,7 +392,11 @@ std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTe
             atlasTexture,
             _firstUnusedSlotIndex++,
             tileSize,
-            alphaChannelType));
+            alphaChannelType,
+            dateTimeFirst,
+            dateTimeLast,
+            dateTimePrevious,
+            dateTimeNext));
     }
 }
 
