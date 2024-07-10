@@ -717,7 +717,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTileForMatchingCategories(
                 if (poiAdditionalFilter)
                 {
                     const auto subtypeIndex = ((rawValue & 0x1) == 0x1)
-                        ? ((rawValue >> 1) & 0xFFFF)
+                        ? ((rawValue >> 1) & 0x7FFF)
                         : ((rawValue >> 1) & 0x1F);
                     const auto intValue = ((rawValue & 0x1) == 0x1)
                         ? (rawValue >> 16)
@@ -1051,7 +1051,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 cis->ReadVarint32(&rawValue);
 
                 const auto subtypeIndex = ((rawValue & 0x1) == 0x1)
-                    ? ((rawValue >> 1) & 0xFFFF)
+                    ? ((rawValue >> 1) & 0x7FFF)
                     : ((rawValue >> 1) & 0x1F);
                 const auto intValue = ((rawValue & 0x1) == 0x1)
                     ? (rawValue >> 16)
@@ -1090,7 +1090,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 gpb::uint32 rawValue;
                 cis->ReadVarint32(&rawValue);
                 const auto subtypeIndex = ((rawValue & 0x1) == 0x1)
-                    ? ((rawValue >> 1) & 0xFFFF)
+                    ? ((rawValue >> 1) & 0x7FFF)
                     : ((rawValue >> 1) & 0x1F);
 
                 textValueSubtypeIndices.push_back(subtypeIndex);
