@@ -287,7 +287,7 @@ bool OsmAnd::TextRasterizer_P::getGlyphBlocks(QVector<LinePaint>& paints, int& o
                         k++;
                         j = k;
                     }
-                    else if (isNotLtrChar(text[k]))
+                    else if (isNotLtrChar(text[k]) || text[k].direction() == QChar::DirEN)
                         k++;
                     else
                         break;
