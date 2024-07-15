@@ -14,6 +14,7 @@
 #include <SkCanvas.h>
 #include <SkPaint.h>
 #include <SkFont.h>
+#include <SkTextBlob.h>
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
@@ -42,6 +43,11 @@ namespace OsmAnd
         SkPaint _defaultPaint;
         SkFont _defaultFont;
 
+        struct GlyphBlock
+        {
+            QVector<SkGlyphID> codepoints;
+            sk_sp<SkTextBlob> textBlob;
+        };
         struct TextPaint
         {
             inline TextPaint()
@@ -51,6 +57,7 @@ namespace OsmAnd
             }
 
             QStringRef text;
+            QVector<GlyphBlock> glyphBlocks;
             SkPaint paint;
             std::shared_ptr<const ITypefaceFinder::Typeface> typeface;
             SkFont skFont;
@@ -73,7 +80,6 @@ namespace OsmAnd
                 , minFontBottom(std::numeric_limits<SkScalar>::max())
                 , fontAscent(0)
                 , maxBoundsTop(0)
-                , minBoundsTop(std::numeric_limits<SkScalar>::max())
                 , width(0)
             {
             }
@@ -90,22 +96,20 @@ namespace OsmAnd
             SkScalar minFontBottom;
             SkScalar fontAscent;
             SkScalar maxBoundsTop;
-            SkScalar minBoundsTop;
             SkScalar width;
         };
         QVector<LinePaint> evaluatePaints(const QVector<QStringRef>& lineRefs, const Style& style) const;
-        void measureText(QVector<LinePaint>& paints, SkScalar& outMaxLineWidth) const;
-        void measureGlyphs(const QVector<LinePaint>& paints, QVector<SkScalar>& outGlyphWidths) const;
-        TextPaint getHaloTextPaint(const TextPaint& textPaint, const Style& style) const;
-        void measureHalo(const Style& style, QVector<LinePaint>& paints) const;
-        void measureHaloGlyphs(const Style& style, const QVector<LinePaint>& paints, QVector<SkScalar>& outGlyphWidths) const;
+        GlyphBlock preparePart(const TextPaint& textPaint, const QString& text, bool rtl,
+            const std::shared_ptr<hb_buffer_t>& hbBuffer, SkPoint& origin) const;
+        bool getGlyphBlocks(QVector<LinePaint>& paints, int& outMaxGlyphCount) const;
+        void measureText(QVector<LinePaint>& paints, int maxGlyphCount, const Style* style, SkScalar& outMaxLineWidth,
+            SkScalar& outLeftGap, SkScalar& outRightGap, QVector<SkScalar>* outGlyphWidths) const;
+        SkPaint getHaloPaint(const SkPaint& paint, const Style& style) const;
         SkRect positionText(
             QVector<LinePaint>& paints,
             const SkScalar maxLineWidth,
             const Style::TextAlignment textAlignment) const;
-        bool drawPart(SkCanvas& canvas, const TextPaint& textPaint, const QString& text, bool rtl,
-            const std::shared_ptr<hb_buffer_t>& hbBuffer, SkPoint& origin) const;
-        bool drawText(SkCanvas& canvas, const TextPaint& textPaint) const;
+        void drawText(SkCanvas& canvas, const TextPaint& textPaint, const SkPaint& paint) const;
         inline bool isRtlChar(const QChar& ch) const
         {
             auto d = ch.direction();
