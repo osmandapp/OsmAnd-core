@@ -38,6 +38,11 @@ bool OsmAnd::MapPrimitivesProvider::obtainTiledPrimitives(
     return _p->obtainTiledPrimitives(request, outTiledPrimitives, metric);
 }
 
+void OsmAnd::MapPrimitivesProvider::retreivePolygons(PointI point, ZoomLevel zoom)
+{
+    _p->retreivePolygons(point, zoom);
+}
+
 bool OsmAnd::MapPrimitivesProvider::supportsNaturalObtainData() const
 {
     return true;

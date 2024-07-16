@@ -43,6 +43,53 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
     return result;
 }
 
+void OsmAnd::MapPrimitivesProvider_P::retreivePolygons(PointI point, ZoomLevel zoom)
+{
+    std::shared_ptr<TileEntry> tileEntry;
+    TileId tile = OsmAnd::Utilities::getTileId(point, zoom);
+    std::shared_ptr<MapPrimitivesProvider::Data> outTiledPrimitives = nullptr;
+    _tileReferences.obtainOrAllocateEntry(tileEntry, tile, zoom,
+        []
+        (const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
+        {
+            return new TileEntry(collection, tileId, zoom);
+        });
+    // If state is "Undefined", change it to "Loading" and proceed with loading
+    if (tileEntry->setStateIf(TileState::Undefined, TileState::Loading))
+        return;
+
+    // In case tile entry is being loaded, wait until it will finish loading
+    if (tileEntry->getState() == TileState::Loading)
+    {
+        QReadLocker scopedLcoker(&tileEntry->loadedConditionLock);
+        // If tile is in 'Loading' state, wait until it will become 'Loaded'
+        while (tileEntry->getState() != TileState::Loaded)
+            REPEAT_UNTIL(tileEntry->loadedCondition.wait(&tileEntry->loadedConditionLock));
+    }
+
+    if (tileEntry->dataIsPresent)
+    {
+        // Otherwise, try to lock tile reference
+        outTiledPrimitives = tileEntry->dataWeakRef.lock();
+        if (outTiledPrimitives && outTiledPrimitives->primitivisedObjects)
+        {
+            for (const auto & p : outTiledPrimitives->primitivisedObjects->polygons)
+            {
+                const auto & mapObj = p->sourceObject;
+                const auto& decRules = mapObj->attributeMapping->decodeMap;
+                auto pAttributeId = mapObj->attributeIds.constData();
+                const auto attributeIdsCount = mapObj->attributeIds.size();
+                for (auto attributeIdIndex = 0; attributeIdIndex < attributeIdsCount; attributeIdIndex++, pAttributeId++)
+                {
+                    const auto& decodedAttribute = decRules[*pAttributeId];
+                    LogPrintf(LogSeverityLevel::Info, "%s %s", qPrintable(decodedAttribute.tag), qPrintable(decodedAttribute.value));
+                }
+            }
+        }
+    }
+    return;
+}
+
 bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
     const MapPrimitivesProvider::Request& request,
     std::shared_ptr<MapPrimitivesProvider::Data>& outTiledPrimitives,
