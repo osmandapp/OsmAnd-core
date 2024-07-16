@@ -87,6 +87,7 @@ namespace OsmAnd
             const MapPrimitivesProvider::Request& request,
             std::shared_ptr<MapPrimitivesProvider::Data>& outTiledPrimitives,
             MapPrimitivesProvider_Metrics::Metric_obtainData* const metric_);
+        void retreivePolygons(PointI point, ZoomLevel zoom);
 
     friend class OsmAnd::MapPrimitivesProvider;
     };

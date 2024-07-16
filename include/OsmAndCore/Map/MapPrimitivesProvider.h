@@ -86,6 +86,7 @@ namespace OsmAnd
             const IMapDataProvider::Request& request,
             const IMapDataProvider::ObtainDataAsyncCallback callback,
             const bool collectMetric = false) Q_DECL_OVERRIDE;
+        virtual void retreivePolygons(PointI point, ZoomLevel zoom);
     };
 }
 
