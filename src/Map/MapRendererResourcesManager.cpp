@@ -72,6 +72,7 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
 
     _requestedResourcesTasks.reserve(1024);
 
+    _threadCountAccess.storeRelease(0);
     _threadCountTime = std::chrono::high_resolution_clock::now();
     _threadCount = 0.0f;
     _threadCountPeriod = 0.0f;
@@ -3366,18 +3367,24 @@ void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const
 
 float OsmAnd::MapRendererResourcesManager::getBasicThreadsCPULoad()
 {
-    reportActiveThread(0);
-    
-    QMutexLocker scopedLocker(&_threadCountLock);
-
     float result = NAN;
-    if (_threadCountPeriod >= 1.0f)
+
+    if (_threadCountAccess.fetchAndOrOrdered(1) == 0)
     {
-        result = _basicThreadsCPULoad / _threadCountPeriod;
-        _threadCountTime = std::chrono::high_resolution_clock::now();
-        _threadCountPeriod = 0.0f;
-        _basicThreadsCPULoad = 0.0f;
+        reportActiveThread(0);
+        {
+            QMutexLocker scopedLocker(&_threadCountLock);
+            if (_threadCountPeriod >= 1.0f)
+            {
+                result = _basicThreadsCPULoad / _threadCountPeriod;
+                _threadCountTime = std::chrono::high_resolution_clock::now();
+                _threadCountPeriod = 0.0f;
+                _basicThreadsCPULoad = 0.0f;
+            }
+        }
+        _threadCountAccess.fetchAndAndOrdered(0);
     }
+
     return result;
 }
 
