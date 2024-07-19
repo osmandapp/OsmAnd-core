@@ -2896,22 +2896,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::pathRenderableAs2D(
     {
         const auto segmentsCount = endPathPointIndex - startPathPointIndex;
 
-        // First check segment between exact start point (which is after startPathPointIndex)
-        // and next point (startPathPointIndex + 1)
-        if (!segmentValidFor2D(
-            pathOnScreen[startPathPointIndex] + vectorsOnScreen[startPathPointIndex] - exactStartPointOnScreen))
-            return false;
-
-        auto pVector = pathOnScreen.constData() + startPathPointIndex + 1;
-        for (auto segmentIdx = 1; segmentIdx < segmentsCount; segmentIdx++)
+        auto pVector = vectorsOnScreen.constData() + startPathPointIndex;
+        for (auto segmentIdx = 0; segmentIdx <= segmentsCount; segmentIdx++)
         {
             if (!segmentValidFor2D(*(pVector++)))
                 return false;
         }
 
-        // Last check is between pathOnScreen[endPathPointIndex] and exact end point,
-        // which is always after endPathPointIndex
-        return segmentValidFor2D(exactEndPointOnScreen - pathOnScreen[endPathPointIndex]);
+        return true;
     }
     else
     {
