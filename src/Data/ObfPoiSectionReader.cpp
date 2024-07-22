@@ -37,6 +37,7 @@ void OsmAnd::ObfPoiSectionReader::loadAmenities(
     const TileAcceptorFunction tileFilter /*= nullptr*/,
     const ZoomLevel zoomFilter /*= InvalidZoomLevel*/,
     const QSet<ObfPoiCategoryId>* const categoriesFilter /*= nullptr*/,
+    const QPair<int, int>* poiAdditionalFilter /*= nullptr*/,
     const ObfPoiSectionReader::VisitorFunction visitor /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
@@ -48,6 +49,7 @@ void OsmAnd::ObfPoiSectionReader::loadAmenities(
         tileFilter,
         zoomFilter,
         categoriesFilter,
+        poiAdditionalFilter,
         visitor,
         queryController);
 }
@@ -60,6 +62,7 @@ void OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
     const AreaI* const bbox31 /*= nullptr*/,
     const TileAcceptorFunction tileFilter /*= nullptr*/,
     const QSet<ObfPoiCategoryId>* const categoriesFilter /*= nullptr*/,
+    const QPair<int, int>* poiAdditionalFilter /*= nullptr*/,
     const ObfPoiSectionReader::VisitorFunction visitor /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
     const bool strictMatch /*= false*/)
@@ -73,6 +76,7 @@ void OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
         bbox31,
         tileFilter,
         categoriesFilter,
+        poiAdditionalFilter,
         visitor,
         queryController,
         strictMatch);

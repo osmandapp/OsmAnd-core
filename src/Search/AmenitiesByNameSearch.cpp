@@ -41,6 +41,7 @@ void OsmAnd::AmenitiesByNameSearch::performSearch(
         criteria.bbox31.getValuePtrOrNullptr(),
         criteria.tileFilter,
         criteria.categoriesFilter.isEmpty() ? nullptr : &criteria.categoriesFilter,
+        (criteria.poiAddtitionalFilter.first.isEmpty() || criteria.poiAddtitionalFilter.second.isEmpty()) ? nullptr : &criteria.poiAddtitionalFilter,
         visitorFunction,
         queryController);
 }
@@ -83,6 +84,7 @@ void OsmAnd::AmenitiesByNameSearch::performTravelGuidesSearch(
         criteria.bbox31.getValuePtrOrNullptr(),
         criteria.tileFilter,
         criteria.categoriesFilter.isEmpty() ? nullptr : &criteria.categoriesFilter,
+        (criteria.poiAddtitionalFilter.first.isEmpty() || criteria.poiAddtitionalFilter.second.isEmpty()) ? nullptr : &criteria.poiAddtitionalFilter,
         visitorFunction,
         queryController,
         true);

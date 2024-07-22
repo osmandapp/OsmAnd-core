@@ -292,6 +292,10 @@ void OsmAnd::ObfPoiSectionReader_P::readSubtypesStructure(
                     subtypes->descriptionSubtypeIndex = subtypes->subtypes.size() - 1;
                     subtypes->descriptionSubtype = subtype;
                 }
+                
+                if (subtype->tagName.startsWith(QLatin1String("top_index_"))) {
+                    subtypes->topIndexSubtypes.push_back(subtype);
+                }
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -393,6 +397,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
     const TileAcceptorFunction tileFilter,
     const ZoomLevel zoomFilter,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
+    const QPair<int, int>* poiAdditionalFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController)
 {
@@ -433,7 +438,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                     bbox31,
                     tileFilter,
                     zoomFilter,
-                    categoriesFilter);
+                    categoriesFilter,
+                    poiAdditionalFilter);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -480,6 +486,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                         zoomToSkip,
                         tilesToSkip,
                         categoriesFilter,
+                        poiAdditionalFilter,
                         visitor,
                         queryController);
 
@@ -514,7 +521,8 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
     const AreaI* const bbox31,
     const TileAcceptorFunction tileFilter,
     const ZoomLevel zoomFilter,
-    const QSet<ObfPoiCategoryId>* const categoriesFilter)
+    const QSet<ObfPoiCategoryId>* const categoriesFilter,
+    const QPair<int, int>* poiAdditionalFilter)
 {
     const auto cis = reader.getCodedInputStream().get();
 
@@ -587,7 +595,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                 const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                const auto hasMatchingContent = scanTileForMatchingCategories(reader, *categoriesFilter);
+                const auto hasMatchingContent = scanTileForMatchingCategories(reader, *categoriesFilter, poiAdditionalFilter);
 
                 cis->PopLimit(oldLimit);
 
@@ -613,7 +621,8 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                     bbox31,
                     tileFilter,
                     zoomFilter,
-                    categoriesFilter);
+                    categoriesFilter,
+                    poiAdditionalFilter);
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
 
                 cis->PopLimit(oldLimit);
@@ -675,7 +684,8 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
 
 bool OsmAnd::ObfPoiSectionReader_P::scanTileForMatchingCategories(
     const ObfReader_P& reader,
-    const QSet<ObfPoiCategoryId>& categories)
+    const QSet<ObfPoiCategoryId>& categories,
+    const QPair<int, int>* poiAdditionalFilter)
 {
     const auto cis = reader.getCodedInputStream().get();
     for (;;)
@@ -700,17 +710,27 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTileForMatchingCategories(
                 }
                 break;
             }
-            //            case OsmandOdb.OsmAndPoiCategories.SUBCATEGORIES_FIELD_NUMBER:
-            //                int subcatvl = codedIS.readUInt32();
-            //                if(req.poiTypeFilter.filterSubtypes()) {
-            //                    subType.setLength(0);
-            //                    PoiSubType pt = region.getSubtypeFromId(subcatvl, subType);
-            //                    if(pt != null && req.poiTypeFilter.accept(pt.name, subType.toString())) {
-            //                        codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
-            //                        return true;
-            //                    }
-            //                }
-            //                break;
+            case OBF::OsmAndPoiCategories::kSubcategoriesFieldNumber:
+            {
+                gpb::uint32 rawValue;
+                cis->ReadVarint32(&rawValue);
+                if (poiAdditionalFilter)
+                {
+                    const auto subtypeIndex = ((rawValue & 0x1) == 0x1)
+                        ? ((rawValue >> 1) & 0x7FFF)
+                        : ((rawValue >> 1) & 0x1F);
+                    const auto intValue = ((rawValue & 0x1) == 0x1)
+                        ? (rawValue >> 16)
+                        : (rawValue >> 6);
+                    
+                    if (poiAdditionalFilter->first == subtypeIndex && poiAdditionalFilter->second == intValue)
+                    {
+                        cis->Skip(cis->BytesUntilLimit());
+                        return true;
+                    }
+                }
+                break;
+            }
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;
@@ -728,6 +748,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
     const ZoomLevel zoomFilter,
     const std::shared_ptr<QSet<uint64_t>> pTilesToSkip,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
+    const QPair<int, int>* poiAdditionalFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController)
 {
@@ -798,6 +819,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
                     zoom,
                     bbox31,
                     categoriesFilter,
+                    poiAdditionalFilter,
                     queryController);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
@@ -856,6 +878,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     const ZoomLevel boxZoom,
     const AreaI* const bbox31,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
+    const QPair<int, int>* poiAdditionalFilter,
     const std::shared_ptr<const IQueryController>& queryController)
 {
     const auto cis = reader.getCodedInputStream().get();
@@ -876,6 +899,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     auto categoriesFilterChecked = false;
     const CollatorStringMatcher matcher(query, StringMatcherMode::CHECK_STARTS_FROM_SPACE);
     uint32_t precisionXY = 0;
+    bool hasSubcategoriesField = false;
+    bool topIndexAdditonalFound = false;
 
     for (;;)
     {
@@ -953,6 +978,11 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 {
                     return;
                 }
+                
+                if (poiAdditionalFilter && (!hasSubcategoriesField || !topIndexAdditonalFound))
+                {
+                    return;
+                }
 
                 if (!amenity)
                     amenity.reset(new Amenity(section));
@@ -976,14 +1006,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 amenity->values = detachedOf(intValues).unite(stringOrDataValues);
                 amenity->evaluateTypes();
                 outAmenity = amenity;
-
-                //////////////////////////////////////////////////////////////////////////
-                //if (amenity->id.getOsmId() == 582502308u)
-                //{
-                //    int i = 5;
-                //}
-                //////////////////////////////////////////////////////////////////////////
-
                 return;
             }
             case OBF::OsmAndPoiBoxDataAtom::kDxFieldNumber:
@@ -1015,6 +1037,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
             }
             case OBF::OsmAndPoiBoxDataAtom::kSubcategoriesFieldNumber:
             {
+                hasSubcategoriesField = true;
                 if (!categoriesFilterChecked &&
                     categoriesFilter &&
                     categories.toSet().intersect(*categoriesFilter).isEmpty())
@@ -1028,13 +1051,18 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 cis->ReadVarint32(&rawValue);
 
                 const auto subtypeIndex = ((rawValue & 0x1) == 0x1)
-                    ? ((rawValue >> 1) & 0xFFFF)
+                    ? ((rawValue >> 1) & 0x7FFF)
                     : ((rawValue >> 1) & 0x1F);
                 const auto intValue = ((rawValue & 0x1) == 0x1)
                     ? (rawValue >> 16)
                     : (rawValue >> 6);
 
                 intValues.insert(subtypeIndex, QVariant(intValue));
+                
+                if (poiAdditionalFilter && poiAdditionalFilter->first == subtypeIndex && poiAdditionalFilter->second == intValue)
+                {
+                    topIndexAdditonalFound = true;
+                }
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kNameFieldNumber:
@@ -1062,7 +1090,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 gpb::uint32 rawValue;
                 cis->ReadVarint32(&rawValue);
                 const auto subtypeIndex = ((rawValue & 0x1) == 0x1)
-                    ? ((rawValue >> 1) & 0xFFFF)
+                    ? ((rawValue >> 1) & 0x7FFF)
                     : ((rawValue >> 1) & 0x1F);
 
                 textValueSubtypeIndices.push_back(subtypeIndex);
@@ -1151,6 +1179,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
     const AreaI* const bbox31,
     const TileAcceptorFunction tileFilter,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
+    const QPair<int, int>* poiAdditionalFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController,
     const bool strictMatch)
@@ -1234,6 +1263,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                         InvalidZoomLevel,
                         nullptr,
                         categoriesFilter,
+                        poiAdditionalFilter,
                         visitor,
                         queryController);
 
@@ -1462,6 +1492,7 @@ void OsmAnd::ObfPoiSectionReader_P::loadAmenities(
     const TileAcceptorFunction tileFilter,
     const ZoomLevel zoomFilter,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
+    const QPair<int, int>* poiAdditionalFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController)
 {
@@ -1481,6 +1512,7 @@ void OsmAnd::ObfPoiSectionReader_P::loadAmenities(
         tileFilter,
         zoomFilter,
         categoriesFilter,
+        poiAdditionalFilter,
         visitor,
         queryController);
 
@@ -1497,6 +1529,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
     const AreaI* const bbox31,
     const TileAcceptorFunction tileFilter,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
+    const QPair<int, int>* poiAdditionalFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController,
     const bool strictMatch)
@@ -1518,6 +1551,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
         bbox31,
         tileFilter,
         categoriesFilter,
+        poiAdditionalFilter,
         visitor,
         queryController,
         strictMatch);
