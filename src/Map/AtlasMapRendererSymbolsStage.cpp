@@ -2616,7 +2616,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(
     PointF sourcePoint;
     unsigned int prevIdx;
     bool visible = true;
-    bool prevVisible;
+    bool prevVisible = true;
     const auto r = getRenderer();
     for (auto idx = 0u; idx < pointsCount; idx++)
     {
@@ -2651,6 +2651,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(
                 }
                 origPointInWorld = pointInWorld;
                 prevPointInWorld = origPointInWorld;
+                prevVisible = false;
                 continue;
             }
             if (idx > 0)
