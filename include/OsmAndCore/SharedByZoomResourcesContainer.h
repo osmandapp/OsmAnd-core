@@ -79,7 +79,7 @@ namespace OsmAnd
         std::array< QHash< KEY_TYPE, AvailableResourceEntryPtr >, ZoomLevelsCount> _availableResources;
 
         typedef std::shared_ptr<PromisedResourceEntry> PromisedResourceEntryPtr;
-        QSet< PromisedResourceEntryPtr > _promisedResourceEntriesStorage;
+        QHash< KEY_TYPE, PromisedResourceEntryPtr > _promisedResourceEntriesStorage;
         std::array< QHash< KEY_TYPE, PromisedResourceEntryPtr >, ZoomLevelsCount> _promisedResources;
     protected:
     public:
@@ -301,10 +301,10 @@ namespace OsmAnd
                 _promisedResources[level].insert(key, newEntryPtr);
             }
 
-            _promisedResourceEntriesStorage.insert(qMove(newEntryPtr));
+            _promisedResourceEntriesStorage.insert(key, qMove(newEntryPtr));
         }
 
-        void breakPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels)
+        void breakPromise(const KEY_TYPE& key)
         {
             QMutexLocker scopedLocker(&this->_containerMutex);
 
@@ -316,6 +316,10 @@ namespace OsmAnd
                 qPrintable(Utilities::stringifyZoomLevels(levels)));
 #endif
 
+            const auto& itPromisedEntryPtr = _promisedResourceEntriesStorage.find(key);
+            if (itPromisedEntryPtr == _promisedResourceEntriesStorage.end())
+                return;
+            const auto& levels = itPromisedEntryPtr.value()->zoomLevels;
             PromisedResourceEntryPtr promisedEntryPtr;
             for(const auto& level : constOf(levels))
             {
@@ -331,7 +335,7 @@ namespace OsmAnd
                 promisedResources.erase(itPromisedResourceEntry);
             }
 
-            _promisedResourceEntriesStorage.remove(promisedEntryPtr);
+            _promisedResourceEntriesStorage.remove(key);
             promisedEntryPtr->promise.set_exception(proper::make_exception_ptr(std::runtime_error("Promise was broken")));
         }
 
@@ -362,7 +366,7 @@ namespace OsmAnd
                     promisedEntryPtr = *itPromisedResourceEntry;
                 promisedResources.erase(itPromisedResourceEntry);
             }
-            _promisedResourceEntriesStorage.remove(promisedEntryPtr);
+            _promisedResourceEntriesStorage.remove(key);
 
             if (promisedEntryPtr->refCounter <= 0)
                 return;
@@ -416,7 +420,7 @@ namespace OsmAnd
                     promisedEntryPtr = *itPromisedResourceEntry;
                 promisedResources.erase(itPromisedResourceEntry);
             }
-            _promisedResourceEntriesStorage.remove(promisedEntryPtr);
+            _promisedResourceEntriesStorage.remove(key);
 
             if (promisedEntryPtr->refCounter <= 0)
                 return;
@@ -466,7 +470,7 @@ namespace OsmAnd
                     promisedEntryPtr = *itPromisedResourceEntry;
                 promisedResources.erase(itPromisedResourceEntry);
             }
-            _promisedResourceEntriesStorage.remove(promisedEntryPtr);
+            _promisedResourceEntriesStorage.remove(key);
 
             const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(promisedEntryPtr->refCounter + 1, resourcePtr, levels));
 
@@ -540,7 +544,7 @@ namespace OsmAnd
             return true;
         }
 
-        bool obtainReferenceOrFutureReferenceOrMakePromise(const KEY_TYPE& key, const ZoomLevel level, const QSet<ZoomLevel>& levels, ResourcePtr& outResourcePtr, proper::shared_future<ResourcePtr>& outFutureResourcePtr)
+        bool obtainReferenceOrFutureReferenceOrMakePromise(const KEY_TYPE& key, const ZoomLevel level, const QSet<ZoomLevel>& levels, ResourcePtr& outResourcePtr, proper::shared_future<ResourcePtr>& outFutureResourcePtr, bool withPromise = true)
         {
             QMutexLocker scopedLocker(&this->_containerMutex);
 
@@ -581,7 +585,8 @@ namespace OsmAnd
             if (futureReferenceAvailable)
                 return true;
 
-            makePromise(key, levels);
+            if (withPromise)
+                makePromise(key, levels);
             return false;
         }
 

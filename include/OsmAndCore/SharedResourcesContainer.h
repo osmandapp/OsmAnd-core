@@ -478,7 +478,7 @@ namespace OsmAnd
             return true;
         }
 
-        bool obtainReferenceOrFutureReferenceOrMakePromise(const KEY_TYPE& key, ResourcePtr& outResourcePtr, proper::shared_future<ResourcePtr>& outFutureResourcePtr)
+        bool obtainReferenceOrFutureReferenceOrMakePromise(const KEY_TYPE& key, ResourcePtr& outResourcePtr, proper::shared_future<ResourcePtr>& outFutureResourcePtr, bool withPromise = true)
         {
             QMutexLocker scopedLocker(&_containerMutex);
 
@@ -522,7 +522,8 @@ namespace OsmAnd
                 qPrintable(QString::fromLatin1("%1").arg(key)));
 #endif
 
-            makePromise(key);
+            if (withPromise)
+                makePromise(key);
             return false;
         }
 
