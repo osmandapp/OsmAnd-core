@@ -139,10 +139,14 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     request.combineTilesData = isMetaTiled;
 
     const auto requestSucceeded = provider->obtainTiledSymbols(request, tile);
-    if (queryController && queryController->isAborted())
-        return false;
     if (!requestSucceeded)
+    {
+        for (const auto& sharedGroup : constOf(loadedSharedGroups))
+        {
+            sharedGroupsResources.breakPromise(sharedGroup);
+        }
         return false;
+    }
 
     // Store data
     _sourceData = tile;
@@ -155,14 +159,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     // Convert data
     for (const auto& symbolsGroup : constOf(_sourceData->symbolsGroups))
     {
-        if (queryController && queryController->isAborted())
-            break;
-
         for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
         {
-            if (queryController && queryController->isAborted())
-                break;
-
             const auto rasterMapSymbol = std::dynamic_pointer_cast<RasterMapSymbol>(mapSymbol);
             if (!rasterMapSymbol)
                 continue;
@@ -172,18 +170,12 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
                 AlphaChannelPresence::Present);
         }
     }
-    if (queryController && queryController->isAborted())
-        return false;
-
     // Move referenced shared groups
     _referencedSharedGroupsResources = referencedSharedGroupsResources;
 
     // tile->symbolsGroups contains groups that derived from unique symbols, or loaded shared groups
     for (const auto& symbolsGroup : constOf(_sourceData->symbolsGroups))
     {
-        if (queryController && queryController->isAborted())
-            break;
-
         MapSymbolsGroup::SharingKey sharingKey;
         if (symbolsGroup->obtainSharingKey(sharingKey))
         {
@@ -231,8 +223,15 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
         auto timeout = proper::chrono::system_clock::now() + proper::chrono::seconds(3);
         if (proper::future_status::ready == futureGroup.wait_until(timeout))
         {
-            auto groupResources = futureGroup.get();
-            _referencedSharedGroupsResources.push_back(qMove(groupResources));
+            try
+            {
+                auto groupResources = futureGroup.get();
+                _referencedSharedGroupsResources.push_back(qMove(groupResources));
+            }
+            catch(const std::exception& e)
+            {
+                continue;
+            }
         }
         else
         {
@@ -442,13 +441,12 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
             request.combineTilesData = self->isMetaTiled;
 
             const auto requestSucceeded = provider->obtainTiledSymbols(request, tile);
-            if (queryController && queryController->isAborted())
-            {
-                callback(false, false);
-                return;
-            }
             if (!requestSucceeded)
             {
+                for (const auto& sharedGroup : constOf(loadedSharedGroups))
+                {
+                    sharedGroupsResources.breakPromise(sharedGroup);
+                }
                 callback(false, false);
                 return;
             }
@@ -460,6 +458,10 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
             // Process data
             if (!dataAvailable)
             {
+                for (const auto& sharedGroup : constOf(loadedSharedGroups))
+                {
+                    sharedGroupsResources.breakPromise(sharedGroup);
+                }
                 callback(true, false);
                 return;
             }
@@ -469,14 +471,8 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
                 // Convert data
                 for (const auto& symbolsGroup : constOf(self->_sourceData->symbolsGroups))
                 {
-                    if (queryController && queryController->isAborted())
-                        break;
-
                     for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
                     {
-                        if (queryController && queryController->isAborted())
-                            break;
-
                         const auto rasterMapSymbol = std::dynamic_pointer_cast<RasterMapSymbol>(mapSymbol);
                         if (!rasterMapSymbol)
                             continue;
@@ -490,21 +486,12 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
             else
                 return;
 
-            if (queryController && queryController->isAborted())
-            {
-                callback(false, false);
-                return;
-            }
-
             // Move referenced shared groups
             self->_referencedSharedGroupsResources = referencedSharedGroupsResources;
 
             // tile->symbolsGroups contains groups that derived from unique symbols, or loaded shared groups
             for (const auto& symbolsGroup : constOf(self->_sourceData->symbolsGroups))
             {
-                if (queryController && queryController->isAborted())
-                    break;
-
                 MapSymbolsGroup::SharingKey sharingKey;
                 if (symbolsGroup->obtainSharingKey(sharingKey))
                 {
@@ -555,8 +542,15 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
                 auto timeout = proper::chrono::system_clock::now() + proper::chrono::seconds(3);
                 if (proper::future_status::ready == futureGroup.wait_until(timeout))
                 {
-                    auto groupResources = futureGroup.get();
-                    self->_referencedSharedGroupsResources.push_back(qMove(groupResources));
+                    try
+                    {
+                        auto groupResources = futureGroup.get();
+                        self->_referencedSharedGroupsResources.push_back(qMove(groupResources));
+                    }
+                    catch(const std::exception& e)
+                    {
+                        continue;
+                    }
                 }
                 else
                 {

@@ -3465,7 +3465,7 @@ int64_t OsmAnd::MapRendererResourcesManager::ResourceRequestTask::calculatePrior
         return 0;
 
     // The closer tiled resource coordinates are from center, the higher priority it has
-    auto priority = std::numeric_limits<int64_t>::max() - 1000000000;
+    int64_t priority = std::numeric_limits<int64_t>::max() - 1000000000;
 
     switch (tiledResource->type)
     {
@@ -3485,8 +3485,8 @@ int64_t OsmAnd::MapRendererResourcesManager::ResourceRequestTask::calculatePrior
 
     priority -= qAbs(static_cast<int>(tiledResource->zoom) - static_cast<int>(activeZoom)) * 10000000;
 
-    const auto dX = tiledResource->tileId.x - centerTileId.x;
-    const auto dY = tiledResource->tileId.y - centerTileId.y;
+    int64_t dX = tiledResource->tileId.x - centerTileId.x;
+    int64_t dY = tiledResource->tileId.y - centerTileId.y;
     priority -= dX*dX + dY*dY;
 
     return priority;
