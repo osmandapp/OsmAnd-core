@@ -218,6 +218,7 @@ namespace OsmAnd
         static QMap<QString, QString> readTextMap(QXmlStreamReader &xmlReader, QString key);
         static QMap<QString, Ref<PointsGroup> > mergePointsGroups(QList< Ref<PointsGroup> > &groups, QList< Ref<WptPt> > &points);
         static QString readText(QXmlStreamReader& xmlReader, QString key);
+        static bool containsExtension(const QList<Ref<GpxExtension>> &extensions, const QString& name, const QString& value);
     protected:
         static void writeLinks(const QList< Ref<Link> >& links, QXmlStreamWriter& xmlWriter);
         static void writeExtensions(const QList< Ref<GpxExtension> > &extensions, const QHash<QString, QString> &attributes, QXmlStreamWriter& xmlWriter);

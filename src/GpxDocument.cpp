@@ -308,10 +308,17 @@ void OsmAnd::GpxDocument::writeWpt(const Ref<WptPt> &p, const QString &elementNa
     auto exts = QList(p->extensions);
     if (p->speed > 0)
     {
-        const auto extension = std::make_shared<GpxExtensions::GpxExtension>();
-        extension->name = QStringLiteral("speed");
-        extension->value = QString::number(p->speed, 'f', 1);
-        exts.append(extension);
+        const auto name = QStringLiteral("speed");
+        const auto value = QString::number(p->speed, 'f', 1);
+        
+        // Check if the extension already exists in the list (share .gpx duplicate <osmand:speed>)
+        if (!containsExtension(exts, name, value))
+        {
+            auto extension = std::make_shared<GpxExtensions::GpxExtension>();
+            extension->name = name;
+            extension->value = value;
+            exts.append(extension);
+        }
     }
     if (!isnan(p->heading))
     {
@@ -339,6 +346,14 @@ void OsmAnd::GpxDocument::writeWpt(const Ref<WptPt> &p, const QString &elementNa
         }
     }
     writeExtensions(exts, p->attributes, xmlWriter);
+}
+    
+bool OsmAnd::GpxDocument::containsExtension(const QList<Ref<GpxExtension>> &extensions,
+                                            const QString& name, const QString& value)
+    {
+    return std::any_of(extensions.begin(), extensions.end(), [&name, &value](const Ref<GpxExtension>& extension) {
+            return extension->name == name && extension->value == value;
+        });
 }
 
 QString OsmAnd::GpxDocument::getFilename(const QString& path)
@@ -429,7 +444,7 @@ void OsmAnd::GpxDocument::writeBounds(QXmlStreamWriter& xmlWriter, const Ref<Bou
     xmlWriter.writeEndElement();
 }
 
-void OsmAnd::GpxDocument::writeExtensions(const QList< Ref<GpxExtension> > &extensions, const QHash<QString, QString> &attributes, QXmlStreamWriter& xmlWriter)
+void OsmAnd::GpxDocument::writeExtensions(const QList<Ref<GpxExtension>> &extensions, const QHash<QString, QString> &attributes, QXmlStreamWriter& xmlWriter)
 {
     if (extensions.count() == 0)
         return;
