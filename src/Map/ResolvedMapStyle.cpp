@@ -80,6 +80,17 @@ QList< std::shared_ptr<const OsmAnd::IMapStyle::IAttribute> > OsmAnd::ResolvedMa
     return _p->getAttributes();
 }
 
+std::shared_ptr<const OsmAnd::IMapStyle::IAssociation> OsmAnd::ResolvedMapStyle::getAssociation(
+    const QString& name) const
+{
+    return _p->getAssociation(name);
+}
+
+QList< std::shared_ptr<const OsmAnd::IMapStyle::IAssociation> > OsmAnd::ResolvedMapStyle::getAssociations() const
+{
+    return _p->getAssociations();
+}
+
 QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::IMapStyle::IRule> > OsmAnd::ResolvedMapStyle::getRuleset(
     const MapStyleRulesetType rulesetType) const
 {
@@ -287,6 +298,41 @@ QList<OsmAnd::MapStyleConstantValue> OsmAnd::ResolvedMapStyle::Parameter::getPos
 QString OsmAnd::ResolvedMapStyle::Parameter::getDefaultValueDescription() const
 {
     return defaultValueDescription;
+}
+
+OsmAnd::ResolvedMapStyle::Association::Association(const StringId nameId_)
+    : BaseRule(new RuleNode(false))
+    , nameId(nameId_)
+{
+}
+
+OsmAnd::ResolvedMapStyle::Association::~Association()
+{
+}
+
+std::shared_ptr<OsmAnd::IMapStyle::IRuleNode> OsmAnd::ResolvedMapStyle::Association::getRootNode()
+{
+    return rootNodeAsInterface;
+}
+
+const std::shared_ptr<OsmAnd::IMapStyle::IRuleNode>& OsmAnd::ResolvedMapStyle::Association::getRootNodeRef()
+{
+    return rootNodeAsInterface;
+}
+
+std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> OsmAnd::ResolvedMapStyle::Association::getRootNode() const
+{
+    return rootNodeAsConstInterface;
+}
+
+const std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode>& OsmAnd::ResolvedMapStyle::Association::getRootNodeRef() const
+{
+    return rootNodeAsConstInterface;
+}
+
+OsmAnd::IMapStyle::StringId OsmAnd::ResolvedMapStyle::Association::getNameId() const
+{
+    return nameId;
 }
 
 OsmAnd::ResolvedMapStyle::ParameterValueDefinition::ParameterValueDefinition(

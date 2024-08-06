@@ -20,6 +20,8 @@ DECLARE_BUILTIN_VALUEDEF(INPUT_NAME_TAG, Input, String, "nameTag", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_DISABLE, Output, Boolean, "disable", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_NAME_TAG2, Output, String, "nameTag2", false)
 
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_ASSOCIATION, Output, Integer, "association", false)
+
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_BOOL_VALUE, Output, Boolean, "attrBoolValue", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_INT_VALUE, Output, Integer, "attrIntValue", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_FLOAT_VALUE, Output, Float, "attrFloatValue", true)

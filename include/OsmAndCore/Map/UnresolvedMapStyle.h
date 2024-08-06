@@ -108,6 +108,19 @@ namespace OsmAnd
             QString defaultValueDescription;
         };
 
+        class OSMAND_CORE_API Association Q_DECL_FINAL : public BaseRule
+        {
+            Q_DISABLE_COPY_AND_MOVE(Association);
+
+        private:
+        protected:
+        public:
+            Association(const QString& name);
+            virtual ~Association();
+
+            const QString name;
+        };
+
     private:
         PrivateImplementation<UnresolvedMapStyle_P> _p;
     protected:
@@ -126,6 +139,7 @@ namespace OsmAnd
         const QHash<QString, QString>& constants;
         const QList< std::shared_ptr<const Parameter> >& parameters;
         const QList< std::shared_ptr<const Attribute> >& attributes;
+        const QList< std::shared_ptr<const Association> >& associations;
 #if !defined(SWIG)
         const std::array<RulesByTagValueCollection, MapStyleRulesetTypesCount>& rulesets;
 #endif // !defined(SWIG)

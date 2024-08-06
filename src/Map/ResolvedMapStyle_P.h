@@ -33,6 +33,7 @@ namespace OsmAnd
         typedef ResolvedMapStyle::Rule Rule;
         typedef ResolvedMapStyle::Attribute Attribute;
         typedef ResolvedMapStyle::Parameter Parameter;
+        typedef ResolvedMapStyle::Association Association;
         typedef ResolvedMapStyle::ParameterValueDefinition ParameterValueDefinition;
         
     private:
@@ -69,6 +70,7 @@ namespace OsmAnd
             const std::shared_ptr<const UnresolvedMapStyle::RuleNode>& unresolvedRuleNode);
         bool mergeAndResolveParameters();
         bool mergeAndResolveAttributes();
+        bool mergeAndResolveAssociations();
         bool mergeAndResolveRulesets();
     protected:
         ResolvedMapStyle_P(ResolvedMapStyle* const owner);
@@ -78,6 +80,7 @@ namespace OsmAnd
         QHash<QString, QString> _constants;
         QHash<StringId, std::shared_ptr<const IMapStyle::IParameter> > _parameters;
         QHash<StringId, std::shared_ptr<const IMapStyle::IAttribute> > _attributes;
+        QHash<StringId, std::shared_ptr<const IMapStyle::IAssociation> > _associations;
         std::array< QHash<TagValueId, std::shared_ptr<const IMapStyle::IRule> >, MapStyleRulesetTypesCount> _rulesets;
     public:
         virtual ~ResolvedMapStyle_P();
@@ -103,6 +106,8 @@ namespace OsmAnd
         QList< std::shared_ptr<const IMapStyle::IParameter> > getParameters() const;
         std::shared_ptr<const IMapStyle::IAttribute> getAttribute(const QString& name) const;
         QList< std::shared_ptr<const IMapStyle::IAttribute> > getAttributes() const;
+        std::shared_ptr<const IMapStyle::IAssociation> getAssociation(const QString& name) const;
+        QList< std::shared_ptr<const IMapStyle::IAssociation> > getAssociations() const;
         QHash< TagValueId, std::shared_ptr<const IMapStyle::IRule> > getRuleset(
             const MapStyleRulesetType rulesetType) const;
 

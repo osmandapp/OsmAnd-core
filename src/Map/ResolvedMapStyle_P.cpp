@@ -113,11 +113,11 @@ bool OsmAnd::ResolvedMapStyle_P::resolveValue(
 {
     if (input.startsWith(QLatin1Char('$')))
     {
-        const auto constantOrAttributeName = input.mid(1);
+        const auto constantOrAttributeOrAssociationName = input.mid(1);
 
         // Try to resolve as constant
         QString constantValue;
-        if (resolveConstant(constantOrAttributeName, constantValue))
+        if (resolveConstant(constantOrAttributeOrAssociationName, constantValue))
         {
             if (parseConstantValue(constantValue, dataType, isComplex, outValue.asConstantValue))
                 return true;
@@ -125,7 +125,7 @@ bool OsmAnd::ResolvedMapStyle_P::resolveValue(
 
         // Try as attribute
         StringId attributeNameId = 0u;
-        if (resolveStringIdInLUT(constantOrAttributeName, attributeNameId))
+        if (resolveStringIdInLUT(constantOrAttributeOrAssociationName, attributeNameId))
         {
             const auto citAttribute = _attributes.constFind(attributeNameId);
             if (citAttribute != _attributes.cend())
@@ -137,9 +137,23 @@ bool OsmAnd::ResolvedMapStyle_P::resolveValue(
             }
         }
 
+        // Try as association
+        StringId associationNameId = 0u;
+        if (resolveStringIdInLUT(constantOrAttributeOrAssociationName, associationNameId))
+        {
+            const auto citAssociation = _associations.constFind(associationNameId);
+            if (citAssociation != _associations.cend())
+            {
+                outValue.isDynamic = true;
+                outValue.asDynamicValue.association = *citAssociation;
+
+                return true;
+            }
+        }
+
         LogPrintf(LogSeverityLevel::Error,
-            "'%s' was not defined nor as constant nor as attribute",
-            qPrintable(constantOrAttributeName));
+            "'%s' was not defined nor as constant nor as attribute nor as class",
+            qPrintable(constantOrAttributeOrAssociationName));
         return false;
     }
 
@@ -340,6 +354,32 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveAttributes()
     return true;
 }
 
+bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveAssociations()
+{
+    // Process styles chain in direct order to ensure "overridden" <case> elements are processed first
+    auto citUnresolvedMapStyle = iteratorOf(owner->unresolvedMapStylesChain);
+    while (citUnresolvedMapStyle.hasNext())
+    {
+        const auto& unresolvedMapStyle = citUnresolvedMapStyle.next();
+        
+        for (const auto& unresolvedAssociation : constOf(unresolvedMapStyle->associations))
+        {
+            const auto nameId = resolveStringIdInLUT(unresolvedAssociation->name);
+            auto& resolvedAssociation_ = _associations[nameId];
+            
+            // Create resolved class if needed
+            if (!resolvedAssociation_)
+                resolvedAssociation_.reset(new Association(nameId));
+            
+            auto resolvedAssociation = std::dynamic_pointer_cast<const Association>(resolvedAssociation_);
+            
+            const auto resolvedRuleNode = resolveRuleNode(unresolvedAssociation->rootNode);
+            resolvedAssociation->rootNode->oneOfConditionalSubnodes.append(resolvedRuleNode->oneOfConditionalSubnodes);
+        }
+    }
+    return true;
+}
+
 bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveRulesets()
 {
     const auto builtinValueDefs = MapStyleBuiltinValueDefinitions::get();
@@ -421,6 +461,9 @@ bool OsmAnd::ResolvedMapStyle_P::resolve()
         return false;
 
     if (!mergeAndResolveAttributes())
+        return false;
+
+    if (!mergeAndResolveAssociations())
         return false;
 
     if (!mergeAndResolveRulesets())
@@ -505,6 +548,20 @@ std::shared_ptr<const OsmAnd::IMapStyle::IAttribute> OsmAnd::ResolvedMapStyle_P:
 QList< std::shared_ptr<const OsmAnd::IMapStyle::IAttribute> > OsmAnd::ResolvedMapStyle_P::getAttributes() const
 {
     return _attributes.values();
+}
+
+std::shared_ptr<const OsmAnd::IMapStyle::IAssociation> OsmAnd::ResolvedMapStyle_P::getAssociation(const QString& name) const
+{
+    StringId nameId;
+    if (!resolveStringIdInLUT(name, nameId))
+        return nullptr;
+
+    return _associations[nameId];
+}
+
+QList< std::shared_ptr<const OsmAnd::IMapStyle::IAssociation> > OsmAnd::ResolvedMapStyle_P::getAssociations() const
+{
+    return _associations.values();
 }
 
 QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::IMapStyle::IRule> > OsmAnd::ResolvedMapStyle_P::getRuleset(

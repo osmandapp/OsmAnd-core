@@ -35,6 +35,15 @@ OsmAnd::IMapStyle::Value OsmAnd::IMapStyle::Value::fromAttribute(
     return value;
 }
 
+OsmAnd::IMapStyle::Value OsmAnd::IMapStyle::Value::fromAssociation(
+    const std::shared_ptr<const IAssociation>& association)
+{
+    Value value;
+    value.isDynamic = true;
+    value.asDynamicValue.association = association;
+    return value;
+}
+
 OsmAnd::IMapStyle::IRuleNode::IRuleNode()
 {
 }
@@ -51,10 +60,6 @@ OsmAnd::IMapStyle::IRule::~IRule()
 {
 }
 
-OsmAnd::IMapStyle::IAttribute::IAttribute()
-{
-}
-
 OsmAnd::IMapStyle::IParameter::IParameter()
 {
 }
@@ -63,6 +68,18 @@ OsmAnd::IMapStyle::IParameter::~IParameter()
 {
 }
 
+OsmAnd::IMapStyle::IAttribute::IAttribute()
+{
+}
+
 OsmAnd::IMapStyle::IAttribute::~IAttribute()
+{
+}
+
+OsmAnd::IMapStyle::IAssociation::IAssociation()
+{
+}
+
+OsmAnd::IMapStyle::IAssociation::~IAssociation()
 {
 }

@@ -56,6 +56,7 @@ namespace OsmAnd
             const MapStyleValueDataType dataType,
             const IMapStyle::Value& resolvedValue,
             const std::shared_ptr<const InputValues>& inputValues,
+            IntermediateEvaluationResult* const outResultStorage,
             OnDemand<IntermediateEvaluationResult>& intermediateEvaluationResult) const;
 
         bool evaluate(
@@ -82,7 +83,7 @@ namespace OsmAnd
         void postprocessEvaluationResult(
             const MapObject* const mapObject,
             const std::shared_ptr<const InputValues>& inputValues,
-            const IntermediateEvaluationResult& intermediateResult,
+            IntermediateEvaluationResult& intermediateResult,
             MapStyleEvaluationResult& outResultStorage,
             OnDemand<IntermediateEvaluationResult>& constantEvaluationResult) const;
     protected:
