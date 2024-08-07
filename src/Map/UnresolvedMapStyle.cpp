@@ -17,6 +17,7 @@ OsmAnd::UnresolvedMapStyle::UnresolvedMapStyle(const std::shared_ptr<QIODevice>&
     , constants(_p->_constants)
     , parameters(_p->_parameters)
     , attributes(_p->_attributes)
+    , associations(_p->_associations)
     , rulesets(_p->_rulesets)
 {
 }
@@ -119,5 +120,15 @@ OsmAnd::UnresolvedMapStyle::Parameter::Parameter(
 }
 
 OsmAnd::UnresolvedMapStyle::Parameter::~Parameter()
+{
+}
+
+OsmAnd::UnresolvedMapStyle::Association::Association(const QString& name_)
+    : BaseRule(new RuleNode(false))
+    , name(name_)
+{
+}
+
+OsmAnd::UnresolvedMapStyle::Association::~Association()
 {
 }

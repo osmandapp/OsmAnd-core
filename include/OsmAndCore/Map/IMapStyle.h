@@ -31,6 +31,7 @@ namespace OsmAnd
         typedef int ValueDefinitionId;
 
         class IAttribute;
+        class IAssociation;
         struct OSMAND_CORE_API Value Q_DECL_FINAL
         {
             Value();
@@ -41,10 +42,12 @@ namespace OsmAnd
             MapStyleConstantValue asConstantValue;
             struct {
                 std::shared_ptr<const IAttribute> attribute;
+                std::shared_ptr<const IAssociation> association;
             } asDynamicValue;
 
             static Value fromConstantValue(const MapStyleConstantValue& input);
             static Value fromAttribute(const std::shared_ptr<const IAttribute>& attribute);
+            static Value fromAssociation(const std::shared_ptr<const IAssociation>& association);
         };
 
         class OSMAND_CORE_API IRuleNode
@@ -122,6 +125,23 @@ namespace OsmAnd
             virtual SWIG_CLARIFY(IMapStyle, StringId) getNameId() const = 0;
         };
 
+        class OSMAND_CORE_API IAssociation
+        {
+            Q_DISABLE_COPY_AND_MOVE(IAssociation);
+
+        private:
+        protected:
+            IAssociation();
+        public:
+            virtual ~IAssociation();
+
+            virtual std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() = 0;
+            virtual const std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)>& getRootNodeRef() = 0;
+            virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() const = 0;
+            virtual const std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)>& getRootNodeRef() const = 0;
+            virtual SWIG_CLARIFY(IMapStyle, StringId) getNameId() const = 0;
+        };
+
     private:
     protected:
         IMapStyle();
@@ -149,6 +169,8 @@ namespace OsmAnd
         virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IParameter)> > getParameters() const = 0;
         virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IAttribute)> getAttribute(const QString& name) const = 0;
         virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IAttribute)> > getAttributes() const = 0;
+        virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IAssociation)> getAssociation(const QString& name) const = 0;
+        virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IAssociation)> > getAssociations() const = 0;
         virtual QHash< TagValueId, std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRule)> > getRuleset(
             const MapStyleRulesetType rulesetType) const = 0;
 

@@ -46,6 +46,7 @@ OsmAnd::MapStyleConstantValue OsmAnd::MapStyleEvaluator_P::evaluateConstantValue
     const MapStyleValueDataType dataType,
     const IMapStyle::Value& resolvedValue,
     const std::shared_ptr<const InputValues>& inputValues,
+    IntermediateEvaluationResult* outResultStorage,
     OnDemand<IntermediateEvaluationResult>& intermediateEvaluationResult) const
 {
     if (!resolvedValue.isDynamic)
@@ -56,11 +57,17 @@ OsmAnd::MapStyleConstantValue OsmAnd::MapStyleEvaluator_P::evaluateConstantValue
     OnDemand<IntermediateEvaluationResult> innerConstantEvaluationResult(intermediateEvaluationResultAllocator);
     evaluate(
         mapObject,
-        resolvedValue.asDynamicValue.attribute->getRootNodeRef(),
+        resolvedValue.asDynamicValue.association
+            ? resolvedValue.asDynamicValue.association->getRootNodeRef()
+            : resolvedValue.asDynamicValue.attribute->getRootNodeRef(),
         inputValues,
         wasDisabled,
-        intermediateEvaluationResult.get(),
+        resolvedValue.asDynamicValue.association ? outResultStorage : intermediateEvaluationResult.get(),
         innerConstantEvaluationResult);
+
+    // Return default integer value (zero) for association
+    if (resolvedValue.asDynamicValue.association)
+        return resolvedValue.asConstantValue;
 
     IMapStyle::Value evaluatedValue;
     switch (dataType)
@@ -90,6 +97,7 @@ OsmAnd::MapStyleConstantValue OsmAnd::MapStyleEvaluator_P::evaluateConstantValue
         dataType,
         evaluatedValue,
         inputValues,
+        outResultStorage,
         intermediateEvaluationResult);
 }
 
@@ -166,6 +174,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
             valueDef->dataType,
             ruleValueEntry.value(),
             inputValues,
+            outResultStorage,
             constantEvaluationResult);
 
         InputValue inputValue;
@@ -236,6 +245,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
             _builtinValueDefs->OUTPUT_DISABLE->dataType,
             *citDisabledValue,
             inputValues,
+            outResultStorage,
             constantEvaluationResult);
 
         assert(!disableValue.isComplex);
@@ -321,7 +331,7 @@ void OsmAnd::MapStyleEvaluator_P::fillResultFromRuleNode(
 void OsmAnd::MapStyleEvaluator_P::postprocessEvaluationResult(
     const MapObject* const mapObject,
     const std::shared_ptr<const InputValues>& inputValues,
-    const IntermediateEvaluationResult& intermediateResult,
+    IntermediateEvaluationResult& intermediateResult,
     MapStyleEvaluationResult& outResultStorage,
     OnDemand<IntermediateEvaluationResult>& constantEvaluationResult) const
 {
@@ -339,6 +349,7 @@ void OsmAnd::MapStyleEvaluator_P::postprocessEvaluationResult(
             valueDef->dataType,
             value,
             inputValues,
+            &intermediateResult,
             constantEvaluationResult);
 
         QVariant postprocessedValue;
