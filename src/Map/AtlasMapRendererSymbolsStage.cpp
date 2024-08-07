@@ -2616,7 +2616,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(
     PointF sourcePoint;
     unsigned int prevIdx;
     bool visible = true;
-    bool prevVisible;
+    bool prevVisible = true;
     const auto r = getRenderer();
     for (auto idx = 0u; idx < pointsCount; idx++)
     {
@@ -2651,6 +2651,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(
                 }
                 origPointInWorld = pointInWorld;
                 prevPointInWorld = origPointInWorld;
+                prevVisible = false;
                 continue;
             }
             if (idx > 0)
@@ -2896,22 +2897,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::pathRenderableAs2D(
     {
         const auto segmentsCount = endPathPointIndex - startPathPointIndex;
 
-        // First check segment between exact start point (which is after startPathPointIndex)
-        // and next point (startPathPointIndex + 1)
-        if (!segmentValidFor2D(
-            pathOnScreen[startPathPointIndex] + vectorsOnScreen[startPathPointIndex] - exactStartPointOnScreen))
-            return false;
-
-        auto pVector = pathOnScreen.constData() + startPathPointIndex + 1;
-        for (auto segmentIdx = 1; segmentIdx < segmentsCount; segmentIdx++)
+        auto pVector = vectorsOnScreen.constData() + startPathPointIndex;
+        for (auto segmentIdx = 0; segmentIdx <= segmentsCount; segmentIdx++)
         {
             if (!segmentValidFor2D(*(pVector++)))
                 return false;
         }
 
-        // Last check is between pathOnScreen[endPathPointIndex] and exact end point,
-        // which is always after endPathPointIndex
-        return segmentValidFor2D(exactEndPointOnScreen - pathOnScreen[endPathPointIndex]);
+        return true;
     }
     else
     {

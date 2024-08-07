@@ -49,8 +49,8 @@ namespace OsmAnd
             {
             }
 
-            const ObfMapSectionReader::DataBlockId blockId;
-            const ObfObjectId objectId;
+            ObfMapSectionReader::DataBlockId blockId;
+            ObfObjectId objectId;
             
             inline operator uint64_t() const
             {
@@ -61,6 +61,13 @@ namespace OsmAnd
                 return result;
             }
     
+            inline UniqueBinaryMapObjectId& operator=(const UniqueBinaryMapObjectId& that)
+            {
+                blockId.id = that.blockId.id;
+                objectId.id = that.objectId.id;
+                return *this;
+            }
+
             inline bool operator==(const UniqueBinaryMapObjectId& that) const
             {
                 return blockId == that.blockId && objectId == that.objectId;
@@ -87,8 +94,8 @@ namespace OsmAnd
             {
             }
 
-            const ObfRoutingSectionReader::DataBlockId blockId;
-            const ObfObjectId objectId;
+            ObfRoutingSectionReader::DataBlockId blockId;
+            ObfObjectId objectId;
             
             inline operator uint64_t() const
             {
@@ -99,6 +106,13 @@ namespace OsmAnd
                 return result;
             }
     
+            inline UniqueRoadId& operator=(const UniqueRoadId& that)
+            {
+                blockId.id = that.blockId.id;
+                objectId.id = that.objectId.id;
+                return *this;
+            }
+
             inline bool operator==(const UniqueRoadId& that) const
             {
                 return blockId == that.blockId && objectId == that.objectId;

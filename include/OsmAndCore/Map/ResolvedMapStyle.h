@@ -159,6 +159,29 @@ namespace OsmAnd
             virtual QString getDefaultValueDescription() const Q_DECL_OVERRIDE;
         };
 
+        class OSMAND_CORE_API Association Q_DECL_FINAL
+            : public BaseRule
+            , public IMapStyle::IAssociation
+        {
+            Q_DISABLE_COPY_AND_MOVE(Association);
+
+        private:
+        protected:
+        public:
+            Association(const SWIG_CLARIFY(IMapStyle, StringId) nameId);
+            virtual ~Association();
+
+            virtual std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() Q_DECL_OVERRIDE;
+            virtual const std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)>& getRootNodeRef() Q_DECL_OVERRIDE;
+            virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() const Q_DECL_OVERRIDE;
+            virtual const std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)>& getRootNodeRef() const Q_DECL_OVERRIDE;
+
+#if !defined(SWIG)
+            const StringId nameId;
+#endif // !defined(SWIG)
+            virtual SWIG_CLARIFY(IMapStyle, StringId) getNameId() const Q_DECL_OVERRIDE;
+        };
+
         class OSMAND_CORE_API ParameterValueDefinition : public MapStyleValueDefinition
         {
             Q_DISABLE_COPY_AND_MOVE(ParameterValueDefinition);
@@ -209,6 +232,9 @@ namespace OsmAnd
         virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IAttribute)> getAttribute(
             const QString& name) const Q_DECL_OVERRIDE;
         virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IAttribute)> > getAttributes() const Q_DECL_OVERRIDE;
+        virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IAssociation)> getAssociation(
+            const QString& name) const Q_DECL_OVERRIDE;
+        virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IAssociation)> > getAssociations() const Q_DECL_OVERRIDE;
         virtual QHash< TagValueId, std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRule)> > getRuleset(
             const MapStyleRulesetType rulesetType) const Q_DECL_OVERRIDE;
 

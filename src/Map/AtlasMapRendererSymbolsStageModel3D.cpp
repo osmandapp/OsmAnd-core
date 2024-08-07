@@ -164,10 +164,7 @@ void OsmAnd::AtlasMapRendererSymbolsStageModel3D::obtainRenderables(
         scale = 1 / currentState.visualZoom;
     else
     {
-        const auto maxSizeInWorld = model3DMapSymbol->maxSizeInPixels * internalState.pixelInWorldProjectionScale;
-        const auto maxBBoxSize = qMax(qMax(originalBBox.lengthX(), originalBBox.lengthY()), originalBBox.lengthZ());
-        scale = maxSizeInWorld / maxBBoxSize;
-
+        scale = model3DMapSymbol->maxSizeInPixels * internalState.pixelInWorldProjectionScale;
         const float preHeight = getRenderer()->getHeightOfLocation(currentState, position31);
         const float cameraHeight = internalState.distanceFromCameraToGround;
         if (cameraHeight > preHeight && !qFuzzyIsNull(cameraHeight))

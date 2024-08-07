@@ -204,6 +204,9 @@ namespace OsmAnd
         inline bool findMaxKey(KeyType& outKey) const
         {
             const auto size = _storage.size();
+            if (size == 0)
+                return false;
+
             auto pEntry = _storage.data() + (size - 1);
             for (SizeType index = 0; index < size; index++)
             {
