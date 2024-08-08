@@ -3226,7 +3226,10 @@ void OsmAnd::MapRenderer::dumpResourcesInfo() const
 
 float OsmAnd::MapRenderer::getBasicThreadsCPULoad()
 {
-    return  getResources().getBasicThreadsCPULoad();
+    const auto resources = _resources;
+    if (resources)
+        return  resources->getBasicThreadsCPULoad();
+    return NAN;
 }
 
 int OsmAnd::MapRenderer::getWaitTime() const

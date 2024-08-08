@@ -53,6 +53,10 @@ namespace OsmAnd
         QList< Ref<GpxExtension> > extensions;
 
         QHash<QString, QVariant> getValues(const bool recursive = true) const;
+        
+        void addExtension(const Ref<GpxExtension> &extension);
+        void removeExtension(const QString &name);
+        void removeExtension(const QString &name, const QString &value);
     };
 
     class OSMAND_CORE_API GpxDocument : public GpxExtensions

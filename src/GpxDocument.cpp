@@ -72,6 +72,36 @@ QHash<QString, QVariant> OsmAnd::GpxExtensions::getValues(const bool recursive /
     return values;
 }
 
+void OsmAnd::GpxExtensions::addExtension(const Ref<GpxExtension> &extension)
+{
+    removeExtension(extension->name);
+    extensions.append(extension);
+}
+
+void OsmAnd::GpxExtensions::removeExtension(const QString &name)
+{
+    for (auto it = extensions.begin(); it != extensions.end();)
+    {
+        if ((*it)->name == name) {
+            it = extensions.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
+void OsmAnd::GpxExtensions::removeExtension(const QString &name, const QString &value)
+{
+    for (auto it = extensions.begin(); it != extensions.end();)
+    {
+        if ((*it)->name == name && (*it)->value == value) {
+            it = extensions.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
 OsmAnd::GpxDocument::GpxDocument()
 {
 }
@@ -304,43 +334,40 @@ void OsmAnd::GpxDocument::writeWpt(const Ref<WptPt> &p, const QString &elementNa
         if (!qIsNaN(wpt->verticalDilutionOfPrecision))
             writeNotNullText(xmlWriter, QStringLiteral("vdop"), QString::number(wpt->verticalDilutionOfPrecision, 'f', 12));
     }
+    
+    auto wpt_ = std::dynamic_pointer_cast<const WptPt>(p.shared_ptr());
+    auto wpt = std::const_pointer_cast<WptPt>(wpt_);
 
-    auto exts = QList(p->extensions);
     if (p->speed > 0)
     {
-        const auto extension = std::make_shared<GpxExtensions::GpxExtension>();
+        auto extension = std::make_shared<GpxExtensions::GpxExtension>();
         extension->name = QStringLiteral("speed");
         extension->value = QString::number(p->speed, 'f', 1);
-        exts.append(extension);
+    
+        wpt->addExtension(extension);
     }
+    
     if (!isnan(p->heading))
     {
-        const auto extension = std::make_shared<GpxExtensions::GpxExtension>();
-        extension->name = QStringLiteral("heading");
+        auto extension = std::make_shared<GpxExtensions::GpxExtension>();
+        extension->name = QStringLiteral("heading");;
         extension->value = QString::number(round(p->heading), 'f', 0);
-        exts.append(extension);
+        wpt->addExtension(extension);
     }
-    for (const auto& ext : exts)
-    {
-        if (elementName != QStringLiteral("rtept"))
-        {
-            if (ext->name == QStringLiteral("profile") || ext->name == QStringLiteral("trkpt_idx"))
-            {
-                exts.removeAll(ext);
-            }
-        }
-        else
-        {
-            if (ext->name == QStringLiteral("profile") && ext->value == QStringLiteral("gap"))
-            {
-                exts.removeAll(ext);
-                break;
-            }
-        }
-    }
-    writeExtensions(exts, p->attributes, xmlWriter);
-}
 
+    if (elementName != QStringLiteral("rtept"))
+    {
+        wpt->removeExtension(QStringLiteral("profile"));
+        wpt->removeExtension(QStringLiteral("trkpt_idx"));
+    }
+    else
+    {
+        wpt->removeExtension(QStringLiteral("profile"), QStringLiteral("gap"));
+    }
+
+    writeExtensions(wpt->extensions, p->attributes, xmlWriter);
+}
+    
 QString OsmAnd::GpxDocument::getFilename(const QString& path)
 {
     QString res;
@@ -429,7 +456,7 @@ void OsmAnd::GpxDocument::writeBounds(QXmlStreamWriter& xmlWriter, const Ref<Bou
     xmlWriter.writeEndElement();
 }
 
-void OsmAnd::GpxDocument::writeExtensions(const QList< Ref<GpxExtension> > &extensions, const QHash<QString, QString> &attributes, QXmlStreamWriter& xmlWriter)
+void OsmAnd::GpxDocument::writeExtensions(const QList<Ref<GpxExtension>> &extensions, const QHash<QString, QString> &attributes, QXmlStreamWriter& xmlWriter)
 {
     if (extensions.count() == 0)
         return;
