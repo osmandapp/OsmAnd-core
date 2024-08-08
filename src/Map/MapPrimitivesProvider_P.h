@@ -31,6 +31,7 @@ namespace OsmAnd
     class MapPrimitivesProvider_P Q_DECL_FINAL
     {
     private:
+        std::shared_ptr<OsmAnd::MapObject> deepCopy(std::shared_ptr<const OsmAnd::MapObject> obj);
     protected:
         MapPrimitivesProvider_P(MapPrimitivesProvider* owner);
 
@@ -87,7 +88,7 @@ namespace OsmAnd
             const MapPrimitivesProvider::Request& request,
             std::shared_ptr<MapPrimitivesProvider::Data>& outTiledPrimitives,
             MapPrimitivesProvider_Metrics::Metric_obtainData* const metric_);
-        void retreivePolygons(PointI point, ZoomLevel zoom);
+        QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmAnd::MapObject>>> retreivePolygons(PointI point, ZoomLevel zoom);
 
     friend class OsmAnd::MapPrimitivesProvider;
     };

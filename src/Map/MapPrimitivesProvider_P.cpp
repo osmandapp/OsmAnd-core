@@ -43,11 +43,12 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
     return result;
 }
 
-void OsmAnd::MapPrimitivesProvider_P::retreivePolygons(PointI point, ZoomLevel zoom)
+QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmAnd::MapObject>>> OsmAnd::MapPrimitivesProvider_P::retreivePolygons(PointI point, ZoomLevel zoom)
 {
     std::shared_ptr<TileEntry> tileEntry;
     TileId tile = OsmAnd::Utilities::getTileId(point, zoom);
     std::shared_ptr<MapPrimitivesProvider::Data> outTiledPrimitives = nullptr;
+    QHash<std::shared_ptr<const MapObject>, QList<std::shared_ptr<const MapObject>>> result;
     _tileReferences.obtainOrAllocateEntry(tileEntry, tile, zoom,
         []
         (const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
@@ -56,7 +57,7 @@ void OsmAnd::MapPrimitivesProvider_P::retreivePolygons(PointI point, ZoomLevel z
         });
     // If state is "Undefined", change it to "Loading" and proceed with loading
     if (tileEntry->setStateIf(TileState::Undefined, TileState::Loading))
-        return;
+        return result;
 
     // In case tile entry is being loaded, wait until it will finish loading
     if (tileEntry->getState() == TileState::Loading)
@@ -67,6 +68,7 @@ void OsmAnd::MapPrimitivesProvider_P::retreivePolygons(PointI point, ZoomLevel z
             REPEAT_UNTIL(tileEntry->loadedCondition.wait(&tileEntry->loadedConditionLock));
     }
 
+    QSet<std::shared_ptr<const MapObject>> polygons;
     if (tileEntry->dataIsPresent)
     {
         // Otherwise, try to lock tile reference
@@ -75,19 +77,86 @@ void OsmAnd::MapPrimitivesProvider_P::retreivePolygons(PointI point, ZoomLevel z
         {
             for (const auto & p : outTiledPrimitives->primitivisedObjects->polygons)
             {
-                const auto & mapObj = p->sourceObject;
-                const auto& decRules = mapObj->attributeMapping->decodeMap;
-                auto pAttributeId = mapObj->attributeIds.constData();
-                const auto attributeIdsCount = mapObj->attributeIds.size();
-                for (auto attributeIdIndex = 0; attributeIdIndex < attributeIdsCount; attributeIdIndex++, pAttributeId++)
+                const auto mapObj = p->sourceObject;
+                if (OsmAnd::Utilities::contains(mapObj->points31, point))
                 {
-                    const auto& decodedAttribute = decRules[*pAttributeId];
-                    LogPrintf(LogSeverityLevel::Info, "%s %s", qPrintable(decodedAttribute.tag), qPrintable(decodedAttribute.value));
+                    polygons.insert(mapObj);
                 }
+            }
+            for (const std::shared_ptr<const MapObject> & polygon : polygons)
+            {
+                QList<std::shared_ptr<const MapObject>> points;
+                for (const auto & point : outTiledPrimitives->primitivisedObjects->points)
+                {
+                    const auto & mapObj = point->sourceObject;
+                    if (OsmAnd::Utilities::contains(polygon->points31, mapObj->bbox31.topLeft) || OsmAnd::Utilities::contains(polygon->points31, mapObj->bbox31.bottomRight))
+                    {
+                        points.push_back(mapObj);
+                    }
+                }
+                result.insert(polygon, points);
             }
         }
     }
-    return;
+
+    /*test only*/
+    /*for (const auto & mapObj : polygons)
+    {
+        const auto& decRules = mapObj->attributeMapping->decodeMap;
+        auto pAttributeId = mapObj->attributeIds.constData();
+        const auto attributeIdsCount = mapObj->attributeIds.size();
+        QString s = "";
+        for (auto i = mapObj->captions.begin(); i != mapObj->captions.end(); ++i)
+        {
+            QString c = i.value();
+            if (!c.isEmpty()) {
+                s.append(c + " ");
+            }
+        }
+        for (auto attributeIdIndex = 0; attributeIdIndex < attributeIdsCount; attributeIdIndex++, pAttributeId++)
+        {
+            const auto& decodedAttribute = decRules[*pAttributeId];
+            s.append(decodedAttribute.tag + ":" + decodedAttribute.value + " ");
+        }
+//        const std::shared_ptr<const ObfMapObject> obfMapObject = std::dynamic_pointer_cast<const ObfMapObject>(mapObj);
+//        if (obfMapObject)
+//        {
+//            s.append(" ID:" + QVariant(obfMapObject->id).toString());
+//        }
+        LogPrintf(LogSeverityLevel::Info, "POLYGON: %s", qPrintable(s));
+        const QList<std::shared_ptr<const MapObject>> & points = result.value(mapObj);
+        for (const auto & point : points)
+        {
+            s = "";
+            const auto& decRules = point->attributeMapping->decodeMap;
+            auto pAttributeId = point->attributeIds.constData();
+            const auto attributeIdsCount = point->attributeIds.size();
+            QString s = "";
+            for (auto i = point->captions.begin(); i != point->captions.end(); ++i)
+            {
+                QString c = i.value();
+                if (!c.isEmpty()) {
+                    s.append(c + " ");
+                }
+            }
+            for (auto attributeIdIndex = 0; attributeIdIndex < attributeIdsCount; attributeIdIndex++, pAttributeId++)
+            {
+                const auto& decodedAttribute = decRules[*pAttributeId];
+                s.append(decodedAttribute.tag + ":" + decodedAttribute.value + " ");
+            }
+            LogPrintf(LogSeverityLevel::Info, "POINT: %s", qPrintable(s));
+        }
+        LogPrintf(LogSeverityLevel::Info, "----------------------");
+    }*/
+    /*test only*/
+    return result;
+}
+
+std::shared_ptr<OsmAnd::MapObject> OsmAnd::MapPrimitivesProvider_P::deepCopy(std::shared_ptr<const OsmAnd::MapObject> obj)
+{
+    std::shared_ptr<MapObject> res = std::make_shared<MapObject>();
+    res->points31 = obj->points31;
+    
 }
 
 bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
