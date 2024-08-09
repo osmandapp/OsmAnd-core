@@ -77,7 +77,7 @@ QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmA
         {
             for (const auto & p : outTiledPrimitives->primitivisedObjects->polygons)
             {
-                const auto mapObj = p->sourceObject;
+                const auto & mapObj = p->sourceObject;
                 if (OsmAnd::Utilities::contains(mapObj->points31, point))
                 {
                     polygons.insert(mapObj);
@@ -94,6 +94,13 @@ QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmA
                         points.push_back(mapObj);
                     }
                 }
+                std::sort(points.begin(), points.end(), [point](const std::shared_ptr<const MapObject> &a, const std::shared_ptr<const MapObject> &b) {
+                    int outSegInd0;
+                    int outSegInd1;
+                    double da = OsmAnd::Utilities::minimalSquaredDistanceToLineSegmentFromPoint(a->points31, point, &outSegInd0, &outSegInd1);
+                    double db = OsmAnd::Utilities::minimalSquaredDistanceToLineSegmentFromPoint(b->points31, point, &outSegInd0, &outSegInd1);
+                    return da < db;
+                });
                 result.insert(polygon, points);
             }
         }
@@ -102,9 +109,6 @@ QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmA
     /*test only*/
     /*for (const auto & mapObj : polygons)
     {
-        const auto& decRules = mapObj->attributeMapping->decodeMap;
-        auto pAttributeId = mapObj->attributeIds.constData();
-        const auto attributeIdsCount = mapObj->attributeIds.size();
         QString s = "";
         for (auto i = mapObj->captions.begin(); i != mapObj->captions.end(); ++i)
         {
@@ -113,25 +117,17 @@ QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmA
                 s.append(c + " ");
             }
         }
-        for (auto attributeIdIndex = 0; attributeIdIndex < attributeIdsCount; attributeIdIndex++, pAttributeId++)
+        QHash<QString, QString> tags = mapObj->getResolvedAttributes();
+        for (auto i = tags.begin(); i != tags.end(); ++i)
         {
-            const auto& decodedAttribute = decRules[*pAttributeId];
-            s.append(decodedAttribute.tag + ":" + decodedAttribute.value + " ");
+            s.append(i.key() + ":" + i.value() + " ");
         }
-//        const std::shared_ptr<const ObfMapObject> obfMapObject = std::dynamic_pointer_cast<const ObfMapObject>(mapObj);
-//        if (obfMapObject)
-//        {
-//            s.append(" ID:" + QVariant(obfMapObject->id).toString());
-//        }
         LogPrintf(LogSeverityLevel::Info, "POLYGON: %s", qPrintable(s));
+        
         const QList<std::shared_ptr<const MapObject>> & points = result.value(mapObj);
         for (const auto & point : points)
         {
             s = "";
-            const auto& decRules = point->attributeMapping->decodeMap;
-            auto pAttributeId = point->attributeIds.constData();
-            const auto attributeIdsCount = point->attributeIds.size();
-            QString s = "";
             for (auto i = point->captions.begin(); i != point->captions.end(); ++i)
             {
                 QString c = i.value();
@@ -139,10 +135,10 @@ QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmA
                     s.append(c + " ");
                 }
             }
-            for (auto attributeIdIndex = 0; attributeIdIndex < attributeIdsCount; attributeIdIndex++, pAttributeId++)
+            QHash<QString, QString> tags = point->getResolvedAttributes();
+            for (auto i = tags.begin(); i != tags.end(); ++i)
             {
-                const auto& decodedAttribute = decRules[*pAttributeId];
-                s.append(decodedAttribute.tag + ":" + decodedAttribute.value + " ");
+                s.append(i.key() + ":" + i.value() + " ");
             }
             LogPrintf(LogSeverityLevel::Info, "POINT: %s", qPrintable(s));
         }
