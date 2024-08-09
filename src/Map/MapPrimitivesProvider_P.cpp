@@ -10,6 +10,7 @@
 #include "Stopwatch.h"
 #include "Utilities.h"
 #include "Logging.h"
+#include "ObfMapObject.h"
 
 OsmAnd::MapPrimitivesProvider_P::MapPrimitivesProvider_P(MapPrimitivesProvider* owner_)
     : _primitiviserCache(new MapPrimitiviser::Cache())
@@ -80,7 +81,10 @@ QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmA
                 const auto & mapObj = p->sourceObject;
                 if (OsmAnd::Utilities::contains(mapObj->points31, point))
                 {
-                    polygons.insert(mapObj);
+                    std::shared_ptr<const ObfMapObject> obfMapObject = std::dynamic_pointer_cast<const ObfMapObject>(mapObj);
+                    if (obfMapObject) {
+                        polygons.insert(mapObj);
+                    }
                 }
             }
             for (const std::shared_ptr<const MapObject> & polygon : polygons)
@@ -146,13 +150,6 @@ QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmA
     }*/
     /*test only*/
     return result;
-}
-
-std::shared_ptr<OsmAnd::MapObject> OsmAnd::MapPrimitivesProvider_P::deepCopy(std::shared_ptr<const OsmAnd::MapObject> obj)
-{
-    std::shared_ptr<MapObject> res = std::make_shared<MapObject>();
-    res->points31 = obj->points31;
-    
 }
 
 bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
