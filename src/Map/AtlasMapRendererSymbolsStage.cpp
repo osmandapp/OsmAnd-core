@@ -1814,11 +1814,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         offsetFromStartPathPoint2D);
     unsigned int endPathPointIndex2D = startPathPointIndex2D;
     float offsetFromEndPathPoint2D = offsetFromStartPathPoint2D;
+    const auto extraSpaceToFitStaightenedPath =
+        qMax(onPathMapSymbol->glyphsWidth.first(), onPathMapSymbol->glyphsWidth.last());
     fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
         computedPathData.pathSegmentsLengthsOnScreen,
         pinPointOnPath.basePathPointIndex,
         distanceToPinPointOnScreen,
-        halfSizeInPixels,
+        halfSizeInPixels + extraSpaceToFitStaightenedPath,
         endPathPointIndex2D,
         offsetFromEndPathPoint2D);
     if (fits)
@@ -1875,7 +1877,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
             computedPathData.pathSegmentsLengthsInWorld,
             pinPointOnPath.basePathPointIndex,
             distanceToPinPointInWorld,
-            halfSizeInWorld,
+            halfSizeInWorld + extraSpaceToFitStaightenedPath * pathPixelSizeInWorld,
             endPathPointIndex3D,
             offsetFromEndPathPoint3D);
 
@@ -3035,14 +3037,14 @@ QVector<unsigned int> OsmAnd::AtlasMapRendererSymbolsStage::computePathForGlyphs
     const auto glyphWidthIncrement = shouldInvert ? -1 : +1;
 
     // Compute start of each glyph on straight line
-    QVector<float> glyphsStartOnStraight;
+    QVector<float> glyphsEndOnStraight;
     auto glyphsTotalWidth = 0.0f;
     for (int glyphIdx = 0; glyphIdx < glyphsCount; glyphIdx++)
     {
-        glyphsStartOnStraight.push_back(glyphsTotalWidth);
         const auto glyphWidth = *(pGlyphWidth + glyphIdx * glyphWidthIncrement);
         const auto scaledGlyphWidth = glyphWidth * projectionScale;
         glyphsTotalWidth += scaledGlyphWidth;
+        glyphsEndOnStraight.push_back(glyphsTotalWidth);
     }
 
     // This will build such path, that in each triplet of glyphs 1st and 2nd glyph will
@@ -3056,11 +3058,9 @@ QVector<unsigned int> OsmAnd::AtlasMapRendererSymbolsStage::computePathForGlyphs
     for (auto i = 0; i < glyphsCount; i += 3)
     {
         // Find start of 1st and end of 2nd (or 1st, if there are no more glyphs) glyph in triplet
-        const auto start = glyphsStartOnStraight[i];
+        const auto start = i > 0 ? glyphsEndOnStraight[i - 1] : 0.0f;
         const auto endIndex = qMin(i + 1, glyphsCount - 1);
-        const auto endGlyphWidth = *(pGlyphWidth + endIndex * glyphWidthIncrement);
-        const auto endGlyphScaledWidth = endGlyphWidth * projectionScale;
-        const auto end = glyphsStartOnStraight[endIndex] + endGlyphScaledWidth;
+        const auto end = glyphsEndOnStraight[endIndex];
 
         // Find such segment on original path, so that 1st and 2nd glyphs of triplet will fit
         startPointDistance = findOffsetInSegmentForDistance(
@@ -3111,26 +3111,9 @@ QVector<unsigned int> OsmAnd::AtlasMapRendererSymbolsStage::computePathForGlyphs
     symmetricOffset = 0.0f;
 
     // Leave room for a possible last glyph
-    const auto firstWidth = *pGlyphWidth * projectionScale;
-    const auto lastWidth = qMax((glyphsTotalWidth - totalLength) * 1.1f, firstWidth * 0.1f);
+    const auto lastWidth = qMax((glyphsTotalWidth - totalLength) * 1.1f, glyphsEndOnStraight[0] * 0.1f);
     unsigned int lastIndex;
     float lastDistance;
-    if (firstWidth > lastWidth)
-    {
-        lastDistance = findOffsetInSegmentForDistance(
-            firstWidth,
-            is2D ? computedPathData.pathSegmentsLengthsOnScreen : computedPathData.pathSegmentsLengthsInWorld,
-            endPointIndex,
-            endPointDistance,
-            endPathPointIndex,
-            lastIndex);
-        if (lastDistance >= 0.0f)
-        {
-            result.push_back(lastIndex);
-            pathOffsets.push_back(lastDistance);
-            return result;
-        }
-    }
     lastDistance = findOffsetInSegmentForDistance(
         lastWidth,
         is2D ? computedPathData.pathSegmentsLengthsOnScreen : computedPathData.pathSegmentsLengthsInWorld,
