@@ -211,7 +211,7 @@ public abstract class MapRendererView extends FrameLayout {
             _densityFactor = inWindow ? getResources().getDisplayMetrics().density : 1.0f;
 
             // Set initial frame rate limit
-            setMaximumFrameRate(100); // 100 frames per second
+            setMaximumFrameRate(0); // no limit
 
             // Create instance of OsmAndCore::IMapRenderer
             if (oldView == null)
