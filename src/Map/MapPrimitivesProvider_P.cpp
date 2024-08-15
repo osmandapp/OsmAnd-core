@@ -95,26 +95,6 @@ QList<std::shared_ptr<const OsmAnd::MapObject>> OsmAnd::MapPrimitivesProvider_P:
             });
         }
     }
-
-    /*test only*/
-    for (const auto & mapObj : polygons)
-    {
-        QString s = "";
-        for (auto i = mapObj->captions.begin(); i != mapObj->captions.end(); ++i)
-        {
-            QString c = i.value();
-            if (!c.isEmpty()) {
-                s.append(c + " ");
-            }
-        }
-        QHash<QString, QString> tags = mapObj->getResolvedAttributes();
-        for (auto i = tags.begin(); i != tags.end(); ++i)
-        {
-            s.append(i.key() + ":" + i.value() + " ");
-        }
-        LogPrintf(LogSeverityLevel::Info, "POLYGON: %s", qPrintable(s));
-    }
-    /*test only*/
     return polygons;
 }
 

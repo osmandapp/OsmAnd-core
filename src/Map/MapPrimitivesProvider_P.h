@@ -30,8 +30,6 @@ namespace OsmAnd
 {
     class MapPrimitivesProvider_P Q_DECL_FINAL
     {
-    private:
-        std::shared_ptr<OsmAnd::MapObject> deepCopy(std::shared_ptr<const OsmAnd::MapObject> obj);
     protected:
         MapPrimitivesProvider_P(MapPrimitivesProvider* owner);
 
