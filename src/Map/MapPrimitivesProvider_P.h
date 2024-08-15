@@ -88,7 +88,7 @@ namespace OsmAnd
             const MapPrimitivesProvider::Request& request,
             std::shared_ptr<MapPrimitivesProvider::Data>& outTiledPrimitives,
             MapPrimitivesProvider_Metrics::Metric_obtainData* const metric_);
-        QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmAnd::MapObject>>> retreivePolygons(PointI point, ZoomLevel zoom);
+        QList<std::shared_ptr<const OsmAnd::MapObject>> retreivePolygons(PointI point, ZoomLevel zoom);
 
     friend class OsmAnd::MapPrimitivesProvider;
     };

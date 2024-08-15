@@ -426,7 +426,6 @@ using namespace OsmAnd;
 	%template(QListDouble) QList<double>;
 	%template(QListFloat) QList<float>;
 	%template(MapObjectList) QList<std::shared_ptr<const OsmAnd::MapObject>>;
-	%template(PolygonsAndPointsHash) QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmAnd::MapObject>>>;	
 #endif
 %include <OsmAndCore/LatLon.h>
 %include <OsmAndCore/Nullable.h>

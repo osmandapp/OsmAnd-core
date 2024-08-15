@@ -38,7 +38,7 @@ bool OsmAnd::MapPrimitivesProvider::obtainTiledPrimitives(
     return _p->obtainTiledPrimitives(request, outTiledPrimitives, metric);
 }
 
-QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmAnd::MapObject>>> OsmAnd::MapPrimitivesProvider::retreivePolygons(PointI point, ZoomLevel zoom)
+QList<std::shared_ptr<const OsmAnd::MapObject>> OsmAnd::MapPrimitivesProvider::retreivePolygons(PointI point, ZoomLevel zoom)
 {
     return _p->retreivePolygons(point, zoom);
 }

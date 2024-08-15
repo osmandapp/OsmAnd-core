@@ -44,12 +44,12 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
     return result;
 }
 
-QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmAnd::MapObject>>> OsmAnd::MapPrimitivesProvider_P::retreivePolygons(PointI point, ZoomLevel zoom)
+QList<std::shared_ptr<const OsmAnd::MapObject>> OsmAnd::MapPrimitivesProvider_P::retreivePolygons(PointI point, ZoomLevel zoom)
 {
     std::shared_ptr<TileEntry> tileEntry;
     TileId tile = OsmAnd::Utilities::getTileId(point, zoom);
     std::shared_ptr<MapPrimitivesProvider::Data> outTiledPrimitives = nullptr;
-    QHash<std::shared_ptr<const MapObject>, QList<std::shared_ptr<const MapObject>>> result;
+    QList<std::shared_ptr<const OsmAnd::MapObject>> polygons;
     _tileReferences.obtainOrAllocateEntry(tileEntry, tile, zoom,
         []
         (const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
@@ -58,7 +58,7 @@ QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmA
         });
     // If state is "Undefined", change it to "Loading" and proceed with loading
     if (tileEntry->setStateIf(TileState::Undefined, TileState::Loading))
-        return result;
+        return polygons;
 
     // In case tile entry is being loaded, wait until it will finish loading
     if (tileEntry->getState() == TileState::Loading)
@@ -69,7 +69,6 @@ QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmA
             REPEAT_UNTIL(tileEntry->loadedCondition.wait(&tileEntry->loadedConditionLock));
     }
 
-    QSet<std::shared_ptr<const MapObject>> polygons;
     if (tileEntry->dataIsPresent)
     {
         // Otherwise, try to lock tile reference
@@ -82,36 +81,23 @@ QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmA
                 if (OsmAnd::Utilities::contains(mapObj->points31, point))
                 {
                     std::shared_ptr<const ObfMapObject> obfMapObject = std::dynamic_pointer_cast<const ObfMapObject>(mapObj);
-                    if (obfMapObject) {
-                        polygons.insert(mapObj);
+                    if (obfMapObject && !polygons.contains(mapObj)) {
+                        polygons.push_back(mapObj);
                     }
                 }
             }
-            for (const std::shared_ptr<const MapObject> & polygon : polygons)
-            {
-                QList<std::shared_ptr<const MapObject>> points;
-                for (const auto & point : outTiledPrimitives->primitivisedObjects->points)
-                {
-                    const auto & mapObj = point->sourceObject;
-                    if (OsmAnd::Utilities::contains(polygon->points31, mapObj->bbox31.topLeft) || OsmAnd::Utilities::contains(polygon->points31, mapObj->bbox31.bottomRight))
-                    {
-                        points.push_back(mapObj);
-                    }
-                }
-                std::sort(points.begin(), points.end(), [point](const std::shared_ptr<const MapObject> &a, const std::shared_ptr<const MapObject> &b) {
-                    int outSegInd0;
-                    int outSegInd1;
-                    double da = OsmAnd::Utilities::minimalSquaredDistanceToLineSegmentFromPoint(a->points31, point, &outSegInd0, &outSegInd1);
-                    double db = OsmAnd::Utilities::minimalSquaredDistanceToLineSegmentFromPoint(b->points31, point, &outSegInd0, &outSegInd1);
-                    return da < db;
-                });
-                result.insert(polygon, points);
-            }
+            
+            //sort by polygons area
+            std::sort(polygons.begin(), polygons.end(), [](const std::shared_ptr<const MapObject> &a, const std::shared_ptr<const MapObject> &b) {
+                double da = Utilities::polygonArea(a->points31);
+                double db = Utilities::polygonArea(b->points31);
+                return da < db;
+            });
         }
     }
 
     /*test only*/
-    /*for (const auto & mapObj : polygons)
+    for (const auto & mapObj : polygons)
     {
         QString s = "";
         for (auto i = mapObj->captions.begin(); i != mapObj->captions.end(); ++i)
@@ -127,29 +113,9 @@ QHash<std::shared_ptr<const OsmAnd::MapObject>, QList<std::shared_ptr<const OsmA
             s.append(i.key() + ":" + i.value() + " ");
         }
         LogPrintf(LogSeverityLevel::Info, "POLYGON: %s", qPrintable(s));
-        
-        const QList<std::shared_ptr<const MapObject>> & points = result.value(mapObj);
-        for (const auto & point : points)
-        {
-            s = "";
-            for (auto i = point->captions.begin(); i != point->captions.end(); ++i)
-            {
-                QString c = i.value();
-                if (!c.isEmpty()) {
-                    s.append(c + " ");
-                }
-            }
-            QHash<QString, QString> tags = point->getResolvedAttributes();
-            for (auto i = tags.begin(); i != tags.end(); ++i)
-            {
-                s.append(i.key() + ":" + i.value() + " ");
-            }
-            LogPrintf(LogSeverityLevel::Info, "POINT: %s", qPrintable(s));
-        }
-        LogPrintf(LogSeverityLevel::Info, "----------------------");
-    }*/
+    }
     /*test only*/
-    return result;
+    return polygons;
 }
 
 bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
