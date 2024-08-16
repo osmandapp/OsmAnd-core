@@ -1143,7 +1143,7 @@ namespace OsmAnd
         static bool calculateIntersection(const PointI64& p1, const PointI64& p0, const AreaI& bbox, PointI64& pX);
         static bool calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX);
         
-        static void calculateShortestPath(const PointI64& start64, const PointI& start31, const PointI& finish31,
+        static double calculateShortestPath(const PointI64& start64, const PointI& start31, const PointI& finish31,
             PointI64& minCoordinates, PointI64& maxCoordinates, QVector<PointI64>* path = nullptr);
 
         // Log formatted coordinates for https://www.gpsvisualizer.com/

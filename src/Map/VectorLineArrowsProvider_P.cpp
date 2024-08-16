@@ -82,7 +82,7 @@ void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
             const auto& marker = getMarker(markerId);
             if (marker)
             {
-                marker->setIsHidden(false);
+                marker->setIsHidden(symbolInfo.distance < line->getStartingDistance() + line->getArrowStartingGap());
                 marker->setPosition(symbolInfo.position31);
                 marker->setHeight(symbolInfo.elevation);
                 marker->setElevationScaleFactor(symbolInfo.elevationScaleFactor);
@@ -105,7 +105,7 @@ void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
                 
                 builder.setMarkerId(markerId);
                 builder.setBaseOrder(baseOrder);
-                builder.setIsHidden(false);
+                builder.setIsHidden(symbolInfo.distance < line->getStartingDistance() + line->getArrowStartingGap());
                 builder.setPosition(symbolInfo.position31);
                 builder.setHeight(symbolInfo.elevation);
                 builder.setElevationScaleFactor(symbolInfo.elevationScaleFactor);

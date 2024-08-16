@@ -110,9 +110,10 @@ void OsmAnd::VectorMapSymbol::generateCirclePrimitive(
     auto pVertex = verticesAndIndices->vertices;
 
     // First vertex is the center
-    pVertex->positionXYZ[0] = 0.0f;
-    pVertex->positionXYZ[1] = _absentElevation;
-    pVertex->positionXYZ[2] = 0.0f;
+    pVertex->positionXYZD[0] = 0.0f;
+    pVertex->positionXYZD[1] = _absentElevation;
+    pVertex->positionXYZD[2] = 0.0f;
+    pVertex->positionXYZD[3] = NAN;
     pVertex->color = color;
     pVertex += 1;
 
@@ -121,18 +122,20 @@ void OsmAnd::VectorMapSymbol::generateCirclePrimitive(
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
     {
         const auto angle = step * pointIdx;
-        pVertex->positionXYZ[0] = radius * qCos(angle);
-        pVertex->positionXYZ[1] = _absentElevation;
-        pVertex->positionXYZ[2] = radius * qSin(angle);
+        pVertex->positionXYZD[0] = radius * qCos(angle);
+        pVertex->positionXYZD[1] = _absentElevation;
+        pVertex->positionXYZD[2] = radius * qSin(angle);
+        pVertex->positionXYZD[3] = NAN;
         pVertex->color = color;
 
         pVertex += 1;
     }
 
     // Close the fan
-    pVertex->positionXYZ[0] = verticesAndIndices->vertices[1].positionXYZ[0];
-    pVertex->positionXYZ[1] = _absentElevation;
-    pVertex->positionXYZ[2] = verticesAndIndices->vertices[1].positionXYZ[2];
+    pVertex->positionXYZD[0] = verticesAndIndices->vertices[1].positionXYZD[0];
+    pVertex->positionXYZD[1] = _absentElevation;
+    pVertex->positionXYZD[2] = verticesAndIndices->vertices[1].positionXYZD[2];
+    pVertex->positionXYZD[3] = NAN;
     pVertex->color = color;
     
     mapSymbol.setVerticesAndIndices(verticesAndIndices);
@@ -168,9 +171,10 @@ void OsmAnd::VectorMapSymbol::generateRingLinePrimitive(
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
     {
         const auto angle = step * pointIdx;
-        pVertex->positionXYZ[0] = radius * qCos(angle);
-        pVertex->positionXYZ[1] = _absentElevation;
-        pVertex->positionXYZ[2] = radius * qSin(angle);
+        pVertex->positionXYZD[0] = radius * qCos(angle);
+        pVertex->positionXYZD[1] = _absentElevation;
+        pVertex->positionXYZD[2] = radius * qSin(angle);
+        pVertex->positionXYZD[3] = NAN;
         pVertex->color = color;
 
         pVertex += 1;

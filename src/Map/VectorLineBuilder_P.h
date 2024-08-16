@@ -32,6 +32,7 @@ namespace OsmAnd
         mutable QReadWriteLock _lock;
 
         bool _isHidden;
+        float _startingDistance;
         bool _showArrows;
         bool _isApproximationEnabled;
         
@@ -75,7 +76,10 @@ namespace OsmAnd
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);
-        
+
+        float getStartingDistance() const;
+        void setStartingDistance(const float distanceInMeters);
+
         bool shouldShowArrows() const;
         void setShouldShowArrows(const bool showArrows);
 

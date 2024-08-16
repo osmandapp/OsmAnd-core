@@ -435,22 +435,25 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 				next = iMinX + iMaxX != 2 ? std::max(iMinX, iMaxX) : 0;
 				rate = (rod - xMin) / (xMax - xMin);
 				point1 = {rod, tgl[iMinX].y + (tgl[iMaxX].y - tgl[iMinX].y) * rate,
-					tgl[iMinX].z + (tgl[iMaxX].z - tgl[iMinX].z) * rate, 0,
-                    middleColor(tgl[iMinX].color, tgl[iMaxX].color, rate)};
+					tgl[iMinX].z + (tgl[iMaxX].z - tgl[iMinX].z) * rate,
+					tgl[iMinX].d + (tgl[iMaxX].d - tgl[iMinX].d) * rate,
+                    0, middleColor(tgl[iMinX].color, tgl[iMaxX].color, rate)};
 				intoTwo = false;
 				if (rod < tgl[i].x - minDist)
 				{
 					rate = (rod - xMin) / (tgl[i].x - xMin);
 					point2 = {rod, tgl[iMinX].y + (tgl[i].y - tgl[iMinX].y) * rate,
-						tgl[iMinX].z + (tgl[i].z - tgl[iMinX].z) * rate, 0,
-                        middleColor(tgl[iMinX].color, tgl[i].color, rate)};
+						tgl[iMinX].z + (tgl[i].z - tgl[iMinX].z) * rate,
+						tgl[iMinX].d + (tgl[i].d - tgl[iMinX].d) * rate,
+                        0, middleColor(tgl[iMinX].color, tgl[i].color, rate)};
 				}
 				else if (rod > tgl[i].x + minDist)
 				{
 					rate = (rod - tgl[i].x) / (xMax - tgl[i].x);
 					point2 = {rod, tgl[i].y + (tgl[iMaxX].y - tgl[i].y) * rate,
-						tgl[i].z + (tgl[iMaxX].z - tgl[i].z) * rate, 0,
-                        middleColor(tgl[i].color, tgl[iMaxX].color, rate)};
+						tgl[i].z + (tgl[iMaxX].z - tgl[i].z) * rate,
+						tgl[i].d + (tgl[iMaxX].d - tgl[i].d) * rate,
+                        0, middleColor(tgl[i].color, tgl[iMaxX].color, rate)};
 				}
 				else
 					intoTwo = true;
@@ -466,22 +469,25 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 				next = iMinY + iMaxY != 2 ? std::max(iMinY, iMaxY) : 0;
 				rate = (rod - yMin) / (yMax - yMin);
 				point1 = {tgl[iMinY].x + (tgl[iMaxY].x - tgl[iMinY].x) * rate, rod,
-					tgl[iMinY].z + (tgl[iMaxY].z - tgl[iMinY].z) * rate, 0,
-                    middleColor(tgl[iMinY].color, tgl[iMaxY].color, rate)};
+					tgl[iMinY].z + (tgl[iMaxY].z - tgl[iMinY].z) * rate,
+					tgl[iMinY].d + (tgl[iMaxY].d - tgl[iMinY].d) * rate,
+                    0, middleColor(tgl[iMinY].color, tgl[iMaxY].color, rate)};
 				intoTwo = false;
 				if (rod < tgl[i].y - minDist)
 				{
 					rate = (rod - yMin) / (tgl[i].y - yMin);
 					point2 = {tgl[iMinY].x + (tgl[i].x - tgl[iMinY].x) * rate, rod,
-						tgl[iMinY].z + (tgl[i].z - tgl[iMinY].z) * rate, 0,
-                        middleColor(tgl[iMinY].color, tgl[i].color, rate)};
+						tgl[iMinY].z + (tgl[i].z - tgl[iMinY].z) * rate,
+						tgl[iMinY].d + (tgl[i].d - tgl[iMinY].d) * rate,
+                        0, middleColor(tgl[iMinY].color, tgl[i].color, rate)};
 				}
 				else if (rod > tgl[i].y + minDist)
 				{
 					rate = (rod - tgl[i].y) / (yMax - tgl[i].y);
 					point2 = {tgl[i].x + (tgl[iMaxY].x - tgl[i].x) * rate, rod,
-						tgl[i].z + (tgl[iMaxY].z - tgl[i].z) * rate, 0,
-                        middleColor(tgl[i].color, tgl[iMaxY].color, rate)};
+						tgl[i].z + (tgl[iMaxY].z - tgl[i].z) * rate,
+						tgl[i].d + (tgl[iMaxY].d - tgl[i].d) * rate,
+                        0, middleColor(tgl[i].color, tgl[iMaxY].color, rate)};
 				}
 				else
 					intoTwo = true;
@@ -498,8 +504,9 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 				rate = (rod - wMin) / (wMax - wMin);
 				point1 = {tgl[iMinW].x + (tgl[iMaxW].x - tgl[iMinW].x) * rate,
 					tgl[iMinW].y + (tgl[iMaxW].y - tgl[iMinW].y) * rate,
-					tgl[iMinW].z + (tgl[iMaxW].z - tgl[iMinW].z) * rate, 0,
-                    middleColor(tgl[iMinW].color, tgl[iMaxW].color, rate)};
+					tgl[iMinW].z + (tgl[iMaxW].z - tgl[iMinW].z) * rate,
+					tgl[iMinW].d + (tgl[iMaxW].d - tgl[iMinW].d) * rate,
+                    0, middleColor(tgl[iMinW].color, tgl[iMaxW].color, rate)};
 				w = (tgl[i].x - tgl[i].y) * RSQRT2;
 				intoTwo = false;
 				if (rod < w - minDist)
@@ -507,16 +514,18 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 					rate = (rod - wMin) / (w - wMin);
 					point2 = {tgl[iMinW].x + (tgl[i].x - tgl[iMinW].x) * rate,
 						tgl[iMinW].y + (tgl[i].y - tgl[iMinW].y) * rate,
-						tgl[iMinW].z + (tgl[i].z - tgl[iMinW].z) * rate, 0,
-                        middleColor(tgl[iMinW].color, tgl[i].color, rate)};
+						tgl[iMinW].z + (tgl[i].z - tgl[iMinW].z) * rate,
+						tgl[iMinW].d + (tgl[i].d - tgl[iMinW].d) * rate,
+                        0, middleColor(tgl[iMinW].color, tgl[i].color, rate)};
 				}
 				else if (rod > w + minDist)
 				{
 					rate = (rod - w) / (wMax - w);
 					point2 = {tgl[i].x + (tgl[iMaxW].x - tgl[i].x) * rate,
 						tgl[i].y + (tgl[iMaxW].y - tgl[i].y) * rate,
-						tgl[i].z + (tgl[iMaxW].z - tgl[i].z) * rate, 0,
-                        middleColor(tgl[i].color, tgl[iMaxW].color, rate)};
+						tgl[i].z + (tgl[iMaxW].z - tgl[i].z) * rate,
+						tgl[i].d + (tgl[iMaxW].d - tgl[i].d) * rate,
+                        0, middleColor(tgl[i].color, tgl[iMaxW].color, rate)};
 				}
 				else
 					intoTwo = true;
@@ -533,8 +542,9 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 				rate = (rod - uMin) / (uMax - uMin);
 				point1 = {tgl[iMinU].x + (tgl[iMaxU].x - tgl[iMinU].x) * rate,
 					tgl[iMinU].y + (tgl[iMaxU].y - tgl[iMinU].y) * rate,
-					tgl[iMinU].z + (tgl[iMaxU].z - tgl[iMinU].z) * rate, 0,
-                    middleColor(tgl[iMinU].color, tgl[iMaxU].color, rate)};
+					tgl[iMinU].z + (tgl[iMaxU].z - tgl[iMinU].z) * rate,
+					tgl[iMinU].d + (tgl[iMaxU].d - tgl[iMinU].d) * rate,
+                    0, middleColor(tgl[iMinU].color, tgl[iMaxU].color, rate)};
 				u = (tgl[i].x + tgl[i].y) * RSQRT2;
 				intoTwo = false;
 				if (rod < u - minDist)
@@ -542,16 +552,18 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 					rate = (rod - uMin) / (u - uMin);
 					point2 = {tgl[iMinU].x + (tgl[i].x - tgl[iMinU].x) * rate,
 						tgl[iMinU].y + (tgl[i].y - tgl[iMinU].y) * rate,
-						tgl[iMinU].z + (tgl[i].z - tgl[iMinU].z) * rate, 0,
-                        middleColor(tgl[iMinU].color, tgl[i].color, rate)};
+						tgl[iMinU].z + (tgl[i].z - tgl[iMinU].z) * rate,
+						tgl[iMinU].d + (tgl[i].d - tgl[iMinU].d) * rate,
+                        0, middleColor(tgl[iMinU].color, tgl[i].color, rate)};
 				}
 				else if (rod > u + minDist)
 				{
 					rate = (rod - u) / (uMax - u);
 					point2 = {tgl[i].x + (tgl[iMaxU].x - tgl[i].x) * rate,
 						tgl[i].y + (tgl[iMaxU].y - tgl[i].y) * rate,
-						tgl[i].z + (tgl[iMaxU].z - tgl[i].z) * rate, 0,
-                        middleColor(tgl[i].color, tgl[iMaxU].color, rate)};
+						tgl[i].z + (tgl[iMaxU].z - tgl[i].z) * rate,
+						tgl[i].d + (tgl[iMaxU].d - tgl[i].d) * rate,
+                        0, middleColor(tgl[i].color, tgl[iMaxU].color, rate)};
 				}
 				else
 					intoTwo = true;
@@ -658,6 +670,7 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 // Create vertical plane for path, cutting it by tiles and grid cells
 bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::Vertex>& vertices,
 		const std::vector<OsmAnd::PointD>& points,
+		QList<float>& distances,
 		QList<float>& heights,
 		FColorARGB& fillColor,
 		FColorARGB& topColor,
@@ -692,14 +705,18 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
     {
         auto &point1 = points[i];
         auto &point2 = points[i + 1];
+        auto &distance1 = distances[i];
+        auto &distance2 = distances[i + 1];
         auto &height1 = heights[i];
         auto &height2 = heights[i + 1];
         auto &roofColor1 = i < colorizationMapping.size() ? colorizationMapping[i] : fillColor;
         auto &roofColor2 = i < colorizationMapping.size() - shift ? colorizationMapping[i + shift] : fillColor;
         auto &topColor1 = i < traceColorizationMapping.size() ? traceColorizationMapping[i] : topColor;
         auto &topColor2 = i < traceColorizationMapping.size() - shift ? traceColorizationMapping[i + shift] : topColor;
-        inObj.push_back({static_cast<float>(point1.x), static_cast<float>(point1.y), height1, roofColor1, topColor1});
-        inObj.push_back({static_cast<float>(point2.x), static_cast<float>(point2.y), height2, roofColor2, topColor2});
+        inObj.push_back(
+            {static_cast<float>(point1.x), static_cast<float>(point1.y), distance1, height1, roofColor1, topColor1});
+        inObj.push_back(
+            {static_cast<float>(point2.x), static_cast<float>(point2.y), distance2, height2, roofColor2, topColor2});
     }
 	VertexForPath seg[2], point1;
 	float RSQRT2 = 0.70710678118654752440084436210485L;
@@ -800,6 +817,7 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
 				rate = (rod - xMin) / (xMax - xMin);
 				point1 = {rod, seg[iMinX].y + (seg[iMaxX].y - seg[iMinX].y) * rate,
 					seg[iMinX].z + (seg[iMaxX].z - seg[iMinX].z) * rate,
+					seg[iMinX].d + (seg[iMaxX].d - seg[iMinX].d) * rate,
                     middleColor(seg[iMinX].color, seg[iMaxX].color, rate),
                     middleColor(seg[iMinX].traceColor, seg[iMaxX].traceColor, rate)};
 				break;
@@ -809,6 +827,7 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
 				rate = (rod - yMin) / (yMax - yMin);
 				point1 = {seg[iMinY].x + (seg[iMaxY].x - seg[iMinY].x) * rate, rod,
 					seg[iMinY].z + (seg[iMaxY].z - seg[iMinY].z) * rate,
+					seg[iMinY].d + (seg[iMaxY].d - seg[iMinY].d) * rate,
                     middleColor(seg[iMinY].color, seg[iMaxY].color, rate),
                     middleColor(seg[iMinY].traceColor, seg[iMaxY].traceColor, rate)};
 				break;
@@ -819,6 +838,7 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
 				point1 = {seg[iMinW].x + (seg[iMaxW].x - seg[iMinW].x) * rate,
 					seg[iMinW].y + (seg[iMaxW].y - seg[iMinW].y) * rate,
 					seg[iMinW].z + (seg[iMaxW].z - seg[iMinW].z) * rate,
+					seg[iMinW].d + (seg[iMaxW].d - seg[iMinW].d) * rate,
                     middleColor(seg[iMinW].color, seg[iMaxW].color, rate),
                     middleColor(seg[iMinW].traceColor, seg[iMaxW].traceColor, rate)};
 				break;
@@ -829,6 +849,7 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
 				point1 = {seg[iMinU].x + (seg[iMaxU].x - seg[iMinU].x) * rate,
 					seg[iMinU].y + (seg[iMaxU].y - seg[iMinU].y) * rate,
 					seg[iMinU].z + (seg[iMaxU].z - seg[iMinU].z) * rate,
+					seg[iMinU].d + (seg[iMaxU].d - seg[iMinU].d) * rate,
                     middleColor(seg[iMinU].color, seg[iMaxU].color, rate),
                     middleColor(seg[iMinU].traceColor, seg[iMaxU].traceColor, rate)};
 				break;
@@ -847,12 +868,12 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
                     auto metersPerUnit1 = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offset1);
                     topHeight0 -= roofHeight * static_cast<float>(metersPerUnit0);
                     topHeight1 -= roofHeight * static_cast<float>(metersPerUnit1);
-                    vertices.push_back({{seg[0].x, seg[0].z, seg[0].y}, seg[0].color});
-                    vertices.push_back({{seg[1].x, seg[1].z, seg[1].y}, seg[1].color});
-                    vertices.push_back({{seg[0].x, topHeight0, seg[0].y}, seg[0].color});
-                    vertices.push_back({{seg[1].x, topHeight1, seg[1].y}, seg[1].color});
-                    vertices.push_back({{seg[0].x, topHeight0, seg[0].y}, seg[0].color});
-                    vertices.push_back({{seg[1].x, seg[1].z, seg[1].y}, seg[1].color});
+                    vertices.push_back({{seg[0].x, seg[0].z, seg[0].y, seg[0].d}, seg[0].color});
+                    vertices.push_back({{seg[1].x, seg[1].z, seg[1].y, seg[1].d}, seg[1].color});
+                    vertices.push_back({{seg[0].x, topHeight0, seg[0].y, seg[0].d}, seg[0].color});
+                    vertices.push_back({{seg[1].x, topHeight1, seg[1].y, seg[1].d}, seg[1].color});
+                    vertices.push_back({{seg[0].x, topHeight0, seg[0].y, seg[0].d}, seg[0].color});
+                    vertices.push_back({{seg[1].x, seg[1].z, seg[1].y, seg[1].d}, seg[1].color});
                 }
                 if (withTrace)
                 {
@@ -867,12 +888,12 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
                         topColor0 *= topColor;
                         topColor1 *= topColor;
                     }
-                    vertices.push_back({{seg[0].x, topHeight0, seg[0].y}, topColor0});
-                    vertices.push_back({{seg[1].x, topHeight1, seg[1].y}, topColor1});
-                    vertices.push_back({{seg[0].x, noHeight, seg[0].y}, bottomColor0});
-                    vertices.push_back({{seg[1].x, noHeight, seg[1].y}, bottomColor1});
-                    vertices.push_back({{seg[0].x, noHeight, seg[0].y}, bottomColor0});
-                    vertices.push_back({{seg[1].x, topHeight1, seg[1].y}, topColor1});
+                    vertices.push_back({{seg[0].x, topHeight0, seg[0].y, seg[0].d}, topColor0});
+                    vertices.push_back({{seg[1].x, topHeight1, seg[1].y, seg[1].d}, topColor1});
+                    vertices.push_back({{seg[0].x, noHeight, seg[0].y, seg[0].d}, bottomColor0});
+                    vertices.push_back({{seg[1].x, noHeight, seg[1].y, seg[1].d}, bottomColor1});
+                    vertices.push_back({{seg[0].x, noHeight, seg[0].y, seg[0].d}, bottomColor0});
+                    vertices.push_back({{seg[1].x, topHeight1, seg[1].y, seg[1].d}, topColor1});
                 }
                 continue;
 		}

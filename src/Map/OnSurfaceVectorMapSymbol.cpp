@@ -5,6 +5,7 @@ OsmAnd::OnSurfaceVectorMapSymbol::OnSurfaceVectorMapSymbol(
     : VectorMapSymbol(group_)
     , direction(0.0f)
     , elevationScaleFactor(1.0f)
+    , startingDistance(0.0f)
 {
 }
 
@@ -40,4 +41,14 @@ float OsmAnd::OnSurfaceVectorMapSymbol::getElevationScaleFactor() const
 void OsmAnd::OnSurfaceVectorMapSymbol::setElevationScaleFactor(const float scaleFactor)
 {
     elevationScaleFactor = scaleFactor;
+}
+
+float OsmAnd::OnSurfaceVectorMapSymbol::getStartingDistance() const
+{
+    return startingDistance;
+}
+
+void OsmAnd::OnSurfaceVectorMapSymbol::setStartingDistance(const float distanceInMeters)
+{
+    startingDistance = distanceInMeters;
 }

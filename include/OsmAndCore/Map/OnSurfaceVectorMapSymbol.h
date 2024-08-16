@@ -36,6 +36,10 @@ namespace OsmAnd
         float elevationScaleFactor;
         virtual float getElevationScaleFactor() const;
         virtual void setElevationScaleFactor(const float scaleFactor);
+
+        float startingDistance;
+        virtual float getStartingDistance() const;
+        virtual void setStartingDistance(const float distanceInMeters);
     };
 }
 

@@ -24,7 +24,7 @@ namespace OsmAnd
         struct Vertex
         {
             // Coordinates
-            float positionXYZ[3];
+            float positionXYZD[4];
 
             // Color
             FColorARGB color;

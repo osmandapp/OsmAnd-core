@@ -62,6 +62,7 @@ public:
 	 * @param points The points of the path.
 	 * @param thickness The path's thickness.
 	 * @param outline The outline's thickness.
+	 * @param heights The path's distance map (in meters).
 	 * @param fillColor The path's color.
 	 * @param nearOutlineColor The outline's inner color/filter (see outlineColorizationMapping).
 	 * @param farOutlineColor The outline's outer color/filter (see outlineColorizationMapping).
@@ -85,6 +86,7 @@ public:
                                                                const InputCollection &points,
                                                                float thickness,
                                                                float outline,
+                                                               QList<float> &distances,
                                                                OsmAnd::FColorARGB &fillColor,
                                                                OsmAnd::FColorARGB &nearOutlineColor,
                                                                OsmAnd::FColorARGB &farOutlineColor,
@@ -96,7 +98,7 @@ public:
                                                                bool solidColors = false) {
 		std::vector<OsmAnd::VectorMapSymbol::Vertex> vertices;
 		create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex, vertices, points, thickness,
-            outline, fillColor, nearOutlineColor, farOutlineColor, colorizationMapping,
+            outline, distances, fillColor, nearOutlineColor, farOutlineColor, colorizationMapping,
             outlineColorizationMapping, heights, jointStyle, endCapStyle, solidColors);
 		return vertices;
 	}
@@ -106,6 +108,7 @@ public:
                                                                const std::vector<OsmAnd::PointD> &points,
                                                                float thickness,
                                                                float outline,
+                                                               QList<float> &distances,
                                                                OsmAnd::FColorARGB &fillColor,
                                                                OsmAnd::FColorARGB &nearOutlineColor,
                                                                OsmAnd::FColorARGB &farOutlineColor,
@@ -117,7 +120,7 @@ public:
                                                                bool solidColors = false) {
         std::vector<OsmAnd::VectorMapSymbol::Vertex> vertices;
 		create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex, vertices, points, thickness,
-            outline, fillColor, nearOutlineColor, farOutlineColor, colorizationMapping,
+            outline, distances, fillColor, nearOutlineColor, farOutlineColor, colorizationMapping,
             outlineColorizationMapping, heights, jointStyle, endCapStyle, solidColors);
 		return vertices;
 	}
@@ -128,6 +131,7 @@ public:
                          const InputCollection &points,
                          float thickness,
                          float outline,
+                         QList<float> &distances,
                          OsmAnd::FColorARGB &fillColor,
                          OsmAnd::FColorARGB &nearOutlineColor,
                          OsmAnd::FColorARGB &farOutlineColor,
@@ -139,9 +143,9 @@ public:
                          bool solidColors = false) {
 		auto numVerticesBefore = vertices.size();
 
-        create<Vertex, InputCollection>(vertex, std::back_inserter(vertices), points, thickness, outline, fillColor,
-            nearOutlineColor, farOutlineColor, colorizationMapping, outlineColorizationMapping, heights, jointStyle,
-            endCapStyle, solidColors);
+        create<Vertex, InputCollection>(vertex, std::back_inserter(vertices), points, thickness, outline, distances,
+            fillColor, nearOutlineColor, farOutlineColor, colorizationMapping, outlineColorizationMapping, heights,
+            jointStyle, endCapStyle, solidColors);
 
 		return vertices.size() - numVerticesBefore;
 	}
@@ -152,6 +156,7 @@ public:
                                  const InputCollection &points,
                                  float thickness,
                                  float outline,
+                                 QList<float> &distances,
                                  OsmAnd::FColorARGB &fillColor,
                                  OsmAnd::FColorARGB &nearOutlineColor,
                                  OsmAnd::FColorARGB &farOutlineColor,
@@ -219,6 +224,8 @@ public:
 		auto pathEnd1 = lastSegment.edge1.b;
 		auto pathEnd2 = lastSegment.edge2.b;
         
+        bool hasDistances = distances.size() == points.size();
+        auto noDistance = NAN;
         bool hasColorMapping = !colorizationMapping.isEmpty();
         bool hasOutlineColorMapping = !outlineColorizationMapping.isEmpty();
         bool hasHeights = heights.size() == points.size();
@@ -243,9 +250,10 @@ public:
 			    innerColor *= outlineColorizationMapping.first();
 			    outerColor *= outlineColorizationMapping.first();
             }
+			auto firstDistance = hasDistances ? distances.first() : noDistance;
 			auto firstHeight = hasHeights ? heights.first() : noHeight;
             createTriangleFan(vertex, vertices, firstColor, firstColor, innerColor, innerColor, outerColor, outerColor,
-                outlineWidth, firstHeight, outline, firstSegment.center.a, firstSegment.center.a,
+                outlineWidth, firstDistance, firstHeight, outline, firstSegment.center.a, firstSegment.center.a,
                 firstSegment.edge1.a, firstSegment.edge2.a, endSide1, nextStartSide1, false);
             if (endCapStyle == EndCapStyle::ARROW) {
                 // Define location for an arrow cap
@@ -277,6 +285,7 @@ public:
 			// join the last (connecting) segment and the first segment
 			auto endColor = hasColorMapping ? colorizationMapping.last() : fillColor;
 			auto nextColor = hasColorMapping ? colorizationMapping.first() : fillColor;
+			auto distance = hasDistances ? distances.first() : noDistance;
 			auto height = hasHeights ? heights.first() : noHeight;
             auto side1 = lastSegment.edge1.a;
             auto side2 = lastSegment.edge2.a;
@@ -296,8 +305,8 @@ public:
             }
             createJoint(vertex, vertices, lastSegment, firstSegment, lastSegment.edge1.a, lastSegment.edge2.a, side1,
                 side2, endColor, nextColor, endInnerColor, nextInnerColor, endOuterColor, nextOuterColor, outlineWidth,
-                height, outline, jointStyle, pathEnd1, pathEnd2, pathStart1, pathStart2, lastSide1, lastSide2,
-                startSide1, startSide2, solidColors);
+                distance, height, outline, jointStyle, pathEnd1, pathEnd2, pathStart1, pathStart2,
+                lastSide1, lastSide2, startSide1, startSide2, solidColors);
             firstSegment.edge1.a = pathStart1;
             firstSegment.edge2.a = pathStart2;
             lastSegment.edge1.b = pathEnd1;
@@ -315,48 +324,50 @@ public:
                 pCenter =
                     Vec2Maths::subtract(pCenter, Vec2Maths::multiply(firstSegment.center.direction(), edgeOffset));
 
+                pVertex->positionXYZD[3] = hasDistances ? distances.first() : noDistance;
+
 			    auto top = hasHeights ? heights.first() : noHeight;
 
                 pVertex->color = hasColorMapping ? colorizationMapping.first() : fillColor;
 
-                pVertex->positionXYZ[0] = pathStart1.x;
-			    pVertex->positionXYZ[1] = top;
-                pVertex->positionXYZ[2] = pathStart1.y;
+                pVertex->positionXYZD[0] = pathStart1.x;
+			    pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pathStart1.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = pStart1.x;
-                pVertex->positionXYZ[2] = pStart1.y;
+                pVertex->positionXYZD[0] = pStart1.x;
+                pVertex->positionXYZD[2] = pStart1.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = firstSegment.center.a.x;
-                pVertex->positionXYZ[2] = firstSegment.center.a.y;
-                *vertices++ = vertex;
-                *vertices++ = vertex;
-                
-                pVertex->positionXYZ[0] = pStart1.x;
-                pVertex->positionXYZ[2] = pStart1.y;
-                *vertices++ = vertex;
-                
-                pVertex->positionXYZ[0] = pCenter.x;
-                pVertex->positionXYZ[2] = pCenter.y;
+                pVertex->positionXYZD[0] = firstSegment.center.a.x;
+                pVertex->positionXYZD[2] = firstSegment.center.a.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = pStart2.x;
-                pVertex->positionXYZ[2] = pStart2.y;
+                pVertex->positionXYZD[0] = pStart1.x;
+                pVertex->positionXYZD[2] = pStart1.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = firstSegment.center.a.x;
-                pVertex->positionXYZ[2] = firstSegment.center.a.y;
+                pVertex->positionXYZD[0] = pCenter.x;
+                pVertex->positionXYZD[2] = pCenter.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = pStart2.x;
-                pVertex->positionXYZ[2] = pStart2.y;
+                pVertex->positionXYZD[0] = pStart2.x;
+                pVertex->positionXYZD[2] = pStart2.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = pathStart2.x;
-                pVertex->positionXYZ[2] = pathStart2.y;
+                pVertex->positionXYZD[0] = firstSegment.center.a.x;
+                pVertex->positionXYZD[2] = firstSegment.center.a.y;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = pStart2.x;
+                pVertex->positionXYZD[2] = pStart2.y;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = pathStart2.x;
+                pVertex->positionXYZD[2] = pathStart2.y;
                 *vertices++ = vertex;
             }            
     		if (showOutline) {
@@ -377,70 +388,72 @@ public:
                     outerColor *= outlineColorizationMapping.first();
                 }
 
+                pVertex->positionXYZD[3] = hasDistances ? distances.first() : noDistance;
+
 			    auto top = hasHeights ? heights.first() : noHeight;
 			    auto bottom = hasHeights ? heights.first() - outline : noHeight;
 
                 // emit triangles for starting outline part
                 pVertex->color = outerColor;
-                pVertex->positionXYZ[0] = outPathStartSide1.x;
-			    pVertex->positionXYZ[1] = bottom;
-                pVertex->positionXYZ[2] = outPathStartSide1.y;
+                pVertex->positionXYZD[0] = outPathStartSide1.x;
+			    pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = outPathStartSide1.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = outPathStart1.x;
-                pVertex->positionXYZ[2] = outPathStart1.y;
+                pVertex->positionXYZD[0] = outPathStart1.x;
+                pVertex->positionXYZD[2] = outPathStart1.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = innerColor;
-                pVertex->positionXYZ[0] = pStart1.x;
-			    pVertex->positionXYZ[1] = top;
-                pVertex->positionXYZ[2] = pStart1.y;
+                pVertex->positionXYZD[0] = pStart1.x;
+			    pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pStart1.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
                 pVertex->color = outerColor;
-                pVertex->positionXYZ[0] = outPathStart1.x;
-			    pVertex->positionXYZ[1] = bottom;
-                pVertex->positionXYZ[2] = outPathStart1.y;
+                pVertex->positionXYZD[0] = outPathStart1.x;
+			    pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = outPathStart1.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = innerColor;
-                pVertex->positionXYZ[0] = pCenter.x;
-			    pVertex->positionXYZ[1] = top;
-                pVertex->positionXYZ[2] = pCenter.y;
+                pVertex->positionXYZD[0] = pCenter.x;
+			    pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pCenter.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
                 pVertex->color = outerColor;
-                pVertex->positionXYZ[0] = outPathStart1.x;
-			    pVertex->positionXYZ[1] = bottom;
-                pVertex->positionXYZ[2] = outPathStart1.y;
+                pVertex->positionXYZD[0] = outPathStart1.x;
+			    pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = outPathStart1.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = outPathStart2.x;
-                pVertex->positionXYZ[2] = outPathStart2.y;
+                pVertex->positionXYZD[0] = outPathStart2.x;
+                pVertex->positionXYZD[2] = outPathStart2.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = outPathStartSide2.x;
-                pVertex->positionXYZ[2] = outPathStartSide2.y;
+                pVertex->positionXYZD[0] = outPathStartSide2.x;
+                pVertex->positionXYZD[2] = outPathStartSide2.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = innerColor;
-                pVertex->positionXYZ[0] = pStart2.x;
-			    pVertex->positionXYZ[1] = top;
-                pVertex->positionXYZ[2] = pStart2.y;
+                pVertex->positionXYZD[0] = pStart2.x;
+			    pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pStart2.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = pCenter.x;
-                pVertex->positionXYZ[2] = pCenter.y;
+                pVertex->positionXYZD[0] = pCenter.x;
+                pVertex->positionXYZD[2] = pCenter.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = outerColor;
-                pVertex->positionXYZ[0] = outPathStart2.x;
-			    pVertex->positionXYZ[1] = bottom;
-                pVertex->positionXYZ[2] = outPathStart2.y;
+                pVertex->positionXYZD[0] = outPathStart2.x;
+			    pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = outPathStart2.y;
                 *vertices++ = vertex;
 
                 if (endCapStyle == EndCapStyle::SQUARE) {
@@ -450,55 +463,55 @@ public:
                         pathStart2, Vec2Maths::multiply(firstSegment.edge2.normal(), outlineWidth));
 
                     pVertex->color = outerColor;
-                    pVertex->positionXYZ[0] = outPrevStartSide1.x;
-                    pVertex->positionXYZ[1] = bottom;
-                    pVertex->positionXYZ[2] = outPrevStartSide1.y;
+                    pVertex->positionXYZD[0] = outPrevStartSide1.x;
+                    pVertex->positionXYZD[1] = bottom;
+                    pVertex->positionXYZD[2] = outPrevStartSide1.y;
                     *vertices++ = vertex;
                     
-                    pVertex->positionXYZ[0] = outPathStartSide1.x;
-                    pVertex->positionXYZ[2] = outPathStartSide1.y;
-                    *vertices++ = vertex;
-                    
-                    pVertex->color = innerColor;
-                    pVertex->positionXYZ[0] = pStart1.x;
-                    pVertex->positionXYZ[1] = top;
-                    pVertex->positionXYZ[2] = pStart1.y;
-                    *vertices++ = vertex;
-                    *vertices++ = vertex;
-                    
-                    pVertex->positionXYZ[0] = pathStart1.x;
-                    pVertex->positionXYZ[2] = pathStart1.y;
-                    *vertices++ = vertex;
-                    
-                    pVertex->color = outerColor;
-                    pVertex->positionXYZ[0] = outPrevStartSide1.x;
-                    pVertex->positionXYZ[1] = bottom;
-                    pVertex->positionXYZ[2] = outPrevStartSide1.y;
-                    *vertices++ = vertex;
-                    
-                    pVertex->positionXYZ[0] = outPathStartSide2.x;
-                    pVertex->positionXYZ[2] = outPathStartSide2.y;
-                    *vertices++ = vertex;
-                    
-                    pVertex->positionXYZ[0] = outPrevStartSide2.x;
-                    pVertex->positionXYZ[2] = outPrevStartSide2.y;
+                    pVertex->positionXYZD[0] = outPathStartSide1.x;
+                    pVertex->positionXYZD[2] = outPathStartSide1.y;
                     *vertices++ = vertex;
                     
                     pVertex->color = innerColor;
-                    pVertex->positionXYZ[0] = pathStart2.x;
-                    pVertex->positionXYZ[1] = top;
-                    pVertex->positionXYZ[2] = pathStart2.y;
+                    pVertex->positionXYZD[0] = pStart1.x;
+                    pVertex->positionXYZD[1] = top;
+                    pVertex->positionXYZD[2] = pStart1.y;
                     *vertices++ = vertex;
                     *vertices++ = vertex;
                     
-                    pVertex->positionXYZ[0] = pStart2.x;
-                    pVertex->positionXYZ[2] = pStart2.y;
+                    pVertex->positionXYZD[0] = pathStart1.x;
+                    pVertex->positionXYZD[2] = pathStart1.y;
                     *vertices++ = vertex;
                     
                     pVertex->color = outerColor;
-                    pVertex->positionXYZ[0] = outPathStartSide2.x;
-                    pVertex->positionXYZ[1] = bottom;
-                    pVertex->positionXYZ[2] = outPathStartSide2.y;
+                    pVertex->positionXYZD[0] = outPrevStartSide1.x;
+                    pVertex->positionXYZD[1] = bottom;
+                    pVertex->positionXYZD[2] = outPrevStartSide1.y;
+                    *vertices++ = vertex;
+                    
+                    pVertex->positionXYZD[0] = outPathStartSide2.x;
+                    pVertex->positionXYZD[2] = outPathStartSide2.y;
+                    *vertices++ = vertex;
+                    
+                    pVertex->positionXYZD[0] = outPrevStartSide2.x;
+                    pVertex->positionXYZD[2] = outPrevStartSide2.y;
+                    *vertices++ = vertex;
+                    
+                    pVertex->color = innerColor;
+                    pVertex->positionXYZD[0] = pathStart2.x;
+                    pVertex->positionXYZD[1] = top;
+                    pVertex->positionXYZD[2] = pathStart2.y;
+                    *vertices++ = vertex;
+                    *vertices++ = vertex;
+                    
+                    pVertex->positionXYZD[0] = pStart2.x;
+                    pVertex->positionXYZD[2] = pStart2.y;
+                    *vertices++ = vertex;
+                    
+                    pVertex->color = outerColor;
+                    pVertex->positionXYZD[0] = outPathStartSide2.x;
+                    pVertex->positionXYZD[1] = bottom;
+                    pVertex->positionXYZD[2] = outPathStartSide2.y;
                     *vertices++ = vertex;
                 }
             }
@@ -534,6 +547,9 @@ public:
                 }
             }
 
+            auto startDistance = hasDistances && i < distances.size() ? distances[i] : noDistance;
+            auto endDistance = hasDistances && i < distances.size() - 1 ? distances[i + 1] : noDistance;
+
             auto startHeight = hasHeights && i < heights.size() ? heights[i] : noHeight;
             auto endHeight = hasHeights && i < heights.size() - 1 ? heights[i + 1] : noHeight;
 
@@ -555,8 +571,13 @@ public:
 				end1 = pathEnd1;
 				end2 = pathEnd2;
 
-                if (hasHeights && endCapStyle == EndCapStyle::ARROW) {
-                    endHeight -= arrowShift * (endHeight - startHeight) / lastLength;
+                if (endCapStyle == EndCapStyle::ARROW) {
+                    if (hasDistances) {
+                        endDistance -= arrowShift * (endDistance - startDistance) / lastLength;
+                    }
+                    if (hasHeights) {
+                        endHeight -= arrowShift * (endHeight - startHeight) / lastLength;
+                    }
                 }
 
         		if (showOutline) {
@@ -572,8 +593,8 @@ public:
 			} else {
                 createJoint(vertex, vertices, segment, segments[i + 1], start1, start2, startSide1, startSide2,
                     endColor, nextColor, endInnerColor, nextInnerColor, endOuterColor, nextOuterColor, outlineWidth,
-                    endHeight, outline, jointStyle, end1, end2, nextStart1, nextStart2, endSide1, endSide2,
-                    nextStartSide1, nextStartSide2, solidColors);
+                    endDistance, endHeight, outline, jointStyle, end1, end2, nextStart1, nextStart2,
+                    endSide1, endSide2, nextStartSide1, nextStartSide2, solidColors);
 			}
 
             // emit vertices
@@ -583,75 +604,83 @@ public:
             auto extraEnd1 = end1;
             if (!Vec2Maths::equal(start2, end2)) {
                 pVertex->color = startColor;
-                pVertex->positionXYZ[1] = startTop;
-                pVertex->positionXYZ[0] = segment.center.a.x,
-                pVertex->positionXYZ[2] = segment.center.a.y;
+                pVertex->positionXYZD[1] = startTop;
+                pVertex->positionXYZD[0] = segment.center.a.x,
+                pVertex->positionXYZD[2] = segment.center.a.y;
+                pVertex->positionXYZD[3] = startDistance;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = start2.x,
-                pVertex->positionXYZ[2] = start2.y;
+                pVertex->positionXYZD[0] = start2.x,
+                pVertex->positionXYZD[2] = start2.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = endColor;
-                pVertex->positionXYZ[1] = endTop;
-                pVertex->positionXYZ[0] = end2.x;
-                pVertex->positionXYZ[2] = end2.y;
+                pVertex->positionXYZD[1] = endTop;
+                pVertex->positionXYZD[0] = end2.x;
+                pVertex->positionXYZD[2] = end2.y;
+                pVertex->positionXYZD[3] = endDistance;
                 *vertices++ = vertex;
             }
             extraStart2 = segment.center.a;
 
             if (!Vec2Maths::equal(start1, end1)) {
                 pVertex->color = endColor;
-                pVertex->positionXYZ[1] = endTop;
-                pVertex->positionXYZ[0] = segment.center.b.x;
-                pVertex->positionXYZ[2] = segment.center.b.y;
+                pVertex->positionXYZD[1] = endTop;
+                pVertex->positionXYZD[0] = segment.center.b.x;
+                pVertex->positionXYZD[2] = segment.center.b.y;
+                pVertex->positionXYZD[3] = endDistance;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = end1.x;
-                pVertex->positionXYZ[2] = end1.y;
+                pVertex->positionXYZD[0] = end1.x;
+                pVertex->positionXYZD[2] = end1.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = startColor;
-                pVertex->positionXYZ[1] = startTop;
-                pVertex->positionXYZ[0] = start1.x,
-                pVertex->positionXYZ[2] = start1.y;
+                pVertex->positionXYZD[1] = startTop;
+                pVertex->positionXYZD[0] = start1.x,
+                pVertex->positionXYZD[2] = start1.y;
+                pVertex->positionXYZD[3] = startDistance;
                 *vertices++ = vertex;
             }
             extraEnd1 = segment.center.b;
 
             if (!Vec2Maths::equal(start1, end1)) {
                 pVertex->color = startColor;
-                pVertex->positionXYZ[1] = startTop;
-                pVertex->positionXYZ[0] = start1.x,
-                pVertex->positionXYZ[2] = start1.y;
+                pVertex->positionXYZD[1] = startTop;
+                pVertex->positionXYZD[0] = start1.x,
+                pVertex->positionXYZD[2] = start1.y;
+                pVertex->positionXYZD[3] = startDistance;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = extraStart2.x,
-                pVertex->positionXYZ[2] = extraStart2.y;
+                pVertex->positionXYZD[0] = extraStart2.x,
+                pVertex->positionXYZD[2] = extraStart2.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = endColor;
-                pVertex->positionXYZ[1] = endTop;
-                pVertex->positionXYZ[0] = extraEnd1.x;
-                pVertex->positionXYZ[2] = extraEnd1.y;
+                pVertex->positionXYZD[1] = endTop;
+                pVertex->positionXYZD[0] = extraEnd1.x;
+                pVertex->positionXYZD[2] = extraEnd1.y;
+                pVertex->positionXYZD[3] = endDistance;
                 *vertices++ = vertex;
             }
 
             if (!Vec2Maths::equal(start2, end2)) {
                 pVertex->color = endColor;
-                pVertex->positionXYZ[1] = endTop;
-                pVertex->positionXYZ[0] = end2.x;
-                pVertex->positionXYZ[2] = end2.y;
+                pVertex->positionXYZD[1] = endTop;
+                pVertex->positionXYZD[0] = end2.x;
+                pVertex->positionXYZD[2] = end2.y;
+                pVertex->positionXYZD[3] = endDistance;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = extraEnd1.x;
-                pVertex->positionXYZ[2] = extraEnd1.y;
+                pVertex->positionXYZD[0] = extraEnd1.x;
+                pVertex->positionXYZD[2] = extraEnd1.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = startColor;
-                pVertex->positionXYZ[1] = startTop;
-                pVertex->positionXYZ[0] = extraStart2.x,
-                pVertex->positionXYZ[2] = extraStart2.y;
+                pVertex->positionXYZD[1] = startTop;
+                pVertex->positionXYZD[0] = extraStart2.x,
+                pVertex->positionXYZD[2] = extraStart2.y;
+                pVertex->positionXYZD[3] = startDistance;
                 *vertices++ = vertex;
             }
 
@@ -663,78 +692,86 @@ public:
                 if (!Vec2Maths::equal(start1, end1)) {
                     if (!Vec2Maths::equal(startSide1, endSide1)) {
                         pVertex->color = startOuterColor;
-                        pVertex->positionXYZ[0] = startSide1.x,
-                        pVertex->positionXYZ[1] = startBottom;
-                        pVertex->positionXYZ[2] = startSide1.y;
+                        pVertex->positionXYZD[0] = startSide1.x,
+                        pVertex->positionXYZD[1] = startBottom;
+                        pVertex->positionXYZD[2] = startSide1.y;
+                        pVertex->positionXYZD[3] = startDistance;
                         *vertices++ = vertex;
                         
                         pVertex->color = startInnerColor;
-                        pVertex->positionXYZ[0] = start1.x;
-                        pVertex->positionXYZ[1] = startTop;
-                        pVertex->positionXYZ[2] = start1.y;
+                        pVertex->positionXYZD[0] = start1.x;
+                        pVertex->positionXYZD[1] = startTop;
+                        pVertex->positionXYZD[2] = start1.y;
                         *vertices++ = vertex;
                         
                         pVertex->color = endOuterColor;
-                        pVertex->positionXYZ[0] = endSide1.x;
-                        pVertex->positionXYZ[1] = endBottom;
-                        pVertex->positionXYZ[2] = endSide1.y;
+                        pVertex->positionXYZD[0] = endSide1.x;
+                        pVertex->positionXYZD[1] = endBottom;
+                        pVertex->positionXYZD[2] = endSide1.y;
+                        pVertex->positionXYZD[3] = endDistance;
                         *vertices++ = vertex;
                     }
                     pVertex->color = endInnerColor;
-                    pVertex->positionXYZ[0] = end1.x,
-                    pVertex->positionXYZ[1] = endTop;
-                    pVertex->positionXYZ[2] = end1.y;
+                    pVertex->positionXYZD[0] = end1.x,
+                    pVertex->positionXYZD[1] = endTop;
+                    pVertex->positionXYZD[2] = end1.y;
+                    pVertex->positionXYZD[3] = endDistance;
                     *vertices++ = vertex;
                     
                     pVertex->color = endOuterColor;
-                    pVertex->positionXYZ[0] = endSide1.x;
-                    pVertex->positionXYZ[1] = endBottom;
-                    pVertex->positionXYZ[2] = endSide1.y;
+                    pVertex->positionXYZD[0] = endSide1.x;
+                    pVertex->positionXYZD[1] = endBottom;
+                    pVertex->positionXYZD[2] = endSide1.y;
                     *vertices++ = vertex;
                     
                     pVertex->color = startInnerColor;
-                    pVertex->positionXYZ[0] = start1.x,
-                    pVertex->positionXYZ[1] = startTop;
-                    pVertex->positionXYZ[2] = start1.y;
+                    pVertex->positionXYZD[0] = start1.x,
+                    pVertex->positionXYZD[1] = startTop;
+                    pVertex->positionXYZD[2] = start1.y;
+                    pVertex->positionXYZD[3] = startDistance;
                     *vertices++ = vertex;
                 }
 
                 if (!Vec2Maths::equal(start2, end2)) {
                     if (!Vec2Maths::equal(startSide2, endSide2)) {
                         pVertex->color = endOuterColor;
-                        pVertex->positionXYZ[0] = endSide2.x;
-                        pVertex->positionXYZ[1] = endBottom;
-                        pVertex->positionXYZ[2] = endSide2.y;
+                        pVertex->positionXYZD[0] = endSide2.x;
+                        pVertex->positionXYZD[1] = endBottom;
+                        pVertex->positionXYZD[2] = endSide2.y;
+                        pVertex->positionXYZD[3] = endDistance;
                         *vertices++ = vertex;
                         
                         pVertex->color = endInnerColor;
-                        pVertex->positionXYZ[0] = end2.x;
-                        pVertex->positionXYZ[1] = endTop;
-                        pVertex->positionXYZ[2] = end2.y;
+                        pVertex->positionXYZD[0] = end2.x;
+                        pVertex->positionXYZD[1] = endTop;
+                        pVertex->positionXYZD[2] = end2.y;
                         *vertices++ = vertex;
                         
                         pVertex->color = startOuterColor;
-                        pVertex->positionXYZ[0] = startSide2.x,
-                        pVertex->positionXYZ[1] = startBottom;
-                        pVertex->positionXYZ[2] = startSide2.y;
+                        pVertex->positionXYZD[0] = startSide2.x,
+                        pVertex->positionXYZD[1] = startBottom;
+                        pVertex->positionXYZD[2] = startSide2.y;
+                        pVertex->positionXYZD[3] = startDistance;
                         *vertices++ = vertex;
                     }
                     pVertex->color = startInnerColor;
-                    pVertex->positionXYZ[0] = start2.x,
-                    pVertex->positionXYZ[1] = startTop;
-                    pVertex->positionXYZ[2] = start2.y;
+                    pVertex->positionXYZD[0] = start2.x,
+                    pVertex->positionXYZD[1] = startTop;
+                    pVertex->positionXYZD[2] = start2.y;
+                    pVertex->positionXYZD[3] = startDistance;
                     *vertices++ = vertex;
                     
                     pVertex->color = startOuterColor;
-                    pVertex->positionXYZ[0] = startSide2.x,
-                    pVertex->positionXYZ[1] = startBottom;
-                    pVertex->positionXYZ[2] = startSide2.y;
+                    pVertex->positionXYZD[0] = startSide2.x,
+                    pVertex->positionXYZD[1] = startBottom;
+                    pVertex->positionXYZD[2] = startSide2.y;
                     *vertices++ = vertex;
                     
                     pVertex->color = endInnerColor;
-                    pVertex->positionXYZ[0] = end2.x;
-                    pVertex->positionXYZ[1] = endTop;
-                    pVertex->positionXYZ[2] = end2.y;
+                    pVertex->positionXYZD[0] = end2.x;
+                    pVertex->positionXYZD[1] = endTop;
+                    pVertex->positionXYZD[2] = end2.y;
+                    pVertex->positionXYZD[3] = endDistance;
                     *vertices++ = vertex;
                 }
     			startSide1 = nextStartSide1;
@@ -761,99 +798,110 @@ public:
                     Vec2Maths::add(arrowStart2, Vec2Maths::multiply(lastSegment.edge2.direction(), outlineWidth));
             }
 
+            auto distance = hasDistances ? distances.last() : noDistance;
+            auto tipDistance = distance;
             auto top = hasHeights ? heights.last() : noHeight;
             auto tip = top;
+            if (hasDistances) {
+                auto difDistance = distance - distances[distances.size() - 2];
+                distance -= arrowShift * difDistance / lastLength;
+                tipDistance += (arrowLength - arrowShift) * difDistance / lastLength;
+            }
             if (hasHeights) {
-                auto prevTop = heights[heights.size() - 2];
-                auto difHeight = top - prevTop;
+                auto difHeight = top - heights[heights.size() - 2];
                 top -= arrowShift * difHeight / lastLength;
                 tip += (arrowLength - arrowShift) * difHeight / lastLength;
             }
 
             pVertex->color = hasColorMapping ? colorizationMapping.last() : fillColor;
 
-            pVertex->positionXYZ[0] = midPoint.x;
-            pVertex->positionXYZ[1] = tip;
-            pVertex->positionXYZ[2] = midPoint.y;
+            pVertex->positionXYZD[0] = midPoint.x;
+            pVertex->positionXYZD[1] = tip;
+            pVertex->positionXYZD[2] = midPoint.y;
+            pVertex->positionXYZD[3] = tipDistance;
             *vertices++ = vertex;
             
-            pVertex->positionXYZ[0] = pt1.x;
-            pVertex->positionXYZ[1] = top;
-            pVertex->positionXYZ[2] = pt1.y;
+            pVertex->positionXYZD[0] = pt1.x;
+            pVertex->positionXYZD[1] = top;
+            pVertex->positionXYZD[2] = pt1.y;
+            pVertex->positionXYZD[3] = distance;
             *vertices++ = vertex;
             
-            pVertex->positionXYZ[0] = arrowStart1.x;
-            pVertex->positionXYZ[2] = arrowStart1.y;
-            *vertices++ = vertex;
-            *vertices++ = vertex;
-            
-            pVertex->positionXYZ[0] = arrowCenter.x;
-            pVertex->positionXYZ[2] = arrowCenter.y;
-            *vertices++ = vertex;
-            
-            pVertex->positionXYZ[0] = midPoint.x;
-            pVertex->positionXYZ[1] = tip;
-            pVertex->positionXYZ[2] = midPoint.y;
+            pVertex->positionXYZD[0] = arrowStart1.x;
+            pVertex->positionXYZD[2] = arrowStart1.y;
             *vertices++ = vertex;
             *vertices++ = vertex;
             
-            pVertex->positionXYZ[0] = arrowCenter.x;
-            pVertex->positionXYZ[1] = top;
-            pVertex->positionXYZ[2] = arrowCenter.y;
+            pVertex->positionXYZD[0] = arrowCenter.x;
+            pVertex->positionXYZD[2] = arrowCenter.y;
+            *vertices++ = vertex;
+            
+            pVertex->positionXYZD[0] = midPoint.x;
+            pVertex->positionXYZD[1] = tip;
+            pVertex->positionXYZD[2] = midPoint.y;
+            pVertex->positionXYZD[3] = tipDistance;
+            *vertices++ = vertex;
+            *vertices++ = vertex;
+            
+            pVertex->positionXYZD[0] = arrowCenter.x;
+            pVertex->positionXYZD[1] = top;
+            pVertex->positionXYZD[2] = arrowCenter.y;
+            pVertex->positionXYZD[3] = distance;
             *vertices++ = vertex;
 
-            pVertex->positionXYZ[0] = arrowStart2.x;
-            pVertex->positionXYZ[2] = arrowStart2.y;
+            pVertex->positionXYZD[0] = arrowStart2.x;
+            pVertex->positionXYZD[2] = arrowStart2.y;
             *vertices++ = vertex;
             *vertices++ = vertex;
            
-            pVertex->positionXYZ[0] = pt2.x;
-            pVertex->positionXYZ[2] = pt2.y;
+            pVertex->positionXYZD[0] = pt2.x;
+            pVertex->positionXYZD[2] = pt2.y;
             *vertices++ = vertex;
            
-            pVertex->positionXYZ[0] = midPoint.x;
-            pVertex->positionXYZ[1] = tip;
-            pVertex->positionXYZ[2] = midPoint.y;
+            pVertex->positionXYZD[0] = midPoint.x;
+            pVertex->positionXYZD[1] = tip;
+            pVertex->positionXYZD[2] = midPoint.y;
+            pVertex->positionXYZD[3] = tipDistance;
             *vertices++ = vertex;
 
             if (!hasHeights && showOutline) {
-                pVertex->positionXYZ[0] = arrowStart1.x;
-                pVertex->positionXYZ[2] = arrowStart1.y;
+                pVertex->positionXYZD[0] = arrowStart1.x;
+                pVertex->positionXYZD[2] = arrowStart1.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = pathEnd1.x;
-                pVertex->positionXYZ[2] = pathEnd1.y;
+                pVertex->positionXYZD[0] = pathEnd1.x;
+                pVertex->positionXYZD[2] = pathEnd1.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = lastSegment.center.b.x;
-                pVertex->positionXYZ[2] = lastSegment.center.b.y;
-                *vertices++ = vertex;
-                *vertices++ = vertex;
-                
-                pVertex->positionXYZ[0] = pathEnd2.x;
-                pVertex->positionXYZ[2] = pathEnd2.y;
-                *vertices++ = vertex;
-                
-                pVertex->positionXYZ[0] = arrowStart2.x;
-                pVertex->positionXYZ[2] = arrowStart2.y;
+                pVertex->positionXYZD[0] = lastSegment.center.b.x;
+                pVertex->positionXYZD[2] = lastSegment.center.b.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = arrowCenter.x;
-                pVertex->positionXYZ[2] = arrowCenter.y;
+                pVertex->positionXYZD[0] = pathEnd2.x;
+                pVertex->positionXYZD[2] = pathEnd2.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = lastSegment.center.b.x;
-                pVertex->positionXYZ[2] = lastSegment.center.b.y;
+                pVertex->positionXYZD[0] = arrowStart2.x;
+                pVertex->positionXYZD[2] = arrowStart2.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = arrowCenter.x;
-                pVertex->positionXYZ[2] = arrowCenter.y;
+                pVertex->positionXYZD[0] = arrowCenter.x;
+                pVertex->positionXYZD[2] = arrowCenter.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = arrowStart1.x;
-                pVertex->positionXYZ[2] = arrowStart1.y;
+                pVertex->positionXYZD[0] = lastSegment.center.b.x;
+                pVertex->positionXYZD[2] = lastSegment.center.b.y;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = arrowCenter.x;
+                pVertex->positionXYZD[2] = arrowCenter.y;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = arrowStart1.x;
+                pVertex->positionXYZD[2] = arrowStart1.y;
                 *vertices++ = vertex;
             }
 
@@ -883,128 +931,133 @@ public:
                 }
 
                 pVertex->color = outerColor;
-                pVertex->positionXYZ[0] = side1.x;
-                pVertex->positionXYZ[1] = bottom;
-                pVertex->positionXYZ[2] = side1.y;
+                pVertex->positionXYZD[0] = side1.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = side1.y;
+                pVertex->positionXYZD[3] = distance;
                 *vertices++ = vertex;
                 
                 pVertex->color = innerColor;
-                pVertex->positionXYZ[0] = pathEnd1.x;
-                pVertex->positionXYZ[1] = top;
-                pVertex->positionXYZ[2] = pathEnd1.y;
+                pVertex->positionXYZD[0] = pathEnd1.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pathEnd1.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = arrowStart1.x;
-                pVertex->positionXYZ[2] = arrowStart1.y;
-                *vertices++ = vertex;
-                *vertices++ = vertex;
-                
-                pVertex->positionXYZ[0] = pt1.x;
-                pVertex->positionXYZ[2] = pt1.y;
-                *vertices++ = vertex;
-                
-                pVertex->color = outerColor;
-                pVertex->positionXYZ[0] = side1.x;
-                pVertex->positionXYZ[1] = bottom;
-                pVertex->positionXYZ[2] = side1.y;
+                pVertex->positionXYZD[0] = arrowStart1.x;
+                pVertex->positionXYZD[2] = arrowStart1.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
-                pVertex->color = innerColor;
-                pVertex->positionXYZ[0] = pt1.x;
-                pVertex->positionXYZ[1] = top;
-                pVertex->positionXYZ[2] = pt1.y;
+                pVertex->positionXYZD[0] = pt1.x;
+                pVertex->positionXYZD[2] = pt1.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = outerColor;
-                pVertex->positionXYZ[0] = arrowSide1.x;
-                pVertex->positionXYZ[1] = bottom;
-                pVertex->positionXYZ[2] = arrowSide1.y;
+                pVertex->positionXYZD[0] = side1.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = side1.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
                 pVertex->color = innerColor;
-                pVertex->positionXYZ[0] = pt1.x;
-                pVertex->positionXYZ[1] = top;
-                pVertex->positionXYZ[2] = pt1.y;
+                pVertex->positionXYZD[0] = pt1.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pt1.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = outerColor;
-                pVertex->positionXYZ[0] = arrowSide3.x;
-                pVertex->positionXYZ[1] = bottom;
-                pVertex->positionXYZ[2] = arrowSide3.y;
+                pVertex->positionXYZD[0] = arrowSide1.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = arrowSide1.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
                 pVertex->color = innerColor;
-                pVertex->positionXYZ[0] = pt1.x;
-                pVertex->positionXYZ[1] = top;
-                pVertex->positionXYZ[2] = pt1.y;
-                *vertices++ = vertex;
-                
-                pVertex->positionXYZ[0] = midPoint.x;
-                pVertex->positionXYZ[1] = tip;
-                pVertex->positionXYZ[2] = midPoint.y;
-                *vertices++ = vertex;
-                *vertices++ = vertex;
-                
-                pVertex->positionXYZ[0] = pt2.x;
-                pVertex->positionXYZ[1] = top;
-                pVertex->positionXYZ[2] = pt2.y;
+                pVertex->positionXYZD[0] = pt1.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pt1.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = outerColor;
-                pVertex->positionXYZ[0] = arrowSide3.x;
-                pVertex->positionXYZ[1] = tipBottom;
-                pVertex->positionXYZ[2] = arrowSide3.y;
+                pVertex->positionXYZD[0] = arrowSide3.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = arrowSide3.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
                 pVertex->color = innerColor;
-                pVertex->positionXYZ[0] = pt2.x;
-                pVertex->positionXYZ[1] = top;
-                pVertex->positionXYZ[2] = pt2.y;
+                pVertex->positionXYZD[0] = pt1.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pt1.y;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = midPoint.x;
+                pVertex->positionXYZD[1] = tip;
+                pVertex->positionXYZD[2] = midPoint.y;
+                pVertex->positionXYZD[3] = tipDistance;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = pt2.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pt2.y;
+                pVertex->positionXYZD[3] = distance;
                 *vertices++ = vertex;
                 
                 pVertex->color = outerColor;
-                pVertex->positionXYZ[0] = arrowSide2.x;
-                pVertex->positionXYZ[1] = bottom;
-                pVertex->positionXYZ[2] = arrowSide2.y;
+                pVertex->positionXYZD[0] = arrowSide3.x;
+                pVertex->positionXYZD[1] = tipBottom;
+                pVertex->positionXYZD[2] = arrowSide3.y;
+                pVertex->positionXYZD[3] = tipDistance;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
                 pVertex->color = innerColor;
-                pVertex->positionXYZ[0] = pt2.x;
-                pVertex->positionXYZ[1] = top;
-                pVertex->positionXYZ[2] = pt2.y;
+                pVertex->positionXYZD[0] = pt2.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pt2.y;
+                pVertex->positionXYZD[3] = distance;
                 *vertices++ = vertex;
                 
                 pVertex->color = outerColor;
-                pVertex->positionXYZ[0] = side2.x;
-                pVertex->positionXYZ[1] = bottom;
-                pVertex->positionXYZ[2] = side2.y;
+                pVertex->positionXYZD[0] = arrowSide2.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = arrowSide2.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
                 pVertex->color = innerColor;
-                pVertex->positionXYZ[0] = pt2.x;
-                pVertex->positionXYZ[1] = top;
-                pVertex->positionXYZ[2] = pt2.y;
-                *vertices++ = vertex;
-                
-                pVertex->positionXYZ[0] = arrowStart2.x;
-                pVertex->positionXYZ[2] = arrowStart2.y;
-                *vertices++ = vertex;
-                *vertices++ = vertex;
-                
-                pVertex->positionXYZ[0] = pathEnd2.x;
-                pVertex->positionXYZ[2] = pathEnd2.y;
+                pVertex->positionXYZD[0] = pt2.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pt2.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = outerColor;
-                pVertex->positionXYZ[0] = side2.x;
-                pVertex->positionXYZ[1] = bottom;
-                pVertex->positionXYZ[2] = side2.y;
+                pVertex->positionXYZD[0] = side2.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = side2.y;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->color = innerColor;
+                pVertex->positionXYZD[0] = pt2.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pt2.y;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = arrowStart2.x;
+                pVertex->positionXYZD[2] = arrowStart2.y;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = pathEnd2.x;
+                pVertex->positionXYZD[2] = pathEnd2.y;
+                *vertices++ = vertex;
+                
+                pVertex->color = outerColor;
+                pVertex->positionXYZD[0] = side2.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = side2.y;
                 *vertices++ = vertex;
             }
         } else if (endCapStyle == EndCapStyle::ROUND) {
@@ -1016,9 +1069,10 @@ public:
 			    innerColor *= outlineColorizationMapping.last();
 			    outerColor *= outlineColorizationMapping.last();
             }
+			auto lastDistance = hasDistances ? distances.last() : noDistance;
 			auto lastHeight = hasHeights ? heights.last() : noHeight;
             createTriangleFan(vertex, vertices, lastColor, lastColor, innerColor, innerColor, outerColor, outerColor,
-                outlineWidth, lastHeight, outline, lastSegment.center.b, lastSegment.center.b,
+                outlineWidth, lastDistance, lastHeight, outline, lastSegment.center.b, lastSegment.center.b,
                 lastSegment.edge2.b, lastSegment.edge1.b, endSide1, nextStartSide1, false);
         } else if (endCapStyle != EndCapStyle::JOINT) {
             auto pEnd1 = pathEnd1;
@@ -1030,48 +1084,50 @@ public:
                 pEnd2 = Vec2Maths::add(pEnd2, Vec2Maths::multiply(lastSegment.edge2.direction(), edgeOffset));
                 pCenter = Vec2Maths::add(pCenter, Vec2Maths::multiply(lastSegment.center.direction(), edgeOffset));
 
+                auto distance = hasDistances ? distances.last() : noDistance;
                 auto top = hasHeights ? heights.last() : noHeight;
 
                 pVertex->color = hasColorMapping ? colorizationMapping.last() : fillColor;
 
-                pVertex->positionXYZ[0] = lastSegment.center.b.x;
-			    pVertex->positionXYZ[1] = top;
-                pVertex->positionXYZ[2] = lastSegment.center.b.y;
+                pVertex->positionXYZD[0] = lastSegment.center.b.x;
+			    pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = lastSegment.center.b.y;
+			    pVertex->positionXYZD[3] = distance;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = pCenter.x;
-                pVertex->positionXYZ[2] = pCenter.y;
+                pVertex->positionXYZD[0] = pCenter.x;
+                pVertex->positionXYZD[2] = pCenter.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = pEnd1.x;
-                pVertex->positionXYZ[2] = pEnd1.y;
-                *vertices++ = vertex;
-                *vertices++ = vertex;
-                
-                pVertex->positionXYZ[0] = pathEnd1.x;
-                pVertex->positionXYZ[2] = pathEnd1.y;
-                *vertices++ = vertex;
-                
-                pVertex->positionXYZ[0] = lastSegment.center.b.x;
-                pVertex->positionXYZ[2] = lastSegment.center.b.y;
+                pVertex->positionXYZD[0] = pEnd1.x;
+                pVertex->positionXYZD[2] = pEnd1.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = pathEnd2.x;
-                pVertex->positionXYZ[2] = pathEnd2.y;
+                pVertex->positionXYZD[0] = pathEnd1.x;
+                pVertex->positionXYZD[2] = pathEnd1.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = pEnd2.x;
-                pVertex->positionXYZ[2] = pEnd2.y;
+                pVertex->positionXYZD[0] = lastSegment.center.b.x;
+                pVertex->positionXYZD[2] = lastSegment.center.b.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = pCenter.x;
-                pVertex->positionXYZ[2] = pCenter.y;
+                pVertex->positionXYZD[0] = pathEnd2.x;
+                pVertex->positionXYZD[2] = pathEnd2.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = lastSegment.center.b.x;
-                pVertex->positionXYZ[2] = lastSegment.center.b.y;
+                pVertex->positionXYZD[0] = pEnd2.x;
+                pVertex->positionXYZD[2] = pEnd2.y;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = pCenter.x;
+                pVertex->positionXYZD[2] = pCenter.y;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = lastSegment.center.b.x;
+                pVertex->positionXYZD[2] = lastSegment.center.b.y;
                 *vertices++ = vertex;
             }            
 
@@ -1087,6 +1143,7 @@ public:
                 auto outPathEnd2 =
                     Vec2Maths::add(outPathEndSide2, Vec2Maths::multiply(lastSegment.edge2.direction(), outlineWidth));
 
+                auto distance = hasDistances ? distances.last() : noDistance;
                 auto top = hasHeights ? heights.last() : noHeight;
                 auto bottom = hasHeights ? heights.last() - outline : noHeight;
 
@@ -1099,65 +1156,66 @@ public:
 
                 // emit triangles for ending outline part
                 pVertex->color = outerColor;
-                pVertex->positionXYZ[0] = outPathEndSide2.x;
-                pVertex->positionXYZ[1] = bottom;
-                pVertex->positionXYZ[2] = outPathEndSide2.y;
+                pVertex->positionXYZD[0] = outPathEndSide2.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = outPathEndSide2.y;
+                pVertex->positionXYZD[3] = distance;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = outPathEnd2.x;
-                pVertex->positionXYZ[2] = outPathEnd2.y;
+                pVertex->positionXYZD[0] = outPathEnd2.x;
+                pVertex->positionXYZD[2] = outPathEnd2.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = innerColor;
-                pVertex->positionXYZ[0] = pEnd2.x;
-                pVertex->positionXYZ[1] = top;
-                pVertex->positionXYZ[2] = pEnd2.y;
+                pVertex->positionXYZD[0] = pEnd2.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pEnd2.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
                 pVertex->color = outerColor;
-                pVertex->positionXYZ[0] = outPathEnd2.x;
-                pVertex->positionXYZ[1] = bottom;
-                pVertex->positionXYZ[2] = outPathEnd2.y;
+                pVertex->positionXYZD[0] = outPathEnd2.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = outPathEnd2.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = innerColor;
-                pVertex->positionXYZ[0] = pCenter.x;
-                pVertex->positionXYZ[1] = top;
-                pVertex->positionXYZ[2] = pCenter.y;
+                pVertex->positionXYZD[0] = pCenter.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pCenter.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
                 pVertex->color = outerColor;
-                pVertex->positionXYZ[0] = outPathEnd2.x;
-                pVertex->positionXYZ[1] = bottom;
-                pVertex->positionXYZ[2] = outPathEnd2.y;
+                pVertex->positionXYZD[0] = outPathEnd2.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = outPathEnd2.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = outPathEnd1.x;
-                pVertex->positionXYZ[2] = outPathEnd1.y;
+                pVertex->positionXYZD[0] = outPathEnd1.x;
+                pVertex->positionXYZD[2] = outPathEnd1.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = outPathEndSide1.x;
-                pVertex->positionXYZ[2] = outPathEndSide1.y;
+                pVertex->positionXYZD[0] = outPathEndSide1.x;
+                pVertex->positionXYZD[2] = outPathEndSide1.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = innerColor;
-                pVertex->positionXYZ[0] = pEnd1.x;
-                pVertex->positionXYZ[1] = top;
-                pVertex->positionXYZ[2] = pEnd1.y;
+                pVertex->positionXYZD[0] = pEnd1.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pEnd1.y;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = pCenter.x;
-                pVertex->positionXYZ[2] = pCenter.y;
+                pVertex->positionXYZD[0] = pCenter.x;
+                pVertex->positionXYZD[2] = pCenter.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = outerColor;
-                pVertex->positionXYZ[0] = outPathEnd1.x;
-                pVertex->positionXYZ[1] = bottom;
-                pVertex->positionXYZ[2] = outPathEnd1.y;
+                pVertex->positionXYZD[0] = outPathEnd1.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = outPathEnd1.y;
                 *vertices++ = vertex;
 
                 if (endCapStyle == EndCapStyle::SQUARE) {
@@ -1167,55 +1225,55 @@ public:
                         pathEnd2, Vec2Maths::multiply(lastSegment.edge2.normal(), outlineWidth));
 
                     pVertex->color = outerColor;
-                    pVertex->positionXYZ[0] = outPathEndSide1.x;
-                    pVertex->positionXYZ[1] = bottom;
-                    pVertex->positionXYZ[2] = outPathEndSide1.y;
+                    pVertex->positionXYZD[0] = outPathEndSide1.x;
+                    pVertex->positionXYZD[1] = bottom;
+                    pVertex->positionXYZD[2] = outPathEndSide1.y;
                     *vertices++ = vertex;
                     
-                    pVertex->positionXYZ[0] = outPrevEndSide1.x;
-                    pVertex->positionXYZ[2] = outPrevEndSide1.y;
-                    *vertices++ = vertex;
-                    
-                    pVertex->color = innerColor;
-                    pVertex->positionXYZ[0] = pathEnd1.x;
-                    pVertex->positionXYZ[1] = top;
-                    pVertex->positionXYZ[2] = pathEnd1.y;
-                    *vertices++ = vertex;
-                    *vertices++ = vertex;
-                    
-                    pVertex->positionXYZ[0] = pEnd1.x;
-                    pVertex->positionXYZ[2] = pEnd1.y;
-                    *vertices++ = vertex;
-                    
-                    pVertex->color = outerColor;
-                    pVertex->positionXYZ[0] = outPathEndSide1.x;
-                    pVertex->positionXYZ[1] = bottom;
-                    pVertex->positionXYZ[2] = outPathEndSide1.y;
-                    *vertices++ = vertex;
-                    
-                    pVertex->positionXYZ[0] = outPrevEndSide2.x;
-                    pVertex->positionXYZ[2] = outPrevEndSide2.y;
-                    *vertices++ = vertex;
-                    
-                    pVertex->positionXYZ[0] = outPathEndSide2.x;
-                    pVertex->positionXYZ[2] = outPathEndSide2.y;
+                    pVertex->positionXYZD[0] = outPrevEndSide1.x;
+                    pVertex->positionXYZD[2] = outPrevEndSide1.y;
                     *vertices++ = vertex;
                     
                     pVertex->color = innerColor;
-                    pVertex->positionXYZ[0] = pEnd2.x;
-                    pVertex->positionXYZ[1] = top;
-                    pVertex->positionXYZ[2] = pEnd2.y;
+                    pVertex->positionXYZD[0] = pathEnd1.x;
+                    pVertex->positionXYZD[1] = top;
+                    pVertex->positionXYZD[2] = pathEnd1.y;
                     *vertices++ = vertex;
                     *vertices++ = vertex;
                     
-                    pVertex->positionXYZ[0] = pathEnd2.x;
-                    pVertex->positionXYZ[2] = pathEnd2.y;
+                    pVertex->positionXYZD[0] = pEnd1.x;
+                    pVertex->positionXYZD[2] = pEnd1.y;
                     *vertices++ = vertex;
                     
                     pVertex->color = outerColor;
-                    pVertex->positionXYZ[0] = outPrevEndSide2.x;
-                    pVertex->positionXYZ[1] = bottom;
-                    pVertex->positionXYZ[2] = outPrevEndSide2.y;
+                    pVertex->positionXYZD[0] = outPathEndSide1.x;
+                    pVertex->positionXYZD[1] = bottom;
+                    pVertex->positionXYZD[2] = outPathEndSide1.y;
+                    *vertices++ = vertex;
+                    
+                    pVertex->positionXYZD[0] = outPrevEndSide2.x;
+                    pVertex->positionXYZD[2] = outPrevEndSide2.y;
+                    *vertices++ = vertex;
+                    
+                    pVertex->positionXYZD[0] = outPathEndSide2.x;
+                    pVertex->positionXYZD[2] = outPathEndSide2.y;
+                    *vertices++ = vertex;
+                    
+                    pVertex->color = innerColor;
+                    pVertex->positionXYZD[0] = pEnd2.x;
+                    pVertex->positionXYZD[1] = top;
+                    pVertex->positionXYZD[2] = pEnd2.y;
+                    *vertices++ = vertex;
+                    *vertices++ = vertex;
+                    
+                    pVertex->positionXYZD[0] = pathEnd2.x;
+                    pVertex->positionXYZD[2] = pathEnd2.y;
+                    *vertices++ = vertex;
+                    
+                    pVertex->color = outerColor;
+                    pVertex->positionXYZD[0] = outPrevEndSide2.x;
+                    pVertex->positionXYZD[1] = bottom;
+                    pVertex->positionXYZD[2] = outPrevEndSide2.y;
                     *vertices++ = vertex;
                 }
             }
@@ -1275,6 +1333,7 @@ private:
                                       const OsmAnd::FColorARGB &endFarOutlineColor,
                                       const OsmAnd::FColorARGB &nextFarOutlineColor,
                                       float outlineWidth,
+                                      float distance,
                                       float height,
                                       float outlineHeight,
 	                                  JointStyle jointStyle,
@@ -1449,6 +1508,7 @@ private:
 			}
 
 			// connect the intersection points according to the joint style
+            pVertex->positionXYZD[3] = distance;
             float top = height;
             float bottom = height == OsmAnd::VectorMapSymbol::_absentElevation ? height : height - outlineHeight;
 			if (jointStyle == JointStyle::BEVEL) {
@@ -1460,29 +1520,29 @@ private:
                 bool takeEndColor = clockwise || !(withIntersection && solidColors);
                 bool takeNextColor = clockwise && withIntersection && solidColors;
 
-                pVertex->positionXYZ[1] = top;
+                pVertex->positionXYZD[1] = top;
                 pVertex->color = takeEndColor ? endColor : nextColor;
-                pVertex->positionXYZ[0] = middlePoint.x;
-                pVertex->positionXYZ[2] = middlePoint.y;
+                pVertex->positionXYZD[0] = middlePoint.x;
+                pVertex->positionXYZD[2] = middlePoint.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = firstPoint.x;
-                pVertex->positionXYZ[2] = firstPoint.y;
+                pVertex->positionXYZD[0] = firstPoint.x;
+                pVertex->positionXYZD[2] = firstPoint.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = segment1.center.b.x;
-                pVertex->positionXYZ[2] = segment1.center.b.y;
+                pVertex->positionXYZD[0] = segment1.center.b.x;
+                pVertex->positionXYZD[2] = segment1.center.b.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = takeNextColor ? nextColor : endColor;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = secondPoint.x;
-                pVertex->positionXYZ[2] = secondPoint.y;
+                pVertex->positionXYZD[0] = secondPoint.x;
+                pVertex->positionXYZD[2] = secondPoint.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZ[0] = middlePoint.x;
-                pVertex->positionXYZ[2] = middlePoint.y;
+                pVertex->positionXYZD[0] = middlePoint.x;
+                pVertex->positionXYZD[2] = middlePoint.y;
                 *vertices++ = vertex;
                 if (showOutline) {
                     auto sideSegment = LineSegment<Vec2>(outer1->b, outer2->a);
@@ -1510,56 +1570,56 @@ private:
                     auto& secondFarOutlineColor = takeNextColor ? nextFarOutlineColor : endFarOutlineColor;
 
                     pVertex->color = firstFarOutlineColor;
-                    pVertex->positionXYZ[0] = middleSidePoint.x;
-                    pVertex->positionXYZ[1] = bottom;
-                    pVertex->positionXYZ[2] = middleSidePoint.y;
+                    pVertex->positionXYZD[0] = middleSidePoint.x;
+                    pVertex->positionXYZD[1] = bottom;
+                    pVertex->positionXYZD[2] = middleSidePoint.y;
                     *vertices++ = vertex;
                     
-                    pVertex->positionXYZ[0] = firstSidePoint.x;
-                    pVertex->positionXYZ[2] = firstSidePoint.y;
+                    pVertex->positionXYZD[0] = firstSidePoint.x;
+                    pVertex->positionXYZD[2] = firstSidePoint.y;
                     *vertices++ = vertex;
                     
                     pVertex->color = firstNearOutlineColor;
-                    pVertex->positionXYZ[0] = firstPoint.x;
-                    pVertex->positionXYZ[1] = top;
-                    pVertex->positionXYZ[2] = firstPoint.y;
+                    pVertex->positionXYZD[0] = firstPoint.x;
+                    pVertex->positionXYZD[1] = top;
+                    pVertex->positionXYZD[2] = firstPoint.y;
                     *vertices++ = vertex;
                     *vertices++ = vertex;
                     
-                    pVertex->positionXYZ[0] = middlePoint.x;
-                    pVertex->positionXYZ[2] = middlePoint.y;
+                    pVertex->positionXYZD[0] = middlePoint.x;
+                    pVertex->positionXYZD[2] = middlePoint.y;
                     *vertices++ = vertex;
                     
                     pVertex->color = firstFarOutlineColor;
-                    pVertex->positionXYZ[0] = middleSidePoint.x;
-                    pVertex->positionXYZ[1] = bottom;
-                    pVertex->positionXYZ[2] = middleSidePoint.y;
+                    pVertex->positionXYZD[0] = middleSidePoint.x;
+                    pVertex->positionXYZD[1] = bottom;
+                    pVertex->positionXYZD[2] = middleSidePoint.y;
                     *vertices++ = vertex;
 
                     pVertex->color = secondFarOutlineColor;
                     *vertices++ = vertex;
 
                     pVertex->color = secondNearOutlineColor;
-                    pVertex->positionXYZ[0] = middlePoint.x;
-                    pVertex->positionXYZ[1] = top;
-                    pVertex->positionXYZ[2] = middlePoint.y;
+                    pVertex->positionXYZD[0] = middlePoint.x;
+                    pVertex->positionXYZD[1] = top;
+                    pVertex->positionXYZD[2] = middlePoint.y;
                     *vertices++ = vertex;
                     
                     pVertex->color = secondFarOutlineColor;
-                    pVertex->positionXYZ[0] = secondSidePoint.x;
-                    pVertex->positionXYZ[1] = bottom;
-                    pVertex->positionXYZ[2] = secondSidePoint.y;
+                    pVertex->positionXYZD[0] = secondSidePoint.x;
+                    pVertex->positionXYZD[1] = bottom;
+                    pVertex->positionXYZD[2] = secondSidePoint.y;
                     *vertices++ = vertex;
                     *vertices++ = vertex;
                     
                     pVertex->color = secondNearOutlineColor;
-                    pVertex->positionXYZ[0] = middlePoint.x;
-                    pVertex->positionXYZ[1] = top;
-                    pVertex->positionXYZ[2] = middlePoint.y;
+                    pVertex->positionXYZD[0] = middlePoint.x;
+                    pVertex->positionXYZD[1] = top;
+                    pVertex->positionXYZD[2] = middlePoint.y;
                     *vertices++ = vertex;
                     
-                    pVertex->positionXYZ[0] = secondPoint.x;
-                    pVertex->positionXYZ[2] = secondPoint.y;
+                    pVertex->positionXYZD[0] = secondPoint.x;
+                    pVertex->positionXYZD[2] = secondPoint.y;
                     *vertices++ = vertex;
                 }
 			} else {
@@ -1570,8 +1630,8 @@ private:
                 auto secondNearColor = withIntersection && solidColors ? nextNearOutlineColor : endNearOutlineColor;
                 auto secondFarColor = withIntersection && solidColors ? nextFarOutlineColor : endFarOutlineColor;
                 createTriangleFan(vertex, vertices, endColor, secondColor, endNearOutlineColor, secondNearColor,
-                    endFarOutlineColor, secondFarColor, outlineWidth, height, outlineHeight, segment1.center.b,
-                    segment1.center.b, outer1->b, outer2->a, endSide, nextStartSide, clockwise);
+                    endFarOutlineColor, secondFarColor, outlineWidth, distance, height, outlineHeight,
+                    segment1.center.b, segment1.center.b, outer1->b, outer2->a, endSide, nextStartSide, clockwise);
 			}
             if (showOutline) {
                 if (clockwise) {
@@ -1613,6 +1673,7 @@ private:
                                             const OsmAnd::FColorARGB &endFarOutlineColor,
                                             const OsmAnd::FColorARGB &nextFarOutlineColor,
                                             float outlineWidth,
+                                            float distance,
                                             float height,
                                             float outlineHeight,
                                             const Vec2 &connectTo,
@@ -1653,6 +1714,7 @@ private:
 
 		Vec2 startPoint = start;
 		Vec2 endPoint, startPointSide, endPointSide;
+        pVertex->positionXYZD[3] = distance;
         float top = height;
         float bottom = height == OsmAnd::VectorMapSymbol::_absentElevation ? height : height - outlineHeight;
         bool showOutline = outlineWidth >= 0.0f;
@@ -1689,82 +1751,82 @@ private:
             
             // emit the triangle
             pVertex->color = t < halfOfTriangles ? endColor : nextColor;
-            pVertex->positionXYZ[1] = top;
+            pVertex->positionXYZD[1] = top;
             
             if (!clockwise) {
-                pVertex->positionXYZ[0] = startPoint.x;
-                pVertex->positionXYZ[2] = startPoint.y;
+                pVertex->positionXYZD[0] = startPoint.x;
+                pVertex->positionXYZD[2] = startPoint.y;
                 *vertices++ = vertex;
             }
             
-            pVertex->positionXYZ[0] = endPoint.x;
-            pVertex->positionXYZ[2] = endPoint.y;
+            pVertex->positionXYZD[0] = endPoint.x;
+            pVertex->positionXYZD[2] = endPoint.y;
             *vertices++ = vertex;
             
             if (clockwise) {
-                pVertex->positionXYZ[0] = startPoint.x;
-                pVertex->positionXYZ[2] = startPoint.y;
+                pVertex->positionXYZD[0] = startPoint.x;
+                pVertex->positionXYZD[2] = startPoint.y;
                 *vertices++ = vertex;
             }
 
-            pVertex->positionXYZ[0] = connectTo.x;
-            pVertex->positionXYZ[2] = connectTo.y;
+            pVertex->positionXYZD[0] = connectTo.x;
+            pVertex->positionXYZD[2] = connectTo.y;
             *vertices++ = vertex;
 
             if (showOutline) {
                 // emit two trianges for outline
                 pVertex->color = t < halfOfTriangles ? endFarOutlineColor : nextFarOutlineColor;
                 if (clockwise) {
-                    pVertex->positionXYZ[0] = endPointSide.x;
-                    pVertex->positionXYZ[1] = bottom;
-                    pVertex->positionXYZ[2] = endPointSide.y;
+                    pVertex->positionXYZD[0] = endPointSide.x;
+                    pVertex->positionXYZD[1] = bottom;
+                    pVertex->positionXYZD[2] = endPointSide.y;
                     *vertices++ = vertex;
                     
-                    pVertex->positionXYZ[0] = startPointSide.x;
-                    pVertex->positionXYZ[2] = startPointSide.y;
+                    pVertex->positionXYZD[0] = startPointSide.x;
+                    pVertex->positionXYZD[2] = startPointSide.y;
                     *vertices++ = vertex;
                     
                     pVertex->color = t < halfOfTriangles ? endNearOutlineColor : nextNearOutlineColor;
-                    pVertex->positionXYZ[0] = startPoint.x;
-                    pVertex->positionXYZ[1] = top;
-                    pVertex->positionXYZ[2] = startPoint.y;
+                    pVertex->positionXYZD[0] = startPoint.x;
+                    pVertex->positionXYZD[1] = top;
+                    pVertex->positionXYZD[2] = startPoint.y;
                     *vertices++ = vertex;
                     *vertices++ = vertex;
                     
-                    pVertex->positionXYZ[0] = endPoint.x;
-                    pVertex->positionXYZ[2] = endPoint.y;
+                    pVertex->positionXYZD[0] = endPoint.x;
+                    pVertex->positionXYZD[2] = endPoint.y;
                     *vertices++ = vertex;
                     
                     pVertex->color = t < halfOfTriangles ? endFarOutlineColor : nextFarOutlineColor;
-                    pVertex->positionXYZ[0] = endPointSide.x;
-                    pVertex->positionXYZ[1] = bottom;
-                    pVertex->positionXYZ[2] = endPointSide.y;
+                    pVertex->positionXYZD[0] = endPointSide.x;
+                    pVertex->positionXYZD[1] = bottom;
+                    pVertex->positionXYZD[2] = endPointSide.y;
                     *vertices++ = vertex;
                 } else {
-                    pVertex->positionXYZ[0] = startPointSide.x;
-                    pVertex->positionXYZ[1] = bottom;
-                    pVertex->positionXYZ[2] = startPointSide.y;
+                    pVertex->positionXYZD[0] = startPointSide.x;
+                    pVertex->positionXYZD[1] = bottom;
+                    pVertex->positionXYZD[2] = startPointSide.y;
                     *vertices++ = vertex;
                     
-                    pVertex->positionXYZ[0] = endPointSide.x;
-                    pVertex->positionXYZ[2] = endPointSide.y;
+                    pVertex->positionXYZD[0] = endPointSide.x;
+                    pVertex->positionXYZD[2] = endPointSide.y;
                     *vertices++ = vertex;
                     
                     pVertex->color = t < halfOfTriangles ? endNearOutlineColor : nextNearOutlineColor;
-                    pVertex->positionXYZ[0] = endPoint.x;
-                    pVertex->positionXYZ[1] = top;
-                    pVertex->positionXYZ[2] = endPoint.y;
+                    pVertex->positionXYZD[0] = endPoint.x;
+                    pVertex->positionXYZD[1] = top;
+                    pVertex->positionXYZD[2] = endPoint.y;
                     *vertices++ = vertex;
                     *vertices++ = vertex;
                     
-                    pVertex->positionXYZ[0] = startPoint.x;
-                    pVertex->positionXYZ[2] = startPoint.y;
+                    pVertex->positionXYZD[0] = startPoint.x;
+                    pVertex->positionXYZD[2] = startPoint.y;
                     *vertices++ = vertex;
                     
                     pVertex->color = t < halfOfTriangles ? endFarOutlineColor : nextFarOutlineColor;
-                    pVertex->positionXYZ[0] = startPointSide.x;
-                    pVertex->positionXYZ[1] = bottom;
-                    pVertex->positionXYZ[2] = startPointSide.y;
+                    pVertex->positionXYZD[0] = startPointSide.x;
+                    pVertex->positionXYZD[1] = bottom;
+                    pVertex->positionXYZD[2] = startPointSide.y;
                     *vertices++ = vertex;
                 }
     			startPointSide = endPointSide;

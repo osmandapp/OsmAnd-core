@@ -39,7 +39,11 @@ namespace OsmAnd
 
         bool isHidden() const;
         VectorLineBuilder& setIsHidden(const bool hidden);
-        
+
+        // Get/set the distance (in meters) from which only part of the line should be drawn,
+        float getStartingDistance() const;
+        VectorLineBuilder& setStartingDistance(const float distanceInMeters);
+
         bool shouldShowArrows() const;
         VectorLineBuilder& setShouldShowArrows(const bool showArrows);
 

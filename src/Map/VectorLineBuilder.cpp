@@ -22,6 +22,18 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setIsHidden(const bool hid
     return *this;
 }
 
+float OsmAnd::VectorLineBuilder::getStartingDistance() const
+{
+    return _p->getStartingDistance();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setStartingDistance(const float distanceInMeters)
+{
+    _p->setStartingDistance(distanceInMeters);
+
+    return *this;
+}
+
 bool OsmAnd::VectorLineBuilder::shouldShowArrows() const
 {
     return _p->shouldShowArrows();

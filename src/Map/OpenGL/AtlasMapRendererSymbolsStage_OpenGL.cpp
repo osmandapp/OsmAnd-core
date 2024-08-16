@@ -2235,11 +2235,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
         // Input data
-        "INPUT vec3 in_vs_vertexPosition;                                                                                   ""\n"
+        "INPUT vec4 in_vs_vertexPosition;                                                                                   ""\n"
         "INPUT vec4 in_vs_vertexColor;                                                                                      ""\n"
         "                                                                                                                   ""\n"
         // Output data to next shader stages
         "PARAM_OUTPUT vec4 v2f_color;                                                                                       ""\n"
+        "PARAM_OUTPUT float v2f_distance;                                                                                   ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform vec4 param_vs_elevation_scale;                                                                             ""\n"
@@ -2305,6 +2306,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "    v.y += min(extraZfar, extraCam) + 0.1;                                                                         ""\n"
         "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
         "                                                                                                                   ""\n"
+        // Prepare distance
+        "    v2f_distance = in_vs_vertexPosition.w;                                                                         ""\n"
         // Prepare color
         "    v2f_color.argb = in_vs_vertexColor.xyzw * param_vs_modulationColor.argb;                                       ""\n"
         "}                                                                                                                  ""\n");
@@ -2326,13 +2329,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     const QString fragmentShader = QLatin1String(
         // Input data
         "PARAM_INPUT vec4 v2f_color;                                                                                        ""\n"
+        "PARAM_INPUT float v2f_distance;                                                                                    ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
-        // Parameters: per-symbol data
+        "uniform float param_fs_startingDistance;                                                                           ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = v2f_color;                                                                             ""\n"
+        "    vec4 outColor = v2f_color;                                                                                     ""\n"
+        "    outColor.a = v2f_distance < param_fs_startingDistance ? 0.0 : outColor.a;                                      ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = outColor;                                                                              ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedFragmentShader = fragmentShader;
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
@@ -2376,6 +2382,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.elevationFactor, "param_vs_elevationFactor", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.texCoordsOffsetAndScale, "param_vs_texCoordsOffsetAndScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.elevationLayerDataPlace, "param_vs_elevationLayerDataPlace", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.fs.param.startingDistance, "param_fs_startingDistance", GlslVariableType::Uniform);
     if (!ok)
     {
         glDeleteProgram(_onSurfaceVectorProgram.id);
@@ -2513,6 +2520,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     glUniform1f(_onSurfaceVectorProgram.vs.param.elevationFactor, renderable->elevationFactor);
     GL_CHECK_RESULT;
 
+    // Set starting distance
+    glUniform1f(_onSurfaceVectorProgram.fs.param.startingDistance, symbol->startingDistance);
+    GL_CHECK_RESULT;
+
     // If symbol has no tiled parts - render it flat using single elevation value
     if (gpuResource->zoomLevel == InvalidZoomLevel || gpuResource->partSizes == nullptr)
     {
@@ -2548,9 +2559,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
         GL_CHECK_RESULT;
         glVertexAttribPointer(*_onSurfaceVectorProgram.vs.in.vertexPosition,
-            3, GL_FLOAT, GL_FALSE,
+            4, GL_FLOAT, GL_FALSE,
             sizeof(VectorMapSymbol::Vertex),
-            reinterpret_cast<GLvoid*>(offsetof(VectorMapSymbol::Vertex, positionXYZ)));
+            reinterpret_cast<GLvoid*>(offsetof(VectorMapSymbol::Vertex, positionXYZD)));
         GL_CHECK_RESULT;
 
         glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexColor);
@@ -2787,9 +2798,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
             glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
             GL_CHECK_RESULT;
             glVertexAttribPointer(*_onSurfaceVectorProgram.vs.in.vertexPosition,
-                3, GL_FLOAT, GL_FALSE,
+                4, GL_FLOAT, GL_FALSE,
                 sizeof(VectorMapSymbol::Vertex),
-                reinterpret_cast<GLvoid*>(partOffset + offsetof(VectorMapSymbol::Vertex, positionXYZ)));
+                reinterpret_cast<GLvoid*>(partOffset + offsetof(VectorMapSymbol::Vertex, positionXYZD)));
             GL_CHECK_RESULT;
 
             glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexColor);

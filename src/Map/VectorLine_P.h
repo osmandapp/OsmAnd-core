@@ -32,7 +32,8 @@ namespace OsmAnd
             std::vector<VectorMapSymbol::Vertex> &vertices,
             VectorMapSymbol::Vertex &vertex,
             std::vector<OsmAnd::PointD> &original,
-            double radius,
+            double thickness,
+            QList<float>& distances,
             FColorARGB &fillColor,
             QList<FColorARGB>& colorMapping,
             QList<FColorARGB>& outlineColorMapping,
@@ -40,7 +41,8 @@ namespace OsmAnd
                 
         void addArrowsOnSegmentPath(
             const std::vector<PointI>& segmentPoints,
-            QList<float>& segmentHeights,
+            const QList<float>& segmentDistances,
+            const QList<float>& segmentHeights,
             const std::vector<bool>& includedPoints,
             const PointI64& arrowsOrigin);
         
@@ -63,6 +65,7 @@ namespace OsmAnd
         bool _hasUnappliedPrimitiveChanges;
 
         bool _isHidden;
+        bool _startingDistance;
         bool _isApproximationEnabled;
         bool _showArrows;
 
@@ -133,6 +136,7 @@ namespace OsmAnd
         inline FColorARGB middleColor(const FColorARGB& first, const FColorARGB& last, const float factor) const;
         void calculateVisibleSegments(
             std::vector<std::vector<PointI>>& segments,
+            QList<QList<float>>& segmentDistances,
             QList<QList<FColorARGB>>& segmentColors,
             QList<QList<FColorARGB>>& segmentOutlineColors,
             QList<QList<float>>& segmentHeights) const;
@@ -145,7 +149,12 @@ namespace OsmAnd
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);
-        
+
+        float getStartingDistance() const;
+        void setStartingDistance(const float distanceInMeters);
+
+        float getArrowStartingGap() const;
+
         bool showArrows() const;
         void setShowArrows(const bool showArrows);
 

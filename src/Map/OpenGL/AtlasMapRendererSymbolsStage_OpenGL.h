@@ -264,8 +264,7 @@ namespace OsmAnd
                 // Parameters
                 struct {
                     // Common data
-
-                    // Per-symbol data
+                    GLlocation startingDistance;
                 } param;
             } fs;
         } _onSurfaceVectorProgram;
