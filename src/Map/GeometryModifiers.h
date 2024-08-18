@@ -21,6 +21,7 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 		float x;
 		float y;
 		float z; // height
+		float d; // distance
 
 		// Grid line code
 		int32_t g;
@@ -35,6 +36,7 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 		float x;
 		float y;
 		float z; // height
+		float d; // distance
 
 		// Color
 		FColorARGB color;
@@ -102,11 +104,11 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 								const VertexAdv& C, const VertexAdv& D, const int32_t& rodCode)
 	{
 		inObj.push_back(A);
-		inObj.push_back({B.x, B.y, B.z, rodCode, B.color});
+		inObj.push_back({B.x, B.y, B.z, B.d, rodCode, B.color});
 		inObj.push_back(D);
 		inObj.push_back(C);
-		inObj.push_back({D.x, D.y, D.z, rodCode, D.color});
-		inObj.push_back({B.x, B.y, B.z, A.g, B.color});
+		inObj.push_back({D.x, D.y, D.z, D.d, rodCode, D.color});
+		inObj.push_back({B.x, B.y, B.z, B.d, A.g, B.color});
 	}
 
 	// Paving with three triangles
@@ -136,13 +138,13 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 			rewire = m < r;
 		}
 		inObj.push_back(A);
-		inObj.push_back({B.x, B.y, B.z, rodCode, B.color});
-		inObj.push_back({E.x, E.y, E.z, D.g, E.color});
+		inObj.push_back({B.x, B.y, B.z, B.d, rodCode, B.color});
+		inObj.push_back({E.x, E.y, E.z, E.d, D.g, E.color});
 		if (rewire)
 		{
-			inObj.push_back({B.x, B.y, B.z, A.g, B.color});
-			inObj.push_back({C.x, C.y, C.z, 0, C.color});
-			inObj.push_back({E.x, E.y, E.z, rodCode, E.color});
+			inObj.push_back({B.x, B.y, B.z, B.d, A.g, B.color});
+			inObj.push_back({C.x, C.y, C.z, C.d, 0, C.color});
+			inObj.push_back({E.x, E.y, E.z, E.d, rodCode, E.color});
 			inObj.push_back(C);
 			inObj.push_back(D);
 			inObj.push_back(E);
@@ -151,10 +153,10 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 		{
 			inObj.push_back(B);
 			inObj.push_back(D);
-			inObj.push_back({E.x, E.y, E.z, rodCode, E.color});
+			inObj.push_back({E.x, E.y, E.z, E.d, rodCode, E.color});
 			inObj.push_back(C);
-			inObj.push_back({D.x, D.y, D.z, 0, D.color});
-			inObj.push_back({B.x, B.y, B.z, A.g, B.color});
+			inObj.push_back({D.x, D.y, D.z, D.d, 0, D.color});
+			inObj.push_back({B.x, B.y, B.z, B.d, A.g, B.color});
 		}
 	}
 
@@ -179,9 +181,9 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 	// Test triangles for CCW and rewire if not
 	inline static void ccwTriangle(VectorMapSymbol::Vertex* A, VectorMapSymbol::Vertex* B, VectorMapSymbol::Vertex* C)
 	{
-		float s = A->positionXYZ[0] * B->positionXYZ[2] - A->positionXYZ[2] * B->positionXYZ[0];
-		s += B->positionXYZ[0] * C->positionXYZ[2] - B->positionXYZ[2] * C->positionXYZ[0];
-		s += C->positionXYZ[0] * A->positionXYZ[2] - C->positionXYZ[2] * A->positionXYZ[0];
+		float s = A->positionXYZD[0] * B->positionXYZD[2] - A->positionXYZD[2] * B->positionXYZD[0];
+		s += B->positionXYZD[0] * C->positionXYZD[2] - B->positionXYZD[2] * C->positionXYZD[0];
+		s += C->positionXYZD[0] * A->positionXYZD[2] - C->positionXYZD[2] * A->positionXYZD[0];
 		if (s < 0.0f)
 		{
 			VectorMapSymbol::Vertex* D = B;
@@ -193,7 +195,13 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 	// Get triange from vertex
 	inline static void getVertex(VectorMapSymbol::Vertex* vertex, std::deque<VertexAdv>& outQueue)
 	{
-        outQueue.push_back({vertex->positionXYZ[0], vertex->positionXYZ[2], vertex->positionXYZ[1], 0, vertex->color});
+        outQueue.push_back(
+            {vertex->positionXYZD[0],
+            vertex->positionXYZD[2],
+            vertex->positionXYZD[1],
+            vertex->positionXYZD[3],
+            0,
+            vertex->color});
 	}
 
 	// Put triangle to the tile list
@@ -211,16 +219,16 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 		auto ftile = meshes.find(tileId);
 		if (ftile != meshes.end())
 		{
-			ftile->second.push_back({{A.x, A.z, A.y}, A.color});
-			ftile->second.push_back({{B.x, B.z, B.y}, B.color});
-			ftile->second.push_back({{C.x, C.z, C.y}, C.color});
+			ftile->second.push_back({{A.x, A.z, A.y, A.d}, A.color});
+			ftile->second.push_back({{B.x, B.z, B.y, B.d}, B.color});
+			ftile->second.push_back({{C.x, C.z, C.y, C.d}, C.color});
 		}
 		else
 		{
 			std::vector<VectorMapSymbol::Vertex> tvec;
-			tvec.push_back({{A.x, A.z, A.y}, A.color});
-			tvec.push_back({{B.x, B.z, B.y}, B.color});
-			tvec.push_back({{C.x, C.z, C.y}, C.color});
+			tvec.push_back({{A.x, A.z, A.y, A.d}, A.color});
+			tvec.push_back({{B.x, B.z, B.y, B.d}, B.color});
+			tvec.push_back({{C.x, C.z, C.y, C.d}, C.color});
 			meshes.insert({tileId, tvec});
 		}
 	}
@@ -237,6 +245,7 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 	// Create vertical faces for path, cutting it by tiles and grid cells
 	static bool getTesselatedPlane(std::vector<VectorMapSymbol::Vertex>& vertices,
 						const std::vector<OsmAnd::PointD>& points,
+						QList<float>& distances,
 						QList<float>& heights,
 						FColorARGB& fillColor,
 						FColorARGB& topColor,

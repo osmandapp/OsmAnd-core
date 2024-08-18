@@ -987,11 +987,12 @@ bool OsmAnd::Utilities::calculateIntersection(const PointI& p1, const PointI& p0
     return result;
 }
 
-void OsmAnd::Utilities::calculateShortestPath(const PointI64& start64, const PointI& start31, const PointI& finish31,
+double OsmAnd::Utilities::calculateShortestPath(const PointI64& start64, const PointI& start31, const PointI& finish31,
     PointI64& minCoordinates, PointI64& maxCoordinates, QVector<PointI64>* path /*= nullptr*/)
 {
-    const auto leap = 100.0;
-    const double radius = 6371.0;
+    // divide the distance into 100 km segments along the shortest path on the Earth's surface
+    const double leap = 100000.0;
+    const double earthRadius = 6371000.0;
     int64_t intFull = INT32_MAX;
     intFull++;
     const auto intHalf = static_cast<int32_t>(intFull >> 1);
@@ -1011,7 +1012,8 @@ void OsmAnd::Utilities::calculateShortestPath(const PointI64& start64, const Poi
     nY /= length;
     nZ /= length;
     const auto angle = qAtan2(length, prevX * nextX + prevY * nextY + prevZ * nextZ);
-    const int count = qFloor(radius * qAbs(angle) / leap) + 1;
+    const auto distance = earthRadius * qAbs(angle);
+    const int count = qFloor(distance / leap) + 1;
     const auto delta = angle / count;
     const auto sn = qSin(delta);
     const auto cs = qCos(delta);
@@ -1054,6 +1056,7 @@ void OsmAnd::Utilities::calculateShortestPath(const PointI64& start64, const Poi
             path->push_back(middlePoint);
         previous31 = next31;
     }
+    return distance;
 }
 
 /**

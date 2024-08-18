@@ -59,10 +59,12 @@ namespace OsmAnd
 
         struct OnPathSymbolData
         {
-            OnPathSymbolData(PointI position31, float direction, float elevation, float elevationScaleFactor);
+            OnPathSymbolData(
+                PointI position31, float distance, float direction, float elevation, float elevationScaleFactor);
             ~OnPathSymbolData();
 
             PointI position31;
+            float distance;
             float direction;
             float elevation;
             float elevationScaleFactor;
@@ -111,6 +113,11 @@ namespace OsmAnd
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);
+
+        float getStartingDistance() const;
+        void setStartingDistance(const float distanceInMeters);
+
+        float getArrowStartingGap() const;
 
         bool showArrows() const;
         void setShowArrows(const bool showArrows);

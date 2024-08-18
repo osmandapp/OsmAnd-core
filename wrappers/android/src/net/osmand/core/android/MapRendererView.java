@@ -85,6 +85,13 @@ public abstract class MapRendererView extends FrameLayout {
     private volatile boolean _renderingResultIsReady;
 
     /**
+     * Rendering global parameters
+     */
+    private volatile boolean _batterySavingMode;
+    private volatile int _maxFrameRate;
+    private volatile long _maxFrameTime;
+
+    /**
      * Rendering time metrics
      */
     private long _frameStartTime;
@@ -197,11 +204,18 @@ public abstract class MapRendererView extends FrameLayout {
         boolean inWindow = (bitmapWidth == 0 || bitmapHeight == 0);
 
         synchronized (this) {
-            if (!inWindow)
+            if (!inWindow) {
                 _byteBuffer = ByteBuffer.allocateDirect(bitmapWidth * bitmapHeight * 4);
+            }
 
-                // Get display density factor
+            // Get display density factor
             _densityFactor = inWindow ? getResources().getDisplayMetrics().density : 1.0f;
+
+            // Disable battery saving mode
+            disableBatterySavingMode();
+
+            // Set initial frame rate limit for battery saving mode
+            setMaximumFrameRate(20); // 20 frames per seconds
 
             // Create instance of OsmAndCore::IMapRenderer
             if (oldView == null)
@@ -1321,6 +1335,27 @@ public abstract class MapRendererView extends FrameLayout {
         _mapRenderer.dumpResourcesInfo();
     }
 
+    public final boolean isBatterySavingModeEnabled() {
+        return _batterySavingMode;
+    }
+
+    public final void enableBatterySavingMode() {
+        _batterySavingMode = true;
+    }
+
+    public final void disableBatterySavingMode() {
+        _batterySavingMode = false;
+    }
+
+    public final int getMaximumFrameRate() {
+        return _maxFrameRate;
+    }
+
+    public final void setMaximumFrameRate(int maximumFramesPerSecond) {
+        _maxFrameRate = maximumFramesPerSecond;
+        _maxFrameTime = Math.round(1000.0f / (float) maximumFramesPerSecond);
+    }
+
     public final float getBasicThreadsCPULoad() {
         NativeCore.checkIfLoaded();
 
@@ -1851,6 +1886,18 @@ public abstract class MapRendererView extends FrameLayout {
             _frameRenderTime = Math.max(postRenderTime - _frameStartTime, 1);
             _frameRate = 1000.0f / (float) _frameRenderTime;
             _frameRateLast1K = _frameRateLast1K > 0.0 ? (_frameRateLast1K * 999.0f + _frameRate) / 1000.0f : _frameRate;
+
+            if (_batterySavingMode && _maxFrameRate > 0)
+            {
+                long extraTime = _maxFrameTime - _frameRenderTime;
+                if (extraTime > 0) {
+                    try {
+                        Thread.sleep(extraTime);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }
         }
     }
 

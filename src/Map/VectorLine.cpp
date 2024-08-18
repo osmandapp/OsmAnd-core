@@ -36,6 +36,21 @@ void OsmAnd::VectorLine::setIsHidden(const bool hidden)
     _p->setIsHidden(hidden);
 }
 
+float OsmAnd::VectorLine::getStartingDistance() const
+{
+    return _p->getStartingDistance();
+}
+
+void OsmAnd::VectorLine::setStartingDistance(const float distanceInMeters)
+{
+    _p->setStartingDistance(distanceInMeters);
+}
+
+float OsmAnd::VectorLine::getArrowStartingGap() const
+{
+    return _p->getArrowStartingGap();
+}
+
 bool OsmAnd::VectorLine::showArrows() const
 {
     return _p->showArrows();
@@ -306,8 +321,9 @@ OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::VectorLine::SymbolsGroup
 }
 
 OsmAnd::VectorLine::OnPathSymbolData::OnPathSymbolData(
-    OsmAnd::PointI position31, float direction, float elevation, float elevationScaleFactor)
+    OsmAnd::PointI position31, float distance, float direction, float elevation, float elevationScaleFactor)
     : position31(position31)
+    , distance(distance)
     , direction(direction)
     , elevation(elevation)
     , elevationScaleFactor(elevationScaleFactor)

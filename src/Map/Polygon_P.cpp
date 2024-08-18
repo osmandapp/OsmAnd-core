@@ -316,19 +316,20 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
     // generate triangles
     for (auto pointIdx = 0u; pointIdx + 2 < indices.size(); pointIdx += 3)
     {
-        pVertex->positionXYZ[1] = VectorMapSymbol::_absentElevation;
-        pVertex->positionXYZ[0] = original[indices[pointIdx]][0];
-        pVertex->positionXYZ[2] = original[indices[pointIdx]][1];
+        pVertex->positionXYZD[1] = VectorMapSymbol::_absentElevation;
+        pVertex->positionXYZD[3] = NAN;
+        pVertex->positionXYZD[0] = original[indices[pointIdx]][0];
+        pVertex->positionXYZD[2] = original[indices[pointIdx]][1];
         pVertex->color = owner->fillColor;
         vertices.push_back(vertex);
 
-        pVertex->positionXYZ[0] = original[indices[pointIdx + 1]][0];
-        pVertex->positionXYZ[2] = original[indices[pointIdx + 1]][1];
+        pVertex->positionXYZD[0] = original[indices[pointIdx + 1]][0];
+        pVertex->positionXYZD[2] = original[indices[pointIdx + 1]][1];
         pVertex->color = owner->fillColor;
         vertices.push_back(vertex);
         
-        pVertex->positionXYZ[0] = original[indices[pointIdx + 2]][0];
-        pVertex->positionXYZ[2] = original[indices[pointIdx + 2]][1];
+        pVertex->positionXYZD[0] = original[indices[pointIdx + 2]][0];
+        pVertex->positionXYZD[2] = original[indices[pointIdx + 2]][1];
         pVertex->color = owner->fillColor;
         vertices.push_back(vertex);
     }

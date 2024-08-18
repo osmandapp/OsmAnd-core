@@ -50,6 +50,20 @@ void OsmAnd::VectorLineBuilder_P::setIsHidden(const bool hidden)
     _isHidden = hidden;
 }
 
+float OsmAnd::VectorLineBuilder_P::getStartingDistance() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _startingDistance;
+}
+
+void OsmAnd::VectorLineBuilder_P::setStartingDistance(const float distanceInMeters)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _startingDistance = distanceInMeters;
+}
+
 bool OsmAnd::VectorLineBuilder_P::shouldShowArrows() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -448,6 +462,7 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
     line->setShowArrows(_showArrows);
     line->setFillColor(_fillColor);
     line->setIsHidden(_isHidden);
+    line->setStartingDistance(_startingDistance);
     line->setApproximationEnabled(_isApproximationEnabled);
     line->setPoints(_points);
     line->setHeights(_heights);
