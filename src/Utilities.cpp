@@ -1085,70 +1085,25 @@ bool OsmAnd::Utilities::isPointInsidePolygon(const OsmAnd::PointI point,
     return oddNodes;
 }
 
-int OsmAnd::Utilities::ray_intersect_xo(int prevX, int prevY, int x, int y, int middleY)
+int OsmAnd::Utilities::countIntersections(const QVector<PointI> &points, const PointI &otherPoint)
 {
-    // prev node above line
-    // x,y node below line
-    if (prevY > y) 
+    uint32_t intersections = 0;
+    auto itPrevPoint = points.cbegin();
+    auto itPoint = itPrevPoint + 1;
+    for (const auto itEnd = points.cend(); itPoint != itEnd; itPrevPoint = itPoint, ++itPoint)
     {
-        int tx = x;
-        int ty = y;
-        x = prevX;
-        y = prevY;
-        prevX = tx;
-        prevY = ty;
-    }
-    if (y == middleY || prevY == middleY) 
-    {
-        middleY -= 1;
-    }
-    if (prevY > middleY || y < middleY) 
-    {
-        return INT_MIN;
-    } else {
-        if (y == prevY) 
-        {
-            // the node on the boundary !!!
-            return x;
-        }
-        // that tested on all cases (left/right)
-        double rx = x + ((double)middleY - y) * ((double)x - prevX) / (((double)y - prevY));
-        return (int)rx;
-    }
-}
+        const auto& point0 = *itPrevPoint;
+        const auto& point1 = *itPoint;
 
-bool OsmAnd::Utilities::ray_intersect_x(int prevX, int prevY, int nx, int ny, int x, int y)
-{
-    int t = ray_intersect_xo(prevX, prevY, nx, ny, y);
-    if (t == INT_MIN) 
-    {
-        return false;
-    }
-    if (t < x) 
-    {
-        return true;
-    }
-    return false;
-}
-
-int OsmAnd::Utilities::countIntersections(const QVector<PointI> &points, const PointI &point)
-{
-    int intersections = 0;
-    if (points.size() == 0) 
-    {
-        return 0;
-    }
-    for (uint i = 0; i < points.size() - 1; i++) 
-    {
-        if (ray_intersect_x(points.at(i).x, points.at(i).y, points.at(i + 1).x, points.at(i + 1).y, point.x, point.y))
-        {
+        if (Utilities::rayIntersect(point0, point1, otherPoint))
             intersections++;
-        }
     }
+
     // special handling, also count first and last, might not be closed, but
     // we want this!
-    if (ray_intersect_x(points.at(0).x, points.at(0).y, points.at(points.size() - 1).x,
-                        points.at(points.size() - 1).y, point.x, point.y))
+    const auto& point0 = points.first();
+    const auto& point1 = points.last();
+    if (Utilities::rayIntersect(point0, point1, otherPoint))
     {
         intersections++;
     }
