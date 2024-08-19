@@ -456,10 +456,10 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     {
         // Check area is inside polygon
         bool ok = true;
-        ok = ok || containsHelper(outerPoints, area31.topLeft);
-        ok = ok || containsHelper(outerPoints, area31.bottomRight);
-        ok = ok || containsHelper(outerPoints, PointI(0, area31.bottom()));
-        ok = ok || containsHelper(outerPoints, PointI(area31.right(), 0));
+        ok = ok || OsmAnd::Utilities::contains(outerPoints, area31.topLeft);
+        ok = ok || OsmAnd::Utilities::contains(outerPoints, area31.bottomRight);
+        ok = ok || OsmAnd::Utilities::contains(outerPoints, PointI(0, area31.bottom()));
+        ok = ok || OsmAnd::Utilities::contains(outerPoints, PointI(area31.right(), 0));
         if (!ok)
             return;
     }
@@ -813,31 +813,6 @@ void OsmAnd::MapRasterizer_P::calculateVertex(const Context& context, const Poin
     vertex.y = static_cast<float>(point31.y - context.area31.top()) / context.primitivisedObjects->scaleDivisor31ToPixel.y;
 
     vertex += PointF(context.pixelArea.topLeft);
-}
-
-bool OsmAnd::MapRasterizer_P::containsHelper(const QVector< PointI >& points, const PointI& otherPoint)
-{
-    uint32_t intersections = 0;
-
-    auto itPrevPoint = points.cbegin();
-    auto itPoint = itPrevPoint + 1;
-    for (const auto itEnd = points.cend(); itPoint != itEnd; itPrevPoint = itPoint, ++itPoint)
-    {
-        const auto& point0 = *itPrevPoint;
-        const auto& point1 = *itPoint;
-
-        if (Utilities::rayIntersect(point0, point1, otherPoint))
-            intersections++;
-    }
-
-    // special handling, also count first and last, might not be closed, but
-    // we want this!
-    const auto& point0 = points.first();
-    const auto& point1 = points.last();
-    if (Utilities::rayIntersect(point0, point1, otherPoint))
-        intersections++;
-
-    return intersections % 2 == 1;
 }
 
 bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect, sk_sp<SkPathEffect> &outPathEffect) const

@@ -1087,3 +1087,28 @@ bool OsmAnd::Utilities::isPointInsidePolygon(const OsmAnd::PointI point,
     }
     return oddNodes;
 }
+
+int OsmAnd::Utilities::countIntersections(const QVector<PointI> &points, const PointI &otherPoint)
+{
+    uint32_t intersections = 0;
+    auto itPrevPoint = points.cbegin();
+    auto itPoint = itPrevPoint + 1;
+    for (const auto itEnd = points.cend(); itPoint != itEnd; itPrevPoint = itPoint, ++itPoint)
+    {
+        const auto& point0 = *itPrevPoint;
+        const auto& point1 = *itPoint;
+
+        if (Utilities::rayIntersect(point0, point1, otherPoint))
+            intersections++;
+    }
+
+    // special handling, also count first and last, might not be closed, but
+    // we want this!
+    const auto& point0 = points.first();
+    const auto& point1 = points.last();
+    if (Utilities::rayIntersect(point0, point1, otherPoint))
+    {
+        intersections++;
+    }
+    return intersections;
+}

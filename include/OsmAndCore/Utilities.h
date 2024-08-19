@@ -1221,10 +1221,15 @@ namespace OsmAnd
                     .arg(name)
                     .arg(color)));
         }
+        
+        inline static bool contains(const QVector<PointI> &polygon, const PointI &point) {
+            return countIntersections(polygon, point) % 2 == 1;
+        }
 
     private:
         Utilities();
         ~Utilities();
+        static int countIntersections(const QVector<PointI> &points, const PointI &point);
     };
 }
 

@@ -30,7 +30,6 @@ namespace OsmAnd
 {
     class MapPrimitivesProvider_P Q_DECL_FINAL
     {
-    private:
     protected:
         MapPrimitivesProvider_P(MapPrimitivesProvider* owner);
 
@@ -87,6 +86,7 @@ namespace OsmAnd
             const MapPrimitivesProvider::Request& request,
             std::shared_ptr<MapPrimitivesProvider::Data>& outTiledPrimitives,
             MapPrimitivesProvider_Metrics::Metric_obtainData* const metric_);
+        QList<std::shared_ptr<const OsmAnd::MapObject>> retreivePolygons(PointI point, ZoomLevel zoom);
 
     friend class OsmAnd::MapPrimitivesProvider;
     };

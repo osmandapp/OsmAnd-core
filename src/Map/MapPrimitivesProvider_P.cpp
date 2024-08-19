@@ -10,6 +10,7 @@
 #include "Stopwatch.h"
 #include "Utilities.h"
 #include "Logging.h"
+#include "ObfMapObject.h"
 
 OsmAnd::MapPrimitivesProvider_P::MapPrimitivesProvider_P(MapPrimitivesProvider* owner_)
     : _primitiviserCache(new MapPrimitiviser::Cache())
@@ -41,6 +42,60 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
         pOutMetric ? static_cast<MapPrimitivesProvider_Metrics::Metric_obtainData*>(pOutMetric->get()) : nullptr);
     outData = data;
     return result;
+}
+
+QList<std::shared_ptr<const OsmAnd::MapObject>> OsmAnd::MapPrimitivesProvider_P::retreivePolygons(PointI point, ZoomLevel zoom)
+{
+    std::shared_ptr<TileEntry> tileEntry;
+    TileId tile = OsmAnd::Utilities::getTileId(point, zoom);
+    std::shared_ptr<MapPrimitivesProvider::Data> outTiledPrimitives = nullptr;
+    QList<std::shared_ptr<const OsmAnd::MapObject>> polygons;
+    _tileReferences.obtainOrAllocateEntry(tileEntry, tile, zoom,
+        []
+        (const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
+        {
+            return new TileEntry(collection, tileId, zoom);
+        });
+    // If state is "Undefined", change it to "Loading" and proceed with loading
+    if (tileEntry->setStateIf(TileState::Undefined, TileState::Loading))
+        return polygons;
+
+    // In case tile entry is being loaded, wait until it will finish loading
+    if (tileEntry->getState() == TileState::Loading)
+    {
+        QReadLocker scopedLcoker(&tileEntry->loadedConditionLock);
+        // If tile is in 'Loading' state, wait until it will become 'Loaded'
+        while (tileEntry->getState() != TileState::Loaded)
+            REPEAT_UNTIL(tileEntry->loadedCondition.wait(&tileEntry->loadedConditionLock));
+    }
+
+    if (tileEntry->dataIsPresent)
+    {
+        // Otherwise, try to lock tile reference
+        outTiledPrimitives = tileEntry->dataWeakRef.lock();
+        if (outTiledPrimitives && outTiledPrimitives->primitivisedObjects)
+        {
+            for (const auto & p : outTiledPrimitives->primitivisedObjects->polygons)
+            {
+                const auto & mapObj = p->sourceObject;
+                if (OsmAnd::Utilities::contains(mapObj->points31, point))
+                {
+                    std::shared_ptr<const ObfMapObject> obfMapObject = std::dynamic_pointer_cast<const ObfMapObject>(mapObj);
+                    if (obfMapObject && !polygons.contains(mapObj)) {
+                        polygons.push_back(mapObj);
+                    }
+                }
+            }
+            
+            //sort by polygons area
+            std::sort(polygons.begin(), polygons.end(), [](const std::shared_ptr<const MapObject> &a, const std::shared_ptr<const MapObject> &b) {
+                double da = Utilities::polygonArea(a->points31);
+                double db = Utilities::polygonArea(b->points31);
+                return da < db;
+            });
+        }
+    }
+    return polygons;
 }
 
 bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(

@@ -425,6 +425,7 @@ using namespace OsmAnd;
 	%template(QListIAnimation) QList<std::shared_ptr<OsmAnd::IAnimation>>;
 	%template(QListDouble) QList<double>;
 	%template(QListFloat) QList<float>;
+	%template(MapObjectList) QList<std::shared_ptr<const OsmAnd::MapObject>>;
 #endif
 %include <OsmAndCore/LatLon.h>
 %include <OsmAndCore/Nullable.h>

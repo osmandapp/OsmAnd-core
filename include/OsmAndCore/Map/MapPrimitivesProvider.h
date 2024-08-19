@@ -15,6 +15,7 @@
 #include <OsmAndCore/Map/MapPrimitiviser.h>
 #include <OsmAndCore/Map/IMapObjectsProvider.h>
 #include <OsmAndCore/Map/MapPrimitivesProvider_Metrics.h>
+#include <OsmAndCore/Data/MapObject.h>
 
 namespace OsmAnd
 {
@@ -86,6 +87,7 @@ namespace OsmAnd
             const IMapDataProvider::Request& request,
             const IMapDataProvider::ObtainDataAsyncCallback callback,
             const bool collectMetric = false) Q_DECL_OVERRIDE;
+        virtual QList<std::shared_ptr<const OsmAnd::MapObject>> retreivePolygons(PointI point, ZoomLevel zoom);
     };
 }
 

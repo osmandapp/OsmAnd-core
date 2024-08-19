@@ -564,13 +564,17 @@ QHash<QString, QString> OsmAnd::MapObject::getResolvedAttributes() const
     QHash<QString, QString> result;
     for (const auto& attributeId : constOf(attributeIds))
     {
-        const auto& decodedAttribute = attributeMapping->decodeMap[attributeId];
-        result.insert(decodedAttribute.tag, decodedAttribute.value);
+        if (attributeMapping->decodeMap.size() > attributeId) {
+            const auto& decodedAttribute = attributeMapping->decodeMap[attributeId];
+            result.insert(decodedAttribute.tag, decodedAttribute.value);
+        }
     }
     for (const auto& attributeId : constOf(additionalAttributeIds))
     {
-        const auto& decodedAttribute = attributeMapping->decodeMap[attributeId];
-        result.insert(decodedAttribute.tag, decodedAttribute.value);
+        if (attributeMapping->decodeMap.size() > attributeId) {
+            const auto& decodedAttribute = attributeMapping->decodeMap[attributeId];
+            result.insert(decodedAttribute.tag, decodedAttribute.value);
+        }
     }
     return result;
 }
