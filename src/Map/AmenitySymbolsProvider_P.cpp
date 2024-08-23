@@ -174,6 +174,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         nullptr,
         request.zoom,
         owner->categoriesFilter.getValuePtrOrNullptr(),
+        owner->poiAdditionalFilter.getValuePtrOrNullptr(),
         visitorFunction,
         nullptr);
 

@@ -34,6 +34,7 @@ namespace OsmAnd
             TileAcceptorFunction tileFilter;
             ZoomLevel zoomFilter;
             QHash<QString, QStringList> categoriesFilter;
+            QPair<QString, QString> poiAdditionalFilter;
             QList< std::shared_ptr<const ResourcesManager::LocalResource> > localResources;
         };
 

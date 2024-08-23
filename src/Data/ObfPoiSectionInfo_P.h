@@ -36,6 +36,7 @@ namespace OsmAnd
         mutable QMutex _categoriesLoadMutex;
 
         mutable std::shared_ptr<ObfPoiSectionSubtypes> _subtypes;
+        mutable std::shared_ptr<ObfPoiSectionSubtypes> _topIndexSubtypes;
         mutable QAtomicInt _subtypesLoaded;
         mutable QMutex _subtypesLoadMutex;
     public:
