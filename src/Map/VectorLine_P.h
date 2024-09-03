@@ -65,7 +65,7 @@ namespace OsmAnd
         bool _hasUnappliedPrimitiveChanges;
 
         bool _isHidden;
-        bool _startingDistance;
+        float _startingDistance;
         bool _isApproximationEnabled;
         bool _showArrows;
 
