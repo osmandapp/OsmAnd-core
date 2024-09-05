@@ -36,6 +36,7 @@ namespace OsmAnd
             TileAcceptorFunction tileFilter;
             QString name;
             QHash<QString, QStringList> categoriesFilter;
+            QPair<QString, QString> poiAddtitionalFilter;
             QList< std::shared_ptr<const ResourcesManager::LocalResource> > localResources;
         };
 
