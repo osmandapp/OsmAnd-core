@@ -177,7 +177,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         assert(citPreallocatedGroup != preallocatedSymbolsGroups.cend());
         const auto group = *citPreallocatedGroup;
 
-        auto path31 = combinePathsResult.getCombinedOrOriginalPath(mapObject);
+        auto path31 = simplifyPathOutsideBBox(combinePathsResult.getCombinedOrOriginalPath(mapObject), bbox31);
 
         // Convert all symbols inside group
         bool hasAtLeastOneOnPath = false;
@@ -620,6 +620,62 @@ OsmAnd::MapObjectsSymbolsProvider_P::CombinePathsResult OsmAnd::MapObjectsSymbol
     return result;
 }
 
+QVector<OsmAnd::PointI> OsmAnd::MapObjectsSymbolsProvider_P::simplifyPathOutsideBBox(
+    const QVector<PointI>& path31, const AreaI bbox31) const
+{
+    auto center = AreaD(bbox31).center();
+    const auto pointsCount = path31.size();
+    QVector<PointI> result;
+    result.reserve(pointsCount);
+    auto pPoint31 = path31.constData();
+    PointI prevPoint;
+    PointI lastPoint;
+    int prevCode = 0;
+    int sameCodeCount = 0;
+    double prevDistance = 0.0;
+    for (auto pointIdx = 0; pointIdx < pointsCount; pointIdx++)
+    {
+        auto point31 = *(pPoint31++);
+        int code = (point31.x < bbox31.left() ? 1 : (point31.x > bbox31.right() ? 2 : 0))
+            | (point31.y < bbox31.top() ? 4 : (point31.y > bbox31.bottom() ? 8 : 0));
+
+        if (code != 0 && code == prevCode)
+        {
+            if (sameCodeCount < 4)
+                result.push_back(point31);
+            prevDistance += PointD(point31 - prevPoint).norm();
+            sameCodeCount++;
+        }
+        else
+        {
+            if (sameCodeCount > 3)
+            {
+                result.pop_back();
+                result.pop_back();
+                result.pop_back();
+                const auto extraDistance = PointD(prevPoint - lastPoint).norm() - prevDistance;
+                if (extraDistance > 0.0)
+                {
+                    const auto first = PointD(lastPoint);
+                    auto vector = (first - center).normalized() * extraDistance * 0.5;
+                    const auto second = first + vector;
+                    result.push_back({qRound(second.x), qRound(second.y)});
+                    const auto third = PointD(prevPoint) + vector;
+                    result.push_back({qRound(third.x), qRound(third.y)});
+                }
+                result.push_back(prevPoint);
+            }
+            result.push_back(point31);
+            lastPoint = point31;
+            prevDistance = 0.0;
+            sameCodeCount = 0;
+        }
+        prevPoint = point31;
+        prevCode = code;
+    }
+    return result;
+}
+
 QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> OsmAnd::MapObjectsSymbolsProvider_P::computePinPoints(
     const QVector<PointI>& path31,
     const float globalPaddingInPixels,
@@ -704,7 +760,7 @@ QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> OsmAnd::MapObjectsS
             return computedPinPoints;
 
         fittedSymbolsWidth -= symbolSpacingInPixels;
-        auto nextSymbolStartN = pathLengthInPixels - 0.5f * fittedSymbolsWidth;
+        auto nextSymbolStartN = 0.5f - 0.5f * fittedSymbolsWidth / pathLengthInPixels;
         computeSymbolsPinPoints(
             symbolsWidthsN,
             fittedSymbolsCount,

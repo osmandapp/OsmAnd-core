@@ -91,6 +91,8 @@ namespace OsmAnd
             const PointD& scaleDivisor31ToPixel,
             const std::shared_ptr<const IQueryController>& queryController) const;
 
+        QVector<PointI> simplifyPathOutsideBBox(const QVector<PointI>& path31, const AreaI bbox31) const;
+
         QList<ComputedPinPoint> computePinPoints(
             const QVector<PointI>& path31,
             const float globalPaddingInPixels,
