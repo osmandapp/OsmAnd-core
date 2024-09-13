@@ -259,7 +259,9 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
 		"${LEGACY_SRC}/NetworkDBPointRouteInfo.h"
 		"${LEGACY_SRC}/NetworkDBPointRouteInfo.cpp"
 
-		"${LEGACY_SRC}/gpxSegmentsApproximation.cpp"
+		"${LEGACY_SRC}/gpxRouteApproximation.cpp"
+		"${LEGACY_SRC}/gpxMultiSegmentsApproximation.cpp"
+		"${LEGACY_SRC}/gpxSimplePointsMatchApproximation.cpp"
 
 		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/extension_set.cc \
 		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/generated_message_util.cc \
