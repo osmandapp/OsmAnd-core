@@ -66,7 +66,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
         "    vec4 v = vec4(in_vs_vertexPosition, 1.0);                                                                      ""\n"
         "    v = param_vs_mModel * v;                                                                                       ""\n"
         "    v2f_pointPosition = v.xyz;                                                                                     ""\n"
-        "    v2f_pointNormal = mat3(param_vs_mModel) * in_vs_vertexNormal;                                                  ""\n"
+        "    mat3 nModel = mat3(param_vs_mModel[0].xyz, param_vs_mModel[1].xyz, param_vs_mModel[2].xyz);                    ""\n"
+        "    v2f_pointNormal = nModel * in_vs_vertexNormal;                                                                 ""\n"
         "    v2f_pointColor.argb = in_vs_vertexColor.x > -1.0 ? in_vs_vertexColor.xyzw : param_vs_mainColor.argb;           ""\n"
         "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
         "}                                                                                                                  ""\n");
