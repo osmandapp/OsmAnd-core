@@ -301,7 +301,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             const auto symbolSpacingInPixels = env->getDefaultSymbolPathSpacing() * 20;
 
             const auto& windowSize = request.mapState.windowSize;
-            const auto minWindowSize = qMin(windowSize.x, windowSize.y);
+            const auto minWindowSize = qMin(windowSize.x, windowSize.y) * 0.9f;
             const auto minBlockSpacingInPixels = minWindowSize / 10.0f;
             const auto maxBlockSpacingInPixels = minWindowSize / 2.0f;
             const auto completeBlockLengthInPixels = std::accumulate(symbolsWidthsInPixels, 0.0f)
