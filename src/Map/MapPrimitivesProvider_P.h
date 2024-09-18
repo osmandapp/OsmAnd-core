@@ -73,6 +73,10 @@ namespace OsmAnd
             std::weak_ptr<TileEntry> tileEntryWeakRef;
             std::shared_ptr<const IMapDataProvider::RetainableCacheMetadata> binaryMapRetainableCacheMetadata;
         };
+    private:
+        void collectPolygons(QList<std::shared_ptr<const OsmAnd::MapObject>> & polygons, 
+                             const std::shared_ptr<const MapObject> & mapObj,
+                             const MapPrimitiviser::PrimitiveType & type, const PointI & point);
     public:
         ~MapPrimitivesProvider_P();
 
