@@ -56,17 +56,9 @@ QList<std::shared_ptr<const OsmAnd::MapObject>> OsmAnd::MapPrimitivesProvider_P:
         {
             return new TileEntry(collection, tileId, zoom);
         });
-    // If state is "Undefined", change it to "Loading" and proceed with loading
-    if (tileEntry->setStateIf(TileState::Undefined, TileState::Loading))
-        return polygons;
-
-    // In case tile entry is being loaded, wait until it will finish loading
-    if (tileEntry->getState() == TileState::Loading)
+    if (tileEntry->getState() != TileState::Loaded)
     {
-        QReadLocker scopedLcoker(&tileEntry->loadedConditionLock);
-        // If tile is in 'Loading' state, wait until it will become 'Loaded'
-        while (tileEntry->getState() != TileState::Loaded)
-            REPEAT_UNTIL(tileEntry->loadedCondition.wait(&tileEntry->loadedConditionLock));
+        return polygons;
     }
 
     if (tileEntry->dataIsPresent)
