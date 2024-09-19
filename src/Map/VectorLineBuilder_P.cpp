@@ -28,6 +28,7 @@ OsmAnd::VectorLineBuilder_P::VectorLineBuilder_P(VectorLineBuilder* const owner_
     , _isElevatedLineVisible(true)
     , _isSurfaceLineVisible(false)
     , _elevationScaleFactor(1.0f)
+    , _startingDistance(0.0f)
     , owner(owner_)
 {
 }
