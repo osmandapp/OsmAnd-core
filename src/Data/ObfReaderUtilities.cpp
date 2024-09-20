@@ -220,7 +220,7 @@ void OsmAnd::ObfReaderUtilities::readTileBox(gpb::io::CodedInputStream* cis, Are
 void OsmAnd::ObfReaderUtilities::skipUnknownField(gpb::io::CodedInputStream* cis, int tag)
 {
     const auto wireType = gpb::internal::WireFormatLite::GetTagWireType(tag);
-    if (wireType == gpb::internal::WireFormatLite::WIRETYPE_FIXED32_LENGTH_DELIMITED)
+    if (wireType == gpb::internal::WireFormatLite::WIRETYPE_FIXED32_LENGTH_DELIMITED || wireType == gpb::internal::WireFormatLite::WIRETYPE_FIXED64)
     {
         const auto length = readBigEndianInt(cis);
         cis->Skip(length);
