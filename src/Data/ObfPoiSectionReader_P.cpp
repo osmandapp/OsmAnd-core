@@ -1164,7 +1164,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 break;
             }
             default:
-                ObfReaderUtilities::skipUnknownField(cis, tag);
+                ObfReaderUtilities::skipUnknownField(cis, t);
                 break;
         }
     }
