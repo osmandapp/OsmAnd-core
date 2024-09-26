@@ -11,6 +11,7 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Data/ObfSectionInfo.h>
+#include <OsmAndCore/QuadTree.h>
 
 namespace OsmAnd
 {
@@ -76,6 +77,15 @@ namespace OsmAnd
     friend class OsmAnd::ObfPoiSectionReader_P;
     };
 
+    typedef OsmAnd::QuadTree<int32_t, AreaI::CoordType> BBoxIndexTree;
+    
+    struct TagValue
+    {
+        QString tag;
+        QString value;
+        TagValue(QString tag, QString value);
+    };
+
     class ObfPoiSectionInfo_P;
     class OSMAND_CORE_API ObfPoiSectionInfo : public ObfSectionInfo
     {
@@ -93,9 +103,12 @@ namespace OsmAnd
         uint32_t nameIndexInnerOffset;
         uint32_t subtypesInnerOffset;
         uint32_t firstBoxInnerOffset;
+        mutable QHash<int, QList<TagValue>> tagGroups;
+        mutable BBoxIndexTree bboxIndexCache;
 
         std::shared_ptr<const ObfPoiSectionCategories> getCategories() const;
         std::shared_ptr<const ObfPoiSectionSubtypes> getSubtypes() const;
+        QList<TagValue> getTagValues(int id) const;
 
     friend class OsmAnd::ObfPoiSectionReader_P;
     };

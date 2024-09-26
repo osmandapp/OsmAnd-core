@@ -78,6 +78,7 @@ namespace OsmAnd
             const std::shared_ptr<const IQueryController>& queryController);
         static bool scanTiles(
             const ObfReader_P& reader,
+            const std::shared_ptr<const ObfPoiSectionInfo>& section,
             QMap<uint32_t, uint64_t>& outDataOffsetsMap,
             const std::shared_ptr<QSet<uint64_t>> tilesToSkip,
             const ZoomLevel parentZoom,
@@ -86,7 +87,8 @@ namespace OsmAnd
             const TileAcceptorFunction tileFilter,
             const ZoomLevel zoomFilter,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
-            const QPair<int, int>* poiAdditionalFilter);
+            const QPair<int, int>* poiAdditionalFilter,
+            const BBoxIndexTree* nameIndexTree);
         static bool scanTileForMatchingCategories(
             const ObfReader_P& reader,
             const QSet<ObfPoiCategoryId>& categories,
@@ -112,19 +114,25 @@ namespace OsmAnd
             const PointI* const xy31,
             const AreaI* const bbox31,
             const TileAcceptorFunction tileFilter,
-            const bool strictMatch);
+            const bool strictMatch,
+            const std::shared_ptr<const ObfPoiSectionInfo>& section,
+            QList<int>& nameIndexCoordinates);
         static void readNameIndexData(
             const ObfReader_P& reader,
             QMap<uint32_t, uint32_t>& outDataOffsets,
             const PointI* const xy31,
             const AreaI* const bbox31,
-            const TileAcceptorFunction tileFilter);
+            const TileAcceptorFunction tileFilter,
+            const std::shared_ptr<const ObfPoiSectionInfo>& section,
+            QList<int>& nameIndexCoordinates);
         static void readNameIndexDataAtom(
             const ObfReader_P& reader,
             QMap<uint32_t, uint32_t>& outDataOffsets,
             const PointI* const xy31,
             const AreaI* const bbox31,
-            const TileAcceptorFunction tileFilter);
+            const TileAcceptorFunction tileFilter,
+            const std::shared_ptr<const ObfPoiSectionInfo>& section,
+            QList<int>& nameIndexCoordinates);
 
         static bool readAmenitiesDataBox(
             const ObfReader_P& reader,
@@ -150,6 +158,8 @@ namespace OsmAnd
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const QPair<int, int>* poiAdditionalFilter,
             const std::shared_ptr<const IQueryController>& queryController);
+        static void readTagGroups(const ObfReader_P& reader, std::map<int, std::vector<TagValue>> * tagGroups);
+        static void readTagGroup(const ObfReader_P& reader, std::map<int, std::vector<TagValue>> * tagGroups);
     public:
         static void loadCategories(
             const ObfReader_P& reader,

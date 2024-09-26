@@ -73,6 +73,8 @@ class OsmAndPoiNameIndexDataAtom;
 class OsmAndCategoryTable;
 class OsmAndSubtypesTable;
 class OsmAndPoiSubtype;
+class OsmAndPoiTagGroup;
+class OsmAndPoiTagGroups;
 class OsmAndPoiBox;
 class OsmAndPoiCategories;
 class OsmAndPoiBoxData;
@@ -5345,6 +5347,204 @@ class OsmAndPoiSubtype : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
+class OsmAndPoiTagGroup : public ::google::protobuf::Message {
+ public:
+  OsmAndPoiTagGroup();
+  virtual ~OsmAndPoiTagGroup();
+
+  OsmAndPoiTagGroup(const OsmAndPoiTagGroup& from);
+
+  inline OsmAndPoiTagGroup& operator=(const OsmAndPoiTagGroup& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const OsmAndPoiTagGroup& default_instance();
+
+  void Swap(OsmAndPoiTagGroup* other);
+
+  // implements Message ----------------------------------------------
+
+  OsmAndPoiTagGroup* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const OsmAndPoiTagGroup& from);
+  void MergeFrom(const OsmAndPoiTagGroup& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // required uint32 id = 1;
+  inline bool has_id() const;
+  inline void clear_id();
+  static const int kIdFieldNumber = 1;
+  inline ::google::protobuf::uint32 id() const;
+  inline void set_id(::google::protobuf::uint32 value);
+
+  // repeated string tagValues = 5;
+  inline int tagvalues_size() const;
+  inline void clear_tagvalues();
+  static const int kTagValuesFieldNumber = 5;
+  inline const ::std::string& tagvalues(int index) const;
+  inline ::std::string* mutable_tagvalues(int index);
+  inline void set_tagvalues(int index, const ::std::string& value);
+  inline void set_tagvalues(int index, const char* value);
+  inline void set_tagvalues(int index, const char* value, size_t size);
+  inline ::std::string* add_tagvalues();
+  inline void add_tagvalues(const ::std::string& value);
+  inline void add_tagvalues(const char* value);
+  inline void add_tagvalues(const char* value, size_t size);
+  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& tagvalues() const;
+  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_tagvalues();
+
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndPoiTagGroup)
+ private:
+  inline void set_has_id();
+  inline void clear_has_id();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::RepeatedPtrField< ::std::string> tagvalues_;
+  ::google::protobuf::uint32 id_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+
+  friend void  protobuf_AddDesc_OBF_2eproto();
+  friend void protobuf_AssignDesc_OBF_2eproto();
+  friend void protobuf_ShutdownFile_OBF_2eproto();
+
+  void InitAsDefaultInstance();
+  static OsmAndPoiTagGroup* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class OsmAndPoiTagGroups : public ::google::protobuf::Message {
+ public:
+  OsmAndPoiTagGroups();
+  virtual ~OsmAndPoiTagGroups();
+
+  OsmAndPoiTagGroups(const OsmAndPoiTagGroups& from);
+
+  inline OsmAndPoiTagGroups& operator=(const OsmAndPoiTagGroups& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const OsmAndPoiTagGroups& default_instance();
+
+  void Swap(OsmAndPoiTagGroups* other);
+
+  // implements Message ----------------------------------------------
+
+  OsmAndPoiTagGroups* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const OsmAndPoiTagGroups& from);
+  void MergeFrom(const OsmAndPoiTagGroups& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated uint32 ids = 2 [packed = true];
+  inline int ids_size() const;
+  inline void clear_ids();
+  static const int kIdsFieldNumber = 2;
+  inline ::google::protobuf::uint32 ids(int index) const;
+  inline void set_ids(int index, ::google::protobuf::uint32 value);
+  inline void add_ids(::google::protobuf::uint32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      ids() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_ids();
+
+  // repeated .OsmAnd.OBF.OsmAndPoiTagGroup groups = 5;
+  inline int groups_size() const;
+  inline void clear_groups();
+  static const int kGroupsFieldNumber = 5;
+  inline const ::OsmAnd::OBF::OsmAndPoiTagGroup& groups(int index) const;
+  inline ::OsmAnd::OBF::OsmAndPoiTagGroup* mutable_groups(int index);
+  inline ::OsmAnd::OBF::OsmAndPoiTagGroup* add_groups();
+  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiTagGroup >&
+      groups() const;
+  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiTagGroup >*
+      mutable_groups();
+
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndPoiTagGroups)
+ private:
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > ids_;
+  mutable int _ids_cached_byte_size_;
+  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiTagGroup > groups_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+
+  friend void  protobuf_AddDesc_OBF_2eproto();
+  friend void protobuf_AssignDesc_OBF_2eproto();
+  friend void protobuf_ShutdownFile_OBF_2eproto();
+
+  void InitAsDefaultInstance();
+  static OsmAndPoiTagGroups* default_instance_;
+};
+// -------------------------------------------------------------------
+
 class OsmAndPoiBox : public ::google::protobuf::Message {
  public:
   OsmAndPoiBox();
@@ -5429,6 +5629,15 @@ class OsmAndPoiBox : public ::google::protobuf::Message {
   inline ::OsmAnd::OBF::OsmAndPoiCategories* release_categories();
   inline void set_allocated_categories(::OsmAnd::OBF::OsmAndPoiCategories* categories);
 
+  // optional .OsmAnd.OBF.OsmAndPoiTagGroups tagGroups = 8;
+  inline bool has_taggroups() const;
+  inline void clear_taggroups();
+  static const int kTagGroupsFieldNumber = 8;
+  inline const ::OsmAnd::OBF::OsmAndPoiTagGroups& taggroups() const;
+  inline ::OsmAnd::OBF::OsmAndPoiTagGroups* mutable_taggroups();
+  inline ::OsmAnd::OBF::OsmAndPoiTagGroups* release_taggroups();
+  inline void set_allocated_taggroups(::OsmAnd::OBF::OsmAndPoiTagGroups* taggroups);
+
   // repeated .OsmAnd.OBF.OsmAndPoiBox subBoxes = 10;
   inline int subboxes_size() const;
   inline void clear_subboxes();
@@ -5458,6 +5667,8 @@ class OsmAndPoiBox : public ::google::protobuf::Message {
   inline void clear_has_top();
   inline void set_has_categories();
   inline void clear_has_categories();
+  inline void set_has_taggroups();
+  inline void clear_has_taggroups();
   inline void set_has_shifttodata();
   inline void clear_has_shifttodata();
 
@@ -5466,12 +5677,13 @@ class OsmAndPoiBox : public ::google::protobuf::Message {
   ::google::protobuf::uint32 zoom_;
   ::google::protobuf::int32 left_;
   ::OsmAnd::OBF::OsmAndPoiCategories* categories_;
+  ::OsmAnd::OBF::OsmAndPoiTagGroups* taggroups_;
   ::google::protobuf::int32 top_;
   ::google::protobuf::uint32 shifttodata_;
   ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox > subboxes_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(7 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -5901,6 +6113,18 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 precisionxy() const;
   inline void set_precisionxy(::google::protobuf::int32 value);
 
+  // repeated uint32 tagGroups = 17 [packed = true];
+  inline int taggroups_size() const;
+  inline void clear_taggroups();
+  static const int kTagGroupsFieldNumber = 17;
+  inline ::google::protobuf::uint32 taggroups(int index) const;
+  inline void set_taggroups(int index, ::google::protobuf::uint32 value);
+  inline void add_taggroups(::google::protobuf::uint32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      taggroups() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_taggroups();
+
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndPoiBoxDataAtom)
  private:
   inline void set_has_dx();
@@ -5939,10 +6163,12 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
   ::std::string* note_;
   ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > textcategories_;
   ::google::protobuf::RepeatedPtrField< ::std::string> textvalues_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > taggroups_;
+  mutable int _taggroups_cached_byte_size_;
   ::google::protobuf::int32 precisionxy_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(14 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(15 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -14643,6 +14869,130 @@ OsmAndPoiSubtype::mutable_subtypevalue() {
 
 // -------------------------------------------------------------------
 
+// OsmAndPoiTagGroup
+
+// required uint32 id = 1;
+inline bool OsmAndPoiTagGroup::has_id() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void OsmAndPoiTagGroup::set_has_id() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void OsmAndPoiTagGroup::clear_has_id() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void OsmAndPoiTagGroup::clear_id() {
+  id_ = 0u;
+  clear_has_id();
+}
+inline ::google::protobuf::uint32 OsmAndPoiTagGroup::id() const {
+  return id_;
+}
+inline void OsmAndPoiTagGroup::set_id(::google::protobuf::uint32 value) {
+  set_has_id();
+  id_ = value;
+}
+
+// repeated string tagValues = 5;
+inline int OsmAndPoiTagGroup::tagvalues_size() const {
+  return tagvalues_.size();
+}
+inline void OsmAndPoiTagGroup::clear_tagvalues() {
+  tagvalues_.Clear();
+}
+inline const ::std::string& OsmAndPoiTagGroup::tagvalues(int index) const {
+  return tagvalues_.Get(index);
+}
+inline ::std::string* OsmAndPoiTagGroup::mutable_tagvalues(int index) {
+  return tagvalues_.Mutable(index);
+}
+inline void OsmAndPoiTagGroup::set_tagvalues(int index, const ::std::string& value) {
+  tagvalues_.Mutable(index)->assign(value);
+}
+inline void OsmAndPoiTagGroup::set_tagvalues(int index, const char* value) {
+  tagvalues_.Mutable(index)->assign(value);
+}
+inline void OsmAndPoiTagGroup::set_tagvalues(int index, const char* value, size_t size) {
+  tagvalues_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* OsmAndPoiTagGroup::add_tagvalues() {
+  return tagvalues_.Add();
+}
+inline void OsmAndPoiTagGroup::add_tagvalues(const ::std::string& value) {
+  tagvalues_.Add()->assign(value);
+}
+inline void OsmAndPoiTagGroup::add_tagvalues(const char* value) {
+  tagvalues_.Add()->assign(value);
+}
+inline void OsmAndPoiTagGroup::add_tagvalues(const char* value, size_t size) {
+  tagvalues_.Add()->assign(reinterpret_cast<const char*>(value), size);
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+OsmAndPoiTagGroup::tagvalues() const {
+  return tagvalues_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+OsmAndPoiTagGroup::mutable_tagvalues() {
+  return &tagvalues_;
+}
+
+// -------------------------------------------------------------------
+
+// OsmAndPoiTagGroups
+
+// repeated uint32 ids = 2 [packed = true];
+inline int OsmAndPoiTagGroups::ids_size() const {
+  return ids_.size();
+}
+inline void OsmAndPoiTagGroups::clear_ids() {
+  ids_.Clear();
+}
+inline ::google::protobuf::uint32 OsmAndPoiTagGroups::ids(int index) const {
+  return ids_.Get(index);
+}
+inline void OsmAndPoiTagGroups::set_ids(int index, ::google::protobuf::uint32 value) {
+  ids_.Set(index, value);
+}
+inline void OsmAndPoiTagGroups::add_ids(::google::protobuf::uint32 value) {
+  ids_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+OsmAndPoiTagGroups::ids() const {
+  return ids_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+OsmAndPoiTagGroups::mutable_ids() {
+  return &ids_;
+}
+
+// repeated .OsmAnd.OBF.OsmAndPoiTagGroup groups = 5;
+inline int OsmAndPoiTagGroups::groups_size() const {
+  return groups_.size();
+}
+inline void OsmAndPoiTagGroups::clear_groups() {
+  groups_.Clear();
+}
+inline const ::OsmAnd::OBF::OsmAndPoiTagGroup& OsmAndPoiTagGroups::groups(int index) const {
+  return groups_.Get(index);
+}
+inline ::OsmAnd::OBF::OsmAndPoiTagGroup* OsmAndPoiTagGroups::mutable_groups(int index) {
+  return groups_.Mutable(index);
+}
+inline ::OsmAnd::OBF::OsmAndPoiTagGroup* OsmAndPoiTagGroups::add_groups() {
+  return groups_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiTagGroup >&
+OsmAndPoiTagGroups::groups() const {
+  return groups_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiTagGroup >*
+OsmAndPoiTagGroups::mutable_groups() {
+  return &groups_;
+}
+
+// -------------------------------------------------------------------
+
 // OsmAndPoiBox
 
 // required uint32 zoom = 1;
@@ -14749,6 +15099,44 @@ inline void OsmAndPoiBox::set_allocated_categories(::OsmAnd::OBF::OsmAndPoiCateg
   }
 }
 
+// optional .OsmAnd.OBF.OsmAndPoiTagGroups tagGroups = 8;
+inline bool OsmAndPoiBox::has_taggroups() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void OsmAndPoiBox::set_has_taggroups() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void OsmAndPoiBox::clear_has_taggroups() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void OsmAndPoiBox::clear_taggroups() {
+  if (taggroups_ != NULL) taggroups_->::OsmAnd::OBF::OsmAndPoiTagGroups::Clear();
+  clear_has_taggroups();
+}
+inline const ::OsmAnd::OBF::OsmAndPoiTagGroups& OsmAndPoiBox::taggroups() const {
+  return taggroups_ != NULL ? *taggroups_ : *default_instance_->taggroups_;
+}
+inline ::OsmAnd::OBF::OsmAndPoiTagGroups* OsmAndPoiBox::mutable_taggroups() {
+  set_has_taggroups();
+  if (taggroups_ == NULL) taggroups_ = new ::OsmAnd::OBF::OsmAndPoiTagGroups;
+  return taggroups_;
+}
+inline ::OsmAnd::OBF::OsmAndPoiTagGroups* OsmAndPoiBox::release_taggroups() {
+  clear_has_taggroups();
+  ::OsmAnd::OBF::OsmAndPoiTagGroups* temp = taggroups_;
+  taggroups_ = NULL;
+  return temp;
+}
+inline void OsmAndPoiBox::set_allocated_taggroups(::OsmAnd::OBF::OsmAndPoiTagGroups* taggroups) {
+  delete taggroups_;
+  taggroups_ = taggroups;
+  if (taggroups) {
+    set_has_taggroups();
+  } else {
+    clear_has_taggroups();
+  }
+}
+
 // repeated .OsmAnd.OBF.OsmAndPoiBox subBoxes = 10;
 inline int OsmAndPoiBox::subboxes_size() const {
   return subboxes_.size();
@@ -14776,13 +15164,13 @@ OsmAndPoiBox::mutable_subboxes() {
 
 // optional fixed32 shiftToData = 14;
 inline bool OsmAndPoiBox::has_shifttodata() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
+  return (_has_bits_[0] & 0x00000040u) != 0;
 }
 inline void OsmAndPoiBox::set_has_shifttodata() {
-  _has_bits_[0] |= 0x00000020u;
+  _has_bits_[0] |= 0x00000040u;
 }
 inline void OsmAndPoiBox::clear_has_shifttodata() {
-  _has_bits_[0] &= ~0x00000020u;
+  _has_bits_[0] &= ~0x00000040u;
 }
 inline void OsmAndPoiBox::clear_shifttodata() {
   shifttodata_ = 0u;
@@ -15574,6 +15962,31 @@ inline ::google::protobuf::int32 OsmAndPoiBoxDataAtom::precisionxy() const {
 inline void OsmAndPoiBoxDataAtom::set_precisionxy(::google::protobuf::int32 value) {
   set_has_precisionxy();
   precisionxy_ = value;
+}
+
+// repeated uint32 tagGroups = 17 [packed = true];
+inline int OsmAndPoiBoxDataAtom::taggroups_size() const {
+  return taggroups_.size();
+}
+inline void OsmAndPoiBoxDataAtom::clear_taggroups() {
+  taggroups_.Clear();
+}
+inline ::google::protobuf::uint32 OsmAndPoiBoxDataAtom::taggroups(int index) const {
+  return taggroups_.Get(index);
+}
+inline void OsmAndPoiBoxDataAtom::set_taggroups(int index, ::google::protobuf::uint32 value) {
+  taggroups_.Set(index, value);
+}
+inline void OsmAndPoiBoxDataAtom::add_taggroups(::google::protobuf::uint32 value) {
+  taggroups_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+OsmAndPoiBoxDataAtom::taggroups() const {
+  return taggroups_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+OsmAndPoiBoxDataAtom::mutable_taggroups() {
+  return &taggroups_;
 }
 
 // -------------------------------------------------------------------
