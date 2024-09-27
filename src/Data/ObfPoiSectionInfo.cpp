@@ -16,12 +16,6 @@ OsmAnd::ObfPoiSectionInfo::~ObfPoiSectionInfo()
 {
 }
 
-OsmAnd::TagValue::TagValue(QString tag, QString value)
-    : tag(tag)
-    , value(value)
-{
-}
-
 std::shared_ptr<const OsmAnd::ObfPoiSectionCategories> OsmAnd::ObfPoiSectionInfo::getCategories() const
 {
     return _p->getCategories();
@@ -32,7 +26,7 @@ std::shared_ptr<const OsmAnd::ObfPoiSectionSubtypes> OsmAnd::ObfPoiSectionInfo::
     return _p->getSubtypes();
 }
 
-QList<OsmAnd::TagValue> OsmAnd::ObfPoiSectionInfo::getTagValues(int id) const
+QList<QPair<QString, QString>> OsmAnd::ObfPoiSectionInfo::getTagValues(int id) const
 {
     auto it = tagGroups.find(id);
     if (it != tagGroups.end())
@@ -41,7 +35,7 @@ QList<OsmAnd::TagValue> OsmAnd::ObfPoiSectionInfo::getTagValues(int id) const
     }
     else
     {
-        return {};
+        return QList<QPair<QString, QString>>();
     }
 }
 

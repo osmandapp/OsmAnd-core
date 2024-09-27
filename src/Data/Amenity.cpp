@@ -242,11 +242,6 @@ QString OsmAnd::Amenity::getName(const QString lang, bool transliterate) const
         return name;
 }
 
-void OsmAnd::Amenity::addTagGroup(int id, QList<TagValue> tagValues)
-{
-    tagGroups.insert(id, tagValues);
-}
-
 QString OsmAnd::Amenity::getCityFromTagGroups(QString lang) const
 {
     QString result = "";
@@ -254,15 +249,15 @@ QString OsmAnd::Amenity::getCityFromTagGroups(QString lang) const
     {
         for (const auto & tagValue : i.value())
         {
-            if (tagValue.tag.endsWith("city:" + lang)) {
+            if (tagValue.first.endsWith("city:" + lang)) {
                 if (result.isEmpty())
-                    result = tagValue.value;
+                    result = tagValue.second;
                 else
-                    result += ", " + tagValue.value;
+                    result += ", " + tagValue.second;
                 break;
             }
-            if (tagValue.tag.endsWith("city"))
-                result = tagValue.value;
+            if (tagValue.first.endsWith("city"))
+                result = tagValue.second;
         }
     }
     return result;

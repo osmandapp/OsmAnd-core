@@ -78,13 +78,6 @@ namespace OsmAnd
     };
 
     typedef OsmAnd::QuadTree<int32_t, AreaI::CoordType> BBoxIndexTree;
-    
-    struct TagValue
-    {
-        QString tag;
-        QString value;
-        TagValue(QString tag, QString value);
-    };
 
     class ObfPoiSectionInfo_P;
     class OSMAND_CORE_API ObfPoiSectionInfo : public ObfSectionInfo
@@ -103,12 +96,12 @@ namespace OsmAnd
         uint32_t nameIndexInnerOffset;
         uint32_t subtypesInnerOffset;
         uint32_t firstBoxInnerOffset;
-        mutable QHash<int, QList<TagValue>> tagGroups;
+        mutable QHash<int, QList<QPair<QString, QString>>> tagGroups;
         mutable BBoxIndexTree bboxIndexCache;
 
         std::shared_ptr<const ObfPoiSectionCategories> getCategories() const;
         std::shared_ptr<const ObfPoiSectionSubtypes> getSubtypes() const;
-        QList<TagValue> getTagValues(int id) const;
+        QList<QPair<QString, QString>> getTagValues(int id) const;
 
     friend class OsmAnd::ObfPoiSectionReader_P;
     };

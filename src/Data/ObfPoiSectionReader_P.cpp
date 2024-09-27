@@ -581,7 +581,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                     }
                 }
                 
-                if (!rejectBox && bbox31 && !intersectWithNameIndex)
+                if (!rejectBox && bbox31)
                 {
                     rejectBox =
                         !bbox31->contains(tileBBox31) &&
@@ -589,7 +589,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                         !bbox31->intersects(tileBBox31);
                 }
 
-                if (rejectBox)
+                if (rejectBox && !intersectWithNameIndex)
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     return false;
@@ -626,9 +626,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                 gpb::uint32 tagGroupLength;
                 cis->ReadVarint32(&tagGroupLength);
                 const auto old = cis->PushLimit(tagGroupLength);
-                std::map<int, std::vector<TagValue>> ttt;
-                readTagGroups(reader, &ttt);
-                //section->tagGroups = ttt;
+                readTagGroups(reader, section->tagGroups);
                 cis->PopLimit(old);
                 break;
             }
@@ -710,7 +708,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::readTagGroups(const ObfReader_P& reader, std::map<int, std::vector<TagValue>> * tagGroups)
+void OsmAnd::ObfPoiSectionReader_P::readTagGroups(const ObfReader_P& reader, QHash<int, QList<QPair<QString, QString>>> & tagGroups)
 {
     const auto cis = reader.getCodedInputStream().get();
     for (;;)
@@ -736,7 +734,7 @@ void OsmAnd::ObfPoiSectionReader_P::readTagGroups(const ObfReader_P& reader, std
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::readTagGroup(const ObfReader_P& reader, std::map<int, std::vector<TagValue>> * tagGroups)
+void OsmAnd::ObfPoiSectionReader_P::readTagGroup(const ObfReader_P& reader, QHash<int, QList<QPair<QString, QString>>> & tagGroups)
 {
     const auto cis = reader.getCodedInputStream().get();
     QList<QString> tagValues;
@@ -749,12 +747,11 @@ void OsmAnd::ObfPoiSectionReader_P::readTagGroup(const ObfReader_P& reader, std:
             case 0:
             {
                 if (id > 0 && tagValues.size() > 1 && tagValues.size() % 2 == 0) {
-                    std::vector<TagValue> tagValuePairs;
+                    auto it = tagGroups.insert(id, {});
                     for (int i = 0; i < tagValues.size(); i = i + 2)
                     {
-                        tagValuePairs.push_back(TagValue(tagValues.at(i), tagValues.at(i + 1)));
+                        it->push_back(qMakePair(tagValues.at(i), tagValues.at(i + 1)));
                     }
-                    tagGroups->insert(std::make_pair(id, tagValuePairs));
                 }
                 return;
             }
@@ -989,6 +986,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     QVector<int> textValueSubtypeIndices;
     QHash<int, QVariant> intValues;
     QHash<int, QVariant> stringOrDataValues;
+    QHash<uint32_t, QList<QPair<QString, QString>>> tagGroupsAmenity;
     auto categoriesFilterChecked = false;
     const CollatorStringMatcher matcher(query, StringMatcherMode::CHECK_STARTS_FROM_SPACE);
     uint32_t precisionXY = 0;
@@ -1098,6 +1096,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     amenity->id = id;
                 amenity->values = detachedOf(intValues).unite(stringOrDataValues);
                 amenity->evaluateTypes();
+                amenity->tagGroups = qMove(tagGroupsAmenity);
                 outAmenity = amenity;
                 return;
             }
@@ -1266,10 +1265,10 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 {
                     uint32_t tagGroupId;
                     cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&tagGroupId));
-                    QList<TagValue> list = section->getTagValues(tagGroupId);
+                    auto list = section->getTagValues(tagGroupId);
                     if (list.size() > 0)
                     {
-                        amenity->addTagGroup(tagGroupId, list);
+                        tagGroupsAmenity.insert(tagGroupId, list);
                     }
                 }
                 cis->PopLimit(old);
@@ -1348,7 +1347,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                     {
                         int x = nameIndexCoordinates.at(i);
                         int y = nameIndexCoordinates.at(i + 1);
-                        nameIndexTree->insert(0, AreaI(x, y, x, y));
+                        nameIndexTree->insert(0, AreaI(y, x, y, x));
                     }
                 }
                 scanTiles(

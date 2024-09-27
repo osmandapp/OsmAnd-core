@@ -21,7 +21,6 @@ namespace OsmAnd
 {
     class ObfPoiSectionInfo;
     struct ObfPoiSectionSubtype;
-    struct TagValue;
 
     class OSMAND_CORE_API Amenity Q_DECL_FINAL
     {
@@ -46,13 +45,12 @@ namespace OsmAnd
             QString value;
         };
 
-    private:
-        QHash<int, QList<TagValue>> tagGroups;
     protected:
     public:
         Amenity(const std::shared_ptr<const ObfPoiSectionInfo>& obfSection);
         virtual ~Amenity();
 
+        QHash<uint32_t, QList<QPair<QString, QString>>> tagGroups;
         const std::shared_ptr<const ObfPoiSectionInfo> obfSection;
 
         PointI position31;
@@ -74,7 +72,6 @@ namespace OsmAnd
             const QList< std::shared_ptr<const OsmAnd::Amenity> >& input);
 
         QString getName(const QString lang, bool transliterate) const;
-        void addTagGroup(int id, QList<TagValue> tagValues);
         QString getCityFromTagGroups(QString lang) const;
     };
 }
