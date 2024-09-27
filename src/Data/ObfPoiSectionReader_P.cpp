@@ -622,7 +622,6 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
             }
             case OBF::OsmAndPoiBox::kTagGroupsFieldNumber:
             {
-                //PoiRegion.MAP_HAS_TAG_GROUPS = true;
                 gpb::uint32 tagGroupLength;
                 cis->ReadVarint32(&tagGroupLength);
                 const auto old = cis->PushLimit(tagGroupLength);
@@ -1257,7 +1256,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
             }
             case OBF::OsmAndPoiBoxDataAtom::kTagGroupsFieldNumber:
             {
-                //PoiRegion.MAP_HAS_TAG_GROUPS = true;
                 gpb::uint32 sz;
                 cis->ReadVarint32(&sz);
                 const auto old = cis->PushLimit(sz);
@@ -1358,7 +1356,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                     MinZoomLevel,
                     TileId::zero(),
                     bbox31,
-                    tileFilter,//accept all ?
+                    tileFilter,
                     MinZoomLevel,
                     nullptr,
                     nullptr,
