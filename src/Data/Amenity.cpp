@@ -273,7 +273,7 @@ QString OsmAnd::Amenity::getCityFromTagGroups(const QString & lang) const
     return result;
 }
 
-bool OsmAnd::Amenity::isCityTypeAccept(QString & type) const
+bool OsmAnd::Amenity::isCityTypeAccept(const QString & type) const
 {
     if (type.isEmpty())
         return false;
