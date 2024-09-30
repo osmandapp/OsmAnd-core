@@ -158,8 +158,8 @@ namespace OsmAnd
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const QPair<int, int>* poiAdditionalFilter,
             const std::shared_ptr<const IQueryController>& queryController);
-        static void readTagGroups(const ObfReader_P& reader, QHash<int, QList<QPair<QString, QString>>> & tagGroups);
-        static void readTagGroup(const ObfReader_P& reader, QHash<int, QList<QPair<QString, QString>>> & tagGroups);
+        static void readTagGroups(const ObfReader_P& reader, QHash<uint32_t, QList<QPair<QString, QString>>> & tagGroups);
+        static void readTagGroup(const ObfReader_P& reader, QHash<uint32_t, QList<QPair<QString, QString>>> & tagGroups);
     public:
         static void loadCategories(
             const ObfReader_P& reader,

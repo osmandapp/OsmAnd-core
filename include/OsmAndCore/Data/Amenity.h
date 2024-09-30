@@ -72,7 +72,7 @@ namespace OsmAnd
             const QList< std::shared_ptr<const OsmAnd::Amenity> >& input);
 
         QString getName(const QString lang, bool transliterate) const;
-        QString getCityFromTagGroups(QString lang) const;
+        QString getCityFromTagGroups(const QString & lang) const;
     };
 }
 

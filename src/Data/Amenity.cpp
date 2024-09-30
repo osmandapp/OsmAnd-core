@@ -242,21 +242,21 @@ QString OsmAnd::Amenity::getName(const QString lang, bool transliterate) const
         return name;
 }
 
-QString OsmAnd::Amenity::getCityFromTagGroups(QString lang) const
+QString OsmAnd::Amenity::getCityFromTagGroups(const QString & lang) const
 {
     QString result = "";
     for (auto i = tagGroups.begin(); i != tagGroups.end(); ++i)
     {
         for (const auto & tagValue : i.value())
         {
-            if (tagValue.first.endsWith("city:" + lang)) {
+            if (tagValue.first.endsWith(QStringLiteral("city:") + lang)) {
                 if (result.isEmpty())
                     result = tagValue.second;
                 else
                     result += ", " + tagValue.second;
                 break;
             }
-            if (tagValue.first.endsWith("city"))
+            if (tagValue.first.endsWith(QStringLiteral("city")))
                 result = tagValue.second;
         }
     }

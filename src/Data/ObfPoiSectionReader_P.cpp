@@ -707,7 +707,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::readTagGroups(const ObfReader_P& reader, QHash<int, QList<QPair<QString, QString>>> & tagGroups)
+void OsmAnd::ObfPoiSectionReader_P::readTagGroups(const ObfReader_P& reader, QHash<uint32_t, QList<QPair<QString, QString>>> & tagGroups)
 {
     const auto cis = reader.getCodedInputStream().get();
     for (;;)
@@ -733,7 +733,7 @@ void OsmAnd::ObfPoiSectionReader_P::readTagGroups(const ObfReader_P& reader, QHa
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::readTagGroup(const ObfReader_P& reader, QHash<int, QList<QPair<QString, QString>>> & tagGroups)
+void OsmAnd::ObfPoiSectionReader_P::readTagGroup(const ObfReader_P& reader, QHash<uint32_t, QList<QPair<QString, QString>>> & tagGroups)
 {
     const auto cis = reader.getCodedInputStream().get();
     QList<QString> tagValues;
@@ -1296,7 +1296,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
     const auto cis = reader.getCodedInputStream().get();
     QMap<uint32_t, uint32_t> dataBoxesOffsetsSet;
     QList<int> nameIndexCoordinates;
-    BBoxIndexTree* nameIndexTree = nullptr;
     QMap<uint32_t, uint64_t> dataBoxesOffsetsMap;
     for (;;)
     {
@@ -1304,10 +1303,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
-                if (nameIndexTree)
-                {
-                    delete nameIndexTree;
-                }
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return;
 
@@ -1337,16 +1332,18 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
             {
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 const auto oldLimit = cis->PushLimit(length);
+                BBoxIndexTree nameIndexTree;
+                bool hasTree = false;
                 if (nameIndexCoordinates.size() > 0)
                 {
-                    AreaI area(0, 0, INT_MAX, INT_MAX);
-                    nameIndexTree = new BBoxIndexTree(area, 8);
+                    nameIndexTree = BBoxIndexTree(AreaI::largestPositive(), 8);
                     for (int i = 0; i < nameIndexCoordinates.size(); i = i + 2)
                     {
                         int x = nameIndexCoordinates.at(i);
                         int y = nameIndexCoordinates.at(i + 1);
-                        nameIndexTree->insert(0, AreaI(y, x, y, x));
+                        nameIndexTree.insert(0, AreaI(y, x, y, x));
                     }
+                    hasTree = true;
                 }
                 scanTiles(
                     reader, 
@@ -1360,7 +1357,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                     MinZoomLevel,
                     nullptr,
                     nullptr,
-                    nameIndexTree);
+                    hasTree ? &nameIndexTree : nullptr);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -1613,7 +1610,7 @@ void OsmAnd::ObfPoiSectionReader_P::readNameIndexDataAtom(
                 }
                 
                 QList<int> bboxResult;
-                section->bboxIndexCache.query(AreaI(position31.x, position31.y, position31.x, position31.y), bboxResult);
+                section->bboxIndexCache.query(AreaI(position31.y, position31.x, position31.y, position31.x), bboxResult);
                 if (bboxResult.size() == 0)
                 {
                     nameIndexCoordinates.push_back(position31.x);
