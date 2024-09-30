@@ -8,6 +8,7 @@ OsmAnd::ObfPoiSectionInfo::ObfPoiSectionInfo(const std::shared_ptr<const ObfInfo
     , nameIndexInnerOffset(0)
     , subtypesInnerOffset(0)
     , firstBoxInnerOffset(0)
+    , bboxIndexCache(AreaI::largestPositive(), 8)
 {
 }
 
@@ -23,6 +24,19 @@ std::shared_ptr<const OsmAnd::ObfPoiSectionCategories> OsmAnd::ObfPoiSectionInfo
 std::shared_ptr<const OsmAnd::ObfPoiSectionSubtypes> OsmAnd::ObfPoiSectionInfo::getSubtypes() const
 {
     return _p->getSubtypes();
+}
+
+QList<QPair<QString, QString>> OsmAnd::ObfPoiSectionInfo::getTagValues(uint32_t id) const
+{
+    auto it = tagGroups.find(id);
+    if (it != tagGroups.end())
+    {
+        return *it;
+    }
+    else
+    {
+        return QList<QPair<QString, QString>>();
+    }
 }
 
 OsmAnd::ObfPoiSectionCategories::ObfPoiSectionCategories()

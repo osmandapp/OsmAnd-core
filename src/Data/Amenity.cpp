@@ -241,3 +241,41 @@ QString OsmAnd::Amenity::getName(const QString lang, bool transliterate) const
     else
         return name;
 }
+
+QString OsmAnd::Amenity::getCityFromTagGroups(const QString & lang) const
+{
+    QString result = "";
+    for (auto i = tagGroups.begin(); i != tagGroups.end(); ++i)
+    {
+        QString translated = "";
+        QString nonTranslated = "";
+        QString type = "";
+        for (const auto & tagValue : i.value())
+        {
+            if (tagValue.first == (QStringLiteral("name:") + lang))
+            {
+                translated = tagValue.second;
+            }
+            if (tagValue.first == QStringLiteral("name"))
+            {
+                nonTranslated = tagValue.second;
+            }
+            if (tagValue.first == QStringLiteral("place"))
+            {
+                type = tagValue.second;
+            }
+        }
+        QString name = translated.isEmpty() ? nonTranslated : translated;
+        if (!name.isEmpty() && isCityTypeAccept(type)) {
+            result = result.isEmpty() ? name : result + ", " + name;
+        }
+    }
+    return result;
+}
+
+bool OsmAnd::Amenity::isCityTypeAccept(const QString & type) const
+{
+    if (type.isEmpty())
+        return false;
+    return type != QStringLiteral("district") && type != QStringLiteral("neighbourhood") && type != QStringLiteral("borough");
+}

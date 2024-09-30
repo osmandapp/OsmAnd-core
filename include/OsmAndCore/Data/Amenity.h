@@ -46,11 +46,13 @@ namespace OsmAnd
         };
 
     private:
+        bool isCityTypeAccept(const QString & type) const;
     protected:
     public:
         Amenity(const std::shared_ptr<const ObfPoiSectionInfo>& obfSection);
         virtual ~Amenity();
 
+        QHash<uint32_t, QList<QPair<QString, QString>>> tagGroups;
         const std::shared_ptr<const ObfPoiSectionInfo> obfSection;
 
         PointI position31;
@@ -72,6 +74,7 @@ namespace OsmAnd
             const QList< std::shared_ptr<const OsmAnd::Amenity> >& input);
 
         QString getName(const QString lang, bool transliterate) const;
+        QString getCityFromTagGroups(const QString & lang) const;
     };
 }
 
