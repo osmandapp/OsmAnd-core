@@ -247,18 +247,35 @@ QString OsmAnd::Amenity::getCityFromTagGroups(const QString & lang) const
     QString result = "";
     for (auto i = tagGroups.begin(); i != tagGroups.end(); ++i)
     {
+        QString translated = "";
+        QString nonTranslated = "";
+        QString type = "";
         for (const auto & tagValue : i.value())
         {
-            if (tagValue.first.endsWith(QStringLiteral("city:") + lang)) {
-                if (result.isEmpty())
-                    result = tagValue.second;
-                else
-                    result += ", " + tagValue.second;
-                break;
+            if (tagValue.first == (QStringLiteral("name:") + lang))
+            {
+                translated = tagValue.second;
             }
-            if (tagValue.first.endsWith(QStringLiteral("city")))
-                result = tagValue.second;
+            if (tagValue.first == QStringLiteral("name"))
+            {
+                nonTranslated = tagValue.second;
+            }
+            if (tagValue.first == QStringLiteral("place"))
+            {
+                type = tagValue.second;
+            }
+        }
+        QString name = translated.isEmpty() ? nonTranslated : translated;
+        if (!name.isEmpty() && isCityTypeAccept(type)) {
+            result = result.isEmpty() ? name : result + ", " + name;
         }
     }
     return result;
+}
+
+bool OsmAnd::Amenity::isCityTypeAccept(QString & type) const
+{
+    if (type.isEmpty())
+        return false;
+    return type != QStringLiteral("district") && type != QStringLiteral("neighbourhood") && type != QStringLiteral("borough");
 }

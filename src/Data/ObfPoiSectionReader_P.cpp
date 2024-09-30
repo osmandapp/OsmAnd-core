@@ -737,7 +737,7 @@ void OsmAnd::ObfPoiSectionReader_P::readTagGroup(const ObfReader_P& reader, QHas
 {
     const auto cis = reader.getCodedInputStream().get();
     QList<QString> tagValues;
-    int id = -1;
+    uint32_t id = 0;
     for (;;)
     {
         const auto tag = cis->ReadTag();

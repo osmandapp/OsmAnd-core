@@ -45,6 +45,8 @@ namespace OsmAnd
             QString value;
         };
 
+    private:
+        bool isCityTypeAccept(QString & type) const;
     protected:
     public:
         Amenity(const std::shared_ptr<const ObfPoiSectionInfo>& obfSection);
