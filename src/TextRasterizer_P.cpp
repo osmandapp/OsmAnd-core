@@ -187,7 +187,7 @@ OsmAnd::TextRasterizer_P::GlyphBlock OsmAnd::TextRasterizer_P::preparePart(const
     hb_shape(textPaint.hbFont.get(), hbBuffer.get(), nullptr, 0);
 
     const auto glyphsCount = hb_buffer_get_length(hbBuffer.get());
-    if (!glyphsCount)
+    if (glyphsCount == 0)
         return glyphBlock;
 
     const auto pGlyphInfos = hb_buffer_get_glyph_infos(hbBuffer.get(), nullptr);
@@ -439,14 +439,15 @@ SkRect OsmAnd::TextRasterizer_P::positionText(
             textPaint.positionedBounds = textPaint.bounds;
             if(horizontalOffset == 0)
                 horizontalOffset = horizontalShift;
-            if(verticalOffset == 0)
-                verticalOffset = -textPaint.bounds.top();
 
-            // Position text
-            textPaint.positionedBounds.offset(horizontalOffset, verticalOffset + linePaint.maxBoundsTop);
+            // Position text horizontally
+            textPaint.positionedBounds.offset(horizontalOffset, verticalOffset - textPaint.bounds.top());
 
             // Include into text area
             textArea.join(textPaint.positionedBounds);
+
+            // Position text vertically
+            textPaint.positionedBounds.offset(0, linePaint.maxBoundsTop);
 
             horizontalOffset += textPaint.width;
         }
@@ -600,8 +601,8 @@ bool OsmAnd::TextRasterizer_P::rasterize(
         bitmapHeight = qMax(bitmapHeight, style.backgroundImage->height());
 
         // Shift text area to proper position in a larger
-        offsetLeft += (bitmapWidth - qCeil(textArea.width())) / 2.0f;
-        offsetTop += (bitmapHeight - qCeil(textArea.height())) / 2.0f;
+        offsetLeft = (bitmapWidth - qCeil(leftGap + textArea.width() + rightGap)) / 2.0f;
+        offsetTop = (bitmapHeight - qCeil(textArea.height())) / 2.0f;
     }
 
     const auto offset = SkPoint::Make(offsetLeft, offsetTop);
