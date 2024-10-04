@@ -714,9 +714,9 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
         auto &topColor1 = i < traceColorizationMapping.size() ? traceColorizationMapping[i] : topColor;
         auto &topColor2 = i < traceColorizationMapping.size() - shift ? traceColorizationMapping[i + shift] : topColor;
         inObj.push_back(
-            {static_cast<float>(point1.x), static_cast<float>(point1.y), distance1, height1, roofColor1, topColor1});
+            {static_cast<float>(point1.x), static_cast<float>(point1.y), height1, distance1, roofColor1, topColor1});
         inObj.push_back(
-            {static_cast<float>(point2.x), static_cast<float>(point2.y), distance2, height2, roofColor2, topColor2});
+            {static_cast<float>(point2.x), static_cast<float>(point2.y), height2, distance2, roofColor2, topColor2});
     }
 	VertexForPath seg[2], point1;
 	float RSQRT2 = 0.70710678118654752440084436210485L;
