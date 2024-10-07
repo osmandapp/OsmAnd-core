@@ -746,17 +746,30 @@ void OsmAnd::ObfPoiSectionReader_P::readTagGroup(const ObfReader_P& reader, QHas
             case 0:
             {
                 if (id > 0 && tagValues.size() > 1 && tagValues.size() % 2 == 0) {
-                    auto it = tagGroups.insert(id, {});
-                    for (int i = 0; i < tagValues.size(); i = i + 2)
+                    auto it = tagGroups.find(id);
+                    if (it == tagGroups.end()) 
                     {
-                        it->push_back(qMakePair(tagValues.at(i), tagValues.at(i + 1)));
+                        QList<QPair<QString, QString>> list;
+                        for (int i = 0; i < tagValues.size(); i = i + 2)
+                        {
+                            list.push_back(qMakePair(tagValues.at(i), tagValues.at(i + 1)));
+                        }
+                        tagGroups.insert(id, list);
                     }
                 }
                 return;
             }
             case OBF::OsmAndPoiTagGroup::kIdFieldNumber:
+            {
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&id));
+                auto it = tagGroups.find(id);
+                if (it != tagGroups.end())
+                {
+                    cis->Skip(cis->BytesUntilLimit());
+                    return;
+                }
                 break;
+            }
             case OBF::OsmAndPoiTagGroup::kTagValuesFieldNumber:
             {
                 QString value;
