@@ -42,7 +42,9 @@ namespace OsmAnd
             Zoom,
             Azimuth,
             ElevationAngle,
-            Target
+            Target,
+            PrimaryPixel,
+            SecondaryPixel
         };
     }
 }

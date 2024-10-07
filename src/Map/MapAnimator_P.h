@@ -103,6 +103,19 @@ namespace OsmAnd
             const float duration,
             const TimingFunction timingFunction);
 
+        void constructPrimaryPixelAnimationToValue(
+            AnimationsCollection& outAnimation,
+            const Key key,
+            const PointI& value,
+            const float duration,
+            const TimingFunction timingFunction);
+        void constructSecondaryPixelAnimationToValue(
+            AnimationsCollection& outAnimation,
+            const Key key,
+            const PointI& value,
+            const float duration,
+            const TimingFunction timingFunction);
+
         void constructParabolicTargetAnimationByDelta(
             AnimationsCollection& outAnimation,
             const Key key,
@@ -196,6 +209,16 @@ namespace OsmAnd
         PointI64 secondaryTargetGetter(const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
         const Animation<PointI64>::ApplierMethod _secondaryTargetSetter;
         void secondaryTargetSetter(const Key key, const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
+
+        const Animation<PointI>::GetInitialValueMethod _primaryPixelGetter;
+        PointI primaryPixelGetter(const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
+        const Animation<PointI>::ApplierMethod _primaryPixelSetter;
+        void primaryPixelSetter(const Key key, const PointI newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
+
+        const Animation<PointI>::GetInitialValueMethod _secondaryPixelGetter;
+        PointI secondaryPixelGetter(const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
+        const Animation<PointI>::ApplierMethod _secondaryPixelSetter;
+        void secondaryPixelSetter(const Key key, const PointI newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
 
         static std::shared_ptr<GenericAnimation> findCurrentAnimation(const AnimatedValue animatedValue, const AnimationsCollection& collection);
     public:
@@ -299,6 +322,18 @@ namespace OsmAnd
         void animateSecondaryTargetWith(
             const PointD& velocity,
             const PointD& deceleration,
+            const Key key);
+
+        void animatePrimaryPixelTo(
+            const PointI& value,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key);
+
+        void animateSecondaryPixelTo(
+            const PointI& value,
+            const float duration,
+            const TimingFunction timingFunction,
             const Key key);
 
         void animateAzimuthBy(

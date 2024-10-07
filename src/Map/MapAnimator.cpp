@@ -230,6 +230,24 @@ void OsmAnd::MapAnimator::animateSecondaryTargetWith(
     _p->animateSecondaryTargetWith(velocity, deceleration, key);
 }
 
+void OsmAnd::MapAnimator::animatePrimaryPixelTo(
+    const PointI& value,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key /*= nullptr*/)
+{
+    _p->animatePrimaryPixelTo(value, duration, timingFunction, key);
+}
+
+void OsmAnd::MapAnimator::animateSecondaryPixelTo(
+    const PointI& value,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key /*= nullptr*/)
+{
+    _p->animateSecondaryPixelTo(value, duration, timingFunction, key);
+}
+
 void OsmAnd::MapAnimator::animateAzimuthBy(
     const float deltaValue,
     const float duration,

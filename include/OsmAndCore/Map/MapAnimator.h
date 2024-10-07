@@ -133,6 +133,18 @@ namespace OsmAnd
             const PointD& deceleration,
             const Key key = nullptr);
 
+        void animatePrimaryPixelTo(
+            const PointI& value,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key = nullptr);
+
+        void animateSecondaryPixelTo(
+            const PointI& value,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key = nullptr);
+
         void animateAzimuthBy(
             const float deltaValue,
             const float duration,
