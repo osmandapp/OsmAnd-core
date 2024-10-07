@@ -22,6 +22,10 @@ OsmAnd::MapAnimator_P::MapAnimator_P( MapAnimator* const owner_ )
     , _flatTargetSetter(std::bind(&MapAnimator_P::flatTargetSetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4))
     , _secondaryTargetGetter(std::bind(&MapAnimator_P::secondaryTargetGetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
     , _secondaryTargetSetter(std::bind(&MapAnimator_P::secondaryTargetSetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4))
+    , _primaryPixelGetter(std::bind(&MapAnimator_P::primaryPixelGetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
+    , _primaryPixelSetter(std::bind(&MapAnimator_P::primaryPixelSetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4))
+    , _secondaryPixelGetter(std::bind(&MapAnimator_P::secondaryPixelGetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
+    , _secondaryPixelSetter(std::bind(&MapAnimator_P::secondaryPixelSetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4))
     , owner(owner_)
 {
 }
@@ -509,6 +513,34 @@ void OsmAnd::MapAnimator_P::animateSecondaryTargetWith(
     animateSecondaryTargetBy(deltaValue, duration, TimingFunction::EaseOutQuadratic, key);
 }
 
+void OsmAnd::MapAnimator_P::animatePrimaryPixelTo(
+    const PointI& value,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key)
+{
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
+
+    AnimationsCollection newAnimations;
+    constructPrimaryPixelAnimationToValue(newAnimations, key, value, duration, timingFunction);
+
+    _animationsByKey[key].append(newAnimations);
+}
+
+void OsmAnd::MapAnimator_P::animateSecondaryPixelTo(
+    const PointI& value,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key)
+{
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
+
+    AnimationsCollection newAnimations;
+    constructSecondaryPixelAnimationToValue(newAnimations, key, value, duration, timingFunction);
+
+    _animationsByKey[key].append(newAnimations);
+}
+
 void OsmAnd::MapAnimator_P::animateAzimuthBy(
     const float deltaValue,
     const float duration,
@@ -712,6 +744,28 @@ void OsmAnd::MapAnimator_P::secondaryTargetSetter(const Key key, const PointI64 
     _renderer->targetChangedObservable.postNotify(_renderer.get());
 }
 
+OsmAnd::PointI OsmAnd::MapAnimator_P::primaryPixelGetter(const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
+{
+    return _renderer->getState().fixedPixel;
+}
+
+void OsmAnd::MapAnimator_P::primaryPixelSetter(const Key key, const PointI newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
+{
+    _renderer->setMapTargetPixelCoordinates(newValue);
+    _renderer->targetChangedObservable.postNotify(_renderer.get());
+}
+
+OsmAnd::PointI OsmAnd::MapAnimator_P::secondaryPixelGetter(const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
+{
+    return _renderer->getState().aimPixel;
+}
+
+void OsmAnd::MapAnimator_P::secondaryPixelSetter(const Key key, const PointI newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
+{
+    _renderer->setSecondaryTargetPixelCoordinates(newValue);
+    _renderer->targetChangedObservable.postNotify(_renderer.get());
+}
+
 void OsmAnd::MapAnimator_P::constructZoomAnimationByDelta(
     AnimationsCollection& outAnimation,
     const Key key,
@@ -886,6 +940,54 @@ void OsmAnd::MapAnimator_P::constructSecondaryTargetAnimationToValue(
         },
         duration, 0.0f, timingFunction,
         _secondaryTargetGetter, _secondaryTargetSetter));
+
+    outAnimation.push_back(qMove(newAnimation));
+}
+
+void OsmAnd::MapAnimator_P::constructPrimaryPixelAnimationToValue(
+    AnimationsCollection& outAnimation,
+    const Key key,
+    const PointI& value,
+    const float duration,
+    const TimingFunction timingFunction)
+{
+    if (qFuzzyIsNull(duration))
+        return;
+
+    std::shared_ptr<GenericAnimation> newAnimation(new Animation<PointI>(
+        key,
+        AnimatedValue::PrimaryPixel,
+        [this, value]
+        (const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> PointI
+        {
+            return PointI(value) - PointI(primaryPixelGetter(key, context, sharedContext));
+        },
+        duration, 0.0f, timingFunction,
+        _primaryPixelGetter, _primaryPixelSetter));
+
+    outAnimation.push_back(qMove(newAnimation));
+}
+
+void OsmAnd::MapAnimator_P::constructSecondaryPixelAnimationToValue(
+    AnimationsCollection& outAnimation,
+    const Key key,
+    const PointI& value,
+    const float duration,
+    const TimingFunction timingFunction)
+{
+    if (qFuzzyIsNull(duration))
+        return;
+
+    std::shared_ptr<GenericAnimation> newAnimation(new Animation<PointI>(
+        key,
+        AnimatedValue::SecondaryPixel,
+        [this, value]
+        (const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> PointI
+        {
+            return PointI(value) - PointI(secondaryPixelGetter(key, context, sharedContext));
+        },
+        duration, 0.0f, timingFunction,
+        _secondaryPixelGetter, _secondaryPixelSetter));
 
     outAnimation.push_back(qMove(newAnimation));
 }
