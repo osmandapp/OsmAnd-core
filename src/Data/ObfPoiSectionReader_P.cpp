@@ -573,7 +573,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                 {
                     QList<int32_t> resCache;
                     {
-                        QReadLocker bboxIndexCasheLocker(&section->_bboxIndexCacheLock);
+                        QReadLocker bboxIndexCacheLocker(&section->_bboxIndexCacheLock);
                         section->bboxIndexCache.query(tileBBox31, resCache);
                     }
                     if (resCache.size() == 0)
@@ -1645,7 +1645,10 @@ void OsmAnd::ObfPoiSectionReader_P::readNameIndexDataAtom(
                 }
                 
                 QList<int> bboxResult;
-                section->bboxIndexCache.query(AreaI(position31.y, position31.x, position31.y, position31.x), bboxResult);
+                {
+                    QReadLocker bboxIndexCacheLocker(&section->_bboxIndexCacheLock);
+                    section->bboxIndexCache.query(AreaI(position31.y, position31.x, position31.y, position31.x), bboxResult);
+                }
                 if (bboxResult.size() == 0)
                 {
                     nameIndexCoordinates.push_back(position31.x);
