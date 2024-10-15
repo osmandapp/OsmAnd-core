@@ -6,6 +6,7 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
 #include <QStringList>
+#include <QReadWriteLock>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -98,6 +99,8 @@ namespace OsmAnd
         uint32_t firstBoxInnerOffset;
         mutable QHash<uint32_t, QList<QPair<QString, QString>>> tagGroups;
         mutable BBoxIndexTree bboxIndexCache;
+        mutable QReadWriteLock _tagGroupsLock;
+        mutable QReadWriteLock _bboxIndexCacheLock;
 
         std::shared_ptr<const ObfPoiSectionCategories> getCategories() const;
         std::shared_ptr<const ObfPoiSectionSubtypes> getSubtypes() const;

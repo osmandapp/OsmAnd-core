@@ -571,11 +571,14 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                 const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
                 if (nameIndexTree)
                 {
-                    QList<int> resCache;
-                    section->bboxIndexCache.query(tileBBox31, resCache);
-                    if (resCache.size() == 0) 
+                    QList<int32_t> resCache;
                     {
-                        QList<int> res;
+                        QReadLocker bboxIndexCasheLocker(&section->_bboxIndexCacheLock);
+                        section->bboxIndexCache.query(tileBBox31, resCache);
+                    }
+                    if (resCache.size() == 0)
+                    {
+                        QList<int32_t> res;
                         nameIndexTree->query(tileBBox31, res);
                         intersectWithNameIndex = res.size() > 0;
                     }
@@ -594,7 +597,10 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                     cis->Skip(cis->BytesUntilLimit());
                     return false;
                 }
-                section->bboxIndexCache.insert(0, tileBBox31);
+                {
+                    QWriteLocker bboxIndexCacheLocker(&section->_bboxIndexCacheLock);
+                    section->bboxIndexCache.insert(0, tileBBox31);
+                }
                 break;
             }
             case OBF::OsmAndPoiBox::kCategoriesFieldNumber:
@@ -625,7 +631,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                 gpb::uint32 tagGroupLength;
                 cis->ReadVarint32(&tagGroupLength);
                 const auto old = cis->PushLimit(tagGroupLength);
-                readTagGroups(reader, section->tagGroups);
+                readTagGroups(reader, section);
                 cis->PopLimit(old);
                 break;
             }
@@ -707,7 +713,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::readTagGroups(const ObfReader_P& reader, QHash<uint32_t, QList<QPair<QString, QString>>> & tagGroups)
+void OsmAnd::ObfPoiSectionReader_P::readTagGroups(const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section)
 {
     const auto cis = reader.getCodedInputStream().get();
     for (;;)
@@ -722,7 +728,7 @@ void OsmAnd::ObfPoiSectionReader_P::readTagGroups(const ObfReader_P& reader, QHa
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 const auto oldLimit = cis->PushLimit(length);
-                readTagGroup(reader, tagGroups);
+                readTagGroup(reader, section);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -733,7 +739,7 @@ void OsmAnd::ObfPoiSectionReader_P::readTagGroups(const ObfReader_P& reader, QHa
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::readTagGroup(const ObfReader_P& reader, QHash<uint32_t, QList<QPair<QString, QString>>> & tagGroups)
+void OsmAnd::ObfPoiSectionReader_P::readTagGroup(const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section)
 {
     const auto cis = reader.getCodedInputStream().get();
     QList<QString> tagValues;
@@ -745,16 +751,26 @@ void OsmAnd::ObfPoiSectionReader_P::readTagGroup(const ObfReader_P& reader, QHas
         {
             case 0:
             {
-                if (id > 0 && tagValues.size() > 1 && tagValues.size() % 2 == 0) {
-                    auto it = tagGroups.find(id);
-                    if (it == tagGroups.end()) 
+                if (id > 0 && tagValues.size() > 1 && tagValues.size() % 2 == 0) 
+                {
+                    bool isWrite = false;
+                    {
+                        QReadLocker tagGroupsLocker(&section->_tagGroupsLock);
+                        auto it = section->tagGroups.find(id);
+                        auto end = section->tagGroups.end();
+                        isWrite = it == end;
+                    }
+                    if (isWrite)
                     {
                         QList<QPair<QString, QString>> list;
                         for (int i = 0; i < tagValues.size(); i = i + 2)
                         {
                             list.push_back(qMakePair(tagValues.at(i), tagValues.at(i + 1)));
                         }
-                        tagGroups.insert(id, list);
+                        {
+                            QWriteLocker tagGroupsLocker(&section->_tagGroupsLock);
+                            section->tagGroups.insert(id, list);
+                        }
                     }
                 }
                 return;
@@ -762,8 +778,14 @@ void OsmAnd::ObfPoiSectionReader_P::readTagGroup(const ObfReader_P& reader, QHas
             case OBF::OsmAndPoiTagGroup::kIdFieldNumber:
             {
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&id));
-                auto it = tagGroups.find(id);
-                if (it != tagGroups.end())
+                bool isSkip = false;
+                {
+                    QReadLocker tagGroupsLocker(&section->_tagGroupsLock);
+                    auto it = section->tagGroups.find(id);
+                    auto end = section->tagGroups.end();
+                    isSkip = it != section->tagGroups.end();
+                }
+                if (isSkip)
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     return;
@@ -1347,7 +1369,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                 const auto oldLimit = cis->PushLimit(length);
                 BBoxIndexTree nameIndexTree;
                 bool hasTree = false;
-                if (nameIndexCoordinates.size() > 0)
+                if (nameIndexCoordinates.size() > 1)
                 {
                     nameIndexTree = BBoxIndexTree(AreaI::largestPositive(), 8);
                     for (int i = 0; i < nameIndexCoordinates.size(); i = i + 2)
