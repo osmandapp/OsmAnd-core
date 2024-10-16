@@ -8,7 +8,6 @@ OsmAnd::ObfPoiSectionInfo::ObfPoiSectionInfo(const std::shared_ptr<const ObfInfo
     , nameIndexInnerOffset(0)
     , subtypesInnerOffset(0)
     , firstBoxInnerOffset(0)
-    , bboxIndexCache(AreaI::largestPositive(), 8)
 {
 }
 

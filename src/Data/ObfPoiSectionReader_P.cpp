@@ -440,8 +440,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                     tileFilter,
                     zoomFilter,
                     categoriesFilter,
-                    poiAdditionalFilter,
-                    nullptr);
+                    poiAdditionalFilter);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -525,8 +524,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
     const TileAcceptorFunction tileFilter,
     const ZoomLevel zoomFilter,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
-    const QPair<int, int>* poiAdditionalFilter,
-    const BBoxIndexTree* nameIndexTree)
+    const QPair<int, int>* poiAdditionalFilter)
 {
     const auto cis = reader.getCodedInputStream().get();
 
@@ -569,18 +567,6 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                 bool rejectBox = false;
                 bool intersectWithNameIndex = false;
                 const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
-                if (nameIndexTree)
-                {
-                    QList<int> resCache;
-                    section->bboxIndexCache.query(tileBBox31, resCache);
-                    if (resCache.size() == 0) 
-                    {
-                        QList<int> res;
-                        nameIndexTree->query(tileBBox31, res);
-                        intersectWithNameIndex = res.size() > 0;
-                    }
-                }
-                
                 if (!rejectBox && bbox31)
                 {
                     rejectBox =
@@ -594,7 +580,6 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                     cis->Skip(cis->BytesUntilLimit());
                     return false;
                 }
-                section->bboxIndexCache.insert(0, tileBBox31);
                 break;
             }
             case OBF::OsmAndPoiBox::kCategoriesFieldNumber:
@@ -625,7 +610,9 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                 gpb::uint32 tagGroupLength;
                 cis->ReadVarint32(&tagGroupLength);
                 const auto old = cis->PushLimit(tagGroupLength);
-                readTagGroups(reader, section->tagGroups);
+                QHash<uint32_t, QList<QPair<QString, QString>>> localTagGroups;
+                readTagGroups(reader, localTagGroups);
+                section->tagGroups.insert(localTagGroups);
                 cis->PopLimit(old);
                 break;
             }
@@ -646,8 +633,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                     tileFilter,
                     zoomFilter,
                     categoriesFilter,
-                    poiAdditionalFilter,
-                    nullptr);
+                    poiAdditionalFilter);
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
 
                 cis->PopLimit(oldLimit);
@@ -746,16 +732,12 @@ void OsmAnd::ObfPoiSectionReader_P::readTagGroup(const ObfReader_P& reader, QHas
             case 0:
             {
                 if (id > 0 && tagValues.size() > 1 && tagValues.size() % 2 == 0) {
-                    auto it = tagGroups.find(id);
-                    if (it == tagGroups.end()) 
+                    QList<QPair<QString, QString>> list;
+                    for (int i = 0; i < tagValues.size(); i = i + 2)
                     {
-                        QList<QPair<QString, QString>> list;
-                        for (int i = 0; i < tagValues.size(); i = i + 2)
-                        {
-                            list.push_back(qMakePair(tagValues.at(i), tagValues.at(i + 1)));
-                        }
-                        tagGroups.insert(id, list);
+                        list.push_back(qMakePair(tagValues.at(i), tagValues.at(i + 1)));
                     }
+                    tagGroups.insert(id, list);
                 }
                 return;
             }
@@ -1281,6 +1263,11 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     {
                         tagGroupsAmenity.insert(tagGroupId, list);
                     }
+                    else
+                    {
+                        OsmAnd::LogPrintf(LogSeverityLevel::Error, "Couldn't read tag groups for amenity %s %.4f %.4f",
+                                          qPrintable(nativeName), Utilities::get31LatitudeY(position31.y), Utilities::get31LongitudeX(position31.x));
+                    }
                 }
                 cis->PopLimit(old);
                 break;
@@ -1345,19 +1332,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
             {
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 const auto oldLimit = cis->PushLimit(length);
-                BBoxIndexTree nameIndexTree;
-                bool hasTree = false;
-                if (nameIndexCoordinates.size() > 0)
-                {
-                    nameIndexTree = BBoxIndexTree(AreaI::largestPositive(), 8);
-                    for (int i = 0; i < nameIndexCoordinates.size(); i = i + 2)
-                    {
-                        int x = nameIndexCoordinates.at(i);
-                        int y = nameIndexCoordinates.at(i + 1);
-                        nameIndexTree.insert(0, AreaI(y, x, y, x));
-                    }
-                    hasTree = true;
-                }
                 scanTiles(
                     reader, 
                     section,
@@ -1369,8 +1343,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                     tileFilter,
                     MinZoomLevel,
                     nullptr,
-                    nullptr,
-                    hasTree ? &nameIndexTree : nullptr);
+                    nullptr);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -1620,14 +1593,6 @@ void OsmAnd::ObfPoiSectionReader_P::readNameIndexDataAtom(
                     if (xy31)
                         d = qAbs(xy31->x - position31.x) + qAbs(xy31->y - position31.y);
                     outDataOffsets.insert(dataOffset, d);
-                }
-                
-                QList<int> bboxResult;
-                section->bboxIndexCache.query(AreaI(position31.y, position31.x, position31.y, position31.x), bboxResult);
-                if (bboxResult.size() == 0)
-                {
-                    nameIndexCoordinates.push_back(position31.x);
-                    nameIndexCoordinates.push_back(position31.y);
                 }
                 break;
             }

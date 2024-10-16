@@ -87,8 +87,7 @@ namespace OsmAnd
             const TileAcceptorFunction tileFilter,
             const ZoomLevel zoomFilter,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
-            const QPair<int, int>* poiAdditionalFilter,
-            const BBoxIndexTree* nameIndexTree);
+            const QPair<int, int>* poiAdditionalFilter);
         static bool scanTileForMatchingCategories(
             const ObfReader_P& reader,
             const QSet<ObfPoiCategoryId>& categories,
