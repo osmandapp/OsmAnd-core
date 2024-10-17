@@ -159,26 +159,30 @@ namespace OsmAnd
             virtual QString getDefaultValueDescription() const Q_DECL_OVERRIDE;
         };
 
-        class OSMAND_CORE_API Association Q_DECL_FINAL
-            : public BaseRule
-            , public IMapStyle::IAssociation
+        class OSMAND_CORE_API SymbolClass Q_DECL_FINAL
+            : public IMapStyle::ISymbolClass
         {
-            Q_DISABLE_COPY_AND_MOVE(Association);
+            Q_DISABLE_COPY_AND_MOVE(SymbolClass);
 
         private:
         protected:
         public:
-            Association(const SWIG_CLARIFY(IMapStyle, StringId) nameId);
-            virtual ~Association();
-
-            virtual std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() Q_DECL_OVERRIDE;
-            virtual const std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)>& getRootNodeRef() Q_DECL_OVERRIDE;
-            virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() const Q_DECL_OVERRIDE;
-            virtual const std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)>& getRootNodeRef() const Q_DECL_OVERRIDE;
+            SymbolClass(
+                const QString& title,
+                const QString& description,
+                const QString& category,
+                const SWIG_CLARIFY(IMapStyle, StringId) nameId);
+            virtual ~SymbolClass();
 
 #if !defined(SWIG)
-            const StringId nameId;
+            QString title;
+            QString description;
+            QString category;
+            StringId nameId;
 #endif // !defined(SWIG)
+            virtual QString getTitle() const Q_DECL_OVERRIDE;
+            virtual QString getDescription() const Q_DECL_OVERRIDE;
+            virtual QString getCategory() const Q_DECL_OVERRIDE;
             virtual SWIG_CLARIFY(IMapStyle, StringId) getNameId() const Q_DECL_OVERRIDE;
         };
 
@@ -199,6 +203,23 @@ namespace OsmAnd
             const std::shared_ptr<const Parameter> parameter;
         };
 
+        class OSMAND_CORE_API SymbolClassValueDefinition : public MapStyleValueDefinition
+        {
+            Q_DISABLE_COPY_AND_MOVE(SymbolClassValueDefinition);
+
+        private:
+        protected:
+        public:
+            SymbolClassValueDefinition(
+                const int id,
+                const QString& name,
+                const std::shared_ptr<const SymbolClass>& symbolClass);
+            virtual ~SymbolClassValueDefinition();
+
+            const int id;
+            const std::shared_ptr<const SymbolClass> symbolClass;
+        };
+
     private:
         PrivateImplementation<ResolvedMapStyle_P> _p;
     protected:
@@ -208,6 +229,8 @@ namespace OsmAnd
 
         const QList< std::shared_ptr<const UnresolvedMapStyle> > unresolvedMapStylesChain;
 
+        virtual SWIG_CLARIFY(IMapStyle, ValueDefinitionId) getValueDefinitionIdByNameId(
+            const StringId& nameId) const Q_DECL_OVERRIDE;
         virtual SWIG_CLARIFY(IMapStyle, ValueDefinitionId) getValueDefinitionIdByName(
             const QString& name) const Q_DECL_OVERRIDE;
         virtual std::shared_ptr<const MapStyleValueDefinition> getValueDefinitionById(
@@ -232,9 +255,9 @@ namespace OsmAnd
         virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IAttribute)> getAttribute(
             const QString& name) const Q_DECL_OVERRIDE;
         virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IAttribute)> > getAttributes() const Q_DECL_OVERRIDE;
-        virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IAssociation)> getAssociation(
+        virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, ISymbolClass)> getSymbolClass(
             const QString& name) const Q_DECL_OVERRIDE;
-        virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IAssociation)> > getAssociations() const Q_DECL_OVERRIDE;
+        virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, ISymbolClass)> > getSymbolClasses() const Q_DECL_OVERRIDE;
         virtual QHash< TagValueId, std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRule)> > getRuleset(
             const MapStyleRulesetType rulesetType) const Q_DECL_OVERRIDE;
 

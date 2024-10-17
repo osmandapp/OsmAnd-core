@@ -41,7 +41,7 @@ namespace OsmAnd
         typedef UnresolvedMapStyle::RulesByTagValueCollection RulesByTagValueCollection;
         typedef UnresolvedMapStyle::Attribute Attribute;
         typedef UnresolvedMapStyle::Parameter Parameter;
-        typedef UnresolvedMapStyle::Association Association;
+        typedef UnresolvedMapStyle::SymbolClass SymbolClass;
 
         typedef QHash< QString, QHash<QString, std::shared_ptr< Rule > > > EditableRulesByTagValueCollection;
     private:
@@ -52,7 +52,7 @@ namespace OsmAnd
         QHash<QString, QString> constants;
         QList< std::shared_ptr<const Parameter> > parameters;
         QList< std::shared_ptr<const Attribute> > attributes;
-        QList< std::shared_ptr<const Association> > associations;
+        QList< std::shared_ptr<const SymbolClass> > symbolClasses;
         std::array<EditableRulesByTagValueCollection, MapStyleRulesetTypesCount> rulesets;
         
         QAtomicInt _isMetadataLoaded;
@@ -99,7 +99,7 @@ namespace OsmAnd
         QHash<QString, QString> _constants;
         QList< std::shared_ptr<const Parameter> > _parameters;
         QList< std::shared_ptr<const Attribute> > _attributes;
-        QList< std::shared_ptr<const Association> > _associations;
+        QList< std::shared_ptr<const SymbolClass> > _symbolClasses;
         std::array<RulesByTagValueCollection, MapStyleRulesetTypesCount> _rulesets;
     public:
         ~UnresolvedMapStyle_P();

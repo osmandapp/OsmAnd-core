@@ -108,17 +108,24 @@ namespace OsmAnd
             QString defaultValueDescription;
         };
 
-        class OSMAND_CORE_API Association Q_DECL_FINAL : public BaseRule
+        class OSMAND_CORE_API SymbolClass Q_DECL_FINAL
         {
-            Q_DISABLE_COPY_AND_MOVE(Association);
+            Q_DISABLE_COPY_AND_MOVE(SymbolClass);
 
         private:
         protected:
         public:
-            Association(const QString& name);
-            virtual ~Association();
+            SymbolClass(
+                const QString& title,
+                const QString& description,
+                const QString& category,
+                const QString& name);
+            virtual ~SymbolClass();
 
-            const QString name;
+            QString title;
+            QString description;
+            QString category;
+            QString name;
         };
 
     private:
@@ -139,7 +146,7 @@ namespace OsmAnd
         const QHash<QString, QString>& constants;
         const QList< std::shared_ptr<const Parameter> >& parameters;
         const QList< std::shared_ptr<const Attribute> >& attributes;
-        const QList< std::shared_ptr<const Association> >& associations;
+        const QList< std::shared_ptr<const SymbolClass> >& symbolClasses;
 #if !defined(SWIG)
         const std::array<RulesByTagValueCollection, MapStyleRulesetTypesCount>& rulesets;
 #endif // !defined(SWIG)

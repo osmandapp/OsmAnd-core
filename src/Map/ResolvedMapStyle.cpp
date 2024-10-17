@@ -14,6 +14,12 @@ OsmAnd::ResolvedMapStyle::~ResolvedMapStyle()
 {
 }
 
+OsmAnd::IMapStyle::ValueDefinitionId OsmAnd::ResolvedMapStyle::getValueDefinitionIdByNameId(
+    const StringId& nameId) const
+{
+    return _p->getValueDefinitionIdByNameId(nameId);
+}
+
 OsmAnd::IMapStyle::ValueDefinitionId OsmAnd::ResolvedMapStyle::getValueDefinitionIdByName(
     const QString& name) const
 {
@@ -80,15 +86,15 @@ QList< std::shared_ptr<const OsmAnd::IMapStyle::IAttribute> > OsmAnd::ResolvedMa
     return _p->getAttributes();
 }
 
-std::shared_ptr<const OsmAnd::IMapStyle::IAssociation> OsmAnd::ResolvedMapStyle::getAssociation(
+std::shared_ptr<const OsmAnd::IMapStyle::ISymbolClass> OsmAnd::ResolvedMapStyle::getSymbolClass(
     const QString& name) const
 {
-    return _p->getAssociation(name);
+    return _p->getSymbolClass(name);
 }
 
-QList< std::shared_ptr<const OsmAnd::IMapStyle::IAssociation> > OsmAnd::ResolvedMapStyle::getAssociations() const
+QList< std::shared_ptr<const OsmAnd::IMapStyle::ISymbolClass> > OsmAnd::ResolvedMapStyle::getSymbolClasses() const
 {
-    return _p->getAssociations();
+    return _p->getSymbolClasses();
 }
 
 QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::IMapStyle::IRule> > OsmAnd::ResolvedMapStyle::getRuleset(
@@ -300,37 +306,38 @@ QString OsmAnd::ResolvedMapStyle::Parameter::getDefaultValueDescription() const
     return defaultValueDescription;
 }
 
-OsmAnd::ResolvedMapStyle::Association::Association(const StringId nameId_)
-    : BaseRule(new RuleNode(false))
+OsmAnd::ResolvedMapStyle::SymbolClass::SymbolClass(
+    const QString& title_,
+    const QString& description_,
+    const QString& category_,
+    const StringId nameId_)
+    : title(title_)
+    , description(description_)
+    , category(category_)
     , nameId(nameId_)
 {
 }
 
-OsmAnd::ResolvedMapStyle::Association::~Association()
+OsmAnd::ResolvedMapStyle::SymbolClass::~SymbolClass()
 {
 }
 
-std::shared_ptr<OsmAnd::IMapStyle::IRuleNode> OsmAnd::ResolvedMapStyle::Association::getRootNode()
+QString OsmAnd::ResolvedMapStyle::SymbolClass::getTitle() const
 {
-    return rootNodeAsInterface;
+    return title;
 }
 
-const std::shared_ptr<OsmAnd::IMapStyle::IRuleNode>& OsmAnd::ResolvedMapStyle::Association::getRootNodeRef()
+QString OsmAnd::ResolvedMapStyle::SymbolClass::getDescription() const
 {
-    return rootNodeAsInterface;
+    return description;
 }
 
-std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> OsmAnd::ResolvedMapStyle::Association::getRootNode() const
+QString OsmAnd::ResolvedMapStyle::SymbolClass::getCategory() const
 {
-    return rootNodeAsConstInterface;
+    return category;
 }
 
-const std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode>& OsmAnd::ResolvedMapStyle::Association::getRootNodeRef() const
-{
-    return rootNodeAsConstInterface;
-}
-
-OsmAnd::IMapStyle::StringId OsmAnd::ResolvedMapStyle::Association::getNameId() const
+OsmAnd::IMapStyle::StringId OsmAnd::ResolvedMapStyle::SymbolClass::getNameId() const
 {
     return nameId;
 }
@@ -346,5 +353,19 @@ OsmAnd::ResolvedMapStyle::ParameterValueDefinition::ParameterValueDefinition(
 }
 
 OsmAnd::ResolvedMapStyle::ParameterValueDefinition::~ParameterValueDefinition()
+{
+}
+
+OsmAnd::ResolvedMapStyle::SymbolClassValueDefinition::SymbolClassValueDefinition(
+    const int id_,
+    const QString& name_,
+    const std::shared_ptr<const SymbolClass>& symbolClass_)
+    : MapStyleValueDefinition(MapStyleValueDefinition::Class::Input, MapStyleValueDataType::Boolean, name_, false)
+    , id(id_)
+    , symbolClass(symbolClass_)
+{
+}
+
+OsmAnd::ResolvedMapStyle::SymbolClassValueDefinition::~SymbolClassValueDefinition()
 {
 }
