@@ -164,20 +164,16 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
         
         attributes.push_back(qMove(newAttribute));
     }
-    else if (tagName == QStringLiteral("renderingAssociation"))
+    else if (tagName == QStringLiteral("renderingClass"))
     {
-        const auto nameAssociationValue = attribs.value(QStringLiteral("name")).toString();
+        const auto title = attribs.value(QStringLiteral("title")).toString();
+        const auto description = attribs.value(QStringLiteral("description")).toString();
+        const auto category = attribs.value(QStringLiteral("category")).toString();
+        const auto name = attribs.value(QStringLiteral("name")).toString();
         
-        const std::shared_ptr<Association> newAssociation(new Association(nameAssociationValue));
+        const std::shared_ptr<SymbolClass> newSymbolClass(new SymbolClass(title, description, category, name));
         
-        if (!ruleNodesStack.isEmpty())
-        {
-            LogPrintf(LogSeverityLevel::Error, "Previous rule node was closed before opening <renderingAssociation>");
-            return false;
-        }
-        ruleNodesStack.push(newAssociation->rootNode);
-        
-        associations.push_back(qMove(newAssociation));
+        symbolClasses.push_back(qMove(newSymbolClass));
     }
     else if (tagName == QStringLiteral("switch") || tagName == QStringLiteral("group"))
     {
@@ -229,7 +225,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
         if (ruleNodesStack.isEmpty())
         {
             LogPrintf(LogSeverityLevel::Error,
-                      "<apply> must be inside <switch>, <case> or <renderingAttribute> or <renderingAssociation> at %" PRIi64 ":%" PRIi64,
+                      "<apply> must be inside <switch>, <case> or <renderingAttribute> at %" PRIi64 ":%" PRIi64,
                       lineNum,
                       columnNum);
             return false;
@@ -270,15 +266,6 @@ bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType
         if (!ruleNodesStack.isEmpty())
         {
             LogPrintf(LogSeverityLevel::Error, "<renderingAttribute> was not complete before </renderingAttribute>");
-            return false;
-        }
-    }
-    else if (tagName == QStringLiteral("renderingAssociation"))
-    {
-        const auto association = ruleNodesStack.pop();
-        if (!ruleNodesStack.isEmpty())
-        {
-            LogPrintf(LogSeverityLevel::Error, "<renderingAssociation> was not complete before </renderingAssociation>");
             return false;
         }
     }
@@ -438,7 +425,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
     _constants = constants;
     _parameters = parameters;
     _attributes = attributes;
-    _associations = associations;
+    _symbolClasses = symbolClasses;
     for (auto rulesetTypeIdx = 0u; rulesetTypeIdx < MapStyleRulesetTypesCount; rulesetTypeIdx++)
     {
         const auto& src = rulesets[rulesetTypeIdx];

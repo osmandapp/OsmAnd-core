@@ -15,6 +15,7 @@
 #include "PrivateImplementation.h"
 #include "UnresolvedMapStyle.h"
 #include "ResolvedMapStyle.h"
+#include "IMapStyle.h"
 
 namespace OsmAnd
 {
@@ -33,18 +34,22 @@ namespace OsmAnd
         typedef ResolvedMapStyle::Rule Rule;
         typedef ResolvedMapStyle::Attribute Attribute;
         typedef ResolvedMapStyle::Parameter Parameter;
-        typedef ResolvedMapStyle::Association Association;
+        typedef ResolvedMapStyle::SymbolClass SymbolClass;
         typedef ResolvedMapStyle::ParameterValueDefinition ParameterValueDefinition;
+        typedef ResolvedMapStyle::SymbolClassValueDefinition SymbolClassValueDefinition;
         
     private:
         QList<QString> _stringsForwardLUT;
         QHash<QString, StringId> _stringsBackwardLUT;
+        QHash<QString, StringId> _symbolClassesLUT;
+        StringId addSymbolClassToLUT(const QString& value);
         StringId addStringToLUT(const QString& value);
         StringId resolveStringIdInLUT(const QString& value);
         bool resolveStringIdInLUT(const QString& value, StringId& outId) const;
 
         QList< std::shared_ptr<const MapStyleValueDefinition> > _valuesDefinitions;
         QHash< QString, ValueDefinitionId > _valuesDefinitionsIndicesByName;
+        QHash< StringId, ValueDefinitionId > _valuesDefinitionsIndicesBySymbolClassNameId;
         void registerBuiltinValueDefinitions();
 
         bool parseConstantValue(
@@ -70,7 +75,7 @@ namespace OsmAnd
             const std::shared_ptr<const UnresolvedMapStyle::RuleNode>& unresolvedRuleNode);
         bool mergeAndResolveParameters();
         bool mergeAndResolveAttributes();
-        bool mergeAndResolveAssociations();
+        bool mergeAndResolveSymbolClasses();
         bool mergeAndResolveRulesets();
     protected:
         ResolvedMapStyle_P(ResolvedMapStyle* const owner);
@@ -80,13 +85,14 @@ namespace OsmAnd
         QHash<QString, QString> _constants;
         QHash<StringId, std::shared_ptr<const IMapStyle::IParameter> > _parameters;
         QHash<StringId, std::shared_ptr<const IMapStyle::IAttribute> > _attributes;
-        QHash<StringId, std::shared_ptr<const IMapStyle::IAssociation> > _associations;
+        QHash<StringId, std::shared_ptr<const IMapStyle::ISymbolClass> > _symbolClasses;
         std::array< QHash<TagValueId, std::shared_ptr<const IMapStyle::IRule> >, MapStyleRulesetTypesCount> _rulesets;
     public:
         virtual ~ResolvedMapStyle_P();
 
         ImplementationInterface<ResolvedMapStyle> owner;
 
+        ValueDefinitionId getValueDefinitionIdByNameId(const StringId& name) const;
         ValueDefinitionId getValueDefinitionIdByName(const QString& name) const;
         std::shared_ptr<const MapStyleValueDefinition> getValueDefinitionById(const ValueDefinitionId id) const;
         const std::shared_ptr<const MapStyleValueDefinition>& getValueDefinitionRefById(const ValueDefinitionId id) const;
@@ -106,8 +112,8 @@ namespace OsmAnd
         QList< std::shared_ptr<const IMapStyle::IParameter> > getParameters() const;
         std::shared_ptr<const IMapStyle::IAttribute> getAttribute(const QString& name) const;
         QList< std::shared_ptr<const IMapStyle::IAttribute> > getAttributes() const;
-        std::shared_ptr<const IMapStyle::IAssociation> getAssociation(const QString& name) const;
-        QList< std::shared_ptr<const IMapStyle::IAssociation> > getAssociations() const;
+        std::shared_ptr<const IMapStyle::ISymbolClass> getSymbolClass(const QString& name) const;
+        QList< std::shared_ptr<const IMapStyle::ISymbolClass> > getSymbolClasses() const;
         QHash< TagValueId, std::shared_ptr<const IMapStyle::IRule> > getRuleset(
             const MapStyleRulesetType rulesetType) const;
 

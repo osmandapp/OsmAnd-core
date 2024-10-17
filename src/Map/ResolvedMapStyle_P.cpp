@@ -20,6 +20,23 @@ OsmAnd::ResolvedMapStyle_P::~ResolvedMapStyle_P()
 {
 }
 
+OsmAnd::ResolvedMapStyle_P::StringId OsmAnd::ResolvedMapStyle_P::addSymbolClassToLUT(const QString& value)
+{
+    const auto newId = static_cast<OsmAnd::ResolvedMapStyle_P::StringId>(_symbolClassesLUT.size());
+
+    _symbolClassesLUT.insert(value, newId);
+
+    const auto splitPosition = value.lastIndexOf(QLatin1Char('.'));
+
+    if (splitPosition > -1)
+    {
+        const auto symbolClassName = value.left(splitPosition) + QStringLiteral(".*");
+        addSymbolClassToLUT(symbolClassName);
+    }
+
+    return newId;
+}
+
 OsmAnd::ResolvedMapStyle_P::StringId OsmAnd::ResolvedMapStyle_P::addStringToLUT(const QString& value)
 {
     const auto newId = static_cast<OsmAnd::ResolvedMapStyle_P::StringId>(_stringsForwardLUT.size());
@@ -113,11 +130,11 @@ bool OsmAnd::ResolvedMapStyle_P::resolveValue(
 {
     if (input.startsWith(QLatin1Char('$')))
     {
-        const auto constantOrAttributeOrAssociationName = input.mid(1);
+        const auto constantOrAttributeName = input.mid(1);
 
         // Try to resolve as constant
         QString constantValue;
-        if (resolveConstant(constantOrAttributeOrAssociationName, constantValue))
+        if (resolveConstant(constantOrAttributeName, constantValue))
         {
             if (parseConstantValue(constantValue, dataType, isComplex, outValue.asConstantValue))
                 return true;
@@ -125,36 +142,110 @@ bool OsmAnd::ResolvedMapStyle_P::resolveValue(
 
         // Try as attribute
         StringId attributeNameId = 0u;
-        if (resolveStringIdInLUT(constantOrAttributeOrAssociationName, attributeNameId))
+        if (resolveStringIdInLUT(constantOrAttributeName, attributeNameId))
         {
             const auto citAttribute = _attributes.constFind(attributeNameId);
             if (citAttribute != _attributes.cend())
             {
                 outValue.isDynamic = true;
                 outValue.asDynamicValue.attribute = *citAttribute;
-
-                return true;
-            }
-        }
-
-        // Try as association
-        StringId associationNameId = 0u;
-        if (resolveStringIdInLUT(constantOrAttributeOrAssociationName, associationNameId))
-        {
-            const auto citAssociation = _associations.constFind(associationNameId);
-            if (citAssociation != _associations.cend())
-            {
-                outValue.isDynamic = true;
-                outValue.asDynamicValue.association = *citAssociation;
-
                 return true;
             }
         }
 
         LogPrintf(LogSeverityLevel::Error,
-            "'%s' was not defined nor as constant nor as attribute nor as class",
-            qPrintable(constantOrAttributeOrAssociationName));
+            "'%s' was not defined nor as constant nor as attribute",
+            qPrintable(constantOrAttributeName));
         return false;
+    }
+
+    if (input.startsWith(QLatin1Char('.')))
+    {
+        bool atLeastOneClassAdded = false;
+        bool atLeastOneClassTemplateAdded = false;
+        const auto symbolClasses = std::make_shared<QList<std::shared_ptr<const IMapStyle::ISymbolClass>>>();
+        const auto symbolClassTemplates = std::make_shared<QList<StringId>>();
+        auto nextPart = input;
+        int splitPosition = 1;
+        while (splitPosition > 0)
+        {
+            if (nextPart.startsWith(QLatin1Char('.')))
+            {
+                splitPosition = nextPart.indexOf(QLatin1Char(','));
+                const auto symbolClassName = nextPart.left(splitPosition);
+                const auto tagPosition = nextPart.indexOf(QLatin1Char('$'));
+                if (tagPosition > 0)
+                {
+                    // Store class name template to form actual class name from tag value later
+                    symbolClassTemplates->append(addStringToLUT(symbolClassName));
+                    atLeastOneClassTemplateAdded = true;
+                }
+                StringId symbolClassNameId = 0u;
+                if (resolveStringIdInLUT(symbolClassName, symbolClassNameId))
+                {
+                    // Try as class
+                    const auto citSymbolClass = _symbolClasses.constFind(symbolClassNameId);
+                    if (citSymbolClass != _symbolClasses.cend())
+                    {
+                        symbolClasses->append(*citSymbolClass);
+                        atLeastOneClassAdded = true;
+                    }
+                    else
+                    {
+                        LogPrintf(LogSeverityLevel::Error,
+                            "Class '%s' was not found",
+                            qPrintable(symbolClassName));
+                        return false;
+                    }
+                }
+                else
+                {
+                    // Try as group of classes when wildcard .* is specified
+                    auto itStringId = _symbolClassesLUT.find(symbolClassName);
+                    while (itStringId != _symbolClassesLUT.cend())
+                    {
+                        const auto citSymbolClass = _symbolClasses.constFind(*itStringId);
+                        if (citSymbolClass != _symbolClasses.cend())
+                        {
+                            symbolClasses->append(*citSymbolClass);
+                            atLeastOneClassAdded = true;
+                        }
+                        itStringId++;
+                    }
+                }
+            }
+            else
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                    "'%s' should be started with '.' as a class name",
+                    qPrintable(nextPart));
+                return false;
+            }
+            if (splitPosition > 0)
+                nextPart = input.mid(splitPosition + 1);
+        }
+
+        if (atLeastOneClassAdded)
+        {
+            outValue.isDynamic = true;
+            outValue.asDynamicValue.symbolClasses = symbolClasses;
+        }
+
+        if (atLeastOneClassTemplateAdded)
+        {
+            outValue.isDynamic = true;
+            outValue.asDynamicValue.symbolClassTemplates = symbolClassTemplates;
+        }
+
+        if (!atLeastOneClassAdded && !atLeastOneClassTemplateAdded)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "No class was found for '%s'",
+                qPrintable(input));
+            return false;
+        }
+
+        return true;
     }
 
     if (parseConstantValue(input, dataType, isComplex, outValue.asConstantValue))
@@ -354,27 +445,41 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveAttributes()
     return true;
 }
 
-bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveAssociations()
+bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveSymbolClasses()
 {
-    // Process styles chain in direct order to ensure "overridden" <case> elements are processed first
+    // Process styles chain in direct order, to exclude redefined parameters
     auto citUnresolvedMapStyle = iteratorOf(owner->unresolvedMapStylesChain);
     while (citUnresolvedMapStyle.hasNext())
     {
         const auto& unresolvedMapStyle = citUnresolvedMapStyle.next();
-        
-        for (const auto& unresolvedAssociation : constOf(unresolvedMapStyle->associations))
+
+        for (const auto& unresolvedSymbolClass : constOf(unresolvedMapStyle->symbolClasses))
         {
-            const auto nameId = resolveStringIdInLUT(unresolvedAssociation->name);
-            auto& resolvedAssociation_ = _associations[nameId];
-            
-            // Create resolved class if needed
-            if (!resolvedAssociation_)
-                resolvedAssociation_.reset(new Association(nameId));
-            
-            auto resolvedAssociation = std::dynamic_pointer_cast<const Association>(resolvedAssociation_);
-            
-            const auto resolvedRuleNode = resolveRuleNode(unresolvedAssociation->rootNode);
-            resolvedAssociation->rootNode->oneOfConditionalSubnodes.append(resolvedRuleNode->oneOfConditionalSubnodes);
+            const auto nameId = resolveStringIdInLUT(unresolvedSymbolClass->name);
+            auto& resolvedSymbolClass = _symbolClasses[nameId];
+
+            // Skip already defined classes
+            if (resolvedSymbolClass)
+                continue;
+
+            // Create new resolved class
+            addSymbolClassToLUT(unresolvedSymbolClass->name);
+            const std::shared_ptr<SymbolClass> newResolvedSymbolClass(new SymbolClass(
+                unresolvedSymbolClass->title,
+                unresolvedSymbolClass->description,
+                unresolvedSymbolClass->category,
+                nameId));
+            resolvedSymbolClass = newResolvedSymbolClass;
+
+            // Register class as value definition
+            const auto newValueDefId = _valuesDefinitions.size();
+            const std::shared_ptr<SymbolClassValueDefinition> inputValueDefinition(new SymbolClassValueDefinition(
+                newValueDefId,
+                unresolvedSymbolClass->name,
+                newResolvedSymbolClass));
+            _valuesDefinitions.push_back(inputValueDefinition);
+            _valuesDefinitionsIndicesByName.insert(unresolvedSymbolClass->name, newValueDefId);
+            _valuesDefinitionsIndicesBySymbolClassNameId.insert(nameId, newValueDefId);
         }
     }
     return true;
@@ -460,16 +565,25 @@ bool OsmAnd::ResolvedMapStyle_P::resolve()
     if (!mergeAndResolveParameters())
         return false;
 
-    if (!mergeAndResolveAttributes())
+    if (!mergeAndResolveSymbolClasses())
         return false;
 
-    if (!mergeAndResolveAssociations())
+    if (!mergeAndResolveAttributes())
         return false;
 
     if (!mergeAndResolveRulesets())
         return false;
 
     return true;
+}
+
+OsmAnd::ResolvedMapStyle_P::ValueDefinitionId OsmAnd::ResolvedMapStyle_P::getValueDefinitionIdByNameId(
+    const StringId& nameId) const
+{
+    const auto citId = _valuesDefinitionsIndicesBySymbolClassNameId.constFind(nameId);
+    if (citId == _valuesDefinitionsIndicesBySymbolClassNameId.cend())
+        return -1;
+    return *citId;
 }
 
 OsmAnd::ResolvedMapStyle_P::ValueDefinitionId OsmAnd::ResolvedMapStyle_P::getValueDefinitionIdByName(const QString& name) const
@@ -550,18 +664,18 @@ QList< std::shared_ptr<const OsmAnd::IMapStyle::IAttribute> > OsmAnd::ResolvedMa
     return _attributes.values();
 }
 
-std::shared_ptr<const OsmAnd::IMapStyle::IAssociation> OsmAnd::ResolvedMapStyle_P::getAssociation(const QString& name) const
+std::shared_ptr<const OsmAnd::IMapStyle::ISymbolClass> OsmAnd::ResolvedMapStyle_P::getSymbolClass(const QString& name) const
 {
     StringId nameId;
     if (!resolveStringIdInLUT(name, nameId))
         return nullptr;
 
-    return _associations[nameId];
+    return _symbolClasses[nameId];
 }
 
-QList< std::shared_ptr<const OsmAnd::IMapStyle::IAssociation> > OsmAnd::ResolvedMapStyle_P::getAssociations() const
+QList< std::shared_ptr<const OsmAnd::IMapStyle::ISymbolClass> > OsmAnd::ResolvedMapStyle_P::getSymbolClasses() const
 {
-    return _associations.values();
+    return _symbolClasses.values();
 }
 
 QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::IMapStyle::IRule> > OsmAnd::ResolvedMapStyle_P::getRuleset(
