@@ -97,7 +97,6 @@ namespace OsmAnd
         uint32_t subtypesInnerOffset;
         uint32_t firstBoxInnerOffset;
         mutable QHash<uint32_t, QList<QPair<QString, QString>>> tagGroups;
-        mutable BBoxIndexTree bboxIndexCache;
 
         std::shared_ptr<const ObfPoiSectionCategories> getCategories() const;
         std::shared_ptr<const ObfPoiSectionSubtypes> getSubtypes() const;
