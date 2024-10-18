@@ -49,7 +49,8 @@ OsmAnd::MapStyleConstantValue OsmAnd::MapStyleEvaluator_P::evaluateConstantValue
     IntermediateEvaluationResult* outResultStorage,
     OnDemand<IntermediateEvaluationResult>& intermediateEvaluationResult) const
 {
-    if (!resolvedValue.isDynamic)
+    if (!resolvedValue.isDynamic
+        || resolvedValue.asDynamicValue.symbolClasses || resolvedValue.asDynamicValue.symbolClassTemplates)
         return resolvedValue.asConstantValue;
 
     bool wasDisabled = false;
@@ -57,17 +58,11 @@ OsmAnd::MapStyleConstantValue OsmAnd::MapStyleEvaluator_P::evaluateConstantValue
     OnDemand<IntermediateEvaluationResult> innerConstantEvaluationResult(intermediateEvaluationResultAllocator);
     evaluate(
         mapObject,
-        resolvedValue.asDynamicValue.association
-            ? resolvedValue.asDynamicValue.association->getRootNodeRef()
-            : resolvedValue.asDynamicValue.attribute->getRootNodeRef(),
+        resolvedValue.asDynamicValue.attribute->getRootNodeRef(),
         inputValues,
         wasDisabled,
-        resolvedValue.asDynamicValue.association ? outResultStorage : intermediateEvaluationResult.get(),
+        intermediateEvaluationResult.get(),
         innerConstantEvaluationResult);
-
-    // Return default integer value (zero) for association
-    if (resolvedValue.asDynamicValue.association)
-        return resolvedValue.asConstantValue;
 
     IMapStyle::Value evaluatedValue;
     switch (dataType)
@@ -250,6 +245,62 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
 
         assert(!disableValue.isComplex);
         if (disableValue.asSimple.asUInt != 0)
+        {
+            outDisabled = true;
+            return false;
+        }
+    }
+
+    // In case rule doesn't have any enabled class in "rClass", stop processing
+    const auto citSymbolClassValue = ruleNodeValues.constFind(_builtinValueDefs->id_OUTPUT_CLASS);
+    if (citSymbolClassValue != ruleNodeValues.cend())
+    {
+        bool atLeastOneClassEnabled = false;
+        if (citSymbolClassValue->asDynamicValue.symbolClasses)
+        {
+            const auto& symbolClasses = *citSymbolClassValue->asDynamicValue.symbolClasses;
+            for (const auto& symbolClass : symbolClasses)
+            {
+                const auto& symbolClassDefId = owner->mapStyle->getValueDefinitionIdByNameId(symbolClass->getNameId());
+                if (symbolClassDefId > -1)
+                {
+                    InputValue symbolClassValue;
+                    inputValues->get(symbolClassDefId, symbolClassValue);
+                    if (symbolClassValue.asUInt != 0)
+                        atLeastOneClassEnabled = true;
+                }
+            }
+        }
+        if (citSymbolClassValue->asDynamicValue.symbolClassTemplates)
+        {
+            const auto& symbolClassTemplates = *citSymbolClassValue->asDynamicValue.symbolClassTemplates;
+            for (const auto& symbolClassTemplateId : symbolClassTemplates)
+            {
+                const auto& symbolClassTemplate = owner->mapStyle->getStringById(symbolClassTemplateId);
+                const auto splitPosition = symbolClassTemplate.indexOf(QLatin1Char('$'));
+                const auto& classNameHeadPart = symbolClassTemplate.left(splitPosition);
+                const auto& classNameTagName = symbolClassTemplate.mid(splitPosition + 1);
+                const auto& valueDefId = owner->mapStyle->getValueDefinitionIdByName(classNameTagName);
+                if (valueDefId > -1)
+                {
+                    InputValue inputValue;
+                    if (inputValues->get(valueDefId, inputValue))
+                    {
+                        const auto& classNameTailPart = owner->mapStyle->getStringById(inputValue.asUInt);
+                        const auto& className = classNameHeadPart + classNameTailPart;
+                        const auto& symbolClassDefId = owner->mapStyle->getValueDefinitionIdByName(className);
+                        if (symbolClassDefId > -1)
+                        {
+                            InputValue symbolClassValue;
+                            inputValues->get(symbolClassDefId, symbolClassValue);
+                            if (symbolClassValue.asUInt != 0)
+                                atLeastOneClassEnabled = true;
+                        }
+                    }
+                }
+            }
+        }
+        if (!atLeastOneClassEnabled)
         {
             outDisabled = true;
             return false;
