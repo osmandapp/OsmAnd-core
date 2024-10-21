@@ -433,6 +433,8 @@ SkRect OsmAnd::TextRasterizer_P::positionText(
                 // Do nothing here
                 break;
         }
+        if (verticalOffset == 0)
+            verticalOffset = linePaint.maxBoundsTop;
         SkScalar horizontalOffset = 0;
         for (auto& textPaint : linePaint.textPaints)
         {
@@ -440,14 +442,14 @@ SkRect OsmAnd::TextRasterizer_P::positionText(
             if(horizontalOffset == 0)
                 horizontalOffset = horizontalShift;
 
-            // Position text horizontally
-            textPaint.positionedBounds.offset(horizontalOffset, verticalOffset - textPaint.bounds.top());
+            // Position text
+            textPaint.positionedBounds.offset(horizontalOffset, verticalOffset);
 
             // Include into text area
             textArea.join(textPaint.positionedBounds);
 
             // Position text vertically
-            textPaint.positionedBounds.offset(0, linePaint.maxBoundsTop);
+            textPaint.positionedBounds.offset(0, -textPaint.bounds.top());
 
             horizontalOffset += textPaint.width;
         }
