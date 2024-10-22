@@ -31,7 +31,13 @@ OsmAnd::ResolvedMapStyle_P::StringId OsmAnd::ResolvedMapStyle_P::addSymbolClassT
     if (splitPosition > -1)
     {
         const auto symbolClassName = value.left(splitPosition) + QStringLiteral(".*");
-        addSymbolClassToLUT(symbolClassName);
+        if (splitPosition < 1)
+        {
+            const auto lastId = static_cast<OsmAnd::ResolvedMapStyle_P::StringId>(_symbolClassesLUT.size());
+            _symbolClassesLUT.insert(symbolClassName, lastId);
+        }
+        else
+            addSymbolClassToLUT(symbolClassName);
     }
 
     return newId;
