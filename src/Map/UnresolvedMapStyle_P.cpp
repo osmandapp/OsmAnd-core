@@ -169,9 +169,11 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
         const auto title = attribs.value(QStringLiteral("title")).toString();
         const auto description = attribs.value(QStringLiteral("description")).toString();
         const auto category = attribs.value(QStringLiteral("category")).toString();
+        const auto enable = attribs.value(QStringLiteral("enable")).toString();
         const auto name = attribs.value(QStringLiteral("name")).toString();
         
-        const std::shared_ptr<SymbolClass> newSymbolClass(new SymbolClass(title, description, category, name));
+        const bool isSet = enable.compare(QStringLiteral("true"), Qt::CaseSensitivity::CaseInsensitive) == 0;
+        const std::shared_ptr<SymbolClass> newSymbolClass(new SymbolClass(title, description, category, isSet, name));
         
         symbolClasses.push_back(qMove(newSymbolClass));
     }

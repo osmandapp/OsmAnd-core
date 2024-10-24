@@ -127,10 +127,12 @@ OsmAnd::UnresolvedMapStyle::SymbolClass::SymbolClass(
     const QString& title_,
     const QString& description_,
     const QString& category_,
+    const bool isSetByDefault_,
     const QString& name_)
     : title(title_)
     , description(description_)
     , category(category_)
+    , isSetByDefault(isSetByDefault_)
     , name(name_)
 {
 }

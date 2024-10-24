@@ -139,6 +139,7 @@ namespace OsmAnd
             virtual QString getTitle() const = 0;
             virtual QString getDescription() const = 0;
             virtual QString getCategory() const = 0;
+            virtual bool getDefaultSetting() const = 0;
             virtual SWIG_CLARIFY(IMapStyle, StringId) getNameId() const = 0;
         };
 

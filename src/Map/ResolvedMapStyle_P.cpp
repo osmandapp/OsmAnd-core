@@ -474,6 +474,7 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveSymbolClasses()
                 unresolvedSymbolClass->title,
                 unresolvedSymbolClass->description,
                 unresolvedSymbolClass->category,
+                unresolvedSymbolClass->isSetByDefault,
                 nameId));
             resolvedSymbolClass = newResolvedSymbolClass;
 

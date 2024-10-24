@@ -265,9 +265,15 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
                 if (symbolClassDefId > -1)
                 {
                     InputValue symbolClassValue;
-                    inputValues->get(symbolClassDefId, symbolClassValue);
-                    if (symbolClassValue.asUInt != 0)
+                    if (inputValues->get(symbolClassDefId, symbolClassValue))
+                    {
+                        if (symbolClassValue.asUInt != 0)
+                            atLeastOneClassEnabled = true;
+                    }
+                    else if (symbolClass->getDefaultSetting())
+                    {
                         atLeastOneClassEnabled = true;
+                    }
                 }
             }
         }
@@ -292,9 +298,17 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
                         if (symbolClassDefId > -1)
                         {
                             InputValue symbolClassValue;
-                            inputValues->get(symbolClassDefId, symbolClassValue);
-                            if (symbolClassValue.asUInt != 0)
-                                atLeastOneClassEnabled = true;
+                            if (inputValues->get(symbolClassDefId, symbolClassValue))
+                            {
+                                if (symbolClassValue.asUInt != 0)
+                                    atLeastOneClassEnabled = true;
+                            }
+                            else
+                            {
+                                const auto& symbolClass = owner->mapStyle->getSymbolClass(className);
+                                if (symbolClass && symbolClass->getDefaultSetting())
+                                    atLeastOneClassEnabled = true;
+                            }
                         }
                     }
                 }

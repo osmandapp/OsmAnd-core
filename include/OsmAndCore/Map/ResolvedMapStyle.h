@@ -171,6 +171,7 @@ namespace OsmAnd
                 const QString& title,
                 const QString& description,
                 const QString& category,
+                const bool isSetByDefault,
                 const SWIG_CLARIFY(IMapStyle, StringId) nameId);
             virtual ~SymbolClass();
 
@@ -179,10 +180,12 @@ namespace OsmAnd
             QString description;
             QString category;
             StringId nameId;
+            bool isSetByDefault;
 #endif // !defined(SWIG)
             virtual QString getTitle() const Q_DECL_OVERRIDE;
             virtual QString getDescription() const Q_DECL_OVERRIDE;
             virtual QString getCategory() const Q_DECL_OVERRIDE;
+            virtual bool getDefaultSetting() const Q_DECL_OVERRIDE;
             virtual SWIG_CLARIFY(IMapStyle, StringId) getNameId() const Q_DECL_OVERRIDE;
         };
 

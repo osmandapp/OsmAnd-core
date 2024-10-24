@@ -310,10 +310,12 @@ OsmAnd::ResolvedMapStyle::SymbolClass::SymbolClass(
     const QString& title_,
     const QString& description_,
     const QString& category_,
+    const bool isSetByDefault_,
     const StringId nameId_)
     : title(title_)
     , description(description_)
     , category(category_)
+    , isSetByDefault(isSetByDefault_)
     , nameId(nameId_)
 {
 }
@@ -335,6 +337,11 @@ QString OsmAnd::ResolvedMapStyle::SymbolClass::getDescription() const
 QString OsmAnd::ResolvedMapStyle::SymbolClass::getCategory() const
 {
     return category;
+}
+
+bool OsmAnd::ResolvedMapStyle::SymbolClass::getDefaultSetting() const
+{
+    return isSetByDefault;
 }
 
 OsmAnd::IMapStyle::StringId OsmAnd::ResolvedMapStyle::SymbolClass::getNameId() const
