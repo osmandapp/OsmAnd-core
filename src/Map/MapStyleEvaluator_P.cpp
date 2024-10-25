@@ -268,16 +268,20 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
                     if (inputValues->get(symbolClassDefId, symbolClassValue))
                     {
                         if (symbolClassValue.asUInt != 0)
+                        {
                             atLeastOneClassEnabled = true;
+                            break;
+                        }
                     }
                     else if (symbolClass->getDefaultSetting())
                     {
                         atLeastOneClassEnabled = true;
+                        break;
                     }
                 }
             }
         }
-        if (citSymbolClassValue->asDynamicValue.symbolClassTemplates)
+        if (!atLeastOneClassEnabled && citSymbolClassValue->asDynamicValue.symbolClassTemplates)
         {
             const auto& symbolClassTemplates = *citSymbolClassValue->asDynamicValue.symbolClassTemplates;
             for (const auto& symbolClassTemplateId : symbolClassTemplates)
@@ -301,13 +305,19 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
                             if (inputValues->get(symbolClassDefId, symbolClassValue))
                             {
                                 if (symbolClassValue.asUInt != 0)
+                                {
                                     atLeastOneClassEnabled = true;
+                                    break;
+                                }
                             }
                             else
                             {
                                 const auto& symbolClass = owner->mapStyle->getSymbolClass(className);
                                 if (symbolClass && symbolClass->getDefaultSetting())
+                                {
                                     atLeastOneClassEnabled = true;
+                                    break;
+                                }
                             }
                         }
                     }
