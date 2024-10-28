@@ -365,9 +365,19 @@ void OsmAnd::TextRasterizer_P::measureText(QVector<LinePaint>& paints, int maxGl
                 for (int glyphIdx = 0; glyphIdx < glyphsCount; glyphIdx++)
                 {
                     if (glyphIdx == 0 && blockIdx == 0 && textIdx == 0)
-                            lineLeftGap = -bounds[glyphIdx].fLeft;
+                    {
+                        lineLeftGap = -bounds[glyphIdx].fLeft;
+                        if (bounds[glyphIdx].width() == 0.0f)
+                            continue;
+                    }
                     if (glyphIdx == glyphsCount - 1 && blockIdx == blocksCount - 1 && textIdx == textsCount - 1)
+                    {
+                        lineRightGap = bounds[glyphIdx].fRight - widths[glyphIdx];
+                        if (bounds[glyphIdx].width() == 0.0f)
+                            continue;
+                        else
                             lineRightGap = bounds[glyphIdx].fRight - widths[glyphIdx];
+                    }
                     textPaint.width += widths[glyphIdx];
                     textPaint.bounds.join(bounds[glyphIdx]);
                 }
