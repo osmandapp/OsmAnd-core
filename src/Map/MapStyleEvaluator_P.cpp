@@ -325,10 +325,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
             }
         }
         if (!atLeastOneClassEnabled)
-        {
-            outDisabled = true;
             return false;
-        }
     }
 
     if (outResultStorage && !ruleNode->getIsSwitch())
