@@ -11,7 +11,6 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Data/ObfSectionInfo.h>
-#include <OsmAndCore/QuadTree.h>
 
 namespace OsmAnd
 {
@@ -76,8 +75,6 @@ namespace OsmAnd
 
     friend class OsmAnd::ObfPoiSectionReader_P;
     };
-
-    typedef OsmAnd::QuadTree<int32_t, AreaI::CoordType> BBoxIndexTree;
 
     class ObfPoiSectionInfo_P;
     class OSMAND_CORE_API ObfPoiSectionInfo : public ObfSectionInfo
