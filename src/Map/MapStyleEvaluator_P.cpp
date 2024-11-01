@@ -298,7 +298,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
                 else if (mapObject)
                     classNameTailPart = mapObject->getResolvedAttribute(QStringRef(&classNameTagName));
                 
-                if (classNameTailPart.isEmpty())
+                if (!classNameTailPart.isEmpty())
                 {
                     const auto& className = classNameHeadPart + classNameTailPart;
                     const auto& symbolClassDefId = owner->mapStyle->getValueDefinitionIdByName(className);

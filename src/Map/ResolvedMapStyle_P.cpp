@@ -178,6 +178,7 @@ bool OsmAnd::ResolvedMapStyle_P::resolveValue(
         {
             if (nextPart.startsWith(QLatin1Char('.')))
             {
+                StringId symbolClassNameId = 0u;
                 splitPosition = nextPart.indexOf(QLatin1Char(','));
                 const auto symbolClassName = nextPart.left(splitPosition);
                 const auto tagPosition = nextPart.indexOf(QLatin1Char('$'));
@@ -187,8 +188,7 @@ bool OsmAnd::ResolvedMapStyle_P::resolveValue(
                     symbolClassTemplates->append(addStringToLUT(symbolClassName));
                     atLeastOneClassTemplateAdded = true;
                 }
-                StringId symbolClassNameId = 0u;
-                if (resolveStringIdInLUT(symbolClassName, symbolClassNameId))
+                else if (resolveStringIdInLUT(symbolClassName, symbolClassNameId))
                 {
                     // Try as class
                     const auto citSymbolClass = _symbolClasses.constFind(symbolClassNameId);
