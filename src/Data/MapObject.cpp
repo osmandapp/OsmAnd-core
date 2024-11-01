@@ -566,10 +566,14 @@ QString OsmAnd::MapObject::getResolvedAttribute(const QStringRef& tagRef) const
     const auto& citTagsGroup = attributeMapping->encodeMap.constFind(tagRef);
     if (citTagsGroup != attributeMapping->encodeMap.cend() && !citTagsGroup->empty())
     {
-        auto attributeId = citTagsGroup->cbegin().value();
-        if (attributeMapping->decodeMap.size() > attributeId) {
-            const auto& decodedAttribute = attributeMapping->decodeMap[attributeId];
-            result = decodedAttribute.value;
+        for (const auto attributeId : constOf(*citTagsGroup))
+        {
+            if (attributeMapping->decodeMap.size() > attributeId &&
+                (attributeIds.contains(attributeId) || additionalAttributeIds.contains(attributeId)))
+            {
+                result = attributeMapping->decodeMap[attributeId].value;
+                break;
+            }
         }
     }
     
