@@ -16,7 +16,8 @@ targetOS=$1
 compiler=$2
 
 QTBASE_CONFIGURATION=$(echo "
-	-platform macx-clang -release -opensource -confirm-license -c++std c++11 -static -mp -silent -no-accessibility -no-sql-sqlite
+	-platform macx-clang -device-option QMAKE_APPLE_DEVICE_ARCHS=arm64 -device-option QMAKE_APPLE_SIMULATOR_ARCHS=arm64 -release 
+        -opensource -confirm-license -c++std c++11 -static -mp -silent -no-accessibility -no-sql-sqlite
 	-qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
 	-nomake examples -nomake tools -nomake tests -no-feature-testlib -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 	-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
