@@ -291,33 +291,35 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
                 const auto& classNameHeadPart = symbolClassTemplate.left(splitPosition);
                 const auto& classNameTagName = symbolClassTemplate.mid(splitPosition + 1);
                 const auto& valueDefId = owner->mapStyle->getValueDefinitionIdByName(classNameTagName);
-                if (valueDefId > -1)
+                QString classNameTailPart;
+                InputValue inputValue;
+                if (valueDefId > -1 && inputValues->get(valueDefId, inputValue))
+                    classNameTailPart = owner->mapStyle->getStringById(inputValue.asUInt);
+                else if (mapObject)
+                    classNameTailPart = mapObject->getResolvedAttribute(QStringRef(&classNameTagName));
+                
+                if (classNameTailPart.isEmpty())
                 {
-                    InputValue inputValue;
-                    if (inputValues->get(valueDefId, inputValue))
+                    const auto& className = classNameHeadPart + classNameTailPart;
+                    const auto& symbolClassDefId = owner->mapStyle->getValueDefinitionIdByName(className);
+                    if (symbolClassDefId > -1)
                     {
-                        const auto& classNameTailPart = owner->mapStyle->getStringById(inputValue.asUInt);
-                        const auto& className = classNameHeadPart + classNameTailPart;
-                        const auto& symbolClassDefId = owner->mapStyle->getValueDefinitionIdByName(className);
-                        if (symbolClassDefId > -1)
+                        InputValue symbolClassValue;
+                        if (inputValues->get(symbolClassDefId, symbolClassValue))
                         {
-                            InputValue symbolClassValue;
-                            if (inputValues->get(symbolClassDefId, symbolClassValue))
+                            if (symbolClassValue.asUInt != 0)
                             {
-                                if (symbolClassValue.asUInt != 0)
-                                {
-                                    atLeastOneClassEnabled = true;
-                                    break;
-                                }
+                                atLeastOneClassEnabled = true;
+                                break;
                             }
-                            else
+                        }
+                        else
+                        {
+                            const auto& symbolClass = owner->mapStyle->getSymbolClass(className);
+                            if (symbolClass && symbolClass->getDefaultSetting())
                             {
-                                const auto& symbolClass = owner->mapStyle->getSymbolClass(className);
-                                if (symbolClass && symbolClass->getDefaultSetting())
-                                {
-                                    atLeastOneClassEnabled = true;
-                                    break;
-                                }
+                                atLeastOneClassEnabled = true;
+                                break;
                             }
                         }
                     }
