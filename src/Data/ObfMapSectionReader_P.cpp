@@ -20,8 +20,6 @@
 #include "Logging.h"
 #include "Utilities.h"
 
-const int MAX_TREE_DEPTH_IN_CACHE = 7;
-
 using google::protobuf::internal::WireFormatLite;
 
 OsmAnd::ObfMapSectionReader_P::ObfMapSectionReader_P()
@@ -398,139 +396,39 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfMapSectionInfo>& section,
     const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
-    QHash<ObfMapSectionDataBlockId, std::shared_ptr<const ObfMapSectionLevelTreeNode>>& nodeCache,
-    QReadWriteLock& nodeCacheAccessMutex,
-    int treeDepth,
     MapSurfaceType& outChildrenSurfaceType,
     QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >* nodesWithData,
     const AreaI* bbox31,
     const std::shared_ptr<const IQueryController>& queryController,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
-    QList<std::shared_ptr<const ObfMapSectionLevelTreeNode>> childNodes;
+    const auto cis = reader.getCodedInputStream().get();
 
-    bool fromCache = false;
-    if (!treeNode->subNodeIds)
+    outChildrenSurfaceType = MapSurfaceType::Undefined;
+    for (;;)
     {
-        QMutexLocker scopedLocker(&treeNode->_subNodeIdsMutex);
-
-        if (!treeNode->subNodeIds)
+        const auto tag = cis->ReadTag();
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
-            // Read all child nodes and make a lookup table
-            const std::shared_ptr<QList<ObfMapSectionDataBlockId>> subNodeIds(new QList<ObfMapSectionDataBlockId>);
-            const auto cis = reader.getCodedInputStream().get();
-            cis->Seek(treeNode->offset);
-            const auto oldLimit = cis->PushLimit(treeNode->length);
-            cis->Skip(treeNode->firstDataBoxInnerOffset);
-            outChildrenSurfaceType = MapSurfaceType::Undefined;
-            bool keepReading = true;
-            while (keepReading)
+            case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
+                return;
+            case OBF::OsmAndMapIndex_MapDataBox::kBoxesFieldNumber:
             {
-                const auto tag = cis->ReadTag();
-                switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
-                {
-                    case 0:
-                        keepReading = false;
-                        if (!ObfReaderUtilities::reachedDataEnd(cis))
-                            break;
+                const auto length = ObfReaderUtilities::readBigEndianInt(cis);
+                const auto offset = cis->CurrentPosition();
+                const auto oldLimit = cis->PushLimit(length);
 
-                        break;
-                    case OBF::OsmAndMapIndex_MapDataBox::kBoxesFieldNumber:
-                    {
-                        const auto length = ObfReaderUtilities::readBigEndianInt(cis);
-                        const auto offset = cis->CurrentPosition();
-                        const auto prevLimit = cis->PushLimit(length);
+                const std::shared_ptr<ObfMapSectionLevelTreeNode> childNode(new ObfMapSectionLevelTreeNode(treeNode->level));
+                childNode->surfaceType = treeNode->surfaceType;
+                childNode->offset = offset;
+                childNode->length = length;
+                readTreeNode(reader, section, treeNode->area31, childNode);
 
-                        std::shared_ptr<ObfMapSectionLevelTreeNode> childNode(
-                            new ObfMapSectionLevelTreeNode(treeNode->level));
-                        childNode->surfaceType = treeNode->surfaceType;
-                        childNode->offset = offset;
-                        childNode->length = length;
-                        readTreeNode(reader, section, treeNode->area31, childNode);
-
-                        ObfReaderUtilities::ensureAllDataWasRead(cis);
-                        cis->PopLimit(prevLimit);
-
-                        // Update metric
-                        if (metric)
-                            metric->visitedNodes++;
-
-                        ObfMapSectionDataBlockId subNodeId;
-                        subNodeId.sectionRuntimeGeneratedId = section->runtimeGeneratedId;
-                        subNodeId.offset = childNode->offset;
-
-                        // Register node in lookup table
-                        subNodeIds->append(subNodeId);
-
-                        // Store node in cache
-                        if (treeDepth < MAX_TREE_DEPTH_IN_CACHE)
-                        {
-                            QWriteLocker scopedLocker(&nodeCacheAccessMutex);
-
-                            nodeCache.insert(subNodeId, childNode);
-                        }
-
-                        if (bbox31)
-                        {
-                            const auto shouldSkip =
-                                !bbox31->contains(childNode->area31) &&
-                                !childNode->area31.contains(*bbox31) &&
-                                !bbox31->intersects(childNode->area31);
-                            if (shouldSkip)
-                                break;
-                        }
-
-                        // Update metric
-                        if (metric)
-                            metric->acceptedNodes++;
-
-                        if (nodesWithData && childNode->dataOffset > 0)
-                            nodesWithData->push_back(childNode);
-
-                        if (childNode->hasChildrenDataBoxes)
-                            childNodes.append(childNode);
-
-                        if (childNode->surfaceType != MapSurfaceType::Undefined)
-                        {
-                            if (outChildrenSurfaceType == MapSurfaceType::Undefined)
-                                outChildrenSurfaceType = childNode->surfaceType;
-                            else if (outChildrenSurfaceType != childNode->surfaceType)
-                                outChildrenSurfaceType = MapSurfaceType::Mixed;
-                        }
-
-                        break;
-                    }
-                    default:
-                        ObfReaderUtilities::skipUnknownField(cis, tag);
-                        break;
-                }
-            }
-            ObfReaderUtilities::ensureAllDataWasRead(cis);
-            cis->PopLimit(oldLimit);
-
-            // Store lookup table
-            if (treeDepth < MAX_TREE_DEPTH_IN_CACHE)
-            {
-                treeNode->subNodeIds = subNodeIds;
-            }
-        }
-        else
-            fromCache = true;
-    }
-    else
-        fromCache = true;
-
-    if (fromCache)
-    {
-        // Use lookup table to access child nodes stored in cache
-        QReadLocker scopedLocker(&nodeCacheAccessMutex);
-
-        for (const auto& subNodeId : constOf(*treeNode->subNodeIds))
-        {
-            const auto& citChildNode = nodeCache.constFind(subNodeId);
-            if (citChildNode != nodeCache.cend())
-            {
-                const auto& childNode = citChildNode.value();
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
+                cis->PopLimit(oldLimit);
 
                 // Update metric
                 if (metric)
@@ -543,7 +441,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                         !childNode->area31.contains(*bbox31) &&
                         !bbox31->intersects(childNode->area31);
                     if (shouldSkip)
-                        continue;
+                        break;
                 }
 
                 // Update metric
@@ -553,43 +451,33 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 if (nodesWithData && childNode->dataOffset > 0)
                     nodesWithData->push_back(childNode);
 
+                auto subchildrenSurfaceType = MapSurfaceType::Undefined;
                 if (childNode->hasChildrenDataBoxes)
-                    childNodes.append(childNode);
+                {
+                    cis->Seek(childNode->offset);
+                    const auto oldLimit = cis->PushLimit(childNode->length);
 
-                if (childNode->surfaceType != MapSurfaceType::Undefined)
+                    cis->Skip(childNode->firstDataBoxInnerOffset);
+                    readTreeNodeChildren(reader, section, childNode, subchildrenSurfaceType, nodesWithData, bbox31, queryController, metric);
+
+                    ObfReaderUtilities::ensureAllDataWasRead(cis);
+                    cis->PopLimit(oldLimit);
+                }
+
+                const auto surfaceTypeToMerge = (subchildrenSurfaceType != MapSurfaceType::Undefined) ? subchildrenSurfaceType : childNode->surfaceType;
+                if (surfaceTypeToMerge != MapSurfaceType::Undefined)
                 {
                     if (outChildrenSurfaceType == MapSurfaceType::Undefined)
-                        outChildrenSurfaceType = childNode->surfaceType;
-                    else if (outChildrenSurfaceType != childNode->surfaceType)
+                        outChildrenSurfaceType = surfaceTypeToMerge;
+                    else if (outChildrenSurfaceType != surfaceTypeToMerge)
                         outChildrenSurfaceType = MapSurfaceType::Mixed;
                 }
-            }
-        }
-    }
 
-    for (const auto& childNode : constOf(childNodes))
-    {
-        auto subchildrenSurfaceType = MapSurfaceType::Undefined;
-        readTreeNodeChildren(
-            reader,
-            section,
-            childNode,
-            nodeCache,
-            nodeCacheAccessMutex,
-            treeDepth + 1,
-            subchildrenSurfaceType,
-            nodesWithData,
-            bbox31,
-            queryController,
-            metric);
-        const auto surfaceTypeToMerge =
-            (subchildrenSurfaceType != MapSurfaceType::Undefined) ? subchildrenSurfaceType : childNode->surfaceType;
-        if (surfaceTypeToMerge != MapSurfaceType::Undefined)
-        {
-            if (outChildrenSurfaceType == MapSurfaceType::Undefined)
-                outChildrenSurfaceType = surfaceTypeToMerge;
-            else if (outChildrenSurfaceType != surfaceTypeToMerge)
-                outChildrenSurfaceType = MapSurfaceType::Mixed;
+                break;
+            }
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
         }
     }
 }
@@ -1214,22 +1102,17 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             auto rootSubnodesSurfaceType = MapSurfaceType::Undefined;
             if (rootNode->hasChildrenDataBoxes)
             {
-                readTreeNodeChildren(
-                    reader,
-                    section,
-                    rootNode,
-                    mapLevel->_p->_nodeCache,
-                    mapLevel->_p->_nodeCacheAccessMutex,
-                    0,
-                    rootSubnodesSurfaceType,
-                    &treeNodesWithData,
-                    bbox31,
-                    queryController,
-                    metric);
+                cis->Seek(rootNode->offset);
+                auto oldLimit = cis->PushLimit(rootNode->length);
+
+                cis->Skip(rootNode->firstDataBoxInnerOffset);
+                readTreeNodeChildren(reader, section, rootNode, rootSubnodesSurfaceType, &treeNodesWithData, bbox31, queryController, metric);
+                
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
+                cis->PopLimit(oldLimit);
             }
 
-            const auto surfaceTypeToMerge = (rootSubnodesSurfaceType != MapSurfaceType::Undefined)
-                ? rootSubnodesSurfaceType : rootNode->surfaceType;
+            const auto surfaceTypeToMerge = (rootSubnodesSurfaceType != MapSurfaceType::Undefined) ? rootSubnodesSurfaceType : rootNode->surfaceType;
             if (surfaceTypeToMerge != MapSurfaceType::Undefined)
             {
                 if (bboxOrSectionSurfaceType == MapSurfaceType::Undefined)
