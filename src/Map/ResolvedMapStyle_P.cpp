@@ -181,7 +181,7 @@ bool OsmAnd::ResolvedMapStyle_P::resolveValue(
                 StringId symbolClassNameId = 0u;
                 splitPosition = nextPart.indexOf(QLatin1Char(','));
                 const auto symbolClassName = nextPart.left(splitPosition);
-                const auto tagPosition = nextPart.indexOf(QLatin1Char('$'));
+                const auto tagPosition = symbolClassName.indexOf(QLatin1Char('$'));
                 if (tagPosition > 0)
                 {
                     // Store class name template to form actual class name from tag value later
