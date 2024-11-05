@@ -171,7 +171,7 @@ set(CORE_LEGACY "${OSMAND_ROOT}/core-legacy")
 set(LEGACY_PROTOBUF "${CORE_LEGACY}/externals/protobuf/upstream.patched")
 set(LEGACY_SRC "${CORE_LEGACY}/native/src/")
 
-file(GLOB legacy_shared_sources
+set(legacy_shared_sources
 	"${LEGACY_SRC}/openingHoursParser.h"
 	"${LEGACY_SRC}/openingHoursParser.cpp"
 	"${LEGACY_SRC}/proto/osmand_index.pb.h"
@@ -187,7 +187,7 @@ set(legacy_shared_dirs_public
 	"${CORE_LEGACY}/native/include"
 )
 
-file(GLOB common_legacy_sources
+set(common_legacy_sources
 		"${LEGACY_SRC}/multipolygons.h"
 		"${LEGACY_SRC}/multipolygons.cpp"
 		"${LEGACY_SRC}/common.cpp"
@@ -198,7 +198,7 @@ set(target_legacy_shared_public_includes
 )
 
 if (CMAKE_TARGET_OS STREQUAL "ios")
-	file(GLOB legacy_sources
+	set(legacy_sources
 		"${LEGACY_SRC}/routeTypeRule.h"
 		"${LEGACY_SRC}/routeTypeRule.cpp"
 		"${LEGACY_SRC}/binaryRead.h"

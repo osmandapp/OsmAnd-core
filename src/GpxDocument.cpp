@@ -160,7 +160,9 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
     xmlWriter.writeAttribute(QStringLiteral("xmlns:xsi"), QStringLiteral("http://www.w3.org/2001/XMLSchema-instance"));
     xmlWriter.writeAttribute(QStringLiteral("xsi:schemaLocation"), QStringLiteral("http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd"));
 
-    writeMetadata(metadata, filename, xmlWriter);
+    if (metadata)
+        writeMetadata(metadata, filename, xmlWriter);
+
     writePoints(points, xmlWriter);
     writeRoutes(routes, xmlWriter);
     writeTracks(tracks, xmlWriter);
