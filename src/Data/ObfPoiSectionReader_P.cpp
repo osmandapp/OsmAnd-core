@@ -1265,8 +1265,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     }
                     else
                     {
-                        OsmAnd::LogPrintf(LogSeverityLevel::Error, "Couldn't read tag groups for amenity %s %.4f %.4f",
-                                          qPrintable(nativeName), Utilities::get31LatitudeY(position31.y), Utilities::get31LongitudeX(position31.x));
+//                        OsmAnd::LogPrintf(LogSeverityLevel::Error, "Couldn't read tag groups for amenity %s %.4f %.4f",
+//                                          qPrintable(nativeName), Utilities::get31LatitudeY(position31.y), Utilities::get31LongitudeX(position31.x));
                     }
                 }
                 cis->PopLimit(old);

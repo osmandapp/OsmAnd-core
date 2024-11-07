@@ -61,6 +61,10 @@ bool OsmAnd::ReverseGeocoder_P::DISTANCE_COMPARATOR(
         const std::shared_ptr<const ResultEntry>& a,
         const std::shared_ptr<const ResultEntry>& b)
 {
+    if ((int) a->getDistance() == (int) b->getDistance())
+    {
+        return a->getCityDistance() < b->getCityDistance();
+    }
     return a->getDistance() < b->getDistance();
 }
 
@@ -75,16 +79,20 @@ void addWord(QStringList &ls, QString word, bool addCommonWords)
     }
 }
 
+bool isSpace(QChar c) {
+    return !c.isDigit() && !c.isLetter();
+}
+
 QStringList prepareStreetName(const QString &s, bool addCommonWords)
 {
     QStringList ls;
     int beginning = 0;
     for (int i = 1; i < s.length(); i++)
     {
-        if (s[i] == ' ')
+        if (isSpace(s[i]))
         {
             addWord(ls, s.mid(beginning, i - beginning), addCommonWords);
-            beginning = i;
+            beginning = i + 1;
         }
         else if (s[i] == '(')
         {
@@ -182,13 +190,15 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
     {
         std::sort(streetList.begin(), streetList.end(), DISTANCE_COMPARATOR);
         double streetDistance = 0;
-        for (const std::shared_ptr<ResultEntry> street : streetList)
+        bool isBuildingFound = knownMinBuildingDistance > 0;
+        for (const std::shared_ptr<ResultEntry> & street : streetList)
         {
             if (streetDistance == 0)
                 streetDistance = street->getDistance();
-            else if (street->getDistance() > streetDistance + DISTANCE_STREET_FROM_CLOSEST_WITH_SAME_NAME)
+            else if (isBuildingFound && street->getDistance() > streetDistance + DISTANCE_STREET_FROM_CLOSEST_WITH_SAME_NAME)
                 continue;
             
+            street->resetDistance();
             street->connectionPoint = road->connectionPoint;
             QVector<std::shared_ptr<const ResultEntry>> streetBuildings = loadStreetBuildings(road, street);
             std::sort(streetBuildings.begin(), streetBuildings.end(), DISTANCE_COMPARATOR);
@@ -335,7 +345,6 @@ std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeoco
         {
             double md = justified[0]->getDistance();
             minBuildingDistance = (minBuildingDistance == 0) ? md : std::min(md, minBuildingDistance);
-            justified[0]->setDistance(NAN);//clear intermediate cached distance
             complete.append(justified);
         }
     }
