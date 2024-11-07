@@ -59,12 +59,15 @@ namespace OsmAnd
             std::shared_ptr<const OsmAnd::RoadInfo> point;
 
             double getDistance() const;
+            void resetDistance();
+            double getCityDistance() const;
             Nullable<PointI> searchPoint31() const;
             void setDistance(double distance) const;
             QString toString() const;
 
         private:
-            mutable double dist = -1;
+            mutable double dist = NAN;
+            mutable double cityDist = NAN;
         };
 
         explicit ReverseGeocoder(
