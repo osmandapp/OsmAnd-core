@@ -85,12 +85,9 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
         // Handle main basemap
         if (obfInfo->isBasemapWithCoastlines)
         {
-            // In case there's more than 1 basemap reader present, use only first and warn about this fact
+            // In case there's more than 1 basemap reader present, use only first
             if (basemapReader)
-            {
-                LogPrintf(LogSeverityLevel::Warning, "More than 1 basemap available");
                 continue;
-            }
 
             // Save basemap reader for later use
             basemapReader = obfReader;
@@ -284,10 +281,9 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
         // Handle basemap
         if (obfInfo->isBasemapWithCoastlines)
         {
-            // In case there's more than 1 basemap reader present, use only first that is not mini map and warn about this fact
+            // In case there's more than 1 basemap reader present, use only first that is not mini map
             if (basemapReader)
             {
-                LogPrintf(LogSeverityLevel::Warning, "More than 1 basemap available");
                 // If used basemap is not mini, keep it
                 if (!basemapReader->obfFile->filePath.contains(QStringLiteral("basemap_mini")))
                     continue;
