@@ -7,6 +7,7 @@
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QMutex>
+#include <QReadWriteLock>
 #include <QSet>
 #include <QHash>
 #include <QMap>
@@ -39,10 +40,12 @@ namespace OsmAnd
         uint32_t offset;
         uint32_t length;
         uint32_t dataOffset;
+        uint32_t depth;
         MapSurfaceType surfaceType;
         AreaI area31;
 
         bool hasChildrenDataBoxes;
+        mutable QList<std::shared_ptr<const ObfMapSectionLevelTreeNode>> children;
         uint32_t firstDataBoxInnerOffset;
 
     friend class OsmAnd::ObfMapSectionReader_P;
@@ -57,6 +60,7 @@ namespace OsmAnd
         mutable std::shared_ptr< const QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> > > _rootNodes;
         mutable QAtomicInt _rootNodesLoaded;
         mutable QMutex _rootNodesLoadMutex;
+        mutable QReadWriteLock _childNodeAccessMutex;
     public:
         virtual ~ObfMapSectionLevel_P();
 

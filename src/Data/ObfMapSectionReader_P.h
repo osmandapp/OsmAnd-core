@@ -85,6 +85,18 @@ namespace OsmAnd
             QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >* nodesWithData,
             const AreaI* bbox31,
             const std::shared_ptr<const IQueryController>& queryController,
+            QReadWriteLock& childNodeAccessMutex,
+            ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
+        
+        static void readTreeNodeChildrenCache(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfMapSectionInfo>& section,
+            const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
+            MapSurfaceType& outChildrenSurfaceType,
+            QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >* nodesWithData,
+            const AreaI* bbox31,
+            const std::shared_ptr<const IQueryController>& queryController,
+            QReadWriteLock& childNodeAccessMutex,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 
         typedef std::function < bool(

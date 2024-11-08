@@ -22,6 +22,8 @@
 
 using google::protobuf::internal::WireFormatLite;
 
+const int MAX_TREE_DEPTH_IN_CACHE = 7;
+
 OsmAnd::ObfMapSectionReader_P::ObfMapSectionReader_P()
 {
 }
@@ -392,6 +394,41 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
     }
 }
 
+void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildrenCache(
+    const ObfReader_P& reader,
+    const std::shared_ptr<const ObfMapSectionInfo>& section,
+    const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
+    MapSurfaceType& outChildrenSurfaceType,
+    QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >* nodesWithData,
+    const AreaI* bbox31,
+    const std::shared_ptr<const IQueryController>& queryController,
+    QReadWriteLock& childNodeAccessMutex,
+    ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
+{
+    if (treeNode->children.size() > 0)
+    {
+        QList<std::shared_ptr<const ObfMapSectionLevelTreeNode>> childrens;
+        {
+            QReadLocker scopedLocker(&childNodeAccessMutex);
+            childrens = treeNode->children;
+        }
+        for (auto & ch : childrens)
+        {
+            readTreeNodeChildrenCache(reader, section, ch, outChildrenSurfaceType, nodesWithData, bbox31, queryController, childNodeAccessMutex,  metric);
+        }
+    }
+    else
+    {
+        const auto cis = reader.getCodedInputStream().get();
+        cis->Seek(treeNode->offset);
+        auto oldLimit = cis->PushLimit(treeNode->length);
+        cis->Skip(treeNode->firstDataBoxInnerOffset);
+        readTreeNodeChildren(reader, section, treeNode, outChildrenSurfaceType, nodesWithData, bbox31, queryController, childNodeAccessMutex, metric);
+        ObfReaderUtilities::ensureAllDataWasRead(cis);
+        cis->PopLimit(oldLimit);
+    }
+}
+
 void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfMapSectionInfo>& section,
@@ -400,6 +437,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
     QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >* nodesWithData,
     const AreaI* bbox31,
     const std::shared_ptr<const IQueryController>& queryController,
+    QReadWriteLock& childNodeAccessMutex,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
     const auto cis = reader.getCodedInputStream().get();
@@ -425,10 +463,17 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 childNode->surfaceType = treeNode->surfaceType;
                 childNode->offset = offset;
                 childNode->length = length;
+                childNode->depth = treeNode->depth + 1;
                 readTreeNode(reader, section, treeNode->area31, childNode);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
+                
+//                if (treeNode->depth < MAX_TREE_DEPTH_IN_CACHE)
+//                {
+//                    QWriteLocker scopedLocker(&childNodeAccessMutex);
+//                    treeNode->children.append(childNode);
+//                }
 
                 // Update metric
                 if (metric)
@@ -458,7 +503,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                     const auto oldLimit = cis->PushLimit(childNode->length);
 
                     cis->Skip(childNode->firstDataBoxInnerOffset);
-                    readTreeNodeChildren(reader, section, childNode, subchildrenSurfaceType, nodesWithData, bbox31, queryController, metric);
+                    readTreeNodeChildren(reader, section, childNode, subchildrenSurfaceType, nodesWithData, bbox31, queryController, childNodeAccessMutex, metric);
 
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
                     cis->PopLimit(oldLimit);
@@ -1102,14 +1147,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             auto rootSubnodesSurfaceType = MapSurfaceType::Undefined;
             if (rootNode->hasChildrenDataBoxes)
             {
-                cis->Seek(rootNode->offset);
-                auto oldLimit = cis->PushLimit(rootNode->length);
-
-                cis->Skip(rootNode->firstDataBoxInnerOffset);
-                readTreeNodeChildren(reader, section, rootNode, rootSubnodesSurfaceType, &treeNodesWithData, bbox31, queryController, metric);
-                
-                ObfReaderUtilities::ensureAllDataWasRead(cis);
-                cis->PopLimit(oldLimit);
+                readTreeNodeChildrenCache(reader, section, rootNode, rootSubnodesSurfaceType, &treeNodesWithData, bbox31, queryController, mapLevel->_p->_childNodeAccessMutex, metric);
             }
 
             const auto surfaceTypeToMerge = (rootSubnodesSurfaceType != MapSurfaceType::Undefined) ? rootSubnodesSurfaceType : rootNode->surfaceType;
