@@ -54,18 +54,20 @@ buildArch()
 	fi
 }
 
-buildArch "armeabi-v7a"
-retcode=$?
-if [[ $retcode -ne 0 ]]; then
-	echo "buildArch(armeabi-v7a) failed with $retcode, exiting..."
-	exit $retcode
-fi
-
 buildArch "arm64-v8a"
 retcode=$?
 if [[ $retcode -ne 0 ]]; then
 	echo "buildArch(arm64-v8a) failed with $retcode, exiting..."
 	exit $retcode
+fi
+
+#exit 0; # for testing purposes
+
+buildArch "armeabi-v7a"
+retcode=$?
+if [[ $retcode -ne 0 ]]; then
+        echo "buildArch(armeabi-v7a) failed with $retcode, exiting..."
+        exit $retcode
 fi
 
 buildArch "x86"
