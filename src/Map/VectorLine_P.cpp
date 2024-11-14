@@ -25,7 +25,7 @@
 #define SPECIAL_ARROW_DISTANCE_MULTIPLIER 2.5f
 
 #define VECTOR_LINE_SCALE_COEF 2.0f
-#define LINE_WIDTH_THRESHOLD_DP 8.0f * VECTOR_LINE_SCALE_COEF
+#define LINE_WIDTH_THRESHOLD_DP 22.0f * VECTOR_LINE_SCALE_COEF
 
 // Colorization shemes
 #define COLORIZATION_NONE 0
@@ -105,7 +105,7 @@ float OsmAnd::VectorLine_P::getArrowStartingGap() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return getPointStepPx() * _metersPerPixel * owner->screenScale;
+    return getPointStepPx() * _metersPerPixel;
 }
 
 bool OsmAnd::VectorLine_P::showArrows() const
@@ -258,7 +258,7 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
 
         if (owner->pathIcon)
         {
-            double newWidth = _lineWidth / 3.4f;
+            double newWidth = _lineWidth * owner->screenScale / 8.0f;
             double scale = newWidth / owner->pathIcon->width();
             auto scaledPathIcon = SkiaUtilities::scaleImage(owner->pathIcon, scale, scale);
             _scaledPathIcon = scaledPathIcon ? scaledPathIcon : owner->pathIcon;
@@ -1455,7 +1455,7 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
     const PointD location(origin);
     bool withHeights = !segmentHeights.isEmpty();
     float pathIconStep = getPointStepPx();
-    double step = Utilities::metersToX31(pathIconStep * _metersPerPixel * owner->screenScale);
+    double step = Utilities::metersToX31(pathIconStep * _metersPerPixel);
     double halfStep = step / 2.0;
     bool ok = halfStep > 0.0;
     if (!ok)
@@ -1515,7 +1515,7 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
 
 bool OsmAnd::VectorLine_P::useSpecialArrow() const
 {
-    return _lineWidth < (LINE_WIDTH_THRESHOLD_DP * owner->screenScale) && owner->specialPathIcon;
+    return _lineWidth < LINE_WIDTH_THRESHOLD_DP && owner->specialPathIcon;
 }
 
 double OsmAnd::VectorLine_P::getPointStepPx() const
