@@ -576,6 +576,18 @@ QHash<QString, QString> OsmAnd::MapObject::getResolvedAttributes() const
             result.insert(decodedAttribute.tag, decodedAttribute.value);
         }
     }
+    for (const auto& captionAttributeId : constOf(captionsOrder))
+    {
+        if (captionAttributeId == attributeMapping->nativeNameAttributeId || attributeMapping->localizedNameAttributeIds.contains(captionAttributeId))
+        {
+            // caption is name or localized name:lang
+            continue;
+        }
+        // caption is additional="text"
+        const QString & caption = constOf(captions)[captionAttributeId];
+        const QString & tag = attributeMapping->decodeMap[captionAttributeId].tag;
+        result.insert(tag, caption);
+    }
     return result;
 }
 
