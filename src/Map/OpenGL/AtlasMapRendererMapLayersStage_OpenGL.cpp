@@ -172,6 +172,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*sampler*/;
     const auto vsOtherUniforms =
         4 /*param_vs_mPerspectiveProjectionView*/ +
+        1 /*param_vs_resultScale*/ +
         1 /*param_vs_targetInTilePosN*/ +
         1 /*param_vs_tileSize*/ +
         (!gpuAPI->isSupported_textureLod
@@ -232,6 +233,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
     });
 
     // Get minimal and limit further with override if set
+    const auto previousMaxNumberOfRasterMapLayersInBatch = _maxNumberOfRasterMapLayersInBatch;
     _maxNumberOfRasterMapLayersInBatch = std::min({
         maxBatchSizeByUniforms,
         maxBatchSizeByVaryingFloats,
@@ -254,17 +256,34 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
 
     // Initialize programs that support [1 ... _maxNumberOfRasterMapLayersInBatch] as number of layers
     auto supportedMaxNumberOfRasterMapLayersInBatch = _maxNumberOfRasterMapLayersInBatch;
-    for (auto numberOfLayersInBatch = _maxNumberOfRasterMapLayersInBatch; numberOfLayersInBatch >= 1; numberOfLayersInBatch--)
+    if (_rasterLayerTilePrograms.size() != _maxNumberOfRasterMapLayersInBatch)
     {
-        RasterLayerTileProgram rasterLayerTileProgram;
-        const auto success = initializeRasterLayersProgram(numberOfLayersInBatch, rasterLayerTileProgram);
-        if (!success)
+        _rasterLayerTilePrograms.clear();
+        for (auto numberOfLayersInBatch = _maxNumberOfRasterMapLayersInBatch; numberOfLayersInBatch >= 1; numberOfLayersInBatch--)
         {
-            supportedMaxNumberOfRasterMapLayersInBatch -= 1;
-            continue;
-        }
+            RasterLayerTileProgram rasterLayerTileProgram;
+            const auto success = initializeRasterLayersProgram(numberOfLayersInBatch, rasterLayerTileProgram);
+            if (!success)
+            {
+                supportedMaxNumberOfRasterMapLayersInBatch -= 1;
+                continue;
+            }
 
-        _rasterLayerTilePrograms.insert(numberOfLayersInBatch, rasterLayerTileProgram);
+            _rasterLayerTilePrograms.insert(numberOfLayersInBatch, rasterLayerTileProgram);
+        }
+    }
+    else
+    {
+        for (auto numberOfLayersInBatch = _maxNumberOfRasterMapLayersInBatch; numberOfLayersInBatch >= 1; numberOfLayersInBatch--)
+        {
+            auto& rasterLayerTileProgram = _rasterLayerTilePrograms[numberOfLayersInBatch];
+            const auto success = initializeRasterLayersProgram(numberOfLayersInBatch, rasterLayerTileProgram);
+            if (!success)
+            {
+                supportedMaxNumberOfRasterMapLayersInBatch -= 1;
+                continue;
+            }
+        }
     }
     if (supportedMaxNumberOfRasterMapLayersInBatch != _maxNumberOfRasterMapLayersInBatch)
     {
@@ -296,733 +315,743 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    const auto& vertexShader = QString::fromLatin1(
-        // Definitions
-        "#define ELEVATION_VISUALIZATION_ENABLED %ElevationVisualizationEnabled%                                            ""\n"
-        "                                                                                                                   ""\n"
-        // Input data
-        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
-        "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        // Output data to next shader stages
-        "%UnrolledPerRasterLayerTexCoordsDeclarationCode%                                                                   ""\n"
-        "PARAM_OUTPUT float v2f_metersPerUnit;                                                                              ""\n"
-        "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
-        "    PARAM_OUTPUT float v2f_mipmapLOD;                                                                              ""\n"
-        "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
-        "    PARAM_OUTPUT lowp vec4 v2f_elevationColor;                                                                     ""\n"
-        "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
-        "PARAM_OUTPUT vec4 v2f_position;                                                                                    ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
-        "uniform vec2 param_vs_targetInTilePosN;                                                                            ""\n"
-        "uniform float param_vs_tileSize;                                                                                   ""\n"
-        "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
-        "    uniform float param_vs_distanceFromCameraToTarget;                                                             ""\n"
-        "    uniform float param_vs_cameraElevationAngleN;                                                                  ""\n"
-        "    uniform vec2 param_vs_groundCameraPosition;                                                                    ""\n"
-        "    uniform float param_vs_scaleToRetainProjectedSize;                                                             ""\n"
-        "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "uniform vec4 param_vs_elevation_configuration;                                                                     ""\n"
-        "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
-        "    uniform vec4 param_vs_elevation_hillshadeConfiguration;                                                        ""\n"
-        "    uniform vec4 param_vs_elevation_colorMapKeys[%MaxElevationColorMapEntriesCount%];                              ""\n"
-        "    uniform vec4 param_vs_elevation_colorMapValues[%MaxElevationColorMapEntriesCount%];                            ""\n"
-        "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: per-tile data
-        "uniform vec2 param_vs_tileCoordsOffset;                                                                            ""\n"
-        "uniform vec4 param_vs_elevation_scale;                                                                             ""\n"
-        "uniform highp sampler2D param_vs_elevation_dataSampler;                                                            ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: per-layer-in-tile data
-        "struct VsRasterLayerTile                                                                                           ""\n"
-        "{                                                                                                                  ""\n"
-        "    highp vec4 texCoordsOffsetAndScale;                                                                            ""\n"
-        "};                                                                                                                 ""\n"
-        "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
-        "uniform VsRasterLayerTile param_vs_elevationLayer;                                                                 ""\n"
-        "uniform highp vec4 param_vs_elevationLayerTexelSize;                                                               ""\n"
-        "uniform highp vec4 param_vs_elevationLayerDataPlace;                                                               ""\n"
-        "                                                                                                                   ""\n"
-        "float interpolatedHeight(in vec2 inTexCoords)                                                                      ""\n"
-        "{                                                                                                                  ""\n"
-        "    vec2 heixelSize = param_vs_elevationLayerDataPlace.zw * 2.0;                                                   ""\n"
-        "    vec2 texCoords = (inTexCoords - param_vs_elevationLayerDataPlace.zw) / heixelSize;                             ""\n"
-        "    vec2 pixOffset = fract(texCoords);                                                                             ""\n"
-        "    texCoords = floor(texCoords) * heixelSize + param_vs_elevationLayerDataPlace.zw;                               ""\n"
-        "    vec2 minCoords = param_vs_elevationLayerDataPlace.xy - heixelSize;                                             ""\n"
-        "    vec2 maxCoords = minCoords + heixelSize * (%HeixelsPerTileSide%.0 + 2.0);                                      ""\n"
-        "    float blHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
-        "    texCoords.x += heixelSize.x;                                                                                   ""\n"
-        "    float brHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
-        "    texCoords.y += heixelSize.y;                                                                                   ""\n"
-        "    float trHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
-        "    texCoords.x -= heixelSize.x;                                                                                   ""\n"
-        "    float tlHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
-        "    float avbPixel = mix(blHeixel, brHeixel, pixOffset.x);                                                         ""\n"
-        "    float avtPixel = mix(tlHeixel, trHeixel, pixOffset.x);                                                         ""\n"
-        "    return mix(avbPixel, avtPixel, pixOffset.y);                                                                   ""\n"
-        "}                                                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "void calculateTextureCoordinates(in VsRasterLayerTile tileLayer, out vec2 outTexCoords)                            ""\n"
-        "{                                                                                                                  ""\n"
-        "    vec2 texCoords = in_vs_vertexTexCoords;                                                                        ""\n"
-        "    texCoords = texCoords * tileLayer.texCoordsOffsetAndScale.zw + tileLayer.texCoordsOffsetAndScale.xy;           ""\n"
-        "    outTexCoords = texCoords;                                                                                      ""\n"
-        "}                                                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    vec4 v = vec4(in_vs_vertexPosition.x, 0.0, in_vs_vertexPosition.y, 1.0);                                       ""\n"
-        "                                                                                                                   ""\n"
-        //   Scale and shift vertex to it's proper position
-        "    v.xz *= param_vs_tileSize;                                                                                     ""\n"
-        "    v.xz += param_vs_tileSize * (param_vs_tileCoordsOffset - param_vs_targetInTilePosN);                           ""\n"
-        "                                                                                                                   ""\n"
-        //   Get meters per unit, which is needed at both shader stages
-        "    v2f_metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, in_vs_vertexTexCoords.t);      ""\n"
-        "                                                                                                                   ""\n"
-        //   Process each tile layer texture coordinates (except elevation)
-        "%UnrolledPerRasterLayerTexCoordsProcessingCode%                                                                    ""\n"
-        "                                                                                                                   ""\n"
-        //   If elevation data is active, use it
-        "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
-        "    v2f_elevationColor = vec4(0.0, 0.0, 0.0, 0.0);                                                                 ""\n"
-        "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
-        "    if (abs(param_vs_elevation_scale.w) > 0.0)                                                                     ""\n"
-        "    {                                                                                                              ""\n"
-        "        float slopeAlgorithm = param_vs_elevation_configuration.x;                                                 ""\n"
-        "                                                                                                                   ""\n"
-        // [0][0] - TL (0); [1][0] - T (1); [2][0] - TR (2)
-        // [0][1] -  L (3); [1][1] - O (4); [2][1] -  R (5)
-        // [0][2] - BL (6); [1][2] - B (7); [2][2] - BR (8)
-        "        mat3 heightInMeters = mat3(0.0);                                                                           ""\n"
-        "        vec2 elevationTexCoordsO;                                                                                  ""\n"
-        "        calculateTextureCoordinates(                                                                               ""\n"
-        "            param_vs_elevationLayer,                                                                               ""\n"
-        "            elevationTexCoordsO);                                                                                  ""\n"
-        "        heightInMeters[1][1] = interpolatedHeight(elevationTexCoordsO);                                            ""\n"
-        "                                                                                                                   ""\n"
-        "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
-        "        if (slopeAlgorithm > %SlopeAlgorithm_None%.0)                                                              ""\n"
-        "        {                                                                                                          ""\n"
-        "            vec2 elevationTexCoordsT = elevationTexCoordsO;                                                        ""\n"
-        "            elevationTexCoordsT.t -= param_vs_elevationLayerTexelSize.y;                                           ""\n"
-        "            heightInMeters[1][0] = interpolatedHeight(elevationTexCoordsT);                                        ""\n"
-        "                                                                                                                   ""\n"
-        "            vec2 elevationTexCoordsL = elevationTexCoordsO;                                                        ""\n"
-        "            elevationTexCoordsL.s -= param_vs_elevationLayerTexelSize.x;                                           ""\n"
-        "            heightInMeters[0][1] = interpolatedHeight(elevationTexCoordsL);                                        ""\n"
-        "                                                                                                                   ""\n"
-        "            vec2 elevationTexCoordsB = elevationTexCoordsO;                                                        ""\n"
-        "            elevationTexCoordsB.t += param_vs_elevationLayerTexelSize.y;                                           ""\n"
-        "            heightInMeters[1][2] = interpolatedHeight(elevationTexCoordsB);                                        ""\n"
-        "                                                                                                                   ""\n"
-        "            vec2 elevationTexCoordsR = elevationTexCoordsO;                                                        ""\n"
-        "            elevationTexCoordsR.s += param_vs_elevationLayerTexelSize.x;                                           ""\n"
-        "            heightInMeters[2][1] = interpolatedHeight(elevationTexCoordsR);                                        ""\n"
-        "                                                                                                                   ""\n"
-        "            if (slopeAlgorithm > %SlopeAlgorithm_ZevenbergenThorne%.0)                                             ""\n"
-        "            {                                                                                                      ""\n"
-        "                vec2 elevationTexCoordsTL = elevationTexCoordsO;                                                   ""\n"
-        "                elevationTexCoordsTL.s -= param_vs_elevationLayerTexelSize.x;                                      ""\n"
-        "                elevationTexCoordsTL.t -= param_vs_elevationLayerTexelSize.y;                                      ""\n"
-        "                heightInMeters[0][0] = interpolatedHeight(elevationTexCoordsTL);                                   ""\n"
-        "                                                                                                                   ""\n"
-        "                vec2 elevationTexCoordsTR = elevationTexCoordsO;                                                   ""\n"
-        "                elevationTexCoordsTR.s += param_vs_elevationLayerTexelSize.x;                                      ""\n"
-        "                elevationTexCoordsTR.t -= param_vs_elevationLayerTexelSize.y;                                      ""\n"
-        "                heightInMeters[2][0] = interpolatedHeight(elevationTexCoordsTR);                                   ""\n"
-        "                                                                                                                   ""\n"
-        "                vec2 elevationTexCoordsBL = elevationTexCoordsO;                                                   ""\n"
-        "                elevationTexCoordsBL.s -= param_vs_elevationLayerTexelSize.x;                                      ""\n"
-        "                elevationTexCoordsBL.t += param_vs_elevationLayerTexelSize.y;                                      ""\n"
-        "                heightInMeters[0][2] = interpolatedHeight(elevationTexCoordsBL);                                   ""\n"
-        "                                                                                                                   ""\n"
-        "                vec2 elevationTexCoordsBR = elevationTexCoordsO;                                                   ""\n"
-        "                elevationTexCoordsBR.s += param_vs_elevationLayerTexelSize.x;                                      ""\n"
-        "                elevationTexCoordsBR.t += param_vs_elevationLayerTexelSize.y;                                      ""\n"
-        "                heightInMeters[2][2] = interpolatedHeight(elevationTexCoordsBR);                                   ""\n"
-        "            }                                                                                                      ""\n"
-        "        }                                                                                                          ""\n"
-        "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
-        "        heightInMeters *= param_vs_elevation_scale.w * param_vs_elevation_scale.z;                                 ""\n"
-        "                                                                                                                   ""\n"
-        "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
-        "        float visualizationStyle = param_vs_elevation_configuration.y;                                             ""\n"
-        "        if (visualizationStyle > %VisualizationStyle_None%.0)                                                      ""\n"
-        "        {                                                                                                          ""\n"
-        "            const float M_PI = 3.1415926535897932384626433832795;                                                  ""\n"
-        "            const float M_PI_2 = M_PI / 2.0;                                                                       ""\n"
-        "            const float M_2PI = 2.0 * M_PI;                                                                        ""\n"
-        "            const float M_3PI_2 = 3.0 * M_PI_2;                                                                    ""\n"
-        "            const float M_COS_225_D = -0.70710678118;                                                              ""\n"
-        "                                                                                                                   ""\n"
-        "            float heixelInMeters = v2f_metersPerUnit * (param_vs_tileSize / %HeixelsPerTileSide%.0);               ""\n"
-        "                                                                                                                   ""\n"
-        "            vec2 slopeInMeters = vec2(0.0);                                                                        ""\n"
-        "            float slopeAlgorithmScale = 1.0;                                                                       ""\n"
-        "            if (abs(slopeAlgorithm - %SlopeAlgorithm_ZevenbergenThorne%.0) < 0.00001)                              ""\n"
-        "            {                                                                                                      ""\n"
-        "                slopeInMeters.x = heightInMeters[0][1] - heightInMeters[2][1];                                     ""\n"
-        "                slopeInMeters.y = heightInMeters[1][2] - heightInMeters[1][0];                                     ""\n"
-        "                                                                                                                   ""\n"
-        "                slopeAlgorithmScale = 2.0;                                                                         ""\n"
-        "            }                                                                                                      ""\n"
-        "            else if (abs(slopeAlgorithm - %SlopeAlgorithm_Horn%.0) < 0.00001)                                      ""\n"
-        "            {                                                                                                      ""\n"
-        "                slopeInMeters.x = (                                                                                ""\n"
-        "                    heightInMeters[0][0] + heightInMeters[0][1] + heightInMeters[0][1] + heightInMeters[0][2]      ""\n"
-        "                );                                                                                                 ""\n"
-        "                slopeInMeters.x -= (                                                                               ""\n"
-        "                    heightInMeters[2][0] + heightInMeters[2][1] + heightInMeters[2][1] + heightInMeters[2][2]      ""\n"
-        "                );                                                                                                 ""\n"
-        "                                                                                                                   ""\n"
-        "                slopeInMeters.y = (                                                                                ""\n"
-        "                    heightInMeters[0][2] + heightInMeters[1][2] + heightInMeters[1][2] + heightInMeters[2][2]      ""\n"
-        "                );                                                                                                 ""\n"
-        "                slopeInMeters.y -= (                                                                               ""\n"
-        "                    heightInMeters[0][0] + heightInMeters[1][0] + heightInMeters[1][0] + heightInMeters[2][0]      ""\n"
-        "                );                                                                                                 ""\n"
-        "                                                                                                                   ""\n"
-        "                slopeAlgorithmScale = 8.0;                                                                         ""\n"
-        "            }                                                                                                      ""\n"
-        "            highp float slope_XX = slopeInMeters.x*slopeInMeters.x;                                                ""\n"
-        "            highp float slope_YY = slopeInMeters.y*slopeInMeters.y;                                                ""\n"
-        "            highp float slope_XXpYY = slope_XX + slope_YY;                                                         ""\n"
-        "                                                                                                                   ""\n"
-        "            float zFactor = param_vs_elevation_configuration.w;                                                    ""\n"
-        "            float zFactorN = zFactor / (slopeAlgorithmScale * heixelInMeters);                                     ""\n"
-        "            float zFactorNSq = zFactorN * zFactorN;                                                                ""\n"
-        "            float sunZenith = param_vs_elevation_hillshadeConfiguration.x;                                         ""\n"
-        "            float zNCosZenith = zFactorN * cos(sunZenith);                                                         ""\n"
-        "                                                                                                                   ""\n"
-        "            float colorMapKey_0 = param_vs_elevation_colorMapKeys[0].w;                                            ""\n"
-        "            float colorMapKey = colorMapKey_0 - 1.0;                                                               ""\n"
-        "            if (abs(visualizationStyle - %VisualizationStyle_SlopeDegrees%.0) < 0.00001)                           ""\n"
-        "            {                                                                                                      ""\n"
-        "                vec2 slopeN = slopeInMeters / (slopeAlgorithmScale * heixelInMeters);                              ""\n"
-        "                float slopeN_XXpYY = slopeN.x*slopeN.x + slopeN.y*slopeN.y;                                        ""\n"
-        "                colorMapKey = degrees(atan(zFactor * sqrt(slopeN_XXpYY)));                                         ""\n"
-        "                colorMapKey = max(colorMapKey, colorMapKey_0);                                                     ""\n"
-        "            }                                                                                                      ""\n"
-        "            else if (abs(visualizationStyle - %VisualizationStyle_SlopePercents%.0) < 0.00001)                     ""\n"
-        "            {                                                                                                      ""\n"
-        "                vec2 slopeN = slopeInMeters / (slopeAlgorithmScale * heixelInMeters);                              ""\n"
-        "                float slopeN_XXpYY = slopeN.x*slopeN.x + slopeN.y*slopeN.y;                                        ""\n"
-        "                colorMapKey = 100.0 * zFactor * sqrt(slopeN_XXpYY);                                                ""\n"
-        "                colorMapKey = max(colorMapKey, colorMapKey_0);                                                     ""\n"
-        "            }                                                                                                      ""\n"
-        "            else if (abs(visualizationStyle - %VisualizationStyle_HillshadeMultidirectional%.0) < 0.00001)         ""\n"
-        "            {                                                                                                      ""\n"
-        // NOTE: See http://pubs.usgs.gov/of/1992/of92-422/of92-422.pdf
-        "                float sinZenith = sin(sunZenith);                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "                if (slope_XXpYY < 0.00001)                                                                         ""\n"
-        "                {                                                                                                  ""\n"
-        "                    float value = 1.0 + 254.0 * sinZenith;                                                         ""\n"
-        "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
-        "                }                                                                                                  ""\n"
-        "                else                                                                                               ""\n"
-        "                {                                                                                                  ""\n"
-        "                    highp float weight_225 = 0.5 * slope_XXpYY - slopeInMeters.x * slopeInMeters.y;                ""\n"
-        "                    highp float weight_270 = slope_XX;                                                             ""\n"
-        "                    highp float weight_315 = slope_XXpYY - weight_225;                                             ""\n"
-        "                    highp float weight_360 = slope_YY;                                                             ""\n"
-        "                                                                                                                   ""\n"
-        "                    float value_225 = sinZenith - (slopeInMeters.x - slopeInMeters.y) * M_COS_225_D * zNCosZenith; ""\n"
-        "                    float value_270 = sinZenith - slopeInMeters.x * zNCosZenith;                                   ""\n"
-        "                    float value_315 = sinZenith + (slopeInMeters.x + slopeInMeters.y) * M_COS_225_D * zNCosZenith; ""\n"
-        "                    float value_360 = sinZenith - slopeInMeters.y * zNCosZenith;                                   ""\n"
-        "                                                                                                                   ""\n"
-        "                    float value = weight_225 * max(value_225, 0.0);                                                ""\n"
-        "                    value += weight_270 * max(value_270, 0.0);                                                     ""\n"
-        "                    value += weight_315 * max(value_315, 0.0);                                                     ""\n"
-        "                    value += weight_360 * max(value_360, 0.0);                                                     ""\n"
-        "                    value *= 127.0;                                                                                ""\n"
-        "                    value /= slope_XXpYY;                                                                          ""\n"
-        "                    value /= sqrt(1.0 + zFactorNSq * slope_XXpYY);                                                 ""\n"
-        "                    value = 1.0 + value;                                                                           ""\n"
-        "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
-        "                }                                                                                                  ""\n"
-        "            }                                                                                                      ""\n"
-        "            else                                                                                                   ""\n"
-        "            {                                                                                                      ""\n"
-        "                float sunAzimuth = M_PI - param_vs_elevation_hillshadeConfiguration.y;                             ""\n"
-        "                                                                                                                   ""\n"
-        "                float zNCosZenithCosAzimuth = zNCosZenith * cos(sunAzimuth);                                       ""\n"
-        "                float zNCosZenithSinAzimuth = zNCosZenith * sin(sunAzimuth);                                       ""\n"
-        "                                                                                                                   ""\n"
-        "                if (abs(visualizationStyle - %VisualizationStyle_HillshadeTraditional%.0) < 0.00001)               ""\n"
-        "                {                                                                                                  ""\n"
-        "                    float value = sin(sunZenith);                                                                  ""\n"
-        "                    value -= slopeInMeters.y*zNCosZenithCosAzimuth - slopeInMeters.x*zNCosZenithSinAzimuth;        ""\n"
-        "                    value = 254.0 * value / sqrt(1.0 + zFactorNSq * slope_XXpYY);                                  ""\n"
-        "                    value = 1.0 + max(value, 0.0);                                                                 ""\n"
-        "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
-        "                }                                                                                                  ""\n"
-        "                else if (abs(visualizationStyle - %VisualizationStyle_HillshadeIgor%.0) < 0.00001)                 ""\n"
-        "                {                                                                                                  ""\n"
-        "                    float slopeAngle = atan(sqrt(slope_XXpYY) * zFactorN);                                         ""\n"
-        "                    float aspect = atan(slopeInMeters.y, slopeInMeters.x);                                         ""\n"
-        "                    float slopeStrength = slopeAngle / M_PI_2;                                                     ""\n"
-        "                    float aspectN = mod(M_2PI + aspect, M_2PI);                                                    ""\n"
-        "                    float wAzimuthN = mod(M_2PI + mod(M_3PI_2 - sunAzimuth, M_2PI), M_2PI);                        ""\n"
-        "                    float aspectDiffWAzimuth = mod(abs(aspectN - wAzimuthN), M_PI);                                ""\n"
-        "                    float value = 255.0 * (1.0 - slopeStrength * (1.0 - aspectDiffWAzimuth / M_PI));               ""\n"
-        "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
-        "                }                                                                                                  ""\n"
-        "                else if (abs(visualizationStyle - %VisualizationStyle_HillshadeCombined%.0) < 0.00001)             ""\n"
-        "                {                                                                                                  ""\n"
-        // NOTE: First part produces same result as HillshadeTraditional except for mapping to 1..255 scale (oblique shading)
-        "                    float value = sin(sunZenith);                                                                  ""\n"
-        "                    value -= slopeInMeters.y*zNCosZenithCosAzimuth - slopeInMeters.x*zNCosZenithSinAzimuth;        ""\n"
-        "                    value /= sqrt(1.0 + zFactorNSq * slope_XXpYY);                                                 ""\n"
-        "                                                                                                                   ""\n"
-        // NOTE: Combine with slope shading
-        // NOTE: Implemented differently that in GDAL, see source that https://trac.osgeo.org/gdal/ticket/4753 references
-        "                    vec2 slopeN = slopeInMeters / (slopeAlgorithmScale * heixelInMeters);                          ""\n"
-        "                    float slopeN_XXpYY = slopeN.x*slopeN.x + slopeN.y*slopeN.y;                                    ""\n"
-        "                    value *= 1.0 - abs(atan(zFactor * sqrt(slopeN_XXpYY)) / M_PI);                                 ""\n"
-        "                                                                                                                   ""\n"
-        "                    value = 1.0 + 254.0 * max(value, 0.0);                                                         ""\n"
-        "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
-        "                }                                                                                                  ""\n"
-        "            }                                                                                                      ""\n"
-        "                                                                                                                   ""\n"
-        "            if (colorMapKey >= colorMapKey_0)                                                                      ""\n"
-        "            {                                                                                                      ""\n"
-        "                float colorMapEntryKeyA = colorMapKey_0;                                                           ""\n"
-        "                float colorMapEntryKeyB = colorMapKey;                                                             ""\n"
-        "                vec4 colorMapEntryValueA = vec4(0.0);                                                              ""\n"
-        "                vec4 colorMapEntryValueB = vec4(0.0);                                                              ""\n"
-        "                                                                                                                   ""\n"
-        "%UnrolledPerElevationColorMapEntryCode%                                                                            ""\n"
-        "                                                                                                                   ""\n"
-        "                float interpolation = (colorMapKey - colorMapEntryKeyA) / (colorMapEntryKeyB - colorMapEntryKeyA); ""\n"
-        "                v2f_elevationColor = mix(                                                                          ""\n"
-        "                    colorMapEntryValueA,                                                                           ""\n"
-        "                    colorMapEntryValueB,                                                                           ""\n"
-        "                    clamp(interpolation, 0.0, 1.0));                                                               ""\n"
-        "            }                                                                                                      ""\n"
-        "            v2f_elevationColor.a *= param_vs_elevation_configuration.z;                                            ""\n"
-        "        }                                                                                                          ""\n"
-        "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
-        "        v.y = heightInMeters[1][1] / v2f_metersPerUnit;                                                            ""\n"
-        "    }                                                                                                              ""\n"
-        "                                                                                                                   ""\n"
-        "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
-        //   Calculate mipmap LOD
-        "    vec2 groundVertex = v.xz;                                                                                      ""\n"
-        "    vec2 groundCameraToVertex = groundVertex - param_vs_groundCameraPosition;                                      ""\n"
-        "    float mipmapK = log(1.0 + 10.0 * log2(1.0 + param_vs_cameraElevationAngleN));                                  ""\n"
-        "    float mipmapBaseLevelEndDistance = mipmapK * param_vs_distanceFromCameraToTarget;                              ""\n"
-        "    v2f_mipmapLOD = 1.0 + (length(groundCameraToVertex) - mipmapBaseLevelEndDistance)                              ""\n"
-        "        / (param_vs_scaleToRetainProjectedSize * param_vs_tileSize);                                               ""\n"
-        "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "                                                                                                                   ""\n"
-        //   Finally output processed modified vertex
-        "    v2f_position = v;                                                                                              ""\n"
-        "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
-        "}                                                                                                                  ""\n");
-    const auto& vertexShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
-        "PARAM_OUTPUT vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                        ""\n");
-    const auto& vertexShader_perRasterLayerParamsDeclaration = QString::fromLatin1(
-        "uniform VsRasterLayerTile param_vs_rasterTileLayer_%rasterLayerIndex%;                                             ""\n");
-    const auto& vertexShader_perRasterLayerTexCoordsProcessing = QString::fromLatin1(
-        "    calculateTextureCoordinates(                                                                                   ""\n"
-        "        param_vs_rasterTileLayer_%rasterLayerIndex%,                                                               ""\n"
-        "        v2f_texCoordsPerLayer_%rasterLayerIndex%);                                                                 ""\n"
-        "                                                                                                                   ""\n");
-    const auto& vertexShader_perElevationColorMapEntryCode = QString::fromLatin1(
-        "                float colorMapKey_%entryIndex% = param_vs_elevation_colorMapKeys[%entryIndex%].w;                  ""\n"
-        "                if (colorMapKey_%entryIndex% > colorMapKey_%prevEntryIndex%)                                       ""\n"
-        "                {                                                                                                  ""\n"
-        "                    if (colorMapKey >= colorMapKey_%prevEntryIndex%)                                               ""\n"
-        "                    {                                                                                              ""\n"
-        "                        colorMapEntryKeyA = colorMapKey_%prevEntryIndex%;                                          ""\n"
-        "                        colorMapEntryValueA = param_vs_elevation_colorMapValues[%prevEntryIndex%];                 ""\n"
-        "                        colorMapEntryKeyB = colorMapKey_%entryIndex%;                                              ""\n"
-        "                        colorMapEntryValueB = param_vs_elevation_colorMapValues[%entryIndex%];                     ""\n"
-        "                    }                                                                                              ""\n"
-        "                }                                                                                                  ""\n"
-        "                                                                                                                   ""\n");
-
-    const auto& fragmentShader = QString::fromLatin1(
-        // Definitions
-        "#define ELEVATION_VISUALIZATION_ENABLED %ElevationVisualizationEnabled%                                            ""\n"
-        "                                                                                                                   ""\n"
-        // Input data
-        "%UnrolledPerRasterLayerTexCoordsDeclarationCode%                                                                   ""\n"
-        "PARAM_INPUT float v2f_metersPerUnit;                                                                               ""\n"
-        "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
-        "    PARAM_INPUT float v2f_mipmapLOD;                                                                               ""\n"
-        "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
-        "    PARAM_INPUT lowp vec4 v2f_elevationColor;                                                                      ""\n"
-        "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
-        "PARAM_INPUT vec4 v2f_position;                                                                                     ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform lowp float param_fs_lastBatch;                                                                             ""\n"
-        "uniform lowp float param_fs_blendingEnabled;                                                                       ""\n"
-        "uniform lowp vec4 param_fs_backgroundColor;                                                                        ""\n"
-        "uniform lowp vec4 param_fs_myLocationColor;                                                                        ""\n"
-        "uniform vec4 param_fs_myLocation;                                                                                  ""\n"
-        "uniform vec2 param_fs_myDirection;                                                                                  ""\n"
-        "uniform vec4 param_fs_worldCameraPosition;                                                                         ""\n"
-        "uniform vec4 param_fs_mistConfiguration;                                                                           ""\n"
-        "uniform vec4 param_fs_mistColor;                                                                                   ""\n"
-        // Parameters: per-layer data
-        "struct FsRasterLayerTile                                                                                           ""\n"
-        "{                                                                                                                  ""\n"
-        "    lowp float isPremultipliedAlpha;                                                                               ""\n"
-        "    lowp float opacityFactor;                                                                                      ""\n"
-        "    highp vec4 texCoordsOffsetAndScale;                                                                            ""\n"
-        "    highp vec4 transitionPhase;                                                                                    ""\n"
-        "    highp float texelSize;                                                                                         ""\n"
-        "    lowp sampler2D sampler;                                                                                        ""\n"
-        "};                                                                                                                 ""\n"
-        "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
-        "                                                                                                                   ""\n"
-        "void addExtraAlpha(inout lowp vec4 color, in lowp float alpha, in lowp float isPremultipliedAlpha)                 ""\n"
-        "{                                                                                                                  ""\n"
-        "    lowp float colorAlpha = 1.0 - isPremultipliedAlpha + isPremultipliedAlpha * alpha;                             ""\n"
-        "    color *= vec4(colorAlpha, colorAlpha, colorAlpha, alpha);                                                      ""\n"
-        "}                                                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "void mixColors(inout lowp vec4 destColor, in lowp vec4 srcColor)                                                   ""\n"
-        "{                                                                                                                  ""\n"
-        "    destColor = destColor * (1.0 - srcColor.a) + srcColor * vec4(srcColor.a, srcColor.a, srcColor.a, 1.0);         ""\n"
-        "}                                                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "void mixColors(inout lowp vec4 destColor, in lowp vec4 srcColor, in lowp float isPremultipliedAlpha)               ""\n"
-        "{                                                                                                                  ""\n"
-        "    lowp float srcColorMultiplier =                                                                                ""\n"
-        "        isPremultipliedAlpha + (1.0 - isPremultipliedAlpha) * srcColor.a;                                          ""\n"
-        "    destColor *= 1.0 - srcColor.a;                                                                                 ""\n"
-        "    destColor += srcColor * vec4(srcColorMultiplier, srcColorMultiplier,  srcColorMultiplier, 1.0);                ""\n"
-        "}                                                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "void fromTexture(in lowp sampler2D sampler, in vec2 coords, out lowp vec4 destColor)                               ""\n"
-        "{                                                                                                                  ""\n"
-        "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
-        "    destColor = SAMPLE_TEXTURE_2D_LOD(sampler, coords, v2f_mipmapLOD);                                             ""\n"
-        "#else // !TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "    destColor = SAMPLE_TEXTURE_2D(sampler, coords);                                                                ""\n"
-        "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "}                                                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "void getWind(in lowp sampler2D sampler, in vec2 coords, out vec2 windVector)                                       ""\n"
-        "{                                                                                                                  ""\n"
-        "    lowp vec4 windColor;                                                                                           ""\n"
-        "    fromTexture(sampler, coords, windColor);                                                                       ""\n"
-        "    vec2 result = (windColor.rb + windColor.ga * 255.0 - 8.0) * 10.0;                                              ""\n"
-        "    windVector = vec2(result.x, -result.y);                                                                        ""\n"
-        "}                                                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "float getRandPixel(in vec2 pixCoords, in vec2 tileSize, in float normSeed)                                         ""\n"
-        "{                                                                                                                  ""\n"
-        "    vec2 intCoords = floor(pixCoords);                                                                             ""\n"
-        "    float randValue = abs(fract(sin(dot(intCoords / tileSize + normSeed, vec2(12.9898, 78.233))) * 43758.5453));   ""\n"
-        "    return randValue > 0.98 ? 1.0 : 0.0;                                                                           ""\n"
-        "}                                                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "void getParticleColor(in vec2 pixCoords, in vec2 windVector, in vec2 tileSize, in float seed, out lowp vec4 color) ""\n"
-        "{                                                                                                                  ""\n"
-        "    float normSeed = seed * 0.001;                                                                                 ""\n"
-        "    float windMagnitude = length(windVector);                                                                      ""\n"
-        "    vec2 shift = windMagnitude >= 0.5 ? windVector / windMagnitude : vec2(0.0);                                    ""\n"
-        //   Rescale two times: to get out of tile data without overlap (- 0.1 / 0.8) and to access full texture (/ 0.5)
-        "    vec2 coords = (pixCoords - 0.05) * tileSize / 0.4;                                                             ""\n"
-        "    vec2 center = coords + shift;                                                                                  ""\n"
-        "    float nextPixel = 0.5 * getRandPixel(center, tileSize, normSeed);                                              ""\n"
-        "    float prevPixel = getRandPixel(coords - shift, tileSize, normSeed);                                            ""\n"
-        "    center = prevPixel > 0.0 ? coords - shift : center;                                                            ""\n"
-        "    float actPixel = 0.8 * getRandPixel(coords, tileSize, normSeed);                                               ""\n"
-        "    center = actPixel > 0.0 ? coords : center;                                                                     ""\n"
-        "    float alpha = max(max(actPixel, nextPixel), prevPixel);                                                        ""\n"
-        "    vec2 norm = vec2(shift.y, -shift.x);                                                                           ""\n"
-        "    alpha *= clamp(1.0 - 2.0 * abs(dot(norm, coords) - dot(norm, floor(center) + 0.5)), 0.0, 1.0);                 ""\n"
-        "    color = vec4(1.0, 1.0, 1.0, alpha);                                                                            ""\n"
-        "}                                                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "void getTextureColor(in vec4 texCoordsOffsetAndScale, in vec4 transitionPhase, in float texelSize,                 ""\n"
-        "        in sampler2D sampler, in vec2 texCoords, out lowp vec4 resultColor)                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    if (transitionPhase.x >= 0.0)                                                                                  ""\n"
-        "    {                                                                                                              ""\n"
-        //       Animate transition between textures
-        "        vec2 leftCoords = texCoords;                                                                               ""\n"
-        "        vec2 rightCoords;                                                                                          ""\n"
-        "        lowp vec4 windColor = vec4(0.0);                                                                           ""\n"
-        "        float halfTexelSize = texelSize / 2.0;                                                                     ""\n"
-        //       Scale two times: to get into tile data without overlap (* 0.8 + 0.1) and to access quadrants (* 0.5)
-        "        leftCoords = leftCoords * 0.4 + 0.05;                                                                      ""\n"
-        "        leftCoords.x = clamp(leftCoords.x, halfTexelSize, 0.5 - halfTexelSize);                                    ""\n"
-        "        leftCoords.y = clamp(leftCoords.y, halfTexelSize, 0.5 - halfTexelSize);                                    ""\n"
-        "        rightCoords = leftCoords + 0.5;                                                                            ""\n"
-        "        vec2 rightWind;                                                                                            ""\n"
-        "        getWind(sampler, rightCoords, rightWind);                                                                  ""\n"
-        //       Scale two times (* 0.8 and * 0.5) and then divide to TileSize3D (/ 100)
-        "        float factor = transitionPhase.y / (v2f_metersPerUnit * 250.0);                                            ""\n"
-        "        vec2 texShift = rightWind * texCoordsOffsetAndScale.zw * factor;                                           ""\n"
-        "        if (transitionPhase.z >= 0.0)                                                                              ""\n"
-        "        {                                                                                                          ""\n"
-        //           Animate wind particles
-        "            float seed = floor(transitionPhase.z) / 10.0;                                                          ""\n"
-        "            float shift = floor(texCoordsOffsetAndScale.y * 10.0) / 100.0;                                         ""\n"
-        "            shift += floor(texCoordsOffsetAndScale.x * 10.0) / 1000.0;                                             ""\n"
-        "            float phase = fract(transitionPhase.z);                                                                ""\n"
-        "            vec2 tileSize = transitionPhase.w / texCoordsOffsetAndScale.zw;                                        ""\n"
-        "            rightCoords.x -= 0.5;                                                                                  ""\n"
-        "            vec2 leftWind;                                                                                         ""\n"
-        "            getWind(sampler, rightCoords, leftWind);                                                               ""\n"
-        "            vec2 windVector = mix(leftWind, rightWind, transitionPhase.x);                                         ""\n"
-        "            vec2 windShift = windVector * texCoordsOffsetAndScale.zw * factor;                                     ""\n"
-        "            vec2 leftShift = windShift * phase;                                                                    ""\n"
-        "            vec2 rightShift = windShift * (1.0 - phase);                                                           ""\n"
-        "            lowp vec4 tmpColor;                                                                                    ""\n"
-        "            lowp vec4 leftColor;                                                                                   ""\n"
-        "            lowp vec4 rightColor;                                                                                  ""\n"
-        "            getParticleColor(leftCoords - leftShift, windVector, tileSize, fract(seed) + shift, leftColor);        ""\n"
-        "            getParticleColor(leftCoords - leftShift, windVector, tileSize, fract(seed + 0.1) + shift, tmpColor);   ""\n"
-        "            leftColor = mix(tmpColor, leftColor, clamp(phase + 0.5, 0.0, 1.0));                                    ""\n"
-        "            getParticleColor(leftCoords + rightShift, windVector, tileSize, fract(seed + 0.1) + shift, rightColor);""\n"
-        "            getParticleColor(leftCoords + rightShift, windVector, tileSize, fract(seed + 0.2) + shift, tmpColor);  ""\n"
-        "            rightColor = mix(rightColor, tmpColor, clamp(phase - 0.5, 0.0, 1.0));                                  ""\n"
-        "            windColor = mix(leftColor, rightColor, phase);                                                         ""\n"
-        "        }                                                                                                          ""\n"
-        "        rightCoords = leftCoords;                                                                                  ""\n"
-        "        rightCoords.x += 0.5;                                                                                      ""\n"
-        "        leftCoords -= texShift * transitionPhase.x;                                                                ""\n"
-        "        leftCoords.x = clamp(leftCoords.x, halfTexelSize, 0.5 - halfTexelSize);                                    ""\n"
-        "        leftCoords.y = clamp(leftCoords.y, halfTexelSize, 0.5 - halfTexelSize);                                    ""\n"
-        "        rightCoords += texShift * (1.0 - transitionPhase.x);                                                       ""\n"
-        "        rightCoords.x = clamp(rightCoords.x, 0.5 + halfTexelSize, 1.0 - halfTexelSize);                            ""\n"
-        "        rightCoords.y = clamp(rightCoords.y, halfTexelSize, 0.5 - halfTexelSize);                                  ""\n"
-        "        lowp vec4 texColorLeft;                                                                                    ""\n"
-        "        lowp vec4 texColorRight;                                                                                   ""\n"
-        "        fromTexture(sampler, leftCoords, texColorLeft);                                                            ""\n"
-        "        fromTexture(sampler, rightCoords, texColorRight);                                                          ""\n"
-        "        lowp vec4 texColor = mix(texColorLeft, texColorRight, clamp(transitionPhase.x, 0.0, 1.0));                 ""\n"
-        "        resultColor = vec4(mix(texColor.rgb, windColor.rgb, windColor.a), texColor.a);                             ""\n"
-        "    }                                                                                                              ""\n"
-        "    else                                                                                                           ""\n"
-        "    {                                                                                                              ""\n"
-        "        fromTexture(sampler, texCoords, resultColor);                                                              ""\n"
-        "    }                                                                                                              ""\n"
-        "}                                                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    lowp vec4 finalColor;                                                                                          ""\n"
-        "                                                                                                                   ""\n"
-        //   Calculate color of accuracy circle
-        "    lowp vec4 circle = param_fs_myLocationColor;                                                                   ""\n"
-        "    vec2 vMyToPos = v2f_position.xz - param_fs_myLocation.xy;                                                      ""\n"
-        "    float dist = length(vMyToPos);                                                                                 ""\n"
-        "    circle.a = dist > param_fs_myLocation.z ? 0.0 : circle.a * (dist + 0.05 > param_fs_myLocation.z ? 2.0 : 1.0);  ""\n"
-        "                                                                                                                   ""\n"
-        //   Calculate color of heading sector
-        "    lowp vec4 sector = param_fs_myLocationColor;                                                                   ""\n"
-        "    float fdir = dot(vec2(sin(param_fs_myDirection.x), -cos(param_fs_myDirection.x)), vMyToPos / dist);            ""\n"
-        "    sector.a = dist >= param_fs_myDirection.y ? 0.0 : (fdir < 0.7071 ? 0.0 : 1.0 - dist / param_fs_myDirection.y); ""\n"
-        "                                                                                                                   ""\n"
-        //   Calculate mist color
-        "    lowp vec4 mistColor = param_fs_mistColor;                                                                      ""\n"
-        "    vec4 infrontPosition = v2f_position;                                                                           ""\n"
-        "    infrontPosition.xz = v2f_position.xz * param_fs_mistConfiguration.xy;                                          ""\n"
-        "    infrontPosition.xz = v2f_position.xz - (infrontPosition.x + infrontPosition.z) * param_fs_mistConfiguration.xy;""\n"
-        "    float toFog = param_fs_mistConfiguration.z - distance(infrontPosition, param_fs_worldCameraPosition);          ""\n"
-        "    float expScale = (3.0 - param_fs_mistColor.w ) / param_fs_mistConfiguration.w;                                 ""\n"
-        "    float expOffset = 2.354 - param_fs_mistColor.w * 0.5;                                                          ""\n"
-        "    mistColor.a = clamp(1.0 - 1.0 / exp(pow(max(0.0, expOffset - toFog * expScale), 2.0)), 0.0, 1.0);              ""\n"
-        "                                                                                                                   ""\n"
-        //   Mix colors of all layers.
-        //   First layer is processed unconditionally, as well as its color is converted to premultiplied alpha.
-        "    getTextureColor(param_fs_rasterTileLayer_0.texCoordsOffsetAndScale, param_fs_rasterTileLayer_0.transitionPhase,""\n"
-        "        param_fs_rasterTileLayer_0.texelSize, param_fs_rasterTileLayer_0.sampler,                                  ""\n"
-        "        v2f_texCoordsPerLayer_0, finalColor);                                                                      ""\n"
-        "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacityFactor,                                            ""\n"
-        "        param_fs_rasterTileLayer_0.isPremultipliedAlpha);                                                          ""\n"
-        "    lowp float firstLayerColorFactor = param_fs_rasterTileLayer_0.isPremultipliedAlpha +                           ""\n"
-        "        (1.0 - param_fs_rasterTileLayer_0.isPremultipliedAlpha) * finalColor.a;                                    ""\n"
-        "    finalColor *= vec4(firstLayerColorFactor, firstLayerColorFactor, firstLayerColorFactor, 1.0);                  ""\n"
-        "                                                                                                                   ""\n"
-        "%UnrolledPerRasterLayerProcessingCode%                                                                             ""\n"
-        "                                                                                                                   ""\n"
-        "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
-        "    mixColors(finalColor, v2f_elevationColor * param_fs_lastBatch);                                                ""\n"
-        "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
-        "                                                                                                                   ""\n"
-#if 0
-        //   NOTE: Useful for debugging mipmap levels
-        "    {                                                                                                              ""\n"
-        "        vec4 mipmapDebugColor;                                                                                     ""\n"
-        "        mipmapDebugColor.a = 1.0;                                                                                  ""\n"
-        "        float value = v2f_mipmapLOD;                                                                               ""\n"
-        //"        float value = textureQueryLod(param_vs_rasterTileLayer[0].sampler, v2f_texCoordsPerLayer[0]).x;          ""\n"
-        "        mipmapDebugColor.r = clamp(value, 0.0, 1.0);                                                               ""\n"
-        "        value -= 1.0;                                                                                              ""\n"
-        "        mipmapDebugColor.g = clamp(value, 0.0, 1.0);                                                               ""\n"
-        "        value -= 1.0;                                                                                              ""\n"
-        "        mipmapDebugColor.b = clamp(value, 0.0, 1.0);                                                               ""\n"
-        "        finalColor = mix(finalColor, mipmapDebugColor, 0.5);                                                       ""\n"
-        "    }                                                                                                              ""\n"
-#endif
-        "                                                                                                                   ""\n"
-        "    mixColors(finalColor, circle * param_fs_lastBatch);                                                            ""\n"
-        "    mixColors(finalColor, sector * param_fs_lastBatch);                                                            ""\n"
-        "    mixColors(finalColor, mistColor * param_fs_lastBatch);                                                         ""\n"
-        "    lowp vec4 overColor = mix(param_fs_backgroundColor, finalColor, finalColor.a);                                 ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = mix(overColor, finalColor, param_fs_blendingEnabled);                                  ""\n"
-        "}                                                                                                                  ""\n");
-    const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
-        "    {                                                                                                              ""\n"
-        "        lowp vec4 tc;                                                                                              ""\n"
-        "        getTextureColor(param_fs_rasterTileLayer_%rasterLayerIndex%.texCoordsOffsetAndScale,                       ""\n"
-        "            param_fs_rasterTileLayer_%rasterLayerIndex%.transitionPhase,                                           ""\n"
-        "            param_fs_rasterTileLayer_%rasterLayerIndex%.texelSize,                                                 ""\n"
-        "            param_fs_rasterTileLayer_%rasterLayerIndex%.sampler, v2f_texCoordsPerLayer_%rasterLayerIndex%, tc);    ""\n"
-        "        addExtraAlpha(tc, param_fs_rasterTileLayer_%rasterLayerIndex%.opacityFactor,                               ""\n"
-        "            param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);                                     ""\n"
-        "        mixColors(finalColor, tc, param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);               ""\n"
-        "    }                                                                                                              ""\n");
-    const auto& fragmentShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
-        "PARAM_INPUT vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                         ""\n");
-    const auto& fragmentShader_perRasterLayerParamsDeclaration = QString::fromLatin1(
-        "uniform FsRasterLayerTile param_fs_rasterTileLayer_%rasterLayerIndex%;                                             ""\n");
-
-    // Compile vertex shader
-    auto preprocessedVertexShader = vertexShader;
-    QString preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsProcessingCode;
-    QString preprocessedVertexShader_UnrolledPerRasterLayerParamsDeclarationCode;
-    QString preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsDeclarationCode;
-    for (auto layerIndex = 0u; layerIndex < numberOfLayersInBatch; layerIndex++)
-    {
-        preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsProcessingCode +=
-            detachedOf(vertexShader_perRasterLayerTexCoordsProcessing)
-            .replace("%rasterLayerIndex%", QString::number(layerIndex));
-
-        preprocessedVertexShader_UnrolledPerRasterLayerParamsDeclarationCode +=
-            detachedOf(vertexShader_perRasterLayerParamsDeclaration)
-            .replace("%rasterLayerIndex%", QString::number(layerIndex));
-
-        preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsDeclarationCode +=
-            detachedOf(vertexShader_perRasterLayerTexCoordsDeclaration)
-            .replace("%rasterLayerIndex%", QString::number(layerIndex));
-    }
-    preprocessedVertexShader.replace("%UnrolledPerRasterLayerTexCoordsProcessingCode%",
-        preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsProcessingCode);
-    preprocessedVertexShader.replace("%UnrolledPerRasterLayerParamsDeclarationCode%",
-        preprocessedVertexShader_UnrolledPerRasterLayerParamsDeclarationCode);
-    preprocessedVertexShader.replace("%UnrolledPerRasterLayerTexCoordsDeclarationCode%",
-        preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsDeclarationCode);
-    QString preprocessedVertexShader_UnrolledPerElevationColorMapEntryCode;
-    for (auto colorMapEntryIndex = 1u; colorMapEntryIndex < ElevationConfiguration::MaxColorMapEntries; colorMapEntryIndex++)
-    {
-        preprocessedVertexShader_UnrolledPerElevationColorMapEntryCode +=
-            detachedOf(vertexShader_perElevationColorMapEntryCode)
-            .replace("%entryIndex%", QString::number(colorMapEntryIndex))
-            .replace("%prevEntryIndex%", QString::number(colorMapEntryIndex - 1));
-    }
-    preprocessedVertexShader.replace("%UnrolledPerElevationColorMapEntryCode%",
-        preprocessedVertexShader_UnrolledPerElevationColorMapEntryCode);
-    preprocessedVertexShader.replace("%HeixelsPerTileSide%",
-        QString::number(AtlasMapRenderer::HeixelsPerTileSide - 1));
-    preprocessedVertexShader.replace("%MaxElevationColorMapEntriesCount%",
-        QString::number(ElevationConfiguration::MaxColorMapEntries));
-    preprocessedVertexShader.replace("%SlopeAlgorithm_None%",
-        QString::number(static_cast<int>(ElevationConfiguration::SlopeAlgorithm::None)));
-    preprocessedVertexShader.replace("%SlopeAlgorithm_ZevenbergenThorne%",
-        QString::number(static_cast<int>(ElevationConfiguration::SlopeAlgorithm::ZevenbergenThorne)));
-    preprocessedVertexShader.replace("%SlopeAlgorithm_Horn%",
-        QString::number(static_cast<int>(ElevationConfiguration::SlopeAlgorithm::Horn)));
-    preprocessedVertexShader.replace("%VisualizationStyle_None%",
-        QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::None)));
-    preprocessedVertexShader.replace("%VisualizationStyle_SlopeDegrees%",
-        QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::SlopeDegrees)));
-    preprocessedVertexShader.replace("%VisualizationStyle_SlopePercents%",
-        QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::SlopePercents)));
-    preprocessedVertexShader.replace("%VisualizationStyle_HillshadeTraditional%",
-        QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeTraditional)));
-    preprocessedVertexShader.replace("%VisualizationStyle_HillshadeIgor%",
-        QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeIgor)));
-    preprocessedVertexShader.replace("%VisualizationStyle_HillshadeCombined%",
-        QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeCombined)));
-    preprocessedVertexShader.replace("%VisualizationStyle_HillshadeMultidirectional%",
-        QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeMultidirectional)));
-    preprocessedVertexShader.replace("%ElevationVisualizationEnabled%",
-        QString::number(setupOptions.elevationVisualizationEnabled ? 1 : 0));
-    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    if (vsId == 0)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererMapLayersStage_OpenGL vertex shader for %d raster map layers",
-            numberOfLayersInBatch);
-        return false;
-    }
-
-    // Compile fragment shader
-    auto preprocessedFragmentShader = fragmentShader;
-    QString preprocessedFragmentShader_UnrolledPerRasterLayerTexCoordsDeclarationCode;
-    QString preprocessedFragmentShader_UnrolledPerRasterLayerParamsDeclarationCode;
-    QString preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode;
-    for (auto layerIndex = 0u; layerIndex < numberOfLayersInBatch; layerIndex++)
-    {
-        preprocessedFragmentShader_UnrolledPerRasterLayerTexCoordsDeclarationCode +=
-            detachedOf(fragmentShader_perRasterLayerTexCoordsDeclaration)
-            .replace("%rasterLayerIndex%", QString::number(layerIndex));
-
-        preprocessedFragmentShader_UnrolledPerRasterLayerParamsDeclarationCode +=
-            detachedOf(fragmentShader_perRasterLayerParamsDeclaration)
-            .replace("%rasterLayerIndex%", QString::number(layerIndex));
-
-        if (layerIndex > 0)
-        {
-            preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode +=
-                detachedOf(fragmentShader_perRasterLayer).replace("%rasterLayerIndex%", QString::number(layerIndex));
-        }
-    }
-    preprocessedFragmentShader.replace(
-        "%UnrolledPerRasterLayerTexCoordsDeclarationCode%",
-        preprocessedFragmentShader_UnrolledPerRasterLayerTexCoordsDeclarationCode);
-    preprocessedFragmentShader.replace(
-        "%UnrolledPerRasterLayerParamsDeclarationCode%",
-        preprocessedFragmentShader_UnrolledPerRasterLayerParamsDeclarationCode);
-    preprocessedFragmentShader.replace(
-        "%UnrolledPerRasterLayerProcessingCode%",
-        preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode);
-    preprocessedFragmentShader.replace("%ElevationVisualizationEnabled%",
-        QString::number(setupOptions.elevationVisualizationEnabled ? 1 : 0));
-    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    if (fsId == 0)
-    {
-        glDeleteShader(vsId);
-        GL_CHECK_RESULT;
-
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererMapLayersStage_OpenGL fragment shader for %d raster map layers",
-            numberOfLayersInBatch);
-        return false;
-    }
-
-    // Link everything into program object
-    GLuint shaders[] = { vsId, fsId };
     auto variableLocations = QList< std::tuple<GlslVariableType, QString, GLint> >({
         { GlslVariableType::In, QStringLiteral("in_vs_vertexPosition"), 0 },
         { GlslVariableType::In, QStringLiteral("in_vs_vertexTexCoords"), 1 },
     });
     QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
-    outRasterLayerTileProgram.id = getGPUAPI()->linkProgram(2, shaders, variableLocations, true, &variablesMap);
+    outRasterLayerTileProgram.id = 0;
+    if (!outRasterLayerTileProgram.binaryCache.isEmpty())
+    {
+        outRasterLayerTileProgram.id = getGPUAPI()->linkProgram(0, nullptr, variableLocations,
+            outRasterLayerTileProgram.binaryCache, outRasterLayerTileProgram.cacheFormat, true, &variablesMap);
+    }
+    if (!outRasterLayerTileProgram.id.isValid())
+    {
+        const auto& vertexShader = QString::fromLatin1(
+            // Definitions
+            "#define ELEVATION_VISUALIZATION_ENABLED %ElevationVisualizationEnabled%                                            ""\n"
+            "                                                                                                                   ""\n"
+            // Input data
+            "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+            "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            // Output data to next shader stages
+            "%UnrolledPerRasterLayerTexCoordsDeclarationCode%                                                                   ""\n"
+            "PARAM_OUTPUT float v2f_metersPerUnit;                                                                              ""\n"
+            "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
+            "    PARAM_OUTPUT float v2f_mipmapLOD;                                                                              ""\n"
+            "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
+            "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+            "    PARAM_OUTPUT lowp vec4 v2f_elevationColor;                                                                     ""\n"
+            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+            "PARAM_OUTPUT vec4 v2f_position;                                                                                    ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
+            "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
+            "uniform vec2 param_vs_targetInTilePosN;                                                                            ""\n"
+            "uniform float param_vs_tileSize;                                                                                   ""\n"
+            "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
+            "    uniform float param_vs_distanceFromCameraToTarget;                                                             ""\n"
+            "    uniform float param_vs_cameraElevationAngleN;                                                                  ""\n"
+            "    uniform vec2 param_vs_groundCameraPosition;                                                                    ""\n"
+            "    uniform float param_vs_scaleToRetainProjectedSize;                                                             ""\n"
+            "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
+            "uniform vec4 param_vs_elevation_configuration;                                                                     ""\n"
+            "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+            "    uniform vec4 param_vs_elevation_hillshadeConfiguration;                                                        ""\n"
+            "    uniform vec4 param_vs_elevation_colorMapKeys[%MaxElevationColorMapEntriesCount%];                              ""\n"
+            "    uniform vec4 param_vs_elevation_colorMapValues[%MaxElevationColorMapEntriesCount%];                            ""\n"
+            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: per-tile data
+            "uniform vec2 param_vs_tileCoordsOffset;                                                                            ""\n"
+            "uniform vec4 param_vs_elevation_scale;                                                                             ""\n"
+            "uniform highp sampler2D param_vs_elevation_dataSampler;                                                            ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: per-layer-in-tile data
+            "struct VsRasterLayerTile                                                                                           ""\n"
+            "{                                                                                                                  ""\n"
+            "    highp vec4 texCoordsOffsetAndScale;                                                                            ""\n"
+            "};                                                                                                                 ""\n"
+            "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
+            "uniform VsRasterLayerTile param_vs_elevationLayer;                                                                 ""\n"
+            "uniform highp vec4 param_vs_elevationLayerTexelSize;                                                               ""\n"
+            "uniform highp vec4 param_vs_elevationLayerDataPlace;                                                               ""\n"
+            "                                                                                                                   ""\n"
+            "float interpolatedHeight(in vec2 inTexCoords)                                                                      ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec2 heixelSize = param_vs_elevationLayerDataPlace.zw * 2.0;                                                   ""\n"
+            "    vec2 texCoords = (inTexCoords - param_vs_elevationLayerDataPlace.zw) / heixelSize;                             ""\n"
+            "    vec2 pixOffset = fract(texCoords);                                                                             ""\n"
+            "    texCoords = floor(texCoords) * heixelSize + param_vs_elevationLayerDataPlace.zw;                               ""\n"
+            "    vec2 minCoords = param_vs_elevationLayerDataPlace.xy - heixelSize;                                             ""\n"
+            "    vec2 maxCoords = minCoords + heixelSize * (%HeixelsPerTileSide%.0 + 2.0);                                      ""\n"
+            "    float blHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
+            "    texCoords.x += heixelSize.x;                                                                                   ""\n"
+            "    float brHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
+            "    texCoords.y += heixelSize.y;                                                                                   ""\n"
+            "    float trHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
+            "    texCoords.x -= heixelSize.x;                                                                                   ""\n"
+            "    float tlHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
+            "    float avbPixel = mix(blHeixel, brHeixel, pixOffset.x);                                                         ""\n"
+            "    float avtPixel = mix(tlHeixel, trHeixel, pixOffset.x);                                                         ""\n"
+            "    return mix(avbPixel, avtPixel, pixOffset.y);                                                                   ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void calculateTextureCoordinates(in VsRasterLayerTile tileLayer, out vec2 outTexCoords)                            ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec2 texCoords = in_vs_vertexTexCoords;                                                                        ""\n"
+            "    texCoords = texCoords * tileLayer.texCoordsOffsetAndScale.zw + tileLayer.texCoordsOffsetAndScale.xy;           ""\n"
+            "    outTexCoords = texCoords;                                                                                      ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec4 v = vec4(in_vs_vertexPosition.x, 0.0, in_vs_vertexPosition.y, 1.0);                                       ""\n"
+            "                                                                                                                   ""\n"
+            //   Scale and shift vertex to it's proper position
+            "    v.xz *= param_vs_tileSize;                                                                                     ""\n"
+            "    v.xz += param_vs_tileSize * (param_vs_tileCoordsOffset - param_vs_targetInTilePosN);                           ""\n"
+            "                                                                                                                   ""\n"
+            //   Get meters per unit, which is needed at both shader stages
+            "    v2f_metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, in_vs_vertexTexCoords.t);      ""\n"
+            "                                                                                                                   ""\n"
+            //   Process each tile layer texture coordinates (except elevation)
+            "%UnrolledPerRasterLayerTexCoordsProcessingCode%                                                                    ""\n"
+            "                                                                                                                   ""\n"
+            //   If elevation data is active, use it
+            "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+            "    v2f_elevationColor = vec4(0.0, 0.0, 0.0, 0.0);                                                                 ""\n"
+            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+            "    if (abs(param_vs_elevation_scale.w) > 0.0)                                                                     ""\n"
+            "    {                                                                                                              ""\n"
+            "        float slopeAlgorithm = param_vs_elevation_configuration.x;                                                 ""\n"
+            "                                                                                                                   ""\n"
+            // [0][0] - TL (0); [1][0] - T (1); [2][0] - TR (2)
+            // [0][1] -  L (3); [1][1] - O (4); [2][1] -  R (5)
+            // [0][2] - BL (6); [1][2] - B (7); [2][2] - BR (8)
+            "        mat3 heightInMeters = mat3(0.0);                                                                           ""\n"
+            "        vec2 elevationTexCoordsO;                                                                                  ""\n"
+            "        calculateTextureCoordinates(                                                                               ""\n"
+            "            param_vs_elevationLayer,                                                                               ""\n"
+            "            elevationTexCoordsO);                                                                                  ""\n"
+            "        heightInMeters[1][1] = interpolatedHeight(elevationTexCoordsO);                                            ""\n"
+            "                                                                                                                   ""\n"
+            "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+            "        if (slopeAlgorithm > %SlopeAlgorithm_None%.0)                                                              ""\n"
+            "        {                                                                                                          ""\n"
+            "            vec2 elevationTexCoordsT = elevationTexCoordsO;                                                        ""\n"
+            "            elevationTexCoordsT.t -= param_vs_elevationLayerTexelSize.y;                                           ""\n"
+            "            heightInMeters[1][0] = interpolatedHeight(elevationTexCoordsT);                                        ""\n"
+            "                                                                                                                   ""\n"
+            "            vec2 elevationTexCoordsL = elevationTexCoordsO;                                                        ""\n"
+            "            elevationTexCoordsL.s -= param_vs_elevationLayerTexelSize.x;                                           ""\n"
+            "            heightInMeters[0][1] = interpolatedHeight(elevationTexCoordsL);                                        ""\n"
+            "                                                                                                                   ""\n"
+            "            vec2 elevationTexCoordsB = elevationTexCoordsO;                                                        ""\n"
+            "            elevationTexCoordsB.t += param_vs_elevationLayerTexelSize.y;                                           ""\n"
+            "            heightInMeters[1][2] = interpolatedHeight(elevationTexCoordsB);                                        ""\n"
+            "                                                                                                                   ""\n"
+            "            vec2 elevationTexCoordsR = elevationTexCoordsO;                                                        ""\n"
+            "            elevationTexCoordsR.s += param_vs_elevationLayerTexelSize.x;                                           ""\n"
+            "            heightInMeters[2][1] = interpolatedHeight(elevationTexCoordsR);                                        ""\n"
+            "                                                                                                                   ""\n"
+            "            if (slopeAlgorithm > %SlopeAlgorithm_ZevenbergenThorne%.0)                                             ""\n"
+            "            {                                                                                                      ""\n"
+            "                vec2 elevationTexCoordsTL = elevationTexCoordsO;                                                   ""\n"
+            "                elevationTexCoordsTL.s -= param_vs_elevationLayerTexelSize.x;                                      ""\n"
+            "                elevationTexCoordsTL.t -= param_vs_elevationLayerTexelSize.y;                                      ""\n"
+            "                heightInMeters[0][0] = interpolatedHeight(elevationTexCoordsTL);                                   ""\n"
+            "                                                                                                                   ""\n"
+            "                vec2 elevationTexCoordsTR = elevationTexCoordsO;                                                   ""\n"
+            "                elevationTexCoordsTR.s += param_vs_elevationLayerTexelSize.x;                                      ""\n"
+            "                elevationTexCoordsTR.t -= param_vs_elevationLayerTexelSize.y;                                      ""\n"
+            "                heightInMeters[2][0] = interpolatedHeight(elevationTexCoordsTR);                                   ""\n"
+            "                                                                                                                   ""\n"
+            "                vec2 elevationTexCoordsBL = elevationTexCoordsO;                                                   ""\n"
+            "                elevationTexCoordsBL.s -= param_vs_elevationLayerTexelSize.x;                                      ""\n"
+            "                elevationTexCoordsBL.t += param_vs_elevationLayerTexelSize.y;                                      ""\n"
+            "                heightInMeters[0][2] = interpolatedHeight(elevationTexCoordsBL);                                   ""\n"
+            "                                                                                                                   ""\n"
+            "                vec2 elevationTexCoordsBR = elevationTexCoordsO;                                                   ""\n"
+            "                elevationTexCoordsBR.s += param_vs_elevationLayerTexelSize.x;                                      ""\n"
+            "                elevationTexCoordsBR.t += param_vs_elevationLayerTexelSize.y;                                      ""\n"
+            "                heightInMeters[2][2] = interpolatedHeight(elevationTexCoordsBR);                                   ""\n"
+            "            }                                                                                                      ""\n"
+            "        }                                                                                                          ""\n"
+            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+            "        heightInMeters *= param_vs_elevation_scale.w * param_vs_elevation_scale.z;                                 ""\n"
+            "                                                                                                                   ""\n"
+            "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+            "        float visualizationStyle = param_vs_elevation_configuration.y;                                             ""\n"
+            "        if (visualizationStyle > %VisualizationStyle_None%.0)                                                      ""\n"
+            "        {                                                                                                          ""\n"
+            "            const float M_PI = 3.1415926535897932384626433832795;                                                  ""\n"
+            "            const float M_PI_2 = M_PI / 2.0;                                                                       ""\n"
+            "            const float M_2PI = 2.0 * M_PI;                                                                        ""\n"
+            "            const float M_3PI_2 = 3.0 * M_PI_2;                                                                    ""\n"
+            "            const float M_COS_225_D = -0.70710678118;                                                              ""\n"
+            "                                                                                                                   ""\n"
+            "            float heixelInMeters = v2f_metersPerUnit * (param_vs_tileSize / %HeixelsPerTileSide%.0);               ""\n"
+            "                                                                                                                   ""\n"
+            "            vec2 slopeInMeters = vec2(0.0);                                                                        ""\n"
+            "            float slopeAlgorithmScale = 1.0;                                                                       ""\n"
+            "            if (abs(slopeAlgorithm - %SlopeAlgorithm_ZevenbergenThorne%.0) < 0.00001)                              ""\n"
+            "            {                                                                                                      ""\n"
+            "                slopeInMeters.x = heightInMeters[0][1] - heightInMeters[2][1];                                     ""\n"
+            "                slopeInMeters.y = heightInMeters[1][2] - heightInMeters[1][0];                                     ""\n"
+            "                                                                                                                   ""\n"
+            "                slopeAlgorithmScale = 2.0;                                                                         ""\n"
+            "            }                                                                                                      ""\n"
+            "            else if (abs(slopeAlgorithm - %SlopeAlgorithm_Horn%.0) < 0.00001)                                      ""\n"
+            "            {                                                                                                      ""\n"
+            "                slopeInMeters.x = (                                                                                ""\n"
+            "                    heightInMeters[0][0] + heightInMeters[0][1] + heightInMeters[0][1] + heightInMeters[0][2]      ""\n"
+            "                );                                                                                                 ""\n"
+            "                slopeInMeters.x -= (                                                                               ""\n"
+            "                    heightInMeters[2][0] + heightInMeters[2][1] + heightInMeters[2][1] + heightInMeters[2][2]      ""\n"
+            "                );                                                                                                 ""\n"
+            "                                                                                                                   ""\n"
+            "                slopeInMeters.y = (                                                                                ""\n"
+            "                    heightInMeters[0][2] + heightInMeters[1][2] + heightInMeters[1][2] + heightInMeters[2][2]      ""\n"
+            "                );                                                                                                 ""\n"
+            "                slopeInMeters.y -= (                                                                               ""\n"
+            "                    heightInMeters[0][0] + heightInMeters[1][0] + heightInMeters[1][0] + heightInMeters[2][0]      ""\n"
+            "                );                                                                                                 ""\n"
+            "                                                                                                                   ""\n"
+            "                slopeAlgorithmScale = 8.0;                                                                         ""\n"
+            "            }                                                                                                      ""\n"
+            "            highp float slope_XX = slopeInMeters.x*slopeInMeters.x;                                                ""\n"
+            "            highp float slope_YY = slopeInMeters.y*slopeInMeters.y;                                                ""\n"
+            "            highp float slope_XXpYY = slope_XX + slope_YY;                                                         ""\n"
+            "                                                                                                                   ""\n"
+            "            float zFactor = param_vs_elevation_configuration.w;                                                    ""\n"
+            "            float zFactorN = zFactor / (slopeAlgorithmScale * heixelInMeters);                                     ""\n"
+            "            float zFactorNSq = zFactorN * zFactorN;                                                                ""\n"
+            "            float sunZenith = param_vs_elevation_hillshadeConfiguration.x;                                         ""\n"
+            "            float zNCosZenith = zFactorN * cos(sunZenith);                                                         ""\n"
+            "                                                                                                                   ""\n"
+            "            float colorMapKey_0 = param_vs_elevation_colorMapKeys[0].w;                                            ""\n"
+            "            float colorMapKey = colorMapKey_0 - 1.0;                                                               ""\n"
+            "            if (abs(visualizationStyle - %VisualizationStyle_SlopeDegrees%.0) < 0.00001)                           ""\n"
+            "            {                                                                                                      ""\n"
+            "                vec2 slopeN = slopeInMeters / (slopeAlgorithmScale * heixelInMeters);                              ""\n"
+            "                float slopeN_XXpYY = slopeN.x*slopeN.x + slopeN.y*slopeN.y;                                        ""\n"
+            "                colorMapKey = degrees(atan(zFactor * sqrt(slopeN_XXpYY)));                                         ""\n"
+            "                colorMapKey = max(colorMapKey, colorMapKey_0);                                                     ""\n"
+            "            }                                                                                                      ""\n"
+            "            else if (abs(visualizationStyle - %VisualizationStyle_SlopePercents%.0) < 0.00001)                     ""\n"
+            "            {                                                                                                      ""\n"
+            "                vec2 slopeN = slopeInMeters / (slopeAlgorithmScale * heixelInMeters);                              ""\n"
+            "                float slopeN_XXpYY = slopeN.x*slopeN.x + slopeN.y*slopeN.y;                                        ""\n"
+            "                colorMapKey = 100.0 * zFactor * sqrt(slopeN_XXpYY);                                                ""\n"
+            "                colorMapKey = max(colorMapKey, colorMapKey_0);                                                     ""\n"
+            "            }                                                                                                      ""\n"
+            "            else if (abs(visualizationStyle - %VisualizationStyle_HillshadeMultidirectional%.0) < 0.00001)         ""\n"
+            "            {                                                                                                      ""\n"
+            // NOTE: See http://pubs.usgs.gov/of/1992/of92-422/of92-422.pdf
+            "                float sinZenith = sin(sunZenith);                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "                if (slope_XXpYY < 0.00001)                                                                         ""\n"
+            "                {                                                                                                  ""\n"
+            "                    float value = 1.0 + 254.0 * sinZenith;                                                         ""\n"
+            "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
+            "                }                                                                                                  ""\n"
+            "                else                                                                                               ""\n"
+            "                {                                                                                                  ""\n"
+            "                    highp float weight_225 = 0.5 * slope_XXpYY - slopeInMeters.x * slopeInMeters.y;                ""\n"
+            "                    highp float weight_270 = slope_XX;                                                             ""\n"
+            "                    highp float weight_315 = slope_XXpYY - weight_225;                                             ""\n"
+            "                    highp float weight_360 = slope_YY;                                                             ""\n"
+            "                                                                                                                   ""\n"
+            "                    float value_225 = sinZenith - (slopeInMeters.x - slopeInMeters.y) * M_COS_225_D * zNCosZenith; ""\n"
+            "                    float value_270 = sinZenith - slopeInMeters.x * zNCosZenith;                                   ""\n"
+            "                    float value_315 = sinZenith + (slopeInMeters.x + slopeInMeters.y) * M_COS_225_D * zNCosZenith; ""\n"
+            "                    float value_360 = sinZenith - slopeInMeters.y * zNCosZenith;                                   ""\n"
+            "                                                                                                                   ""\n"
+            "                    float value = weight_225 * max(value_225, 0.0);                                                ""\n"
+            "                    value += weight_270 * max(value_270, 0.0);                                                     ""\n"
+            "                    value += weight_315 * max(value_315, 0.0);                                                     ""\n"
+            "                    value += weight_360 * max(value_360, 0.0);                                                     ""\n"
+            "                    value *= 127.0;                                                                                ""\n"
+            "                    value /= slope_XXpYY;                                                                          ""\n"
+            "                    value /= sqrt(1.0 + zFactorNSq * slope_XXpYY);                                                 ""\n"
+            "                    value = 1.0 + value;                                                                           ""\n"
+            "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
+            "                }                                                                                                  ""\n"
+            "            }                                                                                                      ""\n"
+            "            else                                                                                                   ""\n"
+            "            {                                                                                                      ""\n"
+            "                float sunAzimuth = M_PI - param_vs_elevation_hillshadeConfiguration.y;                             ""\n"
+            "                                                                                                                   ""\n"
+            "                float zNCosZenithCosAzimuth = zNCosZenith * cos(sunAzimuth);                                       ""\n"
+            "                float zNCosZenithSinAzimuth = zNCosZenith * sin(sunAzimuth);                                       ""\n"
+            "                                                                                                                   ""\n"
+            "                if (abs(visualizationStyle - %VisualizationStyle_HillshadeTraditional%.0) < 0.00001)               ""\n"
+            "                {                                                                                                  ""\n"
+            "                    float value = sin(sunZenith);                                                                  ""\n"
+            "                    value -= slopeInMeters.y*zNCosZenithCosAzimuth - slopeInMeters.x*zNCosZenithSinAzimuth;        ""\n"
+            "                    value = 254.0 * value / sqrt(1.0 + zFactorNSq * slope_XXpYY);                                  ""\n"
+            "                    value = 1.0 + max(value, 0.0);                                                                 ""\n"
+            "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
+            "                }                                                                                                  ""\n"
+            "                else if (abs(visualizationStyle - %VisualizationStyle_HillshadeIgor%.0) < 0.00001)                 ""\n"
+            "                {                                                                                                  ""\n"
+            "                    float slopeAngle = atan(sqrt(slope_XXpYY) * zFactorN);                                         ""\n"
+            "                    float aspect = atan(slopeInMeters.y, slopeInMeters.x);                                         ""\n"
+            "                    float slopeStrength = slopeAngle / M_PI_2;                                                     ""\n"
+            "                    float aspectN = mod(M_2PI + aspect, M_2PI);                                                    ""\n"
+            "                    float wAzimuthN = mod(M_2PI + mod(M_3PI_2 - sunAzimuth, M_2PI), M_2PI);                        ""\n"
+            "                    float aspectDiffWAzimuth = mod(abs(aspectN - wAzimuthN), M_PI);                                ""\n"
+            "                    float value = 255.0 * (1.0 - slopeStrength * (1.0 - aspectDiffWAzimuth / M_PI));               ""\n"
+            "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
+            "                }                                                                                                  ""\n"
+            "                else if (abs(visualizationStyle - %VisualizationStyle_HillshadeCombined%.0) < 0.00001)             ""\n"
+            "                {                                                                                                  ""\n"
+            // NOTE: First part produces same result as HillshadeTraditional except for mapping to 1..255 scale (oblique shading)
+            "                    float value = sin(sunZenith);                                                                  ""\n"
+            "                    value -= slopeInMeters.y*zNCosZenithCosAzimuth - slopeInMeters.x*zNCosZenithSinAzimuth;        ""\n"
+            "                    value /= sqrt(1.0 + zFactorNSq * slope_XXpYY);                                                 ""\n"
+            "                                                                                                                   ""\n"
+            // NOTE: Combine with slope shading
+            // NOTE: Implemented differently that in GDAL, see source that https://trac.osgeo.org/gdal/ticket/4753 references
+            "                    vec2 slopeN = slopeInMeters / (slopeAlgorithmScale * heixelInMeters);                          ""\n"
+            "                    float slopeN_XXpYY = slopeN.x*slopeN.x + slopeN.y*slopeN.y;                                    ""\n"
+            "                    value *= 1.0 - abs(atan(zFactor * sqrt(slopeN_XXpYY)) / M_PI);                                 ""\n"
+            "                                                                                                                   ""\n"
+            "                    value = 1.0 + 254.0 * max(value, 0.0);                                                         ""\n"
+            "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
+            "                }                                                                                                  ""\n"
+            "            }                                                                                                      ""\n"
+            "                                                                                                                   ""\n"
+            "            if (colorMapKey >= colorMapKey_0)                                                                      ""\n"
+            "            {                                                                                                      ""\n"
+            "                float colorMapEntryKeyA = colorMapKey_0;                                                           ""\n"
+            "                float colorMapEntryKeyB = colorMapKey;                                                             ""\n"
+            "                vec4 colorMapEntryValueA = vec4(0.0);                                                              ""\n"
+            "                vec4 colorMapEntryValueB = vec4(0.0);                                                              ""\n"
+            "                                                                                                                   ""\n"
+            "%UnrolledPerElevationColorMapEntryCode%                                                                            ""\n"
+            "                                                                                                                   ""\n"
+            "                float interpolation = (colorMapKey - colorMapEntryKeyA) / (colorMapEntryKeyB - colorMapEntryKeyA); ""\n"
+            "                v2f_elevationColor = mix(                                                                          ""\n"
+            "                    colorMapEntryValueA,                                                                           ""\n"
+            "                    colorMapEntryValueB,                                                                           ""\n"
+            "                    clamp(interpolation, 0.0, 1.0));                                                               ""\n"
+            "            }                                                                                                      ""\n"
+            "            v2f_elevationColor.a *= param_vs_elevation_configuration.z;                                            ""\n"
+            "        }                                                                                                          ""\n"
+            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+            "        v.y = heightInMeters[1][1] / v2f_metersPerUnit;                                                            ""\n"
+            "    }                                                                                                              ""\n"
+            "                                                                                                                   ""\n"
+            "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
+            //   Calculate mipmap LOD
+            "    vec2 groundVertex = v.xz;                                                                                      ""\n"
+            "    vec2 groundCameraToVertex = groundVertex - param_vs_groundCameraPosition;                                      ""\n"
+            "    float mipmapK = log(1.0 + 10.0 * log2(1.0 + param_vs_cameraElevationAngleN));                                  ""\n"
+            "    float mipmapBaseLevelEndDistance = mipmapK * param_vs_distanceFromCameraToTarget;                              ""\n"
+            "    v2f_mipmapLOD = 1.0 + (length(groundCameraToVertex) - mipmapBaseLevelEndDistance)                              ""\n"
+            "        / (param_vs_scaleToRetainProjectedSize * param_vs_tileSize);                                               ""\n"
+            "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
+            "                                                                                                                   ""\n"
+            //   Finally output processed modified vertex
+            "    v2f_position = v;                                                                                              ""\n"
+            "    v = param_vs_mPerspectiveProjectionView * v;                                                                   ""\n"
+            "    gl_Position = v * param_vs_resultScale;                                                                        ""\n"
+            "}                                                                                                                  ""\n");
+        const auto& vertexShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
+            "PARAM_OUTPUT vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                        ""\n");
+        const auto& vertexShader_perRasterLayerParamsDeclaration = QString::fromLatin1(
+            "uniform VsRasterLayerTile param_vs_rasterTileLayer_%rasterLayerIndex%;                                             ""\n");
+        const auto& vertexShader_perRasterLayerTexCoordsProcessing = QString::fromLatin1(
+            "    calculateTextureCoordinates(                                                                                   ""\n"
+            "        param_vs_rasterTileLayer_%rasterLayerIndex%,                                                               ""\n"
+            "        v2f_texCoordsPerLayer_%rasterLayerIndex%);                                                                 ""\n"
+            "                                                                                                                   ""\n");
+        const auto& vertexShader_perElevationColorMapEntryCode = QString::fromLatin1(
+            "                float colorMapKey_%entryIndex% = param_vs_elevation_colorMapKeys[%entryIndex%].w;                  ""\n"
+            "                if (colorMapKey_%entryIndex% > colorMapKey_%prevEntryIndex%)                                       ""\n"
+            "                {                                                                                                  ""\n"
+            "                    if (colorMapKey >= colorMapKey_%prevEntryIndex%)                                               ""\n"
+            "                    {                                                                                              ""\n"
+            "                        colorMapEntryKeyA = colorMapKey_%prevEntryIndex%;                                          ""\n"
+            "                        colorMapEntryValueA = param_vs_elevation_colorMapValues[%prevEntryIndex%];                 ""\n"
+            "                        colorMapEntryKeyB = colorMapKey_%entryIndex%;                                              ""\n"
+            "                        colorMapEntryValueB = param_vs_elevation_colorMapValues[%entryIndex%];                     ""\n"
+            "                    }                                                                                              ""\n"
+            "                }                                                                                                  ""\n"
+            "                                                                                                                   ""\n");
+
+        const auto& fragmentShader = QString::fromLatin1(
+            // Definitions
+            "#define ELEVATION_VISUALIZATION_ENABLED %ElevationVisualizationEnabled%                                            ""\n"
+            "                                                                                                                   ""\n"
+            // Input data
+            "%UnrolledPerRasterLayerTexCoordsDeclarationCode%                                                                   ""\n"
+            "PARAM_INPUT float v2f_metersPerUnit;                                                                               ""\n"
+            "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
+            "    PARAM_INPUT float v2f_mipmapLOD;                                                                               ""\n"
+            "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
+            "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+            "    PARAM_INPUT lowp vec4 v2f_elevationColor;                                                                      ""\n"
+            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+            "PARAM_INPUT vec4 v2f_position;                                                                                     ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform lowp float param_fs_lastBatch;                                                                             ""\n"
+            "uniform lowp float param_fs_blendingEnabled;                                                                       ""\n"
+            "uniform lowp vec4 param_fs_backgroundColor;                                                                        ""\n"
+            "uniform lowp vec4 param_fs_myLocationColor;                                                                        ""\n"
+            "uniform vec4 param_fs_myLocation;                                                                                  ""\n"
+            "uniform vec2 param_fs_myDirection;                                                                                  ""\n"
+            "uniform vec4 param_fs_worldCameraPosition;                                                                         ""\n"
+            "uniform vec4 param_fs_mistConfiguration;                                                                           ""\n"
+            "uniform vec4 param_fs_mistColor;                                                                                   ""\n"
+            // Parameters: per-layer data
+            "struct FsRasterLayerTile                                                                                           ""\n"
+            "{                                                                                                                  ""\n"
+            "    lowp float isPremultipliedAlpha;                                                                               ""\n"
+            "    lowp float opacityFactor;                                                                                      ""\n"
+            "    highp vec4 texCoordsOffsetAndScale;                                                                            ""\n"
+            "    highp vec4 transitionPhase;                                                                                    ""\n"
+            "    highp float texelSize;                                                                                         ""\n"
+            "    lowp sampler2D sampler;                                                                                        ""\n"
+            "};                                                                                                                 ""\n"
+            "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
+            "                                                                                                                   ""\n"
+            "void addExtraAlpha(inout lowp vec4 color, in lowp float alpha, in lowp float isPremultipliedAlpha)                 ""\n"
+            "{                                                                                                                  ""\n"
+            "    lowp float colorAlpha = 1.0 - isPremultipliedAlpha + isPremultipliedAlpha * alpha;                             ""\n"
+            "    color *= vec4(colorAlpha, colorAlpha, colorAlpha, alpha);                                                      ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void mixColors(inout lowp vec4 destColor, in lowp vec4 srcColor)                                                   ""\n"
+            "{                                                                                                                  ""\n"
+            "    destColor = destColor * (1.0 - srcColor.a) + srcColor * vec4(srcColor.a, srcColor.a, srcColor.a, 1.0);         ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void mixColors(inout lowp vec4 destColor, in lowp vec4 srcColor, in lowp float isPremultipliedAlpha)               ""\n"
+            "{                                                                                                                  ""\n"
+            "    lowp float srcColorMultiplier =                                                                                ""\n"
+            "        isPremultipliedAlpha + (1.0 - isPremultipliedAlpha) * srcColor.a;                                          ""\n"
+            "    destColor *= 1.0 - srcColor.a;                                                                                 ""\n"
+            "    destColor += srcColor * vec4(srcColorMultiplier, srcColorMultiplier,  srcColorMultiplier, 1.0);                ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void fromTexture(in lowp sampler2D sampler, in vec2 coords, out lowp vec4 destColor)                               ""\n"
+            "{                                                                                                                  ""\n"
+            "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
+            "    destColor = SAMPLE_TEXTURE_2D_LOD(sampler, coords, v2f_mipmapLOD);                                             ""\n"
+            "#else // !TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
+            "    destColor = SAMPLE_TEXTURE_2D(sampler, coords);                                                                ""\n"
+            "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void getWind(in lowp sampler2D sampler, in vec2 coords, out vec2 windVector)                                       ""\n"
+            "{                                                                                                                  ""\n"
+            "    lowp vec4 windColor;                                                                                           ""\n"
+            "    fromTexture(sampler, coords, windColor);                                                                       ""\n"
+            "    vec2 result = (windColor.rb + windColor.ga * 255.0 - 8.0) * 10.0;                                              ""\n"
+            "    windVector = vec2(result.x, -result.y);                                                                        ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "float getRandPixel(in vec2 pixCoords, in vec2 tileSize, in float normSeed)                                         ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec2 intCoords = floor(pixCoords);                                                                             ""\n"
+            "    float randValue = abs(fract(sin(dot(intCoords / tileSize + normSeed, vec2(12.9898, 78.233))) * 43758.5453));   ""\n"
+            "    return randValue > 0.98 ? 1.0 : 0.0;                                                                           ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void getParticleColor(in vec2 pixCoords, in vec2 windVector, in vec2 tileSize, in float seed, out lowp vec4 color) ""\n"
+            "{                                                                                                                  ""\n"
+            "    float normSeed = seed * 0.001;                                                                                 ""\n"
+            "    float windMagnitude = length(windVector);                                                                      ""\n"
+            "    vec2 shift = windMagnitude >= 0.5 ? windVector / windMagnitude : vec2(0.0);                                    ""\n"
+            //   Rescale two times: to get out of tile data without overlap (- 0.1 / 0.8) and to access full texture (/ 0.5)
+            "    vec2 coords = (pixCoords - 0.05) * tileSize / 0.4;                                                             ""\n"
+            "    vec2 center = coords + shift;                                                                                  ""\n"
+            "    float nextPixel = 0.5 * getRandPixel(center, tileSize, normSeed);                                              ""\n"
+            "    float prevPixel = getRandPixel(coords - shift, tileSize, normSeed);                                            ""\n"
+            "    center = prevPixel > 0.0 ? coords - shift : center;                                                            ""\n"
+            "    float actPixel = 0.8 * getRandPixel(coords, tileSize, normSeed);                                               ""\n"
+            "    center = actPixel > 0.0 ? coords : center;                                                                     ""\n"
+            "    float alpha = max(max(actPixel, nextPixel), prevPixel);                                                        ""\n"
+            "    vec2 norm = vec2(shift.y, -shift.x);                                                                           ""\n"
+            "    alpha *= clamp(1.0 - 2.0 * abs(dot(norm, coords) - dot(norm, floor(center) + 0.5)), 0.0, 1.0);                 ""\n"
+            "    color = vec4(1.0, 1.0, 1.0, alpha);                                                                            ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void getTextureColor(in vec4 texCoordsOffsetAndScale, in vec4 transitionPhase, in float texelSize,                 ""\n"
+            "        in sampler2D sampler, in vec2 texCoords, out lowp vec4 resultColor)                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    if (transitionPhase.x >= 0.0)                                                                                  ""\n"
+            "    {                                                                                                              ""\n"
+            //       Animate transition between textures
+            "        vec2 leftCoords = texCoords;                                                                               ""\n"
+            "        vec2 rightCoords;                                                                                          ""\n"
+            "        lowp vec4 windColor = vec4(0.0);                                                                           ""\n"
+            "        float halfTexelSize = texelSize / 2.0;                                                                     ""\n"
+            //       Scale two times: to get into tile data without overlap (* 0.8 + 0.1) and to access quadrants (* 0.5)
+            "        leftCoords = leftCoords * 0.4 + 0.05;                                                                      ""\n"
+            "        leftCoords.x = clamp(leftCoords.x, halfTexelSize, 0.5 - halfTexelSize);                                    ""\n"
+            "        leftCoords.y = clamp(leftCoords.y, halfTexelSize, 0.5 - halfTexelSize);                                    ""\n"
+            "        rightCoords = leftCoords + 0.5;                                                                            ""\n"
+            "        vec2 rightWind;                                                                                            ""\n"
+            "        getWind(sampler, rightCoords, rightWind);                                                                  ""\n"
+            //       Scale two times (* 0.8 and * 0.5) and then divide to TileSize3D (/ 100)
+            "        float factor = transitionPhase.y / (v2f_metersPerUnit * 250.0);                                            ""\n"
+            "        vec2 texShift = rightWind * texCoordsOffsetAndScale.zw * factor;                                           ""\n"
+            "        if (transitionPhase.z >= 0.0)                                                                              ""\n"
+            "        {                                                                                                          ""\n"
+            //           Animate wind particles
+            "            float seed = floor(transitionPhase.z) / 10.0;                                                          ""\n"
+            "            float shift = floor(texCoordsOffsetAndScale.y * 10.0) / 100.0;                                         ""\n"
+            "            shift += floor(texCoordsOffsetAndScale.x * 10.0) / 1000.0;                                             ""\n"
+            "            float phase = fract(transitionPhase.z);                                                                ""\n"
+            "            vec2 tileSize = transitionPhase.w / texCoordsOffsetAndScale.zw;                                        ""\n"
+            "            rightCoords.x -= 0.5;                                                                                  ""\n"
+            "            vec2 leftWind;                                                                                         ""\n"
+            "            getWind(sampler, rightCoords, leftWind);                                                               ""\n"
+            "            vec2 windVector = mix(leftWind, rightWind, transitionPhase.x);                                         ""\n"
+            "            vec2 windShift = windVector * texCoordsOffsetAndScale.zw * factor;                                     ""\n"
+            "            vec2 leftShift = windShift * phase;                                                                    ""\n"
+            "            vec2 rightShift = windShift * (1.0 - phase);                                                           ""\n"
+            "            lowp vec4 tmpColor;                                                                                    ""\n"
+            "            lowp vec4 leftColor;                                                                                   ""\n"
+            "            lowp vec4 rightColor;                                                                                  ""\n"
+            "            getParticleColor(leftCoords - leftShift, windVector, tileSize, fract(seed) + shift, leftColor);        ""\n"
+            "            getParticleColor(leftCoords - leftShift, windVector, tileSize, fract(seed + 0.1) + shift, tmpColor);   ""\n"
+            "            leftColor = mix(tmpColor, leftColor, clamp(phase + 0.5, 0.0, 1.0));                                    ""\n"
+            "            getParticleColor(leftCoords + rightShift, windVector, tileSize, fract(seed + 0.1) + shift, rightColor);""\n"
+            "            getParticleColor(leftCoords + rightShift, windVector, tileSize, fract(seed + 0.2) + shift, tmpColor);  ""\n"
+            "            rightColor = mix(rightColor, tmpColor, clamp(phase - 0.5, 0.0, 1.0));                                  ""\n"
+            "            windColor = mix(leftColor, rightColor, phase);                                                         ""\n"
+            "        }                                                                                                          ""\n"
+            "        rightCoords = leftCoords;                                                                                  ""\n"
+            "        rightCoords.x += 0.5;                                                                                      ""\n"
+            "        leftCoords -= texShift * transitionPhase.x;                                                                ""\n"
+            "        leftCoords.x = clamp(leftCoords.x, halfTexelSize, 0.5 - halfTexelSize);                                    ""\n"
+            "        leftCoords.y = clamp(leftCoords.y, halfTexelSize, 0.5 - halfTexelSize);                                    ""\n"
+            "        rightCoords += texShift * (1.0 - transitionPhase.x);                                                       ""\n"
+            "        rightCoords.x = clamp(rightCoords.x, 0.5 + halfTexelSize, 1.0 - halfTexelSize);                            ""\n"
+            "        rightCoords.y = clamp(rightCoords.y, halfTexelSize, 0.5 - halfTexelSize);                                  ""\n"
+            "        lowp vec4 texColorLeft;                                                                                    ""\n"
+            "        lowp vec4 texColorRight;                                                                                   ""\n"
+            "        fromTexture(sampler, leftCoords, texColorLeft);                                                            ""\n"
+            "        fromTexture(sampler, rightCoords, texColorRight);                                                          ""\n"
+            "        lowp vec4 texColor = mix(texColorLeft, texColorRight, clamp(transitionPhase.x, 0.0, 1.0));                 ""\n"
+            "        resultColor = vec4(mix(texColor.rgb, windColor.rgb, windColor.a), texColor.a);                             ""\n"
+            "    }                                                                                                              ""\n"
+            "    else                                                                                                           ""\n"
+            "    {                                                                                                              ""\n"
+            "        fromTexture(sampler, texCoords, resultColor);                                                              ""\n"
+            "    }                                                                                                              ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    lowp vec4 finalColor;                                                                                          ""\n"
+            "                                                                                                                   ""\n"
+            //   Calculate color of accuracy circle
+            "    lowp vec4 circle = param_fs_myLocationColor;                                                                   ""\n"
+            "    vec2 vMyToPos = v2f_position.xz - param_fs_myLocation.xy;                                                      ""\n"
+            "    float dist = length(vMyToPos);                                                                                 ""\n"
+            "    circle.a = dist > param_fs_myLocation.z ? 0.0 : circle.a * (dist + 0.05 > param_fs_myLocation.z ? 2.0 : 1.0);  ""\n"
+            "                                                                                                                   ""\n"
+            //   Calculate color of heading sector
+            "    lowp vec4 sector = param_fs_myLocationColor;                                                                   ""\n"
+            "    float fdir = dot(vec2(sin(param_fs_myDirection.x), -cos(param_fs_myDirection.x)), vMyToPos / dist);            ""\n"
+            "    sector.a = dist >= param_fs_myDirection.y ? 0.0 : (fdir < 0.7071 ? 0.0 : 1.0 - dist / param_fs_myDirection.y); ""\n"
+            "                                                                                                                   ""\n"
+            //   Calculate mist color
+            "    lowp vec4 mistColor = param_fs_mistColor;                                                                      ""\n"
+            "    vec4 infrontPosition = v2f_position;                                                                           ""\n"
+            "    infrontPosition.xz = v2f_position.xz * param_fs_mistConfiguration.xy;                                          ""\n"
+            "    infrontPosition.xz = v2f_position.xz - (infrontPosition.x + infrontPosition.z) * param_fs_mistConfiguration.xy;""\n"
+            "    float toFog = param_fs_mistConfiguration.z - distance(infrontPosition, param_fs_worldCameraPosition);          ""\n"
+            "    float expScale = (3.0 - param_fs_mistColor.w ) / param_fs_mistConfiguration.w;                                 ""\n"
+            "    float expOffset = 2.354 - param_fs_mistColor.w * 0.5;                                                          ""\n"
+            "    mistColor.a = clamp(1.0 - 1.0 / exp(pow(max(0.0, expOffset - toFog * expScale), 2.0)), 0.0, 1.0);              ""\n"
+            "                                                                                                                   ""\n"
+            //   Mix colors of all layers.
+            //   First layer is processed unconditionally, as well as its color is converted to premultiplied alpha.
+            "    getTextureColor(param_fs_rasterTileLayer_0.texCoordsOffsetAndScale, param_fs_rasterTileLayer_0.transitionPhase,""\n"
+            "        param_fs_rasterTileLayer_0.texelSize, param_fs_rasterTileLayer_0.sampler,                                  ""\n"
+            "        v2f_texCoordsPerLayer_0, finalColor);                                                                      ""\n"
+            "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacityFactor,                                            ""\n"
+            "        param_fs_rasterTileLayer_0.isPremultipliedAlpha);                                                          ""\n"
+            "    lowp float firstLayerColorFactor = param_fs_rasterTileLayer_0.isPremultipliedAlpha +                           ""\n"
+            "        (1.0 - param_fs_rasterTileLayer_0.isPremultipliedAlpha) * finalColor.a;                                    ""\n"
+            "    finalColor *= vec4(firstLayerColorFactor, firstLayerColorFactor, firstLayerColorFactor, 1.0);                  ""\n"
+            "                                                                                                                   ""\n"
+            "%UnrolledPerRasterLayerProcessingCode%                                                                             ""\n"
+            "                                                                                                                   ""\n"
+            "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+            "    mixColors(finalColor, v2f_elevationColor * param_fs_lastBatch);                                                ""\n"
+            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+            "                                                                                                                   ""\n"
+#if 0
+            //   NOTE: Useful for debugging mipmap levels
+            "    {                                                                                                              ""\n"
+            "        vec4 mipmapDebugColor;                                                                                     ""\n"
+            "        mipmapDebugColor.a = 1.0;                                                                                  ""\n"
+            "        float value = v2f_mipmapLOD;                                                                               ""\n"
+            //"        float value = textureQueryLod(param_vs_rasterTileLayer[0].sampler, v2f_texCoordsPerLayer[0]).x;          ""\n"
+            "        mipmapDebugColor.r = clamp(value, 0.0, 1.0);                                                               ""\n"
+            "        value -= 1.0;                                                                                              ""\n"
+            "        mipmapDebugColor.g = clamp(value, 0.0, 1.0);                                                               ""\n"
+            "        value -= 1.0;                                                                                              ""\n"
+            "        mipmapDebugColor.b = clamp(value, 0.0, 1.0);                                                               ""\n"
+            "        finalColor = mix(finalColor, mipmapDebugColor, 0.5);                                                       ""\n"
+            "    }                                                                                                              ""\n"
+#endif
+            "                                                                                                                   ""\n"
+            "    mixColors(finalColor, circle * param_fs_lastBatch);                                                            ""\n"
+            "    mixColors(finalColor, sector * param_fs_lastBatch);                                                            ""\n"
+            "    mixColors(finalColor, mistColor * param_fs_lastBatch);                                                         ""\n"
+            "    lowp vec4 overColor = mix(param_fs_backgroundColor, finalColor, finalColor.a);                                 ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = mix(overColor, finalColor, param_fs_blendingEnabled);                                  ""\n"
+            "}                                                                                                                  ""\n");
+        const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
+            "    {                                                                                                              ""\n"
+            "        lowp vec4 tc;                                                                                              ""\n"
+            "        getTextureColor(param_fs_rasterTileLayer_%rasterLayerIndex%.texCoordsOffsetAndScale,                       ""\n"
+            "            param_fs_rasterTileLayer_%rasterLayerIndex%.transitionPhase,                                           ""\n"
+            "            param_fs_rasterTileLayer_%rasterLayerIndex%.texelSize,                                                 ""\n"
+            "            param_fs_rasterTileLayer_%rasterLayerIndex%.sampler, v2f_texCoordsPerLayer_%rasterLayerIndex%, tc);    ""\n"
+            "        addExtraAlpha(tc, param_fs_rasterTileLayer_%rasterLayerIndex%.opacityFactor,                               ""\n"
+            "            param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);                                     ""\n"
+            "        mixColors(finalColor, tc, param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);               ""\n"
+            "    }                                                                                                              ""\n");
+        const auto& fragmentShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
+            "PARAM_INPUT vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                         ""\n");
+        const auto& fragmentShader_perRasterLayerParamsDeclaration = QString::fromLatin1(
+            "uniform FsRasterLayerTile param_fs_rasterTileLayer_%rasterLayerIndex%;                                             ""\n");
+
+        // Compile vertex shader
+        auto preprocessedVertexShader = vertexShader;
+        QString preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsProcessingCode;
+        QString preprocessedVertexShader_UnrolledPerRasterLayerParamsDeclarationCode;
+        QString preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsDeclarationCode;
+        for (auto layerIndex = 0u; layerIndex < numberOfLayersInBatch; layerIndex++)
+        {
+            preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsProcessingCode +=
+                detachedOf(vertexShader_perRasterLayerTexCoordsProcessing)
+                .replace("%rasterLayerIndex%", QString::number(layerIndex));
+
+            preprocessedVertexShader_UnrolledPerRasterLayerParamsDeclarationCode +=
+                detachedOf(vertexShader_perRasterLayerParamsDeclaration)
+                .replace("%rasterLayerIndex%", QString::number(layerIndex));
+
+            preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsDeclarationCode +=
+                detachedOf(vertexShader_perRasterLayerTexCoordsDeclaration)
+                .replace("%rasterLayerIndex%", QString::number(layerIndex));
+        }
+        preprocessedVertexShader.replace("%UnrolledPerRasterLayerTexCoordsProcessingCode%",
+            preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsProcessingCode);
+        preprocessedVertexShader.replace("%UnrolledPerRasterLayerParamsDeclarationCode%",
+            preprocessedVertexShader_UnrolledPerRasterLayerParamsDeclarationCode);
+        preprocessedVertexShader.replace("%UnrolledPerRasterLayerTexCoordsDeclarationCode%",
+            preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsDeclarationCode);
+        QString preprocessedVertexShader_UnrolledPerElevationColorMapEntryCode;
+        for (auto colorMapEntryIndex = 1u; colorMapEntryIndex < ElevationConfiguration::MaxColorMapEntries; colorMapEntryIndex++)
+        {
+            preprocessedVertexShader_UnrolledPerElevationColorMapEntryCode +=
+                detachedOf(vertexShader_perElevationColorMapEntryCode)
+                .replace("%entryIndex%", QString::number(colorMapEntryIndex))
+                .replace("%prevEntryIndex%", QString::number(colorMapEntryIndex - 1));
+        }
+        preprocessedVertexShader.replace("%UnrolledPerElevationColorMapEntryCode%",
+            preprocessedVertexShader_UnrolledPerElevationColorMapEntryCode);
+        preprocessedVertexShader.replace("%HeixelsPerTileSide%",
+            QString::number(AtlasMapRenderer::HeixelsPerTileSide - 1));
+        preprocessedVertexShader.replace("%MaxElevationColorMapEntriesCount%",
+            QString::number(ElevationConfiguration::MaxColorMapEntries));
+        preprocessedVertexShader.replace("%SlopeAlgorithm_None%",
+            QString::number(static_cast<int>(ElevationConfiguration::SlopeAlgorithm::None)));
+        preprocessedVertexShader.replace("%SlopeAlgorithm_ZevenbergenThorne%",
+            QString::number(static_cast<int>(ElevationConfiguration::SlopeAlgorithm::ZevenbergenThorne)));
+        preprocessedVertexShader.replace("%SlopeAlgorithm_Horn%",
+            QString::number(static_cast<int>(ElevationConfiguration::SlopeAlgorithm::Horn)));
+        preprocessedVertexShader.replace("%VisualizationStyle_None%",
+            QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::None)));
+        preprocessedVertexShader.replace("%VisualizationStyle_SlopeDegrees%",
+            QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::SlopeDegrees)));
+        preprocessedVertexShader.replace("%VisualizationStyle_SlopePercents%",
+            QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::SlopePercents)));
+        preprocessedVertexShader.replace("%VisualizationStyle_HillshadeTraditional%",
+            QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeTraditional)));
+        preprocessedVertexShader.replace("%VisualizationStyle_HillshadeIgor%",
+            QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeIgor)));
+        preprocessedVertexShader.replace("%VisualizationStyle_HillshadeCombined%",
+            QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeCombined)));
+        preprocessedVertexShader.replace("%VisualizationStyle_HillshadeMultidirectional%",
+            QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeMultidirectional)));
+        preprocessedVertexShader.replace("%ElevationVisualizationEnabled%",
+            QString::number(setupOptions.elevationVisualizationEnabled ? 1 : 0));
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+        if (vsId == 0)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererMapLayersStage_OpenGL vertex shader for %d raster map layers",
+                numberOfLayersInBatch);
+            return false;
+        }
+
+        // Compile fragment shader
+        auto preprocessedFragmentShader = fragmentShader;
+        QString preprocessedFragmentShader_UnrolledPerRasterLayerTexCoordsDeclarationCode;
+        QString preprocessedFragmentShader_UnrolledPerRasterLayerParamsDeclarationCode;
+        QString preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode;
+        for (auto layerIndex = 0u; layerIndex < numberOfLayersInBatch; layerIndex++)
+        {
+            preprocessedFragmentShader_UnrolledPerRasterLayerTexCoordsDeclarationCode +=
+                detachedOf(fragmentShader_perRasterLayerTexCoordsDeclaration)
+                .replace("%rasterLayerIndex%", QString::number(layerIndex));
+
+            preprocessedFragmentShader_UnrolledPerRasterLayerParamsDeclarationCode +=
+                detachedOf(fragmentShader_perRasterLayerParamsDeclaration)
+                .replace("%rasterLayerIndex%", QString::number(layerIndex));
+
+            if (layerIndex > 0)
+            {
+                preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode +=
+                    detachedOf(fragmentShader_perRasterLayer).replace("%rasterLayerIndex%", QString::number(layerIndex));
+            }
+        }
+        preprocessedFragmentShader.replace(
+            "%UnrolledPerRasterLayerTexCoordsDeclarationCode%",
+            preprocessedFragmentShader_UnrolledPerRasterLayerTexCoordsDeclarationCode);
+        preprocessedFragmentShader.replace(
+            "%UnrolledPerRasterLayerParamsDeclarationCode%",
+            preprocessedFragmentShader_UnrolledPerRasterLayerParamsDeclarationCode);
+        preprocessedFragmentShader.replace(
+            "%UnrolledPerRasterLayerProcessingCode%",
+            preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode);
+        preprocessedFragmentShader.replace("%ElevationVisualizationEnabled%",
+            QString::number(setupOptions.elevationVisualizationEnabled ? 1 : 0));
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+        if (fsId == 0)
+        {
+            glDeleteShader(vsId);
+            GL_CHECK_RESULT;
+
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererMapLayersStage_OpenGL fragment shader for %d raster map layers",
+                numberOfLayersInBatch);
+            return false;
+        }
+        GLuint shaders[] = { vsId, fsId };
+        outRasterLayerTileProgram.id = getGPUAPI()->linkProgram(2, shaders, variableLocations,
+            outRasterLayerTileProgram.binaryCache, outRasterLayerTileProgram.cacheFormat, true, &variablesMap);
+    }
     if (!outRasterLayerTileProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -1043,6 +1072,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.vs.param.mPerspectiveProjectionView,
         "param_vs_mPerspectiveProjectionView",
+        GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(
+        outRasterLayerTileProgram.vs.param.resultScale,
+        "param_vs_resultScale",
         GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.vs.param.targetInTilePosN,
@@ -1281,154 +1314,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
         haveElevation = true;
     }
 
-/*
-    QList<Ref<ElevationResource>> elevationResources;
-    ZoomLevel elevationZoom = zoomLevel;
-    auto baseTileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
-        static_cast<double>(1ull << currentState.zoomLevel - zoomLevel);
-    auto tileSize = baseTileSize;
-    const auto tileIdN = Utilities::normalizeTileId(batch->tileId, zoomLevel);
-    const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
-        zoomLevel,
-        tileIdN.y,
-        baseTileSize);
-    const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
-        zoomLevel,
-        tileIdN.y + 1,
-        baseTileSize);
-    float zScaleFactor = 0.0f;
-    float dataScaleFactor = 0.0f;
-    if (withElevation && currentState.elevationDataProvider)
-    {
-        auto elevationResource = captureElevationDataResource(tileIdN, zoomLevel);
-        if (elevationResource)
-        {
-            configureElevationData(elevationResource, program,
-                tileIdN,
-                zoomLevel,
-                PointF(0.0f, 0.0f),
-                PointF(1.0f, 1.0f),
-                tileSize,
-                elevationDataSamplerIndex);
-        }
-        else
-        {            
-            const auto maxMissingDataZoomShift = currentState.elevationDataProvider->getMaxMissingDataZoomShift();
-            const auto maxUnderZoomShift = currentState.elevationDataProvider->getMaxMissingDataUnderZoomShift();
-            const auto minZoom = currentState.elevationDataProvider->getMinZoom();
-            const auto maxZoom = currentState.elevationDataProvider->getMaxZoom();
-            for (int absZoomShift = 1; absZoomShift <= maxMissingDataZoomShift; absZoomShift++)
-            {
-                // Look for underscaled first. Only full match is accepted.
-                // Don't replace tiles of absent zoom levels by the unserscaled ones
-                const auto underscaledZoom = static_cast<int>(zoomLevel) + absZoomShift;
-                if (underscaledZoom >= minZoom && underscaledZoom <= maxZoom && absZoomShift <= maxUnderZoomShift &&
-                    zoomLevel >= minZoom)
-                {
-                    const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
-                        tileIdN,
-                        absZoomShift);
-                    const auto subtilesCount = underscaledTileIdsN.size();
-                    bool atLeastOnePresent = false;
-                    QVector< std::shared_ptr<const GPUAPI::ResourceInGPU> > gpuResources(subtilesCount);
-                    auto pUnderscaledTileIdN = underscaledTileIdsN.constData();
-                    auto pGpuResource = gpuResources.data();
-                    for (auto tileIdx = 0; tileIdx < subtilesCount; tileIdx++)
-                    {
-                        const auto& underscaledTileId = *(pUnderscaledTileIdN++);
-                        auto& gpuResource = *(pGpuResource++);
-                        gpuResource = captureElevationDataResource(
-                            underscaledTileId,
-                            static_cast<ZoomLevel>(underscaledZoom));
-                        if (gpuResource)
-                            atLeastOnePresent = true;
-                    }
-
-                    if (atLeastOnePresent)
-                    {
-                        const auto subtilesPerSide = (1u << absZoomShift);
-                        const PointF texCoordsScale(subtilesPerSide, subtilesPerSide);
-                        auto pGpuResource = gpuResources.constData();
-                        pUnderscaledTileIdN = underscaledTileIdsN.constData();
-                        for (auto subtileIdx = 0; subtileIdx < subtilesCount; subtileIdx++)
-                        {
-                            const auto& underscaledTileId = *(pUnderscaledTileIdN++);
-                            const auto& gpuResource = *(pGpuResource++);
-                            if (gpuResource)
-                            {
-                                uint16_t xSubtile;
-                                uint16_t ySubtile;
-                                Utilities::decodeMortonCode(subtileIdx, xSubtile, ySubtile);
-                                elevationResources.push_back(Ref<ElevationResource>::New(
-                                    gpuResource,
-                                    underscaledTileId,
-                                    PointF(-xSubtile, -ySubtile),
-                                    texCoordsScale));
-                            }
-                            else
-                            {
-                                // Stub texture requires no texture offset or scaling
-                                elevationResources.push_back(Ref<ElevationResource>::New(
-                                    nullptr,
-                                    underscaledTileId));
-                            }
-                        }
-                        if (subtilesCount > subtilesPerTile)
-                        {
-                            subtileRasterFactor = subtilesCount / subtilesPerTile;
-                            subtilesPerTile = subtilesCount;
-                        }
-                        else if (subtilesCount < subtilesPerTile)
-                            subtileElevationFactor = subtilesPerTile / subtilesCount;
-                        elevationZoom = static_cast<ZoomLevel>(underscaledZoom);
-                        tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
-                            (elevationZoom > currentState.zoomLevel ?
-                            1.0 / static_cast<double>(1ull << elevationZoom - currentState.zoomLevel) :
-                            static_cast<double>(1ull << currentState.zoomLevel - elevationZoom));
-                        break;
-                    }
-                }
-
-                // If underscaled was not found, look for overscaled (surely, if such zoom level exists at all)
-                const auto overscaledZoom = static_cast<int>(zoomLevel) - absZoomShift;
-                if (overscaledZoom >= minZoom && overscaledZoom <= maxZoom)
-                {
-                    PointF texCoordsOffset;
-                    PointF texCoordsScale;
-                    const auto overscaledTileIdN = Utilities::getTileIdOverscaledByZoomShift(
-                        tileIdN,
-                        absZoomShift,
-                        &texCoordsOffset,
-                        &texCoordsScale);
-                    elevationZoom = static_cast<ZoomLevel>(overscaledZoom);
-                    if (elevationResource = captureElevationDataResource(
-                        overscaledTileIdN,
-                        elevationZoom))
-                    {
-                        tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
-                            static_cast<double>(1ull << currentState.zoomLevel - elevationZoom);
-                        configureElevationData(elevationResource, program,
-                            overscaledTileIdN,
-                            elevationZoom,
-                            texCoordsOffset,
-                            texCoordsScale,
-                            tileSize,
-                            elevationDataSamplerIndex);
-                        break;
-                    }
-                }
-            }
-        }
-        if (!elevationResource && elevationResources.isEmpty())
-            cancelElevation(program, elevationDataSamplerIndex);
-        else
-        {
-            zScaleFactor = currentState.elevationConfiguration.zScaleFactor;
-            dataScaleFactor = currentState.elevationConfiguration.dataScaleFactor;
-            haveElevation = true;
-        }
-    }
-*/
     // Per-tile elevation data configuration
     glUniform4f(
         program.vs.param.elevation_scale,
@@ -1687,6 +1572,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     glUniformMatrix4fv(program.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
     GL_CHECK_RESULT;
 
+    // Scale the result
+    glUniform4f(program.vs.param.resultScale,
+        1.0f,
+        currentState.flip ? -1.0f : 1.0f,
+        1.0f,
+        1.0f);
+    GL_CHECK_RESULT;
+
     // Set center offset
     PointF offsetInTileN;
     Utilities::getTileId(currentState.target31, zoomLevel, &offsetInTileN);
@@ -1934,9 +1827,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterLayers(bool gpu
             glDeleteProgram(rasterLayerTileProgram.id);
             GL_CHECK_RESULT;
         }
-        rasterLayerTileProgram = RasterLayerTileProgram();
+        rasterLayerTileProgram.id = 0;
     }
-    _rasterLayerTilePrograms.clear();
 
     return true;
 }

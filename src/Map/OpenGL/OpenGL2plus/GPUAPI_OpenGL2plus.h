@@ -36,9 +36,7 @@ namespace OsmAnd
         bool _isSupported_EXT_debug_marker;
         bool _isSupported_EXT_debug_label;
         bool _isSupported_ARB_sync;
-
-        GLenum _framebufferDepthDataFormat;
-        GLenum _framebufferDepthDataType;
+        bool _isSupported_ARB_get_program_binary;
         QVector<GLuint> _pointVisibilityCheckQueries;
 
         std::array< GLuint, SamplerTypesCount > _textureSamplers;
@@ -69,8 +67,6 @@ namespace OsmAnd
         bool initialize() override;
         int checkElementVisibility(int queryIndex, float pointSize) override;
         bool elementIsVisible(int queryIndex) override;
-        bool attachToRenderTarget() override;
-        bool detachFromRenderTarget(bool gpuContextLost) override;
         bool release(bool gpuContextLost) override;
 
         const bool& isSupported_GREMEDY_string_marker;
@@ -86,9 +82,7 @@ namespace OsmAnd
         const bool& isSupported_EXT_debug_marker;
         const bool& isSupported_EXT_debug_label;
         const bool& isSupported_ARB_sync;
-
-        const GLenum& framebufferDepthDataFormat;
-        const GLenum& framebufferDepthDataType;
+        const bool& isSupported_ARB_get_program_binary;
 
         GLenum validateResult(const char* function, const char* file, int line) override;
 
@@ -111,11 +105,6 @@ namespace OsmAnd
         void popDebugGroupMarker() override;
 
         void setObjectLabel(ObjectType type, GLuint name, const QString& label) override;
-
-        void glClearDepth_wrapper(float depth) override;
-
-        void readFramebufferDepth(GLint x, GLint y, GLsizei width, GLsizei height, std::vector<std::byte>& outData) override;
-        bool pickFramebufferDepthValue(const std::vector<std::byte>& data, GLint x, GLint y, GLsizei width, GLsizei height, GLfloat& outValue) override;
     };
 }
 

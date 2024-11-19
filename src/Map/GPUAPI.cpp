@@ -5,7 +5,6 @@
 #include "Logging.h"
 
 OsmAnd::GPUAPI::GPUAPI()
-    : _isAttachedToRenderTarget(false)
 {
 }
 
@@ -26,11 +25,6 @@ OsmAnd::GPUAPI::~GPUAPI()
     assert(resourcesRemaining == 0);
 }
 
-bool OsmAnd::GPUAPI::isAttachedToRenderTarget()
-{
-    return _isAttachedToRenderTarget;
-}
-
 bool OsmAnd::GPUAPI::initialize()
 {
     return true;
@@ -46,35 +40,8 @@ bool OsmAnd::GPUAPI::elementIsVisible(int queryIndex)
     return true;
 }
 
-bool OsmAnd::GPUAPI::attachToRenderTarget()
-{
-    _isAttachedToRenderTarget = true;
-    return true;
-}
-
-bool OsmAnd::GPUAPI::detachFromRenderTarget(bool gpuContextLost)
-{
-    if (!isAttachedToRenderTarget())
-    {
-        return false;
-    }
-
-    _isAttachedToRenderTarget = false;
-
-    return true;
-}
-
 bool OsmAnd::GPUAPI::release(bool gpuContextLost)
 {
-    bool ok;
-
-    if (isAttachedToRenderTarget())
-    {
-        ok = detachFromRenderTarget(gpuContextLost);
-        if (!ok)
-            return false;
-    }
-
     return true;
 }
 

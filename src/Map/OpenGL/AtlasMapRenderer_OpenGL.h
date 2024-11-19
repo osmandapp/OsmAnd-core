@@ -40,8 +40,6 @@ namespace OsmAnd
         const static float _minimumVisualZoom;
         const static float _maximumVisualZoom;
         const static double _minimumElevationAngle;
-        std::vector<std::byte> _terrainDepthBuffer;
-        PointI _terrainDepthBufferSize;
 
         void updateFrustum(InternalState* internalState, const MapRendererState& state) const;
         void computeTileset(const TileId targetTileId, const PointF targetInTileOffsetN,
@@ -99,7 +97,7 @@ namespace OsmAnd
         void onValidateResourcesOfType(MapRendererResourceType type) override;
 
         // Customization points:
-        bool doInitializeRendering() override;
+        bool doInitializeRendering(bool reinitialize) override;
         bool doRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* metric) override;
         bool doReleaseRendering(bool gpuContextLost) override;
         bool handleStateChange(const MapRendererState& state, MapRendererStateChanges mask) override;
@@ -158,9 +156,6 @@ namespace OsmAnd
     public:
         AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* gpuAPI);
         virtual ~AtlasMapRenderer_OpenGL();
-
-        const std::vector<std::byte>& terrainDepthBuffer;
-        const PointI& terrainDepthBufferSize;
 
         float getTileSizeOnScreenInPixels() const override;
 

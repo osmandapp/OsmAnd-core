@@ -36,37 +36,7 @@ namespace OsmAnd
         static PFNGLLABELOBJECTEXTPROC glLabelObjectEXT;
 #endif // !OSMAND_TARGET_OS_ios
     private:
-        GLint _depthTexture;
-        GLint _depthTextureBits;
-        GLint _depthTextureBytes;
-        GLuint _depthFramebuffer;
-        GLuint _depthFramebufferColorRenderbuffer;
-        GLint _depthFramebufferColorRenderbufferFormat;
-        GLint _depthFramebufferColorRenderbufferType;
         QVector<GLuint> _pointVisibilityCheckQueries;
-
-        struct DepthFramebufferProgram {
-            GLname id;
-
-            struct {
-                // Input data
-                struct {
-                    GLlocation vertexPosition;
-                    GLlocation vertexTexCoords;
-                } in;
-            } vs;
-
-            struct {
-                // Parameters
-                struct {
-                    GLlocation depthTextureSampler;
-                } param;
-            } fs;
-        } _depthFramebufferProgram;
-        GLname _depthFramebufferVAO;
-        GLname _depthFramebufferVBO;
-        GLname _depthFramebufferIBO;
-
         bool _isSupported_EXT_unpack_subimage;
         bool _isSupported_EXT_texture_storage;
         bool _isSupported_APPLE_texture_max_level;
@@ -82,6 +52,7 @@ namespace OsmAnd
         bool _isSupported_EXT_debug_label;
         bool _isSupported_APPLE_sync;
         bool _isSupported_samplerObjects;
+        bool _isSupported_OES_get_program_binary;
         QSet<GLenum> _supportedVertexShaderPrecisionFormats;
         QSet<GLenum> _supportedFragmentShaderPrecisionFormats;
 
@@ -112,8 +83,6 @@ namespace OsmAnd
         bool initialize() override;
         int checkElementVisibility(int queryIndex, float pointSize) override;
         bool elementIsVisible(int queryIndex) override;
-        bool attachToRenderTarget() override;
-        bool detachFromRenderTarget(bool gpuContextLost) override;
         bool release(bool gpuContextLost) override;
 
         const bool& isSupported_EXT_unpack_subimage;
@@ -131,6 +100,7 @@ namespace OsmAnd
         const bool& isSupported_EXT_debug_label;
         const bool& isSupported_APPLE_sync;
         const bool& isSupported_samplerObjects;
+        const bool& isSupported_OES_get_program_binary;
 
         const QSet<GLenum>& supportedVertexShaderPrecisionFormats;
         const QSet<GLenum>& supportedFragmentShaderPrecisionFormats;
@@ -156,11 +126,6 @@ namespace OsmAnd
         void popDebugGroupMarker() override;
 
         void setObjectLabel(ObjectType type, GLuint name, const QString& label) override;
-
-        void glClearDepth_wrapper(float depth) override;
-
-        void readFramebufferDepth(GLint x, GLint y, GLsizei width, GLsizei height, std::vector<std::byte>& outData) override;
-        bool pickFramebufferDepthValue(const std::vector<std::byte>& data, GLint x, GLint y, GLsizei width, GLsizei height, GLfloat& outValue) override;
     };
 }
 

@@ -24,6 +24,8 @@ namespace OsmAnd
         GLname _iboPoint2D;
         struct ProgramPoint2D {
             GLname id;
+            QByteArray binaryCache;
+            GLenum cacheFormat;
 
             struct {
                 // Input data
@@ -35,6 +37,7 @@ namespace OsmAnd
                 struct {
                     // Common data
                     GLlocation mProjectionViewModel;
+                    GLlocation resultScale;
                     GLlocation point;
                 } param;
             } vs;
@@ -55,6 +58,8 @@ namespace OsmAnd
         GLname _iboRect2D;
         struct ProgramRect2D {
             GLname id;
+            QByteArray binaryCache;
+            GLenum cacheFormat;
 
             struct {
                 // Input data
@@ -66,6 +71,7 @@ namespace OsmAnd
                 struct {
                     // Common data
                     GLlocation mProjectionViewModel;
+                    GLlocation resultScale;
                     GLlocation rect;
                     GLlocation angle;
                 } param;
@@ -88,6 +94,8 @@ namespace OsmAnd
         GLname _iboLine2D;
         struct ProgramLine2D {
             GLname id;
+            QByteArray binaryCache;
+            GLenum cacheFormat;
 
             struct {
                 // Input data
@@ -99,6 +107,7 @@ namespace OsmAnd
                 struct {
                     // Common data
                     GLlocation mProjectionViewModel;
+                    GLlocation resultScale;
                     GLlocation v0;
                     GLlocation v1;
                 } param;
@@ -121,6 +130,8 @@ namespace OsmAnd
         GLname _iboLine3D;
         struct ProgramLine3D {
             GLname id;
+            QByteArray binaryCache;
+            GLenum cacheFormat;
 
             struct {
                 // Input data
@@ -132,6 +143,7 @@ namespace OsmAnd
                 struct {
                     // Common data
                     GLlocation mProjectionViewModel;
+                    GLlocation resultScale;
                     GLlocation v0;
                     GLlocation v1;
                 } param;
@@ -154,6 +166,8 @@ namespace OsmAnd
         GLname _iboQuad3D;
         struct ProgramQuad3D {
             GLname id;
+            QByteArray binaryCache;
+            GLenum cacheFormat;
 
             struct {
                 // Input data
@@ -165,6 +179,7 @@ namespace OsmAnd
                 struct {
                     // Common data
                     GLlocation mProjectionViewModel;
+                    GLlocation resultScale;
                     GLlocation v0;
                     GLlocation v1;
                     GLlocation v2;

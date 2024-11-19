@@ -171,9 +171,9 @@ bool OsmAnd::AtlasMapRenderer::preInitializeRendering()
     return true;
 }
 
-bool OsmAnd::AtlasMapRenderer::doInitializeRendering()
+bool OsmAnd::AtlasMapRenderer::doInitializeRendering(bool reinitialize)
 {
-    bool ok = MapRenderer::doInitializeRendering();
+    bool ok = MapRenderer::doInitializeRendering(reinitialize);
     if (!ok)
         return false;
 
@@ -200,31 +200,49 @@ bool OsmAnd::AtlasMapRenderer::doReleaseRendering(bool gpuContextLost)
     {
         if (!_skyStage->release(gpuContextLost))
             ok = false;
-        _skyStage.reset();
     }
 
     if (_mapLayersStage)
     {
         if (!_mapLayersStage->release(gpuContextLost))
             ok = false;
-        _mapLayersStage.reset();
     }
 
     if (_symbolsStage)
     {
         if (!_symbolsStage->release(gpuContextLost))
             ok = false;
-        _symbolsStage.reset();
     }
 
     if (_debugStage)
     {
         if (!_debugStage->release(gpuContextLost))
             ok = false;
-        _debugStage.reset();
     }
 
     if (!MapRenderer::doReleaseRendering(gpuContextLost))
+        ok = false;
+
+    return ok;
+}
+
+bool OsmAnd::AtlasMapRenderer::postReleaseRendering(bool gpuContextLost)
+{
+    bool ok = true;
+
+    if (_skyStage)
+        _skyStage.reset();
+
+    if (_mapLayersStage)
+        _mapLayersStage.reset();
+
+    if (_symbolsStage)
+        _symbolsStage.reset();
+
+    if (_debugStage)
+        _debugStage.reset();
+
+    if (!MapRenderer::postReleaseRendering(gpuContextLost))
         ok = false;
 
     return ok;

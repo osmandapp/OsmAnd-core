@@ -68,8 +68,6 @@ OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gp
         gpuAPI_,
         std::unique_ptr<const MapRendererConfiguration>(new AtlasMapRendererConfiguration()),
         std::unique_ptr<const MapRendererDebugSettings>(new MapRendererDebugSettings()))
-    , terrainDepthBuffer(_terrainDepthBuffer)
-    , terrainDepthBufferSize(_terrainDepthBufferSize)
 {
 }
 
@@ -77,7 +75,7 @@ OsmAnd::AtlasMapRenderer_OpenGL::~AtlasMapRenderer_OpenGL()
 {
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering()
+bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering(bool reinitialize)
 {
     GL_CHECK_PRESENT(glClearColor);
 
@@ -85,14 +83,11 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering()
 
     bool ok;
 
-    ok = AtlasMapRenderer::doInitializeRendering();
+    ok = AtlasMapRenderer::doInitializeRendering(reinitialize);
     if (!ok)
         return false;
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    GL_CHECK_RESULT;
-
-    gpuAPI->glClearDepth_wrapper(1.0f);
     GL_CHECK_RESULT;
 
     return true;
@@ -147,11 +142,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glDisable(GL_DEPTH_TEST);
     GL_CHECK_RESULT;
 
-//    // Turn off writing to the color buffer for the sky (depth only)
-//    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-//    GL_CHECK_RESULT;
-
-    // Render the sky (depth only) -- ???
     // Render the sky
     if (!currentDebugSettings->disableSkyStage)
     {
@@ -182,7 +172,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         glEnable(GL_CULL_FACE);
         GL_CHECK_RESULT;
 
-        glCullFace(GL_FRONT);
+        glCullFace(currentState.flip ? GL_BACK : GL_FRONT);
         GL_CHECK_RESULT;
 
         Stopwatch mapLayersStageStopwatch(metric != nullptr);
@@ -196,19 +186,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         GL_CHECK_RESULT;
 
     }
-    /* Disable depth buffer reading
-    // Capture terrain depth buffer
-    if (_terrainDepthBuffer.size() > 0 && _terrainDepthBufferSize == currentState.windowSize)
-    {
-        Stopwatch terrainDepthBufferCaptureStopwatch(metric != nullptr);
-
-        gpuAPI->readFramebufferDepth(0, 0, _terrainDepthBufferSize.x, _terrainDepthBufferSize.y, _terrainDepthBuffer);
-        GL_CHECK_RESULT;
-
-        if (metric)
-            metric->elapsedTimeForTerrainDepthBufferCapture = terrainDepthBufferCaptureStopwatch.elapsed();
-    }
-    */
     // Turn on blending since now objects with transparency are going to be rendered
     glEnable(GL_BLEND);
     GL_CHECK_RESULT;
@@ -269,21 +246,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doReleaseRendering(bool gpuContextLost)
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::handleStateChange(const MapRendererState& state, MapRendererStateChanges mask)
 {
-    const auto gpuAPI = getGPUAPI();
-
     bool ok = AtlasMapRenderer::handleStateChange(state, mask);
 
-/*  Disable depth buffer reading
-    if (mask.isSet(MapRendererStateChange::WindowSize))
-    {
-        const auto depthBufferSize = state.windowSize.x * state.windowSize.y * gpuAPI->framebufferDepthBytes;
-        if (depthBufferSize != _terrainDepthBuffer.size())
-        {
-            _terrainDepthBuffer.resize(depthBufferSize);
-            _terrainDepthBufferSize = state.windowSize;
-        }
-    }
-*/
     return ok;
 }
 

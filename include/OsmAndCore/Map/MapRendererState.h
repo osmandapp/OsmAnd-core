@@ -41,6 +41,7 @@ namespace OsmAnd
         Symbols_Configuration,
         WindowSize,
         Viewport,
+        Flip,
         FieldOfView,
         VisibleDistance,
         DetailedDistance,
@@ -75,6 +76,7 @@ namespace OsmAnd
         
         PointI windowSize;
         AreaI viewport;
+        bool flip;
         float fieldOfView;
         float visibleDistance;
         float detailedDistance;
@@ -134,6 +136,7 @@ namespace OsmAnd
 
         PointI windowSize;
         AreaI viewport;
+        bool flip;
         float fieldOfView;
         float visibleDistance;
         float detailedDistance;

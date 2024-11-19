@@ -30,86 +30,91 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    // Compile vertex shader
-    const QString vertexShader = QLatin1String(
-        // Input data
-        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        // Output data to next shader stages
-        "PARAM_OUTPUT vec2 v2f_position;                                                                                    ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform mat4 param_vs_mProjection;                                                                                 ""\n"
-        "uniform vec4 param_vs_planeSize;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    vec4 v;                                                                                                        ""\n"
-        "    v.xy = in_vs_vertexPosition * param_vs_planeSize.xy;                                                           ""\n"
-        "    v.z = param_vs_planeSize.z;                                                                                    ""\n"
-        "    v.w = 1.0;                                                                                                     ""\n"
-        "    v.y += param_vs_planeSize.w;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        "    v2f_position = in_vs_vertexPosition;                                                                           ""\n"
-        "    v = param_vs_mProjection * v;                                                                                  ""\n"
-        "    v.y--;                                                                                                         ""\n"
-        "    gl_Position = v;                                                                                               ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedVertexShader = vertexShader;
-    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    if (vsId == 0)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererSkyStage_OpenGL vertex shader");
-        return false;
-    }
-
-    // Compile fragment shader
-    const QString fragmentShader = QLatin1String(
-        // Input data
-        "PARAM_INPUT vec2 v2f_position;                                                                                     ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform vec4 param_fs_skySize;                                                                                     ""\n"
-        "uniform lowp vec4 param_fs_skyColor;                                                                               ""\n"
-        "uniform lowp vec4 param_fs_fogColor;                                                                               ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    lowp vec4 color;                                                                                               ""\n"
-        "    float position;                                                                                                ""\n"
-        "    float skyHeight = param_fs_skySize.y / (1.0 - param_fs_skySize.z);                                             ""\n"
-        "    bool sky = v2f_position.y > param_fs_skySize.z;                                                                ""\n"
-        "    position = (v2f_position.y - (sky ? param_fs_skySize.z : 0.0)) * skyHeight;                                    ""\n"
-        "    float low = 1.0 / pow(1.1 + position, 4.0);                                                                    ""\n"
-        "    float high = 1.0 - low;                                                                                        ""\n"
-        "    color.r = (0.7647059 * low + high * exp(1.0 - position / 3.0) * 0.3101728) * param_fs_skyColor.r;              ""\n"
-        "    color.g = (0.8039216 * low + high * exp(1.0 - position / 5.0) * 0.3390262) * param_fs_skyColor.g;              ""\n"
-        "    color.b = (0.9019608 * low + high * exp(1.0 - position / 12.0) * 0.3678794) * param_fs_skyColor.b;             ""\n"
-        "    color.a = 1.0;                                                                                                 ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = sky ? color : param_fs_fogColor;                                                       ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedFragmentShader = fragmentShader;
-    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
-    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    if (fsId == 0)
-    {
-        glDeleteShader(vsId);
-        GL_CHECK_RESULT;
-
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererSkyStage_OpenGL fragment shader");
-        return false;
-    }
-
-    // Link everything into program object
-    const GLuint shaders[] = { vsId, fsId };
     QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
-    _program.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
+    _program.id = 0;
+    if (!_program.binaryCache.isEmpty())
+        _program.id = gpuAPI->linkProgram(0, nullptr, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
+    if (!_program.id.isValid())
+    {
+        // Compile vertex shader
+        const QString vertexShader = QLatin1String(
+            // Input data
+            "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+            "                                                                                                                   ""\n"
+            // Output data to next shader stages
+            "PARAM_OUTPUT vec2 v2f_position;                                                                                    ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform mat4 param_vs_mProjection;                                                                                 ""\n"
+            "uniform vec4 param_vs_planeSize;                                                                                   ""\n"
+            "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec4 v;                                                                                                        ""\n"
+            "    v.xy = in_vs_vertexPosition * param_vs_planeSize.xy;                                                           ""\n"
+            "    v.z = param_vs_planeSize.z;                                                                                    ""\n"
+            "    v.w = 1.0;                                                                                                     ""\n"
+            "    v.y += param_vs_planeSize.w;                                                                                   ""\n"
+            "                                                                                                                   ""\n"
+            "    v2f_position = in_vs_vertexPosition;                                                                           ""\n"
+            "    v = param_vs_mProjection * v;                                                                                  ""\n"
+            "    v.y--;                                                                                                         ""\n"
+            "    gl_Position = v * param_vs_resultScale;                                                                        ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedVertexShader = vertexShader;
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+        if (vsId == 0)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererSkyStage_OpenGL vertex shader");
+            return false;
+        }
+
+        // Compile fragment shader
+        const QString fragmentShader = QLatin1String(
+            // Input data
+            "PARAM_INPUT vec2 v2f_position;                                                                                     ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform vec4 param_fs_skySize;                                                                                     ""\n"
+            "uniform lowp vec4 param_fs_skyColor;                                                                               ""\n"
+            "uniform lowp vec4 param_fs_fogColor;                                                                               ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    lowp vec4 color;                                                                                               ""\n"
+            "    float position;                                                                                                ""\n"
+            "    float skyHeight = param_fs_skySize.y / (1.0 - param_fs_skySize.z);                                             ""\n"
+            "    bool sky = v2f_position.y > param_fs_skySize.z;                                                                ""\n"
+            "    position = (v2f_position.y - (sky ? param_fs_skySize.z : 0.0)) * skyHeight;                                    ""\n"
+            "    float low = 1.0 / pow(1.1 + position, 4.0);                                                                    ""\n"
+            "    float high = 1.0 - low;                                                                                        ""\n"
+            "    color.r = (0.7647059 * low + high * exp(1.0 - position / 3.0) * 0.3101728) * param_fs_skyColor.r;              ""\n"
+            "    color.g = (0.8039216 * low + high * exp(1.0 - position / 5.0) * 0.3390262) * param_fs_skyColor.g;              ""\n"
+            "    color.b = (0.9019608 * low + high * exp(1.0 - position / 12.0) * 0.3678794) * param_fs_skyColor.b;             ""\n"
+            "    color.a = 1.0;                                                                                                 ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = sky ? color : param_fs_fogColor;                                                       ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedFragmentShader = fragmentShader;
+        QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+        if (fsId == 0)
+        {
+            glDeleteShader(vsId);
+            GL_CHECK_RESULT;
+
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererSkyStage_OpenGL fragment shader");
+            return false;
+        }
+        const GLuint shaders[] = { vsId, fsId };
+        _program.id = gpuAPI->linkProgram(2, shaders, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
+    }
     if (!_program.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -122,6 +127,7 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     ok = ok && lookup->lookupLocation(_program.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);    
     ok = ok && lookup->lookupLocation(_program.vs.param.mProjection, "param_vs_mProjection", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.planeSize, "param_vs_planeSize", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.skySize, "param_fs_skySize", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.skyColor, "param_fs_skyColor", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.fogColor, "param_fs_fogColor", GlslVariableType::Uniform);
@@ -235,6 +241,14 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::render(IMapRenderer_Metrics::Metri
         internalState.skyShift);
     GL_CHECK_RESULT;
 
+    // Scale the result
+    glUniform4f(_program.vs.param.resultScale,
+        1.0f,
+        currentState.flip ? -1.0f : 1.0f,
+        1.0f,
+        1.0f);
+    GL_CHECK_RESULT;
+
     // Set parameters of the sky
     glUniform4f(_program.fs.param.skySize,
         0.0f, // TODO: put sky width (in kilometers) here for the spherified horizon
@@ -315,7 +329,7 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::release(bool gpuContextLost)
             glDeleteProgram(_program.id);
             GL_CHECK_RESULT;
         }
-        _program = Program();
+        _program.id = 0;
     }
 
     return true;

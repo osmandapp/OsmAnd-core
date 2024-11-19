@@ -26,6 +26,8 @@ namespace OsmAnd
 
         struct Program {
             GLname id;
+            QByteArray binaryCache;
+            GLenum cacheFormat;
 
             struct {
                 // Input data
@@ -38,6 +40,7 @@ namespace OsmAnd
                     // Common data
                     GLlocation mProjection;
                     GLlocation planeSize;
+                    GLlocation resultScale;
                 } param;
             } vs;
 

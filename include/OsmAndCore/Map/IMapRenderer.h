@@ -62,15 +62,11 @@ namespace OsmAnd
         virtual void setConfiguration(const std::shared_ptr<const MapRendererConfiguration>& configuration, bool forcedUpdate = false) = 0;
 
         virtual bool isRenderingInitialized() const = 0;
-        virtual bool initializeRendering(bool renderTargetAvailable) = 0;
+        virtual bool initializeRendering(bool fresh = true) = 0;
         virtual bool update(IMapRenderer_Metrics::Metric_update* const metric = nullptr) = 0;
         virtual bool prepareFrame(IMapRenderer_Metrics::Metric_prepareFrame* const metric = nullptr) = 0;
         virtual bool renderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric = nullptr) = 0;
         virtual bool releaseRendering(bool gpuContextLost = false) = 0;
-
-        virtual bool attachToRenderTarget() = 0;
-        virtual bool isAttachedToRenderTarget() = 0;
-        virtual bool detachFromRenderTarget() = 0;
 
         virtual bool isIdle() const = 0;
         virtual QString getNotIdleReason() const = 0;
@@ -135,6 +131,7 @@ namespace OsmAnd
 
         virtual bool setWindowSize(const PointI& windowSize, bool forcedUpdate = false) = 0;
         virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false) = 0;
+        virtual bool setFlip(bool flip, bool forcedUpdate = false) = 0;
         virtual bool setFieldOfView(const float fieldOfView, bool forcedUpdate = false) = 0;
         virtual bool setVisibleDistance(const float visibleDistance, bool forcedUpdate = false) = 0;
         virtual bool setDetailedDistance(const float detailedDistance, bool forcedUpdate = false) = 0;

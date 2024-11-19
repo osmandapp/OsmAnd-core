@@ -97,6 +97,8 @@ bool OsmAnd::MapRenderer::isInRenderThread() const
 
 OsmAnd::MapRendererSetupOptions OsmAnd::MapRenderer::getSetupOptions() const
 {
+    QReadLocker scopedLocker(&_setupOptionsLock);
+
     return _setupOptions;
 }
 
@@ -104,9 +106,13 @@ bool OsmAnd::MapRenderer::setup(const MapRendererSetupOptions& setupOptions)
 {
     // We can not change setup options renderer once rendering has been initialized
     if (_isRenderingInitialized)
-        return false;
+    {
+        QWriteLocker scopedLocker(&_setupOptionsLock);
 
-    _setupOptions = setupOptions;
+        _setupOptions = setupOptions;
+    }
+    else
+        _setupOptions = setupOptions;
 
     return true;
 }
@@ -213,6 +219,8 @@ void OsmAnd::MapRenderer::invalidateFrame()
     // Increment frame-invalidated counter by 1
     _frameInvalidatesCounter.fetchAndAddOrdered(1);
 
+    QReadLocker scopedLocker(&_setupOptionsLock);
+
     // Request frame, if such callback is defined
     if (_setupOptions.frameUpdateRequestCallback)
         _setupOptions.frameUpdateRequestCallback(this);
@@ -220,14 +228,16 @@ void OsmAnd::MapRenderer::invalidateFrame()
 
 void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
 {
-    assert(_setupOptions.gpuWorkerThreadEnabled);
-
     // Capture thread ID
     _gpuWorkerThreadId = QThread::currentThreadId();
 
-    // Call prologue if such exists
-    if (_setupOptions.gpuWorkerThreadPrologue)
-        _setupOptions.gpuWorkerThreadPrologue(this);
+    {
+        QReadLocker scopedLocker(&_setupOptionsLock);
+
+        // Call prologue if such exists
+        if (_setupOptions.gpuWorkerThreadPrologue)
+            _setupOptions.gpuWorkerThreadPrologue(this);
+    }
 
     while (_gpuWorkerThreadIsAlive)
     {
@@ -245,9 +255,13 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
             processGpuWorker();
     }
 
-    // Call epilogue
-    if (_setupOptions.gpuWorkerThreadEpilogue)
-        _setupOptions.gpuWorkerThreadEpilogue(this);
+    {
+        QReadLocker scopedLocker(&_setupOptionsLock);
+
+        // Call epilogue
+        if (_setupOptions.gpuWorkerThreadEpilogue)
+            _setupOptions.gpuWorkerThreadEpilogue(this);
+    }
 
     _gpuWorkerThreadId = nullptr;
 }
@@ -295,36 +309,53 @@ void OsmAnd::MapRenderer::processGpuWorker()
     _gpuThreadDispatcher.runAll();
 }
 
-bool OsmAnd::MapRenderer::initializeRendering(bool renderTargetAvailable)
+bool OsmAnd::MapRenderer::initializeRendering(bool fresh /* = true */)
 {
+    QMutexLocker scopedLocker(&_initializationLock);
+
+    if (_isRenderingInitialized && fresh)
+        return false;
+
     bool ok;
 
-    _resourcesGpuSyncRequestsCounter.storeRelaxed(0);
+    if (_isRenderingInitialized)
+    {
+        ok = gpuAPI->release(true);
+        if (!ok)
+            return false;
+    }
+    else
+        _resourcesGpuSyncRequestsCounter.storeRelaxed(0);
 
     ok = gpuAPI->initialize();
     if (!ok)
         return false;
 
-    ok = preInitializeRendering();
+    if (_isRenderingInitialized)
+    {
+        _renderThreadId = QThread::currentThreadId();
+
+        ok = doReleaseRendering(true);
+        if (!ok)
+            return false;
+    }
+    else
+    {
+        ok = preInitializeRendering();
+        if (!ok)
+            return false;
+    }
+
+    ok = doInitializeRendering(_isRenderingInitialized);
     if (!ok)
         return false;
 
-    ok = doInitializeRendering();
-    if (!ok)
-        return false;
-
-    ok = postInitializeRendering();
-    if (!ok)
-        return false;
-
-    // DEPTH BUFFER READING IS NOT NEEDED
-    // Once rendering is initialized, attach to render target if available
-    //if (renderTargetAvailable)
-    //{
-    //    ok = attachToRenderTarget();
-    //    if (!ok)
-    //        return false;
-    //}
+    if (!_isRenderingInitialized)
+    {
+        ok = postInitializeRendering();
+        if (!ok)
+            return false;
+    }
 
     // Once rendering is initialized, invalidate frame
     invalidateFrame();
@@ -357,8 +388,13 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
     return true;
 }
 
-bool OsmAnd::MapRenderer::doInitializeRendering()
+bool OsmAnd::MapRenderer::doInitializeRendering(bool reinitialize)
 {
+    if (reinitialize)
+        return true;
+
+    QReadLocker scopedLocker(&_setupOptionsLock);
+
     // Create GPU worker thread
     if (_setupOptions.gpuWorkerThreadEnabled)
     {
@@ -661,15 +697,25 @@ bool OsmAnd::MapRenderer::postRenderFrame(IMapRenderer_Metrics::Metric_renderFra
 
 bool OsmAnd::MapRenderer::releaseRendering(bool gpuContextLost)
 {
-    assert(_renderThreadId == QThread::currentThreadId());
+    if (!gpuContextLost)
+        assert(_renderThreadId == QThread::currentThreadId());
+
+    QMutexLocker scopedLocker(&_initializationLock);
 
     if (gpuContextLost)
         gpuContextIsLost = true;
 
-    _setupOptions.gpuWorkerThreadEnabled = false;
-    _setupOptions.gpuWorkerThreadPrologue = nullptr;
-    _setupOptions.gpuWorkerThreadEpilogue = nullptr;
-    _setupOptions.frameUpdateRequestCallback = nullptr;
+    {
+        QWriteLocker scopedLocker(&_setupOptionsLock);
+
+        _setupOptions.gpuWorkerThreadEnabled = false;
+        _setupOptions.gpuWorkerThreadPrologue = nullptr;
+        _setupOptions.gpuWorkerThreadEpilogue = nullptr;
+        _setupOptions.frameUpdateRequestCallback = nullptr;
+    }
+
+    if (!_isRenderingInitialized)
+        return false;
 
     bool ok;
 
@@ -695,9 +741,6 @@ bool OsmAnd::MapRenderer::releaseRendering(bool gpuContextLost)
 
 bool OsmAnd::MapRenderer::preReleaseRendering(const bool gpuContextLost)
 {
-    if (!_isRenderingInitialized)
-        return false;
-
     return true;
 }
 
@@ -779,31 +822,6 @@ bool OsmAnd::MapRenderer::handleStateChange(const MapRendererState& state, MapRe
     ok = ok && _resources->updateBindingsAndTime(state, mask);
 
     return ok;
-}
-
-bool OsmAnd::MapRenderer::attachToRenderTarget()
-{
-    if (isAttachedToRenderTarget())
-        return false;
-
-    bool ok;
-    ok = gpuAPI->attachToRenderTarget();
-    if (!ok)
-        return false;
-
-    invalidateFrame();
-
-    return true;
-}
-
-bool OsmAnd::MapRenderer::isAttachedToRenderTarget()
-{
-    return gpuAPI->isAttachedToRenderTarget();
-}
-
-bool OsmAnd::MapRenderer::detachFromRenderTarget()
-{
-    return gpuAPI->detachFromRenderTarget(false);
 }
 
 bool OsmAnd::MapRenderer::isIdle() const
@@ -1843,6 +1861,23 @@ bool OsmAnd::MapRenderer::setViewport(const AreaI& viewport, bool forcedUpdate /
     setMapTarget(_requestedState, forcedUpdate);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Viewport);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setFlip(bool flip, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update = forcedUpdate || (_requestedState.flip != flip);
+    if (!update)
+        return false;
+
+    _requestedState.flip = flip;
+
+    setMapTarget(_requestedState, forcedUpdate);
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Flip);
 
     return true;
 }
