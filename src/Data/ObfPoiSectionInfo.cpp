@@ -29,7 +29,7 @@ QList<QPair<QString, QString>> OsmAnd::ObfPoiSectionInfo::getTagValues(uint32_t 
 {
     QList<QPair<QString, QString>> res;
     {
-        QReadLocker tagGroupsLocker(&_tagGroupsLock);
+//        QReadLocker tagGroupsLocker(&_tagGroupsLock);
         auto it = tagGroups.find(id);
         if (it != tagGroups.end())
         {
