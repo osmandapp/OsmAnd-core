@@ -612,10 +612,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                 const auto old = cis->PushLimit(tagGroupLength);
                 QHash<uint32_t, QList<QPair<QString, QString>>> localTagGroups;
                 readTagGroups(reader, localTagGroups);
-//                {
-//                    QWriteLocker tagGroupsLocker(&section->_tagGroupsLock);
-//                    section->tagGroups.insert(localTagGroups);
-//                }
+                section->addTagGroups(localTagGroups);
                 cis->PopLimit(old);
                 break;
             }
