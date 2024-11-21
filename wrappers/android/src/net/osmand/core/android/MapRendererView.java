@@ -56,11 +56,8 @@ import java.util.List;
 public abstract class MapRendererView extends FrameLayout {
     private static final String TAG = "OsmAndCore:Android/MapRendererView";
 
-    private final static long INITIALIZE_TIMEOUT = 4000;
-    private final static long INITIALIZE_WAIT_TIME = 400;
-
     private final static long RELEASE_STOP_TIMEOUT = 4000;
-    private final static long RELEASE_WAIT_TIMEOUT = 400;
+    private final static long RELEASE_WAIT_TIMEOUT = 50;
 
     /**
      * Reference to OsmAndCore::IMapRenderer instance
@@ -228,11 +225,10 @@ public abstract class MapRendererView extends FrameLayout {
         Log.v(TAG, "setupRenderer()");
         NativeCore.checkIfLoaded();
 
-        waitInitialization();
-
         if (_mapRenderer != null) {
             synchronized (_mapRenderer) {
                 _exportableMapRenderer = null;
+                stopRenderingView();
                 if (!isSuspended && _mapRenderer.isRenderingInitialized()) {
                     Log.v(TAG, "Rendering release due to setupRenderer()");
                     releaseRendering();
@@ -272,6 +268,7 @@ public abstract class MapRendererView extends FrameLayout {
                 isSuspended = false;
             } else {
                 Log.v(TAG, "Setting up present renderer to reinitialize...");
+                isInitializing = false;
             }
         } else {
             Log.v(TAG, "Setting up provided renderer to reinitialize...");
@@ -283,6 +280,7 @@ public abstract class MapRendererView extends FrameLayout {
             _mapRenderer = oldRenderer;
 
             // Reinitialize renderer
+            isInitializing = false;
             isReinitializing = true;
 
             // Take other useful data from old map renderer view
@@ -397,21 +395,8 @@ public abstract class MapRendererView extends FrameLayout {
             return null;
     }
 
-    public void waitInitialization() {
-        long getTime = System.currentTimeMillis();
-        while ((isInitializing || isReinitializing) && System.currentTimeMillis() < getTime + INITIALIZE_TIMEOUT) {
-            try {
-                Thread.sleep(INITIALIZE_WAIT_TIME);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
-
     public synchronized IMapRenderer getRenderer() {
         Log.v(TAG, "getRenderer()");
-
-        waitInitialization();
 
         if (_mapRenderer == null || !_mapRenderer.isRenderingInitialized() || _exportableMapRenderer == null) {
             Log.v(TAG, "Can't provide absent or not yet initialized renderer");
@@ -419,14 +404,15 @@ public abstract class MapRendererView extends FrameLayout {
         }
 
         synchronized (_mapRenderer) {
+            stopRenderingView();
             if (isSuspended) {
                 Log.v(TAG, "Renderer was already suspended");
             } else {
                 Log.v(TAG, "Suspend renderer to reuse it in other view");
                 isSuspended = true;
+                isInitializing = false;
                 isReinitializing = false;
             }
-
             removeRenderingView();
 
             // Clean up data
@@ -440,8 +426,6 @@ public abstract class MapRendererView extends FrameLayout {
     public synchronized void stopRenderer() {
         Log.v(TAG, "stopRenderer()");
 
-        waitInitialization();
-
         if (_mapRenderer == null) {
             Log.v(TAG, "Can't stop absent renderer");
             return;
@@ -453,8 +437,8 @@ public abstract class MapRendererView extends FrameLayout {
                 _mapRenderer.releaseRendering(true);
             } else {
                 Log.v(TAG, "Stopping active renderer...");
+                stopRenderingView();
                 releaseRendering();
-    
                 removeRenderingView();
             }
             // Clean up data
@@ -496,6 +480,13 @@ public abstract class MapRendererView extends FrameLayout {
                     } catch (InterruptedException ex) {}
                 }
             }
+        }
+    }
+
+    public void stopRenderingView() {
+        Log.v(TAG, "stopRenderingView()");
+        if (_renderingView != null) {
+            _renderingView.onPause();
         }
     }
 
@@ -1987,7 +1978,7 @@ public abstract class MapRendererView extends FrameLayout {
             // In case rendering is not initialized or just needs to be reinitialized, initialize it
             // (happens when surface is created for the first time, or recreated)
             if (_mapRenderer != null && (isReinitializing || !_mapRenderer.isRenderingInitialized())) {
-                Log.v(TAG, "Initializing rendering");
+                Log.v(TAG, "Rendering is initializing...");
                 if (_gpuWorkerContext != null && _gpuWorkerFakeSurface != null) {
                     setupOptions.setGpuWorkerThreadEnabled(true);
                     setupOptions.setGpuWorkerThreadPrologue(_gpuWorkerThreadPrologue.getBinding());
@@ -2007,6 +1998,7 @@ public abstract class MapRendererView extends FrameLayout {
                     }    
                     _frameStartTime = SystemClock.uptimeMillis();
                     _frameRenderTime = 0;
+                    Log.v(TAG, "Rendering is initialized successfully");
                 } else {
                     _exportableMapRenderer = null;
                     isReinitializing = false;
