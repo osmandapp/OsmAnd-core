@@ -54,6 +54,26 @@ OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRende
 
 OsmAnd::AtlasMapRendererSymbolsStage::~AtlasMapRendererSymbolsStage() = default;
 
+bool OsmAnd::AtlasMapRendererSymbolsStage::release(bool gpuContextLost)
+{
+    {
+        QWriteLocker scopedLocker(&_lastPreparedIntersectionsLock);
+
+        _lastPreparedIntersections.clear();
+    }
+
+    {
+        QWriteLocker scopedLocker(&_lastVisibleSymbolsLock);
+
+        _lastVisibleSymbols.clear();
+    }
+
+    _lastAcceptedMapSymbolsByOrder.clear();
+    denseSymbols.clear();
+    renderableSymbols.clear();
+    return true;
+}
+
 void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Metric_renderFrame* const metric)
 {
     Stopwatch stopwatch(metric != nullptr);

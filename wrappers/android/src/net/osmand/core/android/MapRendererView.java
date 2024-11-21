@@ -145,9 +145,7 @@ public abstract class MapRendererView extends FrameLayout {
      */
     private final RenderRequestCallback _renderRequestCallback = new RenderRequestCallback();
 
-    private MapRendererSetupOptions _setupOptions;
-
-    private IMapRendererSetupOptionsConfigurator _mapRendererSetupOptionsConfigurator;
+    public MapRendererSetupOptions setupOptions = new MapRendererSetupOptions();
 
     /**
      * Reference to valid EGL display
@@ -253,8 +251,8 @@ public abstract class MapRendererView extends FrameLayout {
             _byteBuffer = ByteBuffer.allocateDirect(bitmapWidth * bitmapHeight * 4);
         }
 
-        // Get display density factor
-        _densityFactor = inWindow ? getResources().getDisplayMetrics().density : 1.0f;
+        // Set display density factor
+        setupOptions.setDisplayDensityFactor(inWindow ? getResources().getDisplayMetrics().density : 1.0f);
 
         // Disable battery saving mode
         disableBatterySavingMode();
@@ -290,8 +288,6 @@ public abstract class MapRendererView extends FrameLayout {
             // Take other useful data from old map renderer view
             _gpuWorkerContext = oldView.takeGPUWorkerContext();
             _gpuWorkerFakeSurface = oldView.takeGPUWorkerSurface();
-
-            setMapRendererSetupOptionsConfigurator(oldView.getMapRendererSetupOptionsConfigurator());
         }
 
         // Create rendering view
@@ -376,15 +372,6 @@ public abstract class MapRendererView extends FrameLayout {
         }
     }
 
-    public void setMapRendererSetupOptionsConfigurator(
-            IMapRendererSetupOptionsConfigurator configurator) {
-        _mapRendererSetupOptionsConfigurator = configurator;
-    }
-
-    public IMapRendererSetupOptionsConfigurator getMapRendererSetupOptionsConfigurator() {
-        return _mapRendererSetupOptionsConfigurator;
-    }
-
     /**
      * Method to create instance of OsmAndCore::IMapRenderer
      *
@@ -440,7 +427,6 @@ public abstract class MapRendererView extends FrameLayout {
                 isReinitializing = false;
             }
 
-            // Stop and remove rendering view
             removeRenderingView();
 
             // Clean up data
@@ -463,16 +449,14 @@ public abstract class MapRendererView extends FrameLayout {
 
         synchronized (_mapRenderer) {
             if (isSuspended) {
-                Log.v(TAG, "Can't stop suspended renderer - it must be stopped elsewhere");
-                return;
+                Log.v(TAG, "Stopping suspended renderer...");
+                _mapRenderer.releaseRendering(true);
+            } else {
+                Log.v(TAG, "Stopping active renderer...");
+                releaseRendering();
+    
+                removeRenderingView();
             }
-    
-            Log.v(TAG, "Rendering release due to stopRenderer()");
-            releaseRendering();
-    
-            // Stop and remove rendering view
-            removeRenderingView();
-
             // Clean up data
             listeners = new ArrayList<>();
             _mapAnimator = null;
@@ -1922,13 +1906,6 @@ public abstract class MapRendererView extends FrameLayout {
             // Save reference to EGL display
             _display = display;
 
-            // Change renderer setup options
-            _setupOptions = new MapRendererSetupOptions();
-            _setupOptions.setDisplayDensityFactor(_densityFactor);
-            if (_mapRendererSetupOptionsConfigurator != null) {
-                _mapRendererSetupOptionsConfigurator.configureMapRendererSetupOptions(_setupOptions);
-            }
-
             return _mainContext;
         }
 
@@ -2010,19 +1987,18 @@ public abstract class MapRendererView extends FrameLayout {
             // In case rendering is not initialized or just needs to be reinitialized, initialize it
             // (happens when surface is created for the first time, or recreated)
             if (_mapRenderer != null && (isReinitializing || !_mapRenderer.isRenderingInitialized())) {
-                Log.v(TAG, "Initializing rendering due to surface size change");
-
+                Log.v(TAG, "Initializing rendering");
                 if (_gpuWorkerContext != null && _gpuWorkerFakeSurface != null) {
-                    _setupOptions.setGpuWorkerThreadEnabled(true);
-                    _setupOptions.setGpuWorkerThreadPrologue(_gpuWorkerThreadPrologue.getBinding());
-                    _setupOptions.setGpuWorkerThreadEpilogue(_gpuWorkerThreadEpilogue.getBinding());
+                    setupOptions.setGpuWorkerThreadEnabled(true);
+                    setupOptions.setGpuWorkerThreadPrologue(_gpuWorkerThreadPrologue.getBinding());
+                    setupOptions.setGpuWorkerThreadEpilogue(_gpuWorkerThreadEpilogue.getBinding());
                 } else {
-                    _setupOptions.setGpuWorkerThreadEnabled(false);
-                    _setupOptions.setGpuWorkerThreadPrologue(null);
-                    _setupOptions.setGpuWorkerThreadEpilogue(null);
+                    setupOptions.setGpuWorkerThreadEnabled(false);
+                    setupOptions.setGpuWorkerThreadPrologue(null);
+                    setupOptions.setGpuWorkerThreadEpilogue(null);
                 }
-                _setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());    
-                _mapRenderer.setup(_setupOptions);
+                setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());    
+                _mapRenderer.setup(setupOptions);
                 if (_mapRenderer.initializeRendering(false)) {
                     _exportableMapRenderer = _mapRenderer;
                     if (isReinitializing) {

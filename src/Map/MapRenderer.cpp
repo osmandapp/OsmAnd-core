@@ -104,7 +104,6 @@ OsmAnd::MapRendererSetupOptions OsmAnd::MapRenderer::getSetupOptions() const
 
 bool OsmAnd::MapRenderer::setup(const MapRendererSetupOptions& setupOptions)
 {
-    // We can not change setup options renderer once rendering has been initialized
     if (_isRenderingInitialized)
     {
         QWriteLocker scopedLocker(&_setupOptionsLock);
@@ -1280,6 +1279,9 @@ int OsmAnd::MapRenderer::getSymbolsUpdateInterval()
 void OsmAnd::MapRenderer::setSymbolsUpdateInterval(int interval)
 {
     _symbolsUpdateInterval = interval;
+    clearSymbolsUpdated();
+    shouldUpdateSymbols();
+    invalidateFrame();
 }
 
 void OsmAnd::MapRenderer::shouldUpdateSymbols()

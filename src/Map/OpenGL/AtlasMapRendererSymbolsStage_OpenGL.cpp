@@ -305,6 +305,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release(bool gpuContextLost)
     ok = ok && releaseOnSurfaceVector(gpuContextLost);
     ok = ok && (!_model3DSubstage || _model3DSubstage->release(gpuContextLost));
     ok = ok && releaseVisibilityCheck(gpuContextLost);
+    ok = ok && AtlasMapRendererSymbolsStage::release(gpuContextLost);
     return ok;
 }
 

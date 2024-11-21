@@ -125,7 +125,7 @@ namespace OsmAnd
             const std::shared_ptr<MapRendererBaseResource>& resource);
         bool validatePublishedMapSymbolsIntegrity();
         QAtomicInt _suspendSymbolsUpdateCounter;
-        int _symbolsUpdateInterval;
+        volatile int _symbolsUpdateInterval;
         volatile bool _updateSymbols;
         volatile bool _freshSymbols;
         volatile bool _targetIsElevated;
