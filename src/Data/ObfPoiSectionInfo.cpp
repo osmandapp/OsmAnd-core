@@ -27,16 +27,12 @@ std::shared_ptr<const OsmAnd::ObfPoiSectionSubtypes> OsmAnd::ObfPoiSectionInfo::
 
 QList<QPair<QString, QString>> OsmAnd::ObfPoiSectionInfo::getTagValues(uint32_t id) const
 {
-    QList<QPair<QString, QString>> res;
-    {
-//        QReadLocker tagGroupsLocker(&_tagGroupsLock);
-        auto it = tagGroups.find(id);
-        if (it != tagGroups.end())
-        {
-            res = *it;
-        }
-    }
-    return res;
+   return _p->getTagValues(id);
+}
+
+void OsmAnd::ObfPoiSectionInfo::addTagGroups(QHash<uint32_t, QList<QPair<QString, QString>>> & tagGroups) const
+{
+    _p->addTagGroups(tagGroups);
 }
 
 OsmAnd::ObfPoiSectionCategories::ObfPoiSectionCategories()
