@@ -315,11 +315,22 @@ bool OsmAnd::MapRenderer::initializeRendering(bool fresh /* = true */)
     if (_isRenderingInitialized && fresh)
         return false;
 
+    if (_isRenderingInitialized && !fresh) {
+        _renderThreadId = QThread::currentThreadId();
+        return true;
+    }
+
     bool ok;
 
     if (_isRenderingInitialized)
     {
-        ok = gpuAPI->release(true);
+        _renderThreadId = QThread::currentThreadId();
+
+        ok = doReleaseRendering(false);
+        if (!ok)
+            return false;
+
+        ok = gpuAPI->release(false);
         if (!ok)
             return false;
     }
@@ -330,15 +341,7 @@ bool OsmAnd::MapRenderer::initializeRendering(bool fresh /* = true */)
     if (!ok)
         return false;
 
-    if (_isRenderingInitialized)
-    {
-        _renderThreadId = QThread::currentThreadId();
-
-        ok = doReleaseRendering(true);
-        if (!ok)
-            return false;
-    }
-    else
+    if (!_isRenderingInitialized)
     {
         ok = preInitializeRendering();
         if (!ok)
