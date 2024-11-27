@@ -312,12 +312,17 @@ bool OsmAnd::MapRenderer::initializeRendering(bool fresh /* = true */)
 {
     QMutexLocker scopedLocker(&_initializationLock);
 
-    if (_isRenderingInitialized && fresh)
-        return false;
-
-    if (_isRenderingInitialized && !fresh) {
-        _renderThreadId = QThread::currentThreadId();
-        return true;
+    if (_isRenderingInitialized)
+    {
+        if (fresh)
+            return false;
+        else
+        {
+            // Don't reinitialize already initialized renderer - remove this block if reinitialized renderer is needed
+            _renderThreadId = QThread::currentThreadId();
+            invalidateFrame();
+            return true;
+        }
     }
 
     bool ok;

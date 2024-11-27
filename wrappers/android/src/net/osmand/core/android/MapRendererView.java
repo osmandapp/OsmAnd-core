@@ -151,6 +151,9 @@ public abstract class MapRendererView extends FrameLayout {
         CREATE_CONTEXTS,
         CREATE_WINDOW_SURFACE,
         CREATE_PIXELBUFFER_SURFACE,
+        INITIALIZE_RENDERING,
+        RENDER_FRAME,
+        RELEASE_RENDERING,
         DESTROY_SURFACE,
         DESTROY_CONTEXTS
     }
@@ -180,14 +183,19 @@ public abstract class MapRendererView extends FrameLayout {
     private volatile boolean isReinitializing;
 
     /**
-     * Rendering is suspended but renderer must be kept initialized
+     * Rendering is suspended, but renderer needs to be kept initialized
      */
     private volatile boolean isSuspended;
 
     /**
-     * Target surface view is present and ready for rendering
+     * Target surface is present and ready for drawing
      */
     private volatile boolean isSurfaceReady;
+
+    /**
+     * OpenGL view is started and ready for rendering
+     */
+    private volatile boolean isViewStarted;
 
     /**
      * View is on pause
@@ -242,9 +250,7 @@ public abstract class MapRendererView extends FrameLayout {
         _windowWidth = bitmapWidth;
         _windowHeight = bitmapHeight;
 
-        if (!_inWindow) {
-            _byteBuffer = ByteBuffer.allocateDirect(bitmapWidth * bitmapHeight * 4);
-        }
+        _byteBuffer = _inWindow ? null : ByteBuffer.allocateDirect(bitmapWidth * bitmapHeight * 4);
 
         // Set display density factor
         setupOptions.setDisplayDensityFactor(_inWindow ? getResources().getDisplayMetrics().density : 1.0f);
@@ -262,7 +268,7 @@ public abstract class MapRendererView extends FrameLayout {
             isReinitializing = (isSuspended && _mapRenderer != null && _mapRenderer.isRenderingInitialized());
             if (!isReinitializing) {
                 Log.v(TAG, "Setting up new renderer to initialize...");
-                eglThread = new EGLThread("EGLThread");
+                eglThread = new EGLThread("OpenGLThread");
                 eglThread.start();
                 _mapRenderer = createMapRendererInstance();
                 isInitializing = true;
@@ -275,8 +281,11 @@ public abstract class MapRendererView extends FrameLayout {
             Log.v(TAG, "Setting up provided renderer to reinitialize...");
 
             if (_mapRenderer != oldRenderer && isSuspended && _mapRenderer.isRenderingInitialized()) {
-                Log.v(TAG, "Releasing suspended renderer");
-                _mapRenderer.releaseRendering(true);
+                Log.v(TAG, "Releasing suspended renderer...");
+                synchronized (eglThread) {
+                    eglThread.mapRenderer = _mapRenderer;
+                    eglThread.startAndCompleteOperation(EGLThreadOperation.RELEASE_RENDERING);
+                }    
             }
 
             // Use previous frame rate limit for battery saving mode
@@ -318,9 +327,8 @@ public abstract class MapRendererView extends FrameLayout {
         }
         _mapMarkersAnimator.setMapRenderer(_mapRenderer);
 
-        initOnResume = isPaused;
-
         synchronized (_mapRenderer) {
+            initOnResume = isPaused;
             startRenderingView(context);
         }
     }
@@ -421,7 +429,10 @@ public abstract class MapRendererView extends FrameLayout {
         synchronized (_mapRenderer) {
             if (isSuspended) {
                 Log.v(TAG, "Stopping suspended renderer...");
-                _mapRenderer.releaseRendering(true);
+                synchronized (eglThread) {
+                    eglThread.mapRenderer = _mapRenderer;
+                    eglThread.startAndCompleteOperation(EGLThreadOperation.RELEASE_RENDERING);
+                }
             } else {
                 Log.v(TAG, "Stopping active renderer...");
                 stopRenderingView();
@@ -437,36 +448,12 @@ public abstract class MapRendererView extends FrameLayout {
 
     private void releaseRendering() {
         Log.v(TAG, "releaseRendering()");
-        if (releaseTask == null) {
-            releaseTask = new Runnable() {
-                @Override
-                public void run() {
-                    if (!isSuspended && _mapRenderer != null && _mapRenderer.isRenderingInitialized()) {
-                        Log.v(TAG, "Release rendering...");
-                        _mapRenderer.releaseRendering(true);
-                    }
-                    synchronized (this) {
-                        waitRelease = false;
-                        this.notifyAll();
-                    }                
-                }
-            };
-        }
-        if (!waitRelease && _renderingView != null) {
-            waitRelease = true;
-            _renderingView.queueEvent(releaseTask);
-            synchronized (releaseTask) {
-                long stopTime = System.currentTimeMillis();
-                while (waitRelease){
-                    if (System.currentTimeMillis() > stopTime + RELEASE_STOP_TIMEOUT) {
-                        waitRelease = false;
-                        return;
-                    }
-                    try {
-                        releaseTask.wait(RELEASE_WAIT_TIMEOUT);
-                    } catch (InterruptedException ex) {}
-                }
-            }
+        if (!isSuspended && _mapRenderer != null && _mapRenderer.isRenderingInitialized()) {
+            Log.v(TAG, "Release rendering...");
+            synchronized (eglThread) {
+                eglThread.mapRenderer = _mapRenderer;
+                eglThread.startAndCompleteOperation(EGLThreadOperation.RELEASE_RENDERING);
+            }    
         }
     }
 
@@ -477,7 +464,6 @@ public abstract class MapRendererView extends FrameLayout {
             _renderingView.isOffscreen = !_inWindow;
         }
         if (_renderingView != null && (context == null || !initOnResume)) {
-            _renderingView.setGLWrapper(new OpenGLWrapper());
             _renderingView.setPreserveEGLContextOnPause(true);
             _renderingView.setEGLContextClientVersion(3);
             eglThread.configChooser =
@@ -488,6 +474,7 @@ public abstract class MapRendererView extends FrameLayout {
                 _inWindow ? new WindowSurfaceFactory() : new PixelbufferSurfaceFactory(_windowWidth, _windowHeight));
             _renderingView.setRenderer(new RendererProxy());
             _renderingView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+            isViewStarted = true;
             if (_inWindow) {
                 addView(_renderingView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
             } else {
@@ -499,8 +486,13 @@ public abstract class MapRendererView extends FrameLayout {
 
     public void stopRenderingView() {
         Log.v(TAG, "stopRenderingView()");
-        if (_renderingView != null) {
-            _renderingView.onPause();
+        if (isViewStarted) {
+            isViewStarted = false;
+            if (_renderingView != null) {
+                _renderingView.onPause();
+            }
+        } else if (initOnResume) {
+            initOnResume = false;
         }
     }
 
@@ -577,7 +569,7 @@ public abstract class MapRendererView extends FrameLayout {
 
         // Inform rendering view that activity was paused
         synchronized (_mapRenderer) {
-            if (!isSuspended && _renderingView != null) {
+            if (isViewStarted && !isSuspended && _renderingView != null) {
                 _renderingView.onPause();
             }
         }
@@ -1659,16 +1651,6 @@ public abstract class MapRendererView extends FrameLayout {
         }
     }
 
-    private class OpenGLWrapper implements GLSurfaceView.GLWrapper {
-        public GL wrap(GL gl) {
-            if (eglThread.context != null) {
-                return eglThread.context.getGL();
-            } else {
-                return gl;
-            }
-        }
-    }
-
     private abstract class BaseConfigChooser
             implements GLSurfaceView.EGLConfigChooser {
         public BaseConfigChooser(int[] configSpec) {
@@ -1704,7 +1686,7 @@ public abstract class MapRendererView extends FrameLayout {
         public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display) {
             Log.v(TAG, "ComponentSizeChooser.chooseConfig()...");
             synchronized (eglThread) {
-                eglThread.startAndCompleteOperation(egl, EGLThreadOperation.CHOOSE_CONFIG);
+                eglThread.startAndCompleteOperation(EGLThreadOperation.CHOOSE_CONFIG);
             }
             return makeConfig(egl, display);
         }
@@ -1816,7 +1798,7 @@ public abstract class MapRendererView extends FrameLayout {
             Log.v(TAG, "WindowSurfaceFactory.createWindowSurface()...");
             synchronized (eglThread) {
                 eglThread.nativeWindow = nativeWindow;
-                eglThread.startAndCompleteOperation(egl, EGLThreadOperation.CREATE_WINDOW_SURFACE);
+                eglThread.startAndCompleteOperation(EGLThreadOperation.CREATE_WINDOW_SURFACE);
             }
 
             // Create dummy surface
@@ -1833,7 +1815,7 @@ public abstract class MapRendererView extends FrameLayout {
             Log.v(TAG, "WindowSurfaceFactory.destroySurface()...");
             egl.eglDestroySurface(display, surface);
             synchronized (eglThread) {
-                eglThread.startAndCompleteOperation(egl, EGLThreadOperation.DESTROY_SURFACE);
+                eglThread.startAndCompleteOperation(EGLThreadOperation.DESTROY_SURFACE);
             }
         }
 
@@ -1857,7 +1839,7 @@ public abstract class MapRendererView extends FrameLayout {
             synchronized (eglThread) {
                 eglThread.surfaceWidth = surfaceWidth;
                 eglThread.surfaceHeight = surfaceHeight;
-                eglThread.startAndCompleteOperation(egl, EGLThreadOperation.CREATE_PIXELBUFFER_SURFACE);
+                eglThread.startAndCompleteOperation(EGLThreadOperation.CREATE_PIXELBUFFER_SURFACE);
             }
 
             // Create dummy surface
@@ -1874,7 +1856,7 @@ public abstract class MapRendererView extends FrameLayout {
             Log.v(TAG, "PixelbufferSurfaceFactory.destroySurface()...");
             egl.eglDestroySurface(display, surface);
             synchronized (eglThread) {
-                eglThread.startAndCompleteOperation(egl, EGLThreadOperation.DESTROY_SURFACE);
+                eglThread.startAndCompleteOperation(EGLThreadOperation.DESTROY_SURFACE);
             }
         }
 
@@ -1904,7 +1886,7 @@ public abstract class MapRendererView extends FrameLayout {
 
                 // Since there's no more context, where previous resources were created,
                 // they are lost. Forcibly release rendering
-                _mapRenderer.releaseRendering(true);
+                releaseRendering();
             }
 
             if (config == null) {
@@ -1912,7 +1894,7 @@ public abstract class MapRendererView extends FrameLayout {
             }
 
             synchronized (eglThread) {
-                eglThread.startAndCompleteOperation(egl, EGLThreadOperation.CREATE_CONTEXTS);
+                eglThread.startAndCompleteOperation(EGLThreadOperation.CREATE_CONTEXTS);
             }
 
             // Create dummy EGL context for GLSurfaceView only
@@ -1944,7 +1926,7 @@ public abstract class MapRendererView extends FrameLayout {
 
                 // Since there's no more context, where previous resources were created,
                 // they are lost. Forcibly release rendering
-                _mapRenderer.releaseRendering(true);
+                releaseRendering();
             }
 
             // Destroy dummy context
@@ -1952,7 +1934,7 @@ public abstract class MapRendererView extends FrameLayout {
 
             if (!isSuspended) {
                 synchronized (eglThread) {
-                    eglThread.startAndCompleteOperation(egl, EGLThreadOperation.DESTROY_CONTEXTS);
+                    eglThread.startAndCompleteOperation(EGLThreadOperation.DESTROY_CONTEXTS);
                 }
             }
         }
@@ -1976,7 +1958,7 @@ public abstract class MapRendererView extends FrameLayout {
             // call to onSurfaceChanged
             if (!isReinitializing && _mapRenderer != null && _mapRenderer.isRenderingInitialized()) {
                 Log.v(TAG, "Release rendering due to context recreation");
-                _mapRenderer.releaseRendering(true);
+                releaseRendering();
             }
         }
 
@@ -1984,23 +1966,6 @@ public abstract class MapRendererView extends FrameLayout {
             Log.v(TAG, "RendererProxy.onSurfaceChanged()...");
 
             if (isSuspended && !isReinitializing) {
-                return;
-            }
-
-            // Get EGL interface
-            EGL10 egl = (EGL10) EGLContext.getEGL();
-            if (egl == null) {
-                Log.e(TAG, "Failed to obtain EGL interface");
-                return;
-            }
-
-            try {
-                if (!egl.eglMakeCurrent(eglThread.display, eglThread.surface, eglThread.surface, eglThread.context)) {
-                    Log.e(TAG, "Failed to set main EGL context active: " + getEglErrorString(egl.eglGetError()));
-                    return;
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to set main EGL context active", e);
                 return;
             }
 
@@ -2032,7 +1997,14 @@ public abstract class MapRendererView extends FrameLayout {
             // (happens when surface is created for the first time, or recreated)
             if (_mapRenderer != null && (isReinitializing || !_mapRenderer.isRenderingInitialized())) {
                 Log.v(TAG, "Rendering is initializing...");
-                if (_mapRenderer.initializeRendering(false)) {
+                boolean ok = false;
+                synchronized (eglThread) {
+                    eglThread.ok = false;
+                    eglThread.mapRenderer = _mapRenderer;
+                    eglThread.startAndCompleteOperation(EGLThreadOperation.INITIALIZE_RENDERING);
+                    ok = eglThread.ok;
+                }
+                if (ok) {
                     _exportableMapRenderer = _mapRenderer;
                     if (isReinitializing) {
                         isReinitializing = false;
@@ -2077,29 +2049,21 @@ public abstract class MapRendererView extends FrameLayout {
                 listener.onUpdateFrame(MapRendererView.this);
             }
 
-            // Allow renderer to update
-            _mapRenderer.update();
-
-            // In case a new frame was prepared, render it
-            if (_mapRenderer.prepareFrame()) {
-                frameId++;
-                _mapRenderer.renderFrame();
-            }
-
-            long preFlushTime = SystemClock.uptimeMillis();
-
-            // Flush all the commands to GPU
-            gl.glFlush();
-
-            // Read the result raster to byte buffer when rendering off-screen
-            if (_byteBuffer != null) {
-                gl.glFinish();
-                synchronized (_byteBuffer) {
-                    _byteBuffer.rewind();
-                    gl.glReadPixels(
-                        0, 0, _windowWidth, _windowHeight, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, _byteBuffer);
+            long preFlushTime;
+            synchronized (eglThread) {
+                eglThread.mapRenderer = _mapRenderer;
+                eglThread.byteBuffer = _byteBuffer;
+                eglThread.renderingResultIsReady = false;
+                eglThread.startAndCompleteOperation(EGLThreadOperation.RENDER_FRAME);
+                if (eglThread.renderingResultIsReady) {
                     _renderingResultIsReady = true;
                 }
+                preFlushTime = eglThread.preFlushTime;
+            }
+
+            frameId++;
+
+            if (_byteBuffer != null) {
                 for (MapRendererViewListener listener : listeners) {
                     listener.onFrameReady(MapRendererView.this);
                 }
@@ -2123,8 +2087,6 @@ public abstract class MapRendererView extends FrameLayout {
                     }
                 }
             }
-            EGL10 egl = (EGL10) EGLContext.getEGL();
-            egl.eglSwapBuffers(eglThread.display, eglThread.surface);
         }
     }
 
@@ -2237,21 +2199,29 @@ public abstract class MapRendererView extends FrameLayout {
         }
     }
 
-    public class EGLThread extends Thread {
-        public EGL10 egl;
-        public EGLDisplay display;
-        public EGLConfig config;
-        public EGLContext context;
-        public EGLSurface surface;
-        public EGLContext gpuWorkerContext;
-        public EGLSurface gpuWorkerFakeSurface;
+    private class EGLThread extends Thread {
 
-        public ComponentSizeChooser configChooser;
+        private EGL10 egl;
+        private EGLDisplay display;
+        private EGLConfig config;
+        private EGLContext context;
+        private EGLSurface surface;
+        GL10 gl;
 
-        public Object nativeWindow;
+        protected volatile EGLContext gpuWorkerContext;
+        protected volatile EGLSurface gpuWorkerFakeSurface;
 
-        public int surfaceWidth;
-        public int surfaceHeight;
+        protected volatile ComponentSizeChooser configChooser;
+
+        protected volatile Object nativeWindow;
+
+        protected volatile int surfaceWidth;
+        protected volatile int surfaceHeight;
+
+        protected volatile IMapRenderer mapRenderer;
+
+        protected volatile ByteBuffer byteBuffer;
+        protected volatile boolean renderingResultIsReady;
 
         private final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;        
 
@@ -2259,7 +2229,7 @@ public abstract class MapRendererView extends FrameLayout {
          * EGL attributes used to initialize EGL context:
          * - EGL context must support at least OpenGLES 3.0
          */
-        public final int[] contextAttributes = {
+        protected final int[] contextAttributes = {
             EGL_CONTEXT_CLIENT_VERSION, 3,
             EGL10.EGL_NONE
         };
@@ -2273,15 +2243,16 @@ public abstract class MapRendererView extends FrameLayout {
             EGL10.EGL_NONE
         };
 
-        public EGLThreadOperation eglThreadOperation = EGLThreadOperation.NO_OPERATION;
+        public volatile EGLThreadOperation eglThreadOperation = EGLThreadOperation.NO_OPERATION;
+        public volatile boolean ok;
+        public volatile long preFlushTime = SystemClock.uptimeMillis();
 
         public EGLThread(String name) {
             super(name);
         }
 
-        // NOTE: Needs to be called from synchronized block
-        public void startAndCompleteOperation(EGL10 egl_, EGLThreadOperation operation) {
-            egl = egl_;
+        // NOTE: It needs to be called from synchronized block
+        public void startAndCompleteOperation(EGLThreadOperation operation) {
             eglThreadOperation = operation;
             notifyAll();
             while (eglThreadOperation != EGLThreadOperation.NO_OPERATION) {
@@ -2295,6 +2266,7 @@ public abstract class MapRendererView extends FrameLayout {
 
         @Override
         public void run() {
+            egl = (EGL10) EGLContext.getEGL();
             while (true) {
                 synchronized (this) {
                     switch (eglThreadOperation) {
@@ -2389,6 +2361,16 @@ public abstract class MapRendererView extends FrameLayout {
                         }
                         if (surface == null || surface == EGL10.EGL_NO_SURFACE) {
                             surface = null;
+                        } else {
+                            try {
+                                if (!egl.eglMakeCurrent(display, surface, surface, context)) {
+                                    Log.e(TAG, "Failed to set main EGL context to window active: "
+                                        + getEglErrorString(egl.eglGetError()));
+                                }
+                            } catch (Exception e) {
+                                Log.e(TAG, "Failed to set main EGL context to window active", e);
+                            }
+                            gl = (GL10) context.getGL();
                         }
                         break;
 
@@ -2408,16 +2390,57 @@ public abstract class MapRendererView extends FrameLayout {
                         }
                         if (surface == null || surface == EGL10.EGL_NO_SURFACE) {
                             surface = null;
+                        } else {
+                            try {
+                                if (!egl.eglMakeCurrent(display, surface, surface, context)) {
+                                    Log.e(TAG, "Failed to set main EGL context to pixelbuffer active: "
+                                        + getEglErrorString(egl.eglGetError()));
+                                }
+                            } catch (Exception e) {
+                                Log.e(TAG, "Failed to set main EGL context to pixelbuffer active", e);
+                            }
+                            gl = (GL10) context.getGL();
                         }
+                        break;
+
+                        case INITIALIZE_RENDERING:
+                        ok = mapRenderer.initializeRendering(false);
+                        break;
+
+                        case RENDER_FRAME:
+                        mapRenderer.update();
+                        boolean isReady = mapRenderer.prepareFrame();
+                        if (isReady) {
+                            mapRenderer.renderFrame();
+                        }
+                        preFlushTime = SystemClock.uptimeMillis();
+                        if (isReady) {
+                            gl.glFlush();
+                            if (byteBuffer != null) {
+                                gl.glFinish();
+                                synchronized (byteBuffer) {
+                                    byteBuffer.rewind();
+                                    gl.glReadPixels(0, 0, surfaceWidth, surfaceHeight,
+                                        GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, byteBuffer);
+                                    renderingResultIsReady = true;
+                                }
+                            } else {
+                                egl.eglSwapBuffers(display, surface);
+                            }
+                        }
+                        break;
+
+                        case RELEASE_RENDERING:
+                        mapRenderer.releaseRendering(true);
                         break;
 
                         case DESTROY_SURFACE:
                         if (display != null && surface != null) {
+                            egl.eglMakeCurrent(display, EGL10.EGL_NO_SURFACE,
+                                EGL10.EGL_NO_SURFACE,
+                                EGL10.EGL_NO_CONTEXT);
                             egl.eglDestroySurface(display, surface);
                             surface = null;
-                        }
-                        if (display == null || config == null) {
-                            context = null;
                         }
                         break;
             
