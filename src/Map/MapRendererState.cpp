@@ -1,7 +1,8 @@
 #include "MapRendererState.h"
 
 OsmAnd::MapRendererState::MapRendererState()
-    : fieldOfView(16.5f)
+    : flip(false)
+    , fieldOfView(16.5f)
     , visibleDistance(3500)
     , detailedDistance(0.5f)
     , skyColor(ColorRGB(255, 255, 255))
