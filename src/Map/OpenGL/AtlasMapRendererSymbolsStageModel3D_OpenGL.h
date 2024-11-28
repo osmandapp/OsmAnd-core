@@ -17,6 +17,8 @@ namespace OsmAnd
         struct Model3DProgram
         {
             GLname id;
+            QByteArray binaryCache;
+            GLenum cacheFormat;
 
             // Vertex data
             struct
@@ -38,7 +40,8 @@ namespace OsmAnd
 
                     // Common data
                     GLlocation mPerspectiveProjectionView;
-                } params;
+                    GLlocation resultScale;
+                } param;
             } vs;
             // Vertex data
             struct
@@ -48,7 +51,7 @@ namespace OsmAnd
                 {
                     // Common data
                     GLlocation cameraPosition;
-                } params;
+                } param;
             } fs;
         } _program;
 

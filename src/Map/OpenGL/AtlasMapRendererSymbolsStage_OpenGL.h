@@ -32,6 +32,8 @@ namespace OsmAnd
         GLname _billboardRasterSymbolIBO;
         struct BillboardRasterSymbolProgram {
             GLname id;
+            QByteArray binaryCache;
+            GLenum cacheFormat;
 
             struct {
                 // Input data
@@ -45,6 +47,7 @@ namespace OsmAnd
                     // Common data
                     GLlocation mPerspectiveProjectionView;
                     GLlocation mOrthographicProjection;
+                    GLlocation resultScale;
                     GLlocation viewport;
                     GLlocation target31;
 
@@ -93,6 +96,8 @@ namespace OsmAnd
         GLname _onPathSymbol2dIBO;
         struct OnPathSymbol2dProgram {
             GLname id;
+            QByteArray binaryCache;
+            GLenum cacheFormat;
 
             struct {
                 // Input data
@@ -106,6 +111,7 @@ namespace OsmAnd
                 struct {
                     // Common data
                     GLlocation mOrthographicProjection;
+                    GLlocation resultScale;
 
                     // Per-symbol data
                     GLlocation glyphHeight;
@@ -141,6 +147,8 @@ namespace OsmAnd
         GLname _onPathSymbol3dIBO;
         struct OnPathSymbol3dProgram {
             GLname id;
+            QByteArray binaryCache;
+            GLenum cacheFormat;
 
             struct {
                 // Input data
@@ -154,6 +162,7 @@ namespace OsmAnd
                 struct {
                     // Common data
                     GLlocation mPerspectiveProjectionView;
+                    GLlocation resultScale;
 
                     // Per-symbol data
                     GLlocation glyphHeight;
@@ -193,6 +202,8 @@ namespace OsmAnd
         GLname _onSurfaceRasterSymbolIBO;
         struct OnSurfaceRasterProgram {
             GLname id;
+            QByteArray binaryCache;
+            GLenum cacheFormat;
 
             struct {
                 // Input data
@@ -205,6 +216,7 @@ namespace OsmAnd
                 struct {
                     // Common data
                     GLlocation mPerspectiveProjectionView;
+                    GLlocation resultScale;
 
                     // Per-symbol data
                     GLlocation symbolOffsetFromTarget;
@@ -233,6 +245,8 @@ namespace OsmAnd
 
         struct OnSurfaceVectorProgram {
             GLname id;
+            QByteArray binaryCache;
+            GLenum cacheFormat;
 
             struct {
                 // Input data
@@ -245,6 +259,7 @@ namespace OsmAnd
                 struct {
                     // Common data
                     GLlocation mPerspectiveProjectionView;
+                    GLlocation resultScale;
                     GLlocation mModel;
                     GLlocation modulationColor;
                     GLlocation tileId;
@@ -287,6 +302,8 @@ namespace OsmAnd
         GLname _visibilityCheckVBO;
         struct VisibilityCheckProgram {
             GLname id;
+            QByteArray binaryCache;
+            GLenum cacheFormat;
 
             struct {
                 // Input data
@@ -303,6 +320,7 @@ namespace OsmAnd
                     GLlocation fourthPointPosition;
                     GLlocation cameraInWorld;
                     GLlocation mModelViewProjection;
+                    GLlocation resultScale;
                 } param;
             } vs;
 

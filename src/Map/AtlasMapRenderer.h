@@ -64,12 +64,13 @@ namespace OsmAnd
 
         // Customization points:
         bool preInitializeRendering() override;
-        bool doInitializeRendering() override;
+        bool doInitializeRendering(bool reinitialize) override;
 
         bool prePrepareFrame() override;
         bool postPrepareFrame() override;
 
         bool doReleaseRendering(bool gpuContextLost) override;
+        bool postReleaseRendering(bool gpuContextLost) override;
 
         // Stages:
         std::shared_ptr<AtlasMapRendererSkyStage> _skyStage;

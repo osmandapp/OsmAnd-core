@@ -68,6 +68,8 @@ namespace OsmAnd
     private:
         // General:
         bool _isRenderingInitialized;
+        mutable QMutex _initializationLock;
+        mutable QReadWriteLock _setupOptionsLock;
         MapRendererSetupOptions _setupOptions;
 
         // Configuration-related:
@@ -123,7 +125,7 @@ namespace OsmAnd
             const std::shared_ptr<MapRendererBaseResource>& resource);
         bool validatePublishedMapSymbolsIntegrity();
         QAtomicInt _suspendSymbolsUpdateCounter;
-        int _symbolsUpdateInterval;
+        volatile int _symbolsUpdateInterval;
         volatile bool _updateSymbols;
         volatile bool _freshSymbols;
         volatile bool _targetIsElevated;
@@ -278,7 +280,7 @@ namespace OsmAnd
 
         // Customization points:
         virtual bool preInitializeRendering();
-        virtual bool doInitializeRendering();
+        virtual bool doInitializeRendering(bool reinitialize);
         virtual bool postInitializeRendering();
 
         virtual bool preUpdate(IMapRenderer_Metrics::Metric_update* metric);
@@ -314,15 +316,11 @@ namespace OsmAnd
             const std::shared_ptr<const MapRendererConfiguration>& configuration,
             bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
-        bool initializeRendering(bool renderTargetAvailable) override;
+        bool initializeRendering(bool fresh = true) override;
         bool update(IMapRenderer_Metrics::Metric_update* metric = nullptr) final;
         bool prepareFrame(IMapRenderer_Metrics::Metric_prepareFrame* metric = nullptr) final;
         bool renderFrame(IMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) final;
         bool releaseRendering(bool gpuContextLost) override;
-
-        bool attachToRenderTarget() override;
-        bool isAttachedToRenderTarget() override;
-        bool detachFromRenderTarget() override;
 
         virtual bool isIdle() const Q_DECL_OVERRIDE;
         virtual QString getNotIdleReason() const Q_DECL_OVERRIDE;
@@ -367,6 +365,7 @@ namespace OsmAnd
 
         virtual bool setWindowSize(const PointI& windowSize, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setFlip(bool flip, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFieldOfView(const float fieldOfView, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setVisibleDistance(const float visibleDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setDetailedDistance(const float detailedDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;

@@ -41,8 +41,7 @@ OsmAnd::GPUAPI_OpenGL2plus::GPUAPI_OpenGL2plus()
     , _isSupported_EXT_debug_marker(false)
     , _isSupported_EXT_debug_label(false)
     , _isSupported_ARB_sync(false)
-    , _framebufferDepthDataFormat(0)
-    , _framebufferDepthDataType(0)
+    , _isSupported_ARB_get_program_binary(false)
     , isSupported_GREMEDY_string_marker(_isSupported_GREMEDY_string_marker)
     , isSupported_ARB_sampler_objects(_isSupported_ARB_sampler_objects)
     , isSupported_samplerObjects(_isSupported_samplerObjects)
@@ -56,8 +55,7 @@ OsmAnd::GPUAPI_OpenGL2plus::GPUAPI_OpenGL2plus()
     , isSupported_EXT_debug_marker(_isSupported_EXT_debug_marker)
     , isSupported_EXT_debug_label(_isSupported_EXT_debug_label)
     , isSupported_ARB_sync(_isSupported_ARB_sync)
-    , framebufferDepthDataFormat(_framebufferDepthDataFormat)
-    , framebufferDepthDataType(_framebufferDepthDataType)
+    , isSupported_ARB_get_program_binary(_isSupported_ARB_get_program_binary)
 {
 }
 
@@ -236,6 +234,7 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     _isSupported_EXT_debug_label = extensions.contains("GL_EXT_debug_label");
     _isSupported_debug_label = (glVersion >= 43 || _isSupported_EXT_debug_label);
     _isSupported_ARB_sync = extensions.contains("GL_ARB_sync");
+    _isSupported_ARB_get_program_binary = extensions.contains("GL_ARB_get_program_binary");
     _isSupported_sync = (glVersion >= 32 || _isSupported_ARB_sync);
     // http://www.opengl.org/sdk/docs/man/html/glGenSamplers.xhtml are supported only if OpenGL 3.3+ or GL_ARB_sampler_objects is available
     _isSupported_ARB_sampler_objects = extensions.contains(QLatin1String("GL_ARB_sampler_objects"));
@@ -262,6 +261,16 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
 
     _isSupported_EXT_gpu_shader4 = extensions.contains(QStringLiteral("GL_EXT_gpu_shader4"));
     _isSupported_integerOperations = (glslVersion >= 130) || _isSupported_EXT_gpu_shader4;
+
+    if (glVersion >= 41 || _isSupported_ARB_get_program_binary)
+    {
+        GLint numProgramBinaryFormats = 0;
+        glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS, &numProgramBinaryFormats);
+        GL_CHECK_RESULT;
+        _isSupported_program_binary = (numProgramBinaryFormats > 0);
+    }
+    else
+        _isSupported_program_binary = false;
 
     GLint compressedFormatsLength = 0;
     glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &compressedFormatsLength);
@@ -399,76 +408,6 @@ bool OsmAnd::GPUAPI_OpenGL2plus::elementIsVisible(int queryIndex)
     GL_CHECK_RESULT;
 
     return queryResult == 0;
-}
-
-bool OsmAnd::GPUAPI_OpenGL2plus::attachToRenderTarget()
-{
-    if (isAttachedToRenderTarget())
-        return false;
-
-    glGetIntegerv(GL_DEPTH_BITS, &_framebufferDepthBits);
-    GL_CHECK_RESULT;
-    if (_framebufferDepthBits == 24)
-        _framebufferDepthBytes = 4;
-    else
-        _framebufferDepthBytes = _framebufferDepthBits / 8;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL render target depth buffer: %d bits (%d bytes)", _framebufferDepthBits, _framebufferDepthBytes);
-
-    GLint framebufferStencilBits;
-    glGetIntegerv(GL_STENCIL_BITS, &framebufferStencilBits);
-    GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL render target stencil buffer: %d bits", framebufferStencilBits);
-
-    if (_framebufferDepthBits == 32)
-    {
-        _framebufferDepthDataFormat = GL_DEPTH_COMPONENT;
-        _framebufferDepthDataType = GL_UNSIGNED_INT;
-        LogPrintf(LogSeverityLevel::Info, "OpenGL render target depth buffer: DEPTH_COMPONENT/UNSIGNED_INT");
-    }
-    else if (_framebufferDepthBits == 24)
-    {
-        if (framebufferStencilBits == 8)
-        {
-            _framebufferDepthDataFormat = GL_DEPTH_STENCIL;
-            if (glVersion >= 30)
-            {
-                _framebufferDepthDataType = GL_UNSIGNED_INT_24_8;
-                LogPrintf(LogSeverityLevel::Info, "OpenGL render target depth buffer: DEPTH_STENCIL/UNSIGNED_INT_24_8");
-            }
-            else
-            {
-                _framebufferDepthDataType = GL_UNSIGNED_INT;
-                LogPrintf(LogSeverityLevel::Info, "OpenGL render target depth buffer: DEPTH_STENCIL/UNSIGNED_INT");
-            }
-        }
-        else
-        {
-            _framebufferDepthDataFormat = GL_DEPTH_COMPONENT;
-            _framebufferDepthDataType = GL_UNSIGNED_INT;
-            LogPrintf(LogSeverityLevel::Info, "OpenGL render target depth buffer: DEPTH_COMPONENT/UNSIGNED_INT");
-        }
-    }
-    else if (_framebufferDepthBits == 16)
-    {
-        _framebufferDepthDataFormat = GL_DEPTH_COMPONENT;
-        _framebufferDepthDataType = GL_UNSIGNED_SHORT;
-        LogPrintf(LogSeverityLevel::Info, "OpenGL render target depth buffer: DEPTH_COMPONENT/UNSIGNED_SHORT");
-    }
-
-    return GPUAPI_OpenGL::attachToRenderTarget();
-}
-
-bool OsmAnd::GPUAPI_OpenGL2plus::detachFromRenderTarget(bool gpuContextLost)
-{
-    if (!isAttachedToRenderTarget())
-        return false;
-
-    _framebufferDepthBits = 0;
-    _framebufferDepthBytes = 0;
-    _framebufferDepthDataFormat = 0;
-    _framebufferDepthDataType = 0;
-
-    return GPUAPI_OpenGL::detachFromRenderTarget(gpuContextLost);
 }
 
 bool OsmAnd::GPUAPI_OpenGL2plus::release(bool gpuContextLost)
@@ -1129,53 +1068,4 @@ void OsmAnd::GPUAPI_OpenGL2plus::setObjectLabel(ObjectType type_, GLuint name, c
         glLabelObjectEXT(type, name, 0, qPrintable(label));
         GL_CHECK_RESULT;
     }
-}
-
-void OsmAnd::GPUAPI_OpenGL2plus::glClearDepth_wrapper(float depth)
-{
-    GL_CHECK_PRESENT(glClearDepth);
-
-    glClearDepth(depth);
-}
-
-void OsmAnd::GPUAPI_OpenGL2plus::readFramebufferDepth(GLint x, GLint y, GLsizei width, GLsizei height, std::vector<std::byte>& outData)
-{
-    GL_CHECK_PRESENT(glReadPixels);
-
-    glReadPixels(x, y, width, height, _framebufferDepthDataFormat, _framebufferDepthDataType, outData.data());
-    GL_CHECK_RESULT;
-}
-
-bool OsmAnd::GPUAPI_OpenGL2plus::pickFramebufferDepthValue(
-    const std::vector<std::byte>& data, GLint x, GLint y, GLsizei width, GLsizei height, GLfloat& outValue)
-{
-    if (x < 0 || x >= width || y < 0 || y >= height)
-        return false;
-
-    double value;
-    const auto pValue = data.data() + (y * width + x) * _framebufferDepthBytes;
-    if ((_framebufferDepthDataFormat == GL_DEPTH_COMPONENT || _framebufferDepthDataFormat == GL_DEPTH_STENCIL) && _framebufferDepthDataType == GL_UNSIGNED_INT)
-    {
-        value = static_cast<double>(*reinterpret_cast<const uint32_t*>(pValue)) / std::numeric_limits<uint32_t>::max();
-    }
-    else if (_framebufferDepthDataFormat == GL_DEPTH_STENCIL && _framebufferDepthDataType == GL_UNSIGNED_INT_24_8)
-    {
-        value = static_cast<double>(*reinterpret_cast<const uint32_t*>(pValue) >> 8) / (std::numeric_limits<uint32_t>::max() >> 8);
-    }
-    else if (_framebufferDepthDataFormat == GL_DEPTH_COMPONENT && _framebufferDepthDataType == GL_UNSIGNED_SHORT)
-    {
-        value = static_cast<double>(*reinterpret_cast<const uint16_t*>(pValue)) / std::numeric_limits<uint16_t>::max();
-    }
-    else
-    {
-        LogPrintf(LogSeverityLevel::Error,
-              "Unsupported combination of framebuffer depth data format (0x%04x) and type (0x%04x)",
-              _framebufferDepthDataFormat,
-              _framebufferDepthDataType);
-        assert(false);
-        return false;
-    }
-
-    outValue = static_cast<float>(value);
-    return true;
 }

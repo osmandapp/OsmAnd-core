@@ -99,59 +99,69 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializePoints2D()
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    // Compile vertex shader
-    const QString vertexShader = QLatin1String(
-        // Input data
-        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
-        "uniform vec3 param_vs_point;                                                                                       ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    vec2 v = param_vs_point.xy + in_vs_vertexPosition * param_vs_point.z;                                          ""\n"
-        "    gl_Position = param_vs_mProjectionViewModel * vec4(v.x, v.y, -1.0, 1.0);                                       ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedVertexShader = vertexShader;
-    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    if (vsId == 0)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
-        return false;
-    }
-
-    // Compile fragment shader
-    const QString fragmentShader = QLatin1String(
-        // Parameters: common data
-        "uniform lowp vec4 param_fs_color;                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = param_fs_color;                                                                        ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedFragmentShader = fragmentShader;
-    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
-    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    if (fsId == 0)
-    {
-        glDeleteShader(vsId);
-        GL_CHECK_RESULT;
-
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
-        return false;
-    }
-
-    // Link everything into program object
-    GLuint shaders[] = { vsId, fsId };
     QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
-    _programPoint2D.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
+    _programPoint2D.id = 0;
+    if (!_programPoint2D.binaryCache.isEmpty())
+    {
+        _programPoint2D.id = gpuAPI->linkProgram(0, nullptr,
+            _programPoint2D.binaryCache, _programPoint2D.cacheFormat, true, &variablesMap);
+    }
+    if (!_programPoint2D.id.isValid())
+    {
+        // Compile vertex shader
+        const QString vertexShader = QLatin1String(
+            // Input data
+            "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
+            "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
+            "uniform vec3 param_vs_point;                                                                                       ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec2 v = param_vs_point.xy + in_vs_vertexPosition * param_vs_point.z;                                          ""\n"
+            "    vec4 vertex = param_vs_mProjectionViewModel * vec4(v.x, v.y, -1.0, 1.0);                                       ""\n"
+            "    gl_Position = vertex * param_vs_resultScale;                                                                   ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedVertexShader = vertexShader;
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+        if (vsId == 0)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
+            return false;
+        }
+
+        // Compile fragment shader
+        const QString fragmentShader = QLatin1String(
+            // Parameters: common data
+            "uniform lowp vec4 param_fs_color;                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = param_fs_color;                                                                        ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedFragmentShader = fragmentShader;
+        QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+        if (fsId == 0)
+        {
+            glDeleteShader(vsId);
+            GL_CHECK_RESULT;
+
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
+            return false;
+        }
+        GLuint shaders[] = { vsId, fsId };
+        _programPoint2D.id = gpuAPI->linkProgram(2, shaders,
+            _programPoint2D.binaryCache, _programPoint2D.cacheFormat, true, &variablesMap);
+    }
     if (!_programPoint2D.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -162,7 +172,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializePoints2D()
     bool ok = true;
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programPoint2D.id, variablesMap);
     ok = ok && lookup->lookupLocation(_programPoint2D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
-    ok = ok && lookup->lookupLocation(_programPoint2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programPoint2D.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programPoint2D.vs.param.point, "param_vs_point", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programPoint2D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
     if (!ok)
@@ -257,6 +267,14 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderPoints2D()
         1, GL_FALSE, glm::value_ptr(internalState.mOrthographicProjection));
     GL_CHECK_RESULT;
 
+    // Scale the result
+    glUniform4f(_programPoint2D.vs.param.resultScale,
+        1.0f,
+        currentState.flip ? -1.0f : 1.0f,
+        1.0f,
+        1.0f);
+    GL_CHECK_RESULT;
+
     const auto pointSize =
         static_cast<float>(std::min(currentState.viewport.width(), currentState.viewport.height())) / 50.0f;
 
@@ -330,7 +348,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releasePoints2D(bool gpuContextL
             glDeleteProgram(_programPoint2D.id);
             GL_CHECK_RESULT;
         }
-        _programPoint2D = ProgramPoint2D();
+        _programPoint2D.id = 0;
     }
 
     return true;
@@ -348,70 +366,80 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    // Compile vertex shader
-    const QString vertexShader = QLatin1String(
-        // Input data
-        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
-        "uniform vec4 param_vs_rect;                                                                                        ""\n"
-        "uniform float param_vs_angle;                                                                                      ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    vec2 rectCenter = param_vs_rect.yx;                                                                            ""\n"
-        "    vec2 p = in_vs_vertexPosition*param_vs_rect.wz + rectCenter;                                                   ""\n"
-        "    vec4 v;                                                                                                        ""\n"
-        "    float cos_a = cos(param_vs_angle);                                                                             ""\n"
-        "    float sin_a = sin(param_vs_angle);                                                                             ""\n"
-        "    p -= rectCenter;                                                                                               ""\n"
-        "    v.x = rectCenter.x + p.x*cos_a - p.y*sin_a;                                                                    ""\n"
-        "    v.y = rectCenter.y + p.x*sin_a + p.y*cos_a;                                                                    ""\n"
-        "    v.z = -1.0;                                                                                                    ""\n"
-        "    v.w = 1.0;                                                                                                     ""\n"
-        "                                                                                                                   ""\n"
-        "    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedVertexShader = vertexShader;
-    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    if (vsId == 0)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
-        return false;
-    }
-
-    // Compile fragment shader
-    const QString fragmentShader = QLatin1String(
-        // Parameters: common data
-        "uniform lowp vec4 param_fs_color;                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = param_fs_color;                                                                        ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedFragmentShader = fragmentShader;
-    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
-    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    if (fsId == 0)
-    {
-        glDeleteShader(vsId);
-        GL_CHECK_RESULT;
-
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
-        return false;
-    }
-
-    // Link everything into program object
-    GLuint shaders[] = { vsId, fsId };
     QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
-    _programRect2D.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
+    _programRect2D.id = 0;
+    if (!_programRect2D.binaryCache.isEmpty())
+    {
+        _programRect2D.id = gpuAPI->linkProgram(0, nullptr,
+            _programRect2D.binaryCache, _programRect2D.cacheFormat, true, &variablesMap);
+    }
+    if (!_programRect2D.id.isValid())
+    {
+        // Compile vertex shader
+        const QString vertexShader = QLatin1String(
+            // Input data
+            "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
+            "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
+            "uniform vec4 param_vs_rect;                                                                                        ""\n"
+            "uniform float param_vs_angle;                                                                                      ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec2 rectCenter = param_vs_rect.yx;                                                                            ""\n"
+            "    vec2 p = in_vs_vertexPosition*param_vs_rect.wz + rectCenter;                                                   ""\n"
+            "    vec4 v;                                                                                                        ""\n"
+            "    float cos_a = cos(param_vs_angle);                                                                             ""\n"
+            "    float sin_a = sin(param_vs_angle);                                                                             ""\n"
+            "    p -= rectCenter;                                                                                               ""\n"
+            "    v.x = rectCenter.x + p.x*cos_a - p.y*sin_a;                                                                    ""\n"
+            "    v.y = rectCenter.y + p.x*sin_a + p.y*cos_a;                                                                    ""\n"
+            "    v.z = -1.0;                                                                                                    ""\n"
+            "    v.w = 1.0;                                                                                                     ""\n"
+            "                                                                                                                   ""\n"
+            "    v = param_vs_mProjectionViewModel * v;                                                                         ""\n"
+            "    gl_Position = v * param_vs_resultScale;                                                                        ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedVertexShader = vertexShader;
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+        if (vsId == 0)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
+            return false;
+        }
+
+        // Compile fragment shader
+        const QString fragmentShader = QLatin1String(
+            // Parameters: common data
+            "uniform lowp vec4 param_fs_color;                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = param_fs_color;                                                                        ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedFragmentShader = fragmentShader;
+        QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+        if (fsId == 0)
+        {
+            glDeleteShader(vsId);
+            GL_CHECK_RESULT;
+
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
+            return false;
+        }
+        GLuint shaders[] = { vsId, fsId };
+        _programRect2D.id = gpuAPI->linkProgram(2, shaders,
+            _programRect2D.binaryCache, _programRect2D.cacheFormat, true, &variablesMap);
+    }
     if (!_programRect2D.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -423,6 +451,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programRect2D.id, variablesMap);
     ok = ok && lookup->lookupLocation(_programRect2D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_programRect2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programRect2D.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programRect2D.vs.param.rect, "param_vs_rect", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programRect2D.vs.param.angle, "param_vs_angle", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programRect2D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
@@ -507,6 +536,14 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderRects2D()
     glUniformMatrix4fv(_programRect2D.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(internalState.mOrthographicProjection));
     GL_CHECK_RESULT;
 
+    // Scale the result
+    glUniform4f(_programRect2D.vs.param.resultScale,
+        1.0f,
+        currentState.flip ? -1.0f : 1.0f,
+        1.0f,
+        1.0f);
+    GL_CHECK_RESULT;
+
     for(const auto& primitive : constOf(_rects2D))
     {
         const auto& rect = std::get<0>(primitive);
@@ -579,7 +616,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D(bool gpuContextLo
             glDeleteProgram(_programRect2D.id);
             GL_CHECK_RESULT;
         }
-        _programRect2D = ProgramRect2D();
+        _programRect2D.id = 0;
     }
 
     return true;
@@ -597,64 +634,74 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    // Compile vertex shader
-    const QString vertexShader = QLatin1String(
-        // Input data
-        "INPUT vec2 in_vs_vertexPosition; // (1.0, 0.0) for first point, (0.0, 1.0) for second                              ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
-        "uniform vec2 param_vs_v0;                                                                                          ""\n"
-        "uniform vec2 param_vs_v1;                                                                                          ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    vec4 v;                                                                                                        ""\n"
-        "    v.xy = in_vs_vertexPosition.x*param_vs_v0 + in_vs_vertexPosition.y*param_vs_v1;                                ""\n"
-        "    v.z = -1.0;                                                                                                    ""\n"
-        "    v.w = 1.0;                                                                                                     ""\n"
-        "                                                                                                                   ""\n"
-        "    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedVertexShader = vertexShader;
-    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    if (vsId == 0)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
-        return false;
-    }
-
-    // Compile fragment shader
-    const QString fragmentShader = QLatin1String(
-        // Parameters: common data
-        "uniform lowp vec4 param_fs_color;                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = param_fs_color;                                                                        ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedFragmentShader = fragmentShader;
-    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
-    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    if (fsId == 0)
-    {
-        glDeleteShader(vsId);
-        GL_CHECK_RESULT;
-
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
-        return false;
-    }
-
-    // Link everything into program object
-    GLuint shaders[] = { vsId, fsId };
     QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
-    _programLine2D.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
+    _programLine2D.id = 0;
+    if (!_programLine2D.binaryCache.isEmpty())
+    {
+        _programLine2D.id = gpuAPI->linkProgram(0, nullptr,
+            _programLine2D.binaryCache, _programLine2D.cacheFormat, true, &variablesMap);
+    }
+    if (!_programLine2D.id.isValid())
+    {
+        // Compile vertex shader
+        const QString vertexShader = QLatin1String(
+            // Input data
+            "INPUT vec2 in_vs_vertexPosition; // (1.0, 0.0) for first point, (0.0, 1.0) for second                              ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
+            "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
+            "uniform vec2 param_vs_v0;                                                                                          ""\n"
+            "uniform vec2 param_vs_v1;                                                                                          ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec4 v;                                                                                                        ""\n"
+            "    v.xy = in_vs_vertexPosition.x*param_vs_v0 + in_vs_vertexPosition.y*param_vs_v1;                                ""\n"
+            "    v.z = -1.0;                                                                                                    ""\n"
+            "    v.w = 1.0;                                                                                                     ""\n"
+            "                                                                                                                   ""\n"
+            "    v = param_vs_mProjectionViewModel * v;                                                                         ""\n"
+            "    gl_Position = v * param_vs_resultScale;                                                               ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedVertexShader = vertexShader;
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+        if (vsId == 0)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
+            return false;
+        }
+
+        // Compile fragment shader
+        const QString fragmentShader = QLatin1String(
+            // Parameters: common data
+            "uniform lowp vec4 param_fs_color;                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = param_fs_color;                                                                        ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedFragmentShader = fragmentShader;
+        QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+        if (fsId == 0)
+        {
+            glDeleteShader(vsId);
+            GL_CHECK_RESULT;
+
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
+            return false;
+        }
+        GLuint shaders[] = { vsId, fsId };
+        _programLine2D.id = gpuAPI->linkProgram(2, shaders,
+            _programLine2D.binaryCache, _programLine2D.cacheFormat, true, &variablesMap);
+    }
     if (!_programLine2D.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -666,6 +713,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programLine2D.id, variablesMap);
     ok = ok && lookup->lookupLocation(_programLine2D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_programLine2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programLine2D.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programLine2D.vs.param.v0, "param_vs_v0", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programLine2D.vs.param.v1, "param_vs_v1", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programLine2D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
@@ -747,6 +795,14 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines2D()
     glUniformMatrix4fv(_programLine2D.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(internalState.mOrthographicProjection));
     GL_CHECK_RESULT;
 
+    // Scale the result
+    glUniform4f(_programLine2D.vs.param.resultScale,
+        1.0f,
+        currentState.flip ? -1.0f : 1.0f,
+        1.0f,
+        1.0f);
+    GL_CHECK_RESULT;
+
     for(const auto& primitive : constOf(_lines2D))
     {
         const auto& line = primitive.first;
@@ -824,7 +880,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D(bool gpuContextLo
             glDeleteProgram(_programLine2D.id);
             GL_CHECK_RESULT;
         }
-        _programLine2D = ProgramLine2D();
+        _programLine2D.id = 0;
     }
 
     return true;
@@ -842,62 +898,72 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    // Compile vertex shader
-    const QString vertexShader = QLatin1String(
-        // Input data
-        "INPUT vec2 in_vs_vertexPosition; // (1.0, 0.0) for first point, (0.0, 1.0) for second                              ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
-        "uniform vec4 param_vs_v0;                                                                                          ""\n"
-        "uniform vec4 param_vs_v1;                                                                                          ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    vec4 v;                                                                                                        ""\n"
-        "    v = in_vs_vertexPosition.x*param_vs_v0 + in_vs_vertexPosition.y*param_vs_v1;                                   ""\n"
-        "                                                                                                                   ""\n"
-        "    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedVertexShader = vertexShader;
-    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    if (vsId == 0)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
-        return false;
-    }
-
-    // Compile fragment shader
-    const QString fragmentShader = QLatin1String(
-        // Parameters: common data
-        "uniform lowp vec4 param_fs_color;                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = param_fs_color;                                                                        ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedFragmentShader = fragmentShader;
-    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
-    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    if (fsId == 0)
-    {
-        glDeleteShader(vsId);
-        GL_CHECK_RESULT;
-
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
-        return false;
-    }
-
-    // Link everything into program object
-    GLuint shaders[] = { vsId, fsId };
     QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
-    _programLine3D.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
+    _programLine3D.id = 0;
+    if (!_programLine3D.binaryCache.isEmpty())
+    {
+        _programLine3D.id = gpuAPI->linkProgram(0, nullptr,
+            _programLine3D.binaryCache, _programLine3D.cacheFormat, true, &variablesMap);
+    }
+    if (!_programLine3D.id.isValid())
+    {
+        // Compile vertex shader
+        const QString vertexShader = QLatin1String(
+            // Input data
+            "INPUT vec2 in_vs_vertexPosition; // (1.0, 0.0) for first point, (0.0, 1.0) for second                              ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
+            "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
+            "uniform vec4 param_vs_v0;                                                                                          ""\n"
+            "uniform vec4 param_vs_v1;                                                                                          ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec4 v;                                                                                                        ""\n"
+            "    v = in_vs_vertexPosition.x*param_vs_v0 + in_vs_vertexPosition.y*param_vs_v1;                                   ""\n"
+            "                                                                                                                   ""\n"
+            "    v = param_vs_mProjectionViewModel * v;                                                                         ""\n"
+            "    gl_Position = v * param_vs_resultScale;                                                                        ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedVertexShader = vertexShader;
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+        if (vsId == 0)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
+            return false;
+        }
+
+        // Compile fragment shader
+        const QString fragmentShader = QLatin1String(
+            // Parameters: common data
+            "uniform lowp vec4 param_fs_color;                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = param_fs_color;                                                                        ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedFragmentShader = fragmentShader;
+        QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+        if (fsId == 0)
+        {
+            glDeleteShader(vsId);
+            GL_CHECK_RESULT;
+
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
+            return false;
+        }
+        GLuint shaders[] = { vsId, fsId };
+        _programLine3D.id = gpuAPI->linkProgram(2, shaders,
+            _programLine3D.binaryCache, _programLine3D.cacheFormat, true, &variablesMap);
+    }
     if (!_programLine3D.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -909,6 +975,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programLine3D.id, variablesMap);
     ok = ok && lookup->lookupLocation(_programLine3D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_programLine3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programLine3D.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programLine3D.vs.param.v0, "param_vs_v0", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programLine3D.vs.param.v1, "param_vs_v1", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programLine3D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
@@ -990,6 +1057,14 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines3D()
     glUniformMatrix4fv(_programLine3D.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
     GL_CHECK_RESULT;
 
+    // Scale the result
+    glUniform4f(_programLine3D.vs.param.resultScale,
+        1.0f,
+        currentState.flip ? -1.0f : 1.0f,
+        1.0f,
+        1.0f);
+    GL_CHECK_RESULT;
+
     for(const auto& primitive : constOf(_lines3D))
     {
         const auto& line = primitive.first;
@@ -1067,7 +1142,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D(bool gpuContextLo
             glDeleteProgram(_programLine3D.id);
             GL_CHECK_RESULT;
         }
-        _programLine3D = ProgramLine3D();
+        _programLine3D.id = 0;
     }
 
     return true;
@@ -1085,71 +1160,81 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    // Compile vertex shader
-    const QString vertexShader = QLatin1String(
-        // Input data
-        // (1.0, 0.0, 0.0, 0.0) for first point
-        // (0.0, 1.0, 0.0, 0.0) for second point
-        // (0.0, 0.0, 1.0, 0.0) for third point
-        // (0.0, 0.0, 0.0, 1.0) for fourth point
-        "INPUT vec4 in_vs_vertexPosition;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
-        "uniform vec4 param_vs_v0;                                                                                          ""\n"
-        "uniform vec4 param_vs_v1;                                                                                          ""\n"
-        "uniform vec4 param_vs_v2;                                                                                          ""\n"
-        "uniform vec4 param_vs_v3;                                                                                          ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    vec4 v =                                                                                                       ""\n"
-        "        in_vs_vertexPosition.x*param_vs_v0 +                                                                       ""\n"
-        "        in_vs_vertexPosition.y*param_vs_v1 +                                                                       ""\n"
-        "        in_vs_vertexPosition.z*param_vs_v2 +                                                                       ""\n"
-        "        in_vs_vertexPosition.w*param_vs_v3;                                                                        ""\n"
-        "                                                                                                                   ""\n"
-        "    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedVertexShader = vertexShader;
-    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    if (vsId == 0)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
-        return false;
-    }
-
-    // Compile fragment shader
-    const QString fragmentShader = QLatin1String(
-        // Parameters: common data
-        "uniform lowp vec4 param_fs_color;                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = param_fs_color;                                                                        ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedFragmentShader = fragmentShader;
-    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
-    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    if (fsId == 0)
-    {
-        glDeleteShader(vsId);
-        GL_CHECK_RESULT;
-
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
-        return false;
-    }
-
-    // Link everything into program object
-    GLuint shaders[] = { vsId, fsId };
     QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
-    _programQuad3D.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
+    _programQuad3D.id = 0;
+    if (!_programQuad3D.binaryCache.isEmpty())
+    {
+        _programQuad3D.id = gpuAPI->linkProgram(0, nullptr,
+            _programQuad3D.binaryCache, _programQuad3D.cacheFormat, true, &variablesMap);
+    }
+    if (!_programQuad3D.id.isValid())
+    {
+        // Compile vertex shader
+        const QString vertexShader = QLatin1String(
+            // Input data
+            // (1.0, 0.0, 0.0, 0.0) for first point
+            // (0.0, 1.0, 0.0, 0.0) for second point
+            // (0.0, 0.0, 1.0, 0.0) for third point
+            // (0.0, 0.0, 0.0, 1.0) for fourth point
+            "INPUT vec4 in_vs_vertexPosition;                                                                                   ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
+            "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
+            "uniform vec4 param_vs_v0;                                                                                          ""\n"
+            "uniform vec4 param_vs_v1;                                                                                          ""\n"
+            "uniform vec4 param_vs_v2;                                                                                          ""\n"
+            "uniform vec4 param_vs_v3;                                                                                          ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec4 v =                                                                                                       ""\n"
+            "        in_vs_vertexPosition.x*param_vs_v0 +                                                                       ""\n"
+            "        in_vs_vertexPosition.y*param_vs_v1 +                                                                       ""\n"
+            "        in_vs_vertexPosition.z*param_vs_v2 +                                                                       ""\n"
+            "        in_vs_vertexPosition.w*param_vs_v3;                                                                        ""\n"
+            "                                                                                                                   ""\n"
+            "    v = param_vs_mProjectionViewModel * v;                                                                         ""\n"
+            "    gl_Position = v * param_vs_resultScale;                                                                        ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedVertexShader = vertexShader;
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+        if (vsId == 0)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
+            return false;
+        }
+
+        // Compile fragment shader
+        const QString fragmentShader = QLatin1String(
+            // Parameters: common data
+            "uniform lowp vec4 param_fs_color;                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = param_fs_color;                                                                        ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedFragmentShader = fragmentShader;
+        QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+        if (fsId == 0)
+        {
+            glDeleteShader(vsId);
+            GL_CHECK_RESULT;
+
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
+            return false;
+        }
+        GLuint shaders[] = { vsId, fsId };
+        _programQuad3D.id = gpuAPI->linkProgram(2, shaders,
+            _programQuad3D.binaryCache, _programQuad3D.cacheFormat, true, &variablesMap);
+    }
     if (!_programQuad3D.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -1161,6 +1246,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programQuad3D.id, variablesMap);
     ok = ok && lookup->lookupLocation(_programQuad3D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_programQuad3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programQuad3D.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programQuad3D.vs.param.v0, "param_vs_v0", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programQuad3D.vs.param.v1, "param_vs_v1", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programQuad3D.vs.param.v2, "param_vs_v2", GlslVariableType::Uniform);
@@ -1247,6 +1333,14 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderQuads3D()
     glUniformMatrix4fv(_programQuad3D.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
     GL_CHECK_RESULT;
 
+    // Scale the result
+    glUniform4f(_programQuad3D.vs.param.resultScale,
+        1.0f,
+        currentState.flip ? -1.0f : 1.0f,
+        1.0f,
+        1.0f);
+    GL_CHECK_RESULT;
+
     for(const auto& primitive : constOf(_quads3D))
     {
         const auto& p0 = std::get<0>(primitive);
@@ -1322,7 +1416,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D(bool gpuContextLo
             glDeleteProgram(_programQuad3D.id);
             GL_CHECK_RESULT;
         }
-        _programQuad3D = ProgramQuad3D();
+        _programQuad3D.id = 0;
     }
 
     return true;

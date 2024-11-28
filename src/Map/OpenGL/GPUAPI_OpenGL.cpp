@@ -59,8 +59,6 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , _maxVaryingFloats(32)
     , _maxVaryingVectors(15)
     , _maxVertexAttribs(16)
-    , _framebufferDepthBits(0)
-    , _framebufferDepthBytes(0)
     , glVersion(_glVersion)
     , glslVersion(_glslVersion)
     , extensions(_extensions)
@@ -84,8 +82,6 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , maxVaryingFloats(_maxVaryingFloats)
     , maxVaryingVectors(_maxVaryingVectors)
     , maxVertexAttribs(_maxVertexAttribs)
-    , framebufferDepthBits(_framebufferDepthBits)
-    , framebufferDepthBytes(_framebufferDepthBytes)
 {
 }
 
@@ -192,16 +188,20 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* sourc
 GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
     GLuint shadersCount,
     const GLuint* shaders,
+    QByteArray& binaryCache,
+    GLenum& cacheFormat,
     const bool autoReleaseShaders /*= true*/,
     QHash<QString, GlslProgramVariable>* outVariablesMap /*= nullptr*/)
 {
-    return linkProgram(shadersCount, shaders, {}, autoReleaseShaders, outVariablesMap);
+    return linkProgram(shadersCount, shaders, {}, binaryCache, cacheFormat, autoReleaseShaders, outVariablesMap);
 }
 
 GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
     GLuint shadersCount,
     const GLuint* shaders,
     const QList< std::tuple<GlslVariableType, QString, GLint> >& variableLocations,
+    QByteArray& binaryCache,
+    GLenum& cacheFormat,
     const bool autoReleaseShaders /*= true*/,
     QHash<QString, GlslProgramVariable>* outVariablesMap /*= nullptr*/)
 {
@@ -227,12 +227,6 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
         return program;
     }
 
-    for (auto shaderIdx = 0u; shaderIdx < shadersCount; shaderIdx++)
-    {
-        glAttachShader(program, shaders[shaderIdx]);
-        GL_CHECK_RESULT;
-    }
-
     for (const auto& variableLocationsEntry : variableLocations)
     {
         const auto variableType = std::get<0>(variableLocationsEntry);
@@ -246,26 +240,40 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
         }
     }
 
-    glLinkProgram(program);
-    const auto linkingResult = GL_GET_AND_CHECK_RESULT;
-
-    for (auto shaderIdx = 0u; shaderIdx < shadersCount; shaderIdx++)
+    GLenum linkingResult;
+    if (_isSupported_program_binary && !binaryCache.isEmpty())
+        linkingResult = linkProgramBinary(program, binaryCache, cacheFormat);
+    else
     {
-        glDetachShader(program, shaders[shaderIdx]);
-        GL_CHECK_RESULT;
-
-        if (autoReleaseShaders)
+        for (auto shaderIdx = 0u; shaderIdx < shadersCount; shaderIdx++)
         {
-            glDeleteShader(shaders[shaderIdx]);
+            glAttachShader(program, shaders[shaderIdx]);
             GL_CHECK_RESULT;
+        }
+
+        glLinkProgram(program);
+        linkingResult = GL_GET_AND_CHECK_RESULT;
+
+        for (auto shaderIdx = 0u; shaderIdx < shadersCount; shaderIdx++)
+        {
+            glDetachShader(program, shaders[shaderIdx]);
+            GL_CHECK_RESULT;
+
+            if (autoReleaseShaders)
+            {
+                glDeleteShader(shaders[shaderIdx]);
+                GL_CHECK_RESULT;
+            }
         }
     }
 
     GLint linkSuccessful;
     glGetProgramiv(program, GL_LINK_STATUS, &linkSuccessful);
     GL_CHECK_RESULT;
-    if (linkSuccessful == GL_FALSE)
+    if (linkingResult != GL_NO_ERROR || linkSuccessful == GL_FALSE)
     {
+        if (!binaryCache.isEmpty())
+            binaryCache.clear();
         GLint logBufferSize = 0;
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logBufferSize);
         GL_CHECK_RESULT;
@@ -315,6 +323,9 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
 
         return 0;
     }
+
+    if (_isSupported_program_binary && binaryCache.isEmpty())
+        keepProgramBinary(program, binaryCache, cacheFormat);
 
     if (outVariablesMap)
         outVariablesMap->clear();
@@ -412,6 +423,34 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
     delete[] uniformName;
 
     return program;
+}
+
+GLenum OsmAnd::GPUAPI_OpenGL::linkProgramBinary(GLuint program, QByteArray& binaryCache, GLenum cacheFormat)
+{
+    GL_CHECK_PRESENT(glProgramBinary);
+
+    glProgramBinary(program, cacheFormat, binaryCache.constData(), binaryCache.size());
+    GLenum result = GL_GET_AND_CHECK_RESULT;
+
+    return result;
+}
+
+void OsmAnd::GPUAPI_OpenGL::keepProgramBinary(GLuint program, QByteArray& binaryCache, GLenum& cacheFormat)
+{
+    GL_CHECK_PRESENT(glGetProgramiv);
+    GL_CHECK_PRESENT(glGetProgramBinary);
+
+    GLsizei binaryLength = 0;
+    glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, &binaryLength);
+    GL_CHECK_RESULT;
+
+    if (binaryLength > 0)
+    {
+        binaryCache.resize(binaryLength);
+        glGetProgramBinary(program, binaryLength, NULL, &cacheFormat, binaryCache.data());
+        if (GL_GET_AND_CHECK_RESULT != GL_NO_ERROR)
+            binaryCache.clear();
+    }
 }
 
 QString OsmAnd::GPUAPI_OpenGL::decodeGlslVariableDataType(const GLenum dataType)

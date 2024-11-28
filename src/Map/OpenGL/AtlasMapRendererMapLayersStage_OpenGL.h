@@ -126,6 +126,8 @@ namespace OsmAnd
         struct RasterLayerTileProgram
         {
             GLname id;
+            QByteArray binaryCache;
+            GLenum cacheFormat;
 
             struct {
                 // Input data
@@ -138,7 +140,7 @@ namespace OsmAnd
                 struct {
                     // Common data
                     GLlocation mPerspectiveProjectionView;
-                    GLlocation mapScale;
+                    GLlocation resultScale;
                     GLlocation targetInTilePosN;
                     GLlocation tileSize;
                     GLlocation distanceFromCameraToTarget;

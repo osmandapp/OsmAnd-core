@@ -460,6 +460,8 @@ namespace OsmAnd
         AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer);
         virtual ~AtlasMapRendererSymbolsStage();
 
+        bool release(bool gpuContextLost) override;
+
         void queryLastPreparedSymbolsAt(
             const PointI screenPoint,
             QList<IMapRenderer::MapSymbolInformation>& outMapSymbols) const;

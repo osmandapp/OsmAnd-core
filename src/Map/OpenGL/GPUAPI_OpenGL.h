@@ -306,14 +306,12 @@ namespace OsmAnd
         bool _isSupported_texture_rg;
         bool _isSupported_vertex_array_object;
         bool _isSupported_integerOperations;
+        bool _isSupported_program_binary;
         GLint _maxVertexUniformVectors;
         GLint _maxFragmentUniformVectors;
         GLint _maxVaryingFloats;
         GLint _maxVaryingVectors;
         GLint _maxVertexAttribs;
-
-        GLint _framebufferDepthBits;
-        GLint _framebufferDepthBytes;
 
         bool releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU) override;
 
@@ -361,23 +359,26 @@ namespace OsmAnd
         const GLint& maxVaryingVectors;
         const GLint& maxVertexAttribs;
 
-        const GLint& framebufferDepthBits;
-        const GLint& framebufferDepthBytes;
-
         virtual GLenum validateResult(const char* const function, const char* const file, const int line) = 0;
 
         virtual GLuint compileShader(GLenum shaderType, const char* source);
         virtual GLuint linkProgram(
             GLuint shadersCount,
             const GLuint* shaders,
+            QByteArray& binaryCache,
+            GLenum& cacheFormat,
             const bool autoReleaseShaders = true,
             QHash<QString, GlslProgramVariable>* outVariablesMap = nullptr);
         virtual GLuint linkProgram(
             GLuint shadersCount,
             const GLuint* shaders,
             const QList< std::tuple<GlslVariableType, QString, GLint> >& variableLocations,
+            QByteArray& binaryCache,
+            GLenum& cacheFormat,
             const bool autoReleaseShaders = true,
             QHash<QString, GlslProgramVariable>* outVariablesMap = nullptr);
+        virtual GLenum linkProgramBinary(GLuint program, QByteArray& binaryCache, GLenum cacheFormat);
+        virtual void keepProgramBinary(GLuint program, QByteArray& binaryCache, GLenum& cacheFormat);
 
         virtual TextureFormat getTextureFormat(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
             const SkColorType colorType = SkColorType::kRGBA_8888_SkColorType);
@@ -450,11 +451,6 @@ namespace OsmAnd
         virtual void popDebugGroupMarker() = 0;
 
         virtual void setObjectLabel(ObjectType type, GLuint name, const QString& label) = 0;
-
-        virtual void glClearDepth_wrapper(const float depth) = 0;
-
-        virtual void readFramebufferDepth(GLint x, GLint y, GLsizei width, GLsizei height, std::vector<std::byte>& outData) = 0;
-        virtual bool pickFramebufferDepthValue(const std::vector<std::byte>& data, GLint x, GLint y, GLsizei width, GLsizei height, GLfloat& outValue) = 0;
     };
 }
 

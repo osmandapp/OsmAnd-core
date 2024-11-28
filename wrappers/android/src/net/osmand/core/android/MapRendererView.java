@@ -42,6 +42,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
+import javax.microedition.khronos.opengles.GL;
 import javax.microedition.khronos.opengles.GL10;
 
 import java.nio.ByteBuffer;
@@ -57,17 +58,22 @@ public abstract class MapRendererView extends FrameLayout {
     private static final String TAG = "OsmAndCore:Android/MapRendererView";
 
     private final static long RELEASE_STOP_TIMEOUT = 4000;
-    private final static long RELEASE_WAIT_TIMEOUT = 400;
-
-    /**
-     * Main GLSurfaceView
-     */
-    private volatile GLSurfaceView _glSurfaceView;
+    private final static long RELEASE_WAIT_TIMEOUT = 50;
 
     /**
      * Reference to OsmAndCore::IMapRenderer instance
      */
     protected IMapRenderer _mapRenderer;
+
+    /**
+     * Map renderer that is ready to export
+     */
+    protected volatile IMapRenderer _exportableMapRenderer;
+
+    /**
+     * Main rendering view
+     */
+    private RenderingView _renderingView;
 
     /**
      * Optional byte buffer for offscreen rendering
@@ -137,45 +143,70 @@ public abstract class MapRendererView extends FrameLayout {
      */
     private final RenderRequestCallback _renderRequestCallback = new RenderRequestCallback();
 
-    private MapRendererSetupOptions _setupOptions;
+    public MapRendererSetupOptions setupOptions = new MapRendererSetupOptions();
 
-    private IMapRendererSetupOptionsConfigurator _mapRendererSetupOptionsConfigurator;
-
-    /**
-     * Reference to valid EGL display
-     */
-    private EGLDisplay _display;
-
-    /**
-     * Main EGL context
-     */
-    private EGLContext _mainContext;
-
-    /**
-     * GPU-worker EGL context
-     */
-    private EGLContext _gpuWorkerContext;
+    enum EGLThreadOperation {
+        NO_OPERATION,
+        CHOOSE_CONFIG,
+        CREATE_CONTEXTS,
+        CREATE_WINDOW_SURFACE,
+        CREATE_PIXELBUFFER_SURFACE,
+        INITIALIZE_RENDERING,
+        RENDER_FRAME,
+        RELEASE_RENDERING,
+        DESTROY_SURFACE,
+        DESTROY_CONTEXTS
+    }
 
     /**
-     * GPU-worker EGL surface. Not used in reality, but required to initialize context
+     * EGL Thread
      */
-    private EGLSurface _gpuWorkerFakeSurface;
-
-    /**
-     * Device density factor (160 DPI == 1.0f)
-     */
-    private float _densityFactor;
-
+    public volatile EGLThread eglThread;
 
     /**
      * Width and height of current window
      */
     private int _windowWidth;
     private int _windowHeight;
+    private boolean _inWindow;
 
     private int frameId;
 
-    private boolean isPresent;
+    /**
+     * Rendering is meant to be initialized for the first time
+     */
+    private volatile boolean isInitializing;
+
+    /**
+     * Rendering is meant to be reinitialized
+     */
+    private volatile boolean isReinitializing;
+
+    /**
+     * Rendering is suspended, but renderer needs to be kept initialized
+     */
+    private volatile boolean isSuspended;
+
+    /**
+     * Target surface is present and ready for drawing
+     */
+    private volatile boolean isSurfaceReady;
+
+    /**
+     * OpenGL view is started and ready for rendering
+     */
+    private volatile boolean isViewStarted;
+
+    /**
+     * View is on pause
+     */
+    private volatile boolean isPaused;
+
+    /**
+     * Rendering should be initialized after view is resumed
+     */
+    private volatile boolean initOnResume;
+
     private volatile Runnable releaseTask;
     private volatile boolean waitRelease;
 
@@ -198,101 +229,140 @@ public abstract class MapRendererView extends FrameLayout {
         super(context, attrs, defaultStyle);
     }
 
-    public void setupRenderer(Context context, int bitmapWidth, int bitmapHeight, MapRendererView oldView) {
+    public synchronized void setupRenderer(Context context, int bitmapWidth, int bitmapHeight, MapRendererView oldView) {
+        Log.v(TAG, "setupRenderer()");
         NativeCore.checkIfLoaded();
 
-        boolean inWindow = (bitmapWidth == 0 || bitmapHeight == 0);
-
-        synchronized (this) {
-            if (!inWindow) {
-                _byteBuffer = ByteBuffer.allocateDirect(bitmapWidth * bitmapHeight * 4);
+        if (_mapRenderer != null) {
+            synchronized (_mapRenderer) {
+                _exportableMapRenderer = null;
+                stopRenderingView();
+                if (!isSuspended && _mapRenderer.isRenderingInitialized()) {
+                    Log.v(TAG, "Rendering release due to setupRenderer()");
+                    releaseRendering();
+                }
+                removeRenderingView();
             }
+        }
 
-            // Get display density factor
-            _densityFactor = inWindow ? getResources().getDisplayMetrics().density : 1.0f;
+        _inWindow = (bitmapWidth == 0 || bitmapHeight == 0);
 
-            // Disable battery saving mode
-            disableBatterySavingMode();
+        _windowWidth = bitmapWidth;
+        _windowHeight = bitmapHeight;
 
+        _byteBuffer = _inWindow ? null : ByteBuffer.allocateDirect(bitmapWidth * bitmapHeight * 4);
+
+        // Set display density factor
+        setupOptions.setDisplayDensityFactor(_inWindow ? getResources().getDisplayMetrics().density : 1.0f);
+
+        // Disable battery saving mode
+        disableBatterySavingMode();
+
+        // Get already present renderer if available
+        IMapRenderer oldRenderer = oldView != null ? oldView.suspendRenderer() : null;
+
+        if (oldRenderer == null) {
             // Set initial frame rate limit for battery saving mode
             setMaximumFrameRate(20); // 20 frames per seconds
 
-            // Create instance of OsmAndCore::IMapRenderer
-            if (oldView == null)
+            isReinitializing = (isSuspended && _mapRenderer != null && _mapRenderer.isRenderingInitialized());
+            if (!isReinitializing) {
+                Log.v(TAG, "Setting up new renderer to initialize...");
+                eglThread = new EGLThread("OpenGLThread");
+                eglThread.start();
                 _mapRenderer = createMapRendererInstance();
-            else
-                _mapRenderer = oldView.getRenderer();
+                isInitializing = true;
+                isSuspended = false;
+            } else {
+                Log.v(TAG, "Setting up present renderer to reinitialize...");
+                isInitializing = false;
+            }
+        } else {
+            Log.v(TAG, "Setting up provided renderer to reinitialize...");
 
-            // Create GLSurfaceView and add it to hierarchy
-            if (inWindow && _glSurfaceView != null)
-                removeAllViews();
-            _glSurfaceView = new GLSurfaceView(context);
-            if (inWindow)
-                addView(_glSurfaceView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-            else {
-                _windowWidth = bitmapWidth;
-                _windowHeight = bitmapHeight;
+            if (_mapRenderer != oldRenderer && isSuspended && _mapRenderer.isRenderingInitialized()) {
+                Log.v(TAG, "Releasing suspended renderer...");
+                synchronized (eglThread) {
+                    eglThread.mapRenderer = _mapRenderer;
+                    eglThread.startAndCompleteOperation(EGLThreadOperation.RELEASE_RENDERING);
+                }    
             }
 
-            // Create map animator for that map
-            if (_mapAnimator == null)
-                _mapAnimator = new MapAnimator(false);
-            _mapAnimator.setMapRenderer(_mapRenderer);
+            // Use previous frame rate limit for battery saving mode
+            setMaximumFrameRate(oldView.getMaximumFrameRate());
 
-            // Create map markers animator
-            if (_mapMarkersAnimator == null)
-                _mapMarkersAnimator = new MapMarkersAnimator();
-            _mapMarkersAnimator.setMapRenderer(_mapRenderer);
+            // Use present renderer
+            _mapRenderer = oldRenderer;
 
-            // Configure GLSurfaceView
-            _glSurfaceView.setPreserveEGLContextOnPause(true);
-            _glSurfaceView.setEGLContextClientVersion(3);
-            _glSurfaceView.setEGLConfigChooser(new ComponentSizeChooser(8, 8, 8, 0, 16, 0, inWindow));
-            _glSurfaceView.setEGLContextFactory(new EGLContextFactory());
-            if (!inWindow)
-                _glSurfaceView.setEGLWindowSurfaceFactory(new PixelbufferSurfaceFactory(bitmapWidth, bitmapHeight));
-            _glSurfaceView.setRenderer(new RendererProxy());
-            _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-            if (!inWindow) {
-                _glSurfaceView.surfaceCreated(null);
-                _glSurfaceView.surfaceChanged(null, 0, bitmapWidth, bitmapHeight);
-                isPresent = true;
+            // Reinitialize renderer
+            isInitializing = false;
+            isReinitializing = true;
+
+            // Take all EGL references from old map renderer view
+            eglThread = oldView.eglThread;
+
+            // Reset rendering options for current view
+            if (eglThread.gpuWorkerContext != null && eglThread.gpuWorkerFakeSurface != null) {
+                setupOptions.setGpuWorkerThreadEnabled(true);
+                setupOptions.setGpuWorkerThreadPrologue(_gpuWorkerThreadPrologue.getBinding());
+                setupOptions.setGpuWorkerThreadEpilogue(_gpuWorkerThreadEpilogue.getBinding());
+            } else {
+                setupOptions.setGpuWorkerThreadEnabled(false);
+                setupOptions.setGpuWorkerThreadPrologue(null);
+                setupOptions.setGpuWorkerThreadEpilogue(null);
             }
+            setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());    
+            _mapRenderer.setup(setupOptions);
+        }
+
+        // Create map animator for that map
+        if (_mapAnimator == null) {
+            _mapAnimator = new MapAnimator(false);
+        }
+        _mapAnimator.setMapRenderer(_mapRenderer);
+
+        // Create map markers animator
+        if (_mapMarkersAnimator == null) {
+            _mapMarkersAnimator = new MapMarkersAnimator();
+        }
+        _mapMarkersAnimator.setMapRenderer(_mapRenderer);
+
+        synchronized (_mapRenderer) {
+            initOnResume = isPaused;
+            startRenderingView(context);
         }
     }
 
     @Override
     public void setVisibility(int visibility) {
-        if (_glSurfaceView != null)
-            _glSurfaceView.setVisibility(visibility);
+        synchronized (_mapRenderer) {
+            if (_renderingView != null) {
+                _renderingView.setVisibility(visibility);
+            }
+        }
         super.setVisibility(visibility);
     }
 
     public void addListener(MapRendererViewListener listener) {
-        if (!this.listeners.contains(listener)) {
-            List<MapRendererViewListener> listeners = new ArrayList<>();
-            listeners.addAll(this.listeners);
-            listeners.add(listener);
-            this.listeners = listeners;
+        synchronized (_mapRenderer) {
+            if (!isSuspended && !this.listeners.contains(listener)) {
+                List<MapRendererViewListener> listeners = new ArrayList<>();
+                listeners.addAll(this.listeners);
+                listeners.add(listener);
+                this.listeners = listeners;
+            }
         }
     }
 
     public void removeListener(MapRendererViewListener listener) {
-        if (this.listeners.contains(listener)) {
-            List<MapRendererViewListener> listeners = new ArrayList<>();
-            listeners.addAll(this.listeners);
-            listeners.remove(listener);
-            this.listeners = listeners;
+        synchronized (_mapRenderer) {
+            if (!isSuspended && this.listeners.contains(listener)) {
+                List<MapRendererViewListener> listeners = new ArrayList<>();
+                listeners.addAll(this.listeners);
+                listeners.remove(listener);
+                this.listeners = listeners;
+            }
         }
-    }
-
-    public void setMapRendererSetupOptionsConfigurator(
-            IMapRendererSetupOptionsConfigurator configurator) {
-        _mapRendererSetupOptionsConfigurator = configurator;
-    }
-
-    public IMapRendererSetupOptionsConfigurator getMapRendererSetupOptionsConfigurator() {
-        return _mapRendererSetupOptionsConfigurator;
     }
 
     /**
@@ -303,77 +373,139 @@ public abstract class MapRendererView extends FrameLayout {
     protected abstract IMapRenderer createMapRendererInstance();
 
     public Bitmap getBitmap() {
-        if (_byteBuffer != null) {
+        if (!isSuspended && _byteBuffer != null) {
+            if (_resultBitmap == null) {
+                _resultBitmap = Bitmap.createBitmap(_windowWidth, _windowHeight, Bitmap.Config.ARGB_8888);
+            }
             if (_renderingResultIsReady) {
-                Bitmap bitmap = Bitmap.createBitmap(_windowWidth, _windowHeight, Bitmap.Config.ARGB_8888);
                 synchronized (_byteBuffer) {
                     _byteBuffer.rewind();
-                    bitmap.copyPixelsFromBuffer(_byteBuffer);
+                    _resultBitmap.copyPixelsFromBuffer(_byteBuffer);
                     _renderingResultIsReady = false;
                 }
-                Matrix matrix = new Matrix();
-                matrix.preScale(1.0f, -1.0f);
-                _resultBitmap = Bitmap.createBitmap(bitmap, 0, 0, _windowWidth, _windowHeight, matrix, true);
             }
-            if (_resultBitmap == null)
-                _resultBitmap = Bitmap.createBitmap(_windowWidth, _windowHeight, Bitmap.Config.ARGB_8888);
             return _resultBitmap;
         }
         else
             return null;
     }
 
-    public IMapRenderer getRenderer() {
-        return _mapRenderer;
-    }
+    public synchronized IMapRenderer suspendRenderer() {
+        Log.v(TAG, "suspendRenderer()");
 
-    public void stopRenderer() {
-        Log.v(TAG, "removeRendering()");
-        NativeCore.checkIfLoaded();
+        if (_mapRenderer == null || !_mapRenderer.isRenderingInitialized() || _exportableMapRenderer == null) {
+            return null;
+        }
 
-        if (isPresent && _glSurfaceView != null) {
-            isPresent = false;
-            Log.v(TAG, "Rendering release due to removeRendering()");
-            _glSurfaceView.onPause();
-            releaseRendering();
-            removeAllViews();
-            _byteBuffer = null;
-            _resultBitmap = null;
+        synchronized (_mapRenderer) {
+            stopRenderingView();
+            if (isSuspended) {
+                Log.v(TAG, "Renderer was already suspended");
+                return null;
+            } else {
+                Log.v(TAG, "Suspending renderer to reuse it in other view");
+                isSuspended = true;
+                isInitializing = false;
+                isReinitializing = false;
+            }
+            removeRenderingView();
+
+            // Clean up data
+            listeners = new ArrayList<>();
             _mapAnimator = null;
             _mapMarkersAnimator = null;
-            _glSurfaceView = null;
+        }
+        return _exportableMapRenderer.isRenderingInitialized() ? _exportableMapRenderer : null;
+    }
+
+    public synchronized void stopRenderer() {
+        Log.v(TAG, "stopRenderer()");
+
+        if (_mapRenderer == null) {
+            Log.w(TAG, "Can't stop absent renderer");
+            return;
+        }
+
+        synchronized (_mapRenderer) {
+            if (isSuspended) {
+                Log.v(TAG, "Stopping suspended renderer...");
+                synchronized (eglThread) {
+                    eglThread.mapRenderer = _mapRenderer;
+                    eglThread.startAndCompleteOperation(EGLThreadOperation.RELEASE_RENDERING);
+                }
+            } else {
+                Log.v(TAG, "Stopping active renderer...");
+                stopRenderingView();
+                releaseRendering();
+                removeRenderingView();
+            }
+            // Clean up data
+            listeners = new ArrayList<>();
+            _mapAnimator = null;
+            _mapMarkersAnimator = null;
         }
     }
 
     private void releaseRendering() {
-        if(releaseTask == null && _glSurfaceView != null) {
-            waitRelease = true;
-            releaseTask = new Runnable() {
-                @Override
-                public void run() {
-                    if (_mapRenderer.isRenderingInitialized()) {
-                        Log.v(TAG, "Forcibly releasing rendering by schedule");
-                        _mapRenderer.releaseRendering(true);
-                    }
-                    synchronized (this) {
-                        waitRelease = false;
-                        this.notifyAll();
-                    }                
-                }
-            };
-            _glSurfaceView.queueEvent(releaseTask);
+        Log.v(TAG, "releaseRendering()");
+        if (!isSuspended && _mapRenderer != null && _mapRenderer.isRenderingInitialized()) {
+            Log.v(TAG, "Release rendering...");
+            synchronized (eglThread) {
+                eglThread.mapRenderer = _mapRenderer;
+                eglThread.startAndCompleteOperation(EGLThreadOperation.RELEASE_RENDERING);
+            }    
         }
-        if(_glSurfaceView != null) {
-            synchronized (releaseTask) {
-                long stopTime = System.currentTimeMillis();
-                while(waitRelease){
-                    if (System.currentTimeMillis() > stopTime + RELEASE_STOP_TIMEOUT)
-                        return;
-                    try {
-                        releaseTask.wait(RELEASE_WAIT_TIMEOUT);
-                    } catch (InterruptedException ex) {}
-                }
+    }
+
+    public void startRenderingView(Context context) {
+        Log.v(TAG, "startRenderingView()");
+        if (context != null) {
+            _renderingView = new RenderingView(context);
+            _renderingView.isOffscreen = !_inWindow;
+        }
+        if (_renderingView != null && (context == null || !initOnResume)) {
+            _renderingView.setPreserveEGLContextOnPause(true);
+            _renderingView.setEGLContextClientVersion(3);
+            eglThread.configChooser =
+                new ComponentSizeChooser(8, 8, 8, 0, 16, 0);
+            _renderingView.setEGLConfigChooser(eglThread.configChooser);
+            _renderingView.setEGLContextFactory(new EGLContextFactory());
+            _renderingView.setEGLWindowSurfaceFactory(
+                _inWindow ? new WindowSurfaceFactory() : new PixelbufferSurfaceFactory(_windowWidth, _windowHeight));
+            _renderingView.setRenderer(new RendererProxy());
+            _renderingView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+            isViewStarted = true;
+            if (_inWindow) {
+                addView(_renderingView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+            } else {
+                _renderingView.initializeView(_windowWidth, _windowHeight);
+                isSurfaceReady = true;
             }
+        }
+    }
+
+    public void stopRenderingView() {
+        Log.v(TAG, "stopRenderingView()");
+        if (isViewStarted) {
+            isViewStarted = false;
+            if (_renderingView != null) {
+                _renderingView.onPause();
+            }
+        } else if (initOnResume) {
+            initOnResume = false;
+        }
+    }
+
+    public void removeRenderingView() {
+        Log.v(TAG, "removeRenderingView()");
+        isSurfaceReady = false;
+        if (_renderingView != null) {
+            if (_renderingView.isOffscreen) {
+                _renderingView.removeView();
+            } else {
+                removeAllViews();
+            }
+            _renderingView = null;
         }
     }
 
@@ -381,16 +513,15 @@ public abstract class MapRendererView extends FrameLayout {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         Log.v(TAG, "onAttachedToWindow()");
-        isPresent = true;
+        isSurfaceReady = true;
     }
 
     @Override
     protected void onDetachedFromWindow() {
         Log.v(TAG, "onDetachedFromWindow()");
         NativeCore.checkIfLoaded();
-
-        if (isPresent) {
-            isPresent = false;
+        if (isSurfaceReady) {
+            isSurfaceReady = false;
             // Surface and context are going to be destroyed, thus try to release rendering
             // before that will happen
             Log.v(TAG, "Rendering release due to onDetachedFromWindow()");
@@ -403,22 +534,19 @@ public abstract class MapRendererView extends FrameLayout {
     public final void handleOnCreate(Bundle savedInstanceState) {
         Log.v(TAG, "handleOnCreate()");
         NativeCore.checkIfLoaded();
-        isPresent = true;
+        isSurfaceReady = true;
     }
 
     public final void handleOnSaveInstanceState(Bundle outState) {
         Log.v(TAG, "handleOnSaveInstanceState()");
         NativeCore.checkIfLoaded();
-
-        //TODO: do something here
     }
 
     public final void handleOnDestroy() {
         Log.v(TAG, "handleOnDestroy()");
         NativeCore.checkIfLoaded();
-
-        if (isPresent) {
-            isPresent = false;
+        if (isSurfaceReady) {
+            isSurfaceReady = false;
             // Don't delete map renderer here, since context destruction will happen later.
             // Map renderer will be automatically deleted by GC anyways. But queue
             // action to release rendering
@@ -437,19 +565,32 @@ public abstract class MapRendererView extends FrameLayout {
     public final void handleOnPause() {
         Log.v(TAG, "handleOnPause()");
         NativeCore.checkIfLoaded();
+        isPaused = true;
 
-        // Inform GLSurfaceView that activity was paused
-        if (_glSurfaceView != null)
-            _glSurfaceView.onPause();
+        // Inform rendering view that activity was paused
+        synchronized (_mapRenderer) {
+            if (isViewStarted && !isSuspended && _renderingView != null) {
+                _renderingView.onPause();
+            }
+        }
     }
 
     public final void handleOnResume() {
         Log.v(TAG, "handleOnResume()");
         NativeCore.checkIfLoaded();
+        isPaused = false;
 
-        // Inform GLSurfaceView that activity was resumed
-        if (_glSurfaceView != null)
-            _glSurfaceView.onResume();
+        synchronized (_mapRenderer) {
+            if (_renderingView != null) {
+                if (initOnResume && (isInitializing || isReinitializing)) {
+                    initOnResume = false;
+                    startRenderingView(null);
+                } else if (!isSuspended) {
+                    // Inform rendering view that activity was resumed
+                    _renderingView.onResume();
+                }
+            }
+        }
     }
 
     public final void requestRender() {
@@ -457,8 +598,11 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         // Request GLSurfaceView render a frame
-        if (_glSurfaceView != null)
-            _glSurfaceView.requestRender();
+        synchronized (_mapRenderer) {
+            if (!isSuspended && _renderingView != null) {
+                _renderingView.requestRender();
+            }
+        }
     }
 
     public final MapAnimator getMapAnimator() {
@@ -765,10 +909,11 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         PointI fixedPixel = _mapRenderer.getState().getFixedPixel();
-        if (fixedPixel.getX() >= 0 && fixedPixel.getY() >= 0)
+        if (fixedPixel.getX() >= 0 && fixedPixel.getY() >= 0) {
             return _mapRenderer.getState().getFixedLocation31();
-        else
+        } else {
             return _mapRenderer.getState().getTarget31();
+        }
     }
 
     public final PointI getTargetScreenPosition() {
@@ -780,10 +925,11 @@ public abstract class MapRendererView extends FrameLayout {
     public final boolean setTarget(PointI target31) {
         NativeCore.checkIfLoaded();
 
-        if (_windowWidth > 0 && _windowHeight > 0)
+        if (_windowWidth > 0 && _windowHeight > 0) {
             return _mapRenderer.setMapTargetLocation(target31);
-        else
+        } else {
             return _mapRenderer.setTarget(target31);
+        }
     }
 
     public final boolean setTarget(PointI target31, boolean forcedUpdate, boolean disableUpdate) {
@@ -1387,22 +1533,40 @@ public abstract class MapRendererView extends FrameLayout {
     }
 
     public final void resumeMapAnimation() {
-        _mapAnimationStartTime = SystemClock.uptimeMillis();
-        _mapAnimationFinished = false;
-        _mapAnimator.resume();
+        synchronized (_mapRenderer) {
+            _mapAnimationStartTime = SystemClock.uptimeMillis();
+            _mapAnimationFinished = false;
+            if (_mapAnimator != null) {
+                _mapAnimator.resume();
+            }
+        }
     }
 
     public final boolean isMapAnimationPaused() {
-        return _mapAnimator.isPaused();
+        boolean result = true;
+        synchronized (_mapRenderer) {
+            if (_mapAnimator != null) {
+                result = _mapAnimator.isPaused();
+            }
+        }
+        return result;
     }
 
     public final void pauseMapAnimation() {
-        _mapAnimator.pause();
+        synchronized (_mapRenderer) {
+            if (_mapAnimator != null) {
+                _mapAnimator.pause();
+            }
+        }
     }
 
     public final void stopMapAnimation() {
-        _mapAnimator.pause();
-        _mapAnimator.getAllAnimations();
+        synchronized (_mapRenderer) {
+            if (_mapAnimator != null) {
+                _mapAnimator.pause();
+                _mapAnimator.getAllAnimations();
+            }
+        }
     }
 
     public final boolean isMapAnimationFinished() {
@@ -1410,22 +1574,40 @@ public abstract class MapRendererView extends FrameLayout {
     }
 
     public final void resumeMapMarkersAnimation() {
-        _mapMarkersAnimationStartTime = SystemClock.uptimeMillis();
-        _mapMarkersAnimationFinished = false;
-        _mapMarkersAnimator.resume();
+        synchronized (_mapRenderer) {
+            _mapMarkersAnimationStartTime = SystemClock.uptimeMillis();
+            _mapMarkersAnimationFinished = false;
+            if (_mapMarkersAnimator != null) {
+                _mapMarkersAnimator.resume();
+            }
+        }
     }
 
     public final boolean isMapMarkersAnimationPaused() {
-        return _mapMarkersAnimator.isPaused();
+        boolean result = true;
+        synchronized (_mapRenderer) {
+            if (_mapMarkersAnimator != null) {
+                result = _mapMarkersAnimator.isPaused();
+            }
+        }
+        return result;
     }
 
     public final void pauseMapMarkersAnimation() {
-        _mapMarkersAnimator.pause();
+        synchronized (_mapRenderer) {
+            if (_mapMarkersAnimator != null) {
+                _mapMarkersAnimator.pause();
+            }
+        }
     }
 
     public final void stopMapMarkersAnimation() {
-        _mapMarkersAnimator.pause();
-        _mapMarkersAnimator.getAllAnimations();
+        synchronized (_mapRenderer) {
+            if (_mapMarkersAnimator != null) {
+                _mapMarkersAnimator.pause();
+                _mapMarkersAnimator.getAllAnimations();
+            }
+        }
     }
 
     public final boolean isMapMarkersAnimationFinished() {
@@ -1469,63 +1651,44 @@ public abstract class MapRendererView extends FrameLayout {
         }
     }
 
-    private class PixelbufferSurfaceFactory implements GLSurfaceView.EGLWindowSurfaceFactory {
-
-        public PixelbufferSurfaceFactory(int width, int height) {
-            surfaceAttributes = new int[] {
-                    EGL10.EGL_WIDTH, width,
-                    EGL10.EGL_HEIGHT, height,
-                    EGL10.EGL_NONE};
-        }
-
-        public EGLSurface createWindowSurface(EGL10 egl, EGLDisplay display,
-                EGLConfig config, Object nativeWindow) {
-            EGLSurface result = null;
-            try {
-                result = egl.eglCreatePbufferSurface(display, config, surfaceAttributes);
-            } catch (IllegalArgumentException e) {
-                Log.e(TAG, "eglCreateWindowSurface", e);
-            }
-            return result;
-        }
-
-        public void destroySurface(EGL10 egl, EGLDisplay display,
-                EGLSurface surface) {
-            egl.eglDestroySurface(display, surface);
-        }
-
-        private int[] surfaceAttributes;
-    }
-
     private abstract class BaseConfigChooser
             implements GLSurfaceView.EGLConfigChooser {
         public BaseConfigChooser(int[] configSpec) {
             mConfigSpec = filterConfigSpec(configSpec);
         }
 
-        public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display) {
+        public EGLConfig makeConfig(EGL10 egl, EGLDisplay display) {
             int[] num_config = new int[1];
-            if (!egl.eglChooseConfig(display, mConfigSpec, null, 0,
-                    num_config)) {
+            if (!egl.eglChooseConfig(display, mConfigSpec, null, 0, num_config)) {
                 Log.e(TAG, "Failed to choose EGL config");
+                return null;
             }
 
             int numConfigs = num_config[0];
 
             if (numConfigs <= 0) {
                 Log.e(TAG, "No EGL configs match specified requirements");
+                return null;
             }
 
             EGLConfig[] configs = new EGLConfig[numConfigs];
-            if (!egl.eglChooseConfig(display, mConfigSpec, configs, numConfigs,
-                    num_config)) {
+            if (!egl.eglChooseConfig(display, mConfigSpec, configs, numConfigs, num_config)) {
                 Log.e(TAG, "Failed to choose suitable EGL configs");
+                return null;
             }
             EGLConfig config = chooseConfig(egl, display, configs);
             if (config == null) {
                 Log.e(TAG, "Failed to choose required EGL config");
             }
             return config;
+        }
+
+        public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display) {
+            Log.v(TAG, "ComponentSizeChooser.chooseConfig()...");
+            synchronized (eglThread) {
+                eglThread.startAndCompleteOperation(EGLThreadOperation.CHOOSE_CONFIG);
+            }
+            return makeConfig(egl, display);
         }
 
         abstract EGLConfig chooseConfig(EGL10 egl, EGLDisplay display,
@@ -1553,9 +1716,9 @@ public abstract class MapRendererView extends FrameLayout {
      */
     private class ComponentSizeChooser extends BaseConfigChooser {
         public ComponentSizeChooser(int redSize, int greenSize, int blueSize,
-                                    int alphaSize, int depthSize, int stencilSize, boolean inWindow) {
+                                    int alphaSize, int depthSize, int stencilSize) {
             super(new int[] {
-                    EGL10.EGL_SURFACE_TYPE, inWindow ? EGL10.EGL_WINDOW_BIT : EGL10.EGL_PBUFFER_BIT,
+                    EGL10.EGL_SURFACE_TYPE, EGL10.EGL_WINDOW_BIT | EGL10.EGL_PBUFFER_BIT,
                     EGL10.EGL_RED_SIZE, redSize,
                     EGL10.EGL_GREEN_SIZE, greenSize,
                     EGL10.EGL_BLUE_SIZE, blueSize,
@@ -1591,8 +1754,7 @@ public abstract class MapRendererView extends FrameLayout {
                             EGL10.EGL_BLUE_SIZE, 0);
                     int a = findConfigAttrib(egl, display, config,
                             EGL10.EGL_ALPHA_SIZE, 0);
-                    if ((r == mRedSize) && (g == mGreenSize)
-                            && (b == mBlueSize) && (a == mAlphaSize)) {
+                    if ((r == mRedSize) && (g == mGreenSize) && (b == mBlueSize) && (a == mAlphaSize)) {
                         if (d > maxDepthSize) {
                             maxDepthSize = d;
                             bestConfig = config;
@@ -1622,153 +1784,159 @@ public abstract class MapRendererView extends FrameLayout {
         protected int mStencilSize;
     }
 
+    private class WindowSurfaceFactory implements GLSurfaceView.EGLWindowSurfaceFactory {
+
+        public WindowSurfaceFactory() {
+            dummySurfaceAttributes = new int[] {
+                EGL10.EGL_WIDTH, 1,
+                EGL10.EGL_HEIGHT, 1,
+                EGL10.EGL_NONE
+            };
+        }
+
+        public EGLSurface createWindowSurface(EGL10 egl, EGLDisplay display, EGLConfig config, Object nativeWindow) {
+            Log.v(TAG, "WindowSurfaceFactory.createWindowSurface()...");
+            synchronized (eglThread) {
+                eglThread.nativeWindow = nativeWindow;
+                eglThread.startAndCompleteOperation(EGLThreadOperation.CREATE_WINDOW_SURFACE);
+            }
+
+            // Create dummy surface
+            EGLSurface result = null;
+            try {
+                result = egl.eglCreatePbufferSurface(display, config, dummySurfaceAttributes);
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "Failed to create dummy window surface", e);
+            }
+            return result;
+        }
+
+        public void destroySurface(EGL10 egl, EGLDisplay display, EGLSurface surface) {
+            Log.v(TAG, "WindowSurfaceFactory.destroySurface()...");
+            egl.eglDestroySurface(display, surface);
+            synchronized (eglThread) {
+                eglThread.startAndCompleteOperation(EGLThreadOperation.DESTROY_SURFACE);
+            }
+        }
+
+        private int[] dummySurfaceAttributes;
+    }
+
+    private class PixelbufferSurfaceFactory implements GLSurfaceView.EGLWindowSurfaceFactory {
+
+        public PixelbufferSurfaceFactory(int width, int height) {
+            surfaceWidth = width;
+            surfaceHeight = height;
+            dummySurfaceAttributes = new int[] {
+                EGL10.EGL_WIDTH, 1,
+                EGL10.EGL_HEIGHT, 1,
+                EGL10.EGL_NONE
+            };
+        }
+
+        public EGLSurface createWindowSurface(EGL10 egl, EGLDisplay display, EGLConfig config, Object nativeWindow) {
+            Log.v(TAG, "PixelbufferSurfaceFactory.createWindowSurface()...");
+            synchronized (eglThread) {
+                eglThread.surfaceWidth = surfaceWidth;
+                eglThread.surfaceHeight = surfaceHeight;
+                eglThread.startAndCompleteOperation(EGLThreadOperation.CREATE_PIXELBUFFER_SURFACE);
+            }
+
+            // Create dummy surface
+            EGLSurface result = null;
+            try {
+                result = egl.eglCreatePbufferSurface(display, config, dummySurfaceAttributes);
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "Failed to create dummy window surface", e);
+            }
+            return result;
+        }
+
+        public void destroySurface(EGL10 egl, EGLDisplay display, EGLSurface surface) {
+            Log.v(TAG, "PixelbufferSurfaceFactory.destroySurface()...");
+            egl.eglDestroySurface(display, surface);
+            synchronized (eglThread) {
+                eglThread.startAndCompleteOperation(EGLThreadOperation.DESTROY_SURFACE);
+            }
+        }
+
+        private int surfaceWidth;
+        private int surfaceHeight;
+        private int[] dummySurfaceAttributes;
+    }
+
     /**
      * EGL context factory
      * <p/>
      * Implements creation of main and GPU-worker contexts along with needed resources
      */
     private final class EGLContextFactory implements GLSurfaceView.EGLContextFactory {
-        private int EGL_CONTEXT_CLIENT_VERSION = 0x3098;        
-        /**
-         * EGL attributes used to initialize EGL context:
-         * - EGL context must support at least OpenGLES 3.0
-         */
-        private final int[] contextAttributes = {
-                EGL_CONTEXT_CLIENT_VERSION, 3,
-                EGL10.EGL_NONE};
 
-        /**
-         * EGL attributes used to initialize GPU-worker EGL surface with 1x1 pixels size
-         */
-        private final int[] gpuWorkerSurfaceAttributes = {
-                EGL10.EGL_WIDTH, 1,
-                EGL10.EGL_HEIGHT, 1,
-                EGL10.EGL_NONE};
-
-        public EGLContext createContext(EGL10 egl, EGLDisplay display, EGLConfig eglConfig) {
+        public EGLContext createContext(EGL10 egl, EGLDisplay display, EGLConfig config) {
             Log.v(TAG, "EGLContextFactory.createContext()...");
 
-            // In case context is create while rendering is initialized, release it first
-            if (_mapRenderer != null && _mapRenderer.isRenderingInitialized()) {
-                Log.v(TAG, "Rendering is still initialized during context creation, " +
-                        "force releasing it!");
+            if (isSuspended && !isReinitializing) {
+                Log.e(TAG, "No use to create contexts for moved renderer");
+                return null;
+            }
+
+            // In case context is created while rendering is initialized, release it first
+            if (!isReinitializing && _mapRenderer != null && _mapRenderer.isRenderingInitialized()) {
+                Log.v(TAG, "Rendering is still initialized during context creation, force releasing it!");
 
                 // Since there's no more context, where previous resources were created,
                 // they are lost. Forcibly release rendering
-                _mapRenderer.releaseRendering(true);
+                releaseRendering();
             }
 
-            // Create main EGL context
-            if (_mainContext != null) {
-                Log.w(TAG, "Previous main EGL context was not destroyed properly!");
-                _mainContext = null;
+            if (config == null) {
+                return null;
             }
+
+            synchronized (eglThread) {
+                eglThread.startAndCompleteOperation(EGLThreadOperation.CREATE_CONTEXTS);
+            }
+
+            // Create dummy EGL context for GLSurfaceView only
+            EGLContext dummyContext;
             try {
-                _mainContext = egl.eglCreateContext(
+                dummyContext = egl.eglCreateContext(
                         display,
-                        eglConfig,
+                        config,
                         EGL10.EGL_NO_CONTEXT,
-                        contextAttributes);
+                        eglThread.contextAttributes);
             } catch (Exception e) {
-                Log.e(TAG, "Failed to create main EGL context", e);
+                Log.e(TAG, "Failed to create dummy EGL context", e);
                 return null;
             }
-            if (_mainContext == null || _mainContext == EGL10.EGL_NO_CONTEXT) {
-                Log.e(TAG, "Failed to create main EGL context: " +
-                        getEglErrorString(egl.eglGetError()));
-
-                _mainContext = null;
-
+            if (dummyContext == null || dummyContext == EGL10.EGL_NO_CONTEXT) {
+                Log.e(TAG, "Failed to create dummy EGL context: " + getEglErrorString(egl.eglGetError()));
                 return null;
             }
 
-            // Create GPU-worker EGL context
-            if (_gpuWorkerContext != null) {
-                Log.w(TAG, "Previous GPU-worker EGL context was not destroyed properly!");
-                _gpuWorkerContext = null;
-            }
-            try {
-                _gpuWorkerContext = egl.eglCreateContext(
-                        display,
-                        eglConfig,
-                        _mainContext,
-                        contextAttributes);
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to create GPU-worker EGL context", e);
-            }
-            if (_gpuWorkerContext == null || _gpuWorkerContext == EGL10.EGL_NO_CONTEXT) {
-                Log.e(TAG, "Failed to create GPU-worker EGL context: " +
-                        getEglErrorString(egl.eglGetError()));
-                _gpuWorkerContext = null;
-            }
-
-            // Create GPU-worker EGL surface
-            if (_gpuWorkerContext != null) {
-                if (_gpuWorkerFakeSurface != null) {
-                    Log.w(TAG, "Previous GPU-worker EGL surface was not destroyed properly!");
-                    _gpuWorkerFakeSurface = null;
-                }
-                try {
-                    _gpuWorkerFakeSurface = egl.eglCreatePbufferSurface(
-                            display,
-                            eglConfig,
-                            gpuWorkerSurfaceAttributes);
-                } catch (Exception e) {
-                    Log.e(TAG, "Failed to create GPU-worker EGL surface", e);
-                }
-                if (_gpuWorkerFakeSurface == null || _gpuWorkerFakeSurface == EGL10.EGL_NO_SURFACE) {
-                    Log.e(TAG, "Failed to create GPU-worker EGL surface: " +
-                            getEglErrorString(egl.eglGetError()));
-
-                    egl.eglDestroyContext(display, _gpuWorkerContext);
-                    _gpuWorkerContext = null;
-                    _gpuWorkerFakeSurface = null;
-                }
-            }
-
-            // Save reference to EGL display
-            _display = display;
-
-            // Change renderer setup options
-            _setupOptions = new MapRendererSetupOptions();
-            _setupOptions.setDisplayDensityFactor(_densityFactor);
-            if (_mapRendererSetupOptionsConfigurator != null)
-                _mapRendererSetupOptionsConfigurator.configureMapRendererSetupOptions(_setupOptions);
-
-            return _mainContext;
+            return dummyContext;
         }
 
         public void destroyContext(EGL10 egl, EGLDisplay display, EGLContext context) {
             Log.v(TAG, "EGLContextFactory.destroyContext()...");
 
             // In case context is destroyed while rendering is initialized, release it first
-            if (_mapRenderer != null && _mapRenderer.isRenderingInitialized()) {
-                Log.v(TAG, "Rendering is still initialized during context destruction, " +
-                        "force releasing it!");
+            if (!isSuspended && _mapRenderer != null && _mapRenderer.isRenderingInitialized()) {
+                Log.v(TAG, "Rendering is still initialized during context destruction, force releasing it!");
 
                 // Since there's no more context, where previous resources were created,
                 // they are lost. Forcibly release rendering
-                _mapRenderer.releaseRendering(true);
+                releaseRendering();
             }
 
-            // Destroy GPU-worker EGL surface (if present)
-            if (_gpuWorkerFakeSurface != null) {
-                egl.eglDestroySurface(display, _gpuWorkerFakeSurface);
-                _gpuWorkerFakeSurface = null;
-            }
-
-            // Destroy GPU-worker EGL context (if present)
-            if (_gpuWorkerContext != null) {
-                egl.eglDestroyContext(display, _gpuWorkerContext);
-                _gpuWorkerContext = null;
-            }
-
-            // Destroy main context
+            // Destroy dummy context
             egl.eglDestroyContext(display, context);
-            _mainContext = null;
 
-            // Remove reference to EGL display
-            _display = null;
+            if (!isSuspended) {
+                synchronized (eglThread) {
+                    eglThread.startAndCompleteOperation(EGLThreadOperation.DESTROY_CONTEXTS);
+                }
+            }
         }
     }
 
@@ -1781,55 +1949,83 @@ public abstract class MapRendererView extends FrameLayout {
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
             Log.v(TAG, "RendererProxy.onSurfaceCreated()...");
 
-            // In case a new surface was created, and rendering was initialized it means that
-            // surface was changed, so release rendering to allow it to initialize on next
-            // call to onSurfaceChanged
-            if (_mapRenderer.isRenderingInitialized()) {
-                Log.v(TAG, "Releasing rendering due to surface recreation");
+            if (isSuspended && !isReinitializing) {
+                return;
+            }
 
-                // Context still exists here and is active, so just release resources
-                _mapRenderer.releaseRendering();
+            // New context was created, but rendering was initialized before,
+            // so, release rendering to allow it to initialize on next
+            // call to onSurfaceChanged
+            if (!isReinitializing && _mapRenderer != null && _mapRenderer.isRenderingInitialized()) {
+                Log.v(TAG, "Release rendering due to context recreation");
+                releaseRendering();
             }
         }
 
         public void onSurfaceChanged(GL10 gl, int width, int height) {
             Log.v(TAG, "RendererProxy.onSurfaceChanged()...");
 
+            if (isSuspended && !isReinitializing) {
+                return;
+            }
+
             // Set new "window" size and viewport that covers entire "window"
             _windowWidth = width;
             _windowHeight = height;
-            _mapRenderer.setWindowSize(new PointI(width, height));
-            _mapRenderer.setViewport(new AreaI(new PointI(0, 0), new PointI(width, height)));
+            if (_mapRenderer != null) {
+                _mapRenderer.setWindowSize(new PointI(width, height));
+                _mapRenderer.setViewport(new AreaI(new PointI(0, 0), new PointI(width, height)));
+                _mapRenderer.setFlip(!_inWindow);
+            }
 
-            // In case rendering is not initialized, initialize it
-            // (happens when surface is created for the first time, or recreated)
-            if (!_mapRenderer.isRenderingInitialized()) {
-                Log.v(TAG, "Initializing rendering due to surface size change");
-
-                if (_gpuWorkerContext != null && _gpuWorkerFakeSurface != null) {
-                    _setupOptions.setGpuWorkerThreadEnabled(true);
-                    _setupOptions.setGpuWorkerThreadPrologue(_gpuWorkerThreadPrologue.getBinding());
-                    _setupOptions.setGpuWorkerThreadEpilogue(_gpuWorkerThreadEpilogue.getBinding());
+            // Setup rendering options
+            if (_mapRenderer != null && !_mapRenderer.isRenderingInitialized()) {
+                if (eglThread.gpuWorkerContext != null && eglThread.gpuWorkerFakeSurface != null) {
+                    setupOptions.setGpuWorkerThreadEnabled(true);
+                    setupOptions.setGpuWorkerThreadPrologue(_gpuWorkerThreadPrologue.getBinding());
+                    setupOptions.setGpuWorkerThreadEpilogue(_gpuWorkerThreadEpilogue.getBinding());
                 } else {
-                    _setupOptions.setGpuWorkerThreadEnabled(false);
-                    _setupOptions.setGpuWorkerThreadPrologue(null);
-                    _setupOptions.setGpuWorkerThreadEpilogue(null);
+                    setupOptions.setGpuWorkerThreadEnabled(false);
+                    setupOptions.setGpuWorkerThreadPrologue(null);
+                    setupOptions.setGpuWorkerThreadEpilogue(null);
                 }
-                _setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());    
-                _mapRenderer.setup(_setupOptions);
-                if (!_mapRenderer.initializeRendering(true))
-                    Log.e(TAG, "Failed to initialize rendering");
-                else {
+                setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());    
+                _mapRenderer.setup(setupOptions);
+            }
+
+            // In case rendering is not initialized or just needs to be reinitialized, initialize it
+            // (happens when surface is created for the first time, or recreated)
+            if (_mapRenderer != null && (isReinitializing || !_mapRenderer.isRenderingInitialized())) {
+                Log.v(TAG, "Rendering is initializing...");
+                boolean ok = false;
+                synchronized (eglThread) {
+                    eglThread.ok = false;
+                    eglThread.mapRenderer = _mapRenderer;
+                    eglThread.startAndCompleteOperation(EGLThreadOperation.INITIALIZE_RENDERING);
+                    ok = eglThread.ok;
+                }
+                if (ok) {
+                    _exportableMapRenderer = _mapRenderer;
+                    if (isReinitializing) {
+                        isReinitializing = false;
+                        isSuspended = false;
+                    }    
                     _frameStartTime = SystemClock.uptimeMillis();
                     _frameRenderTime = 0;
+                    Log.v(TAG, "Rendering is initialized successfully");
+                } else {
+                    _exportableMapRenderer = null;
+                    isReinitializing = false;
+                    Log.e(TAG, "Failed to initialize rendering");
                 }
+                isInitializing = false;
             }
         }
 
         public void onDrawFrame(GL10 gl) {
-            // In case rendering was not initialized yet, don't do anything
-            if (!_mapRenderer.isRenderingInitialized()) {
-                Log.w(TAG, "Rendering not yet initialized");
+            // In case rendering was not ready yet, don't do anything
+            if (isSuspended || _mapRenderer == null || !_mapRenderer.isRenderingInitialized()) {
+                Log.w(TAG, "Can't draw a frame: renderer either suspended or isn't yet initialized");
                 return;
             }
 
@@ -1853,28 +2049,21 @@ public abstract class MapRendererView extends FrameLayout {
                 listener.onUpdateFrame(MapRendererView.this);
             }
 
-            // Allow renderer to update
-            _mapRenderer.update();
-
-            // In case a new frame was prepared, render it
-            if (_mapRenderer.prepareFrame()) {
-                frameId++;
-                _mapRenderer.renderFrame();
-            }
-
-            long preFlushTime = SystemClock.uptimeMillis();
-
-            // Flush all the commands to GPU
-            gl.glFlush();
-
-            // Read the result raster to byte buffer when rendering off-screen
-            if (_byteBuffer != null) {
-                gl.glFinish();
-                synchronized (_byteBuffer) {
-                    _byteBuffer.rewind();
-                    gl.glReadPixels(0, 0, _windowWidth, _windowHeight, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, _byteBuffer);
+            long preFlushTime;
+            synchronized (eglThread) {
+                eglThread.mapRenderer = _mapRenderer;
+                eglThread.byteBuffer = _byteBuffer;
+                eglThread.renderingResultIsReady = false;
+                eglThread.startAndCompleteOperation(EGLThreadOperation.RENDER_FRAME);
+                if (eglThread.renderingResultIsReady) {
                     _renderingResultIsReady = true;
                 }
+                preFlushTime = eglThread.preFlushTime;
+            }
+
+            frameId++;
+
+            if (_byteBuffer != null) {
                 for (MapRendererViewListener listener : listeners) {
                     listener.onFrameReady(MapRendererView.this);
                 }
@@ -1885,10 +2074,10 @@ public abstract class MapRendererView extends FrameLayout {
             _frameGPUFinishTime = postRenderTime - preFlushTime;
             _frameRenderTime = Math.max(postRenderTime - _frameStartTime, 1);
             _frameRate = 1000.0f / (float) _frameRenderTime;
-            _frameRateLast1K = _frameRateLast1K > 0.0 ? (_frameRateLast1K * 999.0f + _frameRate) / 1000.0f : _frameRate;
+            _frameRateLast1K =
+                _frameRateLast1K > 0.0 ? (_frameRateLast1K * 999.0f + _frameRate) / 1000.0f : _frameRate;
 
-            if (_batterySavingMode && _maxFrameRate > 0)
-            {
+            if (_batterySavingMode && _maxFrameRate > 0) {
                 long extraTime = _maxFrameTime - _frameRenderTime;
                 if (extraTime > 0) {
                     try {
@@ -1908,8 +2097,9 @@ public abstract class MapRendererView extends FrameLayout {
             extends MapRendererSetupOptions.IFrameUpdateRequestCallback {
         @Override
         public void method(IMapRenderer mapRenderer) {
-            if (_glSurfaceView != null)
-                _glSurfaceView.requestRender();
+            if (!isSuspended && _renderingView != null) {
+                _renderingView.requestRender();
+            }
         }
     }
 
@@ -1921,17 +2111,17 @@ public abstract class MapRendererView extends FrameLayout {
             extends MapRendererSetupOptions.IGpuWorkerThreadPrologue {
         @Override
         public void method(IMapRenderer mapRenderer) {
-            if (_display == null) {
+            if (eglThread.display == null) {
                 Log.e(TAG, "EGL display is missing");
                 return;
             }
 
-            if (_gpuWorkerContext == null) {
+            if (eglThread.gpuWorkerContext == null) {
                 Log.e(TAG, "GPU-worker context is missing");
                 return;
             }
 
-            if (_gpuWorkerFakeSurface == null) {
+            if (eglThread.gpuWorkerFakeSurface == null) {
                 Log.e(TAG, "GPU-worker surface is missing");
                 return;
             }
@@ -1945,10 +2135,10 @@ public abstract class MapRendererView extends FrameLayout {
 
             try {
                 if (!egl.eglMakeCurrent(
-                        _display,
-                        _gpuWorkerFakeSurface,
-                        _gpuWorkerFakeSurface,
-                        _gpuWorkerContext)) {
+                        eglThread.display,
+                        eglThread.gpuWorkerFakeSurface,
+                        eglThread.gpuWorkerFakeSurface,
+                        eglThread.gpuWorkerContext)) {
                     Log.e(TAG, "Failed to set GPU-worker EGL context active: " +
                             getEglErrorString(egl.eglGetError()));
                 }
@@ -1985,5 +2175,310 @@ public abstract class MapRendererView extends FrameLayout {
 
     public interface IMapRendererSetupOptionsConfigurator {
         void configureMapRendererSetupOptions(MapRendererSetupOptions mapRendererSetupOptions);
+    }
+
+    public class RenderingView extends GLSurfaceView {
+
+        public boolean isOffscreen = false;
+
+        public RenderingView(Context context) {
+            super(context);
+        }
+
+        public void initializeView(int bitmapWidth, int bitmapHeight) {
+            if (isOffscreen) {
+                super.surfaceCreated(null);
+                super.surfaceChanged(null, 0, bitmapWidth, bitmapHeight);                
+            }
+        }
+
+        public void removeView() {
+            if (isOffscreen) {
+                super.onDetachedFromWindow();
+            }
+        }
+    }
+
+    private class EGLThread extends Thread {
+
+        private EGL10 egl;
+        private EGLDisplay display;
+        private EGLConfig config;
+        private EGLContext context;
+        private EGLSurface surface;
+        GL10 gl;
+
+        protected volatile EGLContext gpuWorkerContext;
+        protected volatile EGLSurface gpuWorkerFakeSurface;
+
+        protected volatile ComponentSizeChooser configChooser;
+
+        protected volatile Object nativeWindow;
+
+        protected volatile int surfaceWidth;
+        protected volatile int surfaceHeight;
+
+        protected volatile IMapRenderer mapRenderer;
+
+        protected volatile ByteBuffer byteBuffer;
+        protected volatile boolean renderingResultIsReady;
+
+        private final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;        
+
+        /**
+         * EGL attributes used to initialize EGL context:
+         * - EGL context must support at least OpenGLES 3.0
+         */
+        protected final int[] contextAttributes = {
+            EGL_CONTEXT_CLIENT_VERSION, 3,
+            EGL10.EGL_NONE
+        };
+
+        /**
+         * EGL attributes used to initialize GPU-worker EGL surface with 1x1 pixels size
+         */
+        private final int[] gpuWorkerSurfaceAttributes = {
+            EGL10.EGL_WIDTH, 1,
+            EGL10.EGL_HEIGHT, 1,
+            EGL10.EGL_NONE
+        };
+
+        public volatile EGLThreadOperation eglThreadOperation = EGLThreadOperation.NO_OPERATION;
+        public volatile boolean ok;
+        public volatile long preFlushTime = SystemClock.uptimeMillis();
+
+        public EGLThread(String name) {
+            super(name);
+        }
+
+        // NOTE: It needs to be called from synchronized block
+        public void startAndCompleteOperation(EGLThreadOperation operation) {
+            eglThreadOperation = operation;
+            notifyAll();
+            while (eglThreadOperation != EGLThreadOperation.NO_OPERATION) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+
+        @Override
+        public void run() {
+            egl = (EGL10) EGLContext.getEGL();
+            while (true) {
+                synchronized (this) {
+                    switch (eglThreadOperation) {
+                        case CHOOSE_CONFIG:
+                        if (display == null) {
+                            display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
+                            if (display == EGL10.EGL_NO_DISPLAY) {
+                                Log.e(TAG, "Failed to get EGL display");
+                                display = null;
+                            }
+                            int[] version = new int[2];
+                            if(!egl.eglInitialize(display, version)) {
+                                Log.e(TAG, "Failed to initialize EGL display connection");
+                                display = null;
+                            }
+                        }
+                        if (display != null && config == null) {
+                            config = configChooser.makeConfig(egl, display);
+                        }
+                        break;
+
+                        case CREATE_CONTEXTS:
+                        // Create GPU-worker EGL context if needed
+                        if (gpuWorkerContext == null) {
+                            try {
+                                gpuWorkerContext = egl.eglCreateContext(
+                                        display,
+                                        config,
+                                        EGL10.EGL_NO_CONTEXT,
+                                        contextAttributes);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Failed to create GPU-worker EGL context", e);
+                            }
+                            if (gpuWorkerContext == null || gpuWorkerContext == EGL10.EGL_NO_CONTEXT) {
+                                Log.e(TAG, "Failed to create GPU-worker EGL context: " +
+                                        getEglErrorString(egl.eglGetError()));
+                                gpuWorkerContext = null;
+                            }
+                            // Create GPU-worker EGL surface
+                            if (gpuWorkerContext != null) {
+                                if (gpuWorkerFakeSurface != null) {
+                                    Log.w(TAG, "Previous GPU-worker EGL surface was not destroyed properly!");
+                                    gpuWorkerFakeSurface = null;
+                                }
+                                try {
+                                    gpuWorkerFakeSurface = egl.eglCreatePbufferSurface(
+                                            display,
+                                            config,
+                                            gpuWorkerSurfaceAttributes);
+                                } catch (Exception e) {
+                                    Log.e(TAG, "Failed to create GPU-worker EGL surface", e);
+                                    gpuWorkerFakeSurface = null;
+                                }
+                                if (gpuWorkerFakeSurface == null || gpuWorkerFakeSurface == EGL10.EGL_NO_SURFACE) {
+                                    Log.e(TAG, "Failed to create GPU-worker EGL surface: " +
+                                            getEglErrorString(egl.eglGetError()));
+            
+                                    egl.eglDestroyContext(display, gpuWorkerContext);
+                                    gpuWorkerContext = null;
+                                    gpuWorkerFakeSurface = null;
+                                }
+                            }
+                        }
+                        // Create main EGL context
+                        if (context == null) {
+                            try {
+                                context = egl.eglCreateContext(
+                                        display,
+                                        config,
+                                        gpuWorkerContext != null ? gpuWorkerContext : EGL10.EGL_NO_CONTEXT,
+                                        contextAttributes);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Failed to create main EGL context", e);
+                            }
+                            if (context == null || context == EGL10.EGL_NO_CONTEXT) {
+                                Log.e(TAG, "Failed to create main EGL context: "
+                                    + getEglErrorString(egl.eglGetError()));
+                                context = null;
+                            }
+                        }
+
+                        break;
+
+                        case CREATE_WINDOW_SURFACE:
+                        surface = null;
+                        if (display != null && config != null) {
+                            try {
+                                surface = egl.eglCreateWindowSurface(display, config, nativeWindow, null);
+                            } catch (IllegalArgumentException e) {
+                                Log.e(TAG, "Failed to create window surface", e);
+                            }
+                        }
+                        if (surface == null || surface == EGL10.EGL_NO_SURFACE) {
+                            surface = null;
+                        } else {
+                            try {
+                                if (!egl.eglMakeCurrent(display, surface, surface, context)) {
+                                    Log.e(TAG, "Failed to set main EGL context to window active: "
+                                        + getEglErrorString(egl.eglGetError()));
+                                }
+                            } catch (Exception e) {
+                                Log.e(TAG, "Failed to set main EGL context to window active", e);
+                            }
+                            gl = (GL10) context.getGL();
+                        }
+                        break;
+
+                        case CREATE_PIXELBUFFER_SURFACE:
+                        surface = null;
+                        if (display != null && config != null) {
+                            int[] surfaceAttributes = new int[] {
+                                EGL10.EGL_WIDTH, surfaceWidth,
+                                EGL10.EGL_HEIGHT, surfaceHeight,
+                                EGL10.EGL_NONE
+                            };
+                            try {
+                                surface = egl.eglCreatePbufferSurface(display, config, surfaceAttributes);
+                            } catch (IllegalArgumentException e) {
+                                Log.e(TAG, "Failed to create pixelbuffer surface", e);
+                            }
+                        }
+                        if (surface == null || surface == EGL10.EGL_NO_SURFACE) {
+                            surface = null;
+                        } else {
+                            try {
+                                if (!egl.eglMakeCurrent(display, surface, surface, context)) {
+                                    Log.e(TAG, "Failed to set main EGL context to pixelbuffer active: "
+                                        + getEglErrorString(egl.eglGetError()));
+                                }
+                            } catch (Exception e) {
+                                Log.e(TAG, "Failed to set main EGL context to pixelbuffer active", e);
+                            }
+                            gl = (GL10) context.getGL();
+                        }
+                        break;
+
+                        case INITIALIZE_RENDERING:
+                        ok = mapRenderer.initializeRendering(false);
+                        break;
+
+                        case RENDER_FRAME:
+                        mapRenderer.update();
+                        boolean isReady = mapRenderer.prepareFrame();
+                        if (isReady) {
+                            mapRenderer.renderFrame();
+                        }
+                        preFlushTime = SystemClock.uptimeMillis();
+                        if (isReady) {
+                            gl.glFlush();
+                            if (byteBuffer != null) {
+                                gl.glFinish();
+                                synchronized (byteBuffer) {
+                                    byteBuffer.rewind();
+                                    gl.glReadPixels(0, 0, surfaceWidth, surfaceHeight,
+                                        GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, byteBuffer);
+                                    renderingResultIsReady = true;
+                                }
+                            } else {
+                                egl.eglSwapBuffers(display, surface);
+                            }
+                        }
+                        break;
+
+                        case RELEASE_RENDERING:
+                        mapRenderer.releaseRendering(true);
+                        break;
+
+                        case DESTROY_SURFACE:
+                        if (display != null && surface != null) {
+                            egl.eglMakeCurrent(display, EGL10.EGL_NO_SURFACE,
+                                EGL10.EGL_NO_SURFACE,
+                                EGL10.EGL_NO_CONTEXT);
+                            egl.eglDestroySurface(display, surface);
+                            surface = null;
+                        }
+                        break;
+            
+                        case DESTROY_CONTEXTS:
+                        if (display != null) {
+                            // Destroy main context
+                            if (context != null) {
+                                egl.eglDestroyContext(display, context);
+                                context = null;
+                            }
+                            // Destroy GPU-worker EGL surface (if present)
+                            if (gpuWorkerFakeSurface != null) {
+                                egl.eglDestroySurface(display, gpuWorkerFakeSurface);
+                                gpuWorkerFakeSurface = null;
+                            }
+                            // Destroy GPU-worker EGL context (if present)
+                            if (gpuWorkerContext != null) {
+                                egl.eglDestroyContext(display, gpuWorkerContext);
+                                gpuWorkerContext = null;
+                            }
+                            // Remove EGL config
+                            if (config != null) {
+                                config = null;
+                            }
+                            // Terminate connection to EGL display
+                            egl.eglTerminate(display);
+                            display = null;
+                        }
+                    }
+                    eglThreadOperation = EGLThreadOperation.NO_OPERATION;
+                    notifyAll();
+                    try {
+                        wait();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }
+        }
     }
 }

@@ -305,6 +305,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release(bool gpuContextLost)
     ok = ok && releaseOnSurfaceVector(gpuContextLost);
     ok = ok && (!_model3DSubstage || _model3DSubstage->release(gpuContextLost));
     ok = ok && releaseVisibilityCheck(gpuContextLost);
+    ok = ok && AtlasMapRendererSymbolsStage::release(gpuContextLost);
     return ok;
 }
 
@@ -320,145 +321,155 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    // Compile vertex shader
-    const QString vertexShader = QLatin1String(
-        // Input data
-        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
-        "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        // Output data to next shader stages
-        "PARAM_OUTPUT vec2 v2f_texCoords;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
-        "uniform mat4 param_vs_mOrthographicProjection;                                                                     ""\n"
-        "uniform vec4 param_vs_viewport; // x, y, width, height                                                             ""\n"
-        "uniform highp ivec4 param_vs_target31; // x, y, zoom, tileSize31                                                   ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: per-symbol data
-        "uniform highp ivec2 param_vs_position31;                                                                           ""\n"
-        "uniform ivec2 param_vs_symbolSize;                                                                                 ""\n"
-        "uniform float param_vs_distanceFromCamera;                                                                         ""\n"
-        "uniform ivec2 param_vs_onScreenOffset;                                                                             ""\n"
-        "uniform float param_vs_elevationInWorld;                                                                           ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        // Calculate position of symbol in world coordinate system.
-        "    highp ivec2 offsetFromTarget31 = param_vs_position31 - param_vs_target31.xy;                                   ""\n"
-        "    highp ivec2 correctOverlap;                                                                                    ""\n"
-        "    correctOverlap.x = offsetFromTarget31.x >= 1073741824 ? -1 : (offsetFromTarget31.x < -1073741824 ? 1 : 0);     ""\n"
-        "    correctOverlap.y = offsetFromTarget31.y >= 1073741824 ? -1 : (offsetFromTarget31.y < -1073741824 ? 1 : 0);     ""\n"
-        "    offsetFromTarget31 += correctOverlap * 2147483647 + correctOverlap;                                            ""\n"
-        "    highp vec2 offsetFromTarget = vec2(0.0);                                                                       ""\n"
-        "#if INTEGER_OPERATIONS_SUPPORTED                                                                                   ""\n"
-        "    {                                                                                                              ""\n"
-        "        highp ivec2 offsetFromTargetT = offsetFromTarget31 / param_vs_target31.w;                                  ""\n"
-        "        highp vec2 offsetFromTargetF = vec2(offsetFromTarget31 - offsetFromTargetT * param_vs_target31.w);         ""\n"
-        "        offsetFromTarget = vec2(offsetFromTargetT) + offsetFromTargetF / float(param_vs_target31.w);               ""\n"
-        "    }                                                                                                              ""\n"
-        "#else // !INTEGER_OPERATIONS_SUPPORTED                                                                             ""\n"
-        "    offsetFromTarget = vec2(offsetFromTarget31);                                                                   ""\n"
-        "    offsetFromTarget /= float(param_vs_target31.w);                                                                ""\n"
-        "#endif // INTEGER_OPERATIONS_SUPPORTED                                                                             ""\n"
-        "    vec4 symbolInWorld;                                                                                            ""\n"
-        "    symbolInWorld.xz = offsetFromTarget * %TileSize3D%.0;                                                          ""\n"
-        "    symbolInWorld.y = param_vs_elevationInWorld;                                                                   ""\n"
-        "    symbolInWorld.w = 1.0;                                                                                         ""\n"
-        "                                                                                                                   ""\n"
-        // Project position of symbol from world coordinate system to clipping space and to normalized device coordinates ([-1 .. 1])
-        "    vec4 symbolInClipping = param_vs_mPerspectiveProjectionView * symbolInWorld;                                   ""\n"
-        "    vec3 symbolInNDC = symbolInClipping.xyz / symbolInClipping.w;                                                  ""\n"
-        "                                                                                                                   ""\n"
-        // Using viewport size, get real screen coordinates and correct depth to be [0 .. 1]
-        "    vec3 symbolOnScreen;                                                                                           ""\n"
-        "    symbolOnScreen.xy = symbolInNDC.xy * 0.5 + 0.5;                                                                ""\n"
-        "    symbolOnScreen.x = symbolOnScreen.x * param_vs_viewport.z + param_vs_viewport.x;                               ""\n"
-        "    symbolOnScreen.y = symbolOnScreen.y * param_vs_viewport.w + param_vs_viewport.y;                               ""\n"
-        "    symbolOnScreen.z = (1.0 + symbolOnScreen.z) * 0.5;                                                             ""\n"
-        "                                                                                                                   ""\n"
-        // Add on-screen offset
-        "    symbolOnScreen.xy += vec2(param_vs_onScreenOffset);                                                            ""\n"
-        "                                                                                                                   ""\n"
-        // symbolOnScreen.xy now contains correct coordinates in viewport,
-        // which can be used in orthographic projection (if it was configured to match viewport).
-        //
-        // To provide pixel-perfect rendering of billboard raster symbols:
-        // symbolOnScreen.(x|y) has to be rounded and +0.5 in case param_vs_symbolSize.(x|y) is even
-        // symbolOnScreen.(x|y) has to be rounded in case param_vs_symbolSize.(x|y) is odd
-        "    symbolOnScreen = floor(symbolOnScreen);                                                                        ""\n"
-        "#if INTEGER_OPERATIONS_SUPPORTED                                                                                   ""\n"
-        "    symbolOnScreen.x += float(1 - param_vs_symbolSize.x & 1) * 0.5;                                                ""\n"
-        "    symbolOnScreen.y += float(1 - param_vs_symbolSize.y & 1) * 0.5;                                                ""\n"
-        "#else // !INTEGER_OPERATIONS_SUPPORTED                                                                             ""\n"
-        "    symbolOnScreen.xy += (vec2(1.0) - mod(vec2(param_vs_symbolSize), vec2(2.0))) * 0.5;                            ""\n"
-        "#endif // INTEGER_OPERATIONS_SUPPORTED                                                                             ""\n"
-        "                                                                                                                   ""\n"
-        // So it's possible to calculate current vertex location:
-        // Initially, get location of current vertex in screen coordinates
-        "    vec2 vertexOnScreen = in_vs_vertexPosition * vec2(param_vs_symbolSize) + symbolOnScreen.xy;                    ""\n"
-        "                                                                                                                   ""\n"
-        // To provide pixel-perfect result, vertexOnScreen needs to be rounded
-        "    vertexOnScreen = floor(vertexOnScreen + vec2(0.5, 0.5));                                                       ""\n"
-        "                                                                                                                   ""\n"
-        // There's no need to perform unprojection into orthographic world space, just multiply these coordinates by
-        // orthographic projection matrix (View and Model being identity), yet use Z from perspective NDC
-        "    vec4 vertex;                                                                                                   ""\n"
-        "    vertex.xy = vertexOnScreen.xy;                                                                                 ""\n"
-        "    vertex.z = 0.0;                                                                                                ""\n"
-        "    vertex.w = 1.0;                                                                                                ""\n"
-        "    gl_Position = param_vs_mOrthographicProjection * vertex;                                                       ""\n"
-        "    gl_Position.z = symbolInNDC.z * gl_Position.w;                                                                 ""\n"
-        "                                                                                                                   ""\n"
-        // Texture coordinates are simply forwarded from input
-        "    v2f_texCoords = in_vs_vertexTexCoords;                                                                         ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedVertexShader = vertexShader;
-    preprocessedVertexShader.replace("%TileSize3D%", QString::number(AtlasMapRenderer::TileSize3D));
-    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    if (vsId == 0)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
-        return false;
-    }
-
-    // Compile fragment shader
-    const QString fragmentShader = QLatin1String(
-        // Input data
-        "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        // Parameters: per-symbol data
-        "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
-        "uniform lowp vec4 param_fs_modulationColor;                                                                        ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
-        "        param_fs_sampler,                                                                                          ""\n"
-        "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedFragmentShader = fragmentShader;
-    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    if (fsId == 0)
-    {
-        glDeleteShader(vsId);
-        GL_CHECK_RESULT;
-
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
-        return false;
-    }
-
-    // Link everything into program object
-    GLuint shaders[] = { vsId, fsId };
     QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
-    _billboardRasterProgram.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
+    _billboardRasterProgram.id = 0;
+    if (!_billboardRasterProgram.binaryCache.isEmpty())
+    {
+        _billboardRasterProgram.id = gpuAPI->linkProgram(0, nullptr,
+            _billboardRasterProgram.binaryCache, _billboardRasterProgram.cacheFormat, true, &variablesMap);
+    }
+    if (!_billboardRasterProgram.id.isValid())
+    {
+        // Compile vertex shader
+        const QString vertexShader = QLatin1String(
+            // Input data
+            "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+            "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            // Output data to next shader stages
+            "PARAM_OUTPUT vec2 v2f_texCoords;                                                                                   ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
+            "uniform mat4 param_vs_mOrthographicProjection;                                                                     ""\n"
+            "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
+            "uniform vec4 param_vs_viewport; // x, y, width, height                                                             ""\n"
+            "uniform highp ivec4 param_vs_target31; // x, y, zoom, tileSize31                                                   ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: per-symbol data
+            "uniform highp ivec2 param_vs_position31;                                                                           ""\n"
+            "uniform ivec2 param_vs_symbolSize;                                                                                 ""\n"
+            "uniform float param_vs_distanceFromCamera;                                                                         ""\n"
+            "uniform ivec2 param_vs_onScreenOffset;                                                                             ""\n"
+            "uniform float param_vs_elevationInWorld;                                                                           ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            // Calculate position of symbol in world coordinate system.
+            "    highp ivec2 offsetFromTarget31 = param_vs_position31 - param_vs_target31.xy;                                   ""\n"
+            "    highp ivec2 correctOverlap;                                                                                    ""\n"
+            "    correctOverlap.x = offsetFromTarget31.x >= 1073741824 ? -1 : (offsetFromTarget31.x < -1073741824 ? 1 : 0);     ""\n"
+            "    correctOverlap.y = offsetFromTarget31.y >= 1073741824 ? -1 : (offsetFromTarget31.y < -1073741824 ? 1 : 0);     ""\n"
+            "    offsetFromTarget31 += correctOverlap * 2147483647 + correctOverlap;                                            ""\n"
+            "    highp vec2 offsetFromTarget = vec2(0.0);                                                                       ""\n"
+            "#if INTEGER_OPERATIONS_SUPPORTED                                                                                   ""\n"
+            "    {                                                                                                              ""\n"
+            "        highp ivec2 offsetFromTargetT = offsetFromTarget31 / param_vs_target31.w;                                  ""\n"
+            "        highp vec2 offsetFromTargetF = vec2(offsetFromTarget31 - offsetFromTargetT * param_vs_target31.w);         ""\n"
+            "        offsetFromTarget = vec2(offsetFromTargetT) + offsetFromTargetF / float(param_vs_target31.w);               ""\n"
+            "    }                                                                                                              ""\n"
+            "#else // !INTEGER_OPERATIONS_SUPPORTED                                                                             ""\n"
+            "    offsetFromTarget = vec2(offsetFromTarget31);                                                                   ""\n"
+            "    offsetFromTarget /= float(param_vs_target31.w);                                                                ""\n"
+            "#endif // INTEGER_OPERATIONS_SUPPORTED                                                                             ""\n"
+            "    vec4 symbolInWorld;                                                                                            ""\n"
+            "    symbolInWorld.xz = offsetFromTarget * %TileSize3D%.0;                                                          ""\n"
+            "    symbolInWorld.y = param_vs_elevationInWorld;                                                                   ""\n"
+            "    symbolInWorld.w = 1.0;                                                                                         ""\n"
+            "                                                                                                                   ""\n"
+            // Project position of symbol from world coordinate system to clipping space and to normalized device coordinates ([-1 .. 1])
+            "    vec4 symbolInClipping = param_vs_mPerspectiveProjectionView * symbolInWorld;                                   ""\n"
+            "    vec3 symbolInNDC = symbolInClipping.xyz / symbolInClipping.w;                                                  ""\n"
+            "                                                                                                                   ""\n"
+            // Using viewport size, get real screen coordinates and correct depth to be [0 .. 1]
+            "    vec3 symbolOnScreen;                                                                                           ""\n"
+            "    symbolOnScreen.xy = symbolInNDC.xy * 0.5 + 0.5;                                                                ""\n"
+            "    symbolOnScreen.x = symbolOnScreen.x * param_vs_viewport.z + param_vs_viewport.x;                               ""\n"
+            "    symbolOnScreen.y = symbolOnScreen.y * param_vs_viewport.w + param_vs_viewport.y;                               ""\n"
+            "    symbolOnScreen.z = (1.0 + symbolOnScreen.z) * 0.5;                                                             ""\n"
+            "                                                                                                                   ""\n"
+            // Add on-screen offset
+            "    symbolOnScreen.xy += vec2(param_vs_onScreenOffset);                                                            ""\n"
+            "                                                                                                                   ""\n"
+            // symbolOnScreen.xy now contains correct coordinates in viewport,
+            // which can be used in orthographic projection (if it was configured to match viewport).
+            //
+            // To provide pixel-perfect rendering of billboard raster symbols:
+            // symbolOnScreen.(x|y) has to be rounded and +0.5 in case param_vs_symbolSize.(x|y) is even
+            // symbolOnScreen.(x|y) has to be rounded in case param_vs_symbolSize.(x|y) is odd
+            "    symbolOnScreen = floor(symbolOnScreen);                                                                        ""\n"
+            "#if INTEGER_OPERATIONS_SUPPORTED                                                                                   ""\n"
+            "    symbolOnScreen.x += float(1 - param_vs_symbolSize.x & 1) * 0.5;                                                ""\n"
+            "    symbolOnScreen.y += float(1 - param_vs_symbolSize.y & 1) * 0.5;                                                ""\n"
+            "#else // !INTEGER_OPERATIONS_SUPPORTED                                                                             ""\n"
+            "    symbolOnScreen.xy += (vec2(1.0) - mod(vec2(param_vs_symbolSize), vec2(2.0))) * 0.5;                            ""\n"
+            "#endif // INTEGER_OPERATIONS_SUPPORTED                                                                             ""\n"
+            "                                                                                                                   ""\n"
+            // So it's possible to calculate current vertex location:
+            // Initially, get location of current vertex in screen coordinates
+            "    vec2 vertexOnScreen = in_vs_vertexPosition * vec2(param_vs_symbolSize) + symbolOnScreen.xy;                    ""\n"
+            "                                                                                                                   ""\n"
+            // To provide pixel-perfect result, vertexOnScreen needs to be rounded
+            "    vertexOnScreen = floor(vertexOnScreen + vec2(0.5, 0.5));                                                       ""\n"
+            "                                                                                                                   ""\n"
+            // There's no need to perform unprojection into orthographic world space, just multiply these coordinates by
+            // orthographic projection matrix (View and Model being identity), yet use Z from perspective NDC
+            "    vec4 vertex;                                                                                                   ""\n"
+            "    vertex.xy = vertexOnScreen.xy;                                                                                 ""\n"
+            "    vertex.z = 0.0;                                                                                                ""\n"
+            "    vertex.w = 1.0;                                                                                                ""\n"
+            "    vertex = param_vs_mOrthographicProjection * vertex;                                                            ""\n"
+            "    vertex.z = symbolInNDC.z * vertex.w;                                                                           ""\n"
+            "    gl_Position = vertex * param_vs_resultScale;                                                                   ""\n"
+            "                                                                                                                   ""\n"
+            // Texture coordinates are simply forwarded from input
+            "    v2f_texCoords = in_vs_vertexTexCoords;                                                                         ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedVertexShader = vertexShader;
+        preprocessedVertexShader.replace("%TileSize3D%", QString::number(AtlasMapRenderer::TileSize3D));
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+        if (vsId == 0)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+            return false;
+        }
+
+        // Compile fragment shader
+        const QString fragmentShader = QLatin1String(
+            // Input data
+            "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            // Parameters: per-symbol data
+            "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
+            "uniform lowp vec4 param_fs_modulationColor;                                                                        ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
+            "        param_fs_sampler,                                                                                          ""\n"
+            "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedFragmentShader = fragmentShader;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+        if (fsId == 0)
+        {
+            glDeleteShader(vsId);
+            GL_CHECK_RESULT;
+
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+            return false;
+        }
+        GLuint shaders[] = { vsId, fsId };
+        _billboardRasterProgram.id = gpuAPI->linkProgram(2, shaders,
+            _billboardRasterProgram.binaryCache, _billboardRasterProgram.cacheFormat, true, &variablesMap);
+    }
     if (!_billboardRasterProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -474,6 +485,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
          && lookup->lookupLocation(
              _billboardRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.viewport, "param_vs_viewport", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.position31, "param_vs_position31", GlslVariableType::Uniform);
@@ -586,6 +598,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
 
         // Set orthographic projection matrix
         glUniformMatrix4fv(_billboardRasterProgram.vs.param.mOrthographicProjection, 1, GL_FALSE, glm::value_ptr(internalState.mOrthographicProjection));
+        GL_CHECK_RESULT;
+
+        // Scale the result
+        glUniform4f(_billboardRasterProgram.vs.param.resultScale,
+            1.0f,
+            currentState.flip ? -1.0f : 1.0f,
+            1.0f,
+            1.0f);
         GL_CHECK_RESULT;
 
         // Set viewport
@@ -755,7 +775,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster(bool gp
             glDeleteProgram(_billboardRasterProgram.id);
             GL_CHECK_RESULT;
         }
-        _billboardRasterProgram = BillboardRasterSymbolProgram();
+        _billboardRasterProgram.id = 0;
     }
 
     return true;
@@ -780,7 +800,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     GL_CHECK_PRESENT(glVertexAttribPointer);
 
     const auto alreadyOccupiedUniforms =
-        4 /*param_vs_mPerspectiveProjectionView*/ +
+        4 /*param_vs_mOrthographicProjection*/ +
+        1 /*param_vs_resultScale*/ +
         1 /*param_vs_glyphHeight*/ +
         1 /*param_vs_zDistanceFromCamera*/ +
         1 /*param_vs_currentOffset*/;
@@ -927,123 +948,133 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    // Compile vertex shader
-    const QString vertexShader = QLatin1String(
-        // Input data
-        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
-        "INPUT float in_vs_glyphIndex;                                                                                      ""\n"
-        "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        // Output data to next shader stages
-        "PARAM_OUTPUT vec2 v2f_texCoords;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform mat4 param_vs_mOrthographicProjection;                                                                     ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: per-symbol data
-        "uniform float param_vs_glyphHeight;                                                                                ""\n"
-        "uniform float param_vs_distanceFromCamera;                                                                         ""\n"
-        "uniform vec2 param_vs_currentOffset;                                                                               ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: per-glyph data
-        "struct Glyph                                                                                                       ""\n"
-        "{                                                                                                                  ""\n"
-        "    vec2 anchorPoint;                                                                                              ""\n"
-        "    float width;                                                                                                   ""\n"
-        "    float angle;                                                                                                   ""\n"
-        "    float widthOfPreviousN;                                                                                        ""\n"
-        "    float widthN;                                                                                                  ""\n"
-        "};                                                                                                                 ""\n"
-        "uniform Glyph param_vs_glyphs[%MaxGlyphsPerDrawCall%];                                                             ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    Glyph glyph = param_vs_glyphs[int(in_vs_glyphIndex)];                                                          ""\n"
-        "    vec2 anchorPoint = glyph.anchorPoint + param_vs_currentOffset;                                                 ""\n"
-        "    float cos_a = cos(glyph.angle);                                                                                ""\n"
-        "    float sin_a = sin(glyph.angle);                                                                                ""\n"
-        "                                                                                                                   ""\n"
-        // Pixel-perfect rendering is available when angle is 0, 90, 180 or 270 degrees, what will produce
-        // cos_a 0, 1 or -1
-        //"    if (abs(cos_a - int(cos_a)) < 0.0001)                                                                          ""\n"
-        //"    {                                                                                                              ""\n"
-        //"        anchorPoint.x = floor(anchorPoint.x) + mod(glyph.width, 2.0) * 0.5;                                        ""\n"
-        //"        anchorPoint.y = floor(anchorPoint.y) + mod(param_vs_glyphHeight, 2.0) * 0.5;                               ""\n"
-        //"    }                                                                                                              ""\n"
-        "                                                                                                                   ""\n"
-        // Get on-screen glyph point offset
-        "    vec2 glyphPoint;                                                                                               ""\n"
-        "    glyphPoint.x = in_vs_vertexPosition.x * glyph.width;                                                           ""\n"
-        "    glyphPoint.y = in_vs_vertexPosition.y * param_vs_glyphHeight;                                                  ""\n"
-        "                                                                                                                   ""\n"
-        // Get on-screen vertex coordinates
-        "    vec4 vertexOnScreen;                                                                                           ""\n"
-        "    vertexOnScreen.x = anchorPoint.x + (glyphPoint.x*cos_a - glyphPoint.y*sin_a);                                  ""\n"
-        "    vertexOnScreen.y = anchorPoint.y + (glyphPoint.x*sin_a + glyphPoint.y*cos_a);                                  ""\n"
-        "    vertexOnScreen.z = -param_vs_distanceFromCamera;                                                               ""\n"
-        "    vertexOnScreen.w = 1.0;                                                                                        ""\n"
-        "                                                                                                                   ""\n"
-        // Pixel-perfect rendering is available when angle is 0, 90, 180 or 270 degrees, what will produce
-        // cos_a 0, 1 or -1
-        //"    if (abs(cos_a - int(cos_a)) < 0.0001)                                                                          ""\n"
-        //"    {                                                                                                              ""\n"
-        //"        vertexOnScreen.x = floor(vertexOnScreen.x + 0.5);                                                          ""\n"
-        //"        vertexOnScreen.y = floor(vertexOnScreen.y + 0.5);                                                          ""\n"
-        //"    }                                                                                                              ""\n"
-        "                                                                                                                   ""\n"
-        // Project vertex
-        "    gl_Position = param_vs_mOrthographicProjection * vertexOnScreen;                                               ""\n"
-        "                                                                                                                   ""\n"
-        // Prepare texture coordinates
-        "    v2f_texCoords.s = glyph.widthOfPreviousN + in_vs_vertexTexCoords.s*glyph.widthN;                               ""\n"
-        "    v2f_texCoords.t = in_vs_vertexTexCoords.t; // Height is compatible as-is                                       ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedVertexShader = vertexShader;
-    preprocessedVertexShader.replace("%MaxGlyphsPerDrawCall%", QString::number(maxGlyphsPerDrawCall));
-    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    if (vsId == 0)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
-        return false;
-    }
-
-    // Compile fragment shader
-    const QString fragmentShader = QLatin1String(
-        // Input data
-        "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        // Parameters: per-symbol data
-        "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
-        "uniform lowp vec4 param_fs_modulationColor;                                                                        ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
-        "        param_fs_sampler,                                                                                          ""\n"
-        "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedFragmentShader = fragmentShader;
-    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    if (fsId == 0)
-    {
-        glDeleteShader(vsId);
-        GL_CHECK_RESULT;
-
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
-        return false;
-    }
-
-    // Link everything into program object
-    GLuint shaders[] = { vsId, fsId };
     QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
-    _onPath2dProgram.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
+    _onPath2dProgram.id = 0;
+    if (!_onPath2dProgram.binaryCache.isEmpty())
+    {
+        _onPath2dProgram.id = gpuAPI->linkProgram(0, nullptr,
+            _onPath2dProgram.binaryCache, _onPath2dProgram.cacheFormat, true, &variablesMap);
+    }
+    if (!_onPath2dProgram.id.isValid())
+    {
+        // Compile vertex shader
+        const QString vertexShader = QLatin1String(
+            // Input data
+            "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+            "INPUT float in_vs_glyphIndex;                                                                                      ""\n"
+            "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            // Output data to next shader stages
+            "PARAM_OUTPUT vec2 v2f_texCoords;                                                                                   ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform mat4 param_vs_mOrthographicProjection;                                                                     ""\n"
+            "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: per-symbol data
+            "uniform float param_vs_glyphHeight;                                                                                ""\n"
+            "uniform float param_vs_distanceFromCamera;                                                                         ""\n"
+            "uniform vec2 param_vs_currentOffset;                                                                               ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: per-glyph data
+            "struct Glyph                                                                                                       ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec2 anchorPoint;                                                                                              ""\n"
+            "    float width;                                                                                                   ""\n"
+            "    float angle;                                                                                                   ""\n"
+            "    float widthOfPreviousN;                                                                                        ""\n"
+            "    float widthN;                                                                                                  ""\n"
+            "};                                                                                                                 ""\n"
+            "uniform Glyph param_vs_glyphs[%MaxGlyphsPerDrawCall%];                                                             ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    Glyph glyph = param_vs_glyphs[int(in_vs_glyphIndex)];                                                          ""\n"
+            "    vec2 anchorPoint = glyph.anchorPoint + param_vs_currentOffset;                                                 ""\n"
+            "    float cos_a = cos(glyph.angle);                                                                                ""\n"
+            "    float sin_a = sin(glyph.angle);                                                                                ""\n"
+            "                                                                                                                   ""\n"
+            // Pixel-perfect rendering is available when angle is 0, 90, 180 or 270 degrees, what will produce
+            // cos_a 0, 1 or -1
+            //"    if (abs(cos_a - int(cos_a)) < 0.0001)                                                                          ""\n"
+            //"    {                                                                                                              ""\n"
+            //"        anchorPoint.x = floor(anchorPoint.x) + mod(glyph.width, 2.0) * 0.5;                                        ""\n"
+            //"        anchorPoint.y = floor(anchorPoint.y) + mod(param_vs_glyphHeight, 2.0) * 0.5;                               ""\n"
+            //"    }                                                                                                              ""\n"
+            "                                                                                                                   ""\n"
+            // Get on-screen glyph point offset
+            "    vec2 glyphPoint;                                                                                               ""\n"
+            "    glyphPoint.x = in_vs_vertexPosition.x * glyph.width;                                                           ""\n"
+            "    glyphPoint.y = in_vs_vertexPosition.y * param_vs_glyphHeight;                                                  ""\n"
+            "                                                                                                                   ""\n"
+            // Get on-screen vertex coordinates
+            "    vec4 vertexOnScreen;                                                                                           ""\n"
+            "    vertexOnScreen.x = anchorPoint.x + (glyphPoint.x*cos_a - glyphPoint.y*sin_a);                                  ""\n"
+            "    vertexOnScreen.y = anchorPoint.y + (glyphPoint.x*sin_a + glyphPoint.y*cos_a);                                  ""\n"
+            "    vertexOnScreen.z = -param_vs_distanceFromCamera;                                                               ""\n"
+            "    vertexOnScreen.w = 1.0;                                                                                        ""\n"
+            "                                                                                                                   ""\n"
+            // Pixel-perfect rendering is available when angle is 0, 90, 180 or 270 degrees, what will produce
+            // cos_a 0, 1 or -1
+            //"    if (abs(cos_a - int(cos_a)) < 0.0001)                                                                          ""\n"
+            //"    {                                                                                                              ""\n"
+            //"        vertexOnScreen.x = floor(vertexOnScreen.x + 0.5);                                                          ""\n"
+            //"        vertexOnScreen.y = floor(vertexOnScreen.y + 0.5);                                                          ""\n"
+            //"    }                                                                                                              ""\n"
+            "                                                                                                                   ""\n"
+            // Project vertex
+            "    vertexOnScreen = param_vs_mOrthographicProjection * vertexOnScreen;                                            ""\n"
+            "    gl_Position = vertexOnScreen * param_vs_resultScale;                                                           ""\n"
+            "                                                                                                                   ""\n"
+            // Prepare texture coordinates
+            "    v2f_texCoords.s = glyph.widthOfPreviousN + in_vs_vertexTexCoords.s*glyph.widthN;                               ""\n"
+            "    v2f_texCoords.t = in_vs_vertexTexCoords.t; // Height is compatible as-is                                       ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedVertexShader = vertexShader;
+        preprocessedVertexShader.replace("%MaxGlyphsPerDrawCall%", QString::number(maxGlyphsPerDrawCall));
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+        if (vsId == 0)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+            return false;
+        }
+
+        // Compile fragment shader
+        const QString fragmentShader = QLatin1String(
+            // Input data
+            "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            // Parameters: per-symbol data
+            "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
+            "uniform lowp vec4 param_fs_modulationColor;                                                                        ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
+            "        param_fs_sampler,                                                                                          ""\n"
+            "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedFragmentShader = fragmentShader;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+        if (fsId == 0)
+        {
+            glDeleteShader(vsId);
+            GL_CHECK_RESULT;
+
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+            return false;
+        }
+        GLuint shaders[] = { vsId, fsId };
+        _onPath2dProgram.id = gpuAPI->linkProgram(2, shaders,
+            _onPath2dProgram.binaryCache, _onPath2dProgram.cacheFormat, true, &variablesMap);
+    }
     if (!_onPath2dProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -1057,6 +1088,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
     ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.currentOffset, "param_vs_currentOffset", GlslVariableType::Uniform);
@@ -1100,6 +1132,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
 
     const auto alreadyOccupiedUniforms =
         4 /*param_vs_mPerspectiveProjectionView*/ +
+        1 /*param_vs_resultScale*/ +
         1 /*param_vs_glyphHeight*/ +
         1 /*param_vs_zDistanceFromCamera*/ +
         1 /*param_vs_currentOffset*/;
@@ -1246,124 +1279,134 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    // Compile vertex shader
-    const QString vertexShader = QLatin1String(
-        // Input data
-        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
-        "INPUT float in_vs_glyphIndex;                                                                                      ""\n"
-        "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        // Output data to next shader stages
-        "PARAM_OUTPUT vec2 v2f_texCoords;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: per-symbol data
-        "uniform float param_vs_glyphHeight;                                                                                ""\n"
-        "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
-        "uniform vec2 param_vs_currentOffset;                                                                               ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: per-glyph data
-        "struct Glyph                                                                                                       ""\n"
-        "{                                                                                                                  ""\n"
-        "    vec3 anchorPoint;                                                                                              ""\n"
-        "    vec4 angle;                                                                                                    ""\n"
-        "    float width;                                                                                                   ""\n"
-        "    float widthOfPreviousN;                                                                                        ""\n"
-        "    float widthN;                                                                                                  ""\n"
-        "};                                                                                                                 ""\n"
-        "uniform Glyph param_vs_glyphs[%MaxGlyphsPerDrawCall%];                                                             ""\n"
-        "                                                                                                                   ""\n"
-        "vec3 rotateY(vec3 p, float angle)                                                                                  ""\n"
-        "{                                                                                                                  ""\n"
-        "    float sn = sin(angle);                                                                                         ""\n"
-        "    float cs = cos(angle);                                                                                         ""\n"
-        "    float x = p.x * cs - p.z * sn;                                                                                 ""\n"
-        "    float z = p.x * sn + p.z * cs;                                                                                 ""\n"
-        "    return vec3(x, p.y, z);                                                                                        ""\n"
-        "}                                                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "vec3 rotateXZ(vec3 p, float angle, vec2 u)                                                                         ""\n"
-        "{                                                                                                                  ""\n"
-        "    float sn = sin(angle);                                                                                         ""\n"
-        "    float cs = cos(angle);                                                                                         ""\n"
-        "    float csr = 1.0 - cs;                                                                                          ""\n"
-        "    float x = p.x * (cs + u.x * u.x * csr) - p.y * u.y * sn + p.z * u.x * u.y * csr;                               ""\n"
-        "    float y = p.x * u.y * sn + p.y * cs - p.z * u.x * sn;                                                          ""\n"
-        "    float z = p.x * u.x * u.y * csr + p.y * u.x * sn + p.z * (cs + u.y * u.y * csr);                               ""\n"
-        "    return vec3(x, y, z);                                                                                          ""\n"
-        "}                                                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    Glyph glyph = param_vs_glyphs[int(in_vs_glyphIndex)];                                                          ""\n"
-        "                                                                                                                   ""\n"
-        // Get on-screen vertex coordinates
-        "    vec3 p;                                                                                                        ""\n"
-        "    p.x = in_vs_vertexPosition.x * glyph.width;                                                                    ""\n"
-        "    p.y = 0.0;                                                                                                     ""\n"
-        "    p.z = in_vs_vertexPosition.y * param_vs_glyphHeight;                                                           ""\n"
-        "    p = rotateY(p, glyph.angle.y);                                                                                 ""\n"
-        "    p = rotateXZ(p, glyph.angle.x, glyph.angle.zw);                                                                ""\n"
-        "    vec4 v;                                                                                                        ""\n"
-        "    v.x = glyph.anchorPoint.x + p.x - param_vs_currentOffset.x;                                                    ""\n"
-        "    v.y = glyph.anchorPoint.y + p.y;                                                                               ""\n"
-        "    v.z = glyph.anchorPoint.z + p.z - param_vs_currentOffset.y;                                                    ""\n"
-        "    v.w = 1.0;                                                                                                     ""\n"
-        "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
-        "    gl_Position.z = param_vs_zDistanceFromCamera;                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        // Prepare texture coordinates
-        "    v2f_texCoords.s = glyph.widthOfPreviousN + in_vs_vertexTexCoords.s*glyph.widthN;                               ""\n"
-        "    v2f_texCoords.t = in_vs_vertexTexCoords.t; // Height is compatible as-is                                       ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedVertexShader = vertexShader;
-    preprocessedVertexShader.replace("%MaxGlyphsPerDrawCall%", QString::number(maxGlyphsPerDrawCall));
-    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    if (vsId == 0)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
-        return false;
-    }
-
-    // Compile fragment shader
-    const QString fragmentShader = QLatin1String(
-        // Input data
-        "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        // Parameters: per-symbol data
-        "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
-        "uniform lowp vec4 param_fs_modulationColor;                                                                        ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
-        "        param_fs_sampler,                                                                                          ""\n"
-        "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedFragmentShader = fragmentShader;
-    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    if (fsId == 0)
-    {
-        glDeleteShader(vsId);
-        GL_CHECK_RESULT;
-
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
-        return false;
-    }
-
-    // Link everything into program object
-    GLuint shaders[] = { vsId, fsId };
     QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
-    _onPath3dProgram.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
+    _onPath3dProgram.id = 0;
+    if (!_onPath3dProgram.binaryCache.isEmpty())
+    {
+        _onPath3dProgram.id = gpuAPI->linkProgram(0, nullptr,
+            _onPath3dProgram.binaryCache, _onPath3dProgram.cacheFormat, true, &variablesMap);
+    }
+    if (!_onPath3dProgram.id.isValid())
+    {
+        // Compile vertex shader
+        const QString vertexShader = QLatin1String(
+            // Input data
+            "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+            "INPUT float in_vs_glyphIndex;                                                                                      ""\n"
+            "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            // Output data to next shader stages
+            "PARAM_OUTPUT vec2 v2f_texCoords;                                                                                   ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
+            "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: per-symbol data
+            "uniform float param_vs_glyphHeight;                                                                                ""\n"
+            "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
+            "uniform vec2 param_vs_currentOffset;                                                                               ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: per-glyph data
+            "struct Glyph                                                                                                       ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec3 anchorPoint;                                                                                              ""\n"
+            "    vec4 angle;                                                                                                    ""\n"
+            "    float width;                                                                                                   ""\n"
+            "    float widthOfPreviousN;                                                                                        ""\n"
+            "    float widthN;                                                                                                  ""\n"
+            "};                                                                                                                 ""\n"
+            "uniform Glyph param_vs_glyphs[%MaxGlyphsPerDrawCall%];                                                             ""\n"
+            "                                                                                                                   ""\n"
+            "vec3 rotateY(vec3 p, float angle)                                                                                  ""\n"
+            "{                                                                                                                  ""\n"
+            "    float sn = sin(angle);                                                                                         ""\n"
+            "    float cs = cos(angle);                                                                                         ""\n"
+            "    float x = p.x * cs - p.z * sn;                                                                                 ""\n"
+            "    float z = p.x * sn + p.z * cs;                                                                                 ""\n"
+            "    return vec3(x, p.y, z);                                                                                        ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "vec3 rotateXZ(vec3 p, float angle, vec2 u)                                                                         ""\n"
+            "{                                                                                                                  ""\n"
+            "    float sn = sin(angle);                                                                                         ""\n"
+            "    float cs = cos(angle);                                                                                         ""\n"
+            "    float csr = 1.0 - cs;                                                                                          ""\n"
+            "    float x = p.x * (cs + u.x * u.x * csr) - p.y * u.y * sn + p.z * u.x * u.y * csr;                               ""\n"
+            "    float y = p.x * u.y * sn + p.y * cs - p.z * u.x * sn;                                                          ""\n"
+            "    float z = p.x * u.x * u.y * csr + p.y * u.x * sn + p.z * (cs + u.y * u.y * csr);                               ""\n"
+            "    return vec3(x, y, z);                                                                                          ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    Glyph glyph = param_vs_glyphs[int(in_vs_glyphIndex)];                                                          ""\n"
+            "                                                                                                                   ""\n"
+            // Get on-screen vertex coordinates
+            "    vec3 p;                                                                                                        ""\n"
+            "    p.x = in_vs_vertexPosition.x * glyph.width;                                                                    ""\n"
+            "    p.y = 0.0;                                                                                                     ""\n"
+            "    p.z = in_vs_vertexPosition.y * param_vs_glyphHeight;                                                           ""\n"
+            "    p = rotateY(p, glyph.angle.y);                                                                                 ""\n"
+            "    p = rotateXZ(p, glyph.angle.x, glyph.angle.zw);                                                                ""\n"
+            "    vec4 v;                                                                                                        ""\n"
+            "    v.x = glyph.anchorPoint.x + p.x - param_vs_currentOffset.x;                                                    ""\n"
+            "    v.y = glyph.anchorPoint.y + p.y;                                                                               ""\n"
+            "    v.z = glyph.anchorPoint.z + p.z - param_vs_currentOffset.y;                                                    ""\n"
+            "    v.w = 1.0;                                                                                                     ""\n"
+            "    v = param_vs_mPerspectiveProjectionView * v;                                                                   ""\n"
+            "    v.z = param_vs_zDistanceFromCamera;                                                                            ""\n"
+            "    gl_Position = v * param_vs_resultScale;                                                                        ""\n"
+            "                                                                                                                   ""\n"
+            // Prepare texture coordinates
+            "    v2f_texCoords.s = glyph.widthOfPreviousN + in_vs_vertexTexCoords.s*glyph.widthN;                               ""\n"
+            "    v2f_texCoords.t = in_vs_vertexTexCoords.t; // Height is compatible as-is                                       ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedVertexShader = vertexShader;
+        preprocessedVertexShader.replace("%MaxGlyphsPerDrawCall%", QString::number(maxGlyphsPerDrawCall));
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+        if (vsId == 0)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+            return false;
+        }
+
+        // Compile fragment shader
+        const QString fragmentShader = QLatin1String(
+            // Input data
+            "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            // Parameters: per-symbol data
+            "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
+            "uniform lowp vec4 param_fs_modulationColor;                                                                        ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
+            "        param_fs_sampler,                                                                                          ""\n"
+            "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedFragmentShader = fragmentShader;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+        if (fsId == 0)
+        {
+            glDeleteShader(vsId);
+            GL_CHECK_RESULT;
+
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+            return false;
+        }
+        GLuint shaders[] = { vsId, fsId };
+        _onPath3dProgram.id = gpuAPI->linkProgram(2, shaders,
+            _onPath3dProgram.binaryCache, _onPath3dProgram.cacheFormat, true, &variablesMap);
+    }
     if (!_onPath3dProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -1377,6 +1420,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
     ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.currentOffset, "param_vs_currentOffset", GlslVariableType::Uniform);
@@ -1433,6 +1477,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
 
         // Set orthographic projection matrix
         glUniformMatrix4fv(_onPath2dProgram.vs.param.mOrthographicProjection, 1, GL_FALSE, glm::value_ptr(internalState.mOrthographicProjection));
+        GL_CHECK_RESULT;
+
+        // Scale the result
+        glUniform4f(_onPath2dProgram.vs.param.resultScale,
+            1.0f,
+            currentState.flip ? -1.0f : 1.0f,
+            1.0f,
+            1.0f);
         GL_CHECK_RESULT;
 
         // Activate texture block for symbol textures
@@ -1609,6 +1661,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
 
         // Set view-projection matrix
         glUniformMatrix4fv(_onPath3dProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
+        GL_CHECK_RESULT;
+
+        // Scale the result
+        glUniform4f(_onPath3dProgram.vs.param.resultScale,
+            1.0f,
+            currentState.flip ? -1.0f : 1.0f,
+            1.0f,
+            1.0f);
         GL_CHECK_RESULT;
 
         // Activate texture block for symbol textures
@@ -1805,7 +1865,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D(bool gpuContex
             glDeleteProgram(_onPath2dProgram.id);
             GL_CHECK_RESULT;
         }
-        _onPath2dProgram = OnPathSymbol2dProgram();
+        _onPath2dProgram.id = 0;
     }
 
     return true;
@@ -1850,7 +1910,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D(bool gpuContex
             glDeleteProgram(_onPath3dProgram.id);
             GL_CHECK_RESULT;
         }
-        _onPath3dProgram = OnPathSymbol3dProgram();
+        _onPath3dProgram.id = 0;
     }
 
     return true;
@@ -1868,88 +1928,98 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    // Compile vertex shader
-    const QString vertexShader = QLatin1String(
-        // Input data
-        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
-        "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        // Output data to next shader stages
-        "PARAM_OUTPUT vec2 v2f_texCoords;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: per-symbol data
-        "uniform vec2 param_vs_symbolOffsetFromTarget;                                                                      ""\n"
-        "uniform float param_vs_direction;                                                                                  ""\n"
-        "uniform vec2 param_vs_symbolSize;                                                                                  ""\n"
-        "uniform float param_vs_elevationInWorld;                                                                           ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        // Get vertex coordinates in world
-        "    float cos_a = cos(param_vs_direction);                                                                         ""\n"
-        "    float sin_a = sin(param_vs_direction);                                                                         ""\n"
-        "    vec2 p;                                                                                                        ""\n"
-        "    p.x = in_vs_vertexPosition.x * param_vs_symbolSize.x;                                                          ""\n"
-        "    p.y = in_vs_vertexPosition.y * param_vs_symbolSize.y;                                                          ""\n"
-        "    vec4 v;                                                                                                        ""\n"
-        "    v.x = param_vs_symbolOffsetFromTarget.x * %TileSize3D%.0 + (p.x*cos_a - p.y*sin_a);                            ""\n"
-        "    v.y = param_vs_elevationInWorld;                                                                               ""\n"
-        "    v.z = param_vs_symbolOffsetFromTarget.y * %TileSize3D%.0 + (p.x*sin_a + p.y*cos_a);                            ""\n"
-        "    v.w = 1.0;                                                                                                     ""\n"
-        "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
-        "                                                                                                                   ""\n"
-        // Prepare texture coordinates
-        "    v2f_texCoords = in_vs_vertexTexCoords;                                                                         ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedVertexShader = vertexShader;
-    preprocessedVertexShader.replace("%TileSize3D%", QString::number(AtlasMapRenderer::TileSize3D));
-    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    if (vsId == 0)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
-        return false;
-    }
-
-    // Compile fragment shader
-    const QString fragmentShader = QLatin1String(
-        // Input data
-        "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        // Parameters: per-symbol data
-        "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
-        "uniform lowp vec4 param_fs_modulationColor;                                                                        ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
-        "        param_fs_sampler,                                                                                          ""\n"
-        "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedFragmentShader = fragmentShader;
-    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    if (fsId == 0)
-    {
-        glDeleteShader(vsId);
-        GL_CHECK_RESULT;
-
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
-        return false;
-    }
-
-    // Link everything into program object
-    GLuint shaders[] = { vsId, fsId };
     QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
-    _onSurfaceRasterProgram.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
+    _onSurfaceRasterProgram.id = 0;
+    if (!_onSurfaceRasterProgram.binaryCache.isEmpty())
+    {
+        _onSurfaceRasterProgram.id = gpuAPI->linkProgram(0, nullptr,
+            _onSurfaceRasterProgram.binaryCache, _onSurfaceRasterProgram.cacheFormat, true, &variablesMap);
+    }
+    if (!_onSurfaceRasterProgram.id.isValid())
+    {
+        // Compile vertex shader
+        const QString vertexShader = QLatin1String(
+            // Input data
+            "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+            "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            // Output data to next shader stages
+            "PARAM_OUTPUT vec2 v2f_texCoords;                                                                                   ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
+            "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: per-symbol data
+            "uniform vec2 param_vs_symbolOffsetFromTarget;                                                                      ""\n"
+            "uniform float param_vs_direction;                                                                                  ""\n"
+            "uniform vec2 param_vs_symbolSize;                                                                                  ""\n"
+            "uniform float param_vs_elevationInWorld;                                                                           ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            // Get vertex coordinates in world
+            "    float cos_a = cos(param_vs_direction);                                                                         ""\n"
+            "    float sin_a = sin(param_vs_direction);                                                                         ""\n"
+            "    vec2 p;                                                                                                        ""\n"
+            "    p.x = in_vs_vertexPosition.x * param_vs_symbolSize.x;                                                          ""\n"
+            "    p.y = in_vs_vertexPosition.y * param_vs_symbolSize.y;                                                          ""\n"
+            "    vec4 v;                                                                                                        ""\n"
+            "    v.x = param_vs_symbolOffsetFromTarget.x * %TileSize3D%.0 + (p.x*cos_a - p.y*sin_a);                            ""\n"
+            "    v.y = param_vs_elevationInWorld;                                                                               ""\n"
+            "    v.z = param_vs_symbolOffsetFromTarget.y * %TileSize3D%.0 + (p.x*sin_a + p.y*cos_a);                            ""\n"
+            "    v.w = 1.0;                                                                                                     ""\n"
+            "    v = param_vs_mPerspectiveProjectionView * v;                                                                   ""\n"
+            "    gl_Position = v * param_vs_resultScale;                                                                        ""\n"
+            "                                                                                                                   ""\n"
+            // Prepare texture coordinates
+            "    v2f_texCoords = in_vs_vertexTexCoords;                                                                         ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedVertexShader = vertexShader;
+        preprocessedVertexShader.replace("%TileSize3D%", QString::number(AtlasMapRenderer::TileSize3D));
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+        if (vsId == 0)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+            return false;
+        }
+
+        // Compile fragment shader
+        const QString fragmentShader = QLatin1String(
+            // Input data
+            "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            // Parameters: per-symbol data
+            "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
+            "uniform lowp vec4 param_fs_modulationColor;                                                                        ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
+            "        param_fs_sampler,                                                                                          ""\n"
+            "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedFragmentShader = fragmentShader;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+        if (fsId == 0)
+        {
+            glDeleteShader(vsId);
+            GL_CHECK_RESULT;
+
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+            return false;
+        }
+        GLuint shaders[] = { vsId, fsId };
+        _onSurfaceRasterProgram.id = gpuAPI->linkProgram(2, shaders,
+            _onSurfaceRasterProgram.binaryCache, _onSurfaceRasterProgram.cacheFormat, true, &variablesMap);
+    }
     if (!_onSurfaceRasterProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -1962,6 +2032,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.direction, "param_vs_direction", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolSize, "param_vs_symbolSize", GlslVariableType::Uniform);
@@ -2070,6 +2141,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
 
         // Set perspective projection-view matrix
         glUniformMatrix4fv(_onSurfaceRasterProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
+        GL_CHECK_RESULT;
+
+        // Scale the result
+        glUniform4f(_onSurfaceRasterProgram.vs.param.resultScale,
+            1.0f,
+            currentState.flip ? -1.0f : 1.0f,
+            1.0f,
+            1.0f);
         GL_CHECK_RESULT;
 
         // Activate texture block for symbol textures
@@ -2219,7 +2298,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster(bool gp
             glDeleteProgram(_onSurfaceRasterProgram.id);
             GL_CHECK_RESULT;
         }
-        _onSurfaceRasterProgram = OnSurfaceRasterProgram();
+        _onSurfaceRasterProgram.id = 0;
     }
 
     return true;
@@ -2232,132 +2311,142 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    // Compile vertex shader
-    const QString vertexShader = QLatin1String(
-        // Input data
-        "INPUT vec4 in_vs_vertexPosition;                                                                                   ""\n"
-        "INPUT vec4 in_vs_vertexColor;                                                                                      ""\n"
-        "                                                                                                                   ""\n"
-        // Output data to next shader stages
-        "PARAM_OUTPUT vec4 v2f_color;                                                                                       ""\n"
-        "PARAM_OUTPUT float v2f_distance;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform vec4 param_vs_elevation_scale;                                                                             ""\n"
-        "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
-        "uniform mat4 param_vs_mModel;                                                                                      ""\n"
-        "uniform lowp vec4 param_vs_modulationColor;                                                                        ""\n"
-        "uniform vec2 param_vs_tileId;                                                                                      ""\n"
-        "uniform vec4 param_vs_lookupOffsetAndScale;                                                                        ""\n"
-        "uniform vec4 param_vs_cameraPositionAndZfar;                                                                       ""\n"
-        "uniform float param_vs_elevationInMeters;                                                                          ""\n"
-        "uniform float param_vs_elevationFactor;                                                                            ""\n"
-        "uniform highp vec2 param_vs_offsetInTile;                                                                          ""\n"
-        "uniform highp sampler2D param_vs_elevation_dataSampler;                                                            ""\n"
-        "uniform highp vec4 param_vs_texCoordsOffsetAndScale;                                                               ""\n"
-        "uniform highp vec4 param_vs_elevationLayerDataPlace;                                                               ""\n"
-        "                                                                                                                   ""\n"
-        "float interpolatedHeight(in vec2 inTexCoords)                                                                      ""\n"
-        "{                                                                                                                  ""\n"
-        "    vec2 heixelSize = param_vs_elevationLayerDataPlace.zw * 2.0;                                                   ""\n"
-        "    vec2 texCoords = (inTexCoords - param_vs_elevationLayerDataPlace.zw) / heixelSize;                             ""\n"
-        "    vec2 pixOffset = fract(texCoords);                                                                             ""\n"
-        "    texCoords = floor(texCoords) * heixelSize + param_vs_elevationLayerDataPlace.zw;                               ""\n"
-        "    vec2 minCoords = param_vs_elevationLayerDataPlace.xy - heixelSize;                                             ""\n"
-        "    vec2 maxCoords = minCoords + heixelSize * (%HeixelsPerTileSide%.0 + 2.0);                                      ""\n"
-        "    float blHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
-        "    texCoords.x += heixelSize.x;                                                                                   ""\n"
-        "    float brHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
-        "    texCoords.y += heixelSize.y;                                                                                   ""\n"
-        "    float trHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
-        "    texCoords.x -= heixelSize.x;                                                                                   ""\n"
-        "    float tlHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
-        "    float avbPixel = mix(blHeixel, brHeixel, pixOffset.x);                                                         ""\n"
-        "    float avtPixel = mix(tlHeixel, trHeixel, pixOffset.x);                                                         ""\n"
-        "    return mix(avbPixel, avtPixel, pixOffset.y);                                                                   ""\n"
-        "}                                                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        // Get vertex coordinates in world
-        "    vec4 v;                                                                                                        ""\n"
-        "    v.x = in_vs_vertexPosition.x;                                                                                  ""\n"
-        "    v.y = 0.0;                                                                                                     ""\n"
-        "    v.z = in_vs_vertexPosition.z;                                                                                  ""\n"
-        "    v.w = 1.0;                                                                                                     ""\n"
-        "    bool isElevated = param_vs_elevationInMeters > -12000000.0;                                                    ""\n"
-        "    bool withHeight = in_vs_vertexPosition.y > -12000000.0;                                                        ""\n"
-        "    bool withSurface = abs(param_vs_elevation_scale.w) > 0.0;                                                      ""\n"
-        "    vec2 vertexTexCoords = v.xz * param_vs_lookupOffsetAndScale.z + param_vs_lookupOffsetAndScale.xy;              ""\n"
-        "    v = param_vs_mModel * v;                                                                                       ""\n"
-        "    vertexTexCoords -= param_vs_tileId;                                                                            ""\n"
-        "    vec2 elevationTexCoords = vertexTexCoords * param_vs_texCoordsOffsetAndScale.zw;                               ""\n"
-        "    elevationTexCoords += param_vs_texCoordsOffsetAndScale.xy;                                                     ""\n"
-        "    float surfaceInMeters = withSurface ? interpolatedHeight(elevationTexCoords) : 0.0;                            ""\n"
-        "    float tileOffset = withSurface ? vertexTexCoords.t : param_vs_offsetInTile.y;                                  ""\n"
-        "    float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, tileOffset);                 ""\n"
-        "    v.y = surfaceInMeters * param_vs_elevation_scale.w * param_vs_elevation_scale.z / metersPerUnit;               ""\n"
-        "    float elevation = withHeight ? in_vs_vertexPosition.y : surfaceInMeters;                                       ""\n"
-        "    elevation = ((isElevated ? param_vs_elevationInMeters : elevation) - surfaceInMeters) / metersPerUnit;         ""\n"
-        "    v.y += elevation * param_vs_elevationFactor;                                                                   ""\n"
-        "    float dist = distance(param_vs_cameraPositionAndZfar.xyz, v.xyz);                                              ""\n"
-        "    float extraZfar = 2.0 * dist / param_vs_cameraPositionAndZfar.w;                                               ""\n"
-        "    float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                            ""\n"
-        "    v.y += min(extraZfar, extraCam) + 0.1;                                                                         ""\n"
-        "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
-        "                                                                                                                   ""\n"
-        // Prepare distance
-        "    v2f_distance = in_vs_vertexPosition.w;                                                                         ""\n"
-        // Prepare color
-        "    v2f_color.argb = in_vs_vertexColor.xyzw * param_vs_modulationColor.argb;                                       ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedVertexShader = vertexShader;
-    preprocessedVertexShader.replace("%TileSize3D%", QString::number(AtlasMapRenderer::TileSize3D));
-    preprocessedVertexShader.replace("%HeixelsPerTileSide%",
-        QString::number(AtlasMapRenderer::HeixelsPerTileSide - 1));
-    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    if (vsId == 0)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
-        return false;
-    }
-
-    // Compile fragment shader
-    const QString fragmentShader = QLatin1String(
-        // Input data
-        "PARAM_INPUT vec4 v2f_color;                                                                                        ""\n"
-        "PARAM_INPUT float v2f_distance;                                                                                    ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform float param_fs_startingDistance;                                                                           ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    vec4 outColor = v2f_color;                                                                                     ""\n"
-        "    outColor.a = v2f_distance < param_fs_startingDistance ? 0.0 : outColor.a;                                      ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = outColor;                                                                              ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedFragmentShader = fragmentShader;
-    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    if (fsId == 0)
-    {
-        glDeleteShader(vsId);
-        GL_CHECK_RESULT;
-
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
-        return false;
-    }
-
-    // Link everything into program object
-    GLuint shaders[] = { vsId, fsId };
     QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
-    _onSurfaceVectorProgram.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
+    _onSurfaceVectorProgram.id = 0;
+    if (!_onSurfaceVectorProgram.binaryCache.isEmpty())
+    {
+        _onSurfaceVectorProgram.id = gpuAPI->linkProgram(0, nullptr,
+            _onSurfaceVectorProgram.binaryCache, _onSurfaceVectorProgram.cacheFormat, true, &variablesMap);
+    }
+    if (!_onSurfaceVectorProgram.id.isValid())
+    {
+        // Compile vertex shader
+        const QString vertexShader = QLatin1String(
+            // Input data
+            "INPUT vec4 in_vs_vertexPosition;                                                                                   ""\n"
+            "INPUT vec4 in_vs_vertexColor;                                                                                      ""\n"
+            "                                                                                                                   ""\n"
+            // Output data to next shader stages
+            "PARAM_OUTPUT vec4 v2f_color;                                                                                       ""\n"
+            "PARAM_OUTPUT float v2f_distance;                                                                                   ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform vec4 param_vs_elevation_scale;                                                                             ""\n"
+            "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
+            "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
+            "uniform mat4 param_vs_mModel;                                                                                      ""\n"
+            "uniform lowp vec4 param_vs_modulationColor;                                                                        ""\n"
+            "uniform vec2 param_vs_tileId;                                                                                      ""\n"
+            "uniform vec4 param_vs_lookupOffsetAndScale;                                                                        ""\n"
+            "uniform vec4 param_vs_cameraPositionAndZfar;                                                                       ""\n"
+            "uniform float param_vs_elevationInMeters;                                                                          ""\n"
+            "uniform float param_vs_elevationFactor;                                                                            ""\n"
+            "uniform highp vec2 param_vs_offsetInTile;                                                                          ""\n"
+            "uniform highp sampler2D param_vs_elevation_dataSampler;                                                            ""\n"
+            "uniform highp vec4 param_vs_texCoordsOffsetAndScale;                                                               ""\n"
+            "uniform highp vec4 param_vs_elevationLayerDataPlace;                                                               ""\n"
+            "                                                                                                                   ""\n"
+            "float interpolatedHeight(in vec2 inTexCoords)                                                                      ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec2 heixelSize = param_vs_elevationLayerDataPlace.zw * 2.0;                                                   ""\n"
+            "    vec2 texCoords = (inTexCoords - param_vs_elevationLayerDataPlace.zw) / heixelSize;                             ""\n"
+            "    vec2 pixOffset = fract(texCoords);                                                                             ""\n"
+            "    texCoords = floor(texCoords) * heixelSize + param_vs_elevationLayerDataPlace.zw;                               ""\n"
+            "    vec2 minCoords = param_vs_elevationLayerDataPlace.xy - heixelSize;                                             ""\n"
+            "    vec2 maxCoords = minCoords + heixelSize * (%HeixelsPerTileSide%.0 + 2.0);                                      ""\n"
+            "    float blHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
+            "    texCoords.x += heixelSize.x;                                                                                   ""\n"
+            "    float brHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
+            "    texCoords.y += heixelSize.y;                                                                                   ""\n"
+            "    float trHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
+            "    texCoords.x -= heixelSize.x;                                                                                   ""\n"
+            "    float tlHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
+            "    float avbPixel = mix(blHeixel, brHeixel, pixOffset.x);                                                         ""\n"
+            "    float avtPixel = mix(tlHeixel, trHeixel, pixOffset.x);                                                         ""\n"
+            "    return mix(avbPixel, avtPixel, pixOffset.y);                                                                   ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            // Get vertex coordinates in world
+            "    vec4 v;                                                                                                        ""\n"
+            "    v.x = in_vs_vertexPosition.x;                                                                                  ""\n"
+            "    v.y = 0.0;                                                                                                     ""\n"
+            "    v.z = in_vs_vertexPosition.z;                                                                                  ""\n"
+            "    v.w = 1.0;                                                                                                     ""\n"
+            "    bool isElevated = param_vs_elevationInMeters > -12000000.0;                                                    ""\n"
+            "    bool withHeight = in_vs_vertexPosition.y > -12000000.0;                                                        ""\n"
+            "    bool withSurface = abs(param_vs_elevation_scale.w) > 0.0;                                                      ""\n"
+            "    vec2 vertexTexCoords = v.xz * param_vs_lookupOffsetAndScale.z + param_vs_lookupOffsetAndScale.xy;              ""\n"
+            "    v = param_vs_mModel * v;                                                                                       ""\n"
+            "    vertexTexCoords -= param_vs_tileId;                                                                            ""\n"
+            "    vec2 elevationTexCoords = vertexTexCoords * param_vs_texCoordsOffsetAndScale.zw;                               ""\n"
+            "    elevationTexCoords += param_vs_texCoordsOffsetAndScale.xy;                                                     ""\n"
+            "    float surfaceInMeters = withSurface ? interpolatedHeight(elevationTexCoords) : 0.0;                            ""\n"
+            "    float tileOffset = withSurface ? vertexTexCoords.t : param_vs_offsetInTile.y;                                  ""\n"
+            "    float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, tileOffset);                 ""\n"
+            "    v.y = surfaceInMeters * param_vs_elevation_scale.w * param_vs_elevation_scale.z / metersPerUnit;               ""\n"
+            "    float elevation = withHeight ? in_vs_vertexPosition.y : surfaceInMeters;                                       ""\n"
+            "    elevation = ((isElevated ? param_vs_elevationInMeters : elevation) - surfaceInMeters) / metersPerUnit;         ""\n"
+            "    v.y += elevation * param_vs_elevationFactor;                                                                   ""\n"
+            "    float dist = distance(param_vs_cameraPositionAndZfar.xyz, v.xyz);                                              ""\n"
+            "    float extraZfar = 2.0 * dist / param_vs_cameraPositionAndZfar.w;                                               ""\n"
+            "    float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                            ""\n"
+            "    v.y += min(extraZfar, extraCam) + 0.1;                                                                         ""\n"
+            "    v = param_vs_mPerspectiveProjectionView * v;                                                                   ""\n"
+            "    gl_Position = v * param_vs_resultScale;                                                                        ""\n"
+            "                                                                                                                   ""\n"
+            // Prepare distance
+            "    v2f_distance = in_vs_vertexPosition.w;                                                                         ""\n"
+            // Prepare color
+            "    v2f_color.argb = in_vs_vertexColor.xyzw * param_vs_modulationColor.argb;                                       ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedVertexShader = vertexShader;
+        preprocessedVertexShader.replace("%TileSize3D%", QString::number(AtlasMapRenderer::TileSize3D));
+        preprocessedVertexShader.replace("%HeixelsPerTileSide%",
+            QString::number(AtlasMapRenderer::HeixelsPerTileSide - 1));
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+        if (vsId == 0)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+            return false;
+        }
+
+        // Compile fragment shader
+        const QString fragmentShader = QLatin1String(
+            // Input data
+            "PARAM_INPUT vec4 v2f_color;                                                                                        ""\n"
+            "PARAM_INPUT float v2f_distance;                                                                                    ""\n"
+            "                                                                                                                   ""\n"
+            // Parameters: common data
+            "uniform float param_fs_startingDistance;                                                                           ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec4 outColor = v2f_color;                                                                                     ""\n"
+            "    outColor.a = v2f_distance < param_fs_startingDistance ? 0.0 : outColor.a;                                      ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = outColor;                                                                              ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedFragmentShader = fragmentShader;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+        if (fsId == 0)
+        {
+            glDeleteShader(vsId);
+            GL_CHECK_RESULT;
+
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+            return false;
+        }
+        GLuint shaders[] = { vsId, fsId };
+        _onSurfaceVectorProgram.id = gpuAPI->linkProgram(2, shaders,
+            _onSurfaceVectorProgram.binaryCache, _onSurfaceVectorProgram.cacheFormat, true, &variablesMap);
+    }
     if (!_onSurfaceVectorProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -2370,6 +2459,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexColor, "in_vs_vertexColor", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mModel, "param_vs_mModel", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.modulationColor, "param_vs_modulationColor", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.tileId, "param_vs_tileId", GlslVariableType::Uniform);
@@ -2417,6 +2507,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
 
         // Set perspective projection-view matrix
         glUniformMatrix4fv(_onSurfaceVectorProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
+        GL_CHECK_RESULT;
+
+        // Scale the result
+        glUniform4f(_onSurfaceVectorProgram.vs.param.resultScale,
+            1.0f,
+            currentState.flip ? -1.0f : 1.0f,
+            1.0f,
+            1.0f);
         GL_CHECK_RESULT;
 
         // Just in case un-use any possibly used VAO
@@ -2855,7 +2953,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector(bool gp
             glDeleteProgram(_onSurfaceVectorProgram.id);
             GL_CHECK_RESULT;
         }
-        _onSurfaceVectorProgram = OnSurfaceVectorProgram();
+        _onSurfaceVectorProgram.id = 0;
     }
 
     return true;
@@ -2874,64 +2972,74 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeVisibilityCheck()
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    // Compile vertex shader
-    const QString vertexShader = QLatin1String(
-        // Input data
-        "INPUT lowp float in_vs_vertexPosition;                                                                             ""\n"
-        // Parameters: common data
-        "uniform vec3 param_vs_firstPointPosition;                                                                          ""\n"
-        "uniform vec3 param_vs_secondPointPosition;                                                                         ""\n"
-        "uniform vec3 param_vs_thirdPointPosition;                                                                          ""\n"
-        "uniform vec3 param_vs_fourthPointPosition;                                                                         ""\n"
-        "uniform vec4 param_vs_cameraInWorld;                                                                               ""\n"
-        "uniform mat4 param_vs_mModelViewProjection;                                                                        ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        // Get vertex coordinates in world
-        "    vec3 v = in_vs_vertexPosition < 2.5 ? param_vs_thirdPointPosition : param_vs_fourthPointPosition;              ""\n"
-        "    v = in_vs_vertexPosition < 1.5 ? param_vs_secondPointPosition : v;                                             ""\n"
-        "    v = in_vs_vertexPosition < 0.5 ? param_vs_firstPointPosition : v;                                              ""\n"
-        "    v.y += 0.2;                                                                                                    ""\n"
-        "    v += normalize(param_vs_cameraInWorld.xyz - v) * 0.3;                                                          ""\n"
-        "    gl_PointSize = param_vs_cameraInWorld.w;                                                                       ""\n"
-        "    gl_Position = param_vs_mModelViewProjection * vec4(v.x, v.y, v.z, 1.0);                                        ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedVertexShader = vertexShader;
-    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    if (vsId == 0)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
-        return false;
-    }
-
-    // Compile fragment shader
-    const QString fragmentShader = QLatin1String(
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = vec4(0.0, 0.0, 0.0, 0.0);                                                              ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedFragmentShader = fragmentShader;
-    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    if (fsId == 0)
-    {
-        glDeleteShader(vsId);
-        GL_CHECK_RESULT;
-
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
-        return false;
-    }
-
-    // Link everything into program object
-    GLuint shaders[] = { vsId, fsId };
     QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
-    _visibilityCheckProgram.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
+    _visibilityCheckProgram.id = 0;
+    if (!_visibilityCheckProgram.binaryCache.isEmpty())
+    {
+        _visibilityCheckProgram.id = gpuAPI->linkProgram(0, nullptr,
+            _visibilityCheckProgram.binaryCache, _visibilityCheckProgram.cacheFormat, true, &variablesMap);
+    }
+    if (!_visibilityCheckProgram.id.isValid())
+    {
+        // Compile vertex shader
+        const QString vertexShader = QLatin1String(
+            // Input data
+            "INPUT lowp float in_vs_vertexPosition;                                                                             ""\n"
+            // Parameters: common data
+            "uniform vec3 param_vs_firstPointPosition;                                                                          ""\n"
+            "uniform vec3 param_vs_secondPointPosition;                                                                         ""\n"
+            "uniform vec3 param_vs_thirdPointPosition;                                                                          ""\n"
+            "uniform vec3 param_vs_fourthPointPosition;                                                                         ""\n"
+            "uniform vec4 param_vs_cameraInWorld;                                                                               ""\n"
+            "uniform mat4 param_vs_mModelViewProjection;                                                                        ""\n"
+            "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
+            "                                                                                                                   ""\n"
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            // Get vertex coordinates in world
+            "    vec3 v = in_vs_vertexPosition < 2.5 ? param_vs_thirdPointPosition : param_vs_fourthPointPosition;              ""\n"
+            "    v = in_vs_vertexPosition < 1.5 ? param_vs_secondPointPosition : v;                                             ""\n"
+            "    v = in_vs_vertexPosition < 0.5 ? param_vs_firstPointPosition : v;                                              ""\n"
+            "    v.y += 0.2;                                                                                                    ""\n"
+            "    v += normalize(param_vs_cameraInWorld.xyz - v) * 0.3;                                                          ""\n"
+            "    gl_PointSize = param_vs_cameraInWorld.w;                                                                       ""\n"
+            "    vec4 vertex = param_vs_mModelViewProjection * vec4(v.x, v.y, v.z, 1.0);                                        ""\n"
+            "    gl_Position = vertex * param_vs_resultScale;                                                                   ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedVertexShader = vertexShader;
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+        if (vsId == 0)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+            return false;
+        }
+
+        // Compile fragment shader
+        const QString fragmentShader = QLatin1String(
+            "void main()                                                                                                        ""\n"
+            "{                                                                                                                  ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = vec4(0.0, 0.0, 0.0, 0.0);                                                              ""\n"
+            "}                                                                                                                  ""\n");
+        auto preprocessedFragmentShader = fragmentShader;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+        if (fsId == 0)
+        {
+            glDeleteShader(vsId);
+            GL_CHECK_RESULT;
+
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+            return false;
+        }
+        GLuint shaders[] = { vsId, fsId };
+        _visibilityCheckProgram.id = gpuAPI->linkProgram(2, shaders,
+            _visibilityCheckProgram.binaryCache, _visibilityCheckProgram.cacheFormat, true, &variablesMap);
+    }
     if (!_visibilityCheckProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -2948,6 +3056,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeVisibilityCheck()
     ok = ok && lookup->lookupLocation(_visibilityCheckProgram.vs.param.fourthPointPosition, "param_vs_fourthPointPosition", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_visibilityCheckProgram.vs.param.cameraInWorld, "param_vs_cameraInWorld", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_visibilityCheckProgram.vs.param.mModelViewProjection, "param_vs_mModelViewProjection", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_visibilityCheckProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     if (!ok)
     {
         glDeleteProgram(_visibilityCheckProgram.id);
@@ -3025,7 +3134,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseVisibilityCheck(bool gp
             glDeleteProgram(_visibilityCheckProgram.id);
             GL_CHECK_RESULT;
         }
-        _visibilityCheckProgram = VisibilityCheckProgram();
+        _visibilityCheckProgram.id = 0;
     }
 
     return true;
@@ -3110,6 +3219,14 @@ int OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::startTerrainVisibilityFiltering
             1,
             GL_FALSE,
             glm::value_ptr(internalState.mPerspectiveProjectionView));
+        GL_CHECK_RESULT;
+
+        // Scale the result
+        glUniform4f(_visibilityCheckProgram.vs.param.resultScale,
+            1.0f,
+            currentState.flip ? -1.0f : 1.0f,
+            1.0f,
+            1.0f);
         GL_CHECK_RESULT;
 
         // Change depth test function to perform > depth test

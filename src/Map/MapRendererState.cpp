@@ -48,6 +48,7 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
 
     mapState.windowSize = windowSize;
     mapState.viewport = viewport;
+    mapState.flip = flip;
     mapState.fieldOfView = fieldOfView;
     mapState.visibleDistance = visibleDistance;
     mapState.detailedDistance = detailedDistance;
