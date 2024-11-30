@@ -1003,7 +1003,7 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                 available = true;
                 const int zoomShift = zoom - minZoom;
                 bool tileFound = true;
-                if (zoomShift > 0 && minZoom > MinZoomLevel)
+                if (zoomShift >= 0 && minZoom > MinZoomLevel)
                 {
                     // Make sure if tile can be represented by any overscaled one
                     const auto zoomDeltaOverscaled = MaxZoomLevel - minZoom;
