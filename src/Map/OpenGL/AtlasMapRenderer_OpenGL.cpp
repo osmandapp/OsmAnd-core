@@ -1612,7 +1612,10 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getSurfaceZoom(
     const auto scaleFactor = baseUnits / distanceToSurface;
     const auto minZoom = qCeil(log2(scaleFactor / _maximumVisualZoom));
     const auto maxZoom = qFloor(log2(scaleFactor / _minimumVisualZoom));
-    auto resultZoom = qAbs(state.zoomLevel - minZoom) < qAbs(state.zoomLevel - maxZoom) ? minZoom : maxZoom;
+    auto resultZoom = maxZoom;
+    if (state.surfaceZoomLevel >= MinZoomLevel && state.surfaceZoomLevel <= MaxZoomLevel
+        && qAbs(state.surfaceZoomLevel - minZoom) < qAbs(state.surfaceZoomLevel - maxZoom))
+        resultZoom = minZoom;
     if (resultZoom < state.zoomLevel)
         resultZoom = state.zoomLevel;
 
