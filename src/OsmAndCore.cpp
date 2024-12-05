@@ -89,14 +89,14 @@ struct QCoreApplicationThread : public QThread
 };
 std::shared_ptr<QCoreApplicationThread> _qCoreApplicationThread;
 
-OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(
+OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::InitializeCore(
     const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider,
     const char* appFontsPath /* = nullptr */)
 {
     if (!coreResourcesProvider)
     {
         std::cerr << "OsmAnd core requires non-null core resources provider!" << std::endl;
-        return false;
+        return 0;
     }
     
     gCoreResourcesProvider = coreResourcesProvider;
@@ -138,9 +138,9 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(
 
     GDALAllRegister();
     if (!SKIA::initialize())
-        return false;
+        return 0;
     if (!ICU::initialize())
-        return false;
+        return 0;
     (void)QLocale::system(); // This will initialize system locale, since it fails to initialize concurrently
     EmbeddedTypefaceFinder_initialize();
     TextRasterizer_initialize();
@@ -152,7 +152,11 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(
         locale.toString(QDateTime::fromMSecsSinceEpoch(currentTime, Qt::UTC), QStringLiteral("MMMM d yyyy"));
     LogPrintf(LogSeverityLevel::Info, "OsmAnd Core was initialized successfully on %s", qPrintable(initTime));
 
-    return true;
+#if Q_PROCESSOR_WORDSIZE >= 8
+    return 64;
+#endif
+
+    return 32;
 }
 
 OSMAND_CORE_API const std::shared_ptr<const OsmAnd::ICoreResourcesProvider>& OSMAND_CORE_CALL OsmAnd::getCoreResourcesProvider()

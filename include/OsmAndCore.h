@@ -65,7 +65,7 @@ namespace OsmAnd
     class ICoreResourcesProvider;
     class IMemoryManager;
 
-    OSMAND_CORE_API bool OSMAND_CORE_CALL InitializeCore(
+    OSMAND_CORE_API int OSMAND_CORE_CALL InitializeCore(
         const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider, 
         const char* appFontsPath = nullptr);
     OSMAND_CORE_API const std::shared_ptr<const ICoreResourcesProvider>& OSMAND_CORE_CALL getCoreResourcesProvider();
