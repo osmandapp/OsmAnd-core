@@ -66,6 +66,11 @@ public class NativeCore {
     private static boolean s_isLoaded = false;
 
     /**
+     * Bitness of loaded native core
+     */
+    private static int s_bitness = 0;
+
+    /**
      * Method to check if native core was successfully loaded
      *
      * @return True if native core was successfully loaded, false otherwise
@@ -76,6 +81,20 @@ public class NativeCore {
 
         synchronized (s_initSync) {
             return s_isLoaded;
+        }
+    }
+
+    /**
+     * Method to check if native core is 64-bit
+     *
+     * @return True if native core is native 64 bit code, false otherwise
+     */
+    public static boolean is64Bit() {
+        if (!s_loadedNativeLibraries)
+            return false;
+
+        synchronized (s_initSync) {
+            return s_bitness == 64;
         }
     }
 
@@ -119,7 +138,8 @@ public class NativeCore {
             }
 
             // Initialize core
-            s_isLoaded = OsmAndCore.InitializeCore(coreResourcesProvider, appFontsPath);
+            s_bitness = OsmAndCore.InitializeCore(coreResourcesProvider, appFontsPath);
+            s_isLoaded = s_bitness > 0;
             if (!s_isLoaded)
                 return false;
 
