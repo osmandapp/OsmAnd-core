@@ -221,14 +221,14 @@ QString OsmAnd::Road::getDestinationRef(bool direction) const
             if (section->getAttributeMapping()->decodeMap.size() > k)
             {
                 if (refTag == section->getAttributeMapping()->decodeMap[k].tag)
-                    return captions[k];
+                    return Utilities::splitAndClearRepeats(captions[k], ";");
                 
                 if (refTagDefault == section->getAttributeMapping()->decodeMap[k].tag)
                     refDefault = captions[k];
             }
         }
         if (!refDefault.isNull())
-            return refDefault;
+            return Utilities::splitAndClearRepeats(refDefault, ";");
 
         //return names.get(region.refTypeRule);
     }

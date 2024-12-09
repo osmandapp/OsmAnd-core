@@ -1225,6 +1225,25 @@ namespace OsmAnd
         inline static bool contains(const QVector<PointI> &polygon, const PointI &point) {
             return countIntersections(polygon, point) % 2 == 1;
         }
+        
+        inline static QString splitAndClearRepeats(const QString & ref, const QString & symbol)
+        {
+            QList<QString> arr = ref.split(symbol);
+            QString res = "";
+            QString prev = "";
+            for (const QString & s : arr)
+            {
+                if (s.isNull() || s.isEmpty() || prev == s)
+                    continue;
+                if (!res.isEmpty())
+                {
+                    res += symbol;
+                }
+                res += s;
+                prev = s;
+            }
+            return res;
+        }
 
     private:
         Utilities();
