@@ -32,11 +32,11 @@ void OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QString& file
         return;
     }
 
-    writeFiles(a, filesToArchive, basePath);
+    bool writeSucceed = writeFiles(a, filesToArchive, basePath);
 
     res = archive_write_close(a);
     res = archive_write_free(a);
-    *ok_ = res == ARCHIVE_OK;
+    *ok_ = res == ARCHIVE_OK && writeSucceed;
 }
 
 QByteArray OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QList<QString>& filesToArchive, const QString& basePath, const bool gzip /*= false*/)
@@ -51,11 +51,11 @@ QByteArray OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QList<Q
         return nullptr;
     }
 
-    writeFiles(a, filesToArchive, basePath);
+    bool writeSucceed = writeFiles(a, filesToArchive, basePath);
 
     res = archive_write_close(a);
     res = archive_write_free(a);
-    *ok_ = res == ARCHIVE_OK;
+    *ok_ = res == ARCHIVE_OK && writeSucceed;
 
     return result;
 }
@@ -75,14 +75,16 @@ void OsmAnd::ArchiveWriter_P::setupArchive(struct archive *a, const bool gzip)
     archive_write_zip_set_compression_deflate(a);
 }
 
-void OsmAnd::ArchiveWriter_P::writeFiles(struct archive *a, const QList<QString>& filesToArchive, const QString& basePath)
+bool OsmAnd::ArchiveWriter_P::writeFiles(struct archive *a, const QList<QString>& filesToArchive, const QString& basePath)
 {
+    bool res = true;
+
     struct archive_entry *entry;
     struct stat st;
 
     int buffSize = 16384;
     char buff[buffSize];
-    size_t len;
+    qint64 len;
 
     for (auto fileName : filesToArchive)
     {
@@ -101,7 +103,12 @@ void OsmAnd::ArchiveWriter_P::writeFiles(struct archive *a, const QList<QString>
         archive_entry_set_filetype(entry, AE_IFREG);
         archive_entry_set_perm(entry, 0664);
         archive_write_header(a, entry);
-        archiveFile.open(QIODevice::ReadOnly);
+        if (!archiveFile.open(QIODevice::ReadOnly))
+        {
+            archive_entry_free(entry);
+            res = false;
+            break;
+        }
         len = archiveFile.read(buff, buffSize);
         while (len > 0)
         {
@@ -110,7 +117,13 @@ void OsmAnd::ArchiveWriter_P::writeFiles(struct archive *a, const QList<QString>
         }
         archiveFile.close();
         archive_entry_free(entry);
+        if (len == -1)
+        {
+            res = false;
+            break;
+        }
     }
+    return res;
 }
 
 int OsmAnd::ArchiveWriter_P::archive_write_open_memory(struct archive *a)
