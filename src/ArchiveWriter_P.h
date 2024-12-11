@@ -28,7 +28,7 @@ namespace OsmAnd
         QByteArray result;
 
         void setupArchive(struct archive *a, const bool gzip);
-        void writeFiles(struct archive *a, const QList<QString>& filesToArchive, const QString& basePath);
+        bool writeFiles(struct archive *a, const QList<QString>& filesToArchive, const QString& basePath);
 
         int archive_write_open_memory(struct archive *a);
         static int memory_write_open(struct archive *a, void *writer);
