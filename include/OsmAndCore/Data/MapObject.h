@@ -10,6 +10,7 @@
 #include <QString>
 #include <QHash>
 #include <QSet>
+#include <QAtomicInt>
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
@@ -19,6 +20,20 @@
 
 namespace OsmAnd
 {
+    class OSMAND_CORE_API VisibleAreaPoints
+    {
+        Q_DISABLE_COPY_AND_MOVE(VisibleAreaPoints);
+    private:
+    protected:
+    public:
+        VisibleAreaPoints(int64_t visibleAreaTime, const AreaI& visibleArea31, const QVector<PointI>& visiblePoints31);
+        virtual ~VisibleAreaPoints();
+
+        const int64_t areaTime;
+        const AreaI area31;
+        const QVector<PointI> points31;
+    };
+
     class OSMAND_CORE_API MapObject
     {
         Q_DISABLE_COPY_AND_MOVE(MapObject);
@@ -117,9 +132,21 @@ namespace OsmAnd
         QVector< PointI > points31;
         QList< QVector< PointI > > innerPolygonsPoints31;
         AreaI bbox31;
+
+        mutable volatile int vapIndex;
+        mutable VisibleAreaPoints* vapItems[2];
+        mutable QAtomicInt vapCounts[2];
+        mutable QAtomicInt vapWriteLock;
+
         virtual bool isClosedFigure(bool checkInner = false) const;
         virtual void computeBBox31();
         virtual bool intersectedOrContainedBy(const AreaI& area) const;
+        virtual bool intersectedOrContainedBy(const QVector<PointI>& points, const AreaI& area) const;
+        virtual int startReadingArea() const;
+        virtual bool startReadingArea(QAtomicInt& a) const;
+        virtual void stopReadingArea(int index) const;
+        virtual bool shouldChangeArea(const AreaI& prevArea, const AreaI& nextArea) const;
+        virtual bool updateVisibleArea(const AreaI& nextArea, int64_t nextAreaTime) const;
 
         // Attributes
         QVector< uint32_t > attributeIds;

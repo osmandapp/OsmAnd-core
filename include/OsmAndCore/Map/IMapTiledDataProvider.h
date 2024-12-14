@@ -42,6 +42,8 @@ namespace OsmAnd
 
             TileId tileId;
             ZoomLevel zoom;
+            AreaI visibleArea31;
+            int64_t areaTime;
             bool cacheOnly;
 
             static void copy(Request& dst, const IMapDataProvider::Request& src);

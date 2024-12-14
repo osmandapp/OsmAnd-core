@@ -62,6 +62,8 @@ OsmAnd::IMapTiledDataProvider::Data::~Data()
 OsmAnd::IMapTiledDataProvider::Request::Request()
     : tileId(TileId::zero())
     , zoom(InvalidZoomLevel)
+    , visibleArea31(AreaI())
+    , areaTime(0)
     , cacheOnly(false)
 {
 }
@@ -88,6 +90,8 @@ void OsmAnd::IMapTiledDataProvider::Request::copy(Request& dst, const IMapDataPr
 
     dst.tileId = src.tileId;
     dst.zoom = src.zoom;
+    dst.visibleArea31 = src.visibleArea31;
+    dst.areaTime = src.areaTime;
     dst.cacheOnly = src.cacheOnly;
 }
 

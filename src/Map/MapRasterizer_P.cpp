@@ -601,10 +601,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
     bool drawOnlyShadow)
 {
-    const auto& points31 = primitive->sourceObject->points31;
     const auto& env = context.env;
-
-    assert(points31.size() >= 2);
 
     SkPaint paint = _defaultPaint;
     if (!updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_1, false))
@@ -630,10 +627,26 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     const auto enlarge31Y = static_cast<int>(context.pixelArea.height() / 4.0f * scalePixelTo31.y);
     const auto enlargedArea31 = area31.getEnlargedBy(PointI(enlarge31X, enlarge31Y));
 
+    // Process only visible parts of polyline if available
+    const auto& mapObject = primitive->sourceObject;
+    auto areaIndex = mapObject->startReadingArea();
+    if (areaIndex >= 0 && !mapObject->vapItems[areaIndex]->area31.contains(enlargedArea31))
+    {
+        mapObject->stopReadingArea(areaIndex);
+        areaIndex = -1;
+    }
+    const auto& points31 = areaIndex >= 0 ? mapObject->vapItems[areaIndex]->points31 : mapObject->points31;
+
+    assert(points31.size() >= 2);
+
     SkPath path;
     bool intersect = calculateLinePath(context, points31, enlargedArea31, path);
     if (!intersect)
+    {
+        if (areaIndex >= 0)
+            mapObject->stopReadingArea(areaIndex);
         return;
+    }
 
     if (drawOnlyShadow)
     {
@@ -673,6 +686,9 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
 
         rasterizePolylineIcons(context, canvas, path, primitive->evaluationResult);
     }
+
+    if (areaIndex >= 0)
+        mapObject->stopReadingArea(areaIndex);
 }
 
 void OsmAnd::MapRasterizer_P::rasterizePolylineShadow(

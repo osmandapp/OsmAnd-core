@@ -11,10 +11,27 @@
 #include "QKeyIterator.h"
 #include "QKeyValueIterator.h"
 #include "Logging.h"
+#include "Utilities.h"
 #include <ICU.h>
 
 static const int SHIFT_COORDINATES = 5;
 static const int LABEL_ZOOM_ENCODE = 26;
+
+static const int MIN_POINTS_TO_USE_SIMPLIFIED = 1000;
+static const int MIN_BBOX_FACTOR_TO_UPDATE_AREA = 2;
+static const float MIN_INNER_DELTA_TO_UPDATE_AREA = 0.5;
+static const float MIN_OUTER_DELTA_TO_UPDATE_AREA = 0.05;
+
+OsmAnd::VisibleAreaPoints::VisibleAreaPoints(int64_t areaTime_, const AreaI& area31_, const QVector<PointI>& points31_)
+    : areaTime(areaTime_)
+    , area31(area31_)
+    , points31(qMove(points31_))
+{
+}
+
+OsmAnd::VisibleAreaPoints::~VisibleAreaPoints()
+{
+}
 
 std::shared_ptr<const OsmAnd::MapObject::AttributeMapping> OsmAnd::MapObject::defaultAttributeMapping(OsmAnd::modifyAndReturn(
     std::shared_ptr<OsmAnd::MapObject::AttributeMapping>(new OsmAnd::MapObject::AttributeMapping()),
@@ -30,11 +47,18 @@ OsmAnd::MapObject::MapObject()
     , labelX(0)
     , labelY(0)
     , isCoastline(false)
+    , vapIndex(0)
 {
+    vapItems[0] = nullptr;
+    vapItems[1] = nullptr;
 }
 
 OsmAnd::MapObject::~MapObject()
 {
+    if (vapItems[0])
+        delete vapItems[0];
+    if (vapItems[1])
+        delete vapItems[1];
 }
 
 bool OsmAnd::MapObject::obtainSharingKey(SharingKey& outKey) const
@@ -100,9 +124,28 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const AreaI& area) const
     if (!area.intersects(bbox31))
         return false;
 
+    bool result;
+
+    const auto readIndex = vapIndex;
+    if (points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED && startReadingArea(vapCounts[readIndex]))
+    {
+        if (vapItems[readIndex]->area31.contains(area))
+            result = intersectedOrContainedBy(vapItems[readIndex]->points31, area);
+        else
+            result = intersectedOrContainedBy(points31, area);
+        stopReadingArea(readIndex);
+    }
+    else
+        result = intersectedOrContainedBy(points31, area);
+
+    return result;
+}
+
+bool OsmAnd::MapObject::intersectedOrContainedBy(const QVector<PointI>& points, const AreaI& area) const
+{
     // Check if any of the object points is inside area
-    auto pPoint31 = points31.constData();
-    const auto pointsCount = points31.size();
+    auto pPoint31 = points.constData();
+    const auto pointsCount = points.size();
     uint prevCross = 0;
     uint corners = 0;
     int lft = area.left() ;
@@ -136,6 +179,123 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const AreaI& area) const
     if(corners == 15) // && isArea - we can't here detect area or non-area field
         return true;
     return false;
+}
+
+inline int OsmAnd::MapObject::startReadingArea() const
+{
+    if (points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED)
+        return -1;
+
+    const auto readIndex = vapIndex;
+
+    if (!startReadingArea(vapCounts[readIndex]))
+        return -1;
+
+    return readIndex;
+}
+
+inline bool OsmAnd::MapObject::startReadingArea(QAtomicInt& a) const
+{
+    // If this area item can be read then increment the read count
+    bool result = a.loadAcquire() > 0 &&
+        (a.testAndSetOrdered(1, 2)
+        || a.testAndSetOrdered(2, 3)
+        || a.testAndSetOrdered(3, 4)
+        || a.testAndSetOrdered(4, 5)
+        || a.testAndSetOrdered(5, 6)
+        || a.testAndSetOrdered(6, 7)
+        || a.testAndSetOrdered(7, 8)
+        || a.testAndSetOrdered(8, 9));
+
+    return result;
+}
+
+inline void OsmAnd::MapObject::stopReadingArea(int index) const
+{
+    // Decrement the read count of this area and delete the item in case of zero
+    if (vapCounts[index].fetchAndAddOrdered(-1) == 1)
+    {
+        const auto vapItem = vapItems[index];
+        vapItems[index] = nullptr;
+        delete vapItem;
+    }
+}
+
+inline bool OsmAnd::MapObject::shouldChangeArea(const AreaI& prevArea, const AreaI& nextArea) const
+{
+    // Check if the new visible area is significantly different
+    auto innerDeltaWidth = static_cast<int64_t>(prevArea.width() * MIN_INNER_DELTA_TO_UPDATE_AREA);
+    auto outerDeltaWidth = static_cast<int64_t>(prevArea.width() * MIN_OUTER_DELTA_TO_UPDATE_AREA);
+    auto innerDeltaHeight = static_cast<int64_t>(prevArea.height() * MIN_INNER_DELTA_TO_UPDATE_AREA);
+    auto outerDeltaHeight = static_cast<int64_t>(prevArea.height() * MIN_OUTER_DELTA_TO_UPDATE_AREA);
+
+    bool result = 
+        nextArea.left() < static_cast<int64_t>(prevArea.left()) - outerDeltaWidth
+        || nextArea.right() > static_cast<int64_t>(prevArea.right()) + outerDeltaWidth
+        || nextArea.top() < static_cast<int64_t>(prevArea.top()) - outerDeltaWidth
+        || nextArea.bottom() > static_cast<int64_t>(prevArea.bottom()) + outerDeltaWidth
+        || nextArea.left() > static_cast<int64_t>(prevArea.left()) + innerDeltaWidth
+        || nextArea.right() < static_cast<int64_t>(prevArea.right()) - innerDeltaWidth
+        || nextArea.top() > static_cast<int64_t>(prevArea.top()) + innerDeltaWidth
+        || nextArea.bottom() < static_cast<int64_t>(prevArea.bottom()) - innerDeltaWidth;
+
+    return result;
+}
+
+bool OsmAnd::MapObject::updateVisibleArea(const AreaI& nextArea, int64_t nextAreaTime) const
+{
+    if (points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED)
+        return false;
+
+    auto objectWidth = bbox31.width();
+    auto objectHeight = bbox31.height();
+    auto minWidth = static_cast<int64_t>(nextArea.width()) * MIN_BBOX_FACTOR_TO_UPDATE_AREA;
+    auto minHeight = static_cast<int64_t>(nextArea.height()) * MIN_BBOX_FACTOR_TO_UPDATE_AREA;
+
+    if (objectWidth < minWidth && objectHeight < minHeight)
+        return false;
+
+    bool result = false;
+
+    int64_t prevAreaTime;
+    AreaI prevArea31;
+
+    // Try to lock and update
+    if (vapWriteLock.testAndSetOrdered(0, 1))
+    {
+        const auto readIndex = vapIndex;
+        if (startReadingArea(vapCounts[readIndex]))
+        {
+            // Read and check visible area if it needs to be replaced
+            prevAreaTime = vapItems[readIndex]->areaTime;
+            prevArea31 = vapItems[readIndex]->area31;
+            stopReadingArea(readIndex);
+            if (nextAreaTime > prevAreaTime && shouldChangeArea(prevArea31, nextArea))
+            {
+                // Try to update previous visible area
+                const auto writeIndex = 1 - readIndex;
+                if (vapCounts[writeIndex].testAndSetOrdered(1, 0))
+                {
+                    prevAreaTime = vapItems[writeIndex]->areaTime;
+                    prevArea31 = vapItems[writeIndex]->area31;
+                    if (nextAreaTime > prevAreaTime && shouldChangeArea(prevArea31, nextArea))
+                    {
+                        auto nextPoints31 = Utilities::simplifyPathOutsideBBox(points31, nextArea);
+                        if (nextPoints31.size() * 2 < points31.size())
+                        {
+                            delete vapItems[writeIndex];
+                            vapItems[writeIndex] = new VisibleAreaPoints(nextAreaTime, nextArea, nextPoints31);
+                        }
+                    }
+                    vapCounts[writeIndex].storeRelease(1);
+                    vapIndex = writeIndex;
+                    result = true;
+                }
+            }
+        }
+        vapWriteLock.storeRelease(0);
+    }
+    return result;
 }
 
 bool OsmAnd::MapObject::containsAttribute(const uint32_t attributeId, const bool checkAdditional /*= false*/) const

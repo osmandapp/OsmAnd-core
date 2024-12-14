@@ -59,6 +59,11 @@ bool OsmAnd::MapRendererRasterMapLayerResource::obtainData(
     IRasterMapLayerProvider::Request request;
     request.tileId = tileId;
     request.zoom = zoom;
+    const auto mapState = resourcesManager->renderer->getMapState();
+    const auto visibleArea = Utilities::roundBoundingBox31(mapState.visibleBBox31, mapState.zoomLevel);
+    request.visibleArea31 = Utilities::getEnlargedVisibleArea(visibleArea);
+    const auto currentTime = QDateTime::currentMSecsSinceEpoch();
+    request.areaTime = currentTime;
     request.queryController = queryController;
     const auto requestSucceeded = provider->obtainTiledData(request, tiledData);
     if (!requestSucceeded)
@@ -112,6 +117,11 @@ void OsmAnd::MapRendererRasterMapLayerResource::obtainDataAsync(
     IRasterMapLayerProvider::Request request;
     request.tileId = tileId;
     request.zoom = zoom;
+    const auto mapState = resourcesManager->renderer->getMapState();
+    const auto visibleArea = Utilities::roundBoundingBox31(mapState.visibleBBox31, mapState.zoomLevel);
+    request.visibleArea31 = Utilities::getEnlargedVisibleArea(visibleArea);
+    const auto currentTime = QDateTime::currentMSecsSinceEpoch();
+    request.areaTime = currentTime;
     request.cacheOnly = cacheOnly;
     request.queryController = queryController;
     provider->obtainDataAsync(request,

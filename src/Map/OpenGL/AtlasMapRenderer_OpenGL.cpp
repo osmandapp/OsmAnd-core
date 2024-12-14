@@ -2497,13 +2497,17 @@ OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31() const
     if (!ok)
         return AreaI::largest();
 
-    return internalState.globalFrustum2D31.getBBox31();
+    AreaI mainArea = internalState.globalFrustum2D31.getBBox31();
+    AreaI extraArea = internalState.extraFrustum2D31.getBBox31();
+    return extraArea.isEmpty() ? mainArea : mainArea.enlargeToInclude(extraArea);
 }
 
 OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31(const MapRendererInternalState& internalState_) const
 {
     const auto internalState = static_cast<const InternalState*>(&internalState_);
-    return internalState->globalFrustum2D31.getBBox31();
+    AreaI mainArea = internalState->globalFrustum2D31.getBBox31();
+    AreaI extraArea = internalState->extraFrustum2D31.getBBox31();
+    return extraArea.isEmpty() ? mainArea : mainArea.enlargeToInclude(extraArea);
 }
 
 OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBoxShifted() const

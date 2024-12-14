@@ -30,6 +30,12 @@
 #include <OsmAndCore/Bitmask.h>
 #include <OsmAndCore/Logging.h>
 
+// Most polylines width is under 50 meters
+#define MAX_ENLARGE_PRIMITIVIZED_AREA_METERS 50
+#define ENLARGE_PRIMITIVIZED_AREA_COEFF 0.2f
+
+#define ENLARGE_VISIBLE_AREA_COEFF 0.5f
+
 namespace OsmAnd
 {
     struct OSMAND_CORE_API Utilities Q_DECL_FINAL
@@ -742,8 +748,6 @@ namespace OsmAnd
                 roundedBBox31.right() += tilesCount;
             roundedBBox31.right() -= 1;
 
-            assert(roundedBBox31.contains(bbox31));
-
             return roundedBBox31;
         }
 
@@ -776,6 +780,82 @@ namespace OsmAnd
         {
             outX = deinterleaveBy1(code);
             outY = deinterleaveBy1(code >> 1);
+        }
+
+        inline static QVector<PointI> simplifyPathOutsideBBox(const QVector<PointI>& path31, const AreaI& bbox31)
+        {
+            auto center = AreaD(bbox31).center();
+            const auto pointsCount = path31.size();
+            QVector<PointI> result;
+            result.reserve(pointsCount);
+            auto pPoint31 = path31.constData();
+            PointI prevPoint;
+            PointI lastPoint;
+            int prevCode = 0;
+            int sameCodeCount = 0;
+            double prevDistance = 0.0;
+            for (auto pointIdx = 0; pointIdx < pointsCount; pointIdx++)
+            {
+                auto point31 = *(pPoint31++);
+                int code = (point31.x < bbox31.left() ? 1 : (point31.x > bbox31.right() ? 2 : 0))
+                    | (point31.y < bbox31.top() ? 4 : (point31.y > bbox31.bottom() ? 8 : 0));
+
+                if (code != 0 && code == prevCode)
+                {
+                    if (sameCodeCount < 4)
+                        result.push_back(point31);
+                    prevDistance += PointD(point31 - prevPoint).norm();
+                    sameCodeCount++;
+                }
+                else
+                {
+                    if (sameCodeCount > 3)
+                    {
+                        result.pop_back();
+                        result.pop_back();
+                        result.pop_back();
+                        const auto extraDistance = PointD(prevPoint - lastPoint).norm() - prevDistance;
+                        if (extraDistance > 0.0)
+                        {
+                            const auto first = PointD(lastPoint);
+                            auto vector = (first - center).normalized() * extraDistance * 0.5;
+                            const auto second = first + vector;
+                            result.push_back({qRound(second.x), qRound(second.y)});
+                            const auto third = PointD(prevPoint) + vector;
+                            result.push_back({qRound(third.x), qRound(third.y)});
+                        }
+                        result.push_back(prevPoint);
+                    }
+                    result.push_back(point31);
+                    lastPoint = point31;
+                    prevDistance = 0.0;
+                    sameCodeCount = 0;
+                }
+                prevPoint = point31;
+                prevCode = code;
+            }
+            return result;
+        }
+
+        inline static AreaI getEnlargedPrimitivesArea(const AreaI& area31)
+        {
+            // Enlarge area in which objects will be primitivised.
+            // It allows to properly draw polylines on tile bounds
+            const auto enlarge31X = qMin(
+                Utilities::metersToX31(MAX_ENLARGE_PRIMITIVIZED_AREA_METERS),
+                static_cast<int64_t>(area31.width() * ENLARGE_PRIMITIVIZED_AREA_COEFF));
+            const auto enlarge31Y = qMin(
+                Utilities::metersToY31(MAX_ENLARGE_PRIMITIVIZED_AREA_METERS),
+                static_cast<int64_t>(area31.height() * ENLARGE_PRIMITIVIZED_AREA_COEFF));
+            return area31.getEnlargedBy(PointI(enlarge31X, enlarge31Y));
+        }
+
+        inline static AreaI getEnlargedVisibleArea(const AreaI& area31)
+        {
+            auto enlargedArea31 = Utilities::getEnlargedPrimitivesArea(area31);
+            const auto enlarge31X = static_cast<int64_t>(enlargedArea31.width() * ENLARGE_VISIBLE_AREA_COEFF);
+            const auto enlarge31Y = static_cast<int64_t>(enlargedArea31.height() * ENLARGE_VISIBLE_AREA_COEFF);
+            return enlargedArea31.getEnlargedBy(PointI(enlarge31X, enlarge31Y));
         }
 
         static QVector<TileId> getAllMetaTileIds(const TileId anyMetaTileId)
