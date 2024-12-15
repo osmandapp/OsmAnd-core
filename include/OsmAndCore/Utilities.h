@@ -805,7 +805,7 @@ namespace OsmAnd
                 }
                 else
                 {
-                    if (sameCodeCount > 0)
+                    if (sameCodeCount > 1)
                         result.last() = prevPoint;
                     result.push_back(point31);
                     sameCodeCount = 0;
