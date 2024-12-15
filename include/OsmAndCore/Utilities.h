@@ -784,16 +784,13 @@ namespace OsmAnd
 
         inline static QVector<PointI> simplifyPathOutsideBBox(const QVector<PointI>& path31, const AreaI& bbox31)
         {
-            auto center = AreaD(bbox31).center();
             const auto pointsCount = path31.size();
             QVector<PointI> result;
             result.reserve(pointsCount);
             auto pPoint31 = path31.constData();
             PointI prevPoint;
-            PointI lastPoint;
             int prevCode = 0;
             int sameCodeCount = 0;
-            double prevDistance = 0.0;
             for (auto pointIdx = 0; pointIdx < pointsCount; pointIdx++)
             {
                 auto point31 = *(pPoint31++);
@@ -802,33 +799,15 @@ namespace OsmAnd
 
                 if (code != 0 && code == prevCode)
                 {
-                    if (sameCodeCount < 4)
+                    if (sameCodeCount < 1)
                         result.push_back(point31);
-                    prevDistance += PointD(point31 - prevPoint).norm();
                     sameCodeCount++;
                 }
                 else
                 {
-                    if (sameCodeCount > 3)
-                    {
-                        result.pop_back();
-                        result.pop_back();
-                        result.pop_back();
-                        const auto extraDistance = PointD(prevPoint - lastPoint).norm() - prevDistance;
-                        if (extraDistance > 0.0)
-                        {
-                            const auto first = PointD(lastPoint);
-                            auto vector = (first - center).normalized() * extraDistance * 0.5;
-                            const auto second = first + vector;
-                            result.push_back({qRound(second.x), qRound(second.y)});
-                            const auto third = PointD(prevPoint) + vector;
-                            result.push_back({qRound(third.x), qRound(third.y)});
-                        }
-                        result.push_back(prevPoint);
-                    }
+                    if (sameCodeCount > 0)
+                        result.last() = prevPoint;
                     result.push_back(point31);
-                    lastPoint = point31;
-                    prevDistance = 0.0;
                     sameCodeCount = 0;
                 }
                 prevPoint = point31;
