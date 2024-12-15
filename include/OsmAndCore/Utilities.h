@@ -790,44 +790,43 @@ namespace OsmAnd
             QVector<PointI> result;
             result.reserve(pointsCount);
             auto pPoint31 = path31.constData();
-            int prevCode = 0;
-            int sameCodeCount = 0;
             const auto left = bbox31.left();
             const auto right = bbox31.right();
             const auto top = bbox31.top();
             const auto bottom = bbox31.bottom();
             int x, y, prevX, prevY, code;
+            int prevCode = 0;
+            bool skipped = false;
             for (auto pointIdx = 0; pointIdx < pointsCount; pointIdx++)
             {
                 x = pPoint31->x;
                 y = pPoint31->y;
                 code = (x < left ? 1 : (x > right ? 2 : 0)) | (y < top ? 4 : (y > bottom ? 8 : 0));
-                if (code != 0 && code & prevCode != 0)
-                {
-                    if (sameCodeCount == 0)
-                    {
-                        result.resize(result.size() + 1);
-                        result.last().x = x;
-                        result.last().y = y;
-                    }
-                    sameCodeCount++;
-                }
+                if (code != 0 && (code & prevCode) != 0)
+                    skipped = true;
                 else
                 {
-                    if (sameCodeCount > 1)
+                    if (skipped)
                     {
+                        result.resize(result.size() + 1);
                         result.last().x = prevX;
                         result.last().y = prevY;
+                        skipped = false;
                     }
                     result.resize(result.size() + 1);
                     result.last().x = x;
                     result.last().y = y;
-                    sameCodeCount = 0;
+                    prevCode = code;
                 }
                 prevX = x;
                 prevY = y;
-                prevCode = code;
                 pPoint31++;
+            }
+            if (skipped)
+            {
+                result.resize(result.size() + 1);
+                result.last().x = prevX;
+                result.last().y = prevY;
             }
             return result;
         }
