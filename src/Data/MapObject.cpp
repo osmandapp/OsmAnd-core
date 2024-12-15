@@ -126,15 +126,19 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const AreaI& area) const
 
     bool result;
 
-    const auto readIndex = vapIndex;
-    if (points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED && startReadingArea(vapCounts[readIndex]))
+    auto areaIndex = startReadingArea();
+    if (areaIndex >= 0)
     {
-        if (vapItems[readIndex]->area31.contains(area))
-            result = intersectedOrContainedBy(vapItems[readIndex]->points31, area);
+        if (vapItems[areaIndex]->area31.contains(area))
+            result = intersectedOrContainedBy(vapItems[areaIndex]->points31, area);
         else
-            result = intersectedOrContainedBy(points31, area);
-        stopReadingArea(readIndex);
+        {
+            stopReadingArea(areaIndex);
+            areaIndex = -1;
+        }
     }
+    if (areaIndex >= 0)
+        stopReadingArea(areaIndex);
     else
         result = intersectedOrContainedBy(points31, area);
 
@@ -281,7 +285,7 @@ bool OsmAnd::MapObject::updateVisibleArea(const AreaI& nextArea, int64_t nextAre
                     if (nextAreaTime > prevAreaTime && shouldChangeArea(prevArea31, nextArea))
                     {
                         auto nextPoints31 = Utilities::simplifyPathOutsideBBox(points31, nextArea);
-                        if (nextPoints31.size() * 2 < points31.size())
+                        if (nextPoints31.size() * MIN_BBOX_FACTOR_TO_UPDATE_AREA < points31.size())
                         {
                             delete vapItems[writeIndex];
                             vapItems[writeIndex] = new VisibleAreaPoints(nextAreaTime, nextArea, nextPoints31);
