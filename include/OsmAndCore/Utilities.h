@@ -785,33 +785,49 @@ namespace OsmAnd
         inline static QVector<PointI> simplifyPathOutsideBBox(const QVector<PointI>& path31, const AreaI& bbox31)
         {
             const auto pointsCount = path31.size();
+            if (pointsCount < 2)
+                return path31;
             QVector<PointI> result;
             result.reserve(pointsCount);
             auto pPoint31 = path31.constData();
-            PointI prevPoint;
             int prevCode = 0;
             int sameCodeCount = 0;
+            const auto left = bbox31.left();
+            const auto right = bbox31.right();
+            const auto top = bbox31.top();
+            const auto bottom = bbox31.bottom();
+            int x, y, prevX, prevY, code;
             for (auto pointIdx = 0; pointIdx < pointsCount; pointIdx++)
             {
-                auto point31 = *(pPoint31++);
-                int code = (point31.x < bbox31.left() ? 1 : (point31.x > bbox31.right() ? 2 : 0))
-                    | (point31.y < bbox31.top() ? 4 : (point31.y > bbox31.bottom() ? 8 : 0));
-
-                if (code != 0 && code == prevCode)
+                x = pPoint31->x;
+                y = pPoint31->y;
+                code = (x < left ? 1 : (x > right ? 2 : 0)) | (y < top ? 4 : (y > bottom ? 8 : 0));
+                if (code != 0 && code & prevCode != 0)
                 {
-                    if (sameCodeCount < 1)
-                        result.push_back(point31);
+                    if (sameCodeCount == 0)
+                    {
+                        result.resize(result.size() + 1);
+                        result.last().x = x;
+                        result.last().y = y;
+                    }
                     sameCodeCount++;
                 }
                 else
                 {
                     if (sameCodeCount > 1)
-                        result.last() = prevPoint;
-                    result.push_back(point31);
+                    {
+                        result.last().x = prevX;
+                        result.last().y = prevY;
+                    }
+                    result.resize(result.size() + 1);
+                    result.last().x = x;
+                    result.last().y = y;
                     sameCodeCount = 0;
                 }
-                prevPoint = point31;
+                prevX = x;
+                prevY = y;
                 prevCode = code;
+                pPoint31++;
             }
             return result;
         }
