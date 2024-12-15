@@ -31,10 +31,6 @@
 #   define OSMAND_VERBOSE_MAP_PRIMITIVISER 0
 #endif // !defined(OSMAND_VERBOSE_MAP_PRIMITIVISER)
 
-// Most polylines width is under 50 meters
-#define MAX_ENLARGE_PRIMITIVIZED_AREA_METERS 50
-#define ENLARGE_PRIMITIVIZED_AREA_COEFF 0.2f
-
 #define DEFAULT_TEXT_MIN_DISTANCE 150
 
 // If object's primitive is polygon and order is > 10, add it to polylines list
@@ -153,6 +149,8 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const PointI areaSizeInPixels,
     const ZoomLevel zoom,
     const TileId tileId,
+    const AreaI visibleArea31,
+    const int64_t visibleAreaTime,
     const MapSurfaceType surfaceType_,
     const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache,
@@ -179,14 +177,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     bool roadsPresent = false;
     int contourLinesObjectsCount = 0;
 
-    // Enlarge area in which objects will be primitivised. It allows to properly draw polylines on tile bounds
-    const auto enlarge31X = qMin(
-        Utilities::metersToX31(MAX_ENLARGE_PRIMITIVIZED_AREA_METERS),
-        static_cast<int64_t>(area31.width() * ENLARGE_PRIMITIVIZED_AREA_COEFF));
-    const auto enlarge31Y = qMin(
-        Utilities::metersToY31(MAX_ENLARGE_PRIMITIVIZED_AREA_METERS),
-        static_cast<int64_t>(area31.height() * ENLARGE_PRIMITIVIZED_AREA_COEFF));
-    const auto enlargedArea31 = area31.getEnlargedBy(PointI(enlarge31X, enlarge31Y));
+    const auto enlargedArea31 = Utilities::getEnlargedPrimitivesArea(area31);
 
     for (const auto& mapObject : constOf(objects))
     {
@@ -209,6 +200,9 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         {
             continue;
         }
+
+        if (!visibleArea31.isEmpty())
+            mapObject->updateVisibleArea(visibleArea31, visibleAreaTime);
 
         // Check origin of map object
         auto isBasemapObject = false;

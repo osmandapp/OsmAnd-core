@@ -30,6 +30,12 @@
 #include <OsmAndCore/Bitmask.h>
 #include <OsmAndCore/Logging.h>
 
+// Most polylines width is under 50 meters
+#define MAX_ENLARGE_PRIMITIVIZED_AREA_METERS 50
+#define ENLARGE_PRIMITIVIZED_AREA_COEFF 0.2f
+
+#define ENLARGE_VISIBLE_AREA_COEFF 0.5f
+
 namespace OsmAnd
 {
     struct OSMAND_CORE_API Utilities Q_DECL_FINAL
@@ -742,8 +748,6 @@ namespace OsmAnd
                 roundedBBox31.right() += tilesCount;
             roundedBBox31.right() -= 1;
 
-            assert(roundedBBox31.contains(bbox31));
-
             return roundedBBox31;
         }
 
@@ -776,6 +780,76 @@ namespace OsmAnd
         {
             outX = deinterleaveBy1(code);
             outY = deinterleaveBy1(code >> 1);
+        }
+
+        inline static QVector<PointI> simplifyPathOutsideBBox(const QVector<PointI>& path31, const AreaI& bbox31)
+        {
+            const auto pointsCount = path31.size();
+            if (pointsCount < 2)
+                return path31;
+            QVector<PointI> result;
+            result.reserve(pointsCount);
+            auto pPoint31 = path31.constData();
+            const auto left = bbox31.left();
+            const auto right = bbox31.right();
+            const auto top = bbox31.top();
+            const auto bottom = bbox31.bottom();
+            int x, y, prevX, prevY, code;
+            int prevCode = 0;
+            bool skipped = false;
+            for (auto pointIdx = 0; pointIdx < pointsCount; pointIdx++)
+            {
+                x = pPoint31->x;
+                y = pPoint31->y;
+                code = (x < left ? 1 : (x > right ? 2 : 0)) | (y < top ? 4 : (y > bottom ? 8 : 0));
+                if (code != 0 && (code & prevCode) != 0)
+                    skipped = true;
+                else
+                {
+                    if (skipped)
+                    {
+                        result.resize(result.size() + 1);
+                        result.last().x = prevX;
+                        result.last().y = prevY;
+                        skipped = false;
+                    }
+                    result.resize(result.size() + 1);
+                    result.last().x = x;
+                    result.last().y = y;
+                    prevCode = code;
+                }
+                prevX = x;
+                prevY = y;
+                pPoint31++;
+            }
+            if (skipped)
+            {
+                result.resize(result.size() + 1);
+                result.last().x = prevX;
+                result.last().y = prevY;
+            }
+            return result;
+        }
+
+        inline static AreaI getEnlargedPrimitivesArea(const AreaI& area31)
+        {
+            // Enlarge area in which objects will be primitivised.
+            // It allows to properly draw polylines on tile bounds
+            const auto enlarge31X = qMin(
+                Utilities::metersToX31(MAX_ENLARGE_PRIMITIVIZED_AREA_METERS),
+                static_cast<int64_t>(area31.width() * ENLARGE_PRIMITIVIZED_AREA_COEFF));
+            const auto enlarge31Y = qMin(
+                Utilities::metersToY31(MAX_ENLARGE_PRIMITIVIZED_AREA_METERS),
+                static_cast<int64_t>(area31.height() * ENLARGE_PRIMITIVIZED_AREA_COEFF));
+            return area31.getEnlargedBy(PointI(enlarge31X, enlarge31Y));
+        }
+
+        inline static AreaI getEnlargedVisibleArea(const AreaI& area31)
+        {
+            auto enlargedArea31 = Utilities::getEnlargedPrimitivesArea(area31);
+            const auto enlarge31X = static_cast<int64_t>(enlargedArea31.width() * ENLARGE_VISIBLE_AREA_COEFF);
+            const auto enlarge31Y = static_cast<int64_t>(enlargedArea31.height() * ENLARGE_VISIBLE_AREA_COEFF);
+            return enlargedArea31.getEnlargedBy(PointI(enlarge31X, enlarge31Y));
         }
 
         static QVector<TileId> getAllMetaTileIds(const TileId anyMetaTileId)

@@ -36,12 +36,14 @@ namespace OsmAnd
         class СombinedPath
         {
         private:
+            int areaIndex;
             QVector<PointI> _points;
             mutable float _lengthInPixels;
             bool _attachedToAnotherPath;
             bool _combined;
         public:
             СombinedPath(
+                const AreaI& bbox31,
                 const std::shared_ptr<const MapObject>& mapObject,
                 const PointD& divisor31ToPixels);
             virtual ~СombinedPath();
@@ -66,15 +68,6 @@ namespace OsmAnd
         {
             QHash< std::shared_ptr<const MapObject>, QVector<PointI> > combinedPaths;
             QList< std::shared_ptr<const MapObject> > mapObjectToSkip;
-
-            QVector<PointI> getCombinedOrOriginalPath(const std::shared_ptr<const MapObject>& mapObject) const
-            {
-                const auto& citCombinedPath = combinedPaths.constFind(mapObject);
-                if (citCombinedPath == combinedPaths.cend())
-                    return mapObject->points31;
-                else
-                    return *citCombinedPath;
-            }
         };
 
         struct ComputedPinPoint
@@ -86,12 +79,11 @@ namespace OsmAnd
         };
 
         CombinePathsResult combineOnPathSymbols(
+            const AreaI& bbox31,
             const MapPrimitiviser::SymbolsGroupsCollection& symbolsGroups,
             const std::shared_ptr<const MapPresentationEnvironment>& mapPresentationEnvironment,
             const PointD& scaleDivisor31ToPixel,
             const std::shared_ptr<const IQueryController>& queryController) const;
-
-        QVector<PointI> simplifyPathOutsideBBox(const QVector<PointI>& path31, const AreaI bbox31) const;
 
         QList<ComputedPinPoint> computePinPoints(
             const QVector<PointI>& path31,

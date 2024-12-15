@@ -122,7 +122,9 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
     CombinePathsResult combinePathsResult;
     if (!owner->isMetaTiled() || request.combineTilesData)
-        combinePathsResult = combineOnPathSymbols(primitivisedSymbolsGroups,
+        combinePathsResult = combineOnPathSymbols(
+            bbox31,
+            primitivisedSymbolsGroups,
             mapPresentationEnvironment,
             scaleDivisor31ToPixel,
             request.queryController);
@@ -177,7 +179,20 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         assert(citPreallocatedGroup != preallocatedSymbolsGroups.cend());
         const auto group = *citPreallocatedGroup;
 
-        auto path31 = simplifyPathOutsideBBox(combinePathsResult.getCombinedOrOriginalPath(mapObject), bbox31);
+        const auto& citCombinedPath = combinePathsResult.combinedPaths.constFind(mapObject);
+        bool isCombined = citCombinedPath != combinePathsResult.combinedPaths.cend();
+        auto areaIndex = isCombined ? -1 : mapObject->startReadingArea();
+        if (areaIndex >= 0 && !mapObject->vapItems[areaIndex]->area31.contains(bbox31))
+        {
+            mapObject->stopReadingArea(areaIndex);
+            areaIndex = -1;
+        }
+        auto resultPoints31 = isCombined ?
+            *citCombinedPath : (areaIndex >= 0 ? mapObject->vapItems[areaIndex]->points31 : mapObject->points31);
+        auto path31 = Utilities::simplifyPathOutsideBBox(resultPoints31, bbox31);
+
+        if (areaIndex >= 0)
+            mapObject->stopReadingArea(areaIndex);
 
         // Convert all symbols inside group
         bool hasAtLeastOneOnPath = false;
@@ -489,6 +504,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 // length of path to draw full text of symbol. That's why paths
 // are combined, to fit full text of symbol 
 OsmAnd::MapObjectsSymbolsProvider_P::CombinePathsResult OsmAnd::MapObjectsSymbolsProvider_P::combineOnPathSymbols(
+    const AreaI& bbox31,
     const MapPrimitiviser::SymbolsGroupsCollection& symbolsGroups,
     const std::shared_ptr<const MapPresentationEnvironment>& env,
     const PointD& divisor31ToPixels,
@@ -519,7 +535,7 @@ OsmAnd::MapObjectsSymbolsProvider_P::CombinePathsResult OsmAnd::MapObjectsSymbol
         if (onPathTextSymbols.size() >= 2) 
             continue;
 
-        const std::shared_ptr<СombinedPath> combinedPath(new СombinedPath(mapObject, divisor31ToPixels));
+        const std::shared_ptr<СombinedPath> combinedPath(new СombinedPath(bbox31, mapObject, divisor31ToPixels));
 
         const auto& onPathTextSymbol = onPathTextSymbols.front();
         const QString key = onPathTextSymbol->value + QString::number(onPathTextSymbol->order);
@@ -617,62 +633,6 @@ OsmAnd::MapObjectsSymbolsProvider_P::CombinePathsResult OsmAnd::MapObjectsSymbol
         }
     }
 
-    return result;
-}
-
-QVector<OsmAnd::PointI> OsmAnd::MapObjectsSymbolsProvider_P::simplifyPathOutsideBBox(
-    const QVector<PointI>& path31, const AreaI bbox31) const
-{
-    auto center = AreaD(bbox31).center();
-    const auto pointsCount = path31.size();
-    QVector<PointI> result;
-    result.reserve(pointsCount);
-    auto pPoint31 = path31.constData();
-    PointI prevPoint;
-    PointI lastPoint;
-    int prevCode = 0;
-    int sameCodeCount = 0;
-    double prevDistance = 0.0;
-    for (auto pointIdx = 0; pointIdx < pointsCount; pointIdx++)
-    {
-        auto point31 = *(pPoint31++);
-        int code = (point31.x < bbox31.left() ? 1 : (point31.x > bbox31.right() ? 2 : 0))
-            | (point31.y < bbox31.top() ? 4 : (point31.y > bbox31.bottom() ? 8 : 0));
-
-        if (code != 0 && code == prevCode)
-        {
-            if (sameCodeCount < 4)
-                result.push_back(point31);
-            prevDistance += PointD(point31 - prevPoint).norm();
-            sameCodeCount++;
-        }
-        else
-        {
-            if (sameCodeCount > 3)
-            {
-                result.pop_back();
-                result.pop_back();
-                result.pop_back();
-                const auto extraDistance = PointD(prevPoint - lastPoint).norm() - prevDistance;
-                if (extraDistance > 0.0)
-                {
-                    const auto first = PointD(lastPoint);
-                    auto vector = (first - center).normalized() * extraDistance * 0.5;
-                    const auto second = first + vector;
-                    result.push_back({qRound(second.x), qRound(second.y)});
-                    const auto third = PointD(prevPoint) + vector;
-                    result.push_back({qRound(third.x), qRound(third.y)});
-                }
-                result.push_back(prevPoint);
-            }
-            result.push_back(point31);
-            lastPoint = point31;
-            prevDistance = 0.0;
-            sameCodeCount = 0;
-        }
-        prevPoint = point31;
-        prevCode = code;
-    }
     return result;
 }
 
@@ -880,15 +840,24 @@ void OsmAnd::MapObjectsSymbolsProvider_P::computeSymbolsPinPoints(
 }
 
 OsmAnd::MapObjectsSymbolsProvider_P::СombinedPath::СombinedPath(
+    const AreaI& bbox31,
     const std::shared_ptr<const MapObject>& mapObject_,
     const PointD& divisor31ToPixels_)
-    : _points(detachedOf(mapObject_->points31))
-    , _lengthInPixels(-1.0f)
+    : _lengthInPixels(-1.0f)
     , _attachedToAnotherPath(false)
     , _combined(false)
     , mapObject(mapObject_)
     , divisor31ToPixels(divisor31ToPixels_)
 {
+    areaIndex = mapObject->startReadingArea();
+    if (areaIndex >= 0 && !mapObject->vapItems[areaIndex]->area31.contains(bbox31))
+    {
+        mapObject->stopReadingArea(areaIndex);
+        areaIndex = -1;
+    }
+    _points = detachedOf(areaIndex >= 0 ? mapObject->vapItems[areaIndex]->points31 : mapObject->points31);
+    if (areaIndex >= 0)
+        mapObject->stopReadingArea(areaIndex);
 }
 
 OsmAnd::MapObjectsSymbolsProvider_P::СombinedPath::~СombinedPath()

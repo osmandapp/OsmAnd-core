@@ -247,6 +247,8 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
             PointI(owner->tileSize, owner->tileSize),
             request.zoom,
             request.tileId,
+            request.visibleArea31,
+            request.areaTime,
             dataTile->tileSurfaceType,
             dataTile->mapObjects,
             //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance

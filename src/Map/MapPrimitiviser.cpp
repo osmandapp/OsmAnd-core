@@ -52,14 +52,16 @@ std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimiti
     const PointI areaSizeInPixels,
     const ZoomLevel zoom,
     const TileId tileId,
+    const AreaI visibleArea31,
+    const int64_t visibleAreaTime,
     const MapSurfaceType surfaceType,
     const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
     MapPrimitiviser_Metrics::Metric_primitiviseWithSurface* const metric /*= nullptr*/)
 {
-    return _p->primitiviseWithSurface(
-        area31, areaSizeInPixels, zoom, tileId, surfaceType, objects, cache, queryController, metric);
+    return _p->primitiviseWithSurface(area31, areaSizeInPixels, zoom, tileId, visibleArea31, visibleAreaTime,
+        surfaceType, objects, cache, queryController, metric);
 }
 
 std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimitiviser::primitiviseWithoutSurface(
