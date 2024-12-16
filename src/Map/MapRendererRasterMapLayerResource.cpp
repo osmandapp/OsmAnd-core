@@ -174,13 +174,18 @@ bool OsmAnd::MapRendererRasterMapLayerResource::uploadToGPU()
 
 void OsmAnd::MapRendererRasterMapLayerResource::unloadFromGPU()
 {
+    QWriteLocker scopedLocker(&resourceInGPULock);
+
     _resourceInGPU.reset();
 }
 
 void OsmAnd::MapRendererRasterMapLayerResource::lostDataInGPU()
 {
+    QWriteLocker scopedLocker(&resourceInGPULock);
+
     if (_resourceInGPU)
         _resourceInGPU->lostRefInGPU();
+
     _resourceInGPU.reset();
 }
 
