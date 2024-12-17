@@ -64,7 +64,7 @@ namespace OsmAnd
             QString toString() const;
 
         private:
-            mutable double dist = NAN;
+            mutable double dist = -1;
         };
 
         explicit ReverseGeocoder(

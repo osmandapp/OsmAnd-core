@@ -53,7 +53,7 @@ OsmAnd::Nullable<OsmAnd::PointI> OsmAnd::ReverseGeocoder::ResultEntry::searchPoi
 
 double OsmAnd::ReverseGeocoder::ResultEntry::getDistance() const
 {
-    if (std::isnan(dist) && searchPoint.isSet())
+    if (dist == -1 && searchPoint.isSet())
     {
         if (building == nullptr && point != nullptr)
         {
@@ -80,7 +80,7 @@ QString OsmAnd::ReverseGeocoder::ResultEntry::toString() const
             (street ?                QStringLiteral(" ") % street->toString() : QString()) %
             (!streetName.isEmpty() ? QStringLiteral(" str. ") % streetName : QString()) %
             (streetGroup ?           QStringLiteral(" ") % streetGroup->toString() : QString()) %
-            (!std::isnan(getDistance()) ? QStringLiteral(" dist=") % QString::number(getDistance()) : QString());
+            (getDistance() != -1   ? QStringLiteral(" dist=") % QString::number(getDistance()) : QString());
 }
 
 OsmAnd::ReverseGeocoder::Criteria::Criteria()
