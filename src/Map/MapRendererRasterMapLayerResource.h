@@ -46,7 +46,6 @@ namespace OsmAnd
         virtual ~MapRendererRasterMapLayerResource();
 
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU;
-        mutable QReadWriteLock resourceInGPULock;
 
     friend class OsmAnd::MapRendererResourcesManager;
     };
