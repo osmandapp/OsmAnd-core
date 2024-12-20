@@ -132,8 +132,8 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         const std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>& road,
         double knownMinBuildingDistance) const
 {
-    QVector<std::shared_ptr<ResultEntry>> streetList{};
-    QVector<std::shared_ptr<const ResultEntry>> result{};
+    QVector<std::shared_ptr<ResultEntry>> streetList;
+    QVector<std::shared_ptr<const ResultEntry>> result;
 
     bool addCommonWords = false;
     auto streetNamesUsed = prepareStreetName(road->streetName, addCommonWords);
@@ -190,8 +190,8 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
     {
         std::sort(streetList.begin(), streetList.end(), DISTANCE_COMPARATOR);
         double streetDistance = 0;
-        bool isBuildingFound = knownMinBuildingDistance > 0;
-        for (const std::shared_ptr<ResultEntry> & street : streetList)
+        bool isBuildingFound = knownMinBuildingDistance > 0;        
+        for (const auto& street : streetList)
         {
             if (streetDistance == 0)
                 streetDistance = street->getDistance();
@@ -200,20 +200,19 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
             
             street->resetDistance();
             street->connectionPoint = road->connectionPoint;
-            QVector<std::shared_ptr<const ResultEntry>> streetBuildings = loadStreetBuildings(road, street);
+            auto streetBuildings = loadStreetBuildings(road, street);
             std::sort(streetBuildings.begin(), streetBuildings.end(), DISTANCE_COMPARATOR);
             if (!streetBuildings.isEmpty())
             {
                 if (knownMinBuildingDistance == 0)
                     knownMinBuildingDistance = streetBuildings[0]->getDistance();
 
-                std::find_if(streetBuildings.begin(), streetBuildings.end(),
-                             [&result, &knownMinBuildingDistance](const std::shared_ptr<const ResultEntry>& building){
-                    bool stop = building->getDistance() > knownMinBuildingDistance * THRESHOLD_MULTIPLIER_SKIP_BUILDINGS_AFTER;
-                    if (!stop)
-                        result.append(building);
-                    return stop;
-                });
+                for (const auto& building : streetBuildings)
+                {
+                    if (building->getDistance() > knownMinBuildingDistance * THRESHOLD_MULTIPLIER_SKIP_BUILDINGS_AFTER)
+                        break;
+                    result.append(building);
+                }
             }
             result.append(street);
         }
@@ -334,17 +333,18 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
 }
 
 std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeocoder_P::justifyResult(
-        QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> res) const
+        QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>>& res) const
 {
-    QVector<std::shared_ptr<const ResultEntry>> complete{};
+    QVector<std::shared_ptr<const ResultEntry>> complete;
     double minBuildingDistance = 0;
-    for (std::shared_ptr<const ResultEntry> r : res)
+    for (const auto& r : res)
     {
-        QVector<std::shared_ptr<const ResultEntry>> justified = justifyReverseGeocodingSearch(r, minBuildingDistance);
+        auto justified = justifyReverseGeocodingSearch(r, minBuildingDistance);
         if (!justified.isEmpty())
         {
             double md = justified[0]->getDistance();
             minBuildingDistance = (minBuildingDistance == 0) ? md : std::min(md, minBuildingDistance);
+            justified[0]->setDistance(-1); // clear intermediate cached distance
             complete.append(justified);
         }
     }
