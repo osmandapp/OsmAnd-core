@@ -79,13 +79,20 @@ double OsmAnd::ReverseGeocoder::ResultEntry::getCityDistance() const
     if (cityDist == -1 && streetGroup && searchPoint.isSet())
     {
         cityDist = Utilities::distance(Utilities::convert31ToLatLon(streetGroup->position31), searchPoint);
+        if (isnan(cityDist))
+        {
+            cityDist = -1;
+        }
     }
     return cityDist;
 }
 
 void OsmAnd::ReverseGeocoder::ResultEntry::setDistance(double distance) const
 {
-    dist = distance;
+    if (isnan(dist))
+        dist = -1;
+    else
+        dist = distance;
 }
 
 QString OsmAnd::ReverseGeocoder::ResultEntry::toString() const
