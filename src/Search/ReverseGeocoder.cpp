@@ -70,7 +70,7 @@ double OsmAnd::ReverseGeocoder::ResultEntry::getDistance() const
 
 void  OsmAnd::ReverseGeocoder::ResultEntry::resetDistance()
 {
-    dist = NAN;
+    dist = -1;
     getDistance();
 }
 
