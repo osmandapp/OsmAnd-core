@@ -70,7 +70,10 @@ double OsmAnd::ReverseGeocoder::ResultEntry::getDistance() const
 
 void OsmAnd::ReverseGeocoder::ResultEntry::setDistance(double distance) const
 {
-    dist = distance;
+    if (isnan(dist))
+        dist = -1;
+    else
+        dist = distance;
 }
 
 QString OsmAnd::ReverseGeocoder::ResultEntry::toString() const
