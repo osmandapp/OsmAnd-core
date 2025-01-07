@@ -1755,44 +1755,22 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMap
         // Check state and obtain GPU resource
         std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
         auto state = resource->getState();
-        if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
-        {
-            // Capture GPU resource
-            gpuResource = resource->resourceInGPU;
-
-            resource->setState(MapRendererResourceState::Uploaded);
-
-            if (outState != nullptr)
-                *outState = MapRendererResourceState::Uploaded;
-        }
-        else if (resource->setStateIf(MapRendererResourceState::PreparedRenew, MapRendererResourceState::IsBeingUsed))
-        {
-            // Capture GPU resource
-            gpuResource = resource->resourceInGPU;
-
-            resource->setState(MapRendererResourceState::PreparedRenew);
-
-            if (outState != nullptr)
-                *outState = MapRendererResourceState::PreparedRenew;
-        }
-        else if (resource->setStateIf(MapRendererResourceState::Outdated, MapRendererResourceState::IsBeingUsed))
-        {
-            // Capture GPU resource
-            gpuResource = resource->resourceInGPU;
-
-            resource->setState(MapRendererResourceState::Outdated);
-
-            if (outState != nullptr)
-                *outState = MapRendererResourceState::Outdated;
-        }
-        else if (state == MapRendererResourceState::Renewing || state == MapRendererResourceState::Updating
+        if (state == MapRendererResourceState::Uploaded
+            || state == MapRendererResourceState::PreparedRenew
+            || state == MapRendererResourceState::Outdated
+            || state == MapRendererResourceState::Renewing
+            || state == MapRendererResourceState::Updating
             || state == MapRendererResourceState::RequestedUpdate
             || state == MapRendererResourceState::ProcessingUpdate
             || state == MapRendererResourceState::ProcessingUpdateWhileRenewing
             || state == MapRendererResourceState::UpdatingCancelledWhileBeingProcessed)
         {
             // Capture GPU resource (if any)
-            gpuResource = resource->resourceInGPU;
+            if (resource->resourceInGPULock.testAndSetAcquire(0, 1))
+            {
+                gpuResource = resource->resourceInGPU;
+                resource->resourceInGPULock.storeRelease(0);
+            }
 
             if (outState != nullptr)
                 *outState = state;

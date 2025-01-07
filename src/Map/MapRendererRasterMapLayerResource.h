@@ -46,6 +46,7 @@ namespace OsmAnd
         virtual ~MapRendererRasterMapLayerResource();
 
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU;
+        mutable QAtomicInt resourceInGPULock;
 
     friend class OsmAnd::MapRendererResourcesManager;
     };
