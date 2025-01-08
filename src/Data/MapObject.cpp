@@ -117,7 +117,8 @@ void OsmAnd::MapObject::computeBBox31()
         bbox31.enlargeToInclude(*pPoint31);
 }
 
-bool OsmAnd::MapObject::intersectedOrContainedBy(const AreaI& area) const
+bool OsmAnd::MapObject::intersectedOrContainedBy(const AreaI& area,
+    const AreaI& nextArea, int64_t nextAreaTime, QVector<PointI>* path31 /* = nullptr */) const
 {
     // Check if area intersects bbox31 or bbox31 contains area or area contains bbox31
     // Fast check to exclude obviously false cases
@@ -130,7 +131,7 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const AreaI& area) const
     if (areaIndex >= 0)
     {
         if (vapItems[areaIndex]->area31.contains(area))
-            result = intersectedOrContainedBy(vapItems[areaIndex]->points31, area);
+            result = intersectedOrContainedBy(vapItems[areaIndex]->points31, area, nextArea, nextAreaTime, nullptr);
         else
         {
             stopReadingArea(areaIndex);
@@ -140,12 +141,13 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const AreaI& area) const
     if (areaIndex >= 0)
         stopReadingArea(areaIndex);
     else
-        result = intersectedOrContainedBy(points31, area);
+        result = intersectedOrContainedBy(points31, area, nextArea, nextAreaTime, path31);
 
     return result;
 }
 
-bool OsmAnd::MapObject::intersectedOrContainedBy(const QVector<PointI>& points, const AreaI& area) const
+bool OsmAnd::MapObject::intersectedOrContainedBy(const QVector<PointI>& points, const AreaI& area,
+    const AreaI& nextArea, int64_t nextAreaTime, QVector<PointI>* path31 /* = nullptr */) const
 {
     // Check if any of the object points is inside area
     auto pPoint31 = points.constData();
@@ -156,18 +158,29 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const QVector<PointI>& points, 
     int rht = area.right() ;
     int tp = area.top() ;
     int btm = area.bottom() ;
+    const auto left = nextArea.left();
+    const auto right = nextArea.right();
+    const auto top = nextArea.top();
+    const auto bottom = nextArea.bottom();
+    int x, y, prevX, prevY, code;
+    int prevCode = 0;
+    bool skipped = false;
+    bool result = false;
     for (auto pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint31++)
     {
         uint cross = 0;
-        int x31 = (*pPoint31).x;
-        int y31 = (*pPoint31).y;
-        cross |= (x31 < lft? 1 : 0);
-        cross |= (x31 > rht? 2 : 0);
-        cross |= (y31 < tp ? 4 : 0);
-        cross |= (y31 > btm ? 8 : 0);
+        x = (*pPoint31).x;
+        y = (*pPoint31).y;
+        cross |= (x < lft? 1 : 0);
+        cross |= (x > rht? 2 : 0);
+        cross |= (y < tp ? 4 : 0);
+        cross |= (y > btm ? 8 : 0);
         if((pointIdx > 0 && (prevCross & cross) == 0) || cross == 0)
         {
-            return true;
+            if (path31)
+                result = true;
+            else
+                return true;
         }
         if(cross == (1 | 4)) {
             corners |= 1;
@@ -179,10 +192,32 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const QVector<PointI>& points, 
             corners |= 8;
         }
         prevCross = cross;
+        if (path31)
+        {
+            code = (x < left ? 1 : (x > right ? 2 : 0)) | (y < top ? 4 : (y > bottom ? 8 : 0));
+            if (code != 0 && (code & prevCode) != 0)
+                skipped = true;
+            else
+            {
+                if (skipped)
+                {
+                    path31->resize(path31->size() + 1);
+                    path31->last().x = prevX;
+                    path31->last().y = prevY;
+                    skipped = false;
+                }
+                path31->resize(path31->size() + 1);
+                path31->last().x = x;
+                path31->last().y = y;
+                prevCode = code;
+            }
+            prevX = x;
+            prevY = y;
+        }
     }
     if(corners == 15) // && isArea - we can't here detect area or non-area field
         return true;
-    return false;
+    return result;
 }
 
 inline int OsmAnd::MapObject::startReadingArea() const
@@ -246,8 +281,11 @@ inline bool OsmAnd::MapObject::shouldChangeArea(const AreaI& prevArea, const Are
     return result;
 }
 
-bool OsmAnd::MapObject::updateVisibleArea(const AreaI& nextArea, int64_t nextAreaTime) const
+bool OsmAnd::MapObject::needsSimplification(const AreaI& nextArea) const
 {
+    if (nextArea.isEmpty())
+        return false;
+
     if (points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED)
         return false;
 
@@ -259,6 +297,11 @@ bool OsmAnd::MapObject::updateVisibleArea(const AreaI& nextArea, int64_t nextAre
     if (objectWidth < minWidth && objectHeight < minHeight)
         return false;
 
+    return true;
+}
+
+bool OsmAnd::MapObject::updateVisibleArea(const AreaI& nextArea, int64_t nextAreaTime, QVector<PointI>* path31) const
+{
     bool result = false;
 
     int64_t prevAreaTime;
@@ -284,7 +327,8 @@ bool OsmAnd::MapObject::updateVisibleArea(const AreaI& nextArea, int64_t nextAre
                     prevArea31 = vapItems[writeIndex]->area31;
                     if (nextAreaTime > prevAreaTime && shouldChangeArea(prevArea31, nextArea))
                     {
-                        auto nextPoints31 = Utilities::simplifyPathOutsideBBox(points31, nextArea);
+                        auto nextPoints31 =
+                            path31 ? qMove(*path31) : Utilities::simplifyPathOutsideBBox(points31, nextArea);
                         if (nextPoints31.size() * MIN_BBOX_FACTOR_TO_UPDATE_AREA < points31.size())
                         {
                             delete vapItems[writeIndex];

@@ -195,14 +195,22 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             continue;
         }
         
-        if(!mapObject->intersectedOrContainedBy(enlargedArea31) &&
-           !mapObject->containsAttribute(mapObject->attributeMapping->naturalCoastlineAttributeId))
+        bool isInArea = false;
+        if (mapObject->needsSimplification(visibleArea31))
+        {
+            QVector<PointI> path31;
+            path31.reserve(mapObject->points31.size());
+            isInArea = mapObject->intersectedOrContainedBy(enlargedArea31, visibleArea31, visibleAreaTime, &path31);
+            if (isInArea || !path31.isEmpty())
+                mapObject->updateVisibleArea(visibleArea31, visibleAreaTime, path31.isEmpty() ? nullptr : &path31);
+        }
+        else
+            isInArea = mapObject->intersectedOrContainedBy(enlargedArea31, visibleArea31, visibleAreaTime, nullptr);
+
+        if(!isInArea && !mapObject->containsAttribute(mapObject->attributeMapping->naturalCoastlineAttributeId))
         {
             continue;
         }
-
-        if (!visibleArea31.isEmpty())
-            mapObject->updateVisibleArea(visibleArea31, visibleAreaTime);
 
         // Check origin of map object
         auto isBasemapObject = false;

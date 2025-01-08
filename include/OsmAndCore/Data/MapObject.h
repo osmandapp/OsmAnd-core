@@ -140,13 +140,16 @@ namespace OsmAnd
 
         virtual bool isClosedFigure(bool checkInner = false) const;
         virtual void computeBBox31();
-        virtual bool intersectedOrContainedBy(const AreaI& area) const;
-        virtual bool intersectedOrContainedBy(const QVector<PointI>& points, const AreaI& area) const;
+        virtual bool intersectedOrContainedBy(const AreaI& area,
+            const AreaI& nextArea, int64_t nextAreaTime, QVector<PointI>* path31 = nullptr) const;
+        virtual bool intersectedOrContainedBy(const QVector<PointI>& points, const AreaI& area,
+            const AreaI& nextArea, int64_t nextAreaTime, QVector<PointI>* path31 = nullptr) const;
         virtual int startReadingArea() const;
         virtual bool startReadingArea(QAtomicInt& a) const;
         virtual void stopReadingArea(int index) const;
         virtual bool shouldChangeArea(const AreaI& prevArea, const AreaI& nextArea) const;
-        virtual bool updateVisibleArea(const AreaI& nextArea, int64_t nextAreaTime) const;
+        virtual bool needsSimplification(const AreaI& nextArea) const;
+        virtual bool updateVisibleArea(const AreaI& nextArea, int64_t nextAreaTime, QVector<PointI>* path31) const;
 
         // Attributes
         QVector< uint32_t > attributeIds;
