@@ -1833,8 +1833,8 @@ unsigned int OsmAnd::MapRendererResourcesManager::uploadResources(
     const auto& resourcesCollections = safeGetAllResourcesCollections();
     for (const auto& resourcesCollection : constOf(resourcesCollections))
     {
-        // Try to upload resources several times in case resource time needs to be changed
-        for (int i = 0; i = 3; i++)
+        // Try to upload resources two times in case resource time needs to be changed
+        for (int i = 0; i < 2; i++)
         {
             if (uploadResourcesFrom(
                 resourcesCollection, limit, totalUploaded, moreThanLimitAvailable, atLeastOneUploadFailed))
