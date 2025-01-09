@@ -76,9 +76,13 @@ void  OsmAnd::ReverseGeocoder::ResultEntry::resetDistance()
 
 double OsmAnd::ReverseGeocoder::ResultEntry::getCityDistance() const
 {
-    if (std::isnan(cityDist) && streetGroup && searchPoint.isSet())
+    if (cityDist == -1 && streetGroup && searchPoint.isSet())
     {
         cityDist = Utilities::distance(Utilities::convert31ToLatLon(streetGroup->position31), searchPoint);
+        if (isnan(cityDist))
+        {
+            cityDist = -1;
+        }
     }
     return cityDist;
 }

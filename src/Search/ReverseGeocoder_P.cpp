@@ -191,7 +191,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         std::sort(streetList.begin(), streetList.end(), DISTANCE_COMPARATOR);
         double streetDistance = 0;
         bool isBuildingFound = knownMinBuildingDistance > 0;
-        for (const std::shared_ptr<ResultEntry> & street : streetList)
+        for (const auto& street : streetList)
         {
             if (streetDistance == 0)
                 streetDistance = street->getDistance();
@@ -344,6 +344,7 @@ std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeoco
         {
             double md = justified[0]->getDistance();
             minBuildingDistance = (minBuildingDistance == 0) ? md : std::min(md, minBuildingDistance);
+            justified[0]->setDistance(-1); // clear intermediate cached distance
             complete.append(justified);
         }
     }
