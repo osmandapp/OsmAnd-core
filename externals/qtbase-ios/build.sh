@@ -73,7 +73,7 @@ if [[ "$targetOS" == "ios" ]]; then
 		echo "Only 'clang' is supported compiler for '${targetOS}' target, while '${compiler}' was specified"
 		exit 1
 	fi
-
+	exit 0;
 	if [ ! -h "$SRCLOC/upstream.patched.ios.${compiler}-iphoneos" ]; then
 		(cd "$SRCLOC" && \
 			ln -s "upstream.patched.ios.device.${compiler}.static" "upstream.patched.ios.${compiler}-iphoneos")
@@ -82,6 +82,16 @@ if [[ "$targetOS" == "ios" ]]; then
 	if [ ! -h "$SRCLOC/upstream.patched.ios.${compiler}-iphonesimulator" ]; then
 		(cd "$SRCLOC" && \
 			ln -s "upstream.patched.ios.simulator.${compiler}.static" "upstream.patched.ios.${compiler}-iphonesimulator")
+	fi
+	if /usr/bin/pgrep -q oahd; then 
+		echo "Rosetta installed - we can build x86-simulator and device in one .a archive file"; 
+	else 
+		echo "Rosetta not installed so you need to link simulator manually"
+		if [ ! -d "$SRCLOC/upstream.patched.ios.${compiler}.static" ]; then
+                	(cd "$SRCLOC" && \
+                           ln -s "upstream.patched.ios.simulator.${compiler}.static" "upstream.patched.ios.${compiler}.static")
+        	fi    
+		exit 0;
 	fi
 
 	if [ ! -d "$SRCLOC/upstream.patched.ios.${compiler}" ]; then
