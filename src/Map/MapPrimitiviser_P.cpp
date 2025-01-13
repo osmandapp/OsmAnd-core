@@ -330,7 +330,12 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         
         if (hasExtraCoastlines)
         {
-            AreaI bboxZoom13 = Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel13);
+            AreaI bboxZoom13 = Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel14);
+            bboxZoom13.right()++;
+            bboxZoom13.bottom()++;
+            bboxZoom13 = bboxZoom13.getEnlargedBy(bboxZoom13.width() / 2);
+            bboxZoom13.right()--;
+            bboxZoom13.bottom()--;
             MapSurfaceType surfaceTypeOverscaled = MapSurfaceType::Undefined;
             QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
             polygonizeCoastlines(
@@ -2496,11 +2501,11 @@ const std::shared_ptr<OsmAnd::MapObject> OsmAnd::MapPrimitiviser_P::convertFromL
 }
 
 
-// Try to draw a line y = center.y (line through of the center of area) and find intersection with closest coastline
+// Try to draw lines through of the center of area and find intersection with closest coastline
 OsmAnd::MapSurfaceType OsmAnd::MapPrimitiviser_P::determineSurfaceType(AreaI area31, QList< std::shared_ptr<const MapObject> >& coastlines)
 {
     const PointI center = area31.center();
-    int distByX = INT_MAX;
+    int minDist = INT_MAX;
     std::pair<PointI, PointI> foundSegment;
     bool isOcean = false;
     OsmAnd::MapSurfaceType surfaceType = MapSurfaceType::Undefined;
@@ -2516,10 +2521,10 @@ OsmAnd::MapSurfaceType OsmAnd::MapPrimitiviser_P::determineSurfaceType(AreaI are
             int intersectX = ray_intersect_x(start.x, start.y, end.x, end.y, center.y);
             if (intersectX != INT_MAX && intersectX != INT_MIN)
             {
-                if (abs(intersectX - center.x) < distByX)
+                if (abs(intersectX - center.x) < minDist)
                 {
                     // previous segment further than found
-                    distByX = abs(intersectX - center.x);
+                    minDist = abs(intersectX - center.x);
                     
                     //water is always in right side
                     if ((intersectX < center.x && end.x > center.x) || (intersectX > center.x && end.x < center.x))
@@ -2531,6 +2536,36 @@ OsmAnd::MapSurfaceType OsmAnd::MapPrimitiviser_P::determineSurfaceType(AreaI are
                     {
                         //(end.y - center.y) * (end.x - center.x) - overflow INT
                         isOcean = (end.y - center.y < 0 && end.x - center.x < 0) || (end.y - center.y > 0 && end.x - center.x > 0);
+                    }
+                    
+                    if (isOcean)
+                    {
+                        surfaceType = MapSurfaceType::FullWater;
+                    }
+                    else
+                    {
+                        surfaceType = MapSurfaceType::FullLand;
+                    }
+                }
+            }
+            int intersectY = ray_intersect_y(start.x, start.y, end.x, end.y, center.x);
+            if (intersectY != INT_MAX && intersectY != INT_MIN)
+            {
+                if (abs(intersectY - center.y) < minDist)
+                {
+                    // previous segment further than found
+                    minDist = abs(intersectY - center.y);
+                    
+                    //water is always in right side
+                    if ((intersectY < center.y && end.y > center.y) || (intersectY > center.y && end.y < center.y))
+                    {
+                        //the excluding when coastline is too big and "end" point in other quater
+                        isOcean =
+                            (start.x > center.x && start.y > center.y) || (start.x < center.x && start.y < center.y);
+                    }
+                    else
+                    {
+                        isOcean = (end.x < center.x && end.y > center.y) || (end.x > center.x && end.y < center.y);
                     }
                     
                     if (isOcean)

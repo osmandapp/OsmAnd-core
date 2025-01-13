@@ -80,11 +80,12 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     
     if (request.zoom > _coastlineZoom)
     {
+        int zoomShift = request.zoom - _coastlineZoom - 1;
+        overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(request.tileId, zoomShift);
         for (;;)
         {
-            int zoomShift = request.zoom - _coastlineZoom;
-            overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(request.tileId, zoomShift);
-            _coastlineReferences.obtainOrAllocateEntry(coastlineTileEntry, overscaledTileId, _coastlineZoom,
+            _coastlineReferences.obtainOrAllocateEntry(
+                coastlineTileEntry, overscaledTileId, static_cast<ZoomLevel>(_coastlineZoom + 1),
                 []
                 (const TiledEntriesCollection<TileSharedEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileSharedEntry*
                 {
@@ -111,7 +112,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             // Otherwise consider this coastline tile entry as expired
             if (!coastlineTile)
             {
-                _coastlineReferences.removeEntry(overscaledTileId, _coastlineZoom);
+                _coastlineReferences.removeEntry(overscaledTileId, static_cast<ZoomLevel>(_coastlineZoom + 1));
                 coastlineTileEntry.reset();
             }
             else
@@ -477,7 +478,13 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     QList< std::shared_ptr<const BinaryMapObject> > loadedCoastlineMapObjects;
     if (request.zoom > _coastlineZoom && !coastlineTile)
     {
-        const auto coastlineTileBBox31 = Utilities::tileBoundingBox31(overscaledTileId, _coastlineZoom);
+        auto coastlineTileBBox31 =
+            Utilities::tileBoundingBox31(overscaledTileId, static_cast<ZoomLevel>(_coastlineZoom + 1));
+        coastlineTileBBox31.right()++;
+        coastlineTileBBox31.bottom()++;
+        coastlineTileBBox31 = coastlineTileBBox31.getEnlargedBy(coastlineTileBBox31.width() / 2);
+        coastlineTileBBox31.right()--;
+        coastlineTileBBox31.bottom()--;
         Ref<ObfMapSectionReader_Metrics::Metric_loadMapObjects> loadMapObjectsMetric;
         if (metric)
         {
@@ -628,7 +635,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             coastlineMapObjects.push_back(coastline);
         const std::shared_ptr<IMapObjectsProvider::Data> newCoastlineTile(new IMapObjectsProvider::Data(
             overscaledTileId,
-            _coastlineZoom,
+            static_cast<ZoomLevel>(_coastlineZoom + 1),
             coastlineTileSurfaceType,
             coastlineMapObjects,
             nullptr));
