@@ -83,18 +83,9 @@ if [[ "$targetOS" == "ios" ]]; then
 		(cd "$SRCLOC" && \
 			ln -s "upstream.patched.ios.simulator.${compiler}.static" "upstream.patched.ios.${compiler}-iphonesimulator")
 	fi
-	if /usr/bin/pgrep -q oahd; then 
+	if [[ $(/usr/bin/arch)  == "arm64" ]] ; then 
 		echo "Rosetta installed - we can build x86-simulator and device in one .a archive file"; 
-	else 
-		echo "Rosetta not installed so you need to link simulator manually"
-		if [ ! -d "$SRCLOC/upstream.patched.ios.${compiler}.static" ]; then
-                	(cd "$SRCLOC" && \
-                           ln -s "upstream.patched.ios.simulator.${compiler}.static" "upstream.patched.ios.${compiler}.static")
-        	fi    
-		exit 0;
-	fi
-
-	if [ ! -d "$SRCLOC/upstream.patched.ios.${compiler}" ]; then
+		if [ ! -d "$SRCLOC/upstream.patched.ios.${compiler}" ]; then
 		# Make link to cmake stuff and include, src and bin from already built target (any is suitable)
 		mkdir -p "$SRCLOC/upstream.patched.ios.${compiler}"
 		(cd "$SRCLOC/upstream.patched.ios.${compiler}" && \
@@ -122,7 +113,14 @@ if [[ "$targetOS" == "ios" ]]; then
 				exit $retcode
 			fi
 		done
+	else 
+		echo "Rosetta not installed so you need to link simulator manually"
+		if [ ! -d "$SRCLOC/upstream.patched.ios.${compiler}.static" ]; then
+			(cd "$SRCLOC" && ln -s "upstream.patched.ios.simulator.${compiler}.static" "upstream.patched.ios.${compiler}.static")
+		fi
 	fi
+
+	
 	if [ ! -d "$SRCLOC/upstream.patched.ios.${compiler}-fat.static" ]; then
 		(cd "$SRCLOC" && \
 			ln -s "upstream.patched.ios.${compiler}" "upstream.patched.ios.${compiler}-fat.static")
