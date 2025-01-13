@@ -73,7 +73,7 @@ if [[ "$targetOS" == "ios" ]]; then
 		echo "Only 'clang' is supported compiler for '${targetOS}' target, while '${compiler}' was specified"
 		exit 1
 	fi
-	exit 0;
+
 	if [ ! -h "$SRCLOC/upstream.patched.ios.${compiler}-iphoneos" ]; then
 		(cd "$SRCLOC" && \
 			ln -s "upstream.patched.ios.device.${compiler}.static" "upstream.patched.ios.${compiler}-iphoneos")
@@ -83,38 +83,39 @@ if [[ "$targetOS" == "ios" ]]; then
 		(cd "$SRCLOC" && \
 			ln -s "upstream.patched.ios.simulator.${compiler}.static" "upstream.patched.ios.${compiler}-iphonesimulator")
 	fi
-	if [[ $(/usr/bin/arch)  == "arm64" ]] ; then 
+	if [[ $(/usr/bin/arch)  != "arm64" ]] ; then 
 		echo "Rosetta installed - we can build x86-simulator and device in one .a archive file"; 
 		if [ ! -d "$SRCLOC/upstream.patched.ios.${compiler}" ]; then
-		# Make link to cmake stuff and include, src and bin from already built target (any is suitable)
-		mkdir -p "$SRCLOC/upstream.patched.ios.${compiler}"
-		(cd "$SRCLOC/upstream.patched.ios.${compiler}" && \
-			ln -s "../upstream.patched.ios.simulator.${compiler}.static/include" "include")
-		(cd "$SRCLOC/upstream.patched.ios.${compiler}" && \
-			ln -s "../upstream.patched.ios.simulator.${compiler}.static/src" "src")
-		(cd "$SRCLOC/upstream.patched.ios.${compiler}" && \
+			# Make link to cmake stuff and include, src and bin from already built target (any is suitable)
+			mkdir -p "$SRCLOC/upstream.patched.ios.${compiler}"
+			(cd "$SRCLOC/upstream.patched.ios.${compiler}" && \
+				ln -s "../upstream.patched.ios.simulator.${compiler}.static/include" "include")
+			(cd "$SRCLOC/upstream.patched.ios.${compiler}" && \
+				ln -s "../upstream.patched.ios.simulator.${compiler}.static/src" "src")
+			(cd "$SRCLOC/upstream.patched.ios.${compiler}" && \
 			ln -s "../upstream.patched.ios.simulator.${compiler}.static/bin" "bin")
-		mkdir -p "$SRCLOC/upstream.patched.ios.${compiler}/lib"
-		(cd "$SRCLOC/upstream.patched.ios.${compiler}/lib" && \
-			ln -s "../../upstream.patched.ios.simulator.${compiler}.static/lib/cmake" "cmake")
+			mkdir -p "$SRCLOC/upstream.patched.ios.${compiler}/lib"
+			(cd "$SRCLOC/upstream.patched.ios.${compiler}/lib" && \
+				ln -s "../../upstream.patched.ios.simulator.${compiler}.static/lib/cmake" "cmake")
 
-		# Make universal libraries using lipo
-		libraries=(qtpcre2 Qt5Core Qt5Concurrent Qt5Network Qt5Sql Qt5Xml)
-		for libName in "${libraries[@]}" ; do
-			echo "Packing '$libName'..."
-			lipo -create \
-				"$SRCLOC/upstream.patched.ios.simulator.${compiler}.static/lib/lib${libName}.a" \
-				"$SRCLOC/upstream.patched.ios.device.${compiler}.static/lib/lib${libName}.a" \
-				-output "$SRCLOC/upstream.patched.ios.${compiler}/lib/lib${libName}.a"
-			retcode=$?
-			if [ $retcode -ne 0 ]; then
-				echo "Failed to lipo 'lib${libName}.a', aborting..."
-				rm -rf "$path"
-				exit $retcode
-			fi
-		done
+			# Make universal libraries using lipo
+			libraries=(qtpcre2 Qt5Core Qt5Concurrent Qt5Network Qt5Sql Qt5Xml)
+			for libName in "${libraries[@]}" ; do
+				echo "Packing '$libName'..."
+				lipo -create \
+					"$SRCLOC/upstream.patched.ios.simulator.${compiler}.static/lib/lib${libName}.a" \
+					"$SRCLOC/upstream.patched.ios.device.${compiler}.static/lib/lib${libName}.a" \
+					-output "$SRCLOC/upstream.patched.ios.${compiler}/lib/lib${libName}.a"
+				retcode=$?
+				if [ $retcode -ne 0 ]; then
+					echo "Failed to lipo 'lib${libName}.a', aborting..."
+					rm -rf "$path"
+					exit $retcode
+				fi
+			done
+		fi
 	else 
-		echo "Rosetta not installed so you need to link simulator manually"
+		echo "Rosetta not installed so you need to link simulator manually via link_qt_for_arm_device.sh / link_qt_for_arm_simulator.sh"
 		if [ ! -d "$SRCLOC/upstream.patched.ios.${compiler}.static" ]; then
 			(cd "$SRCLOC" && ln -s "upstream.patched.ios.simulator.${compiler}.static" "upstream.patched.ios.${compiler}.static")
 		fi
