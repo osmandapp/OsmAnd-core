@@ -68,6 +68,7 @@ namespace OsmAnd
         private:
             mutable double cityDist = -1;
             mutable double dist = -1;
+            mutable double cityDist = -1;
         };
 
         explicit ReverseGeocoder(
