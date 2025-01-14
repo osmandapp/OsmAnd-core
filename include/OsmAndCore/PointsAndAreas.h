@@ -589,6 +589,11 @@ namespace OsmAnd
             return PointT(left(), bottom());
         }
 
+        inline bool isEmpty() const
+        {
+            return left() == right() || top() == bottom();
+        }
+
         inline bool isNegative() const
         {
             return left() > right() || top() > bottom();

@@ -216,6 +216,8 @@ namespace OsmAnd
             const PointI areaSizeInPixels,
             const ZoomLevel zoom,
             const TileId tileId,
+            const AreaI visibleArea31,
+            const int64_t visibleAreaTime,
             const MapSurfaceType surfaceType,
             const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache,
