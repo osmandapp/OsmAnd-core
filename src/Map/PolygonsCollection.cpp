@@ -68,5 +68,5 @@ OsmAnd::ZoomLevel OsmAnd::PolygonsCollection::getMinZoom() const
 
 OsmAnd::ZoomLevel OsmAnd::PolygonsCollection::getMaxZoom() const
 {
-    return OsmAnd::ZoomLevel7;
+    return OsmAnd::ZoomLevel21;
 }
