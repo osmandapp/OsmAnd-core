@@ -2,7 +2,9 @@ package net.osmand.core.android;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -77,7 +79,7 @@ public abstract class MapRendererView extends FrameLayout {
     /**
      * Optional bitmap for offscreen rendering
      */
-    private Bitmap _resultBitmap;
+    private Bitmap _offscreenBitmap;
 
     /**
      * Offscreen rendering result is ready
@@ -302,25 +304,20 @@ public abstract class MapRendererView extends FrameLayout {
      */
     protected abstract IMapRenderer createMapRendererInstance();
 
-    public Bitmap getBitmap() {
+    public Bitmap getBitmap(Bitmap toDraw) {
         if (_byteBuffer != null) {
             if (_renderingResultIsReady) {
-                Bitmap bitmap = Bitmap.createBitmap(_windowWidth, _windowHeight, Bitmap.Config.ARGB_8888);
+                if (_offscreenBitmap == null || _offscreenBitmap.getWidth() != _windowWidth || _offscreenBitmap.getHeight() != _windowHeight) {
+                    _offscreenBitmap = Bitmap.createBitmap(_windowWidth, _windowHeight, Bitmap.Config.ARGB_8888);
+                }
                 synchronized (_byteBuffer) {
                     _byteBuffer.rewind();
-                    bitmap.copyPixelsFromBuffer(_byteBuffer);
+                    _offscreenBitmap.copyPixelsFromBuffer(_byteBuffer);
                     _renderingResultIsReady = false;
                 }
-                Matrix matrix = new Matrix();
-                matrix.preScale(1.0f, -1.0f);
-                _resultBitmap = Bitmap.createBitmap(bitmap, 0, 0, _windowWidth, _windowHeight, matrix, true);
             }
-            if (_resultBitmap == null)
-                _resultBitmap = Bitmap.createBitmap(_windowWidth, _windowHeight, Bitmap.Config.ARGB_8888);
-            return _resultBitmap;
         }
-        else
-            return null;
+        return _offscreenBitmap;
     }
 
     public IMapRenderer getRenderer() {
@@ -338,8 +335,8 @@ public abstract class MapRendererView extends FrameLayout {
             releaseRendering();
             removeAllViews();
             _byteBuffer = null;
-            _resultBitmap = null;
             _mapAnimator = null;
+            _offscreenBitmap = null;
             _mapMarkersAnimator = null;
             _glSurfaceView = null;
         }
@@ -358,7 +355,7 @@ public abstract class MapRendererView extends FrameLayout {
                     synchronized (this) {
                         waitRelease = false;
                         this.notifyAll();
-                    }                
+                    }
                 }
             };
             _glSurfaceView.queueEvent(releaseTask);
@@ -1186,7 +1183,7 @@ public abstract class MapRendererView extends FrameLayout {
             firstLocation31, firstHeightInMeters, firstScreenPoint,
             secondLocation31, secondHeightInMeters, secondScreenPoint
         );
-    } 
+    }
 
     public final boolean getZoomAndRotationAfterPinch(
                                             PointI firstLocation31, float firstHeightInMeters, PointI firstPoint,
@@ -1304,7 +1301,7 @@ public abstract class MapRendererView extends FrameLayout {
 
         return _mapRenderer.getTileSizeOnScreenInPixels();
     }
-    
+
     public final int getMaxMissingDataZoomShift() {
         NativeCore.checkIfLoaded();
 
@@ -1628,7 +1625,7 @@ public abstract class MapRendererView extends FrameLayout {
      * Implements creation of main and GPU-worker contexts along with needed resources
      */
     private final class EGLContextFactory implements GLSurfaceView.EGLContextFactory {
-        private int EGL_CONTEXT_CLIENT_VERSION = 0x3098;        
+        private int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
         /**
          * EGL attributes used to initialize EGL context:
          * - EGL context must support at least OpenGLES 3.0
@@ -1815,7 +1812,7 @@ public abstract class MapRendererView extends FrameLayout {
                     _setupOptions.setGpuWorkerThreadPrologue(null);
                     _setupOptions.setGpuWorkerThreadEpilogue(null);
                 }
-                _setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());    
+                _setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());
                 _mapRenderer.setup(_setupOptions);
                 if (!_mapRenderer.initializeRendering(true))
                     Log.e(TAG, "Failed to initialize rendering");
