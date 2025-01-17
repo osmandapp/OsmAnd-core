@@ -250,7 +250,7 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 			}
 			inObj.pop_front();
 		}
-		// increase minimal distance in accordance to precission of float:
+		// increase minimal distance in accordance to precision of float:
 		minDist = fmax(fmax(fmax(fabs(xMin), fabs(xMax)), fmax(fabs(yMin), fabs(yMax))) / 1000000.0f, minDist);
 		next = 0;
 		prev = 3;
@@ -765,7 +765,7 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
 			}
 			inObj.pop_front();
 		}
-		// increase minimal distance in accordance to precission of float:
+		// increase minimal distance in accordance to precision of float:
 		minDist = fmax(fmax(fmax(fabs(xMin), fabs(xMax)), fmax(fabs(yMin), fabs(yMax))) / 1000000.0f, minDist);
 		next = 0;
 		rate = xMax - xMin;
