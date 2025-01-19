@@ -7,8 +7,8 @@ OsmAnd::PolygonsCollection::PolygonsCollection(
 	const ZoomLevel minZoom_,
 	const ZoomLevel maxZoom_)
     : _p(new PolygonsCollection_P(this))
-	, minZoom(minZoom_)
-	, maxZoom(maxZoom_)
+	, _minZoom(minZoom_)
+	, _maxZoom(maxZoom_)
 {
 }
 
@@ -67,10 +67,10 @@ void OsmAnd::PolygonsCollection::obtainDataAsync(
 
 OsmAnd::ZoomLevel OsmAnd::PolygonsCollection::getMinZoom() const
 {
-    return minZoom;
+    return _minZoom;
 }
 
 OsmAnd::ZoomLevel OsmAnd::PolygonsCollection::getMaxZoom() const
 {
-    return maxZoom;
+    return _maxZoom;
 }

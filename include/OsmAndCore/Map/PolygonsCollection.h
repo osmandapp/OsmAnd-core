@@ -29,14 +29,13 @@ namespace OsmAnd
     private:
         PrivateImplementation<PolygonsCollection_P> _p;
     protected:
+        const ZoomLevel _minZoom;
+        const ZoomLevel _maxZoom;
     public:
         PolygonsCollection(
             const ZoomLevel minZoom,
             const ZoomLevel maxZoom);
         virtual ~PolygonsCollection();
-
-        const ZoomLevel minZoom;
-        const ZoomLevel maxZoom;
 
         QList< std::shared_ptr<Polygon> > getPolygons() const;
         bool removePolygon(const std::shared_ptr<Polygon>& polygon);
