@@ -214,6 +214,12 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         }
     }
     std::sort(result.begin(), result.end(), DISTANCE_COMPARATOR);
+    result.erase(std::remove_if(result.begin(), result.end(),
+                                [](std::shared_ptr<const ResultEntry> entry)
+                                {
+                                    return !entry->building && !entry->street &&
+                                           !entry->streetGroup && (!entry->road || !entry->road->hasGeocodingAccess());
+                                }), result.end());
     return result;
 }
 
