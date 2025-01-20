@@ -79,17 +79,13 @@ void addWord(QStringList &ls, QString word, bool addCommonWords)
     }
 }
 
-bool isSpace(QChar c) {
-    return !c.isDigit() && !c.isLetter();
-}
-
 QStringList prepareStreetName(const QString &s, bool addCommonWords)
 {
     QStringList ls;
     int beginning = 0;
     for (int i = 1; i < s.length(); i++)
     {
-        if (isSpace(s[i]))
+        if (s[i].isSpace())
         {
             addWord(ls, s.mid(beginning, i - beginning), addCommonWords);
             beginning = i + 1;
