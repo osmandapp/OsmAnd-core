@@ -788,36 +788,46 @@ QString OsmAnd::MapObject::getResolvedAttribute(const QStringRef& tagRef) const
     return result;
 }
 
+QList<QPair<QString, QString>> OsmAnd::MapObject::getResolvedAttributesListPairs() const
+{
+  QList<QPair<QString, QString>> result;
+  for (const auto& attributeId : constOf(attributeIds))
+  {
+    if (attributeMapping->decodeMap.size() > attributeId) {
+      const auto& decodedAttribute = attributeMapping->decodeMap[attributeId];
+      result.append(qMakePair(decodedAttribute.tag, decodedAttribute.value));
+    }
+  }
+  for (const auto& attributeId : constOf(additionalAttributeIds))
+  {
+    if (attributeMapping->decodeMap.size() > attributeId) {
+      const auto& decodedAttribute = attributeMapping->decodeMap[attributeId];
+      result.append(qMakePair(decodedAttribute.tag, decodedAttribute.value));
+    }
+  }
+  for (const auto& captionAttributeId : constOf(captionsOrder))
+  {
+    if (captionAttributeId == attributeMapping->nativeNameAttributeId || attributeMapping->localizedNameAttributeIds.contains(captionAttributeId))
+    {
+      // caption is name or localized name:lang
+      continue;
+    }
+    // caption is additional="text"
+    const QString & caption = constOf(captions)[captionAttributeId];
+    const QString & tag = attributeMapping->decodeMap[captionAttributeId].tag;
+    result.append(qMakePair(tag, caption));
+  }
+  return result;
+}
+
 QHash<QString, QString> OsmAnd::MapObject::getResolvedAttributes() const
 {
-    QHash<QString, QString> result;
-    for (const auto& attributeId : constOf(attributeIds))
-    {
-        if (attributeMapping->decodeMap.size() > attributeId) {
-            const auto& decodedAttribute = attributeMapping->decodeMap[attributeId];
-            result.insert(decodedAttribute.tag, decodedAttribute.value);
-        }
-    }
-    for (const auto& attributeId : constOf(additionalAttributeIds))
-    {
-        if (attributeMapping->decodeMap.size() > attributeId) {
-            const auto& decodedAttribute = attributeMapping->decodeMap[attributeId];
-            result.insert(decodedAttribute.tag, decodedAttribute.value);
-        }
-    }
-    for (const auto& captionAttributeId : constOf(captionsOrder))
-    {
-        if (captionAttributeId == attributeMapping->nativeNameAttributeId || attributeMapping->localizedNameAttributeIds.contains(captionAttributeId))
-        {
-            // caption is name or localized name:lang
-            continue;
-        }
-        // caption is additional="text"
-        const QString & caption = constOf(captions)[captionAttributeId];
-        const QString & tag = attributeMapping->decodeMap[captionAttributeId].tag;
-        result.insert(tag, caption);
-    }
-    return result;
+  QHash<QString, QString> result;
+  QList<QPair<QString, QString>> listPairs = getResolvedAttributesListPairs();
+  for (const auto &pair : listPairs) {
+    result.insert(pair.first, pair.second);
+  }
+  return result;
 }
 
 QString OsmAnd::MapObject::debugInfo(long id, bool all) const

@@ -165,6 +165,8 @@ namespace OsmAnd
         const AttributeMapping::TagValue* resolveAttributeByIndex(const uint32_t index, const bool additional = false) const;
         virtual QString getResolvedAttribute(const QStringRef& tagRef) const;
         virtual QHash<QString, QString> getResolvedAttributes() const;
+        virtual QList<QPair<QString, QString>> getResolvedAttributesListPairs() const;
+
         QString formatWithAdditionalAttributes(const QString& value) const;
 
         // Layers
