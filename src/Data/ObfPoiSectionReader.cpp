@@ -81,3 +81,10 @@ void OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
         queryController,
         strictMatch);
 }
+
+void OsmAnd::ObfPoiSectionReader::ensureCategoriesLoaded(
+    const ObfReader& reader,
+    const std::shared_ptr<const ObfPoiSectionInfo>& section)
+{
+    ObfPoiSectionReader_P::ensureCategoriesLoaded(*reader._p, section);
+}
