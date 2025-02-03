@@ -249,7 +249,7 @@ namespace OsmAnd
 
         void makePromise(const KEY_TYPE& key)
         {
-            QMutexLocker scopedLocker(&_containerMutex);
+            //QMutexLocker scopedLocker(&_containerMutex);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->makePromise(%s)",
@@ -406,7 +406,7 @@ namespace OsmAnd
 
         bool obtainFutureReference(const KEY_TYPE& key, proper::shared_future<ResourcePtr>& outFutureResourcePtr)
         {
-            QMutexLocker scopedLocker(&_containerMutex);
+            //QMutexLocker scopedLocker(&_containerMutex);
 
             // Resource must not be already available.
             // Otherwise behavior is undefined

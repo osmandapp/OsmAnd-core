@@ -279,7 +279,7 @@ namespace OsmAnd
         
         void makePromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels)
         {
-            QMutexLocker scopedLocker(&this->_containerMutex);
+            //QMutexLocker scopedLocker(&this->_containerMutex);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->makePromise(%s, [%s])",
@@ -490,7 +490,7 @@ namespace OsmAnd
 
         bool obtainFutureReference(const KEY_TYPE& key, const ZoomLevel level, proper::shared_future<ResourcePtr>& outFutureResourcePtr)
         {
-            QMutexLocker scopedLocker(&this->_containerMutex);
+            //QMutexLocker scopedLocker(&this->_containerMutex);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->obtainFutureReference(%s, [%d], ...)",
