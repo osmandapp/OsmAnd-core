@@ -151,8 +151,17 @@ namespace OsmAnd
                     GLlocation elevation_hillshadeConfiguration;
                     GLlocation elevation_colorMapKeys;
                     GLlocation elevation_colorMapValues;
+                    GLlocation primaryGridAxisX;
+                    GLlocation secondaryGridAxisX;
+                    GLlocation primaryGridAxisY;
+                    GLlocation secondaryGridAxisY;
 
                     // Per-tile data
+                    GLlocation tileCoords31;
+                    GLlocation primaryGridTileTop;
+                    GLlocation primaryGridTileBot;
+                    GLlocation secondaryGridTileTop;
+                    GLlocation secondaryGridTileBot;
                     GLlocation tileCoordsOffset;
                     GLlocation elevation_scale;
                     GLlocation elevation_dataSampler;
@@ -179,6 +188,9 @@ namespace OsmAnd
                     GLlocation myLocationColor;
                     GLlocation myLocation;
                     GLlocation myDirection;
+                    GLlocation gridParameters;
+                    GLlocation primaryGridColor;
+                    GLlocation secondaryGridColor;
                     GLlocation worldCameraPosition;
                     GLlocation mistConfiguration;
                     GLlocation mistColor;
@@ -221,6 +233,8 @@ namespace OsmAnd
         void cancelElevation(
             const RasterLayerTileProgram& program,
             const int elevationDataSamplerIndex);
+        PointD getGridFractions(const double tile, const double nextTile);
+        PointD getFloatShift(const double first1, const double second1, const double first2, const double second2);
         bool activateRasterLayersProgram(
             const unsigned int numberOfLayersInBatch,
             const int elevationDataSamplerIndex,
