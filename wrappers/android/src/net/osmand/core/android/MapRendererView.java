@@ -12,6 +12,7 @@ import android.opengl.GLSurfaceView;
 
 import net.osmand.core.jni.AreaI;
 import net.osmand.core.jni.ElevationConfiguration;
+import net.osmand.core.jni.GridConfiguration;
 import net.osmand.core.jni.FColorRGB;
 import net.osmand.core.jni.FColorARGB;
 import net.osmand.core.jni.IMapElevationDataProvider;
@@ -769,6 +770,12 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.setElevationConfiguration(elevationConfiguration);
+    }
+
+    public final boolean setGridConfiguration(GridConfiguration gridConfiguration) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setGridConfiguration(gridConfiguration);
     }
 
     public final boolean setElevationDataProvider(IMapElevationDataProvider provider) {

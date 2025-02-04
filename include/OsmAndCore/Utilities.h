@@ -286,6 +286,89 @@ namespace OsmAnd
                 static_cast<int32_t>(std::min(static_cast<int64_t>((1.0 - eval / M_PI) / 2.0 * intFull), intMax)));
         }
 
+        inline static PointD getZoneUTM(const PointD& location, double* refLonDeg)
+        {
+            auto result = location * 180.0 / M_PI;
+            result.x /= 6.0;
+            result.x += 31.0;
+            result.y /= 8.0;
+            result.y += 13.0;
+            double refLon = (floor(result.x) - 31.0) * 6.0 + 3.0;
+            if (result.y >= 23.5 || result.y < 3.0)
+            {
+                result.x = std::numeric_limits<double>::quiet_NaN();
+                result.y = std::numeric_limits<double>::quiet_NaN();
+            }
+            else if (result.y >= 22.0 && result.x >= 31.0 && result.x < 38.0)
+            {
+                result.y = (result.y - 22.0) / 1.5 + 22.0;
+                double s = result.x < 32.5 ? 31.0 : (result.x < 34.5 ? 33.0 : (result.x < 36.5 ? 35.0 : 37.0));
+                result.x = s
+                    + (result.x - (result.x < 32.5 ? s : s - 0.5)) / (result.x >= 32.5 && result.x < 36.5 ? 2.0 : 1.5);
+                refLon = result.x >= 37.0 ? 37.5 : (result.x >= 35.0 ? 27.0 : (result.x >= 33.0 ? 15.0 : 4.5));
+            }
+            else if (result.y >= 20.0 && result.y < 21.0 && result.x >= 31.0 && result.x < 33.0)
+            {
+                result.x = result.x < 31.5 ? 31.0 + (result.x - 31.0) / 0.5 : 32.0 + (result.x - 31.5) / 1.5;
+                refLon = result.x >= 32.0 ? 7.5 : 1.5;
+            }
+            if (refLonDeg)
+                *refLonDeg = refLon;
+            return result;
+        }
+
+        inline static PointI simplifyZoneUTM(const PointD& zUTM)
+        {
+            auto zone = PointI(static_cast<int32_t>(std::floor(zUTM.x)), static_cast<int32_t>(std::floor(zUTM.y)));
+            if (isnan(zUTM.y))
+            {
+                zone.x = 0;
+                zone.y = 127;
+            }
+            if (zone.x < 31 || zone.x > 37 || zone.y < 20 || zone.y == 21 || (zone.y == 20 && zone.x > 32))
+                zone.y = 0;
+            return zone;
+        }
+
+        inline static int getCodedZoneUTM(const PointD& zUTM)
+        {
+            auto zone = simplifyZoneUTM(zUTM);
+            return zone.y << 8 | zone.x;
+        }
+
+        inline static int getCodedZoneUTM(const PointI& location31)
+        {
+            auto zUTM = getZoneUTM(getAnglesFrom31(location31), nullptr);
+            return getCodedZoneUTM(zUTM);
+        }
+
+        inline static PointD getCoordinatesUTM(const PointD& lonlat, const double& refLon)
+        {
+            auto sinlat = sin(lonlat.y);
+            //double f = 1.0 / 298.257223563;
+            //double n = f / (2.0 - f);
+            double nn = 0.081819190842621486; //2.0 * sqrt(n) / (1.0 + n);
+            double t = sinh(atanh(sinlat) - nn * atanh(nn * sinlat));
+            double xi = atan(t / cos(lonlat.x - refLon));
+            double xi2 = xi * 2.0;
+            double xi4 = xi * 4.0;
+            double xi6 = xi * 6.0;
+            double eta = atanh(sin(lonlat.x - refLon) / sqrt(1.0 + t * t));
+            double shEta2 = sinh(eta * 2.0);
+            double shEta4 = sinh(eta * 4.0);
+            double shEta6 = sinh(eta * 6.0);
+            double a1 = 8.3773181881925413e-4; //0.5 * n - 2.0 / 3.0 * n * n + 5.0 / 16.0 * pow(n, 3.0);
+            double a2 = 7.6084969586991665e-7; //13.0 / 48.0 * n * n - 3.0 / 5.0 * pow(n, 3.0);
+            double a3 = 1.2034877875966644e-9; //61.0 / 240.0 * pow(n, 3.0);
+            PointD result(eta + a1 * cos(xi2) * shEta2 + a2 * cos(xi4) * shEta4 + a3 * cos(xi6) * shEta6,
+                xi + a1 * sin(xi2) * shEta2 + a2 * sin(xi4) * shEta4 + a3 * sin(xi6) * shEta6);
+            //double a = 6378.137 / (1.0 + n) * (1.0 + n * n / 4.0 + pow(n, 4.0) / 64.0 + pow(n, 6.0) / 256.0);
+            result *= 6364.9021661650868; //a * 0.9996;
+            result.x += 500.0;
+            result.y += 10000.0;
+            return result;
+        }
+
         inline static ZoomLevel clipZoomLevel(ZoomLevel zoom)
         {
             return qBound(MinZoomLevel, zoom, MaxZoomLevel);
@@ -1081,6 +1164,23 @@ namespace OsmAnd
             else if (offset31.x < -intHalf)
                 offset31.x = offset31.x + INT32_MAX + 1;
             return offset31;
+        }
+
+        inline static double snapToGrid(const double value)
+        {
+            // Snap value to the closest number from range [1, 2.5, 5, 10] * (10 ^ n)
+            double factor = std::pow(10.0, std::floor(log10(value)));
+            double result = value / factor;
+            if (result < 1.5)
+                result = 1.0;
+            else if (result < 3.5)
+                result = 2.0;
+            else if (result < 7.5)
+                result = 5.0;
+            else
+                result = 10.0;
+            result *= factor;
+            return result;
         }
 
         enum class CHCode : uint8_t

@@ -1539,6 +1539,28 @@ float OsmAnd::MapRenderer::getElevationScaleFactor()
     return _requestedState.elevationConfiguration.zScaleFactor;
 }
 
+bool OsmAnd::MapRenderer::setGridConfiguration(
+    const GridConfiguration& configuration,
+    bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (!configuration.isValid())
+        return false;
+
+    bool update = forcedUpdate || (_requestedState.gridConfiguration != configuration);
+    if (!update)
+        return false;
+
+    _requestedState.gridConfiguration = configuration;
+
+    _requestedState.gridConfiguration.setProjectionParameters();
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Grid_Configuration);
+
+    return true;
+}
+
 bool OsmAnd::MapRenderer::addSymbolsProvider(
     const int subsectionIndex,
     const std::shared_ptr<IMapTiledSymbolsProvider>& provider,

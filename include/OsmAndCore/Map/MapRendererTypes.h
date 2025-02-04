@@ -10,6 +10,7 @@
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/CommonSWIG.h>
+#include <OsmAndCore/Utilities.h>
 
 namespace OsmAnd
 {
@@ -226,87 +227,174 @@ namespace OsmAnd
         }
     };
 
-    struct OSMAND_CORE_API FogConfiguration Q_DECL_FINAL
+    struct OSMAND_CORE_API GridParameters Q_DECL_FINAL
     {
-        FogConfiguration();
+        float factorX1; // = 1 - EPSG:4326 longitude (radians)
+        float factorX2; // = 1 - Universal Transverse Mercator easting coordinate (100 kilometers)
+        float factorX3; // = 1 - Mercator X coordinate (100 map kilometers)
+        float offsetX;
+        float factorY1; // = 1 - EPSG:4326 latitude (radians)
+        float factorY2; // = 1 - Universal Transverse Mercator northing coordinate (100 kilometers)
+        float factorY3; // = 1 - Mercator Y coordinate (100 map kilometers)
+        float offsetY;
+        ZoomLevel minZoom;
+        ZoomLevel maxZoomForFloat; // Maximum zoom level to use only FP coordinates in GLSL shaders
+        ZoomLevel maxZoomForMixed; // Maximum zoom level to use FP coordinates in GLSL shaders
+    };
 
-        float distanceToFog;
+    struct OSMAND_CORE_API GridConfiguration Q_DECL_FINAL
+    {
+        enum class Projection {
+            WGS84 = 0,
+            UTM = 1,
+            Mercator = 2,
+        };
+
+        GridConfiguration();
+
+        Projection primaryProjection;
 #if !defined(SWIG)
-        inline FogConfiguration& setDistanceToFog(const float newDistanceToFog)
+        inline GridConfiguration& setPrimaryProjection(const Projection newProjection)
         {
-            distanceToFog = newDistanceToFog;
+            primaryProjection = newProjection;
 
             return *this;
         }
 #endif // !defined(SWIG)
 
-        float originFactor;
+        Projection secondaryProjection;
 #if !defined(SWIG)
-        inline FogConfiguration& setOriginFactor(const float newOriginFactor)
+        inline GridConfiguration& setSecondaryProjection(const Projection newProjection)
         {
-            originFactor = newOriginFactor;
+            secondaryProjection = newProjection;
 
             return *this;
         }
 #endif // !defined(SWIG)
 
-        float heightOriginFactor;
+        float primaryGap;
 #if !defined(SWIG)
-        inline FogConfiguration& setHeightOriginFactor(const float newHeightOriginFactor)
+        inline GridConfiguration& setPrimaryGap(const float newGap)
         {
-            heightOriginFactor = newHeightOriginFactor;
+            primaryGap = newGap;
 
             return *this;
         }
 #endif // !defined(SWIG)
 
-        float density;
+        float secondaryGap;
 #if !defined(SWIG)
-        inline FogConfiguration& setDensity(const float newDensity)
+        inline GridConfiguration& setSecondaryGap(const float newGap)
         {
-            density = newDensity;
+            secondaryGap = newGap;
 
             return *this;
         }
 #endif // !defined(SWIG)
 
-        FColorRGB color;
+        float primaryGranularity;
 #if !defined(SWIG)
-        inline FogConfiguration& setColor(const FColorRGB newColor)
+        inline GridConfiguration& setPrimaryGranularity(const float newGranularity)
         {
-            color = newColor;
+            primaryGranularity = newGranularity;
 
             return *this;
         }
 #endif // !defined(SWIG)
 
-        inline bool isValid() const
+        float secondaryGranularity;
+#if !defined(SWIG)
+        inline GridConfiguration& setSecondaryGranularity(const float newGranularity)
+        {
+            secondaryGranularity = newGranularity;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        float primaryThickness;
+#if !defined(SWIG)
+        inline GridConfiguration& setPrimaryThickness(const float newThickness)
+        {
+            primaryThickness = newThickness;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        float secondaryThickness;
+#if !defined(SWIG)
+        inline GridConfiguration& setSecondaryThickness(const float newThickness)
+        {
+            secondaryThickness = newThickness;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        FColorARGB primaryColor;
+#if !defined(SWIG)
+        inline GridConfiguration& setPrimaryColor(FColorARGB newColor)
+        {
+            primaryColor = newColor;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        FColorARGB secondaryColor;
+#if !defined(SWIG)
+        inline GridConfiguration& setSecondaryColor(FColorARGB newColor)
+        {
+            secondaryColor = newColor;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        GridParameters gridParameters[2];
+#if !defined(SWIG)
+        GridConfiguration& setProjectionParameters();
+        GridConfiguration& setProjectionParameters(const int gridIndex, const Projection projection);
+        double getPrimaryGridReference(const PointI& location31) const;
+        double getSecondaryGridReference(const PointI& location31) const;
+        PointD getPrimaryGridLocation(const PointI& location31, const double* referenceDeg = nullptr) const;
+        PointD getSecondaryGridLocation(const PointI& location31, const double* referenceDeg = nullptr) const;
+        double getLocationReference(const Projection projection, const PointI& location31) const;
+        PointD projectLocation(
+            const Projection projection, const PointI& location31, const double* referenceDeg = nullptr) const;
+#endif // !defined(SWIG)
+
+        bool isValid() const;
+
+        inline bool operator==(const GridConfiguration& r) const
         {
             return
-                (distanceToFog > 0.0f) &&
-                (originFactor > 0.0f && originFactor <= 1.0f) &&
-                (heightOriginFactor > 0.0f && heightOriginFactor <= 1.0f) &&
-                (density > 0.0f);
+                primaryProjection == r.primaryProjection &&
+                qFuzzyCompare(primaryGap, r.primaryGap) &&
+                qFuzzyCompare(primaryGranularity, r.primaryGranularity) &&
+                qFuzzyCompare(primaryThickness, r.primaryThickness) &&
+                primaryColor == r.primaryColor &&
+                secondaryProjection == r.secondaryProjection &&
+                qFuzzyCompare(secondaryGap, r.secondaryGap) &&
+                qFuzzyCompare(secondaryGranularity, r.secondaryGranularity) &&
+                qFuzzyCompare(secondaryThickness, r.secondaryThickness) &&
+                secondaryColor == r.secondaryColor;
         }
 
-        inline bool operator==(const FogConfiguration& r) const
+        inline bool operator!=(const GridConfiguration& r) const
         {
             return
-                qFuzzyCompare(distanceToFog, r.distanceToFog) &&
-                qFuzzyCompare(originFactor, r.originFactor) &&
-                qFuzzyCompare(heightOriginFactor, r.heightOriginFactor) &&
-                qFuzzyCompare(density, r.density) &&
-                color == r.color;
-        }
-
-        inline bool operator!=(const FogConfiguration& r) const
-        {
-            return
-                !qFuzzyCompare(distanceToFog, r.distanceToFog) ||
-                !qFuzzyCompare(originFactor, r.originFactor) ||
-                !qFuzzyCompare(heightOriginFactor, r.heightOriginFactor) ||
-                !qFuzzyCompare(density, r.density) ||
-                color != r.color;
+                primaryProjection != r.primaryProjection ||
+                !qFuzzyCompare(primaryGap, r.primaryGap) ||
+                !qFuzzyCompare(primaryGranularity, r.primaryGranularity) ||
+                !qFuzzyCompare(primaryThickness, r.primaryThickness) ||
+                primaryColor != r.primaryColor ||
+                secondaryProjection != r.secondaryProjection ||
+                !qFuzzyCompare(secondaryGap, r.secondaryGap) ||
+                !qFuzzyCompare(secondaryGranularity, r.secondaryGranularity) ||
+                !qFuzzyCompare(secondaryThickness, r.secondaryThickness) ||
+                secondaryColor != r.secondaryColor;
         }
     };
 }

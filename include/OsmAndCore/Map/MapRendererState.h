@@ -37,6 +37,7 @@ namespace OsmAnd
         MapLayers_Configuration,
         Elevation_DataProvider,
         Elevation_Configuration,
+        Grid_Configuration,
         Symbols_Providers,
         Symbols_Configuration,
         WindowSize,
@@ -129,6 +130,7 @@ namespace OsmAnd
 
         std::shared_ptr<IMapElevationDataProvider> elevationDataProvider;
         ElevationConfiguration elevationConfiguration;
+        GridConfiguration gridConfiguration;
 
         QMap<int, QSet< std::shared_ptr<IMapTiledSymbolsProvider> > > tiledSymbolsProviders;
         QMap<int, QSet< std::shared_ptr<IMapKeyedSymbolsProvider> > > keyedSymbolsProviders;
