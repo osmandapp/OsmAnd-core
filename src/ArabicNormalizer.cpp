@@ -64,7 +64,7 @@ bool OsmAnd::ArabicNormalizer::isDiacritic(QChar c) {
 }
 
 bool OsmAnd::ArabicNormalizer::isArabicDigit(QChar c) {
-    return (c >= QChar(0x0660) && c <= QChar(0x0669));  // Arabic-Indic digits
+    return (c.unicode() >= 0x0660 && c.unicode() <= 0x0669);// Arabic-Indic digits
 }
 
 bool OsmAnd::ArabicNormalizer::isKashida(QChar c) {
