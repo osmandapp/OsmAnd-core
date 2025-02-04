@@ -101,6 +101,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse()
 
 bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetType &currentRulesetType,
                                                 QStack<std::shared_ptr<RuleNode> > &ruleNodesStack,
+                                                QStack<QString> &nodeNamesStack,
                                                 const QString &tagName,
                                                 const QXmlStreamAttributes &attribs,
                                                 qint64 lineNum, qint64 columnNum
@@ -157,7 +158,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
         
         if (!ruleNodesStack.isEmpty())
         {
-            LogPrintf(LogSeverityLevel::Error, "Previous rule node was closed before opening <renderingAttribute>");
+            LogPrintf(LogSeverityLevel::Error, "Previous rule node wasn't closed before opening <renderingAttribute>");
             return false;
         }
         ruleNodesStack.push(newAttribute->rootNode);
@@ -166,15 +167,27 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
     }
     else if (tagName == QStringLiteral("renderingClass"))
     {
+        QString path;
+        if (!nodeNamesStack.isEmpty())
+        {
+            for (auto& nodeName : nodeNamesStack)
+            {
+                path.append(nodeName);
+            }
+        }
         const auto title = attribs.value(QStringLiteral("title")).toString();
         const auto description = attribs.value(QStringLiteral("description")).toString();
         const auto category = attribs.value(QStringLiteral("category")).toString();
         const auto enable = attribs.value(QStringLiteral("enable")).toString();
         const auto name = attribs.value(QStringLiteral("name")).toString();
         
+        path.append(name);
+
         const bool isSet = enable.compare(QStringLiteral("true"), Qt::CaseSensitivity::CaseInsensitive) == 0;
-        const std::shared_ptr<SymbolClass> newSymbolClass(new SymbolClass(title, description, category, isSet, name));
+        const std::shared_ptr<SymbolClass> newSymbolClass(new SymbolClass(title, description, category, isSet, path));
         
+        nodeNamesStack.push(name);
+
         symbolClasses.push_back(qMove(newSymbolClass));
     }
     else if (tagName == QStringLiteral("switch") || tagName == QStringLiteral("group"))
@@ -259,6 +272,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
 
 bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType &currentRulesetType,
                                                 QStack<std::shared_ptr<RuleNode> > &ruleNodesStack,
+                                                QStack<QString> &nodeNamesStack,
                                                 const QString &tagName,
                                                 qint64 lineNum, qint64 columnNum) {
     
@@ -270,6 +284,10 @@ bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType
             LogPrintf(LogSeverityLevel::Error, "<renderingAttribute> was not complete before </renderingAttribute>");
             return false;
         }
+    }
+    else if (tagName == QStringLiteral("renderingClass"))
+    {
+        const auto symbolClass = nodeNamesStack.pop();
     }
     else if (tagName == QStringLiteral("switch") || tagName == QStringLiteral("group"))
     {
@@ -348,6 +366,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
     QList<std::shared_ptr<XmlTreeSequence>> sequenceHolder;
     std::shared_ptr<XmlTreeSequence> currentSeqElement = nullptr;
     QStack< std::shared_ptr<RuleNode> > ruleNodesStack;
+    QStack<QString> nodeNamesStack;
     auto currentRulesetType = MapStyleRulesetType::Invalid;
     
     while (!xmlReader.atEnd() && !xmlReader.hasError())
@@ -383,17 +402,18 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
                 }
                 currentSeqElement = seq;
             }
-            
             else
             {
-                processStartElement(currentRulesetType, ruleNodesStack, tagName, attribs, xmlReader.lineNumber(), xmlReader.columnNumber());
+                processStartElement(currentRulesetType, ruleNodesStack, nodeNamesStack,
+                    tagName, attribs, xmlReader.lineNumber(), xmlReader.columnNumber());
             }
         }
         else if (xmlReader.isEndElement())
         {
             if (currentSeqElement == nullptr)
             {
-                processEndElement(currentRulesetType, ruleNodesStack, tagName, xmlReader.lineNumber(), xmlReader.columnNumber());
+                processEndElement(currentRulesetType, ruleNodesStack, nodeNamesStack,
+                    tagName, xmlReader.lineNumber(), xmlReader.columnNumber());
             }
             else
             {
@@ -407,7 +427,8 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
                         process->process(i,
                                          this,
                                          currentRulesetType,
-                                         ruleNodesStack);
+                                         ruleNodesStack,
+                                         nodeNamesStack);
                     }
                 }
             }
@@ -571,7 +592,8 @@ void OsmAnd::XmlTreeSequence::process(
                                     int index,
                                     OsmAnd::UnresolvedMapStyle_P *parserObj,
                                     OsmAnd::MapStyleRulesetType &currentRulesetType,
-                                    QStack<std::shared_ptr<UnresolvedMapStyle::RuleNode> > &ruleNodesStack) {
+                                    QStack<std::shared_ptr<UnresolvedMapStyle::RuleNode> > &ruleNodesStack,
+                                    QStack<QString> &nodeNamesStack) {
     QXmlStreamAttributes attrsMapCopy = attrsMap;
     for (int i = 0; i < attrsMapCopy.size(); i++)
     {
@@ -586,10 +608,10 @@ void OsmAnd::XmlTreeSequence::process(
         }
     };
 
-    parserObj->processStartElement(currentRulesetType, ruleNodesStack, name, attrsMapCopy, lineNum, columnNum);
+    parserObj->processStartElement(currentRulesetType, ruleNodesStack, nodeNamesStack, name, attrsMapCopy, lineNum, columnNum);
     for (const auto& child : children) {
-        child.lock()->process(index, parserObj, currentRulesetType, ruleNodesStack);
+        child.lock()->process(index, parserObj, currentRulesetType, ruleNodesStack, nodeNamesStack);
         
     };
-    parserObj->processEndElement(currentRulesetType, ruleNodesStack, name, lineNum, columnNum);
+    parserObj->processEndElement(currentRulesetType, ruleNodesStack, nodeNamesStack, name, lineNum, columnNum);
 }
