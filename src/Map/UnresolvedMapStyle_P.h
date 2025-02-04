@@ -69,12 +69,14 @@ namespace OsmAnd
         
         bool processStartElement(OsmAnd::MapStyleRulesetType &currentRulesetType,
                             QStack<std::shared_ptr<RuleNode> > &ruleNodesStack,
+                            QStack<QString> &nodeNamesStack,
                             const QString &tagName,
                             const QXmlStreamAttributes &attribs,
                             qint64 lineNum, qint64 columnNum);
         
         bool processEndElement(OsmAnd::MapStyleRulesetType &currentRulesetType,
                             QStack<std::shared_ptr<RuleNode> > &ruleNodesStack,
+                            QStack<QString> &nodeNamesStack,
                             const QString &tagName,
                             qint64 lineNum, qint64 columnNum);
         
@@ -131,7 +133,8 @@ namespace OsmAnd
         void process(int i,
                      UnresolvedMapStyle_P *parserObj,
                      OsmAnd::MapStyleRulesetType &currentRulesetType,
-                     QStack<std::shared_ptr<UnresolvedMapStyle::RuleNode> > &ruleNodesStack);
+                     QStack<std::shared_ptr<UnresolvedMapStyle::RuleNode> > &ruleNodesStack,
+                     QStack<QString> &nodeNamesStack);
     };
 
 }
