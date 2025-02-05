@@ -17,7 +17,8 @@ OsmAnd::CollatorStringMatcher::CollatorStringMatcher(const QString& part, const 
         }
     }
     if (OsmAnd::ArabicNormalizer::isSpecialArabic(part_)) {
-        part_ = OsmAnd::ArabicNormalizer::normalize(part_);
+        QString normalized  = OsmAnd::ArabicNormalizer::normalize(part_);
+        part_ = normalized.isEmpty() ? part_ : normalized;
     }
     _part = part_;
     _mode = mode_;
@@ -29,11 +30,12 @@ OsmAnd::CollatorStringMatcher::~CollatorStringMatcher()
 
 bool OsmAnd::CollatorStringMatcher::matches(const QString& name) const
 {
-    QString normalized = name;
+    QString name_ = name;
     if (OsmAnd::ArabicNormalizer::isSpecialArabic(name)) {
-        normalized = OsmAnd::ArabicNormalizer::normalize(name);
+        QString arabic = OsmAnd::ArabicNormalizer::normalize(name);
+        name_ = arabic.isEmpty() ? name : arabic;
     }
-    return _p->CollatorStringMatcher_P::matches(normalized, _part, _mode);
+    return _p->CollatorStringMatcher_P::matches(name_, _part, _mode);
 }
 
 bool OsmAnd::CollatorStringMatcher::cmatches(const QString& _base, const QString& _part, StringMatcherMode _mode)
@@ -41,10 +43,12 @@ bool OsmAnd::CollatorStringMatcher::cmatches(const QString& _base, const QString
     QString base = _base;
     QString part = _part;
     if (OsmAnd::ArabicNormalizer::isSpecialArabic(_base)) {
-        base = OsmAnd::ArabicNormalizer::normalize(_base);
+        QString normalized = OsmAnd::ArabicNormalizer::normalize(_base);
+        base = normalized.isEmpty() ? _base : normalized;
     }
     if (OsmAnd::ArabicNormalizer::isSpecialArabic(_part)) {
-        part = OsmAnd::ArabicNormalizer::normalize(_part);
+        QString normalized = OsmAnd::ArabicNormalizer::normalize(_part);
+        part = normalized.isEmpty() ? _part : normalized;
     }
     return OsmAnd::ICU::cmatches(base, part, _mode);
 }
