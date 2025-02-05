@@ -142,6 +142,8 @@ namespace OsmAnd
             virtual QString getLegendObject() const = 0;
             virtual QString getInnerLegendObject() const = 0;
             virtual QString getInnerTitle() const = 0;
+            virtual QString getInnerDescription() const = 0;
+            virtual QString getInnerCategory() const = 0;
             virtual QString getInnerNames() const = 0;
             virtual bool getDefaultSetting() const = 0;
             virtual SWIG_CLARIFY(IMapStyle, StringId) getNameId() const = 0;

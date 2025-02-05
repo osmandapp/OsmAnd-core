@@ -122,6 +122,8 @@ namespace OsmAnd
                 const QString& legendObject,
                 const QString& innerLegendObject,
                 const QString& innerTitle,
+                const QString& innerDescription,
+                const QString& innerCategory,
                 const QString& innerNames,
                 const bool isSetByDefault,
                 const QString& name);
@@ -133,6 +135,8 @@ namespace OsmAnd
             QString legendObject;
             QString innerLegendObject;
             QString innerTitle;
+            QString innerDescription;
+            QString innerCategory;
             QString innerNames;
             bool isSetByDefault;
             QString name;

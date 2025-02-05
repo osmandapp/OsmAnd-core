@@ -174,6 +174,8 @@ namespace OsmAnd
                 const QString& legendObject,
                 const QString& innerLegendObject,
                 const QString& innerTitle,
+                const QString& innerDescription,
+                const QString& innerCategory,
                 const QString& innerNames,
                 const bool isSetByDefault,
                 const SWIG_CLARIFY(IMapStyle, StringId) nameId);
@@ -186,6 +188,8 @@ namespace OsmAnd
             QString legendObject;
             QString innerLegendObject;
             QString innerTitle;
+            QString innerDescription;
+            QString innerCategory;
             QString innerNames;
             StringId nameId;
             bool isSetByDefault;
@@ -196,6 +200,8 @@ namespace OsmAnd
             virtual QString getLegendObject() const Q_DECL_OVERRIDE;
             virtual QString getInnerLegendObject() const Q_DECL_OVERRIDE;
             virtual QString getInnerTitle() const Q_DECL_OVERRIDE;
+            virtual QString getInnerDescription() const Q_DECL_OVERRIDE;
+            virtual QString getInnerCategory() const Q_DECL_OVERRIDE;
             virtual QString getInnerNames() const Q_DECL_OVERRIDE;
             virtual bool getDefaultSetting() const Q_DECL_OVERRIDE;
             virtual SWIG_CLARIFY(IMapStyle, StringId) getNameId() const Q_DECL_OVERRIDE;

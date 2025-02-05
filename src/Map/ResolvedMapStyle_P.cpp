@@ -478,6 +478,8 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveSymbolClasses()
                 unresolvedSymbolClass->legendObject,
                 unresolvedSymbolClass->innerLegendObject,
                 unresolvedSymbolClass->innerTitle,
+                unresolvedSymbolClass->innerDescription,
+                unresolvedSymbolClass->innerCategory,
                 unresolvedSymbolClass->innerNames,
                 unresolvedSymbolClass->isSetByDefault,
                 nameId));
