@@ -310,11 +310,23 @@ OsmAnd::ResolvedMapStyle::SymbolClass::SymbolClass(
     const QString& title_,
     const QString& description_,
     const QString& category_,
+    const QString& legendObject_,
+    const QString& innerLegendObject_,
+    const QString& innerTitle_,
+    const QString& innerDescription_,
+    const QString& innerCategory_,
+    const QString& innerNames_,
     const bool isSetByDefault_,
     const StringId nameId_)
     : title(title_)
     , description(description_)
     , category(category_)
+    , legendObject(legendObject_)
+    , innerLegendObject(innerLegendObject_)
+    , innerTitle(innerTitle_)
+    , innerDescription(innerDescription_)
+    , innerCategory(innerCategory_)
+    , innerNames(innerNames_)
     , isSetByDefault(isSetByDefault_)
     , nameId(nameId_)
 {
@@ -337,6 +349,36 @@ QString OsmAnd::ResolvedMapStyle::SymbolClass::getDescription() const
 QString OsmAnd::ResolvedMapStyle::SymbolClass::getCategory() const
 {
     return category;
+}
+
+QString OsmAnd::ResolvedMapStyle::SymbolClass::getLegendObject() const
+{
+    return legendObject;
+}
+
+QString OsmAnd::ResolvedMapStyle::SymbolClass::getInnerLegendObject() const
+{
+    return innerLegendObject;
+}
+
+QString OsmAnd::ResolvedMapStyle::SymbolClass::getInnerTitle() const
+{
+    return innerTitle;
+}
+
+QString OsmAnd::ResolvedMapStyle::SymbolClass::getInnerDescription() const
+{
+    return innerDescription;
+}
+
+QString OsmAnd::ResolvedMapStyle::SymbolClass::getInnerCategory() const
+{
+    return innerCategory;
+}
+
+QString OsmAnd::ResolvedMapStyle::SymbolClass::getInnerNames() const
+{
+    return innerNames;
 }
 
 bool OsmAnd::ResolvedMapStyle::SymbolClass::getDefaultSetting() const

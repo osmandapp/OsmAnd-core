@@ -178,17 +178,67 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
         const auto title = attribs.value(QStringLiteral("title")).toString();
         const auto description = attribs.value(QStringLiteral("description")).toString();
         const auto category = attribs.value(QStringLiteral("category")).toString();
+        const auto legendObject = attribs.value(QStringLiteral("legend-object")).toString();
+        const auto innerLegendObject = attribs.value(QStringLiteral("inner-legend-object")).toString();
+        const auto innerTitle = attribs.value(QStringLiteral("inner-title")).toString();
+        const auto innerDescription = attribs.value(QStringLiteral("inner-description")).toString();
+        const auto innerCategory = attribs.value(QStringLiteral("inner-category")).toString();
+        const auto innerNames = attribs.value(QStringLiteral("inner-names")).toString();
         const auto enable = attribs.value(QStringLiteral("enable")).toString();
         const auto name = attribs.value(QStringLiteral("name")).toString();
         
         path.append(name);
 
         const bool isSet = enable.compare(QStringLiteral("true"), Qt::CaseSensitivity::CaseInsensitive) == 0;
-        const std::shared_ptr<SymbolClass> newSymbolClass(new SymbolClass(title, description, category, isSet, path));
+        const std::shared_ptr<SymbolClass> newSymbolClass(new SymbolClass(title, description, category, legendObject,
+            innerLegendObject, innerTitle, innerDescription, innerCategory, innerNames, isSet, path));
         
         nodeNamesStack.push(name);
 
         symbolClasses.push_back(qMove(newSymbolClass));
+
+        if (!innerNames.isEmpty())
+        {
+            QVector<QString> classNames;
+            auto nextPart = innerNames;
+            int splitPosition = 1;
+            while (splitPosition > 0)
+            {
+                if (!nextPart.isEmpty() && !nextPart.startsWith(QLatin1Char(',')))
+                {
+                    splitPosition = nextPart.indexOf(QLatin1Char(','));
+                    const auto symbolClassName = nextPart.left(splitPosition);
+                    if (!symbolClassName.isEmpty())
+                        classNames.append(symbolClassName);
+                }
+                else
+                {
+                    LogPrintf(LogSeverityLevel::Error,
+                        "'%s' contains an empty name for inner class definition",
+                        qPrintable(innerNames));
+                    break;
+                }
+                if (splitPosition > 0)
+                    nextPart = innerNames.mid(splitPosition + 1);
+            }
+            auto temp = QLatin1Literal("$class");
+            QString empty;
+            for (auto& className : classNames)
+            {
+                QString classTitle = innerTitle;
+                classTitle.replace(temp, className);
+                QString classDescription = innerDescription;
+                classDescription.replace(temp, className);
+                QString classCategory = innerCategory;
+                classCategory.replace(temp, className);
+                QString classLegendObject = innerLegendObject;
+                classLegendObject.replace(temp, className);
+                const std::shared_ptr<SymbolClass> newClass(new SymbolClass(
+                    classTitle, classDescription, classCategory, classLegendObject,
+                    empty, empty, empty, empty, empty, isSet, path + '.' + className));
+                symbolClasses.push_back(qMove(newClass));
+            }
+        }
     }
     else if (tagName == QStringLiteral("switch") || tagName == QStringLiteral("group"))
     {

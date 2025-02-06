@@ -127,11 +127,23 @@ OsmAnd::UnresolvedMapStyle::SymbolClass::SymbolClass(
     const QString& title_,
     const QString& description_,
     const QString& category_,
+    const QString& legendObject_,
+    const QString& innerLegendObject_,
+    const QString& innerTitle_,
+    const QString& innerDescription_,
+    const QString& innerCategory_,
+    const QString& innerNames_,
     const bool isSetByDefault_,
     const QString& name_)
     : title(title_)
     , description(description_)
     , category(category_)
+    , legendObject(legendObject_)
+    , innerLegendObject(innerLegendObject_)
+    , innerTitle(innerTitle_)
+    , innerDescription(innerDescription_)
+    , innerCategory(innerCategory_)
+    , innerNames(innerNames_)
     , isSetByDefault(isSetByDefault_)
     , name(name_)
 {

@@ -119,6 +119,12 @@ namespace OsmAnd
                 const QString& title,
                 const QString& description,
                 const QString& category,
+                const QString& legendObject,
+                const QString& innerLegendObject,
+                const QString& innerTitle,
+                const QString& innerDescription,
+                const QString& innerCategory,
+                const QString& innerNames,
                 const bool isSetByDefault,
                 const QString& name);
             virtual ~SymbolClass();
@@ -126,6 +132,12 @@ namespace OsmAnd
             QString title;
             QString description;
             QString category;
+            QString legendObject;
+            QString innerLegendObject;
+            QString innerTitle;
+            QString innerDescription;
+            QString innerCategory;
+            QString innerNames;
             bool isSetByDefault;
             QString name;
         };
