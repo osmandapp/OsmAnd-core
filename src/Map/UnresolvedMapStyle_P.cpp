@@ -219,7 +219,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
                     break;
                 }
                 if (splitPosition > 0)
-                    nextPart = innerNames.mid(splitPosition + 1);
+                    nextPart = nextPart.mid(splitPosition + 1);
             }
             auto temp = QLatin1Literal("$class");
             QString empty;
