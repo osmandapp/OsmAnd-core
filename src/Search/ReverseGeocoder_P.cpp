@@ -85,7 +85,7 @@ QStringList prepareStreetName(const QString &s, bool addCommonWords)
     int beginning = 0;
     for (int i = 1; i < s.length(); i++)
     {
-        if (s[i].isSpace())
+        if (s[i].isSpace() || s[i] == '-')
         {
             addWord(ls, s.mid(beginning, i - beginning), addCommonWords);
             beginning = i + 1;
