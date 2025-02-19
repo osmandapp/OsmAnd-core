@@ -250,7 +250,33 @@ namespace OsmAnd
             Mercator = 2,
         };
 
+        enum class Format {
+            Decimal = 0,
+            DMS = 1,
+            DM = 2,
+        };
+
         GridConfiguration();
+
+        bool primaryGrid;
+#if !defined(SWIG)
+        inline GridConfiguration& setPrimaryGrid(const bool enable)
+        {
+            primaryGrid = enable;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        bool secondaryGrid;
+#if !defined(SWIG)
+        inline GridConfiguration& setSecondaryGrid(const bool enable)
+        {
+            secondaryGrid = enable;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
 
         Projection primaryProjection;
 #if !defined(SWIG)
@@ -332,6 +358,26 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
+        Format primaryFormat;
+#if !defined(SWIG)
+        inline GridConfiguration& setPrimaryFormat(const Format newFormat)
+        {
+            primaryFormat = newFormat;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+Format secondaryFormat;
+#if !defined(SWIG)
+        inline GridConfiguration& setSecondaryFormat(const Format newFormat)
+        {
+            secondaryFormat = newFormat;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
         FColorARGB primaryColor;
 #if !defined(SWIG)
         inline GridConfiguration& setPrimaryColor(FColorARGB newColor)
@@ -363,6 +409,28 @@ namespace OsmAnd
         double getLocationReference(const Projection projection, const PointI& location31) const;
         PointD projectLocation(
             const Projection projection, const PointI& location31, const double* referenceDeg = nullptr) const;
+        PointI getPrimaryGridLocation31(const PointD& location) const;
+        PointI getSecondaryGridLocation31(const PointD& location) const;
+        PointI unProjectLocation(const Projection projection, const PointD& location) const;
+        bool getPrimaryGridCoordinateX(double& coordinate) const;
+        bool getPrimaryGridCoordinateY(double& coordinate) const;
+        bool getSecondaryGridCoordinateX(double& coordinate) const;
+        bool getSecondaryGridCoordinateY(double& coordinate) const;
+        bool getCoordinateX(const Projection projection, double& coordinate) const;
+        bool getCoordinateY(const Projection projection, double& coordinate) const;
+        double getPrimaryMaxMarksPerAxis(const double gap) const;
+        double getSecondaryMaxMarksPerAxis(const double gap) const;
+        double getMaxMarksPerAxis(const Projection projection, const double gap) const;
+        QString getPrimaryGridMarkX(const PointD& coordinates, const int zone) const;
+        QString getPrimaryGridMarkY(const PointD& coordinates, const int zone) const;
+        QString getSecondaryGridMarkX(const PointD& coordinates, const int zone) const;
+        QString getSecondaryGridMarkY(const PointD& coordinates, const int zone) const;
+        QString getMarkX(
+            const Projection projection, const Format format, const PointD& coordinates, const int zone) const;
+        QString getMarkY(
+            const Projection projection, const const Format format, const PointD& coordinates, const int zone) const;
+        PointD getCurrentGaps(const PointI& target31, const ZoomLevel& zoomLevel, PointD* refLons = nullptr) const;
+        double correctGap(const Projection projection, const double gap) const;
 #endif // !defined(SWIG)
 
         bool isValid() const;
@@ -370,32 +438,40 @@ namespace OsmAnd
         inline bool operator==(const GridConfiguration& r) const
         {
             return
+                primaryGrid == r.primaryGrid &&
                 primaryProjection == r.primaryProjection &&
                 qFuzzyCompare(primaryGap, r.primaryGap) &&
                 qFuzzyCompare(primaryGranularity, r.primaryGranularity) &&
                 qFuzzyCompare(primaryThickness, r.primaryThickness) &&
+                primaryFormat == r.primaryFormat &&
                 primaryColor == r.primaryColor &&
+                secondaryGrid == r.secondaryGrid &&
                 secondaryProjection == r.secondaryProjection &&
                 qFuzzyCompare(secondaryGap, r.secondaryGap) &&
                 qFuzzyCompare(secondaryGranularity, r.secondaryGranularity) &&
                 qFuzzyCompare(secondaryThickness, r.secondaryThickness) &&
+                secondaryFormat == r.secondaryFormat &&
                 secondaryColor == r.secondaryColor;
         }
 
         inline bool operator!=(const GridConfiguration& r) const
         {
             return
+                primaryGrid != r.primaryGrid ||
                 primaryProjection != r.primaryProjection ||
                 !qFuzzyCompare(primaryGap, r.primaryGap) ||
                 !qFuzzyCompare(primaryGranularity, r.primaryGranularity) ||
                 !qFuzzyCompare(primaryThickness, r.primaryThickness) ||
+                primaryFormat != r.primaryFormat ||
                 primaryColor != r.primaryColor ||
+                secondaryGrid != r.secondaryGrid ||
                 secondaryProjection != r.secondaryProjection ||
                 !qFuzzyCompare(secondaryGap, r.secondaryGap) ||
                 !qFuzzyCompare(secondaryGranularity, r.secondaryGranularity) ||
                 !qFuzzyCompare(secondaryThickness, r.secondaryThickness) ||
+                secondaryFormat != r.secondaryFormat ||
                 secondaryColor != r.secondaryColor;
-        }
+            }
     };
 }
 

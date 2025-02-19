@@ -42,8 +42,8 @@ namespace OsmAnd
         bool _isHidden;
 
         bool _isAccuracyCircleVisible;
-        double _accuracyCircleRadius;
-
+        double _additionalPositionParameter;
+        MapMarker::PositionType _positionType;
         PointI _position;
 
         float _height;
@@ -89,11 +89,15 @@ namespace OsmAnd
 
         bool isAccuracyCircleVisible() const;
         void setIsAccuracyCircleVisible(const bool visible);
-        double getAccuracyCircleRadius() const;
-        void setAccuracyCircleRadius(const double radius);
 
         PointI getPosition() const;
         void setPosition(const PointI position);
+
+        MapMarker::PositionType getPositionType() const;
+        void setPositionType(const MapMarker::PositionType positionType);
+
+        double getAdditionalPosition() const;
+        void setAdditionalPosition(const double additionalPosition);
 
         float getHeight() const;
         void setHeight(const float height);

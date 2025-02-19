@@ -39,6 +39,9 @@
 #include "MapMarker.h"
 #include "VectorLine.h"
 
+# define GRID_ITER_LIMIT 3
+# define GRID_ITER_PRECISION 100.0
+
 // Set maximum incline angle for using onpath-2D symbols instead of 3D-ones (20 deg)
 const float OsmAnd::AtlasMapRendererSymbolsStage::_inclineThresholdOnPath2D =
     qPow(qSin(qDegreesToRadians(20.0f)), 2.0f);
@@ -1250,10 +1253,73 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     const auto& internalState = getInternalState();
     const auto mapSymbol = std::dynamic_pointer_cast<const MapSymbol>(billboardMapSymbol);
 
-    const auto& position31 =
+    auto position31 =
         (instanceParameters && instanceParameters->overridesPosition31)
         ? instanceParameters->position31
         : billboardMapSymbol->getPosition31();
+
+    if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const BillboardRasterMapSymbol>(mapSymbol))
+    {
+        const auto positionType = rasterMapSymbol->getPositionType();
+        if (positionType != MapMarker::PositionType::Coordinate31)
+        {
+            bool isPrimary = positionType == MapMarker::PositionType::PrimaryGridX
+                || positionType == MapMarker::PositionType::PrimaryGridY;
+            bool isAxisY = positionType == MapMarker::PositionType::PrimaryGridY
+                || positionType == MapMarker::PositionType::SecondaryGridY;
+            auto coordinate = rasterMapSymbol->getAdditionalPosition();
+            PointD point(isAxisY ? 0.0 : coordinate, isAxisY ? coordinate : 0.0);
+            auto pos31 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation31(point)
+                : currentState.gridConfiguration.getSecondaryGridLocation31(point);
+            if (pos31.x < 0)
+            {
+                int64_t intFull = INT32_MAX;
+                intFull++;
+                const auto intHalf = intFull >> 1;
+                AreaI64 area64(currentState.visibleBBoxShifted);
+                area64 += PointI64(intHalf, intHalf);
+                area64 += PointI64(intFull, intFull);
+                PointI point1(
+                    isAxisY ? currentState.target31.x : static_cast<int32_t>(area64.topLeft.x & INT32_MAX),
+                    isAxisY ? static_cast<int32_t>(area64.topLeft.y & INT32_MAX) : currentState.target31.y);
+                PointI point2(
+                    isAxisY ? currentState.target31.x : static_cast<int32_t>(area64.bottomRight.x & INT32_MAX),
+                    isAxisY ? static_cast<int32_t>(area64.bottomRight.y & INT32_MAX) : currentState.target31.y);
+                auto refLon = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(currentState.target31)
+                    : currentState.gridConfiguration.getSecondaryGridReference(currentState.target31);
+                auto refLon1 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(point1)
+                    : currentState.gridConfiguration.getSecondaryGridReference(point1);
+                auto refLon2 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(point2)
+                    : currentState.gridConfiguration.getSecondaryGridReference(point2);
+                if (refLon != refLon1 && refLon != refLon2)
+                    return;
+                if (refLon != refLon1)
+                    point1 = currentState.target31;
+                if (refLon != refLon2)
+                    point2 = currentState.target31;
+                auto location1 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(point1, &refLon)
+                    : currentState.gridConfiguration.getSecondaryGridLocation(point1, &refLon);
+                auto location2 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(point2, &refLon)
+                    : currentState.gridConfiguration.getSecondaryGridLocation(point2, &refLon);
+                auto coord1 = isAxisY ? location1.y : location1.x;
+                auto coord2 = isAxisY ? location2.y : location2.x;
+                const bool inside = coordinate > std::min(coord1, coord2) && coordinate < std::max(coord1, coord2);
+                if (!inside)
+                    return;
+                auto pos1 = isAxisY ? point1.y : point1.x;
+                auto pos2 = isAxisY ? point2.y : point2.x;
+                int iterCount = 0;
+                auto pos =
+                    getApproximate31(coordinate, coord1, coord2, pos1, pos2, isPrimary, isAxisY, &refLon, iterCount);
+                if (isAxisY)
+                    pos31.y = pos;
+                else
+                    pos31.x = pos;
+            }
+            position31.x = isAxisY ? currentState.target31.x : pos31.x;
+            position31.y = isAxisY ? pos31.y : currentState.target31.y;
+        }
+    }
 
     const auto renderer = getRenderer();
 
@@ -1364,6 +1430,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         renderable->referenceOrigins = const_cast<MapRenderer::MapSymbolReferenceOrigins*>(&referenceOrigins);
         renderable->gpuResource = gpuResource;
         renderable->positionInWorld = positionInWorld;
+        renderable->position31 = position31;
         renderable->elevationInMeters = elevationInMeters;
         renderable->tileId = tileId;
         renderable->offsetInTileN = offsetInTileN;
@@ -3786,6 +3853,28 @@ float OsmAnd::AtlasMapRendererSymbolsStage::getSubsectionOpacityFactor(
         const auto& subsectionConfiguration = *citSubsectionConfiguration;
         return subsectionConfiguration.opacityFactor;
     }
+}
+
+int32_t OsmAnd::AtlasMapRendererSymbolsStage::getApproximate31(
+    const double coordinate, const double coord1, const double coord2, const int32_t pos1, const int32_t pos2,
+    const bool isPrimary, const bool isAxisY, const double* pRefLon, int32_t& iteration) const
+{
+    const auto delta = coordinate - coord1;
+    const auto gap = coord2 - coord1;
+    const auto distance = static_cast<double>(pos2 - pos1);
+    auto pos = static_cast<int32_t>(distance * delta / gap + static_cast<double>(pos1));
+    const PointI pos31(isAxisY ? currentState.target31.x : pos, isAxisY ? pos : currentState.target31.y);
+    const auto point = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(pos31, pRefLon)
+        : currentState.gridConfiguration.getSecondaryGridLocation(pos31, pRefLon);
+    const auto newCoord = isAxisY ? point.y : point.x;
+    if (iteration < GRID_ITER_LIMIT && std::abs(newCoord - coordinate) > std::abs(gap) / GRID_ITER_PRECISION)
+    {
+        iteration++;
+        const bool s = std::abs(newCoord - coord1) > std::abs(delta);
+        pos = getApproximate31(coordinate, s ? newCoord : coord1, s ? coord2 : newCoord,
+            s ? pos : pos1, s ? pos2 : pos, isPrimary, isAxisY, pRefLon, iteration);
+    }
+    return pos;
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::addPathDebugLine(const QVector<PointI>& path31, const ColorARGB color) const

@@ -57,6 +57,7 @@ namespace OsmAnd
             std::shared_ptr<const MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters> instanceParameters;
 
             glm::vec3 positionInWorld;
+            PointI position31;
             float elevationInMeters;
             TileId tileId;
             PointF offsetInTileN;
@@ -430,6 +431,10 @@ namespace OsmAnd
 
         float getSubsectionOpacityFactor(const std::shared_ptr<const MapSymbol>& mapSymbol) const;
 
+        int32_t getApproximate31(
+            const double coordinate, const double coord1, const double coord2, const int32_t pos1, const int32_t pos2,
+            const bool isPrimary, const bool isAxisY, const double* pRefLon, int32_t& iteration) const;
+        
         // Debug-related:
         void addPathDebugLine(
             const QVector<PointI>& path31,

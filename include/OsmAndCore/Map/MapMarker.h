@@ -52,6 +52,15 @@ namespace OsmAnd
             Right = 2,
         };
 
+        enum PositionType : unsigned int
+        {
+            Coordinate31 = 0,
+            PrimaryGridX = 1,
+            PrimaryGridY = 2,
+            SecondaryGridX = 3,
+            SecondaryGridY = 4
+        };
+
         class SymbolsGroup
             : public MapSymbolsGroup
             , public IUpdatableMapSymbolsGroup
@@ -122,6 +131,12 @@ namespace OsmAnd
 
         PointI getPosition() const;
         void setPosition(const PointI position);
+
+        PositionType getPositionType() const;
+        void setPositionType(const PositionType positionType);
+
+        double getAdditionalPosition() const;
+        void setAdditionalPosition(const double additionalPosition);
 
         float getHeight() const;
         void setHeight(const float height);

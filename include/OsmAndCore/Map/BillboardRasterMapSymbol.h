@@ -9,6 +9,7 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/RasterMapSymbol.h>
 #include <OsmAndCore/Map/IBillboardMapSymbol.h>
+#include <OsmAndCore/Map/MapMarker.h>
 
 namespace OsmAnd
 {
@@ -33,6 +34,14 @@ namespace OsmAnd
         PointI position31;
         virtual PointI getPosition31() const;
         virtual void setPosition31(const PointI position);
+
+        MapMarker::PositionType positionType;
+        virtual MapMarker::PositionType getPositionType() const;
+        virtual void setPositionType(const MapMarker::PositionType positionType);
+
+        double additionalPosition;
+        virtual double getAdditionalPosition() const;
+        virtual void setAdditionalPosition(const double additionalPosition);
 
         float elevation;
         float getElevation() const;

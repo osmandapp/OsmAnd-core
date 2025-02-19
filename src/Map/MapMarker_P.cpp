@@ -17,6 +17,7 @@ OsmAnd::MapMarker_P::MapMarker_P(MapMarker* const owner_)
     : owner(owner_)
     , textRasterizer(TextRasterizer::getDefault())
     , _model3DDirection(-90.0f)
+    , _positionType(MapMarker::PositionType::Coordinate31)
 {
 }
 
@@ -60,24 +61,6 @@ void OsmAnd::MapMarker_P::setIsAccuracyCircleVisible(const bool visible)
     }
 }
 
-double OsmAnd::MapMarker_P::getAccuracyCircleRadius() const
-{
-    QReadLocker scopedLocker(&_lock);
-
-    return _accuracyCircleRadius;
-}
-
-void OsmAnd::MapMarker_P::setAccuracyCircleRadius(const double radius)
-{
-    QWriteLocker scopedLocker(&_lock);
-
-    if (_accuracyCircleRadius != radius)
-    {
-        _accuracyCircleRadius = radius;
-        _hasUnappliedChanges = true;
-    }
-}
-
 OsmAnd::PointI OsmAnd::MapMarker_P::getPosition() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -92,6 +75,42 @@ void OsmAnd::MapMarker_P::setPosition(const PointI position)
     if (_position != position)
     {
         _position = position;
+        _hasUnappliedChanges = true;
+    }
+}
+
+OsmAnd::MapMarker::PositionType OsmAnd::MapMarker_P::getPositionType() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _positionType;
+}
+
+void OsmAnd::MapMarker_P::setPositionType(const MapMarker::PositionType positionType)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_positionType != positionType)
+    {
+        _positionType = positionType;
+        _hasUnappliedChanges = true;
+    }
+}
+
+double OsmAnd::MapMarker_P::getAdditionalPosition() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _additionalPositionParameter;
+}
+
+void OsmAnd::MapMarker_P::setAdditionalPosition(const double additionalPosition)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_additionalPositionParameter != additionalPosition)
+    {
+        _additionalPositionParameter = additionalPosition;
         _hasUnappliedChanges = true;
     }
 }
@@ -278,6 +297,8 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
 
     int order = owner->baseOrder;
 
+    PointI captionOffset;
+
     // SpriteMapSymbol with pinIcon as an icon
     if (owner->pinIcon)
     {
@@ -323,31 +344,55 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         pinIconSymbol->isHidden = _isHidden;
         pinIconSymbol->modulationColor = _pinIconModulationColor;
         symbolsGroup->symbols.push_back(pinIconSymbol);
-        
-        const auto caption = owner->caption;
-        if (!caption.isEmpty())
+        captionOffset.x = offset.x;
+        captionOffset.y = owner->pinIcon->height() / 2 + offset.y;
+    }
+
+    const auto caption = owner->caption;
+    if (!caption.isEmpty())
+    {
+        const auto textStyle = owner->captionStyle;
+        const auto textImage = textRasterizer->rasterize(caption, textStyle);
+        if (textImage)
         {
-            const auto textStyle = owner->captionStyle;
-            const auto textImage = textRasterizer->rasterize(caption, textStyle);
-            if (textImage)
+            auto positionType = owner->getPositionType();
+            PointI extraOffset;
+            switch (positionType)
             {
-                const auto mapSymbolCaption = std::make_shared<BillboardRasterMapSymbol>(symbolsGroup);
-                mapSymbolCaption->order = order - 2;
-                mapSymbolCaption->image = textImage;
-                mapSymbolCaption->contentClass = OsmAnd::MapSymbol::ContentClass::Caption;
-                mapSymbolCaption->intersectsWithClasses.insert(
-                    mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(QStringLiteral("text_layer_caption")));
-                mapSymbolCaption->setOffset(PointI(offset.x, owner->pinIcon->height() / 2 + textImage->height() / 2 + offset.y + owner->captionTopSpace));
-                mapSymbolCaption->size = PointI(textImage->width(), textImage->height());
-                mapSymbolCaption->languageId = LanguageId::Invariant;
-                mapSymbolCaption->position31 = _position;
-                mapSymbolCaption->elevation = _height;
-                mapSymbolCaption->elevationScaleFactor = _elevationScaleFactor;
-                symbolsGroup->symbols.push_back(mapSymbolCaption);
+                case MapMarker::PositionType::PrimaryGridX:
+                case MapMarker::PositionType::SecondaryGridX:
+                    extraOffset.x = owner->captionTopSpace + textImage->width() / 2;
+                    if (textStyle.textAlignment == TextRasterizer::Style::TextAlignment::Under)
+                        extraOffset.y = textImage->height() + owner->captionTopSpace;
+                    break;
+                case MapMarker::PositionType::PrimaryGridY:
+                case MapMarker::PositionType::SecondaryGridY:
+                if (textStyle.textAlignment == TextRasterizer::Style::TextAlignment::Under)
+                    extraOffset.y = textImage->height() / 2 - owner->captionTopSpace;
+                else
+                    extraOffset.y = owner->captionTopSpace - textImage->height() / 2;
+                    break;
+                default:
+                extraOffset.y = owner->captionTopSpace + textImage->height() / 2;
             }
+            const auto mapSymbolCaption = std::make_shared<BillboardRasterMapSymbol>(symbolsGroup);
+            mapSymbolCaption->order = order - 2;
+            mapSymbolCaption->image = textImage;
+            mapSymbolCaption->contentClass = OsmAnd::MapSymbol::ContentClass::Caption;
+            mapSymbolCaption->intersectsWithClasses.insert(
+                mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(QStringLiteral("text_layer_caption")));
+            mapSymbolCaption->setOffset(
+                PointI(captionOffset.x + extraOffset.x, captionOffset.y + extraOffset.y));
+            mapSymbolCaption->size = PointI(textImage->width(), textImage->height());
+            mapSymbolCaption->languageId = LanguageId::Invariant;
+            mapSymbolCaption->position31 = _position;
+            mapSymbolCaption->setPositionType(positionType);
+            mapSymbolCaption->setAdditionalPosition(owner->getAdditionalPosition());
+            mapSymbolCaption->elevation = _height;
+            mapSymbolCaption->elevationScaleFactor = _elevationScaleFactor;
+            symbolsGroup->symbols.push_back(mapSymbolCaption);
         }
     }
-    
     order++;
     
     int surfOrder = order;

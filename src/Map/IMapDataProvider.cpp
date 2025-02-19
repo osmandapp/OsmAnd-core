@@ -54,3 +54,7 @@ void OsmAnd::IMapDataProvider::Request::copy(Request& dst, const Request& src)
 {
     dst.queryController = src.queryController;
 }
+
+void OsmAnd::IMapDataProvider::applyMapChanges(IMapRenderer* renderer)
+{
+}
