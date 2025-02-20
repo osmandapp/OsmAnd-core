@@ -25,7 +25,7 @@ import net.osmand.core.jni.SymbolSubsectionConfiguration;
 import net.osmand.core.jni.MapRendererConfiguration;
 import net.osmand.core.jni.MapRendererDebugSettings;
 import net.osmand.core.jni.MapRendererSetupOptions;
-import net.osmand.core.jni.MapRendererState;
+import net.osmand.core.jni.MapState;
 import net.osmand.core.jni.MapStubStyle;
 import net.osmand.core.jni.PointI;
 import net.osmand.core.jni.PointD;
@@ -668,10 +668,10 @@ public abstract class MapRendererView extends FrameLayout {
         _mapRenderer.reloadEverything();
     }
 
-    public final MapRendererState getState() {
+    public final MapState getState() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getState();
+        return _mapRenderer.getFutureState();
     }
 
     public final int getWindowWidth() {

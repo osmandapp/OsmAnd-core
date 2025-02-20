@@ -105,6 +105,7 @@
 #include <OsmAndCore/Map/VectorLineArrowsProvider.h>
 #include <OsmAndCore/Map/VectorLineBuilder.h>
 #include <OsmAndCore/Map/VectorLinesCollection.h>
+#include <OsmAndCore/Map/GridMarksProvider.h>
 #include <OsmAndCore/IRoadLocator.h>
 #include <OsmAndCore/RoadLocator.h>
 #include <OsmAndCore/IQueryController.h>
@@ -319,6 +320,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::VectorLine)
 	%shared_ptr(OsmAnd::VectorLine::SymbolsGroup)
 	%shared_ptr(OsmAnd::VectorLine::OnPathSymbolData)
+	%shared_ptr(OsmAnd::GridMarksProvider)
 	%shared_ptr(OsmAnd::MapTiledCollectionProvider)
 	%shared_ptr(OsmAnd::MapTiledCollectionPoint)
 	%shared_ptr(OsmAnd::GpxAdditionalIconsProvider)
@@ -540,6 +542,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapMarkerBuilder.h>
 %include <OsmAndCore/Map/VectorLine.h>
     %template(VectorLineUpdatedObservable) OsmAnd::ObservableAs<OsmAnd::VectorLine::Updated>;
+%include <OsmAndCore/Map/GridMarksProvider.h>
 %include <OsmAndCore/IRoadLocator.h>
 %include <OsmAndCore/RoadLocator.h>
 %include <OsmAndCore/IQueryController.h>

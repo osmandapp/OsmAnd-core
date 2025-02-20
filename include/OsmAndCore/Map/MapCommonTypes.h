@@ -74,6 +74,15 @@ namespace OsmAnd
         MapStubStylesCount = static_cast<unsigned int>(MapStubStyle::__LAST),
     };
 
+    enum PositionType : unsigned int
+    {
+        Coordinate31 = 0,
+        PrimaryGridX = 1,
+        PrimaryGridY = 2,
+        SecondaryGridX = 3,
+        SecondaryGridY = 4
+    };
+
     union TagValueId
     {
         uint64_t id;

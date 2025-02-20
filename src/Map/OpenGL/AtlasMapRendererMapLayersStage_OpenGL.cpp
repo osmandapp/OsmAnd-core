@@ -390,9 +390,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             // Parameters: per-tile data
             "uniform ivec4 param_vs_tileCoords31;                                                                               ""\n"
             "uniform vec4 param_vs_primaryGridTileTop;                                                                          ""\n"
-            "uniform vec4 param_vs_primaryGridTileBot;                                                                       ""\n"
+            "uniform vec4 param_vs_primaryGridTileBot;                                                                          ""\n"
             "uniform vec4 param_vs_secondaryGridTileTop;                                                                        ""\n"
-            "uniform vec4 param_vs_secondaryGridTileBot;                                                                     ""\n"
+            "uniform vec4 param_vs_secondaryGridTileBot;                                                                        ""\n"
             "uniform vec2 param_vs_tileCoordsOffset;                                                                            ""\n"
             "uniform vec4 param_vs_elevation_scale;                                                                             ""\n"
             "uniform highp sampler2D param_vs_elevation_dataSampler;                                                            ""\n"
@@ -717,7 +717,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    zUTM.y = zUTM.x < 31.0 || zUTM.x >= 38.0 || (zUTM.y >= 3.0 && zUTM.y < 20.0) ? 0.0 : zUTM.y;                   ""\n"
             "    zUTM.y = zUTM.y >= 21.0 && zUTM.y < 22.0 ? 0.0 : zUTM.y;                                                       ""\n"
             "    zUTM.y = zUTM.y >= 20.0 && zUTM.y < 21.0 && zUTM.x >= 33.0 ? 0.0 : zUTM.y;                                     ""\n"
-            "    zUTM -= vec2(param_vs_tileCoords31.w >> 16 & 255, param_vs_tileCoords31.w >> 24) + 0.5;                        ""\n"
+            "    zUTM -= vec2(param_vs_tileCoords31.w >> 4 & 63, param_vs_tileCoords31.w >> 10) + 0.5;                          ""\n"
             "    if (zUTM.x < -0.5 || zUTM.x >= 0.5 || zUTM.y < -0.5 || zUTM.y >= 0.5)                                          ""\n"
             "    {                                                                                                              ""\n"
             "        zUTM.x = zUTM.x < 0.0 ? -1e38 : 1e38;                                                                      ""\n"
@@ -733,27 +733,20 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    t = 0.5 * log((1.0 + sinlat) / (1.0 - sinlat)) - nn * 0.5 * log((1.0 + t) / (1.0 - t));                        ""\n"
             "    t = (exp(t) - exp(-t)) / 2.0;                                                                                  ""\n"
             "    refLon *= M_PI / 180.0;                                                                                        ""\n"
+            "    vec3 st = vec3(2.0, 4.0, 6.0);                                                                                 ""\n"
             "    float xi = atan(t / cos(lonlat.x - refLon));                                                                   ""\n"
-            "    float xi2 = xi * 2.0;                                                                                          ""\n"
-            "    float xi4 = xi * 4.0;                                                                                          ""\n"
-            "    float xi6 = xi * 6.0;                                                                                          ""\n"
+            "    vec3 xin = st * xi;                                                                                            ""\n"
             "    float eta = sin(lonlat.x - refLon) / sqrt(1.0 + t * t);                                                        ""\n"
             "    eta = 0.5 * log((1.0 + eta) / (1.0 - eta));                                                                    ""\n"
-            "    float eta2 = eta * 2.0;                                                                                        ""\n"
-            "    float eta4 = eta * 4.0;                                                                                        ""\n"
-            "    float eta6 = eta * 6.0;                                                                                        ""\n"
-            "    float shEta2 = (exp(eta2) - exp(-eta2)) / 2.0;                                                                 ""\n"
-            "    float shEta4 = (exp(eta4) - exp(-eta4)) / 2.0;                                                                 ""\n"
-            "    float shEta6 = (exp(eta6) - exp(-eta6)) / 2.0;                                                                 ""\n"
-            "    float a1 = 8.3773181881925413e-4;                                                                              ""\n"
-            "    float a2 = 7.6084969586991665e-7;                                                                              ""\n"
-            "    float a3 = 1.2034877875966644e-9;                                                                              ""\n"
+            "    vec3 etan = st * eta;                                                                                          ""\n"
+            "    vec3 expEtan = exp(etan);                                                                                      ""\n"
+            "    vec3 expmEtan = exp(-etan);                                                                                    ""\n"
+            "    vec3 alpha = vec3(8.3773181881925413e-4, 7.6084969586991665e-7, 1.2034877875966644e-9);                        ""\n"
             "    vec2 mUTM;                                                                                                     ""\n"
-            "    mUTM.x = eta + a1 * cos(xi2) * shEta2 + a2 * cos(xi4) * shEta4 + a3 * cos(xi6) * shEta6;                       ""\n"
-            "    mUTM.y = xi + a1 * sin(xi2) * shEta2 + a2 * sin(xi4) * shEta4 + a3 * sin(xi6) * shEta6;                        ""\n"
-            "    mUTM *= 6364.9021661650868;                                                                                    ""\n"
-            "    mUTM += vec2(500.0, 10000.0);                                                                                  ""\n"
-            "    mUTM /= 100.0;                                                                                                 ""\n"
+            "    mUTM.x = eta + dot(alpha * cos(xin), (expEtan - expmEtan) / 2.0);                                              ""\n"
+            "    mUTM.y = xi + dot(alpha * sin(xin), (expEtan + expmEtan) / 2.0);                                               ""\n"
+            "    mUTM *= 63.649021661650868;                                                                                    ""\n"
+            "    mUTM += vec2(5.0, 100.0);                                                                                      ""\n"
             "    vec4 axisX = vec4(lonlat.x, mUTM.x, mercMeters.x, 1.0);                                                        ""\n"
             "    vec4 axisY = vec4(lonlat.y, mUTM.y, mercMeters.y, 1.0);                                                        ""\n"
             "    axisX.y += param_vs_primaryGridAxisX.y != 0.0 ? zUTM.x : 0.0;                                                  ""\n"
@@ -778,15 +771,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    intp.y = mix(param_vs_secondaryGridTileBot.y, param_vs_secondaryGridTileBot.w, in_vs_vertexPosition.x);        ""\n"
             "    secondary.w = mix(intp.x, intp.y, in_vs_vertexPosition.y);                                                     ""\n"
             "    primary.zw += param_vs_primaryGridAxisX.y > 0.0 ? zUTM : vec2(0.0);                                            ""\n"
-            "    secondary.zw += param_vs_secondaryGridAxisY.y > 0.0 ? zUTM : vec2(0.0);                                        ""\n"
+            "    secondary.zw += param_vs_secondaryGridAxisX.y > 0.0 ? zUTM : vec2(0.0);                                        ""\n"
             "    if ((param_vs_tileCoords31.w & 3) == 0)                                                                        ""\n"
-            "        primary.xy = vec2(1e38, 1e38);                                                                             ""\n"
+            "        primary.xy = vec2(1e38);                                                                                   ""\n"
             "    else if ((param_vs_tileCoords31.w & 3) == 1)                                                                   ""\n"
             "        primary.zw = primary.xy;                                                                                   ""\n"
             "    else if ((param_vs_tileCoords31.w & 3) == 3)                                                                   ""\n"
             "        primary.xy = primary.zw;                                                                                   ""\n"
             "    if ((param_vs_tileCoords31.w & 12) == 0)                                                                       ""\n"
-            "        secondary.xy = vec2(1e38, 1e38);                                                                           ""\n"
+            "        secondary.xy = vec2(1e38);                                                                                 ""\n"
             "    else if ((param_vs_tileCoords31.w & 12) == 4)                                                                  ""\n"
             "        secondary.zw = secondary.xy;                                                                               ""\n"
             "    else if ((param_vs_tileCoords31.w & 12) == 12)                                                                 ""\n"
@@ -847,7 +840,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "uniform lowp vec4 param_fs_myLocationColor;                                                                        ""\n"
             "uniform vec4 param_fs_myLocation;                                                                                  ""\n"
             "uniform vec2 param_fs_myDirection;                                                                                 ""\n"
-            "uniform lowp vec4 param_fs_gridParameters;                                                                         ""\n"
+            "uniform vec4 param_fs_gridParameters;                                                                              ""\n"
             "uniform lowp vec4 param_fs_primaryGridColor;                                                                       ""\n"
             "uniform lowp vec4 param_fs_secondaryGridColor;                                                                     ""\n"
             "uniform vec4 param_fs_worldCameraPosition;                                                                         ""\n"
@@ -1024,9 +1017,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    limit /= param_fs_gridParameters.x;                                                                            ""\n"
             "    vec2 n = limit * param_fs_gridParameters.y;                                                                    ""\n"
             "    vec2 f = limit * (param_fs_gridParameters.y + 1.0);                                                            ""\n"
-            "    lowp vec4 halfColor = primaryColor / 2.0;                                                                      ""\n"
+            "    lowp vec4 halfColor = primaryColor;                                                                            ""\n"
+            "    lowp float halfAlfa = halfColor.a / 2.0;                                                                       ""\n"
+            "    halfColor.a = halfAlfa;                                                                                        ""\n"
             "    primaryColor = d.x > f.x && d.x < 1.0 - f.x && d.y > f.y && d.y < 1.0 - f.y ? vec4(0.0) : halfColor;           ""\n"
-            "    primaryColor += d.x > n.x && d.x < 1.0 - n.x && d.y > n.y && d.y < 1.0 - n.y ? vec4(0.0) : halfColor;          ""\n"
+            "    primaryColor.a += d.x > n.x && d.x < 1.0 - n.x && d.y > n.y && d.y < 1.0 - n.y ? 0.0 : halfAlfa;               ""\n"
             "    lowp vec4 secondaryColor = param_fs_secondaryGridColor;                                                        ""\n"
             "    secondaryColor *= v2f_secondaryLocation.x > -1e30 && v2f_secondaryLocation.x < 1e30 ? 1.0 : 0.0;               ""\n"
             "    secondaryColor *= v2f_secondaryLocation.y > -1e30 && v2f_secondaryLocation.y < 1e30 ? 1.0 : 0.0;               ""\n"
@@ -1040,9 +1035,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    limit /= param_fs_gridParameters.z;                                                                            ""\n"
             "    n = limit * param_fs_gridParameters.w;                                                                         ""\n"
             "    f = limit * (param_fs_gridParameters.w + 1.0);                                                                 ""\n"
-            "    halfColor = secondaryColor / 2.0;                                                                              ""\n"
+            "    halfColor = secondaryColor;                                                                                    ""\n"
+            "    halfAlfa = halfColor.a / 2.0;                                                                                  ""\n"
+            "    halfColor.a = halfAlfa;                                                                                        ""\n"
             "    secondaryColor = d.x > f.x && d.x < 1.0 - f.x && d.y > f.y && d.y < 1.0 - f.y ? vec4(0.0) : halfColor;         ""\n"
-            "    secondaryColor += d.x > n.x && d.x < 1.0 - n.x && d.y > n.y && d.y < 1.0 - n.y ? vec4(0.0) : halfColor;        ""\n"
+            "    secondaryColor.a += d.x > n.x && d.x < 1.0 - n.x && d.y > n.y && d.y < 1.0 - n.y ? 0.0 : halfAlfa;             ""\n"
             "    secondaryColor.a = primaryColor.a < param_fs_primaryGridColor.a ? secondaryColor.a : 0.0;                      ""\n"
             "                                                                                                                   ""\n"
             //   Calculate mist color
@@ -1491,7 +1488,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     const auto elevationDataSamplerIndex = batchedLayersCount;
     auto subtilesPerTile = batch->layers.first()->resourcesInGPU.size();
 
-    GL_PUSH_GROUP_MARKER(QString("%1x%2@%3").arg(batch->tileId.x).arg(batch->tileId.y).arg(zoomLevel));
+    GL_PUSH_GROUP_MARKER(QStringLiteral("%1x%2@%3").arg(batch->tileId.x).arg(batch->tileId.y).arg(zoomLevel));
 
     // Activate proper program depending on number of captured layers
     const auto wasActivated = activateRasterLayersProgram(
@@ -1533,7 +1530,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     auto refLonBR = currentState.gridConfiguration.getPrimaryGridReference(nextTile31);
     auto refLonTR = currentState.gridConfiguration.getPrimaryGridReference(pointTR);
     auto refLonBL = currentState.gridConfiguration.getPrimaryGridReference(pointBL);
-    if (refLonTL != refLon && refLonBR != refLon && refLonTR != refLon && refLonBL != refLon)
+    auto isSmall = currentState.gridConfiguration.primaryGranularity != 0.0f
+        || currentState.gridConfiguration.primaryGap <= 1.0f;
+    if (!currentState.gridConfiguration.primaryGrid || (primaryZoom > 2 && !isSmall)
+        || (refLonTL != refLon && refLonBR != refLon && refLonTR != refLon && refLonBL != refLon))
         primaryZoom = 0;
     else
     {
@@ -1565,12 +1565,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     pointTR.x = nextTile31.x;
     pointTR.y = tile31.y;
     pointBL.x = tile31.x;
-    pointBL.x = nextTile31.y;
+    pointBL.y = nextTile31.y;
     refLonTL = currentState.gridConfiguration.getSecondaryGridReference(tile31);
     refLonBR = currentState.gridConfiguration.getSecondaryGridReference(nextTile31);
     refLonTR = currentState.gridConfiguration.getSecondaryGridReference(pointTR);
     refLonBL = currentState.gridConfiguration.getSecondaryGridReference(pointBL);
-    if (refLonTL != refLon && refLonBR != refLon && refLonTR != refLon && refLonBL != refLon)
+    isSmall = currentState.gridConfiguration.secondaryGranularity != 0.0f
+        || currentState.gridConfiguration.secondaryGap <= 1.0f;
+    if (!currentState.gridConfiguration.secondaryGrid || (secondaryZoom > 2 && !isSmall)
+        || (refLonTL != refLon && refLonBR != refLon && refLonTR != refLon && refLonBL != refLon))
         secondaryZoom = 0;
     else
     {
@@ -1602,7 +1605,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
         tile31.x,
         tile31.y,
         1u << zoomShift & 2147483647u,
-        zone << 16 | secondaryZoom << 2 | primaryZoom);
+        zone << 4 | secondaryZoom << 2 | primaryZoom);
     GL_CHECK_RESULT;
 
     // Set tile coordinates offset
@@ -2027,44 +2030,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         currentState.gridConfiguration.gridParameters[1].factorY3,
         currentState.gridConfiguration.gridParameters[1].offsetY);
     GL_CHECK_RESULT;
-    const auto shift = MaxZoomLevel - currentState.surfaceZoomLevel;
-    PointI tile31(currentState.target31.x >> shift, currentState.target31.y >> shift);
-    tile31.x <<= shift;
-    tile31.y <<= shift;
-    auto tileSize31 = 1u << shift >> 1;
-    PointI centerTile31(tile31.x + tileSize31, tile31.y + tileSize31);
+    auto currentGaps = currentState.gridConfiguration.getCurrentGaps(
+        currentState.target31, currentState.surfaceZoomLevel);
     auto density = renderer->getSetupOptions().displayDensityFactor;
-    auto primaryGap = currentState.gridConfiguration.primaryGap;
-    if (currentState.gridConfiguration.primaryGranularity > 0.0f)
-    {
-        auto refLon = currentState.gridConfiguration.getPrimaryGridReference(currentState.target31);
-        auto tileBegin = currentState.gridConfiguration.getPrimaryGridLocation(tile31, &refLon);
-        auto tileCenter = currentState.gridConfiguration.getPrimaryGridLocation(centerTile31, &refLon);
-        auto cellSize = fabs(tileCenter.x - tileBegin.x) * 2.0 * currentState.gridConfiguration.primaryGranularity;
-        primaryGap = Utilities::snapToGrid(cellSize);
-    }
-    auto secondaryGap = currentState.gridConfiguration.secondaryGap;
-    if (currentState.gridConfiguration.secondaryGranularity > 0.0f)
-    {
-        auto difFactor =
-            currentState.gridConfiguration.primaryGranularity / currentState.gridConfiguration.secondaryGranularity;
-        if (currentState.gridConfiguration.primaryProjection != currentState.gridConfiguration.primaryProjection
-            || difFactor - std::floor(difFactor) > 0.0f)
-        {
-            auto refLon = currentState.gridConfiguration.getSecondaryGridReference(currentState.target31);
-            auto tileBegin = currentState.gridConfiguration.getSecondaryGridLocation(tile31, &refLon);
-            auto tileCenter = currentState.gridConfiguration.getSecondaryGridLocation(centerTile31, &refLon);
-            auto cellSize =
-                fabs(tileCenter.x - tileBegin.x) * 2.0 * currentState.gridConfiguration.secondaryGranularity;
-            secondaryGap = Utilities::snapToGrid(cellSize);
-        }
-        else
-            secondaryGap = primaryGap / difFactor;
-    }
     glUniform4f(program.fs.param.gridParameters,
-        primaryGap,
+        static_cast<float>(currentGaps.x),
         currentState.gridConfiguration.primaryThickness * density / 2.0f,
-        secondaryGap,
+        static_cast<float>(currentGaps.y),
         currentState.gridConfiguration.secondaryThickness * density / 2.0f);
     GL_CHECK_RESULT;
     glUniform4f(program.fs.param.primaryGridColor,

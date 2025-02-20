@@ -81,16 +81,18 @@ bool OsmAnd::ElevationConfiguration::isValid() const
 }
 
 OsmAnd::GridConfiguration::GridConfiguration()
-    : primaryProjection(Projection::UTM)
-    , secondaryProjection(Projection::UTM)
-    , primaryGap(1.0f)
-    , secondaryGap(0.5f)
-    , primaryGranularity(0.5f)
-    , secondaryGranularity(0.25f)
+    : primaryGrid(false)
+    , secondaryGrid(false)
+    , primaryProjection(Projection::WGS84)
+    , secondaryProjection(Projection::WGS84)
+    , primaryGap(180.0f)
+    , secondaryGap(1.0f)
+    , primaryGranularity(0.0f)
+    , secondaryGranularity(1.0f)
     , primaryThickness(2.0f)
     , secondaryThickness(1.0f)
-    , primaryColor({0.0f, 1.0f, 1.0f, 0.0f})
-    , secondaryColor({0.0f, 1.0f, 1.0f, 1.0f})
+    , primaryFormat(Format::Decimal)
+    , secondaryFormat(Format::Decimal)
 {
     setProjectionParameters();
 }
@@ -117,7 +119,7 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setProjectionParameters(
             parameters->factorY2 = 1.0f;
             parameters->factorY3 = 0.0f;
             parameters->offsetY = 0.0f;
-            parameters->minZoom = ZoomLevel9;
+            parameters->minZoom = ZoomLevel3;
             parameters->maxZoomForFloat = ZoomLevel12;
             parameters->maxZoomForMixed = ZoomLevel14;
             break;
@@ -198,22 +200,314 @@ OsmAnd::PointD OsmAnd::GridConfiguration::projectLocation(
     const Projection projection, const PointI& location31, const double* referenceDeg /* = nullptr */) const
 {
     PointD result;
-    double refLonDeg;
-    auto lonlat = Utilities::getAnglesFrom31(location31);
     switch (projection)
     {
         case Projection::UTM: // UTM easting and northing coordinates (100 kilometers)
-            if (referenceDeg)
-                refLonDeg = *referenceDeg;
-            else
-                Utilities::getZoneUTM(lonlat, &refLonDeg);
-            result = Utilities::getCoordinatesUTM(lonlat, refLonDeg * M_PI / 180.0) / 100.0;
+            {
+                const auto lonlat = Utilities::getAnglesFrom31(location31);
+                double refLon;
+                if (referenceDeg)
+                    refLon = *referenceDeg;
+                else
+                    Utilities::getZoneUTM(lonlat, &refLon);
+                result = Utilities::getCoordinatesUTM(lonlat, refLon * M_PI / 180.0) / 100.0;
+            }
             break;
         case Projection::Mercator: // EPSG:3857 X and Y coordinates (100 map kilometers)
             result = Utilities::metersFrom31(PointD(location31)) / 100000.0;
             break;
         default: // EPSG:4326 longitude and latitude (degrees)
-            result = lonlat * 180.0 / M_PI;
+            {
+                const auto lonlat = Utilities::getAnglesFrom31(location31);
+                result = lonlat * 180.0 / M_PI;
+            }
+    }
+    return result;
+}
+
+OsmAnd::PointI OsmAnd::GridConfiguration::getPrimaryGridLocation31(
+    const PointD& location) const
+{
+    return unProjectLocation(primaryProjection, location);
+}
+
+OsmAnd::PointI OsmAnd::GridConfiguration::getSecondaryGridLocation31(
+    const PointD& location) const
+{
+    return unProjectLocation(secondaryProjection, location);
+}
+
+OsmAnd::PointI OsmAnd::GridConfiguration::unProjectLocation(
+    const Projection projection, const PointD& location) const
+{
+    PointI result(-1, -1);
+    switch (projection)
+    {
+        case Projection::UTM: // TODO: unproject UTM to 31-coordinates
+            break;
+        case Projection::Mercator: // Get 31-coordinates from EPSG:3857 X and Y coordinates in 100 map kilometers
+            result = Utilities::metersTo31(location * 100000.0);
+            break;
+        default: // Get 31-coordinates from EPSG:4326 longitude and latitude in degrees
+            result = Utilities::get31FromAngles(location * M_PI / 180.0);
+    }
+    return result;
+}
+
+bool OsmAnd::GridConfiguration::getPrimaryGridCoordinateX(double& coordinate) const
+{
+    return getCoordinateX(primaryProjection, coordinate);
+}
+
+bool OsmAnd::GridConfiguration::getPrimaryGridCoordinateY(double& coordinate) const
+{
+    return getCoordinateY(primaryProjection, coordinate);
+}
+
+bool OsmAnd::GridConfiguration::getSecondaryGridCoordinateX(double& coordinate) const
+{
+    return getCoordinateX(secondaryProjection, coordinate);
+}
+
+bool OsmAnd::GridConfiguration::getSecondaryGridCoordinateY(double& coordinate) const
+{
+    return getCoordinateY(secondaryProjection, coordinate);
+}
+
+bool OsmAnd::GridConfiguration::getCoordinateX(const Projection projection, double& coordinate) const
+{
+    bool result = false;
+    switch (projection)
+    {
+        case Projection::UTM: // UTM easting coordinate (100 kilometers)
+            result = true;
+            break;
+        case Projection::Mercator: // EPSG:3857 coordinate X in 100 map kilometers
+            {
+                const auto half = M_PI * 63.78137;
+                if (coordinate > half)
+                    coordinate -= 2.0 * half;
+                else if (coordinate < -half)
+                    coordinate += 2.0 * half;
+                result = true;
+            }
+            break;
+        default: // EPSG:4326 longitude in degrees
+            if (coordinate >= 180.0)
+                coordinate -= 360.0;
+            else if (coordinate < -180.0)
+                coordinate += 360.0;
+            result = true;
+    }
+    return result;
+}
+
+bool OsmAnd::GridConfiguration::getCoordinateY(const Projection projection, double& coordinate) const
+{
+    bool result = false;
+    switch (projection)
+    {
+        case Projection::UTM: // UTM northing coordinate (100 kilometers)
+            result = true;
+            break;
+        case Projection::Mercator: // EPSG:3857 coordinate Y in 100 map kilometers
+            {
+                const auto half = M_PI * 63.78137;
+                if (coordinate >= -half && coordinate <= half)
+                    result = true;
+            }
+            break;
+        default: // EPSG:4326 latitude in degrees
+            if (coordinate >= -85.0 && coordinate <= 85.0)
+                result = true;
+    }
+    return result;
+}
+
+double OsmAnd::GridConfiguration::getPrimaryMaxMarksPerAxis(const double gap) const
+{
+    return getMaxMarksPerAxis(primaryProjection, gap);
+}
+
+double OsmAnd::GridConfiguration::getSecondaryMaxMarksPerAxis(const double gap) const
+{
+    return getMaxMarksPerAxis(secondaryProjection, gap);
+}
+
+double OsmAnd::GridConfiguration::getMaxMarksPerAxis(const Projection projection, const double gap) const
+{
+    double result;
+    switch (projection)
+    {
+        case Projection::UTM: // No need to limit UTM marks
+            result = std::numeric_limits<double>::max();
+            break;
+        case Projection::Mercator: // Get maximum number of EPSG:3857 marks (gap in 100 kilometers)
+            {
+                const auto earth = 2.0 * M_PI * 63.78137;
+                result = std::floor(earth / gap);
+            }
+            break;
+        default: // Get maximum number of EPSG:4326 marks (gap in degrees)
+            result = std::floor(360.0 / gap);
+    }
+    return result;
+}
+
+QString OsmAnd::GridConfiguration::getPrimaryGridMarkX(const PointD& coordinates, const int zone) const
+{
+    return getMarkX(primaryProjection, primaryFormat, coordinates, zone);
+}
+
+QString OsmAnd::GridConfiguration::getPrimaryGridMarkY(const PointD& coordinates, const int zone) const
+{
+    return getMarkY(primaryProjection, primaryFormat, coordinates, zone);
+}
+
+QString OsmAnd::GridConfiguration::getSecondaryGridMarkX(const PointD& coordinates, const int zone) const
+{
+    return getMarkX(secondaryProjection, secondaryFormat, coordinates, zone);
+}
+
+QString OsmAnd::GridConfiguration::getSecondaryGridMarkY(const PointD& coordinates, const int zone) const
+{
+    return getMarkY(secondaryProjection, secondaryFormat, coordinates, zone);
+}
+
+QString OsmAnd::GridConfiguration::getMarkX(
+    const Projection projection, const Format format, const PointD& coordinates, const int zone) const
+{
+    QString result;
+    switch (projection)
+    {
+        case Projection::UTM: // UTM easting coordinate (zone, hemisphere, meters)
+            {
+                PointI zoneUTM(zone & 63, zone >> 6);
+                QString hemisphere = zoneUTM.y < 13 ? QStringLiteral("S") : QStringLiteral("N");
+                result =
+                    QStringLiteral("%1%2 %3").arg(zoneUTM.x).arg(hemisphere).arg(coordinates.x * 100000.0, 0, 'f', 0);
+            }
+            break;
+        case Projection::Mercator: // EPSG:3857 coordinate X in map kilometers
+            result = QStringLiteral("%1").arg(coordinates.x * 100.0, 0, 'f', 3);
+            Utilities::removeTrailingZeros(result);
+            break;
+        default: // EPSG:4326 longitude (degrees / degrees + minutes + seconds / degrees + minutes)
+            if (format == Format::Decimal)
+            {
+                QString str = QStringLiteral("%1").arg(std::abs(coordinates.x), 0, 'f', 5);
+                Utilities::removeTrailingZeros(str);
+                result = str % QStringLiteral("°");
+            }
+            else if (format == Format::DMS)
+                result = Utilities::getDegreeMinuteSecondString(coordinates.x);
+            else
+                result = Utilities::getDegreeMinuteString(coordinates.x);
+
+    }
+    return result;
+}
+
+QString OsmAnd::GridConfiguration::getMarkY(
+    const Projection projection, const Format format, const PointD& coordinates, const int zone) const
+{
+    QString result;
+    switch (projection)
+    {
+        case Projection::UTM: // UTM northing coordinate (zone, hemisphere, meters)
+            {
+                const PointI zoneUTM(zone & 63, zone >> 6);
+                const QString hemisphere = zoneUTM.y < 13 ? QStringLiteral("S") : QStringLiteral("N");
+                const auto coordinate = std::round(coordinates.y * 100000.0) - (zoneUTM.y < 13 ? 0.0 : 10000000.0);
+                result = QStringLiteral("%1%2 %3").arg(zoneUTM.x).arg(hemisphere).arg(coordinate, 0, 'f', 0);
+            }
+            break;
+        case Projection::Mercator: // EPSG:3857 coordinate Y in map kilometers
+            result = QStringLiteral("%1").arg(coordinates.y * 100.0, 0, 'f', 3);
+            Utilities::removeTrailingZeros(result);
+            break;
+        default: // EPSG:4326 latitude (degrees / degrees + minutes + seconds / degrees + minutes)
+            if (format == Format::Decimal)
+            {
+                QString str = QStringLiteral("%1").arg(std::abs(coordinates.y), 0, 'f', 5);
+                Utilities::removeTrailingZeros(str);
+                result = str % QStringLiteral("°");
+            }
+            else if (format == Format::DMS)
+                result = Utilities::getDegreeMinuteSecondString(coordinates.y);
+            else
+                result = Utilities::getDegreeMinuteString(coordinates.y);
+}
+    return result;
+}
+
+OsmAnd::PointD OsmAnd::GridConfiguration::getCurrentGaps(
+    const PointI& target31, const ZoomLevel& zoomLevel, PointD* refLons_ /* = nullptr */) const
+{
+    PointD result(primaryGap, secondaryGap);
+    PointD refLons(NAN, NAN);
+    const auto shift = MaxZoomLevel - zoomLevel;
+    PointI tile31(target31.x >> shift, target31.y >> shift);
+    tile31.x <<= shift;
+    tile31.y <<= shift;
+    auto tileSize31 = 1u << shift >> 1;
+    PointI startTile31(tile31.x, tile31.y + tileSize31);
+    PointI centerTile31(tile31.x + tileSize31, tile31.y + tileSize31);
+    if (primaryGranularity > 0.0f)
+    {
+        refLons.x = getPrimaryGridReference(centerTile31);
+        auto tileBegin = getPrimaryGridLocation(startTile31, &refLons.x);
+        auto tileCenter = getPrimaryGridLocation(centerTile31, &refLons.x);
+        auto cellSize = fabs(tileCenter.x - tileBegin.x) * 2.0 * primaryGranularity;
+        result.x = primaryFormat == Format::DMS ? Utilities::snapToGridDMS(cellSize)
+            : (primaryFormat == Format::DM ? Utilities::snapToGridDM(cellSize)
+                : Utilities::snapToGridDecimal(cellSize));
+    }
+    if (secondaryGranularity > 0.0f)
+    {
+        auto difFactor =
+            primaryGranularity / secondaryGranularity;
+        if (primaryGranularity == 0.0 || primaryProjection != primaryProjection
+            || difFactor - std::floor(difFactor) > 0.0f)
+        {
+            refLons.y = getSecondaryGridReference(centerTile31);
+            auto tileBegin = getSecondaryGridLocation(startTile31, &refLons.y);
+            auto tileCenter = getSecondaryGridLocation(centerTile31, &refLons.y);
+            auto cellSize =
+                fabs(tileCenter.x - tileBegin.x) * 2.0 * secondaryGranularity;
+            result.y = secondaryFormat == Format::DMS ? Utilities::snapToGridDMS(cellSize)
+                : (secondaryFormat == Format::DM ? Utilities::snapToGridDM(cellSize)
+                    : Utilities::snapToGridDecimal(cellSize));
+            }
+        else
+            result.y = result.x / static_cast<double>(difFactor);
+    }
+
+    if (refLons_)
+        *refLons_ = refLons;
+
+    result.x = correctGap(primaryProjection, result.x);
+    result.y = correctGap(secondaryProjection, result.y);
+
+    return result;
+}
+
+double OsmAnd::GridConfiguration::correctGap(const Projection projection, const double gap) const
+{
+    double result;
+    switch (projection)
+    {
+        case Projection::UTM: // No need to correct UTM gap
+            result = gap;
+            break;
+        case Projection::Mercator: // Get gap for EPSG:3857 that fit (in 100 kilometers)
+            {
+                const auto half = M_PI * 63.78137;
+                result = std::round(half / gap) < 2.0 ? half : gap;
+            }
+            break;
+        default: // Get gap for EPSG:4326 that fit (in degrees)
+            result = 180.0 / std::max(std::round(180.0 / gap), 1.0);
     }
     return result;
 }

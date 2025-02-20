@@ -431,6 +431,7 @@ SkRect OsmAnd::TextRasterizer_P::positionText(
         switch (textAlignment)
         {
             case Style::TextAlignment::Center:
+            case Style::TextAlignment::Under:
                 horizontalShift += widthDelta / 2.0f;
                 break;
 

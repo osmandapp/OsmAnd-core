@@ -156,10 +156,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
                 jsonObject.insert(QStringLiteral("type"), QStringLiteral("billboard"));
                 const auto& symbol =
                     std::static_pointer_cast<const BillboardRasterMapSymbol>(renderableBillboardSymbol->mapSymbol);
-                const auto& position31 = (renderableBillboardSymbol->instanceParameters
-                    && renderableBillboardSymbol->instanceParameters->overridesPosition31)
-                    ? renderableBillboardSymbol->instanceParameters->position31
-                    : symbol->getPosition31();
+                const auto& position31 = renderableBillboardSymbol->position31;
                 jsonObject.insert(QStringLiteral("lat"), Utilities::getLatitudeFromTile(ZoomLevel31, position31.y));
                 jsonObject.insert(QStringLiteral("lon"), Utilities::getLongitudeFromTile(ZoomLevel31, position31.x));
                 reportCommonParameters(jsonObject, *renderableSymbol);
@@ -658,10 +655,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     //////////////////////////////////////////////////////////////////////////
 
     // Per-symbol data
-    const auto& position31 = (renderable->instanceParameters && renderable->instanceParameters->overridesPosition31)
-                                 ? renderable->instanceParameters->position31
-                                 : symbol->getPosition31();
-    glUniform2i(_billboardRasterProgram.vs.param.position31, position31.x, position31.y);
+    glUniform2i(_billboardRasterProgram.vs.param.position31, renderable->position31.x, renderable->position31.y);
 
     // Set symbol size
     glUniform2i(_billboardRasterProgram.vs.param.symbolSize, gpuResource->width, gpuResource->height);

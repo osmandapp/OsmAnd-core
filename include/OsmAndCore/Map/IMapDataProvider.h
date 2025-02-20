@@ -9,6 +9,7 @@
 #include <OsmAndCore/Common.h>
 #include <OsmAndCore/Callable.h>
 #include <OsmAndCore/Metrics.h>
+#include <OsmAndCore/Map/IMapRenderer.h>
 
 namespace OsmAnd
 {
@@ -65,6 +66,8 @@ namespace OsmAnd
         IMapDataProvider();
     public:
         virtual ~IMapDataProvider();
+
+        virtual void applyMapChanges(IMapRenderer* renderer);
 
         virtual bool supportsNaturalObtainData() const = 0;
         virtual bool obtainData(

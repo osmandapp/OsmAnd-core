@@ -333,6 +333,10 @@ namespace OsmAnd
 
         virtual MapRendererState getState() const Q_DECL_OVERRIDE;
         virtual MapState getMapState() const Q_DECL_OVERRIDE;
+        virtual MapState getFutureState() const Q_DECL_OVERRIDE;
+        virtual void getGridConfiguration(GridConfiguration* gridConfiguration,
+            PointI* target31, ZoomLevel* zoomLevel) const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getVisibleArea(AreaI* visibleBBoxShifted) const Q_DECL_OVERRIDE;
         virtual bool isFrameInvalidated() const Q_DECL_OVERRIDE;
         virtual void forcedFrameInvalidate() Q_DECL_OVERRIDE;
         virtual void forcedGpuProcessingCycle() Q_DECL_OVERRIDE;

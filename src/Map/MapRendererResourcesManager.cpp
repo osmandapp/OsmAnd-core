@@ -1112,6 +1112,9 @@ void OsmAnd::MapRendererResourcesManager::requestNeededKeyedResources(
     // Use provider's priority as value of priority for all its resources
     const auto priority = provider->getPriority();
 
+    // Apply current renderer state to provider if needed
+    provider->applyMapChanges(renderer);
+
     // Get list of keys this provider has and check that all are present
     const auto& resourceKeys = provider->getProvidedDataKeys();
     for (const auto& resourceKey : constOf(resourceKeys))

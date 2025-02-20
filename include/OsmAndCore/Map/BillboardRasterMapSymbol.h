@@ -34,6 +34,14 @@ namespace OsmAnd
         virtual PointI getPosition31() const;
         virtual void setPosition31(const PointI position);
 
+        PositionType positionType;
+        virtual PositionType getPositionType() const;
+        virtual void setPositionType(const PositionType positionType);
+
+        double additionalPosition;
+        virtual double getAdditionalPosition() const;
+        virtual void setAdditionalPosition(const double additionalPosition);
+
         float elevation;
         float getElevation() const;
         void setElevation(const float elevation);

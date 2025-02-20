@@ -360,7 +360,7 @@ const QString OsmAnd::OnlineRasterMapLayerProvider_P::calcBoundingBoxForTile(Zoo
     double xmax = Utilities::getLongitudeFromTile(zoom, x+1);
     double ymin = Utilities::getLatitudeFromTile(zoom, y+1);
     double ymax = Utilities::getLatitudeFromTile(zoom, y);
-    return QString("%1,%2,%3,%4").arg(xmin, 0, 'f', 8)
+    return QStringLiteral("%1,%2,%3,%4").arg(xmin, 0, 'f', 8)
                                  .arg(ymin, 0, 'f', 8)
                                  .arg(xmax, 0, 'f', 8)
                                  .arg(ymax, 0, 'f', 8);

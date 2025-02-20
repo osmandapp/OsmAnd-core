@@ -65,6 +65,67 @@ namespace OsmAnd
             return locale.toString(QDateTime::fromMSecsSinceEpoch(time, Qt::UTC), QStringLiteral("yyyyMMdd_hh00"));
         }
 
+        inline static void removeTrailingZeros(QString& str)
+        {
+            while (str.back() == '0')
+            {
+                str.chop(1);
+            }
+            if (str.back() == '.')
+                str.chop(1);
+        }
+
+        inline static QString getDegreeMinuteSecondString(double coordinate)
+        {
+            auto crd = std::abs(coordinate);
+            auto deg = static_cast<int>(std::floor(crd));
+            crd = (crd - deg) * 60.0;
+            auto min = static_cast<int>(std::floor(crd));
+            crd = (crd - min) * 600.0;
+            auto sec = std::round(crd) / 10.0;
+            if (sec > 59.9)
+            {
+                sec = 0.0;
+                min++;
+                if (min > 59)
+                {
+                    min = 0;
+                    deg++;
+                }
+            }
+            QString smin, ssec;
+            if (sec >= 0.05)
+            {
+                ssec = QStringLiteral("%1").arg(sec, 4, 'f', 1, QLatin1Char('0'));
+                Utilities::removeTrailingZeros(ssec);
+            }
+            if (min >= 1 || !ssec.isEmpty())
+                smin = QStringLiteral("%1'").arg(min, 2, 10, QLatin1Char('0'));
+            auto sdeg = QStringLiteral("%1°").arg(deg);
+            return QStringLiteral("%1%2%3\"").arg(sdeg).arg(smin).arg(ssec);
+        }
+
+        inline static QString getDegreeMinuteString(double coordinate)
+        {
+            auto crd = std::abs(coordinate);
+            auto deg = static_cast<int>(std::floor(crd));
+            crd = (crd - deg) * 60000.0;
+            auto min = std::round(crd) / 1000.0;
+            if (min > 59.999)
+            {
+                min = 0.0;
+                deg++;
+            }
+            QString smin;
+            if (min >= 0.0005)
+            {
+                smin = QStringLiteral("%1").arg(min, 6, 'f', 3, QLatin1Char('0'));
+                Utilities::removeTrailingZeros(smin);
+            }
+            auto sdeg = QStringLiteral("%1°").arg(deg);
+            return QStringLiteral("%1%2'").arg(sdeg).arg(smin);
+        }
+
         inline static double toRadians(const double angle)
         {
             return angle / 180.0 * M_PI;
@@ -278,12 +339,12 @@ namespace OsmAnd
         {
             const int64_t intMax = INT32_MAX;
             const auto intFull = intMax + 1;
-            double eval = log(tan(a.y) + 1.0 / cos(a.y));
-            if (eval > M_PI)
-                eval = M_PI;
+            auto y = std::min(std::max(a.y, -M_PI_2), M_PI_2);
+            auto eval = log(tan(y) + 1.0 / cos(y));
+            auto res = eval >= -M_PI && eval <= M_PI ? eval : (eval < -M_PI ? -M_PI : M_PI);
             return PointI(
                 static_cast<int32_t>(static_cast<int64_t>((a.x + M_PI) / (M_PI * 2.0) * intFull) % intFull),
-                static_cast<int32_t>(std::min(static_cast<int64_t>((1.0 - eval / M_PI) / 2.0 * intFull), intMax)));
+                static_cast<int32_t>(std::min(static_cast<int64_t>((1.0 - res / M_PI) / 2.0 * intFull), intMax)));
         }
 
         inline static PointD getZoneUTM(const PointD& location, double* refLonDeg)
@@ -330,16 +391,12 @@ namespace OsmAnd
             return zone;
         }
 
-        inline static int getCodedZoneUTM(const PointD& zUTM)
-        {
-            auto zone = simplifyZoneUTM(zUTM);
-            return zone.y << 8 | zone.x;
-        }
-
-        inline static int getCodedZoneUTM(const PointI& location31)
+        inline static int getCodedZoneUTM(const PointI& location31, const bool simplify = true)
         {
             auto zUTM = getZoneUTM(getAnglesFrom31(location31), nullptr);
-            return getCodedZoneUTM(zUTM);
+            auto zone = simplify ? simplifyZoneUTM(zUTM)
+                : PointI(static_cast<int32_t>(std::floor(zUTM.x)), static_cast<int32_t>(std::floor(zUTM.y)));
+            return zone.y << 6 | zone.x;
         }
 
         inline static PointD getCoordinatesUTM(const PointD& lonlat, const double& refLon)
@@ -354,14 +411,14 @@ namespace OsmAnd
             double xi4 = xi * 4.0;
             double xi6 = xi * 6.0;
             double eta = atanh(sin(lonlat.x - refLon) / sqrt(1.0 + t * t));
-            double shEta2 = sinh(eta * 2.0);
-            double shEta4 = sinh(eta * 4.0);
-            double shEta6 = sinh(eta * 6.0);
+            double eta2 = eta * 2.0;
+            double eta4 = eta * 4.0;
+            double eta6 = eta * 6.0;
             double a1 = 8.3773181881925413e-4; //0.5 * n - 2.0 / 3.0 * n * n + 5.0 / 16.0 * pow(n, 3.0);
             double a2 = 7.6084969586991665e-7; //13.0 / 48.0 * n * n - 3.0 / 5.0 * pow(n, 3.0);
             double a3 = 1.2034877875966644e-9; //61.0 / 240.0 * pow(n, 3.0);
-            PointD result(eta + a1 * cos(xi2) * shEta2 + a2 * cos(xi4) * shEta4 + a3 * cos(xi6) * shEta6,
-                xi + a1 * sin(xi2) * shEta2 + a2 * sin(xi4) * shEta4 + a3 * sin(xi6) * shEta6);
+            PointD result(eta + a1 * cos(xi2) * sinh(eta2) + a2 * cos(xi4) * sinh(eta4) + a3 * cos(xi6) * sinh(eta6),
+                xi + a1 * sin(xi2) * cosh(eta2) + a2 * sin(xi4) * cosh(eta4) + a3 * sin(xi6) * cosh(eta6));
             //double a = 6378.137 / (1.0 + n) * (1.0 + n * n / 4.0 + pow(n, 4.0) / 64.0 + pow(n, 6.0) / 256.0);
             result *= 6364.9021661650868; //a * 0.9996;
             result.x += 500.0;
@@ -1166,9 +1223,9 @@ namespace OsmAnd
             return offset31;
         }
 
-        inline static double snapToGrid(const double value)
+        inline static double snapToGridDecimal(const double value)
         {
-            // Snap value to the closest number from range [1, 2.5, 5, 10] * (10 ^ n)
+            // Snap value to the closest number from range [1, 2, 5, 10] * (10 ^ n)
             double factor = std::pow(10.0, std::floor(log10(value)));
             double result = value / factor;
             if (result < 1.5)
@@ -1181,6 +1238,61 @@ namespace OsmAnd
                 result = 10.0;
             result *= factor;
             return result;
+        }
+
+        inline static double snapToGridSexagesimal(const double value)
+        {
+            // Snap value to the closest number from range [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60]
+            double result = value;
+            if (result < 6.5)
+                result = std::round(result);
+            else if (result < 8.0)
+                result = 6.0;
+            else if (result < 11.0)
+                result = 10.0;
+            else if (result < 13.5)
+                result = 12.0;
+            else if (result < 17.5)
+                result = 15.0;
+            else if (result < 25.0)
+                result = 20.0;
+            else if (result < 45.0)
+                result = 30.0;
+            else
+                result = 60.0;
+            return result;
+        }
+
+        inline static double snapToGridDMS(const double value)
+        {
+            // Snap value to the closest degree:minute:second.n
+            if (value >= 1.0)
+                return snapToGridDecimal(value);
+            double factor = 60.0;
+            double gap = value * factor;
+            if (gap >= 1.0)
+                return snapToGridSexagesimal(gap) / factor;
+            factor *= 60.0;
+            gap = value * factor;
+            if (gap >= 1.0)
+                return snapToGridSexagesimal(gap) / factor;
+            factor *= 10.0;
+            gap = value * factor;
+            return snapToGridDecimal(gap) / factor;
+        }
+
+        inline static double snapToGridDM(const double value)
+        {
+            // Snap value to the closest degree:minute.n
+            if (value >= 1.0)
+                return snapToGridDecimal(value);
+            double factor = 60.0;
+            double gap = value * factor;
+            if (gap >= 1.0)
+                return snapToGridSexagesimal(gap) / factor;
+            factor *= 10.0;
+            gap = value * factor;
+            return snapToGridDecimal(gap) / factor;
         }
 
         enum class CHCode : uint8_t

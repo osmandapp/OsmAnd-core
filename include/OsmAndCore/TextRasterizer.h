@@ -137,7 +137,8 @@ namespace OsmAnd
             {
                 Left,
                 Center,
-                Right
+                Right,
+                Under
             };
             TextAlignment textAlignment;
 #if !defined(SWIG)

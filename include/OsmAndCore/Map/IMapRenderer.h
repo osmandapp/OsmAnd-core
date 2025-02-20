@@ -87,6 +87,10 @@ namespace OsmAnd
 
         virtual MapRendererState getState() const = 0;
         virtual MapState getMapState() const = 0;
+        virtual MapState getFutureState() const = 0;
+        virtual void getGridConfiguration(GridConfiguration* gridConfiguration,
+            PointI* target31, ZoomLevel* zoomLevel) const = 0;
+        virtual ZoomLevel getVisibleArea(AreaI* visibleBBoxShifted) const = 0;
         virtual bool isFrameInvalidated() const = 0;
         virtual void forcedFrameInvalidate() = 0;
         virtual void forcedGpuProcessingCycle() = 0;
