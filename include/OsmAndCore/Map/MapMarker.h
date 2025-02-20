@@ -38,7 +38,6 @@ namespace OsmAnd
 
     public:
         typedef const void* OnSurfaceIconKey;
-        typedef BillboardRasterMapSymbol::PositionType PositionType;
 
         enum PinIconVerticalAlignment : unsigned int
         {

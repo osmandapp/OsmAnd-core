@@ -1261,12 +1261,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const BillboardRasterMapSymbol>(mapSymbol))
     {
         const auto positionType = rasterMapSymbol->getPositionType();
-        if (positionType != BillboardRasterMapSymbol::PositionType::Coordinate31)
+        if (positionType != PositionType::Coordinate31)
         {
-            bool isPrimary = positionType == BillboardRasterMapSymbol::PositionType::PrimaryGridX
-                || positionType == BillboardRasterMapSymbol::PositionType::PrimaryGridY;
-            bool isAxisY = positionType == BillboardRasterMapSymbol::PositionType::PrimaryGridY
-                || positionType == BillboardRasterMapSymbol::PositionType::SecondaryGridY;
+            bool isPrimary = positionType == PositionType::PrimaryGridX
+                || positionType == PositionType::PrimaryGridY;
+            bool isAxisY = positionType == PositionType::PrimaryGridY
+                || positionType == PositionType::SecondaryGridY;
             auto coordinate = rasterMapSymbol->getAdditionalPosition();
             PointD point(isAxisY ? 0.0 : coordinate, isAxisY ? coordinate : 0.0);
             auto pos31 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation31(point)

@@ -78,7 +78,7 @@ void OsmAnd::MapMarker::setPosition(const PointI position)
     _p->setPosition(position);
 }
 
-OsmAnd::MapMarker::PositionType OsmAnd::MapMarker::getPositionType() const
+OsmAnd::PositionType OsmAnd::MapMarker::getPositionType() const
 {
     return _p->getPositionType();
 }

@@ -20,15 +20,6 @@ namespace OsmAnd
     private:
     protected:
     public:
-        enum PositionType : unsigned int
-        {
-            Coordinate31 = 0,
-            PrimaryGridX = 1,
-            PrimaryGridY = 2,
-            SecondaryGridX = 3,
-            SecondaryGridY = 4
-        };
-
         BillboardRasterMapSymbol(
             const std::shared_ptr<MapSymbolsGroup>& group);
         virtual ~BillboardRasterMapSymbol();

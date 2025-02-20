@@ -76,7 +76,7 @@ namespace OsmAnd
         GridMarksProvider_P(GridMarksProvider* const owner);
 
     public:
-        typedef BillboardRasterMapSymbol::PositionType PositionType;    
+        typedef PositionType PositionType;    
         virtual ~GridMarksProvider_P();
 
         ImplementationInterface<GridMarksProvider> owner;

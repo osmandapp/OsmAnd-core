@@ -35,7 +35,7 @@ void OsmAnd::BillboardRasterMapSymbol::setPosition31(const PointI position)
     position31 = position;
 }
 
-OsmAnd::BillboardRasterMapSymbol::PositionType OsmAnd::BillboardRasterMapSymbol::getPositionType() const
+OsmAnd::PositionType OsmAnd::BillboardRasterMapSymbol::getPositionType() const
 {
     return positionType;
 }

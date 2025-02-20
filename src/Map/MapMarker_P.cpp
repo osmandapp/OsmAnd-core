@@ -17,7 +17,7 @@ OsmAnd::MapMarker_P::MapMarker_P(MapMarker* const owner_)
     : owner(owner_)
     , textRasterizer(TextRasterizer::getDefault())
     , _model3DDirection(-90.0f)
-    , _positionType(MapMarker::PositionType::Coordinate31)
+    , _positionType(PositionType::Coordinate31)
 {
 }
 
@@ -79,14 +79,14 @@ void OsmAnd::MapMarker_P::setPosition(const PointI position)
     }
 }
 
-OsmAnd::MapMarker::PositionType OsmAnd::MapMarker_P::getPositionType() const
+OsmAnd::PositionType OsmAnd::MapMarker_P::getPositionType() const
 {
     QReadLocker scopedLocker(&_lock);
 
     return _positionType;
 }
 
-void OsmAnd::MapMarker_P::setPositionType(const MapMarker::PositionType positionType)
+void OsmAnd::MapMarker_P::setPositionType(const PositionType positionType)
 {
     QWriteLocker scopedLocker(&_lock);
 
@@ -359,14 +359,14 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
             PointI extraOffset;
             switch (positionType)
             {
-                case MapMarker::PositionType::PrimaryGridX:
-                case MapMarker::PositionType::SecondaryGridX:
+                case PositionType::PrimaryGridX:
+                case PositionType::SecondaryGridX:
                     extraOffset.x = owner->captionTopSpace + textImage->width() / 2;
                     if (textStyle.textAlignment == TextRasterizer::Style::TextAlignment::Under)
                         extraOffset.y = textImage->height() + owner->captionTopSpace;
                     break;
-                case MapMarker::PositionType::PrimaryGridY:
-                case MapMarker::PositionType::SecondaryGridY:
+                case PositionType::PrimaryGridY:
+                case PositionType::SecondaryGridY:
                 if (textStyle.textAlignment == TextRasterizer::Style::TextAlignment::Under)
                     extraOffset.y = textImage->height() / 2 - owner->captionTopSpace;
                 else

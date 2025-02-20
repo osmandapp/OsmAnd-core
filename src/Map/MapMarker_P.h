@@ -43,7 +43,7 @@ namespace OsmAnd
 
         bool _isAccuracyCircleVisible;
         double _additionalPositionParameter;
-        MapMarker::PositionType _positionType;
+        PositionType _positionType;
         PointI _position;
 
         float _height;
@@ -93,8 +93,8 @@ namespace OsmAnd
         PointI getPosition() const;
         void setPosition(const PointI position);
 
-        MapMarker::PositionType getPositionType() const;
-        void setPositionType(const MapMarker::PositionType positionType);
+        PositionType getPositionType() const;
+        void setPositionType(const PositionType positionType);
 
         double getAdditionalPosition() const;
         void setAdditionalPosition(const double additionalPosition);
