@@ -22,6 +22,7 @@
 #include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
 #include <OsmAndCore/TextRasterizer.h>
 #include <OsmAndCore/Map/Model3D.h>
+#include <OsmAndCore/Map/BillboardRasterMapSymbol.h>
 
 namespace OsmAnd
 {
@@ -37,7 +38,8 @@ namespace OsmAnd
 
     public:
         typedef const void* OnSurfaceIconKey;
-        
+        typedef BillboardRasterMapSymbol::PositionType PositionType;
+
         enum PinIconVerticalAlignment : unsigned int
         {
             Top = 0,
@@ -50,15 +52,6 @@ namespace OsmAnd
             Left = 0,
             CenterHorizontal = 1,
             Right = 2,
-        };
-
-        enum PositionType : unsigned int
-        {
-            Coordinate31 = 0,
-            PrimaryGridX = 1,
-            PrimaryGridY = 2,
-            SecondaryGridX = 3,
-            SecondaryGridY = 4
         };
 
         class SymbolsGroup

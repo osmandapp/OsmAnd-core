@@ -384,17 +384,18 @@ QString OsmAnd::GridConfiguration::getMarkX(
             {
                 PointI zoneUTM(zone & 63, zone >> 6);
                 QString hemisphere = zoneUTM.y < 13 ? QStringLiteral("S") : QStringLiteral("N");
-                result = QString("%1%2 %3").arg(zoneUTM.x).arg(hemisphere).arg(coordinates.x * 100000.0, 0, 'f', 0);
+                result =
+                    QStringLiteral("%1%2 %3").arg(zoneUTM.x).arg(hemisphere).arg(coordinates.x * 100000.0, 0, 'f', 0);
             }
             break;
         case Projection::Mercator: // EPSG:3857 coordinate X in map kilometers
-            result = QString("%1").arg(coordinates.x * 100.0, 0, 'f', 3);
+            result = QStringLiteral("%1").arg(coordinates.x * 100.0, 0, 'f', 3);
             Utilities::removeTrailingZeros(result);
             break;
         default: // EPSG:4326 longitude (degrees / degrees + minutes + seconds / degrees + minutes)
             if (format == Format::Decimal)
             {
-                QString str = QString("%1").arg(std::abs(coordinates.x), 0, 'f', 5);
+                QString str = QStringLiteral("%1").arg(std::abs(coordinates.x), 0, 'f', 5);
                 Utilities::removeTrailingZeros(str);
                 result = str % QStringLiteral("°");
             }
@@ -418,17 +419,17 @@ QString OsmAnd::GridConfiguration::getMarkY(
                 const PointI zoneUTM(zone & 63, zone >> 6);
                 const QString hemisphere = zoneUTM.y < 13 ? QStringLiteral("S") : QStringLiteral("N");
                 const auto coordinate = std::round(coordinates.y * 100000.0) - (zoneUTM.y < 13 ? 0.0 : 10000000.0);
-                result = QString("%1%2 %3").arg(zoneUTM.x).arg(hemisphere).arg(coordinate, 0, 'f', 0);
+                result = QStringLiteral("%1%2 %3").arg(zoneUTM.x).arg(hemisphere).arg(coordinate, 0, 'f', 0);
             }
             break;
         case Projection::Mercator: // EPSG:3857 coordinate Y in map kilometers
-            result = QString("%1").arg(coordinates.y * 100.0, 0, 'f', 3);
+            result = QStringLiteral("%1").arg(coordinates.y * 100.0, 0, 'f', 3);
             Utilities::removeTrailingZeros(result);
             break;
         default: // EPSG:4326 latitude (degrees / degrees + minutes + seconds / degrees + minutes)
             if (format == Format::Decimal)
             {
-                QString str = QString("%1").arg(std::abs(coordinates.y), 0, 'f', 5);
+                QString str = QStringLiteral("%1").arg(std::abs(coordinates.y), 0, 'f', 5);
                 Utilities::removeTrailingZeros(str);
                 result = str % QStringLiteral("°");
             }

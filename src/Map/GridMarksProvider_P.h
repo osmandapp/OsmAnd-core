@@ -18,6 +18,7 @@
 #include "MapMarkerBuilder.h"
 #include "MapRendererState.h"
 #include "TextRasterizer.h"
+#include "BillboardRasterMapSymbol.h"
 
 namespace OsmAnd
 {
@@ -75,6 +76,7 @@ namespace OsmAnd
         GridMarksProvider_P(GridMarksProvider* const owner);
 
     public:
+        typedef BillboardRasterMapSymbol::PositionType PositionType;    
         virtual ~GridMarksProvider_P();
 
         ImplementationInterface<GridMarksProvider> owner;

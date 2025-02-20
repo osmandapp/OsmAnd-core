@@ -9,7 +9,6 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/RasterMapSymbol.h>
 #include <OsmAndCore/Map/IBillboardMapSymbol.h>
-#include <OsmAndCore/Map/MapMarker.h>
 
 namespace OsmAnd
 {
@@ -21,6 +20,15 @@ namespace OsmAnd
     private:
     protected:
     public:
+        enum PositionType : unsigned int
+        {
+            Coordinate31 = 0,
+            PrimaryGridX = 1,
+            PrimaryGridY = 2,
+            SecondaryGridX = 3,
+            SecondaryGridY = 4
+        };
+
         BillboardRasterMapSymbol(
             const std::shared_ptr<MapSymbolsGroup>& group);
         virtual ~BillboardRasterMapSymbol();
@@ -35,9 +43,9 @@ namespace OsmAnd
         virtual PointI getPosition31() const;
         virtual void setPosition31(const PointI position);
 
-        MapMarker::PositionType positionType;
-        virtual MapMarker::PositionType getPositionType() const;
-        virtual void setPositionType(const MapMarker::PositionType positionType);
+        PositionType positionType;
+        virtual PositionType getPositionType() const;
+        virtual void setPositionType(const PositionType positionType);
 
         double additionalPosition;
         virtual double getAdditionalPosition() const;

@@ -2032,7 +2032,7 @@ bool OsmAnd::ResourcesManager_P::installFromRepository(
     if (!resourceInRepository)
         return false;
 
-    const auto tmpFilePath = QDir(owner->localTemporaryPath).absoluteFilePath(QString("%1.%2")
+    const auto tmpFilePath = QDir(owner->localTemporaryPath).absoluteFilePath(QStringLiteral("%1.%2")
         .arg(QString(QCryptographicHash::hash(id.toLocal8Bit(), QCryptographicHash::Md5).toHex()))
         .arg(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()));
 
@@ -2253,7 +2253,7 @@ bool OsmAnd::ResourcesManager_P::updateFromRepository(
     if (!resourceInRepository)
         return false;
 
-    const auto tmpFilePath = QDir(owner->localTemporaryPath).absoluteFilePath(QString("%1.%2")
+    const auto tmpFilePath = QDir(owner->localTemporaryPath).absoluteFilePath(QStringLiteral("%1.%2")
         .arg(QString(QCryptographicHash::hash(id.toLocal8Bit(), QCryptographicHash::Md5).toHex()))
         .arg(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()));
 

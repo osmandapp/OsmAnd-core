@@ -1488,7 +1488,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     const auto elevationDataSamplerIndex = batchedLayersCount;
     auto subtilesPerTile = batch->layers.first()->resourcesInGPU.size();
 
-    GL_PUSH_GROUP_MARKER(QString("%1x%2@%3").arg(batch->tileId.x).arg(batch->tileId.y).arg(zoomLevel));
+    GL_PUSH_GROUP_MARKER(QStringLiteral("%1x%2@%3").arg(batch->tileId.x).arg(batch->tileId.y).arg(zoomLevel));
 
     // Activate proper program depending on number of captured layers
     const auto wasActivated = activateRasterLayersProgram(

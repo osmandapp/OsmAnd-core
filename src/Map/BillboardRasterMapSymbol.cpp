@@ -4,7 +4,8 @@ OsmAnd::BillboardRasterMapSymbol::BillboardRasterMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_)
     : RasterMapSymbol(group_)
     , drawAlongPath(false)
-    , positionType(MapMarker::PositionType::Coordinate31)
+    , positionType(PositionType::Coordinate31)
+    , additionalPosition(0.0)
     , elevation(NAN)
     , elevationScaleFactor(1.0f)
 {
@@ -34,12 +35,12 @@ void OsmAnd::BillboardRasterMapSymbol::setPosition31(const PointI position)
     position31 = position;
 }
 
-OsmAnd::MapMarker::PositionType OsmAnd::BillboardRasterMapSymbol::getPositionType() const
+OsmAnd::BillboardRasterMapSymbol::PositionType OsmAnd::BillboardRasterMapSymbol::getPositionType() const
 {
     return positionType;
 }
 
-void OsmAnd::BillboardRasterMapSymbol::setPositionType(const MapMarker::PositionType positionType_)
+void OsmAnd::BillboardRasterMapSymbol::setPositionType(const PositionType positionType_)
 {
     positionType = positionType_;
 }

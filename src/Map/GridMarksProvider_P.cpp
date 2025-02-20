@@ -54,8 +54,8 @@ void OsmAnd::GridMarksProvider_P::calculateGridMarks(const PointI& target31, con
 void OsmAnd::GridMarksProvider_P::addGridMarks(const PointI& target31, const int zone, const bool isPrimary,
     const bool isAxisY, const float offset, QHash<int, PointD>& marks, QSet<int>& availableIds)
 {
-    auto type = isPrimary ? (isAxisY ? MapMarker::PositionType::PrimaryGridY : MapMarker::PositionType::PrimaryGridX)
-        : (isAxisY ? MapMarker::PositionType::SecondaryGridY : MapMarker::PositionType::SecondaryGridX);
+    auto type = isPrimary ? (isAxisY ? PositionType::PrimaryGridY : PositionType::PrimaryGridX)
+        : (isAxisY ? PositionType::SecondaryGridY : PositionType::SecondaryGridX);
 
     OsmAnd::MapMarkerBuilder builder;
     builder.setBaseOrder(std::numeric_limits<int>::min() + (isPrimary ? 10 : 20));
@@ -187,13 +187,13 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
             auto type = marker->getPositionType();
             auto value = marker->getAdditionalPosition();
             bool isPresent = true;
-            if (keepPrimary && type == MapMarker::PositionType::PrimaryGridX && primaryMarksX.contains(key))
+            if (keepPrimary && type == PositionType::PrimaryGridX && primaryMarksX.contains(key))
                 primaryMarksX.remove(key);
-            else if (keepPrimary && type == MapMarker::PositionType::PrimaryGridY && primaryMarksY.contains(key))
+            else if (keepPrimary && type == PositionType::PrimaryGridY && primaryMarksY.contains(key))
                 primaryMarksY.remove(key);
-            else if (keepSecondary && type == MapMarker::PositionType::SecondaryGridX && secondaryMarksX.contains(key))
+            else if (keepSecondary && type == PositionType::SecondaryGridX && secondaryMarksX.contains(key))
                 secondaryMarksX.remove(key);
-            else if (keepSecondary && type == MapMarker::PositionType::SecondaryGridY && secondaryMarksY.contains(key))
+            else if (keepSecondary && type == PositionType::SecondaryGridY && secondaryMarksY.contains(key))
                 secondaryMarksY.remove(key);
             else
             {

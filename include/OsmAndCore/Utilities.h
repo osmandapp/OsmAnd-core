@@ -96,13 +96,13 @@ namespace OsmAnd
             QString smin, ssec;
             if (sec >= 0.05)
             {
-                ssec = QString("%1").arg(sec, 4, 'f', 1, QLatin1Char('0'));
+                ssec = QStringLiteral("%1").arg(sec, 4, 'f', 1, QLatin1Char('0'));
                 Utilities::removeTrailingZeros(ssec);
             }
             if (min >= 1 || !ssec.isEmpty())
-                smin = QString("%1'").arg(min, 2, 10, QLatin1Char('0'));
-            auto sdeg = QString("%1°").arg(deg);
-            return QString("%1%2%3\"").arg(sdeg).arg(smin).arg(ssec);
+                smin = QStringLiteral("%1'").arg(min, 2, 10, QLatin1Char('0'));
+            auto sdeg = QStringLiteral("%1°").arg(deg);
+            return QStringLiteral("%1%2%3\"").arg(sdeg).arg(smin).arg(ssec);
         }
 
         inline static QString getDegreeMinuteString(double coordinate)
@@ -119,11 +119,11 @@ namespace OsmAnd
             QString smin;
             if (min >= 0.0005)
             {
-                smin = QString("%1").arg(min, 6, 'f', 3, QLatin1Char('0'));
+                smin = QStringLiteral("%1").arg(min, 6, 'f', 3, QLatin1Char('0'));
                 Utilities::removeTrailingZeros(smin);
             }
-            auto sdeg = QString("%1°").arg(deg);
-            return QString("%1%2'").arg(sdeg).arg(smin);
+            auto sdeg = QStringLiteral("%1°").arg(deg);
+            return QStringLiteral("%1%2'").arg(sdeg).arg(smin);
         }
 
         inline static double toRadians(const double angle)
