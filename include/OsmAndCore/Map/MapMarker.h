@@ -22,7 +22,6 @@
 #include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
 #include <OsmAndCore/TextRasterizer.h>
 #include <OsmAndCore/Map/Model3D.h>
-#include <OsmAndCore/Map/BillboardRasterMapSymbol.h>
 
 namespace OsmAnd
 {

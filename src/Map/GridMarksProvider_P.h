@@ -18,7 +18,6 @@
 #include "MapMarkerBuilder.h"
 #include "MapRendererState.h"
 #include "TextRasterizer.h"
-#include "BillboardRasterMapSymbol.h"
 
 namespace OsmAnd
 {
