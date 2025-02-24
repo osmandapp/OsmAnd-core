@@ -72,6 +72,9 @@ namespace OsmAnd
         virtual unsigned int getFavoriteLocationsCount() const = 0;
         virtual QList< std::shared_ptr<IFavoriteLocation> > getFavoriteLocations() const = 0;
 
+        virtual unsigned int getVisibleFavoriteLocationsCount() const = 0;
+        virtual QList< std::shared_ptr<IFavoriteLocation> > getVisibleFavoriteLocations() const = 0;
+
         virtual QSet<QString> getGroups() const = 0;
         virtual QHash<QString, QList<std::shared_ptr<IFavoriteLocation>>> getGroupsLocations() const = 0;
 

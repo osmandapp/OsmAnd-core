@@ -19,7 +19,7 @@ bool OsmAnd::VectorLinesCollection::isEmpty() const
     return _p->isEmpty();
 }
 
-bool OsmAnd::VectorLinesCollection::getLinesCount() const
+int OsmAnd::VectorLinesCollection::getLinesCount() const
 {
     return _p->getLinesCount();
 }

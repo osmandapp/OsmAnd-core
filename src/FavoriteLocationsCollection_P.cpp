@@ -154,6 +154,29 @@ QList< std::shared_ptr<OsmAnd::IFavoriteLocation> > OsmAnd::FavoriteLocationsCol
     return copyAs< QList< std::shared_ptr<IFavoriteLocation> > >(_collection.values());
 }
 
+unsigned int OsmAnd::FavoriteLocationsCollection_P::getVisibleFavoriteLocationsCount() const
+{
+    QReadLocker scopedLocker(&_collectionLock);
+
+    unsigned int res = 0;
+    for (const auto& item : _collection)
+        res += item->isHidden() ? 0 : 1;
+
+    return res;
+}
+
+QList< std::shared_ptr<OsmAnd::IFavoriteLocation> > OsmAnd::FavoriteLocationsCollection_P::getVisibleFavoriteLocations() const
+{
+    QReadLocker scopedLocker(&_collectionLock);
+
+    QList< std::shared_ptr<IFavoriteLocation> > res;
+    for (const auto& item : _collection)
+        if (!item->isHidden())
+            res.push_back(item);
+
+    return res;
+}
+
 QSet<QString> OsmAnd::FavoriteLocationsCollection_P::getGroups() const
 {
     QReadLocker scopedLocker(&_collectionLock);

@@ -20,7 +20,7 @@ bool OsmAnd::VectorLinesCollection_P::isEmpty() const
     return _lines.isEmpty();
 }
 
-bool OsmAnd::VectorLinesCollection_P::getLinesCount() const
+int OsmAnd::VectorLinesCollection_P::getLinesCount() const
 {
     QReadLocker scopedLocker(&_linesLock);
 

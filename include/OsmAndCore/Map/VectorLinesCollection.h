@@ -40,7 +40,7 @@ namespace OsmAnd
         const bool hasVolumetricSymbols;
 
         bool isEmpty() const;
-        bool getLinesCount() const;
+        int getLinesCount() const;
         QList<std::shared_ptr<OsmAnd::VectorLine>> getLines() const;
         bool removeLine(const std::shared_ptr<VectorLine>& line);
         void removeAllLines();

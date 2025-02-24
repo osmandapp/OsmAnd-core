@@ -131,6 +131,16 @@ QList< std::shared_ptr<OsmAnd::IFavoriteLocation> > OsmAnd::FavoriteLocationsCol
     return _p->getFavoriteLocations();
 }
 
+unsigned int OsmAnd::FavoriteLocationsCollection::getVisibleFavoriteLocationsCount() const
+{
+    return _p->getVisibleFavoriteLocationsCount();
+}
+
+QList< std::shared_ptr<OsmAnd::IFavoriteLocation> > OsmAnd::FavoriteLocationsCollection::getVisibleFavoriteLocations() const
+{
+    return _p->getVisibleFavoriteLocations();
+}
+
 QSet<QString> OsmAnd::FavoriteLocationsCollection::getGroups() const
 {
     return _p->getGroups();
