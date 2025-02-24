@@ -119,7 +119,7 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setProjectionParameters(
             parameters->factorY2 = 1.0f;
             parameters->factorY3 = 0.0f;
             parameters->offsetY = 0.0f;
-            parameters->minZoom = ZoomLevel3;
+            parameters->minZoom = ZoomLevel9;
             parameters->maxZoomForFloat = ZoomLevel12;
             parameters->maxZoomForMixed = ZoomLevel14;
             break;
