@@ -135,15 +135,15 @@ OsmAnd::MapState::~MapState()
 }
 
 void OsmAnd::MapRendererState::getGridConfiguration(GridConfiguration* gridConfiguration_,
-    PointI* target31_, ZoomLevel* zoomLevel_) const
+    ZoomLevel* zoomLevel_) const
 {
     *gridConfiguration_ = gridConfiguration;
-    *target31_ = target31;
     *zoomLevel_ = surfaceZoomLevel;
 }
 
-OsmAnd::ZoomLevel OsmAnd::MapRendererState::getVisibleArea(AreaI* visibleBBoxShifted_) const
+OsmAnd::ZoomLevel OsmAnd::MapRendererState::getVisibleArea(AreaI* visibleBBoxShifted_, PointI* target31_) const
 {
     *visibleBBoxShifted_ = visibleBBoxShifted;
+    *target31_ = target31;
     return surfaceZoomLevel;
 }

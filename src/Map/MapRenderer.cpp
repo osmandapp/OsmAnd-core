@@ -1343,19 +1343,18 @@ OsmAnd::MapState OsmAnd::MapRenderer::getFutureState() const
     return _requestedState.getMapState();
 }
 
-void OsmAnd::MapRenderer::getGridConfiguration(GridConfiguration* gridConfiguration,
-    PointI* target31, ZoomLevel* zoomLevel) const
+void OsmAnd::MapRenderer::getGridConfiguration(GridConfiguration* gridConfiguration, ZoomLevel* zoomLevel) const
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    return currentState.getGridConfiguration(gridConfiguration, target31, zoomLevel);
+    return currentState.getGridConfiguration(gridConfiguration, zoomLevel);
 }
 
-OsmAnd::ZoomLevel OsmAnd::MapRenderer::getVisibleArea(AreaI* visibleBBoxShifted) const
+OsmAnd::ZoomLevel OsmAnd::MapRenderer::getVisibleArea(AreaI* visibleBBoxShifted, PointI* target31) const
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    return currentState.getVisibleArea(visibleBBoxShifted);
+    return currentState.getVisibleArea(visibleBBoxShifted, target31);
 }
 
 bool OsmAnd::MapRenderer::isFrameInvalidated() const

@@ -127,7 +127,8 @@ void OsmAnd::GridMarksProvider_P::setSecondary(const bool withValues, const QStr
 void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
 {
     AreaI visibleBBoxShifted;
-    auto mapZoomLevel = renderer->getVisibleArea(&visibleBBoxShifted);
+    PointI target31;
+    auto mapZoomLevel = renderer->getVisibleArea(&visibleBBoxShifted, &target31);
     bool changed = _mapZoomLevel != mapZoomLevel;
     if (!changed && _visibleBBoxShifted != visibleBBoxShifted)
     {
@@ -138,12 +139,19 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
         changed = abs(shTL.x) > lim.x || abs(shTL.y) > lim.y || abs(shBR.x) > lim.x || abs(shBR.y) > lim.y;
     }
 
+    auto zone = Utilities::getCodedZoneUTM(target31, false);
+    bool keepPrimary = _primaryZone == zone;
+    bool keepSecondary = _secondaryZone == zone;
+    if (!keepPrimary || !keepSecondary)
+        changed = true;
+
     if (changed)
     {
         _visibleBBoxShifted = visibleBBoxShifted;
+        _primaryZone = zone;
+        _secondaryZone = zone;
     
-        PointI target31;
-        renderer->getGridConfiguration(&_gridConfiguration, &target31, &mapZoomLevel);
+        renderer->getGridConfiguration(&_gridConfiguration, &mapZoomLevel);
         _mapZoomLevel = mapZoomLevel;
 
         const bool withPrimary = mapZoomLevel >= _gridConfiguration.gridParameters[0].minZoom && (withPrimaryValues
@@ -153,16 +161,12 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
             || !secondaryNorthernHemisphereSuffix.isEmpty() || !secondarySouthernHemisphereSuffix.isEmpty()
             || !secondaryEasternHemisphereSuffix.isEmpty() || !secondaryWesternHemisphereSuffix.isEmpty());
                 
-        int primaryZone = 0;
-        int secondaryZone = 0;
-        if (withPrimary && _gridConfiguration.primaryProjection == GridConfiguration::Projection::UTM)
-            primaryZone = Utilities::getCodedZoneUTM(target31, false);
-        if (withSecondary && _gridConfiguration.secondaryProjection == GridConfiguration::Projection::UTM)
-            secondaryZone = primaryZone == 0 ? Utilities::getCodedZoneUTM(target31, false) : primaryZone;
-        const bool keepPrimary = primaryZone == _primaryZone;
-        const bool keepSecondary = secondaryZone == _secondaryZone;
-        
-        PointD refLons;
+        if (!withPrimary || _gridConfiguration.primaryProjection != GridConfiguration::Projection::UTM)
+            keepPrimary = true;
+        if (!withSecondary || _gridConfiguration.secondaryProjection != GridConfiguration::Projection::UTM)
+            keepSecondary = true;
+    
+            PointD refLons;
         const auto gaps = _gridConfiguration.getCurrentGaps(target31, mapZoomLevel, &refLons);
         QHash<int, PointD> primaryMarksX, primaryMarksY, secondaryMarksX, secondaryMarksY;
         if (withPrimary)
@@ -208,24 +212,21 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
         }
 
         if (!primaryMarksX.isEmpty())
-            addGridMarks(target31, primaryZone, true, false, primaryMarksOffset, primaryMarksX, availableIds);
+            addGridMarks(target31, _primaryZone, true, false, primaryMarksOffset, primaryMarksX, availableIds);
 
         if (!primaryMarksY.isEmpty())
-            addGridMarks(target31, primaryZone, true, true, primaryMarksOffset, primaryMarksY, availableIds);
+            addGridMarks(target31, _primaryZone, true, true, primaryMarksOffset, primaryMarksY, availableIds);
 
         if (!secondaryMarksX.isEmpty())
-            addGridMarks(target31, secondaryZone, false, false, primaryMarksOffset, secondaryMarksX, availableIds);
+            addGridMarks(target31, _secondaryZone, false, false, primaryMarksOffset, secondaryMarksX, availableIds);
 
         if (!secondaryMarksY.isEmpty())
-            addGridMarks(target31, secondaryZone, false, true, primaryMarksOffset, secondaryMarksY, availableIds);
+            addGridMarks(target31, _secondaryZone, false, true, primaryMarksOffset, secondaryMarksY, availableIds);
 
         for (const auto& marker : markersToRemove)
         {
             _markersCollection->removeMarker(marker);
         }
-
-        _primaryZone = primaryZone;
-        _secondaryZone = secondaryZone;
     }
 }
 
