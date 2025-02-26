@@ -385,6 +385,11 @@ public abstract class MapRendererView extends FrameLayout {
                     _resultBitmap.copyPixelsFromBuffer(_byteBuffer);
                     _renderingResultIsReady = false;
                 }
+                if (_frameReadingMode) {
+                    Matrix matrix = new Matrix();
+                    matrix.preScale(1.0f, -1.0f);
+                    _resultBitmap = Bitmap.createBitmap(_resultBitmap, 0, 0, _windowWidth, _windowHeight, matrix, true);
+                }
             }
             return _resultBitmap;
         }
