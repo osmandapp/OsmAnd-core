@@ -73,6 +73,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
         {
             const auto position = pNextCharacter - pText;
             auto npNextCharacter = pNextCharacter;
+            const auto characterUTF16 = *npNextCharacter; // Used to check if character is NonSpacing, if it is no need finding new typeface
             const auto characterUCS4 = SkUTF16_NextUnichar(reinterpret_cast<const uint16_t**>(&npNextCharacter));
             if (npNextCharacter > pEnd)
                 npNextCharacter = pEnd;
@@ -80,7 +81,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
             pNextCharacter = npNextCharacter;
             if (typeface)
             {
-                if (typeface->skTypeface->unicharToGlyph(characterUCS4) == 0)
+                if (typeface->skTypeface->unicharToGlyph(characterUCS4) == 0 && characterUTF16.category() != QChar::Mark_NonSpacing)
                     typeface = nullptr;
 #if OSMAND_LOG_CHARACTERS_TYPEFACE
                 else
