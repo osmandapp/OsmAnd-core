@@ -94,6 +94,7 @@ public abstract class MapRendererView extends FrameLayout {
     /**
      * Rendering global parameters
      */
+    private volatile boolean _frameReadingMode;
     private volatile boolean _batterySavingMode;
     private volatile int _maxFrameRate;
     private volatile long _maxFrameTime;
@@ -383,6 +384,11 @@ public abstract class MapRendererView extends FrameLayout {
                     _byteBuffer.rewind();
                     _resultBitmap.copyPixelsFromBuffer(_byteBuffer);
                     _renderingResultIsReady = false;
+                }
+                if (_frameReadingMode) {
+                    Matrix matrix = new Matrix();
+                    matrix.preScale(1.0f, -1.0f);
+                    _resultBitmap = Bitmap.createBitmap(_resultBitmap, 0, 0, _windowWidth, _windowHeight, matrix, true);
                 }
             }
             return _resultBitmap;
@@ -1488,6 +1494,29 @@ public abstract class MapRendererView extends FrameLayout {
         _mapRenderer.dumpResourcesInfo();
     }
 
+    public final boolean enableFrameReader() {
+        if (_frameReadingMode || _byteBuffer != null) {
+            return true;
+        } else if (_windowWidth > 0 && _windowHeight > 0) {
+            synchronized (eglThread) {
+                _byteBuffer = ByteBuffer.allocateDirect(_windowWidth * _windowHeight * 4);
+                _renderingResultIsReady = false;
+            }
+            _frameReadingMode = true;
+            return true;
+        }
+        return false;
+    }
+
+    public final void disableFrameReader() {
+        if (_frameReadingMode) {
+            synchronized (eglThread) {
+                _byteBuffer = null;
+            }
+            _frameReadingMode = false;
+        }
+    }
+
     public final boolean isBatterySavingModeEnabled() {
         return _batterySavingMode;
     }
@@ -2008,6 +2037,8 @@ public abstract class MapRendererView extends FrameLayout {
                 synchronized (eglThread) {
                     eglThread.ok = false;
                     eglThread.mapRenderer = _mapRenderer;
+                    eglThread.surfaceWidth = width;
+                    eglThread.surfaceHeight = height;    
                     eglThread.startAndCompleteOperation(EGLThreadOperation.INITIALIZE_RENDERING);
                     ok = eglThread.ok;
                 }
@@ -2070,7 +2101,7 @@ public abstract class MapRendererView extends FrameLayout {
 
             frameId++;
 
-            if (_byteBuffer != null) {
+            if (!_frameReadingMode && _byteBuffer != null) {
                 for (MapRendererViewListener listener : listeners) {
                     listener.onFrameReady(MapRendererView.this);
                 }
@@ -2425,6 +2456,9 @@ public abstract class MapRendererView extends FrameLayout {
                             gl.glFlush();
                             if (byteBuffer != null) {
                                 gl.glFinish();
+                                if (_frameReadingMode) {
+                                    egl.eglSwapBuffers(display, surface);
+                                }
                                 synchronized (byteBuffer) {
                                     byteBuffer.rewind();
                                     gl.glReadPixels(0, 0, surfaceWidth, surfaceHeight,
