@@ -34,6 +34,7 @@ namespace OsmAnd
         GridConfiguration _gridConfiguration;
         ZoomLevel _mapZoomLevel;
         AreaI _visibleBBoxShifted;
+        PointI _target31;
         int _primaryZone;
         int _secondaryZone;
 

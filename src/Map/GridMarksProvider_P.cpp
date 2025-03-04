@@ -16,6 +16,9 @@ OsmAnd::GridMarksProvider_P::GridMarksProvider_P(
     , withSecondaryValues(false)
     , primaryMarksOffset(1.0)
     , secondaryMarksOffset(1.0)
+    , _target31(PointI(-1, -1))
+    , _primaryZone(-1)
+    , _secondaryZone(-1)
 {
 }
 
@@ -139,7 +142,13 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
         changed = abs(shTL.x) > lim.x || abs(shTL.y) > lim.y || abs(shBR.x) > lim.x || abs(shBR.y) > lim.y;
     }
 
-    auto zone = Utilities::getCodedZoneUTM(target31, false);
+    auto zone = _primaryZone;
+    if (_target31 != target31)
+    {
+        _target31 = target31;
+        zone = Utilities::getCodedZoneUTM(target31, false);
+    }
+
     bool keepPrimary = _primaryZone == zone;
     bool keepSecondary = _secondaryZone == zone;
     if (!keepPrimary || !keepSecondary)
@@ -166,7 +175,7 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
         if (!withSecondary || _gridConfiguration.secondaryProjection != GridConfiguration::Projection::UTM)
             keepSecondary = true;
     
-            PointD refLons;
+        PointD refLons;
         const auto gaps = _gridConfiguration.getCurrentGaps(target31, mapZoomLevel, &refLons);
         QHash<int, PointD> primaryMarksX, primaryMarksY, secondaryMarksX, secondaryMarksY;
         if (withPrimary)
