@@ -715,6 +715,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(
     internalState->uniqueTiles.clear();
     internalState->extraDetailedTiles.clear();
     internalState->extraElevation = 0.0f;
+    internalState->maxElevation = 0.0f;
 
     // Normalize 2D-frustum points to tiles
     PointF p[4];
@@ -944,6 +945,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeUniqueTileset(InternalState* intern
             const auto maxPoint = glm::vec3(maxPointOnPlane.x, maxHeight, maxPointOnPlane.y);
             if (isTileVisible(*internalState, minPoint, maxPoint))
             {
+                internalState->maxElevation = std::max(internalState->maxElevation, maxHeight);
                 visibleTiles.append(tileId);
                 visibleTilesSet.insert(tileId);
                 const auto topPoint = glm::vec3((
@@ -999,6 +1001,100 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeUniqueTileset(InternalState* intern
         internalState->visibleTilesCount += visibleTiles.size();
         internalState->visibleTiles[zoomLevel] = visibleTiles;
         internalState->visibleTilesSet[zoomLevel] = visibleTilesSet;
+
+        if (internalState->worldCameraPosition.y > internalState->maxElevation)
+        {
+            // 4 points of frustum near clipping box in camera coordinate space
+            const glm::vec4 nTL_c(-internalState->projectionPlaneHalfWidth,
+                +internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
+            const glm::vec4 nTR_c(+internalState->projectionPlaneHalfWidth,
+                +internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
+            const glm::vec4 nBL_c(-internalState->projectionPlaneHalfWidth,
+                -internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
+            const glm::vec4 nBR_c(+internalState->projectionPlaneHalfWidth,
+                -internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
+
+            // 4 points of frustum lower detail plane in camera coordinate space
+            const auto zMid = internalState->zLowerDetail;
+            const auto zMidK = zMid / _zNear;
+            const glm::vec4 mTL_c(zMidK * nTL_c.x, zMidK * nTL_c.y, -zMid, 1.0f);
+            const glm::vec4 mTR_c(zMidK * nTR_c.x, zMidK * nTR_c.y, -zMid, 1.0f);
+            const glm::vec4 mBL_c(zMidK * nBL_c.x, zMidK * nBL_c.y, -zMid, 1.0f);
+            const glm::vec4 mBR_c(zMidK * nBR_c.x, zMidK * nBR_c.y, -zMid, 1.0f);
+        
+            // Transform 8 frustum vertices + camera center to global space
+            const auto eye_g = internalState->worldCameraPosition;
+            const auto mTL_g = internalState->mCameraViewInv * mTL_c;
+            const auto mTR_g = internalState->mCameraViewInv * mTR_c;
+            const auto mBL_g = internalState->mCameraViewInv * mBL_c;
+            const auto mBR_g = internalState->mCameraViewInv * mBR_c;
+            const auto nTL_g = internalState->mCameraViewInv * nTL_c;
+            const auto nTR_g = internalState->mCameraViewInv * nTR_c;
+            const auto nBL_g = internalState->mCameraViewInv * nBL_c;
+            const auto nBR_g = internalState->mCameraViewInv * nBR_c;
+
+            // Get (up to) 4 points of frustum edges & plane intersection
+            const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
+            const glm::vec3 planeE(0.0f, internalState->maxElevation, 0.0f);
+            auto intersectionPointsCounter = 0u;
+            glm::vec3 intersectionPoint;
+            glm::vec2 bottomIntersectionPoints[2];
+            glm::vec2 topIntersectionPoints[2];
+
+            if (intersectionPointsCounter < 2 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+                planeN, planeE, nBL_g.xyz(), mBL_g.xyz(), intersectionPoint))
+            {
+                bottomIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+            }
+            if (intersectionPointsCounter < 2 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+                planeN, planeE, nBR_g.xyz(), mBR_g.xyz(), intersectionPoint))
+            {
+                bottomIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+            }
+            if (intersectionPointsCounter < 2 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+                planeN, planeE, nTL_g.xyz(), nBL_g.xyz(), intersectionPoint))
+            {
+                bottomIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+            }
+            if (intersectionPointsCounter < 2 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+                planeN, planeE, nTR_g.xyz(), nBR_g.xyz(), intersectionPoint))
+            {
+                bottomIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+            }
+            assert(intersectionPointsCounter == 2);
+            intersectionPointsCounter = 0;
+            if (intersectionPointsCounter < 2 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+                planeN, planeE, nTR_g.xyz(), mTR_g.xyz(), intersectionPoint))
+            {
+                topIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+            }
+            if (intersectionPointsCounter < 2 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+                planeN, planeE, nTL_g.xyz(), mTL_g.xyz(), intersectionPoint))
+            {
+                topIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+            }
+            if (intersectionPointsCounter < 2 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+                planeN, planeE, mTR_g.xyz(), mBR_g.xyz(), intersectionPoint))
+            {
+                topIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+            }
+            if (intersectionPointsCounter < 2 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+                planeN, planeE, mTL_g.xyz(), mBL_g.xyz(), intersectionPoint))
+            {
+                topIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+            }
+            assert(intersectionPointsCounter == 2);
+            const auto tileSize31 = static_cast<double>(1u << (ZoomLevel::MaxZoomLevel - state.zoomLevel));
+            internalState->elevatedFrustum2D31.p0 = PointI64((PointD(bottomIntersectionPoints[0].x,
+                bottomIntersectionPoints[0].y) / TileSize3D) * tileSize31) + state.target31;
+            internalState->elevatedFrustum2D31.p1 = PointI64((PointD(bottomIntersectionPoints[1].x,
+                bottomIntersectionPoints[1].y) / TileSize3D) * tileSize31) + state.target31;
+            internalState->elevatedFrustum2D31.p2 = PointI64((PointD(topIntersectionPoints[0].x,
+                topIntersectionPoints[0].y) / TileSize3D) * tileSize31) + state.target31;
+            internalState->elevatedFrustum2D31.p3 = PointI64((PointD(topIntersectionPoints[1].x,
+                topIntersectionPoints[1].y) / TileSize3D) * tileSize31) + state.target31;
+            internalState->targetOffset = internalState->elevatedFrustum2D31.clampCoordinates();
+        }
     }
 }
 

@@ -39,8 +39,9 @@
 #include "MapMarker.h"
 #include "VectorLine.h"
 
-# define GRID_ITER_LIMIT 3
-# define GRID_ITER_PRECISION 100.0
+# define GRID_ITER_LIMIT 10
+# define GRID_ITER_PRECISION 200.0
+# define GRID_BOTTOM_PADDING_FACTOR 8.0
 
 // Set maximum incline angle for using onpath-2D symbols instead of 3D-ones (20 deg)
 const float OsmAnd::AtlasMapRendererSymbolsStage::_inclineThresholdOnPath2D =
@@ -1250,6 +1251,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     bool allowFastCheckByFrustum /*= true*/,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/)
 {
+    const auto renderer = getRenderer();
     const auto& internalState = getInternalState();
     const auto mapSymbol = std::dynamic_pointer_cast<const MapSymbol>(billboardMapSymbol);
 
@@ -1258,70 +1260,252 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         ? instanceParameters->position31
         : billboardMapSymbol->getPosition31();
 
+    auto mRotate = glm::mat2(0.0f);
+
     if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const BillboardRasterMapSymbol>(mapSymbol))
     {
         const auto positionType = rasterMapSymbol->getPositionType();
         if (positionType != PositionType::Coordinate31)
         {
-            bool isPrimary = positionType == PositionType::PrimaryGridX
-                || positionType == PositionType::PrimaryGridY;
-            bool isAxisY = positionType == PositionType::PrimaryGridY
-                || positionType == PositionType::SecondaryGridY;
+            bool isPrimary = positionType == PositionType::PrimaryGridXFirst
+                || positionType == PositionType::PrimaryGridXMiddle
+                || positionType == PositionType::PrimaryGridXLast
+                || positionType == PositionType::PrimaryGridYFirst
+                || positionType == PositionType::PrimaryGridYMiddle
+                || positionType == PositionType::PrimaryGridYLast;
+            bool isAxisY = positionType == PositionType::PrimaryGridYFirst
+                || positionType == PositionType::PrimaryGridYMiddle
+                || positionType == PositionType::PrimaryGridYLast
+                || positionType == PositionType::SecondaryGridYFirst
+                || positionType == PositionType::SecondaryGridYMiddle
+                || positionType == PositionType::SecondaryGridYLast;
+            bool isMiddle = positionType == PositionType::PrimaryGridXMiddle
+                || positionType == PositionType::PrimaryGridYMiddle
+                || positionType == PositionType::SecondaryGridXMiddle
+                || positionType == PositionType::SecondaryGridYMiddle;
             auto coordinate = rasterMapSymbol->getAdditionalPosition();
-            PointD point(isAxisY ? 0.0 : coordinate, isAxisY ? coordinate : 0.0);
-            auto pos31 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation31(point)
-                : currentState.gridConfiguration.getSecondaryGridLocation31(point);
-            if (pos31.x < 0)
+            int64_t intFull = INT32_MAX;
+            intFull++;
+            if (isMiddle)
             {
-                int64_t intFull = INT32_MAX;
-                intFull++;
-                const auto intHalf = intFull >> 1;
-                AreaI64 area64(currentState.visibleBBoxShifted);
-                area64 += PointI64(intHalf, intHalf);
-                area64 += PointI64(intFull, intFull);
-                PointI point1(
-                    isAxisY ? currentState.target31.x : static_cast<int32_t>(area64.topLeft.x & INT32_MAX),
-                    isAxisY ? static_cast<int32_t>(area64.topLeft.y & INT32_MAX) : currentState.target31.y);
-                PointI point2(
-                    isAxisY ? currentState.target31.x : static_cast<int32_t>(area64.bottomRight.x & INT32_MAX),
-                    isAxisY ? static_cast<int32_t>(area64.bottomRight.y & INT32_MAX) : currentState.target31.y);
-                auto refLon = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(currentState.target31)
-                    : currentState.gridConfiguration.getSecondaryGridReference(currentState.target31);
-                auto refLon1 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(point1)
-                    : currentState.gridConfiguration.getSecondaryGridReference(point1);
-                auto refLon2 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(point2)
-                    : currentState.gridConfiguration.getSecondaryGridReference(point2);
-                if (refLon != refLon1 && refLon != refLon2)
+                PointD point(isAxisY ? 0.0 : coordinate, isAxisY ? coordinate : 0.0);
+                auto pos31 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation31(point)
+                    : currentState.gridConfiguration.getSecondaryGridLocation31(point);
+                if (pos31.x >= 0)
+                {
+                    position31.x = isAxisY ? currentState.target31.x : pos31.x;
+                    position31.y = isAxisY ? pos31.y : currentState.target31.y;    
+                }
+                else
+                {
+                    const auto intHalf = intFull >> 1;
+                    AreaI64 area64(currentState.visibleBBoxShifted);
+                    area64 += PointI64(intHalf, intHalf);
+                    area64 += PointI64(intFull, intFull);
+                    PointI p1(
+                        isAxisY ? currentState.target31.x : static_cast<int32_t>(area64.topLeft.x & INT32_MAX),
+                        isAxisY ? static_cast<int32_t>(area64.topLeft.y & INT32_MAX) : currentState.target31.y);
+                    PointI p2(
+                        isAxisY ? currentState.target31.x : static_cast<int32_t>(area64.bottomRight.x & INT32_MAX),
+                        isAxisY ? static_cast<int32_t>(area64.bottomRight.y & INT32_MAX) : currentState.target31.y);
+                    auto refLon = isPrimary
+                        ? currentState.gridConfiguration.getPrimaryGridReference(currentState.target31)
+                        : currentState.gridConfiguration.getSecondaryGridReference(currentState.target31);
+                    auto refLon1 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p1)
+                        : currentState.gridConfiguration.getSecondaryGridReference(p1);
+                    auto refLon2 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p2)
+                        : currentState.gridConfiguration.getSecondaryGridReference(p2);
+                    if (refLon != refLon1 && refLon != refLon2)
+                        return;
+                    if (refLon != refLon1)
+                        p1 = currentState.target31;
+                    if (refLon != refLon2)
+                        p2 = currentState.target31;
+                    auto location1 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p1, &refLon)
+                        : currentState.gridConfiguration.getSecondaryGridLocation(p1, &refLon);
+                    auto location2 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p2, &refLon)
+                        : currentState.gridConfiguration.getSecondaryGridLocation(p2, &refLon);
+                    auto coord1 = isAxisY ? location1.y : location1.x;
+                    auto coord2 = isAxisY ? location2.y : location2.x;
+                    const bool inside = coordinate > std::min(coord1, coord2) && coordinate < std::max(coord1, coord2);
+                    if (!inside)
+                        return;
+                    int i = 0;
+                    position31 = getApproximate31(coordinate, coord1, coord2, p1, p2, isPrimary, isAxisY, &refLon, i);
+                }
+            }
+            else
+            {
+                bool isFirst = positionType == PositionType::PrimaryGridXFirst
+                    || positionType == PositionType::PrimaryGridYFirst
+                    || positionType == PositionType::SecondaryGridXFirst
+                    || positionType == PositionType::SecondaryGridYFirst;
+                PointI p0(internalState.elevatedFrustum2D31.p0);
+                PointI p1(internalState.elevatedFrustum2D31.p1);
+                PointI p2(internalState.elevatedFrustum2D31.p2);
+                PointI p3(internalState.elevatedFrustum2D31.p3);
+                auto refLon0 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p0)
+                    : currentState.gridConfiguration.getSecondaryGridReference(p0);
+                auto refLon1 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p1)
+                    : currentState.gridConfiguration.getSecondaryGridReference(p1);
+                auto refLon2 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p2)
+                    : currentState.gridConfiguration.getSecondaryGridReference(p2);
+                auto refLon3 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p3)
+                    : currentState.gridConfiguration.getSecondaryGridReference(p3);
+                if (refLon0 != refLon1 || refLon0 != refLon2 || refLon0 != refLon3)
                     return;
-                if (refLon != refLon1)
-                    point1 = currentState.target31;
-                if (refLon != refLon2)
-                    point2 = currentState.target31;
-                auto location1 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(point1, &refLon)
-                    : currentState.gridConfiguration.getSecondaryGridLocation(point1, &refLon);
-                auto location2 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(point2, &refLon)
-                    : currentState.gridConfiguration.getSecondaryGridLocation(point2, &refLon);
+                auto location0 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p0, &refLon0)
+                    : currentState.gridConfiguration.getSecondaryGridLocation(p0, &refLon0);
+                auto location1 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p1, &refLon0)
+                    : currentState.gridConfiguration.getSecondaryGridLocation(p1, &refLon0);
+                auto location2 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p2, &refLon0)
+                    : currentState.gridConfiguration.getSecondaryGridLocation(p2, &refLon0);
+                auto location3 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p3, &refLon0)
+                    : currentState.gridConfiguration.getSecondaryGridLocation(p3, &refLon0);
+                auto coord0 = isAxisY ? location0.y : location0.x;
                 auto coord1 = isAxisY ? location1.y : location1.x;
                 auto coord2 = isAxisY ? location2.y : location2.x;
-                const bool inside = coordinate > std::min(coord1, coord2) && coordinate < std::max(coord1, coord2);
+                auto coord3 = isAxisY ? location3.y : location3.x;
+                bool inside = coordinate > std::min(std::min(coord0, coord1), std::min(coord2, coord3))
+                    && coordinate < std::max(std::max(coord0, coord1), std::max(coord2, coord3));
                 if (!inside)
+                {
+                    PointD location(coordinate, coordinate);
+                    location = isPrimary ? currentState.gridConfiguration.getPrimaryGridFullturnLocation(location)
+                        : currentState.gridConfiguration.getSecondaryGridFullturnLocation(location);
+                    coordinate = isAxisY ? location.y : location.x;
+                    inside = coordinate > std::min(std::min(coord0, coord1), std::min(coord2, coord3))
+                        && coordinate < std::max(std::max(coord0, coord1), std::max(coord2, coord3));
+                    if (!inside)
+                        return;
+                }
+                const auto tileSize31 = static_cast<double>(1u << (ZoomLevel::MaxZoomLevel - currentState.zoomLevel));
+                const auto localTarget31 = PointI64(currentState.target31) - internalState.targetOffset;
+                bool cross[4];
+                PointI pos[4];
+                int i = 0;
+                if (cross[0] = coordinate > std::min(coord0, coord1) && coordinate < std::max(coord0, coord1))
+                    pos[0] = getApproximate31(coordinate, coord0, coord1, p0, p1, isPrimary, isAxisY, &refLon0, i);
+                i = 0;
+                if (cross[1] = coordinate > std::min(coord1, coord2) && coordinate < std::max(coord1, coord2))
+                    pos[1] = getApproximate31(coordinate, coord1, coord2, p1, p2, isPrimary, isAxisY, &refLon0, i);
+                i = 0;
+                if (cross[2] = coordinate > std::min(coord2, coord3) && coordinate < std::max(coord2, coord3))
+                    pos[2] = getApproximate31(coordinate, coord2, coord3, p2, p3, isPrimary, isAxisY, &refLon0, i);
+                i = 0;
+                if (cross[3] = coordinate > std::min(coord3, coord0) && coordinate < std::max(coord3, coord0))
+                    pos[3] = getApproximate31(coordinate, coord3, coord0, p3, p0, isPrimary, isAxisY, &refLon0, i);
+                int j;
+                bool isBottom;
+                PointI firstPoint31, lastPoint31;
+                for (i = 0; i < 4; i++)
+                {
+                    j = isFirst ? i : 3 - i;
+                    if (cross[j])
+                    {
+                        // remove left side marks in portrait mode
+                        if (j == 3 && currentState.windowSize.y > currentState.windowSize.x)
+                            return;
+                        
+                        // remove top side marks when in landscape or 3D mode
+                        if (j == 2 && (currentState.windowSize.y < currentState.windowSize.x
+                            || currentState.elevationAngle < 89.0f))
+                            return;
+
+                        firstPoint31 = pos[j];
+                        isBottom = j == 0;
+                        break;
+                    }
+                    if (i == 3)
+                        return;
+                }
+                for (i = 0; i < 4; i++)
+                {
+                    j = isFirst ? 3 - i : i;
+                    if (cross[j])
+                    {
+                        lastPoint31 = pos[j];
+                        break;
+                    }
+                    if (i == 3)
+                        return;
+                }
+                auto firstPoint =
+                    PointF(PointD(PointI64(firstPoint31) - localTarget31) / tileSize31) * AtlasMapRenderer::TileSize3D;
+                auto lastPoint =
+                    PointF(PointD(PointI64(lastPoint31) - localTarget31) / tileSize31) * AtlasMapRenderer::TileSize3D;
+                auto firstInWorld = glm::vec3(firstPoint.x, internalState.maxElevation, firstPoint.y);
+                auto lastInWorld = glm::vec3(lastPoint.x, internalState.maxElevation, lastPoint.y);
+
+                if (!renderer->isPointProjectable(internalState, firstInWorld)
+                    || !renderer->isPointProjectable(internalState, lastInWorld))
                     return;
-                auto pos1 = isAxisY ? point1.y : point1.x;
-                auto pos2 = isAxisY ? point2.y : point2.x;
-                int iterCount = 0;
-                auto pos =
-                    getApproximate31(coordinate, coord1, coord2, pos1, pos2, isPrimary, isAxisY, &refLon, iterCount);
-                if (isAxisY)
-                    pos31.y = pos;
-                else
-                    pos31.x = pos;
+                auto firstOnScreen = glm_extensions::project(
+                    firstInWorld,
+                    internalState.mPerspectiveProjectionView,
+                    internalState.glmViewport).xy();
+                auto lastOnScreen = glm_extensions::project(
+                    lastInWorld,
+                    internalState.mPerspectiveProjectionView,
+                    internalState.glmViewport).xy();
+                auto screenLengthInPixels = glm::distance(firstOnScreen, lastOnScreen);
+                auto symSize = static_cast<float>(rasterMapSymbol->size.x + rasterMapSymbol->size.y * 2);
+                auto offset = screenLengthInPixels / 2.0f;
+                if (screenLengthInPixels > symSize)
+                {
+                    if (!isFirst && screenLengthInPixels < symSize * 3.0f)
+                        return;
+                    offset = symSize / 2.0f + (isBottom ? screenLengthInPixels / GRID_BOTTOM_PADDING_FACTOR : 0.0);
+                }
+                else if (screenLengthInPixels < static_cast<float>(rasterMapSymbol->size.x))
+                    return;
+
+                auto firstNearInWorld = glm::unProject(
+                    glm::vec3(firstOnScreen.x, currentState.windowSize.y - firstOnScreen.y, 0.0f),
+                    internalState.mCameraView,
+                    internalState.mPerspectiveProjection,
+                    internalState.glmViewport);
+                auto lastNearInWorld = glm::unProject(
+                    glm::vec3(lastOnScreen.x, currentState.windowSize.y - lastOnScreen.y, 0.0f),
+                    internalState.mCameraView,
+                    internalState.mPerspectiveProjection,
+                    internalState.glmViewport);
+                auto firstWorldDistance = glm::distance(internalState.worldCameraPosition, firstInWorld);
+                auto firstScreenDistance = glm::distance(internalState.worldCameraPosition, firstNearInWorld);
+                auto lastWorldDistance = glm::distance(internalState.worldCameraPosition, lastInWorld);
+                auto lastScreenDistance = glm::distance(internalState.worldCameraPosition, lastNearInWorld);
+                auto vectorInWorld = lastInWorld.xz() - firstInWorld.xz();
+                auto worldLength = glm::distance(firstInWorld, lastInWorld);
+                auto screenLength = glm::distance(firstNearInWorld, lastNearInWorld);
+                auto worldAngle =
+                    qAcos(qBound(-1.0f, (firstWorldDistance * firstWorldDistance + worldLength * worldLength
+                    - lastWorldDistance * lastWorldDistance) / (2.0f * firstWorldDistance * worldLength), 1.0f));
+                auto screenAngle =
+                    qAcos(qBound(-1.0f, (firstScreenDistance * firstScreenDistance + screenLength * screenLength
+                    - lastScreenDistance * lastScreenDistance) / (2.0f * firstScreenDistance * screenLength), 1.0f));
+                auto middlePoint = computeCorrespondingPoint(
+                    offset * internalState.sizeOfPixelInWorld,
+                    firstScreenDistance,
+                    screenAngle,
+                    firstInWorld.xz(),
+                    vectorInWorld,
+                    worldLength,
+                    firstWorldDistance,
+                    worldAngle);
+                auto pos64 = PointI64(PointD(middlePoint.x, middlePoint.y) / AtlasMapRenderer::TileSize3D * tileSize31)
+                    + currentState.target31;
+                auto vectorOnScreen = glm::normalize(lastOnScreen - firstOnScreen);
+                auto rotAngle = qAtan2(vectorOnScreen.y, vectorOnScreen.x);
+                if (rotAngle > M_PI_2 - 0.01 || rotAngle < -M_PI_2 - 0.01)
+                    rotAngle = Utilities::normalizedAngleRadians(rotAngle + M_PI);
+                auto rotAngleCos = qCos(rotAngle);
+                auto rotAngleSin = qSin(rotAngle);
+                mRotate = glm::mat2(rotAngleCos, rotAngleSin, -rotAngleSin, rotAngleCos);
+                position31.x = pos64.x + intFull & INT32_MAX;
+                position31.y = pos64.y + intFull & INT32_MAX;
             }
-            position31.x = isAxisY ? currentState.target31.x : pos31.x;
-            position31.y = isAxisY ? pos31.y : currentState.target31.y;
         }
     }
-
-    const auto renderer = getRenderer();
 
     // Get target tile and offset
     PointF offsetInTileN;
@@ -1431,6 +1615,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         renderable->gpuResource = gpuResource;
         renderable->positionInWorld = positionInWorld;
         renderable->position31 = position31;
+        renderable->mRotate = mRotate;
         renderable->elevationInMeters = elevationInMeters;
         renderable->tileId = tileId;
         renderable->offsetInTileN = offsetInTileN;
@@ -3855,15 +4040,38 @@ float OsmAnd::AtlasMapRendererSymbolsStage::getSubsectionOpacityFactor(
     }
 }
 
-int32_t OsmAnd::AtlasMapRendererSymbolsStage::getApproximate31(
-    const double coordinate, const double coord1, const double coord2, const int32_t pos1, const int32_t pos2,
+OsmAnd::PointI OsmAnd::AtlasMapRendererSymbolsStage::getApproximate31(
+    const double coordinate, const double coord1, const double coord2, const PointI& pos1, const PointI& pos2,
     const bool isPrimary, const bool isAxisY, const double* pRefLon, int32_t& iteration) const
 {
+    if (iteration == 0)
+    {
+        PointD point(isAxisY ? 0.0 : coordinate, isAxisY ? coordinate : 0.0);
+        auto pos31 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation31(point)
+            : currentState.gridConfiguration.getSecondaryGridLocation31(point);
+        if (pos31.x >= 0)
+        {
+            if (isAxisY)
+            {
+                const auto delta = static_cast<double>(pos31.y - pos1.y);
+                const auto gap = static_cast<double>(pos2.y - pos1.y);
+                const auto factor = gap != 0.0 ? delta / gap : 0.0;
+                pos31.x = static_cast<int32_t>(static_cast<double>(pos2.x - pos1.x) * factor) + pos1.x;
+            }
+            else
+            {
+                const auto delta = static_cast<double>(pos31.x - pos1.x);
+                const auto gap = static_cast<double>(pos2.x - pos1.x);
+                const auto factor = gap != 0.0 ? delta / gap : 0.0;
+                pos31.y = static_cast<int32_t>(static_cast<double>(pos2.y - pos1.y) * factor) + pos1.y;
+            }
+            return pos31;
+        }
+    }
     const auto delta = coordinate - coord1;
     const auto gap = coord2 - coord1;
-    const auto distance = static_cast<double>(pos2 - pos1);
-    auto pos = static_cast<int32_t>(distance * delta / gap + static_cast<double>(pos1));
-    const PointI pos31(isAxisY ? currentState.target31.x : pos, isAxisY ? pos : currentState.target31.y);
+    const auto factor = gap != 0.0 ? delta / gap : 0.0;
+    auto pos31 = PointI(PointD(pos2 - pos1) * factor) + pos1;
     const auto point = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(pos31, pRefLon)
         : currentState.gridConfiguration.getSecondaryGridLocation(pos31, pRefLon);
     const auto newCoord = isAxisY ? point.y : point.x;
@@ -3871,10 +4079,10 @@ int32_t OsmAnd::AtlasMapRendererSymbolsStage::getApproximate31(
     {
         iteration++;
         const bool s = std::abs(newCoord - coord1) > std::abs(delta);
-        pos = getApproximate31(coordinate, s ? newCoord : coord1, s ? coord2 : newCoord,
-            s ? pos : pos1, s ? pos2 : pos, isPrimary, isAxisY, pRefLon, iteration);
+        pos31 = getApproximate31(coordinate, s ? newCoord : coord1, s ? coord2 : newCoord,
+            s ? pos31 : pos1, s ? pos2 : pos31, isPrimary, isAxisY, pRefLon, iteration);
     }
-    return pos;
+    return pos31;
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::addPathDebugLine(const QVector<PointI>& path31, const ColorARGB color) const

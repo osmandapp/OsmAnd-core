@@ -1532,7 +1532,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     auto refLonBL = currentState.gridConfiguration.getPrimaryGridReference(pointBL);
     auto isSmall = currentState.gridConfiguration.primaryGranularity != 0.0f
         || currentState.gridConfiguration.primaryGap <= 1.0f;
-    if (!currentState.gridConfiguration.primaryGrid || (primaryZoom > 2 && !isSmall)
+    if (!currentState.gridConfiguration.primaryGrid || zoomLevel < currentState.gridConfiguration.primaryMinZoomLevel
+        || (primaryZoom > 2 && !isSmall)
         || (refLonTL != refLon && refLonBR != refLon && refLonTR != refLon && refLonBL != refLon))
         primaryZoom = 0;
     else
@@ -1572,7 +1573,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     refLonBL = currentState.gridConfiguration.getSecondaryGridReference(pointBL);
     isSmall = currentState.gridConfiguration.secondaryGranularity != 0.0f
         || currentState.gridConfiguration.secondaryGap <= 1.0f;
-    if (!currentState.gridConfiguration.secondaryGrid || (secondaryZoom > 2 && !isSmall)
+    if (!currentState.gridConfiguration.secondaryGrid
+        || zoomLevel < currentState.gridConfiguration.secondaryMinZoomLevel
+        || (secondaryZoom > 2 && !isSmall)
         || (refLonTL != refLon && refLonBR != refLon && refLonTR != refLon && refLonBL != refLon))
         secondaryZoom = 0;
     else

@@ -28,8 +28,10 @@ namespace OsmAnd
         GridMarksProvider();
         virtual ~GridMarksProvider();
 
-        void setPrimaryStyle(const TextRasterizer::Style& style, const float offset);
-        void setSecondaryStyle(const TextRasterizer::Style& style, const float offset);
+        void setPrimaryStyle(
+            const TextRasterizer::Style& style, const float offset, bool center = false);
+        void setSecondaryStyle(
+            const TextRasterizer::Style& style, const float offset, bool center = false);
 
         void setPrimary(const bool withValues, const QString& northernSuffix,
             const QString& southernSuffix, const QString& easternSuffix, const QString& westernSuffix);

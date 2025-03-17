@@ -339,6 +339,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
             // Parameters: common data
             "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
             "uniform mat4 param_vs_mOrthographicProjection;                                                                     ""\n"
+            "uniform mat2 param_vs_mRotate;                                                                          ""\n"
             "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
             "uniform vec4 param_vs_viewport; // x, y, width, height                                                             ""\n"
             "uniform highp ivec4 param_vs_target31; // x, y, zoom, tileSize31                                                   ""\n"
@@ -404,7 +405,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
             "                                                                                                                   ""\n"
             // So it's possible to calculate current vertex location:
             // Initially, get location of current vertex in screen coordinates
-            "    vec2 vertexOnScreen = in_vs_vertexPosition * vec2(param_vs_symbolSize) + symbolOnScreen.xy;                    ""\n"
+            "    vec2 vertexOnScreen = in_vs_vertexPosition * vec2(param_vs_symbolSize);                                        ""\n"
+            "    bool rotate = param_vs_mRotate[0][0] != 0.0 || param_vs_mRotate[0][1] != 0.0;                                  ""\n"
+            "    vertexOnScreen.y += rotate ? float(param_vs_symbolSize.y) / 2.0 : 0.0;                                         ""\n"
+            "    vertexOnScreen = rotate ? param_vs_mRotate * vertexOnScreen : vertexOnScreen;                                  ""\n"
+            "    vertexOnScreen += symbolOnScreen.xy;                                                                           ""\n"
             "                                                                                                                   ""\n"
             // To provide pixel-perfect result, vertexOnScreen needs to be rounded
             "    vertexOnScreen = floor(vertexOnScreen + vec2(0.5, 0.5));                                                       ""\n"
@@ -482,6 +487,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
          && lookup->lookupLocation(
              _billboardRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.mRotate, "param_vs_mRotate", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.viewport, "param_vs_viewport", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
@@ -656,6 +662,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
 
     // Per-symbol data
     glUniform2i(_billboardRasterProgram.vs.param.position31, renderable->position31.x, renderable->position31.y);
+    GL_CHECK_RESULT;
+
+    glUniformMatrix2fv(_billboardRasterProgram.vs.param.mRotate,
+        1, GL_FALSE, glm::value_ptr(renderable->mRotate));
+    GL_CHECK_RESULT;
+
 
     // Set symbol size
     glUniform2i(_billboardRasterProgram.vs.param.symbolSize, gpuResource->width, gpuResource->height);

@@ -5,6 +5,8 @@
 #include "MapMarker.h"
 #include "MapRenderer.h"
 
+# define MIN_ZOOM_LEVEL_SIDE_MARKS 5
+
 # define GRID_MARKS_PER_AXIS 20
 # define MAP_CHANGE_FACTOR_PART 4
 
@@ -55,10 +57,19 @@ void OsmAnd::GridMarksProvider_P::calculateGridMarks(const PointI& target31, con
 }
 
 void OsmAnd::GridMarksProvider_P::addGridMarks(const PointI& target31, const int zone, const bool isPrimary,
-    const bool isAxisY, const float offset, QHash<int, PointD>& marks, QSet<int>& availableIds)
+    const bool isAxisY, const bool isExtra, const float offset, QHash<int, PointD>& marks, QSet<int>& availableIds)
 {
-    auto type = isPrimary ? (isAxisY ? PositionType::PrimaryGridY : PositionType::PrimaryGridX)
-        : (isAxisY ? PositionType::SecondaryGridY : PositionType::SecondaryGridX);
+    auto type = isPrimary ?
+        (isAxisY
+            ? (centerPrimaryMarks || _mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS ? PositionType::PrimaryGridYMiddle
+                : (isExtra ? PositionType::PrimaryGridYLast : PositionType::PrimaryGridYFirst))
+            : (centerPrimaryMarks || _mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS ? PositionType::PrimaryGridXMiddle
+                : (isExtra ? PositionType::PrimaryGridXLast : PositionType::PrimaryGridXFirst)))
+        : (isAxisY
+            ? (centerSecondaryMarks || _mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS ? PositionType::SecondaryGridYMiddle
+                : (isExtra ? PositionType::SecondaryGridYLast : PositionType::SecondaryGridYFirst))
+            : (centerSecondaryMarks || _mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS ? PositionType::SecondaryGridXMiddle
+                : (isExtra ? PositionType::SecondaryGridXLast : PositionType::SecondaryGridXFirst)));
 
     OsmAnd::MapMarkerBuilder builder;
     builder.setBaseOrder(std::numeric_limits<int>::min() + (isPrimary ? 10 : 20));
@@ -87,7 +98,7 @@ void OsmAnd::GridMarksProvider_P::addGridMarks(const PointI& target31, const int
         }
         builder.setCaption(mark % suffix);
         builder.setMarkerId(*itId);
-        builder.setCaptionTopSpace(isAxisY ? -offset : offset);
+        builder.setCaptionTopSpace(offset);
         const auto newMarker = builder.buildAndAddToCollection(_markersCollection);
         newMarker->setPositionType(type);
         newMarker->setAdditionalPosition(isAxisY ? coordinates.y : coordinates.x);
@@ -95,16 +106,20 @@ void OsmAnd::GridMarksProvider_P::addGridMarks(const PointI& target31, const int
     }
 }
 
-void OsmAnd::GridMarksProvider_P::setPrimaryStyle(const TextRasterizer::Style& style, const float offset)
+void OsmAnd::GridMarksProvider_P::setPrimaryStyle(
+    const TextRasterizer::Style& style, const float offset, bool center)
 {
     primaryStyle = style;
     primaryMarksOffset = offset;
+    centerPrimaryMarks = center;
 }
 
-void OsmAnd::GridMarksProvider_P::setSecondaryStyle(const TextRasterizer::Style& style, const float offset)
+void OsmAnd::GridMarksProvider_P::setSecondaryStyle(
+    const TextRasterizer::Style& style, const float offset, bool center)
 {
     secondaryStyle = style;
     secondaryMarksOffset = offset;
+    centerSecondaryMarks = center;
 }
 
 void OsmAnd::GridMarksProvider_P::setPrimary(const bool withValues, const QString& northernSuffix,
@@ -161,12 +176,13 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
         _secondaryZone = zone;
     
         renderer->getGridConfiguration(&_gridConfiguration, &mapZoomLevel);
-        _mapZoomLevel = mapZoomLevel;
 
-        const bool withPrimary = mapZoomLevel >= _gridConfiguration.gridParameters[0].minZoom && (withPrimaryValues
+        const bool withPrimary = mapZoomLevel >= _gridConfiguration.gridParameters[0].minZoom
+            && mapZoomLevel >= _gridConfiguration.primaryMinZoomLevel && (withPrimaryValues
             || !primaryNorthernHemisphereSuffix.isEmpty() || !primarySouthernHemisphereSuffix.isEmpty()
             || !primaryEasternHemisphereSuffix.isEmpty() || !primaryWesternHemisphereSuffix.isEmpty());
-        const bool withSecondary = mapZoomLevel >= _gridConfiguration.gridParameters[1].minZoom && (withSecondaryValues
+        const bool withSecondary = mapZoomLevel >= _gridConfiguration.gridParameters[1].minZoom
+            && mapZoomLevel >= _gridConfiguration.secondaryMinZoomLevel && (withSecondaryValues
             || !secondaryNorthernHemisphereSuffix.isEmpty() || !secondarySouthernHemisphereSuffix.isEmpty()
             || !secondaryEasternHemisphereSuffix.isEmpty() || !secondaryWesternHemisphereSuffix.isEmpty());
                 
@@ -175,20 +191,52 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
         if (!withSecondary || _gridConfiguration.secondaryProjection != GridConfiguration::Projection::UTM)
             keepSecondary = true;
     
+        bool zoomChange = (mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS && _mapZoomLevel >= MIN_ZOOM_LEVEL_SIDE_MARKS)
+            || (mapZoomLevel >= MIN_ZOOM_LEVEL_SIDE_MARKS && _mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS);
+
+        if (zoomChange && !centerPrimaryMarks)
+            keepPrimary = false;
+        if (zoomChange && !centerSecondaryMarks)
+            keepSecondary = false;
+
+        _mapZoomLevel = mapZoomLevel;
+
         PointD refLons;
         const auto gaps = _gridConfiguration.getCurrentGaps(target31, mapZoomLevel, &refLons);
         QHash<int, PointD> primaryMarksX, primaryMarksY, secondaryMarksX, secondaryMarksY;
+        QHash<int, PointD> primaryMarksXExtra, primaryMarksYExtra, secondaryMarksXExtra, secondaryMarksYExtra;
         if (withPrimary)
+        {
             calculateGridMarks(target31, true, gaps.x, refLons.x, primaryMarksX, primaryMarksY);
+            if (!centerPrimaryMarks && _mapZoomLevel >= MIN_ZOOM_LEVEL_SIDE_MARKS)
+            {
+                primaryMarksXExtra = primaryMarksX;
+                primaryMarksXExtra.detach();
+                primaryMarksYExtra = primaryMarksY;
+                primaryMarksYExtra.detach();
+            }
+        }
         if (withSecondary)
+        {
             calculateGridMarks(target31, false, gaps.y, refLons.y, secondaryMarksX, secondaryMarksY);
+            if (!centerSecondaryMarks && _mapZoomLevel >= MIN_ZOOM_LEVEL_SIDE_MARKS)
+            {
+                secondaryMarksXExtra = secondaryMarksX;
+                secondaryMarksXExtra.detach();
+                secondaryMarksYExtra = secondaryMarksY;
+                secondaryMarksYExtra.detach();
+            }
+        }
 
         QWriteLocker scopedLocker(&_markersLock);
 
-        QSet<int> availableIds;
-        for (int markIdx = 0; markIdx < GRID_MARKS_PER_AXIS * 4; markIdx++)
+        QSet<int> ids;
+        const auto markCount =
+            GRID_MARKS_PER_AXIS * ((centerPrimaryMarks || _mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS ? 2 : 4)
+                + (centerSecondaryMarks || _mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS ? 2 : 4));
+        for (int markIdx = 0; markIdx < markCount; markIdx++)
         {
-            availableIds.insert(markIdx);
+            ids.insert(markIdx);
         }
 
         QList<std::shared_ptr<MapMarker>> markersToRemove;
@@ -198,16 +246,28 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
             auto coord = static_cast<float>(marker->getAdditionalPosition());
             auto key = *reinterpret_cast<int*>(&coord);
             auto type = marker->getPositionType();
+            bool primaryX = type == PositionType::PrimaryGridXMiddle || type == PositionType::PrimaryGridXFirst;
+            bool primaryY = type == PositionType::PrimaryGridYMiddle || type == PositionType::PrimaryGridYFirst;
+            bool secondaryX = type == PositionType::SecondaryGridXMiddle || type == PositionType::SecondaryGridXFirst;
+            bool secondaryY = type == PositionType::SecondaryGridYMiddle || type == PositionType::SecondaryGridYFirst;
             auto value = marker->getAdditionalPosition();
             bool isPresent = true;
-            if (keepPrimary && type == PositionType::PrimaryGridX && primaryMarksX.contains(key))
+            if (keepPrimary && primaryX && primaryMarksX.contains(key))
                 primaryMarksX.remove(key);
-            else if (keepPrimary && type == PositionType::PrimaryGridY && primaryMarksY.contains(key))
+            else if (keepPrimary && type == PositionType::PrimaryGridXLast && primaryMarksXExtra.contains(key))
+                primaryMarksXExtra.remove(key);
+            else if (keepPrimary && primaryY && primaryMarksY.contains(key))
                 primaryMarksY.remove(key);
-            else if (keepSecondary && type == PositionType::SecondaryGridX && secondaryMarksX.contains(key))
+            else if (keepPrimary && type == PositionType::PrimaryGridYLast && primaryMarksYExtra.contains(key))
+                primaryMarksYExtra.remove(key);
+            else if (keepSecondary && secondaryX && secondaryMarksX.contains(key))
                 secondaryMarksX.remove(key);
-            else if (keepSecondary && type == PositionType::SecondaryGridY && secondaryMarksY.contains(key))
+            else if (keepSecondary && type == PositionType::SecondaryGridXLast && secondaryMarksXExtra.contains(key))
+                secondaryMarksXExtra.remove(key);
+            else if (keepSecondary && secondaryY && secondaryMarksY.contains(key))
                 secondaryMarksY.remove(key);
+            else if (keepSecondary && type == PositionType::SecondaryGridYLast && secondaryMarksYExtra.contains(key))
+                secondaryMarksYExtra.remove(key);
             else
             {
                 markersToRemove.append(marker);
@@ -216,21 +276,33 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
             if (isPresent)
             {
                 marker->setPosition(target31);
-                availableIds.remove(marker->markerId);
+                ids.remove(marker->markerId);
             }
         }
 
         if (!primaryMarksX.isEmpty())
-            addGridMarks(target31, _primaryZone, true, false, primaryMarksOffset, primaryMarksX, availableIds);
+            addGridMarks(target31, _primaryZone, true, false, false, primaryMarksOffset, primaryMarksX, ids);
+
+        if (!primaryMarksXExtra.isEmpty())
+            addGridMarks(target31, _primaryZone, true, false, true, primaryMarksOffset, primaryMarksXExtra, ids);
 
         if (!primaryMarksY.isEmpty())
-            addGridMarks(target31, _primaryZone, true, true, primaryMarksOffset, primaryMarksY, availableIds);
+            addGridMarks(target31, _primaryZone, true, true, false, primaryMarksOffset, primaryMarksY, ids);
+
+        if (!primaryMarksYExtra.isEmpty())
+            addGridMarks(target31, _primaryZone, true, true, true, primaryMarksOffset, primaryMarksYExtra, ids);
 
         if (!secondaryMarksX.isEmpty())
-            addGridMarks(target31, _secondaryZone, false, false, primaryMarksOffset, secondaryMarksX, availableIds);
+            addGridMarks(target31, _secondaryZone, false, false, false, secondaryMarksOffset, secondaryMarksX, ids);
+
+        if (!secondaryMarksXExtra.isEmpty())
+            addGridMarks(target31, _secondaryZone, false, false, true, secondaryMarksOffset, secondaryMarksXExtra,ids);
 
         if (!secondaryMarksY.isEmpty())
-            addGridMarks(target31, _secondaryZone, false, true, primaryMarksOffset, secondaryMarksY, availableIds);
+            addGridMarks(target31, _secondaryZone, false, true, false, secondaryMarksOffset, secondaryMarksY, ids);
+
+        if (!secondaryMarksYExtra.isEmpty())
+            addGridMarks(target31, _secondaryZone, false, true, true, secondaryMarksOffset, secondaryMarksYExtra, ids);
 
         for (const auto& marker : markersToRemove)
         {

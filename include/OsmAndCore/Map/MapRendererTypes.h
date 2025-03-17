@@ -368,7 +368,7 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
-Format secondaryFormat;
+        Format secondaryFormat;
 #if !defined(SWIG)
         inline GridConfiguration& setSecondaryFormat(const Format newFormat)
         {
@@ -398,6 +398,26 @@ Format secondaryFormat;
         }
 #endif // !defined(SWIG)
 
+        ZoomLevel  primaryMinZoomLevel;
+#if !defined(SWIG)
+        inline GridConfiguration& setPrimaryMinZoomLevel(const ZoomLevel zoomLevel)
+        {
+            primaryMinZoomLevel = zoomLevel;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        ZoomLevel secondaryMinZoomLevel;
+#if !defined(SWIG)
+        inline GridConfiguration& setSecondaryMinZoomLevel(const ZoomLevel zoomLevel)
+        {
+            secondaryMinZoomLevel = zoomLevel;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
         GridParameters gridParameters[2];
 #if !defined(SWIG)
         GridConfiguration& setProjectionParameters();
@@ -412,6 +432,9 @@ Format secondaryFormat;
         PointI getPrimaryGridLocation31(const PointD& location) const;
         PointI getSecondaryGridLocation31(const PointD& location) const;
         PointI unProjectLocation(const Projection projection, const PointD& location) const;
+        PointD getPrimaryGridFullturnLocation(const PointD& location) const;
+        PointD getSecondaryGridFullturnLocation(const PointD& location) const;
+        PointD getFullturnLocation(const Projection projection, const PointD& location) const;
         bool getPrimaryGridCoordinateX(double& coordinate) const;
         bool getPrimaryGridCoordinateY(double& coordinate) const;
         bool getSecondaryGridCoordinateX(double& coordinate) const;
@@ -445,13 +468,15 @@ Format secondaryFormat;
                 qFuzzyCompare(primaryThickness, r.primaryThickness) &&
                 primaryFormat == r.primaryFormat &&
                 primaryColor == r.primaryColor &&
+                primaryMinZoomLevel == r.primaryMinZoomLevel &&
                 secondaryGrid == r.secondaryGrid &&
                 secondaryProjection == r.secondaryProjection &&
                 qFuzzyCompare(secondaryGap, r.secondaryGap) &&
                 qFuzzyCompare(secondaryGranularity, r.secondaryGranularity) &&
                 qFuzzyCompare(secondaryThickness, r.secondaryThickness) &&
                 secondaryFormat == r.secondaryFormat &&
-                secondaryColor == r.secondaryColor;
+                secondaryColor == r.secondaryColor &&
+                secondaryMinZoomLevel == r.secondaryMinZoomLevel;
         }
 
         inline bool operator!=(const GridConfiguration& r) const
@@ -464,14 +489,16 @@ Format secondaryFormat;
                 !qFuzzyCompare(primaryThickness, r.primaryThickness) ||
                 primaryFormat != r.primaryFormat ||
                 primaryColor != r.primaryColor ||
+                primaryMinZoomLevel != r.primaryMinZoomLevel ||
                 secondaryGrid != r.secondaryGrid ||
                 secondaryProjection != r.secondaryProjection ||
                 !qFuzzyCompare(secondaryGap, r.secondaryGap) ||
                 !qFuzzyCompare(secondaryGranularity, r.secondaryGranularity) ||
                 !qFuzzyCompare(secondaryThickness, r.secondaryThickness) ||
                 secondaryFormat != r.secondaryFormat ||
-                secondaryColor != r.secondaryColor;
-            }
+                secondaryColor != r.secondaryColor ||
+                secondaryMinZoomLevel != r.secondaryMinZoomLevel;
+        }
     };
 }
 

@@ -222,3 +222,20 @@ OsmAnd::AreaI OsmAnd::Frustum2D31::getBBoxShifted() const
 
     return AreaI(np0, np0).enlargeToInclude(np1).enlargeToInclude(np2).enlargeToInclude(np3);
 }
+
+OsmAnd::PointI64 OsmAnd::Frustum2D31::clampCoordinates()
+{
+    const PointI64 maxCoords(
+        std::max(std::max(p0.x, p1.x), std::max(p2.x, p3.x)),
+        std::max(std::max(p0.y, p1.y), std::max(p2.y, p3.y)));
+
+    const PointI64 offset(maxCoords.x > INT32_MAX ? maxCoords.x - (maxCoords.x & INT32_MAX) : 0,
+        maxCoords.y > INT32_MAX ? maxCoords.y - (maxCoords.y & INT32_MAX) : 0);
+
+    p0 -= offset;
+    p1 -= offset;
+    p2 -= offset;
+    p3 -= offset;
+
+    return offset;
+}
