@@ -12,14 +12,16 @@ OsmAnd::GridMarksProvider::~GridMarksProvider()
 {
 }
 
-void OsmAnd::GridMarksProvider::setPrimaryStyle(const TextRasterizer::Style& style, const float offset)
+void OsmAnd::GridMarksProvider::setPrimaryStyle(const TextRasterizer::Style& style, const float offset,
+    bool center /* = false */)
 {
-    _p->setPrimaryStyle(style, offset);
+    _p->setPrimaryStyle(style, offset, center);
 }
 
-void OsmAnd::GridMarksProvider::setSecondaryStyle(const TextRasterizer::Style& style, const float offset)
+void OsmAnd::GridMarksProvider::setSecondaryStyle(const TextRasterizer::Style& style, const float offset,
+    bool center /* = false */)
 {
-    _p->setSecondaryStyle(style, offset);
+    _p->setSecondaryStyle(style, offset, center);
 }
 
 void OsmAnd::GridMarksProvider::setPrimary(const bool withValues, const QString& northernSuffix,

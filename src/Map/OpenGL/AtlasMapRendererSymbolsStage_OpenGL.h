@@ -47,6 +47,7 @@ namespace OsmAnd
                     // Common data
                     GLlocation mPerspectiveProjectionView;
                     GLlocation mOrthographicProjection;
+                    GLlocation mRotate;
                     GLlocation resultScale;
                     GLlocation viewport;
                     GLlocation target31;

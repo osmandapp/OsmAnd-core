@@ -77,10 +77,18 @@ namespace OsmAnd
     enum PositionType : unsigned int
     {
         Coordinate31 = 0,
-        PrimaryGridX = 1,
-        PrimaryGridY = 2,
-        SecondaryGridX = 3,
-        SecondaryGridY = 4
+        PrimaryGridXFirst = 1,
+        PrimaryGridXMiddle = 2,
+        PrimaryGridXLast = 3,
+        PrimaryGridYFirst = 4,
+        PrimaryGridYMiddle = 5,
+        PrimaryGridYLast = 6,
+        SecondaryGridXFirst = 7,
+        SecondaryGridXMiddle = 8,
+        SecondaryGridXLast = 9,
+        SecondaryGridYFirst = 10,
+        SecondaryGridYMiddle = 11,
+        SecondaryGridYLast = 12
     };
 
     union TagValueId

@@ -359,21 +359,21 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
             PointI extraOffset;
             switch (positionType)
             {
-                case PositionType::PrimaryGridX:
-                case PositionType::SecondaryGridX:
-                    extraOffset.x = owner->captionTopSpace + textImage->width() / 2;
+                case PositionType::PrimaryGridXMiddle:
+                case PositionType::SecondaryGridXMiddle:
+                    extraOffset.x = textImage->width() / 2 + owner->captionTopSpace;
                     if (textStyle.textAlignment == TextRasterizer::Style::TextAlignment::Under)
                         extraOffset.y = textImage->height() + owner->captionTopSpace;
                     break;
-                case PositionType::PrimaryGridY:
-                case PositionType::SecondaryGridY:
-                if (textStyle.textAlignment == TextRasterizer::Style::TextAlignment::Under)
-                    extraOffset.y = textImage->height() / 2 - owner->captionTopSpace;
-                else
-                    extraOffset.y = owner->captionTopSpace - textImage->height() / 2;
-                    break;
-                default:
-                extraOffset.y = owner->captionTopSpace + textImage->height() / 2;
+                case PositionType::PrimaryGridYMiddle:
+                case PositionType::SecondaryGridYMiddle:
+                    if (textStyle.textAlignment != TextRasterizer::Style::TextAlignment::Under)
+                    {
+                        extraOffset.y = -textImage->height() / 2 - owner->captionTopSpace;
+                        break;
+                    }
+                case PositionType::Coordinate31:
+                    extraOffset.y = textImage->height() / 2 + owner->captionTopSpace;
             }
             const auto mapSymbolCaption = std::make_shared<BillboardRasterMapSymbol>(symbolsGroup);
             mapSymbolCaption->order = order - 2;

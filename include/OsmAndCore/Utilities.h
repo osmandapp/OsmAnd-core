@@ -1230,11 +1230,11 @@ namespace OsmAnd
             // Snap value to the closest number from range [1, 2, 5, 10] * (10 ^ n)
             double factor = std::pow(10.0, std::floor(log10(value)));
             double result = value / factor;
-            if (result < 1.5)
+            if (result < 2.0)
                 result = 1.0;
-            else if (result < 3.5)
+            else if (result < 5.0)
                 result = 2.0;
-            else if (result < 7.5)
+            else if (result < 10.0)
                 result = 5.0;
             else
                 result = 10.0;
@@ -1246,19 +1246,19 @@ namespace OsmAnd
         {
             // Snap value to the closest number from range [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60]
             double result = value;
-            if (result < 6.5)
+            if (result < 6.0)
                 result = std::round(result);
-            else if (result < 8.0)
+            else if (result < 10.0)
                 result = 6.0;
-            else if (result < 11.0)
+            else if (result < 12.0)
                 result = 10.0;
-            else if (result < 13.5)
+            else if (result < 15.0)
                 result = 12.0;
-            else if (result < 17.5)
+            else if (result < 20.0)
                 result = 15.0;
-            else if (result < 25.0)
+            else if (result < 30.0)
                 result = 20.0;
-            else if (result < 45.0)
+            else if (result < 60.0)
                 result = 30.0;
             else
                 result = 60.0;

@@ -43,6 +43,7 @@ namespace OsmAnd
 
         bool withPrimaryValues;
         float primaryMarksOffset;
+        bool centerPrimaryMarks;
         QString primaryNorthernHemisphereSuffix;
         QString primarySouthernHemisphereSuffix;
         QString primaryEasternHemisphereSuffix;
@@ -50,6 +51,7 @@ namespace OsmAnd
 
         bool withSecondaryValues;
         float secondaryMarksOffset;
+        bool centerSecondaryMarks;
         QString secondaryNorthernHemisphereSuffix;
         QString secondarySouthernHemisphereSuffix;
         QString secondaryEasternHemisphereSuffix;
@@ -59,10 +61,12 @@ namespace OsmAnd
             const double gap, const double refLon, QHash<int, PointD>& marksX, QHash<int, PointD>& marksY);
 
         void addGridMarks(const PointI& target31, const int zone, const bool isPrimary, const bool isAxisY,
-            const float offset, QHash<int, PointD>& marks, QSet<int>& availableIds);
+            const bool isExtra, const float offset, QHash<int, PointD>& marks, QSet<int>& availableIds);
     
-        void setPrimaryStyle(const TextRasterizer::Style& style, const float offset);
-        void setSecondaryStyle(const TextRasterizer::Style& style, const float offset);
+        void setPrimaryStyle(
+            const TextRasterizer::Style& style, const float offset, bool center);
+        void setSecondaryStyle(
+            const TextRasterizer::Style& style, const float offset, bool center);
     
         void setPrimary(const bool withValues, const QString& northernSuffix,
             const QString& southernSuffix, const QString& easternSuffix, const QString& westernSuffix);

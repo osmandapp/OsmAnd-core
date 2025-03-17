@@ -35,6 +35,7 @@ namespace OsmAnd
         QMap<ZoomLevel, TileId> uniqueTilesTargets;
         QSet<TileId> extraDetailedTiles;
         float extraElevation;
+        float maxElevation;
 
         glm::vec4 glmViewport;
         glm::mat4 mOrthographicProjection;
@@ -83,6 +84,8 @@ namespace OsmAnd
         Frustum2D31 globalFrustum2D31;
         Frustum2DF extraField2D;
         Frustum2D31 extraFrustum2D31;
+        PointI64 targetOffset;
+        Frustum2D31 elevatedFrustum2D31;
         glm::vec3 topVisibleEdgeN;
         glm::vec3 leftVisibleEdgeN;
         glm::vec3 bottomVisibleEdgeN;

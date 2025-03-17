@@ -93,6 +93,8 @@ OsmAnd::GridConfiguration::GridConfiguration()
     , secondaryThickness(1.0f)
     , primaryFormat(Format::Decimal)
     , secondaryFormat(Format::Decimal)
+    , primaryMinZoomLevel(ZoomLevel::ZoomLevel2)
+    , secondaryMinZoomLevel(ZoomLevel::ZoomLevel2)
 {
     setProjectionParameters();
 }
@@ -185,7 +187,9 @@ double OsmAnd::GridConfiguration::getLocationReference(
     switch (projection)
     {
         case Projection::UTM: // UTM zone central meridian (degrees)
-            Utilities::getZoneUTM(Utilities::getAnglesFrom31(location31), &result);
+            Utilities::getZoneUTM(Utilities::getAnglesFrom31(PointI(
+                location31.x < 0 ? location31.x + 1 + INT32_MAX : location31.x,
+                location31.y < 0 ? location31.y + 1 + INT32_MAX : location31.y)), &result);
             break;
         case Projection::Mercator: // EPSG:3857 prime meridian
             result = 0.0;
@@ -218,8 +222,12 @@ OsmAnd::PointD OsmAnd::GridConfiguration::projectLocation(
             break;
         default: // EPSG:4326 longitude and latitude (degrees)
             {
-                const auto lonlat = Utilities::getAnglesFrom31(location31);
-                result = lonlat * 180.0 / M_PI;
+                const bool isOverX = location31.x < 0;
+                const bool isOverY = location31.y < 0;
+                const auto lonlat = Utilities::getAnglesFrom31(PointI(
+                    isOverX ? location31.x + 1 + INT32_MAX : location31.x,
+                    isOverY ? location31.y + 1 + INT32_MAX : location31.y));
+                result = (lonlat - PointD(isOverX ? M_PI * 2.0 : 0.0, isOverY ? M_PI : 0.0)) * 180.0 / M_PI;
             }
     }
     return result;
@@ -250,6 +258,40 @@ OsmAnd::PointI OsmAnd::GridConfiguration::unProjectLocation(
             break;
         default: // Get 31-coordinates from EPSG:4326 longitude and latitude in degrees
             result = Utilities::get31FromAngles(location * M_PI / 180.0);
+    }
+    return result;
+}
+
+OsmAnd::PointD OsmAnd::GridConfiguration::getPrimaryGridFullturnLocation(
+    const PointD& location) const
+{
+    return getFullturnLocation(primaryProjection, location);
+}
+
+OsmAnd::PointD OsmAnd::GridConfiguration::getSecondaryGridFullturnLocation(
+    const PointD& location) const
+{
+    return getFullturnLocation(secondaryProjection, location);
+}
+
+OsmAnd::PointD OsmAnd::GridConfiguration::getFullturnLocation(
+    const Projection projection, const PointD& location) const
+{
+    PointD result;
+    switch (projection)
+    {
+        case Projection::UTM: // Return UTM coordinates unchenged
+            result = location;
+            break;
+        case Projection::Mercator: // EPSG:3857 X and Y full-turn coordinates (100 map kilometers)
+            {
+                const auto half = M_PI * 6378137;
+                const auto full = 2.0 * half;
+                result = location + PointD(location.x < -half ? full : -full, location.y < -half ? full : -full);
+            }
+            break;
+        default: // EPSG:4326 full-turn longitude and latitude (degrees)
+            result = location + PointD(location.x < -180.0 ? 360.0 : -360.0, location.y < -90.0 ? 180.0 : -180.0);
     }
     return result;
 }
@@ -473,8 +515,7 @@ OsmAnd::PointD OsmAnd::GridConfiguration::getCurrentGaps(
             refLons.y = getSecondaryGridReference(centerTile31);
             auto tileBegin = getSecondaryGridLocation(startTile31, &refLons.y);
             auto tileCenter = getSecondaryGridLocation(centerTile31, &refLons.y);
-            auto cellSize =
-                fabs(tileCenter.x - tileBegin.x) * 2.0 * secondaryGranularity;
+            auto cellSize = fabs(tileCenter.x - tileBegin.x) * 2.0 * secondaryGranularity;
             result.y = secondaryFormat == Format::DMS ? Utilities::snapToGridDMS(cellSize)
                 : (secondaryFormat == Format::DM ? Utilities::snapToGridDM(cellSize)
                     : Utilities::snapToGridDecimal(cellSize));
