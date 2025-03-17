@@ -95,6 +95,8 @@ OsmAnd::GridConfiguration::GridConfiguration()
     , secondaryFormat(Format::Decimal)
     , primaryMinZoomLevel(ZoomLevel::ZoomLevel2)
     , secondaryMinZoomLevel(ZoomLevel::ZoomLevel2)
+    , primaryMaxZoomLevel(ZoomLevel::ZoomLevel22)
+    , secondaryMaxZoomLevel(ZoomLevel::ZoomLevel22)
 {
     setProjectionParameters();
 }

@@ -112,6 +112,8 @@ void OsmAnd::GridMarksProvider_P::setPrimaryStyle(
     primaryStyle = style;
     primaryMarksOffset = offset;
     centerPrimaryMarks = center;
+    _primaryZone = -1;
+    _target31 = PointI(-1, -1);
 }
 
 void OsmAnd::GridMarksProvider_P::setSecondaryStyle(
@@ -120,6 +122,8 @@ void OsmAnd::GridMarksProvider_P::setSecondaryStyle(
     secondaryStyle = style;
     secondaryMarksOffset = offset;
     centerSecondaryMarks = center;
+    _primaryZone = -1;
+    _target31 = PointI(-1, -1);
 }
 
 void OsmAnd::GridMarksProvider_P::setPrimary(const bool withValues, const QString& northernSuffix,
@@ -130,6 +134,8 @@ void OsmAnd::GridMarksProvider_P::setPrimary(const bool withValues, const QStrin
     primarySouthernHemisphereSuffix = southernSuffix;
     primaryEasternHemisphereSuffix = easternSuffix;
     primaryWesternHemisphereSuffix = westernSuffix;
+    _primaryZone = -1;
+    _target31 = PointI(-1, -1);
 }
 
 void OsmAnd::GridMarksProvider_P::setSecondary(const bool withValues, const QString& northernSuffix,
@@ -140,6 +146,8 @@ void OsmAnd::GridMarksProvider_P::setSecondary(const bool withValues, const QStr
     secondarySouthernHemisphereSuffix = southernSuffix;
     secondaryEasternHemisphereSuffix = easternSuffix;
     secondaryWesternHemisphereSuffix = westernSuffix;
+    _primaryZone = -1;
+    _target31 = PointI(-1, -1);
 }
 
 void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
@@ -178,11 +186,13 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
         renderer->getGridConfiguration(&_gridConfiguration, &mapZoomLevel);
 
         const bool withPrimary = mapZoomLevel >= _gridConfiguration.gridParameters[0].minZoom
-            && mapZoomLevel >= _gridConfiguration.primaryMinZoomLevel && (withPrimaryValues
+            && mapZoomLevel >= _gridConfiguration.primaryMinZoomLevel
+            && mapZoomLevel <= _gridConfiguration.primaryMaxZoomLevel && (withPrimaryValues
             || !primaryNorthernHemisphereSuffix.isEmpty() || !primarySouthernHemisphereSuffix.isEmpty()
             || !primaryEasternHemisphereSuffix.isEmpty() || !primaryWesternHemisphereSuffix.isEmpty());
         const bool withSecondary = mapZoomLevel >= _gridConfiguration.gridParameters[1].minZoom
-            && mapZoomLevel >= _gridConfiguration.secondaryMinZoomLevel && (withSecondaryValues
+            && mapZoomLevel >= _gridConfiguration.secondaryMinZoomLevel
+            && mapZoomLevel <= _gridConfiguration.secondaryMaxZoomLevel && (withSecondaryValues
             || !secondaryNorthernHemisphereSuffix.isEmpty() || !secondarySouthernHemisphereSuffix.isEmpty()
             || !secondaryEasternHemisphereSuffix.isEmpty() || !secondaryWesternHemisphereSuffix.isEmpty());
                 

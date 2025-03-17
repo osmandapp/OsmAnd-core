@@ -418,9 +418,30 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
-        GridParameters gridParameters[2];
+        ZoomLevel  primaryMaxZoomLevel;
 #if !defined(SWIG)
+        inline GridConfiguration& setPrimaryMaxZoomLevel(const ZoomLevel zoomLevel)
+        {
+            primaryMaxZoomLevel = zoomLevel;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        ZoomLevel secondaryMaxZoomLevel;
+#if !defined(SWIG)
+        inline GridConfiguration& setSecondaryMaxZoomLevel(const ZoomLevel zoomLevel)
+        {
+            secondaryMaxZoomLevel = zoomLevel;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        GridParameters gridParameters[2];
         GridConfiguration& setProjectionParameters();
+
+#if !defined(SWIG)
         GridConfiguration& setProjectionParameters(const int gridIndex, const Projection projection);
         double getPrimaryGridReference(const PointI& location31) const;
         double getSecondaryGridReference(const PointI& location31) const;
@@ -469,6 +490,7 @@ namespace OsmAnd
                 primaryFormat == r.primaryFormat &&
                 primaryColor == r.primaryColor &&
                 primaryMinZoomLevel == r.primaryMinZoomLevel &&
+                primaryMaxZoomLevel == r.primaryMaxZoomLevel &&
                 secondaryGrid == r.secondaryGrid &&
                 secondaryProjection == r.secondaryProjection &&
                 qFuzzyCompare(secondaryGap, r.secondaryGap) &&
@@ -476,7 +498,8 @@ namespace OsmAnd
                 qFuzzyCompare(secondaryThickness, r.secondaryThickness) &&
                 secondaryFormat == r.secondaryFormat &&
                 secondaryColor == r.secondaryColor &&
-                secondaryMinZoomLevel == r.secondaryMinZoomLevel;
+                secondaryMinZoomLevel == r.secondaryMinZoomLevel &&
+                secondaryMaxZoomLevel == r.secondaryMaxZoomLevel;
         }
 
         inline bool operator!=(const GridConfiguration& r) const
@@ -490,6 +513,7 @@ namespace OsmAnd
                 primaryFormat != r.primaryFormat ||
                 primaryColor != r.primaryColor ||
                 primaryMinZoomLevel != r.primaryMinZoomLevel ||
+                primaryMaxZoomLevel != r.primaryMaxZoomLevel ||
                 secondaryGrid != r.secondaryGrid ||
                 secondaryProjection != r.secondaryProjection ||
                 !qFuzzyCompare(secondaryGap, r.secondaryGap) ||
@@ -497,7 +521,8 @@ namespace OsmAnd
                 !qFuzzyCompare(secondaryThickness, r.secondaryThickness) ||
                 secondaryFormat != r.secondaryFormat ||
                 secondaryColor != r.secondaryColor ||
-                secondaryMinZoomLevel != r.secondaryMinZoomLevel;
+                secondaryMinZoomLevel != r.secondaryMinZoomLevel ||
+                secondaryMaxZoomLevel != r.secondaryMaxZoomLevel;
         }
     };
 }
