@@ -1407,13 +1407,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                     j = isFirst ? i : 3 - i;
                     if (cross[j])
                     {
-                        // remove left side marks in portrait mode
-                        if (j == 3 && currentState.windowSize.y > currentState.windowSize.x)
-                            return;
-                        
-                        // remove top side marks when in landscape or 3D mode
-                        if (j == 2 && (currentState.windowSize.y < currentState.windowSize.x
-                            || currentState.elevationAngle < 89.0f))
+                        // remove top side marks for 3D mode
+                        if (j == 2 && currentState.elevationAngle < 89.0f)
                             return;
 
                         firstPoint31 = pos[j];
@@ -1454,13 +1449,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                     internalState.glmViewport).xy();
                 auto screenLengthInPixels = glm::distance(firstOnScreen, lastOnScreen);
                 auto symSize = static_cast<float>(rasterMapSymbol->size.x + rasterMapSymbol->size.y * 2);
-                auto halfSize = symSize / 2;
+                auto halfSize = symSize / 2.0f;
                 auto offset = screenLengthInPixels / 2.0f;
                 if (screenLengthInPixels > symSize)
                 {
                     if (!isFirst && screenLengthInPixels < symSize * 3.0f)
                         return;
-                    offset = symSize / 2.0f + (isBottom ? screenLengthInPixels / GRID_BOTTOM_PADDING_FACTOR : 0.0);
+                    offset = halfSize / 2.0f + (isBottom ? screenLengthInPixels / GRID_BOTTOM_PADDING_FACTOR : 0.0);
                 }
                 else if (screenLengthInPixels < static_cast<float>(rasterMapSymbol->size.x))
                     return;
