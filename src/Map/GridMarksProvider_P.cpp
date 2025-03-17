@@ -72,7 +72,7 @@ void OsmAnd::GridMarksProvider_P::addGridMarks(const PointI& target31, const int
                 : (isExtra ? PositionType::SecondaryGridXLast : PositionType::SecondaryGridXFirst)));
 
     OsmAnd::MapMarkerBuilder builder;
-    builder.setBaseOrder(std::numeric_limits<int>::min() + (isPrimary ? 10 : 20));
+    builder.setBaseOrder(std::numeric_limits<int>::max() - (isPrimary ? 20 : 10));
     builder.setPosition(target31);
     builder.setCaptionStyle(isPrimary ? primaryStyle : secondaryStyle);
     for (const auto& markEntry : rangeOf(constOf(marks)))

@@ -165,6 +165,11 @@ namespace OsmAnd
         mutable QReadWriteLock _lastVisibleSymbolsLock;
         ScreenQuadTree _lastVisibleSymbols;
 
+        mutable QList<PointI> _primaryGridMarksOnXAsis;
+        mutable QList<PointI> _primaryGridMarksOnYAsis;
+        mutable QList<PointI> _secondaryGridMarksOnXAsis;
+        mutable QList<PointI> _secondaryGridMarksOnYAsis;
+
         // Path calculations cache
         struct ComputedPathData
         {

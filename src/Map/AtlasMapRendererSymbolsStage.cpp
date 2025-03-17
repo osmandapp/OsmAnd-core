@@ -472,6 +472,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     outIntersections = ScreenQuadTree(currentState.viewport, qMax(treeDepth, 1u));
     ComputedPathsDataCache computedPathsDataCache;
     clearTerrainVisibilityFiltering();
+    _primaryGridMarksOnXAsis.clear();
+    _primaryGridMarksOnYAsis.clear();
+    _secondaryGridMarksOnXAsis.clear();
+    _secondaryGridMarksOnYAsis.clear();
     bool applyFiltering = pOutAcceptedMapSymbolsByOrder != nullptr;
     if (!applyFiltering || !currentState.elevationDataProvider)
     {
@@ -1450,6 +1454,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                     internalState.glmViewport).xy();
                 auto screenLengthInPixels = glm::distance(firstOnScreen, lastOnScreen);
                 auto symSize = static_cast<float>(rasterMapSymbol->size.x + rasterMapSymbol->size.y * 2);
+                auto halfSize = symSize / 2;
                 auto offset = screenLengthInPixels / 2.0f;
                 if (screenLengthInPixels > symSize)
                 {
@@ -1459,6 +1464,39 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 }
                 else if (screenLengthInPixels < static_cast<float>(rasterMapSymbol->size.x))
                     return;
+
+                const auto symPoint = firstOnScreen + (lastOnScreen - firstOnScreen)
+                    * (screenLengthInPixels > 0.0f ? offset / screenLengthInPixels : 0.0f);
+                
+                PointI pointOnScreen(
+                    static_cast<int32_t>(std::round(symPoint.x)),
+                    static_cast<int32_t>(std::round(symPoint.y)));
+
+                const auto drawnMarks = isPrimary
+                    ? (isAxisY ? _primaryGridMarksOnXAsis : _primaryGridMarksOnYAsis)
+                    : (isAxisY ? _secondaryGridMarksOnXAsis : _secondaryGridMarksOnYAsis);
+
+                auto sqLimit = halfSize * halfSize * 2.0;
+                for (const auto& mark : drawnMarks)
+                {
+                    if ((mark - pointOnScreen).squareNorm() < sqLimit)
+                        return;
+                }
+
+                if (isPrimary)
+                {
+                    if (isAxisY)
+                        _primaryGridMarksOnYAsis.append(pointOnScreen);
+                    else
+                        _primaryGridMarksOnXAsis.append(pointOnScreen);
+                }
+                else
+                {
+                    if (isAxisY)
+                        _secondaryGridMarksOnYAsis.append(pointOnScreen);
+                    else
+                        _secondaryGridMarksOnXAsis.append(pointOnScreen);
+                }
 
                 auto firstNearInWorld = glm::unProject(
                     glm::vec3(firstOnScreen.x, currentState.windowSize.y - firstOnScreen.y, 0.0f),
