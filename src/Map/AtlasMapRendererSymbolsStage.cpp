@@ -1455,7 +1455,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 {
                     if (!isFirst && screenLengthInPixels < symSize * 3.0f)
                         return;
-                    offset = halfSize / 2.0f + (isBottom ? screenLengthInPixels / GRID_BOTTOM_PADDING_FACTOR : 0.0);
+                    offset = halfSize + (isBottom ? screenLengthInPixels / GRID_BOTTOM_PADDING_FACTOR : 0.0);
                 }
                 else if (screenLengthInPixels < static_cast<float>(rasterMapSymbol->size.x))
                     return;
