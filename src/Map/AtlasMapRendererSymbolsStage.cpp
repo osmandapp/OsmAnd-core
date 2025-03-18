@@ -1429,6 +1429,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                     if (i == 3)
                         return;
                 }
+                if (isPrimary
+                    && currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::MGRS
+                    || (!isPrimary
+                        && currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::MGRS))
+                {
+                    const auto targetZone = Utilities::getCodedZoneUTM(currentState.target31, false);
+                    const auto pointZone = Utilities::getCodedZoneUTM(firstPoint31, false);
+                    if (pointZone != targetZone)
+                        return;
+                }
                 auto firstPoint =
                     PointF(PointD(PointI64(firstPoint31) - localTarget31) / tileSize31) * AtlasMapRenderer::TileSize3D;
                 auto lastPoint =
@@ -1453,7 +1463,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 auto offset = screenLengthInPixels / 2.0f;
                 if (screenLengthInPixels > symSize)
                 {
-                    if (!isFirst && screenLengthInPixels < symSize * 3.0f)
+                    if (!isFirst && screenLengthInPixels < symSize * 2.0f)
                         return;
                     offset = halfSize + (isBottom ? screenLengthInPixels / GRID_BOTTOM_PADDING_FACTOR : 0.0);
                 }

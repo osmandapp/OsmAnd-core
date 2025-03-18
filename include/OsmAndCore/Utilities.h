@@ -65,6 +65,48 @@ namespace OsmAnd
             return locale.toString(QDateTime::fromMSecsSinceEpoch(time, Qt::UTC), QStringLiteral("yyyyMMdd_hh00"));
         }
 
+        inline static QString getMGRSLetter(int zoneNumber)
+        {
+            switch (zoneNumber)
+            {
+                case 0: return QStringLiteral("A");
+                case 1: return QStringLiteral("B");
+                case 2: return QStringLiteral("C");
+                case 3: return QStringLiteral("D");
+                case 4: return QStringLiteral("E");
+                case 5: return QStringLiteral("F");
+                case 6: return QStringLiteral("G");
+                case 7: return QStringLiteral("H");
+                case 8: return QStringLiteral("J");
+                case 9: return QStringLiteral("K");
+                case 10: return QStringLiteral("L");
+                case 11: return QStringLiteral("M");
+                case 12: return QStringLiteral("N");
+                case 13: return QStringLiteral("P");
+                case 14: return QStringLiteral("Q");
+                case 15: return QStringLiteral("R");
+                case 16: return QStringLiteral("S");
+                case 17: return QStringLiteral("T");
+                case 18: return QStringLiteral("U");
+                case 19: return QStringLiteral("V");
+                case 20: return QStringLiteral("W");
+                case 21: return QStringLiteral("X");
+                case 22: return QStringLiteral("Y");
+                case 23: return QStringLiteral("Z");
+            }
+            return QString();
+        }
+
+        inline static QString getMGRSSquareColumn(const PointI& zoneUTM, const PointD& coordinates)
+        {
+            return getMGRSLetter(static_cast<int>(std::floor(coordinates.x)) - 1 + (zoneUTM.x - 1) % 3 * 8);
+        }
+
+        inline static QString getMGRSSquareRow(const PointI& zoneUTM, const PointD& coordinates)
+        {
+            return getMGRSLetter((static_cast<int>(std::floor(coordinates.y)) + ((zoneUTM.x & 1) > 0 ? 0 : 5)) % 20);
+        }
+
         inline static void removeTrailingZeros(QString& str)
         {
             while (str.back() == '0')
@@ -352,6 +394,10 @@ namespace OsmAnd
         inline static PointD getZoneUTM(const PointD& location, double* refLonDeg)
         {
             auto result = location * 180.0 / M_PI;
+            if (result.x >= 180.0)
+                result.x -= 360.0;
+            else if (result.x < -180.0)
+                result.x += 360.0;
             result.x /= 6.0;
             result.x += 31.0;
             result.y /= 8.0;
@@ -368,36 +414,30 @@ namespace OsmAnd
                 double s = result.x < 32.5 ? 31.0 : (result.x < 34.5 ? 33.0 : (result.x < 36.5 ? 35.0 : 37.0));
                 result.x = s
                     + (result.x - (result.x < 32.5 ? s : s - 0.5)) / (result.x >= 32.5 && result.x < 36.5 ? 2.0 : 1.5);
-                refLon = result.x >= 37.0 ? 37.5 : (result.x >= 35.0 ? 27.0 : (result.x >= 33.0 ? 15.0 : 4.5));
+                refLon = result.x >= 37.0 ? 39.0 : (result.x >= 35.0 ? 27.0 : (result.x >= 33.0 ? 15.0 : 3.0));
             }
             else if (result.y >= 20.0 && result.y < 21.0 && result.x >= 31.0 && result.x < 33.0)
             {
                 result.x = result.x < 31.5 ? 31.0 + (result.x - 31.0) / 0.5 : 32.0 + (result.x - 31.5) / 1.5;
-                refLon = result.x >= 32.0 ? 7.5 : 1.5;
+                refLon = result.x >= 32.0 ? 9.0 : 3.0;
             }
             if (refLonDeg)
                 *refLonDeg = refLon;
             return result;
         }
 
-        inline static PointI simplifyZoneUTM(const PointD& zUTM)
+        inline static int getCodedZoneUTM(const PointI& location31, const bool unite = true)
         {
+            auto zUTM = getZoneUTM(getAnglesFrom31(location31), nullptr);
             auto zone = PointI(static_cast<int32_t>(std::floor(zUTM.x)), static_cast<int32_t>(std::floor(zUTM.y)));
             if (isnan(zUTM.y))
             {
                 zone.x = 0;
                 zone.y = 127;
             }
-            if (zone.x < 31 || zone.x > 37 || zone.y < 20 || zone.y == 21 || (zone.y == 20 && zone.x > 32))
+            if (unite && (zone.x < 31 || zone.x > 37 || zone.y < 20 || zone.y == 21 || (zone.y == 20 && zone.x > 32)))
                 zone.y = 0;
-            return zone;
-        }
-
-        inline static int getCodedZoneUTM(const PointI& location31, const bool simplify = true)
-        {
-            auto zUTM = getZoneUTM(getAnglesFrom31(location31), nullptr);
-            auto zone = simplify ? simplifyZoneUTM(zUTM)
-                : PointI(static_cast<int32_t>(std::floor(zUTM.x)), static_cast<int32_t>(std::floor(zUTM.y)));
+    
             return zone.y << 6 | zone.x;
         }
 

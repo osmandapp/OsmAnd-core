@@ -28,17 +28,19 @@ OsmAnd::GridMarksProvider_P::~GridMarksProvider_P()
 {
 }
 
-void OsmAnd::GridMarksProvider_P::calculateGridMarks(const PointI& target31, const bool isPrimary,
+void OsmAnd::GridMarksProvider_P::calculateGridMarks(const bool isPrimary,
     const double gap, const double refLon, QHash<int, PointD>& marksX, QHash<int, PointD>& marksY)
 {
     auto marksCount = static_cast<int>(std::min(static_cast<double>(GRID_MARKS_PER_AXIS),
         isPrimary ? _gridConfiguration.getPrimaryMaxMarksPerAxis(gap)
         : _gridConfiguration.getSecondaryMaxMarksPerAxis(gap)));
     double halfCount = marksCount / 2;
-    auto location = (isPrimary ? _gridConfiguration.getPrimaryGridLocation(target31, &refLon)
-        : _gridConfiguration.getSecondaryGridLocation(target31, &refLon)) / gap;
-    location.x = (std::round(location.x) - halfCount) * gap;
-    location.y = (std::round(location.y) - halfCount) * gap;
+    auto location = (isPrimary ? _gridConfiguration.getPrimaryGridLocation(_target31, &refLon)
+        : _gridConfiguration.getSecondaryGridLocation(_target31, &refLon)) / gap;
+    PointD centerLocation(std::round(location.x), std::round(location.y));
+    location.x = (centerLocation.x - halfCount) * gap;
+    location.y = (centerLocation.y - halfCount) * gap;
+    centerLocation *= gap;
     for (int i = 0; i < marksCount; i++)
     {
         auto locationN = location;
@@ -48,15 +50,15 @@ void OsmAnd::GridMarksProvider_P::calculateGridMarks(const PointI& target31, con
             : _gridConfiguration.getSecondaryGridCoordinateY(locationN.y);
         PointF coord(static_cast<float>(locationN.x), static_cast<float>(locationN.y));
         if (withX)
-            marksX.insert(*reinterpret_cast<int*>(&coord.x), locationN);
+            marksX.insert(*reinterpret_cast<int*>(&coord.x), PointD(locationN.x, centerLocation.y));
         if (withY)
-            marksY.insert(*reinterpret_cast<int*>(&coord.y), locationN);
+            marksY.insert(*reinterpret_cast<int*>(&coord.y), PointD(centerLocation.x, locationN.y));
         location.x += gap;
         location.y += gap;
     }
 }
 
-void OsmAnd::GridMarksProvider_P::addGridMarks(const PointI& target31, const int zone, const bool isPrimary,
+void OsmAnd::GridMarksProvider_P::addGridMarks(const int zone, const bool isPrimary,
     const bool isAxisY, const bool isExtra, const float offset, QHash<int, PointD>& marks, QSet<int>& availableIds)
 {
     auto type = isPrimary ?
@@ -73,7 +75,7 @@ void OsmAnd::GridMarksProvider_P::addGridMarks(const PointI& target31, const int
 
     OsmAnd::MapMarkerBuilder builder;
     builder.setBaseOrder(std::numeric_limits<int>::max() - (isPrimary ? 20 : 10));
-    builder.setPosition(target31);
+    builder.setPosition(_target31);
     builder.setCaptionStyle(isPrimary ? primaryStyle : secondaryStyle);
     for (const auto& markEntry : rangeOf(constOf(marks)))
     {
@@ -196,9 +198,13 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
             || !secondaryNorthernHemisphereSuffix.isEmpty() || !secondarySouthernHemisphereSuffix.isEmpty()
             || !secondaryEasternHemisphereSuffix.isEmpty() || !secondaryWesternHemisphereSuffix.isEmpty());
                 
-        if (!withPrimary || _gridConfiguration.primaryProjection != GridConfiguration::Projection::UTM)
+        if (!withPrimary
+            || (_gridConfiguration.primaryProjection != GridConfiguration::Projection::UTM
+                && _gridConfiguration.primaryProjection != GridConfiguration::Projection::MGRS))
             keepPrimary = true;
-        if (!withSecondary || _gridConfiguration.secondaryProjection != GridConfiguration::Projection::UTM)
+        if (!withSecondary
+            || (_gridConfiguration.secondaryProjection != GridConfiguration::Projection::UTM
+                && _gridConfiguration.secondaryProjection != GridConfiguration::Projection::MGRS))
             keepSecondary = true;
     
         bool zoomChange = (mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS && _mapZoomLevel >= MIN_ZOOM_LEVEL_SIDE_MARKS)
@@ -217,7 +223,7 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
         QHash<int, PointD> primaryMarksXExtra, primaryMarksYExtra, secondaryMarksXExtra, secondaryMarksYExtra;
         if (withPrimary)
         {
-            calculateGridMarks(target31, true, gaps.x, refLons.x, primaryMarksX, primaryMarksY);
+            calculateGridMarks(true, gaps.x, refLons.x, primaryMarksX, primaryMarksY);
             if (!centerPrimaryMarks && _mapZoomLevel >= MIN_ZOOM_LEVEL_SIDE_MARKS)
             {
                 primaryMarksXExtra = primaryMarksX;
@@ -228,7 +234,7 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
         }
         if (withSecondary)
         {
-            calculateGridMarks(target31, false, gaps.y, refLons.y, secondaryMarksX, secondaryMarksY);
+            calculateGridMarks(false, gaps.y, refLons.y, secondaryMarksX, secondaryMarksY);
             if (!centerSecondaryMarks && _mapZoomLevel >= MIN_ZOOM_LEVEL_SIDE_MARKS)
             {
                 secondaryMarksXExtra = secondaryMarksX;
@@ -291,28 +297,28 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
         }
 
         if (!primaryMarksX.isEmpty())
-            addGridMarks(target31, _primaryZone, true, false, false, primaryMarksOffset, primaryMarksX, ids);
+            addGridMarks(_primaryZone, true, false, false, primaryMarksOffset, primaryMarksX, ids);
 
         if (!primaryMarksXExtra.isEmpty())
-            addGridMarks(target31, _primaryZone, true, false, true, primaryMarksOffset, primaryMarksXExtra, ids);
+            addGridMarks(_primaryZone, true, false, true, primaryMarksOffset, primaryMarksXExtra, ids);
 
         if (!primaryMarksY.isEmpty())
-            addGridMarks(target31, _primaryZone, true, true, false, primaryMarksOffset, primaryMarksY, ids);
+            addGridMarks(_primaryZone, true, true, false, primaryMarksOffset, primaryMarksY, ids);
 
         if (!primaryMarksYExtra.isEmpty())
-            addGridMarks(target31, _primaryZone, true, true, true, primaryMarksOffset, primaryMarksYExtra, ids);
+            addGridMarks(_primaryZone, true, true, true, primaryMarksOffset, primaryMarksYExtra, ids);
 
         if (!secondaryMarksX.isEmpty())
-            addGridMarks(target31, _secondaryZone, false, false, false, secondaryMarksOffset, secondaryMarksX, ids);
+            addGridMarks(_secondaryZone, false, false, false, secondaryMarksOffset, secondaryMarksX, ids);
 
         if (!secondaryMarksXExtra.isEmpty())
-            addGridMarks(target31, _secondaryZone, false, false, true, secondaryMarksOffset, secondaryMarksXExtra,ids);
+            addGridMarks(_secondaryZone, false, false, true, secondaryMarksOffset, secondaryMarksXExtra,ids);
 
         if (!secondaryMarksY.isEmpty())
-            addGridMarks(target31, _secondaryZone, false, true, false, secondaryMarksOffset, secondaryMarksY, ids);
+            addGridMarks(_secondaryZone, false, true, false, secondaryMarksOffset, secondaryMarksY, ids);
 
         if (!secondaryMarksYExtra.isEmpty())
-            addGridMarks(target31, _secondaryZone, false, true, true, secondaryMarksOffset, secondaryMarksYExtra, ids);
+            addGridMarks(_secondaryZone, false, true, true, secondaryMarksOffset, secondaryMarksYExtra, ids);
 
         for (const auto& marker : markersToRemove)
         {

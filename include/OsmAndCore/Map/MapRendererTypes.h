@@ -247,7 +247,8 @@ namespace OsmAnd
         enum class Projection {
             WGS84 = 0,
             UTM = 1,
-            Mercator = 2,
+            MGRS = 2,
+            Mercator = 3,
         };
 
         enum class Format {

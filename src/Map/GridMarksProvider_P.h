@@ -57,10 +57,10 @@ namespace OsmAnd
         QString secondaryEasternHemisphereSuffix;
         QString secondaryWesternHemisphereSuffix;
 
-        void calculateGridMarks(const PointI& target31, const bool isPrimary,
+        void calculateGridMarks(const bool isPrimary,
             const double gap, const double refLon, QHash<int, PointD>& marksX, QHash<int, PointD>& marksY);
 
-        void addGridMarks(const PointI& target31, const int zone, const bool isPrimary, const bool isAxisY,
+        void addGridMarks(const int zone, const bool isPrimary, const bool isAxisY,
             const bool isExtra, const float offset, QHash<int, PointD>& marks, QSet<int>& availableIds);
     
         void setPrimaryStyle(

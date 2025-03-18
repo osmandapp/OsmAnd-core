@@ -115,6 +115,7 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setProjectionParameters(
     switch (projection)
     {
         case Projection::UTM:
+        case Projection::MGRS:
             parameters->factorX1 = 0.0f;
             parameters->factorX2 = 1.0f;
             parameters->factorX3 = 0.0f;
@@ -189,6 +190,7 @@ double OsmAnd::GridConfiguration::getLocationReference(
     switch (projection)
     {
         case Projection::UTM: // UTM zone central meridian (degrees)
+        case Projection::MGRS:
             Utilities::getZoneUTM(Utilities::getAnglesFrom31(PointI(
                 location31.x < 0 ? location31.x + 1 + INT32_MAX : location31.x,
                 location31.y < 0 ? location31.y + 1 + INT32_MAX : location31.y)), &result);
@@ -209,6 +211,7 @@ OsmAnd::PointD OsmAnd::GridConfiguration::projectLocation(
     switch (projection)
     {
         case Projection::UTM: // UTM easting and northing coordinates (100 kilometers)
+        case Projection::MGRS:
             {
                 const auto lonlat = Utilities::getAnglesFrom31(location31);
                 double refLon;
@@ -254,6 +257,7 @@ OsmAnd::PointI OsmAnd::GridConfiguration::unProjectLocation(
     switch (projection)
     {
         case Projection::UTM: // TODO: unproject UTM to 31-coordinates
+        case Projection::MGRS:
             break;
         case Projection::Mercator: // Get 31-coordinates from EPSG:3857 X and Y coordinates in 100 map kilometers
             result = Utilities::metersTo31(location * 100000.0);
@@ -282,7 +286,8 @@ OsmAnd::PointD OsmAnd::GridConfiguration::getFullturnLocation(
     PointD result;
     switch (projection)
     {
-        case Projection::UTM: // Return UTM coordinates unchenged
+        case Projection::UTM: // Return UTM coordinates unchanged
+        case Projection::MGRS:
             result = location;
             break;
         case Projection::Mercator: // EPSG:3857 X and Y full-turn coordinates (100 map kilometers)
@@ -324,6 +329,7 @@ bool OsmAnd::GridConfiguration::getCoordinateX(const Projection projection, doub
     switch (projection)
     {
         case Projection::UTM: // UTM easting coordinate (100 kilometers)
+        case Projection::MGRS:
             result = true;
             break;
         case Projection::Mercator: // EPSG:3857 coordinate X in 100 map kilometers
@@ -352,6 +358,7 @@ bool OsmAnd::GridConfiguration::getCoordinateY(const Projection projection, doub
     switch (projection)
     {
         case Projection::UTM: // UTM northing coordinate (100 kilometers)
+        case Projection::MGRS:
             result = true;
             break;
         case Projection::Mercator: // EPSG:3857 coordinate Y in 100 map kilometers
@@ -384,6 +391,7 @@ double OsmAnd::GridConfiguration::getMaxMarksPerAxis(const Projection projection
     switch (projection)
     {
         case Projection::UTM: // No need to limit UTM marks
+        case Projection::MGRS:
             result = std::numeric_limits<double>::max();
             break;
         case Projection::Mercator: // Get maximum number of EPSG:3857 marks (gap in 100 kilometers)
@@ -427,9 +435,29 @@ QString OsmAnd::GridConfiguration::getMarkX(
         case Projection::UTM: // UTM easting coordinate (zone, hemisphere, meters)
             {
                 PointI zoneUTM(zone & 63, zone >> 6);
+                if (zoneUTM.y == 12 && coordinates.y >= 100.0)
+                    zoneUTM.y = 13;
+                else if (zoneUTM.y == 13 && coordinates.y < 100.0)
+                    zoneUTM.y = 12;
                 QString hemisphere = zoneUTM.y < 13 ? QStringLiteral("S") : QStringLiteral("N");
                 result =
                     QStringLiteral("%1%2 %3").arg(zoneUTM.x).arg(hemisphere).arg(coordinates.x * 100000.0, 0, 'f', 0);
+            }
+            break;
+        case Projection::MGRS: // MGRS easting coordinate (zone, square, meters)
+            {
+                PointI zoneUTM(zone & 63, zone >> 6);
+                QString zoneLetter = Utilities::getMGRSLetter(zoneUTM.y - 1);
+                auto zoneCoords = coordinates;
+                if (zoneUTM.y == 12 && coordinates.y >= 100.0)
+                    zoneCoords.y = 99.999999;
+                else if (zoneUTM.y == 13 && coordinates.y < 100.0)
+                    zoneCoords.y = 100.0;
+                QString column = Utilities::getMGRSSquareColumn(zoneUTM, zoneCoords);
+                QString row = Utilities::getMGRSSquareRow(zoneUTM, zoneCoords);
+                const auto coordinate = coordinates.x - std::floor(coordinates.x);
+                result = QStringLiteral("%1%2 %3%4 %5").arg(zoneUTM.x).arg(zoneLetter).arg(column).arg(row).arg(
+                    coordinate * 100000.0, 5, 'f', 0, QLatin1Char('0'));
             }
             break;
         case Projection::Mercator: // EPSG:3857 coordinate X in map kilometers
@@ -460,10 +488,29 @@ QString OsmAnd::GridConfiguration::getMarkY(
     {
         case Projection::UTM: // UTM northing coordinate (zone, hemisphere, meters)
             {
-                const PointI zoneUTM(zone & 63, zone >> 6);
+                PointI zoneUTM(zone & 63, zone >> 6);
+                if (zoneUTM.y == 12 && coordinates.y >= 100.0)
+                    zoneUTM.y = 13;
+                else if (zoneUTM.y == 13 && coordinates.y < 100.0)
+                    zoneUTM.y = 12;
                 const QString hemisphere = zoneUTM.y < 13 ? QStringLiteral("S") : QStringLiteral("N");
                 const auto coordinate = std::round(coordinates.y * 100000.0) - (zoneUTM.y < 13 ? 0.0 : 10000000.0);
                 result = QStringLiteral("%1%2 %3").arg(zoneUTM.x).arg(hemisphere).arg(coordinate, 0, 'f', 0);
+            }
+            break;
+        case Projection::MGRS: // MGRS northing coordinate (zone, square, meters)
+            {
+                PointI zoneUTM(zone & 63, zone >> 6);
+                if (zoneUTM.y == 12 && coordinates.y >= 100.0)
+                    zoneUTM.y = 13;
+                else if (zoneUTM.y == 13 && coordinates.y < 100.0)
+                    zoneUTM.y = 12;
+                QString zoneLetter = Utilities::getMGRSLetter(zoneUTM.y - 1);
+                QString column = Utilities::getMGRSSquareColumn(zoneUTM, coordinates);
+                QString row = Utilities::getMGRSSquareRow(zoneUTM, coordinates);
+                const auto coordinate = coordinates.y - std::floor(coordinates.y);
+                result = QStringLiteral("%1%2 %3%4 %5").arg(zoneUTM.x).arg(zoneLetter).arg(column).arg(row).arg(
+                    coordinate * 100000.0, 5, 'f', 0, QLatin1Char('0'));
             }
             break;
         case Projection::Mercator: // EPSG:3857 coordinate Y in map kilometers
@@ -503,9 +550,10 @@ OsmAnd::PointD OsmAnd::GridConfiguration::getCurrentGaps(
         auto tileBegin = getPrimaryGridLocation(startTile31, &refLons.x);
         auto tileCenter = getPrimaryGridLocation(centerTile31, &refLons.x);
         auto cellSize = fabs(tileCenter.x - tileBegin.x) * 2.0 * primaryGranularity;
-        result.x = primaryFormat == Format::DMS ? Utilities::snapToGridDMS(cellSize)
-            : (primaryFormat == Format::DM ? Utilities::snapToGridDM(cellSize)
-                : Utilities::snapToGridDecimal(cellSize));
+        result.x = primaryFormat == Format::DMS && primaryProjection == Projection::WGS84
+            ? Utilities::snapToGridDMS(cellSize)
+            : (primaryFormat == Format::DM && primaryProjection == Projection::WGS84
+                ? Utilities::snapToGridDM(cellSize) : Utilities::snapToGridDecimal(cellSize));
     }
     if (secondaryGranularity > 0.0f)
     {
@@ -518,9 +566,10 @@ OsmAnd::PointD OsmAnd::GridConfiguration::getCurrentGaps(
             auto tileBegin = getSecondaryGridLocation(startTile31, &refLons.y);
             auto tileCenter = getSecondaryGridLocation(centerTile31, &refLons.y);
             auto cellSize = fabs(tileCenter.x - tileBegin.x) * 2.0 * secondaryGranularity;
-            result.y = secondaryFormat == Format::DMS ? Utilities::snapToGridDMS(cellSize)
-                : (secondaryFormat == Format::DM ? Utilities::snapToGridDM(cellSize)
-                    : Utilities::snapToGridDecimal(cellSize));
+            result.y = secondaryFormat == Format::DMS && secondaryProjection == Projection::WGS84
+                ? Utilities::snapToGridDMS(cellSize)
+                : (secondaryFormat == Format::DM && secondaryProjection == Projection::WGS84
+                    ? Utilities::snapToGridDM(cellSize) : Utilities::snapToGridDecimal(cellSize));
             }
         else
             result.y = result.x / static_cast<double>(difFactor);
@@ -541,6 +590,7 @@ double OsmAnd::GridConfiguration::correctGap(const Projection projection, const 
     switch (projection)
     {
         case Projection::UTM: // No need to correct UTM gap
+        case Projection::MGRS:
             result = gap;
             break;
         case Projection::Mercator: // Get gap for EPSG:3857 that fit (in 100 kilometers)
@@ -559,8 +609,10 @@ bool OsmAnd::GridConfiguration::isValid() const
 {
     return (primaryProjection == Projection::WGS84
         || primaryProjection == Projection::UTM
+        || primaryProjection == Projection::MGRS
         || primaryProjection == Projection::Mercator) &&
         (secondaryProjection == Projection::WGS84
         || secondaryProjection == Projection::UTM
+        || secondaryProjection == Projection::MGRS
         || secondaryProjection == Projection::Mercator);
 }
