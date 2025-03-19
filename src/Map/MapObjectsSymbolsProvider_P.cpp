@@ -187,9 +187,8 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             mapObject->stopReadingArea(areaIndex);
             areaIndex = -1;
         }
-        auto resultPoints31 = isCombined ?
+        auto path31 = isCombined ?
             *citCombinedPath : (areaIndex >= 0 ? mapObject->vapItems[areaIndex]->points31 : mapObject->points31);
-        auto path31 = Utilities::simplifyPathOutsideBBox(resultPoints31, bbox31);
 
         if (areaIndex >= 0)
             mapObject->stopReadingArea(areaIndex);
