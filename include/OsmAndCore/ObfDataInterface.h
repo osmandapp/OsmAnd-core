@@ -48,6 +48,7 @@ namespace OsmAnd
         bool loadBinaryMapObjects(
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
             MapSurfaceType* outSurfaceType,
+            const std::shared_ptr<const MapPresentationEnvironment>& environment,
             const ZoomLevel zoom,
             const AreaI* const bbox31 = nullptr,
             const ObfMapSectionReader::FilterByIdFunction filterById = nullptr,
@@ -78,6 +79,7 @@ namespace OsmAnd
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* outBinaryMapObjects,
             QList< std::shared_ptr<const OsmAnd::Road> >* outRoads,
             MapSurfaceType* outSurfaceType,
+            const std::shared_ptr<const MapPresentationEnvironment>& environment,
             const ZoomLevel zoom,
             const AreaI* const bbox31 = nullptr,
             const ObfMapSectionReader::FilterByIdFunction filterMapObjectsById = nullptr,

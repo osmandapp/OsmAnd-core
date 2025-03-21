@@ -15,6 +15,7 @@
 #include "CommonTypes.h"
 #include "MapCommonTypes.h"
 #include "ObfMapSectionReader.h"
+#include "MapStyleEvaluator.h"
 
 namespace OsmAnd
 {
@@ -25,6 +26,7 @@ namespace OsmAnd
     class ObfMapSectionLevelTreeNode;
     class BinaryMapObject;
     class IQueryController;
+    class MapPresentationEnvironment;
     namespace ObfMapSectionReader_Metrics
     {
         struct Metric_loadMapObjects;
@@ -97,6 +99,9 @@ namespace OsmAnd
         static void readMapObjectsBlock(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfMapSectionInfo>& section,
+            const std::shared_ptr<const MapPresentationEnvironment>& environment,
+            MapStyleEvaluator& optimizationEvaluator,
+            MapStyleEvaluationResult& evaluationResult,
             const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
             const DataBlockId& blockId,
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
@@ -116,6 +121,9 @@ namespace OsmAnd
         static void readMapObject(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfMapSectionInfo>& section,
+            const std::shared_ptr<const MapPresentationEnvironment>& environment,
+            MapStyleEvaluator& optimizationEvaluator,
+            MapStyleEvaluationResult& evaluationResult,
             uint64_t baseId,
             const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
             std::shared_ptr<OsmAnd::BinaryMapObject>& mapObjectOut,
@@ -131,6 +139,7 @@ namespace OsmAnd
         static void loadMapObjects(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfMapSectionInfo>& section,
+            const std::shared_ptr<const MapPresentationEnvironment>& environment,
             ZoomLevel zoom,
             const AreaI* bbox31,
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,

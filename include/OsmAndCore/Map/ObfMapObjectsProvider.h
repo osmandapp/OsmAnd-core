@@ -12,6 +12,7 @@
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapObjectsProvider.h>
+#include <OsmAndCore/Map/MapStyleEvaluationResult.h>
 #include <OsmAndCore/Map/ObfMapObjectsProvider_Metrics.h>
 #include <OsmAndCore/Data/ObfMapSectionReader.h>
 
@@ -46,6 +47,7 @@ namespace OsmAnd
             const Mode mode = Mode::BinaryMapObjectsAndRoads);
         virtual ~ObfMapObjectsProvider();
 
+        std::shared_ptr<const MapPresentationEnvironment> environment;
         const std::shared_ptr<const IObfsCollection> obfsCollection;
         const Mode mode;
 

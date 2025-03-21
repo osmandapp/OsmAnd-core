@@ -297,6 +297,10 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
         }
         ruleNodesStack.push(newApplyNode);
     }
+    else if (tagName == QStringLiteral("optimization"))
+    {
+        currentRulesetType = MapStyleRulesetType::Optimization;
+    }
     else if (tagName == QStringLiteral("order"))
     {
         currentRulesetType = MapStyleRulesetType::Order;
