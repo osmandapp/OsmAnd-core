@@ -198,6 +198,8 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         bool hasAtLeastOneAlongPathBillboard = false;
         bool hasAtLeastOneSimpleBillboard = false;
         QMap< std::shared_ptr<MapSymbol>, PointI> additionalOffsets;
+        
+        int spriteSymbolsInGroup = 0;
 
         for (const auto& rasterizedSymbol : constOf(rasterizedGroup->symbols))
         {
@@ -206,6 +208,8 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             std::shared_ptr<MapSymbol> symbol;
             if (const auto rasterizedSpriteSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedSpriteSymbol>(rasterizedSymbol))
             {
+                ++spriteSymbolsInGroup;
+                
                 if (!hasAtLeastOneAlongPathBillboard && rasterizedSpriteSymbol->drawAlongPath)
                     hasAtLeastOneAlongPathBillboard = true;
                 if (!hasAtLeastOneSimpleBillboard && !rasterizedSpriteSymbol->drawAlongPath)
@@ -276,6 +280,13 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                 symbol->contentClass = MapSymbol::ContentClass::Caption;
 
             group->symbols.push_back(qMove(symbol));
+        }
+        
+        // Check if group has more then one sprite symbol to avoid icon overlap https://github.com/osmandapp/OsmAnd/issues/21805
+        // As drawback this will enable in group intersection check for for the majority of groups
+        if (spriteSymbolsInGroup > 1)
+        {
+            group->intersectionProcessingMode |= MapSymbolsGroup::IntersectionProcessingModeFlag::CheckIntersectionsWithinGroup;
         }
 
         // If there's at least one on-path symbol or along-path symbol, this group needs special post-processing:
