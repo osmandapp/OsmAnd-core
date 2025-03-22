@@ -45,6 +45,7 @@ namespace OsmAnd
         Polygon,
         Text,
         Order,
+        Optimization,
 
         __LAST
     };

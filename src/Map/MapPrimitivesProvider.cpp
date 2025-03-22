@@ -2,6 +2,7 @@
 #include "MapPrimitivesProvider_P.h"
 
 #include "MapDataProviderHelpers.h"
+#include "ObfMapObjectsProvider.h"
 
 OsmAnd::MapPrimitivesProvider::MapPrimitivesProvider(
     const std::shared_ptr<IMapObjectsProvider>& mapObjectsProvider_,
@@ -14,6 +15,10 @@ OsmAnd::MapPrimitivesProvider::MapPrimitivesProvider(
     , tileSize(tileSize_)
     , mode(mode_)
 {
+    if (auto obfMapObjectsProvider = std::dynamic_pointer_cast<ObfMapObjectsProvider>(mapObjectsProvider))
+    {
+        obfMapObjectsProvider->environment = primitiviser->environment;
+    }
 }
 
 OsmAnd::MapPrimitivesProvider::~MapPrimitivesProvider()

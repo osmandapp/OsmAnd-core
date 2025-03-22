@@ -235,7 +235,7 @@ void printMapDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Conf
     if (cfg.verboseMapObjects)
     {
         QList< std::shared_ptr<const OsmAnd::BinaryMapObject> > mapObjects;
-        OsmAnd::ObfMapSectionReader::loadMapObjects(reader, section, cfg.zoom, &bbox31, &mapObjects);
+        OsmAnd::ObfMapSectionReader::loadMapObjects(reader, section, nullptr, cfg.zoom, &bbox31, &mapObjects);
         output << xT("\tTotal map objects: ") << mapObjects.count() << std::endl;
         for (auto itMapObject = mapObjects.cbegin(); itMapObject != mapObjects.cend(); ++itMapObject)
         {
@@ -260,7 +260,7 @@ void printMapDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Conf
     else
     {
         uint32_t mapObjectsCount = 0;
-        OsmAnd::ObfMapSectionReader::loadMapObjects(reader, section, cfg.zoom, &bbox31, nullptr, nullptr, nullptr,
+        OsmAnd::ObfMapSectionReader::loadMapObjects(reader, section, nullptr, cfg.zoom, &bbox31, nullptr, nullptr, nullptr,
             [&mapObjectsCount]
             (const std::shared_ptr<const OsmAnd::BinaryMapObject>& mapObject) -> bool
             {

@@ -19,6 +19,10 @@
 #include "Stopwatch.h"
 #include "Logging.h"
 #include "Utilities.h"
+#include "MapPresentationEnvironment.h"
+#include "MapStyleEvaluator.h"
+#include "MapStyleEvaluationResult.h"
+#include "MapStyleBuiltinValueDefinitions.h"
 
 using google::protobuf::internal::WireFormatLite;
 
@@ -485,6 +489,9 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
 void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfMapSectionInfo>& section,
+    const std::shared_ptr<const MapPresentationEnvironment>& environment,
+    MapStyleEvaluator& optimizationEvaluator,
+    MapStyleEvaluationResult& evaluationResult,
     const std::shared_ptr<const ObfMapSectionLevelTreeNode>& tree,
     const DataBlockId& blockId,
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
@@ -566,7 +573,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 std::shared_ptr<OsmAnd::BinaryMapObject> mapObject;
                 auto oldLimit = cis->PushLimit(length);
                 
-                readMapObject(reader, section, baseId, tree, mapObject, bbox31, metric);
+                readMapObject(reader, section, environment, optimizationEvaluator, evaluationResult,
+                    baseId, tree, mapObject, bbox31, metric);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -654,6 +662,9 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
 void OsmAnd::ObfMapSectionReader_P::readMapObject(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfMapSectionInfo>& section,
+    const std::shared_ptr<const MapPresentationEnvironment>& environment,
+    MapStyleEvaluator& optimizationEvaluator,
+    MapStyleEvaluationResult& evaluationResult,
     uint64_t baseId,
     const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
     std::shared_ptr<OsmAnd::BinaryMapObject>& mapObject,
@@ -881,18 +892,40 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 // Preallocate space
                 attributeIds.reserve(cis->BytesUntilLimit());
 
+                bool isPresent = true;
+                const auto& decRules = mapObject->attributeMapping->decodeMap;
                 while (cis->BytesUntilLimit() > 0)
                 {
                     gpb::uint32 attributeId;
                     cis->ReadVarint32(&attributeId);
 
                     attributeIds.push_back(attributeId);
+
+                    if (!isPresent || !environment || tgn == OBF::MapData::kAdditionalTypesFieldNumber)
+                        continue;
+
+                    const auto& attr = decRules[attributeId];
+                    optimizationEvaluator.setStringValue(environment->styleBuiltinValueDefs->id_INPUT_TAG, attr.tag);
+                    optimizationEvaluator.setStringValue(
+                        environment->styleBuiltinValueDefs->id_INPUT_VALUE, attr.value);
+                    evaluationResult.clear();
+                    if (optimizationEvaluator.evaluate(
+                        mapObject, MapStyleRulesetType::Optimization, &evaluationResult))
+                    {
+                        int zOrder = -1;
+                        if (evaluationResult.getIntegerValue(
+                            environment->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder) && zOrder < 0)
+                            isPresent = false;
+                    }
                 }
 
                 // Shrink preallocated space
                 attributeIds.squeeze();
 
                 cis->PopLimit(oldLimit);
+
+                if (!isPresent)
+                    cis->Skip(cis->BytesUntilLimit());
 
                 break;
             }
@@ -969,6 +1002,7 @@ bool OsmAnd::ObfMapSectionReader_P::isCoastline(const std::shared_ptr<const Bina
 void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfMapSectionInfo>& section,
+    const std::shared_ptr<const MapPresentationEnvironment>& environment,
     ZoomLevel zoom,
     const AreaI* bbox31,
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
@@ -1013,6 +1047,16 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
             section->_p->_attributeMappingLoaded.storeRelease(1);
         }
+    }
+
+    MapStyleEvaluationResult evaluationResult(environment ? environment->mapStyle->getValueDefinitionsCount() : 0);
+    MapStyleEvaluator optimizationEvaluator(environment ? environment->mapStyle : nullptr,
+        environment ? environment->displayDensityFactor * environment->mapScaleFactor : 0.0f);
+    if (environment)
+    {
+        environment->applyTo(optimizationEvaluator);
+        optimizationEvaluator.setIntegerValue(environment->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
+        optimizationEvaluator.setIntegerValue(environment->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
     }
 
     ObfMapSectionReader_Metrics::Metric_loadMapObjects localMetric;
@@ -1192,6 +1236,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     readMapObjectsBlock(
                         reader,
                         section,
+                        environment,
+                        optimizationEvaluator,
+                        evaluationResult,
                         treeNode,
                         blockId,
                         &mapObjects,
@@ -1269,6 +1316,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
                 readMapObjectsBlock(reader,
                                     section,
+                                    environment,
+                                    optimizationEvaluator,
+                                    evaluationResult,
                                     treeNode,
                                     blockId,
                                     resultOut,

@@ -13,6 +13,7 @@
 #include <OsmAndCore/SharedByZoomResourcesContainer.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
+#include <OsmAndCore/Map/MapStyleEvaluationResult.h>
 
 namespace OsmAnd
 {
@@ -20,6 +21,7 @@ namespace OsmAnd
     class ObfMapSectionInfo;
     class BinaryMapObject;
     class IQueryController;
+    class MapPresentationEnvironment;
     namespace ObfMapSectionReader_Metrics
     {
         struct Metric_loadMapObjects;
@@ -84,6 +86,7 @@ namespace OsmAnd
         static void loadMapObjects(
             const std::shared_ptr<const ObfReader>& reader,
             const std::shared_ptr<const ObfMapSectionInfo>& section,
+            const std::shared_ptr<const MapPresentationEnvironment>& environment,
             const ZoomLevel zoom,
             const AreaI* const bbox31 = nullptr,
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut = nullptr,

@@ -398,6 +398,31 @@ bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType
                       lineNum,
                       columnNum);
         }
+        if (caseNode->values.contains(QStringLiteral("optimize")))
+        {
+            const std::shared_ptr<RuleNode> newCaseNode(new RuleNode(false));
+            newCaseNode->values = caseNode->values;
+            newCaseNode->values.detach();
+            const auto itTagAttrib = newCaseNode->values.find(QStringLiteral("tag"));
+            const auto itValueAttrib = newCaseNode->values.find(QStringLiteral("value"));
+            const auto itAttribNotFound = newCaseNode->values.end();
+            if (itTagAttrib != itAttribNotFound && itValueAttrib != itAttribNotFound)
+            {
+                const auto tagAttrib = *itTagAttrib;
+                newCaseNode->values.erase(itTagAttrib);
+                const auto valueAttrib = *itValueAttrib;
+                newCaseNode->values.erase(itValueAttrib);
+                auto& topLevelRule =
+                    rulesets[static_cast<unsigned int>(MapStyleRulesetType::Optimization)][tagAttrib][valueAttrib];
+                if (!topLevelRule)
+                {
+                    topLevelRule.reset(new Rule(MapStyleRulesetType::Optimization));
+                    topLevelRule->rootNode->values[QStringLiteral("tag")] = tagAttrib;
+                    topLevelRule->rootNode->values[QStringLiteral("value")] = valueAttrib;
+                }
+                topLevelRule->rootNode->oneOfConditionalSubnodes.push_back(newCaseNode);
+            }
+        }
     }
     else if (tagName == QStringLiteral("apply") || tagName == QStringLiteral("apply_if") || tagName == QStringLiteral("groupFilter"))
     {

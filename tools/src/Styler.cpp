@@ -118,6 +118,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
         success = obfDataInterface->loadBinaryMapObjects(
             &mapObjects_,
             nullptr,
+            nullptr,
             configuration.zoom,
             nullptr,
             configuration.mapObjectsIds.isEmpty() ? OsmAnd::ObfMapSectionReader::FilterByIdFunction() : mapObjectsFilterById,

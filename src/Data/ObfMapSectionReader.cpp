@@ -14,6 +14,7 @@ OsmAnd::ObfMapSectionReader::~ObfMapSectionReader()
 void OsmAnd::ObfMapSectionReader::loadMapObjects(
     const std::shared_ptr<const ObfReader>& reader,
     const std::shared_ptr<const ObfMapSectionInfo>& section,
+    const std::shared_ptr<const MapPresentationEnvironment>& environment,
     const ZoomLevel zoom,
     const AreaI* const bbox31 /*= nullptr*/,
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut /*= nullptr*/,
@@ -29,6 +30,7 @@ void OsmAnd::ObfMapSectionReader::loadMapObjects(
     ObfMapSectionReader_P::loadMapObjects(
         *reader->_p,
         section,
+        environment,
         zoom,
         bbox31,
         resultOut,
