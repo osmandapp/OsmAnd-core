@@ -21,6 +21,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_DISABLE, Output, Boolean, "disable", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_NAME_TAG2, Output, String, "nameTag2", false)
 
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CLASS, Output, String, "rClass", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_OPTIMIZE, Output, String, "optimize", false)
 
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_BOOL_VALUE, Output, Boolean, "attrBoolValue", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_INT_VALUE, Output, Integer, "attrIntValue", false)

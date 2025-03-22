@@ -297,10 +297,6 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
         }
         ruleNodesStack.push(newApplyNode);
     }
-    else if (tagName == QStringLiteral("optimization"))
-    {
-        currentRulesetType = MapStyleRulesetType::Optimization;
-    }
     else if (tagName == QStringLiteral("order"))
     {
         currentRulesetType = MapStyleRulesetType::Order;
@@ -401,6 +397,31 @@ bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType
                       "Style parsing error. Undefined ruleset type at line %" PRIi64 " column:%" PRIi64,
                       lineNum,
                       columnNum);
+        }
+        if (caseNode->values.contains(QStringLiteral("optimize")))
+        {
+            const std::shared_ptr<RuleNode> newCaseNode(new RuleNode(false));
+            newCaseNode->values = caseNode->values;
+            newCaseNode->values.detach();
+            const auto itTagAttrib = newCaseNode->values.find(QStringLiteral("tag"));
+            const auto itValueAttrib = newCaseNode->values.find(QStringLiteral("value"));
+            const auto itAttribNotFound = newCaseNode->values.end();
+            if (itTagAttrib != itAttribNotFound && itValueAttrib != itAttribNotFound)
+            {
+                const auto tagAttrib = *itTagAttrib;
+                newCaseNode->values.erase(itTagAttrib);
+                const auto valueAttrib = *itValueAttrib;
+                newCaseNode->values.erase(itValueAttrib);
+                auto& topLevelRule =
+                    rulesets[static_cast<unsigned int>(MapStyleRulesetType::Optimization)][tagAttrib][valueAttrib];
+                if (!topLevelRule)
+                {
+                    topLevelRule.reset(new Rule(MapStyleRulesetType::Optimization));
+                    topLevelRule->rootNode->values[QStringLiteral("tag")] = tagAttrib;
+                    topLevelRule->rootNode->values[QStringLiteral("value")] = valueAttrib;
+                }
+                topLevelRule->rootNode->oneOfConditionalSubnodes.push_back(newCaseNode);
+            }
         }
     }
     else if (tagName == QStringLiteral("apply") || tagName == QStringLiteral("apply_if") || tagName == QStringLiteral("groupFilter"))
