@@ -2363,19 +2363,19 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
             icon->intersectionSize = iconIntersectionSize;
     }
 
-    // In case new icon symbol has a twin that was already added, ignore this one
-    const auto hasTwin = std::any_of(outSymbols,
+    // In case new icon symbol has a twin that was already added or has the same location, ignore this one
+    const auto hasTwinOrSameLocation = std::any_of(outSymbols,
         [icon]
         (const std::shared_ptr<const Symbol>& otherSymbol) -> bool
         {
             if (const auto otherIcon = std::dynamic_pointer_cast<const IconSymbol>(otherSymbol))
             {
-                return icon->hasSameContentAs(*otherIcon);
+                return icon->hasSameContentAs(*otherIcon) || icon->location31 == otherIcon->location31;
             }
 
             return false;
         });
-    if (hasTwin)
+    if (hasTwinOrSameLocation)
     {
         if (metric)
         {
