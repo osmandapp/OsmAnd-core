@@ -256,6 +256,7 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
         OsmAnd::ObfMapSectionReader::loadMapObjects(
             ocbfReader,
             mapSection,
+            nullptr,
             mapSection->levels.first()->minZoom,
             bbox31, // Query entire world
             nullptr, // No need for map objects to be stored

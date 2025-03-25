@@ -415,6 +415,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         dataInterface->loadBinaryMapObjects(
             &loadedBinaryMapObjects,
             &tileSurfaceType,
+            owner->environment,
             request.zoom,
             &tileBBox31,
             binaryMapObjectsFilteringFunctor,
@@ -462,6 +463,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             &loadedBinaryMapObjects,
             &loadedRoads,
             &tileSurfaceType,
+            owner->environment,
             request.zoom,
             &tileBBox31,
             binaryMapObjectsFilteringFunctor,
@@ -513,6 +515,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         dataInterface->loadBinaryMapObjects(
             &loadedCoastlineMapObjects,
             &coastlineTileSurfaceType,
+            owner->environment,
             _coastlineZoom,
             &coastlineTileBBox31,
             coastlineObjectsFilteringFunctor,

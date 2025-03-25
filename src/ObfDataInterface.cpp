@@ -63,6 +63,7 @@ bool OsmAnd::ObfDataInterface::loadObfFiles(
 bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
     MapSurfaceType* outSurfaceType,
+    const std::shared_ptr<const MapPresentationEnvironment>& environment,
     const ZoomLevel zoom,
     const AreaI* const bbox31 /*= nullptr*/,
     const ObfMapSectionReader::FilterByIdFunction filterById /*= nullptr*/,
@@ -107,6 +108,7 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
             OsmAnd::ObfMapSectionReader::loadMapObjects(
                 obfReader,
                 mapSection,
+                environment,
                 zoom,
                 bbox31,
                 resultOut,
@@ -155,6 +157,7 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
             OsmAnd::ObfMapSectionReader::loadMapObjects(
                 basemapReader,
                 mapSection,
+                environment,
                 static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel),
                 pBasemapBBox31,
                 resultOut,
@@ -252,6 +255,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* outBinaryMapObjects,
     QList< std::shared_ptr<const OsmAnd::Road> >* outRoads,
     MapSurfaceType* outSurfaceType,
+    const std::shared_ptr<const MapPresentationEnvironment>& environment,
     const ZoomLevel zoom,
     const AreaI* const bbox31 /*= nullptr*/,
     const ObfMapSectionReader::FilterByIdFunction filterMapObjectsById /*= nullptr*/,
@@ -324,6 +328,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
             OsmAnd::ObfMapSectionReader::loadMapObjects(
                 obfReader,
                 mapSection,
+                environment,
                 zoom,
                 bbox31,
                 outBinaryMapObjects,
@@ -371,6 +376,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
             OsmAnd::ObfMapSectionReader::loadMapObjects(
                 basemapReader,
                 mapSection,
+                environment,
                 static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel),
                 pBasemapBBox31,
                 outBinaryMapObjects,
