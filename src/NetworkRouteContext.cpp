@@ -188,6 +188,9 @@ QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::getRouteKeys(const QHa
     QVector<NetworkRouteKey> lst;
     for(const auto routeType : VALUES)
     {
+        if (routeType == OsmAnd::OsmRouteType::ROAD) {
+            continue; // unsupported
+        }
         int rq = getRouteQuantity(tags, routeType->tagPrefix);
         for (int routeIdx = 1; routeIdx <= rq; routeIdx++)
         {
