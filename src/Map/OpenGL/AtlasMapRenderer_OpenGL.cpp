@@ -36,7 +36,7 @@
 #include "OpenGL/Utilities_OpenGL.h"
 
 // Set camera's near depth limit
-const float OsmAnd::AtlasMapRenderer_OpenGL::_zNear = 0.1f;
+const float OsmAnd::AtlasMapRenderer_OpenGL::_zNear = 1.0f;
 // Set average radius of Earth
 const double OsmAnd::AtlasMapRenderer_OpenGL::_radius = 6371e3;
 // Set minimum earth angle for advanced horizon (non-realistic)
