@@ -218,12 +218,9 @@ bool OsmAnd::NetworkRouteKey::containsUnsupportedRouteTags(const QHash<QString, 
 {
     for (const auto routeType : VALUES)
     {
-        if (!routeType->loadable)
+        if (!routeType->loadable && tags.contains(QStringLiteral("route_") + routeType->name))
         {
-            if (tags.contains(QStringLiteral("route_") + routeType->name))
-            {
-                return true;
-            }
+            return true;
         }
     }
     return false;
