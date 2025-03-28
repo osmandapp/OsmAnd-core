@@ -3,22 +3,23 @@
 
 static QList<const OsmAnd::OsmRouteType*> VALUES;
 
-static const OsmAnd::OsmRouteType _WATER("water", "yellow", "special_kayak");
-static const OsmAnd::OsmRouteType _WINTER("winter", "yellow", "special_skiing");
-static const OsmAnd::OsmRouteType _SNOWMOBILE("snowmobile", "yellow", "special_snowmobile");
-static const OsmAnd::OsmRouteType _RIDING("riding", "yellow", "special_horse");
-static const OsmAnd::OsmRouteType _RACING("racing", "yellow", "raceway");
-static const OsmAnd::OsmRouteType _MOUNTAINBIKE("mountainbike", "blue", "sport_cycling");
-static const OsmAnd::OsmRouteType _BICYCLE("bicycle");
-static const OsmAnd::OsmRouteType _MTB("mtb");
-static const OsmAnd::OsmRouteType _CYCLING("cycling", "blue", "special_bicycle");
-static const OsmAnd::OsmRouteType _HIKING("hiking", "orange", "special_trekking");
-static const OsmAnd::OsmRouteType _RUNNING("running", "orange", "running");
-static const OsmAnd::OsmRouteType _WALKING("walking", "orange", "special_walking");
-static const OsmAnd::OsmRouteType _OFFROAD("offroad", "yellow", "special_offroad");
-static const OsmAnd::OsmRouteType _MOTORBIKE("motorbike", "green", "special_motorcycle");
-static const OsmAnd::OsmRouteType _CAR("car", "green", "shop_car");
-static const OsmAnd::OsmRouteType _HORSE("horse");
+static const OsmAnd::OsmRouteType _WATER("water", "whiteWaterSports", "yellow", "special_kayak");
+static const OsmAnd::OsmRouteType _WINTER("winter", "", "yellow", "special_skiing");
+static const OsmAnd::OsmRouteType _SNOWMOBILE("snowmobile", "", "yellow", "special_snowmobile");
+static const OsmAnd::OsmRouteType _RIDING("riding", "", "yellow", "special_horse");
+static const OsmAnd::OsmRouteType _RACING("racing", "", "yellow", "raceway");
+static const OsmAnd::OsmRouteType _MOUNTAINBIKE("mountainbike", "", "blue", "sport_cycling");
+static const OsmAnd::OsmRouteType _BICYCLE("bicycle", "showCycleRoutes");
+static const OsmAnd::OsmRouteType _MTB("mtb", "showMtbRoutes");
+static const OsmAnd::OsmRouteType _CYCLING("cycling", "", "blue", "special_bicycle");
+static const OsmAnd::OsmRouteType _HIKING("hiking", "hikingRoutesOSMC", "orange", "special_trekking");
+static const OsmAnd::OsmRouteType _RUNNING("running", "showRunningRoutes", "orange", "running");
+static const OsmAnd::OsmRouteType _WALKING("walking", "", "orange", "special_walking");
+static const OsmAnd::OsmRouteType _OFFROAD("offroad", "", "yellow", "special_offroad");
+static const OsmAnd::OsmRouteType _MOTORBIKE("motorbike", "", "green", "special_motorcycle");
+static const OsmAnd::OsmRouteType _DIRTBIKE("dirtbike", "showDirtbikeTrails");
+static const OsmAnd::OsmRouteType _CAR("car", "", "green", "shop_car");
+static const OsmAnd::OsmRouteType _HORSE("horse", "horseRoutes");
 static const OsmAnd::OsmRouteType _ROAD("road");
 static const OsmAnd::OsmRouteType _DETOUR("detour");
 static const OsmAnd::OsmRouteType _BUS("bus");
@@ -26,17 +27,19 @@ static const OsmAnd::OsmRouteType _CANOE("canoe");
 static const OsmAnd::OsmRouteType _FERRY("ferry");
 static const OsmAnd::OsmRouteType _FOOT("foot");
 static const OsmAnd::OsmRouteType _LIGHT_RAIL("light_rail");
-static const OsmAnd::OsmRouteType _PISTE("piste");
+static const OsmAnd::OsmRouteType _PISTE("piste", "pisteRoutes");
 static const OsmAnd::OsmRouteType _RAILWAY("railway");
 static const OsmAnd::OsmRouteType _SKI("ski");
-static const OsmAnd::OsmRouteType _ALPINE("alpine");
-static const OsmAnd::OsmRouteType _FITNESS("fitness");
+static const OsmAnd::OsmRouteType _ALPINE("alpine", "alpineHiking");
+static const OsmAnd::OsmRouteType _FITNESS("fitness_trail", "showFitnessTrails");
 static const OsmAnd::OsmRouteType _INLINE_SKATES("inline_skates");
 static const OsmAnd::OsmRouteType _SUBWAY("subway");
 static const OsmAnd::OsmRouteType _TRAIN("train");
 static const OsmAnd::OsmRouteType _TRACKS("tracks");
 static const OsmAnd::OsmRouteType _TRAM("tram");
 static const OsmAnd::OsmRouteType _TROLLEYBUS("trolleybus");
+static const OsmAnd::OsmRouteType _CLIMBING("climbing", "showClimbingRoutes");
+static const OsmAnd::OsmRouteType _UNKNOWN("unknown");
 
 const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::WATER = &_WATER;
 const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::WINTER = &_WINTER;
@@ -52,6 +55,7 @@ const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::RUNNING = &_RUNNING;
 const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::WALKING = &_WALKING;
 const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::OFFROAD = &_OFFROAD;
 const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::MOTORBIKE = &_MOTORBIKE;
+const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::DIRTBIKE = &_DIRTBIKE;
 const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::CAR = &_CAR;
 const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::HORSE = &_HORSE;
 const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::ROAD = &_ROAD;
@@ -72,6 +76,8 @@ const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::TRAIN = &_TRAIN;
 const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::TRACKS = &_TRACKS;
 const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::TRAM = &_TRAM;
 const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::TROLLEYBUS = &_TROLLEYBUS;
+const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::CLIMBING = &_CLIMBING;
+const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::UNKNOWN = &_UNKNOWN;
 
 OsmAnd::NetworkRouteContext::NetworkRouteContext(
     const std::shared_ptr<const IObfsCollection>& obfsCollection_,
@@ -161,8 +167,8 @@ QString OsmAnd::NetworkRouteKey::getTag() const
     return type ? type->name : QString();
 }
 
-OsmAnd::OsmRouteType::OsmRouteType(const QString& name, const QString& color, const QString& icon) 
-: name(name), tagPrefix(QStringLiteral("route_") + name + QStringLiteral("_")), color(color), icon(icon)
+OsmAnd::OsmRouteType::OsmRouteType(const QString& name, const QString& renderingPropertyAttr, const QString& color, const QString& icon)
+    : name(name), renderingPropertyAttr(renderingPropertyAttr), tagPrefix(QStringLiteral("route_") + name + QStringLiteral("_")), color(color), icon(icon)
 {
     VALUES.push_back(this);
 }
@@ -188,6 +194,10 @@ QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::getRouteKeys(const QHa
     QVector<NetworkRouteKey> lst;
     for(const auto routeType : VALUES)
     {
+        if (routeType->renderingPropertyAttr.isEmpty())
+        {
+            continue; // unsupported
+        }
         int rq = getRouteQuantity(tags, routeType->tagPrefix);
         for (int routeIdx = 1; routeIdx <= rq; routeIdx++)
         {
@@ -206,6 +216,18 @@ QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::getRouteKeys(const QHa
         }
     }
     return lst;
+}
+
+bool OsmAnd::NetworkRouteKey::containsUnsupportedRouteTags(const QHash<QString, QString>& tags)
+{
+    for (const auto routeType : VALUES)
+    {
+        if (routeType->renderingPropertyAttr.isEmpty() && tags.contains(QStringLiteral("route_") + routeType->name))
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::getRouteKeys(const std::shared_ptr<const Road> &road)

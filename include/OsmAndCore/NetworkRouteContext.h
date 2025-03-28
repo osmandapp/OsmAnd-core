@@ -33,6 +33,7 @@ namespace OsmAnd
         static const OsmRouteType* WALKING;
         static const OsmRouteType* OFFROAD;
         static const OsmRouteType* MOTORBIKE;
+        static const OsmRouteType* DIRTBIKE;
         static const OsmRouteType* CAR;
         static const OsmRouteType* HORSE;
         static const OsmRouteType* ROAD;
@@ -53,13 +54,20 @@ namespace OsmAnd
         static const OsmRouteType* TRACKS;
         static const OsmRouteType* TRAM;
         static const OsmRouteType* TROLLEYBUS;
+        static const OsmRouteType* CLIMBING;
+
+        // OsmRouteType.UNKNOWN is used for TravelGpx OSM routes.
+        // It allows us to reuse code of RouteInfoCard, RouteKey icons, etc.
+        static const OsmRouteType* UNKNOWN;
 
         const QString name;
+        const QString renderingPropertyAttr;
         const QString tagPrefix;
         const QString color;
         const QString icon;
 
-        OsmRouteType(const QString& name, const QString& color = QString(), const QString& icon = QString());
+        OsmRouteType(const QString& name, const QString& renderingPropertyAttr = QString(),
+                     const QString& color = QString(), const QString& icon = QString());
 
     public:
         static const OsmRouteType* getByTag(const QString& tag);
@@ -93,7 +101,9 @@ namespace OsmAnd
         
         static QVector<NetworkRouteKey> getRouteKeys(const QHash<QString, QString>& tags);
         static QVector<NetworkRouteKey> getRouteKeys(const std::shared_ptr<const Road> &road);
-        
+
+        static bool containsUnsupportedRouteTags(const QHash<QString, QString>& tags);
+
         static int getRouteQuantity(const QHash<QString, QString>& tags, const QString& tagPrefix);
         QString getTag() const;
         QMap<QString, QString> tagsToGpx() const;
