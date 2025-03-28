@@ -54,14 +54,20 @@ namespace OsmAnd
         static const OsmRouteType* TRACKS;
         static const OsmRouteType* TRAM;
         static const OsmRouteType* TROLLEYBUS;
+        static const OsmRouteType* CLIMBING;
+
+        // OsmRouteType.UNKNOWN is used for TravelGpx OSM routes.
+        // It allows us to reuse code of RouteInfoCard, RouteKey icons, etc.
+        static const OsmRouteType* UNKNOWN;
 
         const QString name;
-        const bool loadable;
+        const QString renderingPropertyAttr;
         const QString tagPrefix;
         const QString color;
         const QString icon;
 
-        OsmRouteType(const QString& name, const bool loadable = false, const QString& color = QString(), const QString& icon = QString());
+        OsmRouteType(const QString& name, const QString& renderingPropertyAttr = QString(),
+                     const QString& color = QString(), const QString& icon = QString());
 
     public:
         static const OsmRouteType* getByTag(const QString& tag);
