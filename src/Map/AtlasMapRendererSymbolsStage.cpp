@@ -41,7 +41,6 @@
 
 # define GRID_ITER_LIMIT 10
 # define GRID_ITER_PRECISION 200.0
-# define GRID_BOTTOM_PADDING_FACTOR 8.0
 
 // Set maximum incline angle for using onpath-2D symbols instead of 3D-ones (20 deg)
 const float OsmAnd::AtlasMapRendererSymbolsStage::_inclineThresholdOnPath2D =
@@ -1400,7 +1399,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 if (cross[3] = coordinate > std::min(coord3, coord0) && coordinate < std::max(coord3, coord0))
                     pos[3] = getApproximate31(coordinate, coord3, coord0, p3, p0, isPrimary, isAxisY, &refLon0, i);
                 int j;
-                bool isBottom;
+                bool isTop = false;
+                bool isBottom = false;
                 PointI firstPoint31, lastPoint31;
                 for (i = 0; i < 4; i++)
                 {
@@ -1412,6 +1412,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                             return;
 
                         firstPoint31 = pos[j];
+                        isTop = j == 2;
                         isBottom = j == 0;
                         break;
                     }
@@ -1465,7 +1466,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 {
                     if (!isFirst && screenLengthInPixels < symSize * 2.0f)
                         return;
-                    offset = halfSize + (isBottom ? screenLengthInPixels / GRID_BOTTOM_PADDING_FACTOR : 0.0);
+                    offset = halfSize
+                        + (isTop ? screenLengthInPixels / (isPrimary
+                            ? currentState.gridConfiguration.primaryTopMarginFactor
+                            : currentState.gridConfiguration.secondaryTopMarginFactor) : 0.0)
+                        + (isBottom ? screenLengthInPixels / (isPrimary
+                            ? currentState.gridConfiguration.primaryBottomMarginFactor
+                            : currentState.gridConfiguration.secondaryBottomMarginFactor) : 0.0);
                 }
                 else if (screenLengthInPixels < static_cast<float>(rasterMapSymbol->size.x))
                     return;

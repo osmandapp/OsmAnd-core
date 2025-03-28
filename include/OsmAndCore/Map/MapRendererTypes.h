@@ -379,6 +379,46 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
+        float primaryTopMarginFactor;
+#if !defined(SWIG)
+        inline GridConfiguration& setPrimaryTopMarginFactor(const float newTopMarginFactor)
+        {
+            primaryTopMarginFactor = newTopMarginFactor;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        float secondaryTopMarginFactor;
+#if !defined(SWIG)
+        inline GridConfiguration& setSecondaryTopMarginFactor(const float newTopMarginFactor)
+        {
+            secondaryTopMarginFactor = newTopMarginFactor;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        float primaryBottomMarginFactor;
+#if !defined(SWIG)
+        inline GridConfiguration& setPrimaryBottomMarginFactor(const float newBottomMarginFactor)
+        {
+            primaryBottomMarginFactor = newBottomMarginFactor;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        float secondaryBottomMarginFactor;
+#if !defined(SWIG)
+        inline GridConfiguration& setSecondaryBottomMarginFactor(const float newBottomMarginFactor)
+        {
+            secondaryBottomMarginFactor = newBottomMarginFactor;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
         FColorARGB primaryColor;
 #if !defined(SWIG)
         inline GridConfiguration& setPrimaryColor(FColorARGB newColor)
@@ -489,6 +529,8 @@ namespace OsmAnd
                 qFuzzyCompare(primaryGranularity, r.primaryGranularity) &&
                 qFuzzyCompare(primaryThickness, r.primaryThickness) &&
                 primaryFormat == r.primaryFormat &&
+                primaryTopMarginFactor == r.primaryTopMarginFactor &&
+                primaryBottomMarginFactor == r.primaryBottomMarginFactor &&
                 primaryColor == r.primaryColor &&
                 primaryMinZoomLevel == r.primaryMinZoomLevel &&
                 primaryMaxZoomLevel == r.primaryMaxZoomLevel &&
@@ -498,6 +540,8 @@ namespace OsmAnd
                 qFuzzyCompare(secondaryGranularity, r.secondaryGranularity) &&
                 qFuzzyCompare(secondaryThickness, r.secondaryThickness) &&
                 secondaryFormat == r.secondaryFormat &&
+                secondaryTopMarginFactor == r.secondaryTopMarginFactor &&
+                secondaryBottomMarginFactor == r.secondaryBottomMarginFactor &&
                 secondaryColor == r.secondaryColor &&
                 secondaryMinZoomLevel == r.secondaryMinZoomLevel &&
                 secondaryMaxZoomLevel == r.secondaryMaxZoomLevel;
@@ -512,6 +556,8 @@ namespace OsmAnd
                 !qFuzzyCompare(primaryGranularity, r.primaryGranularity) ||
                 !qFuzzyCompare(primaryThickness, r.primaryThickness) ||
                 primaryFormat != r.primaryFormat ||
+                primaryTopMarginFactor != r.primaryTopMarginFactor ||
+                primaryBottomMarginFactor != r.primaryBottomMarginFactor ||
                 primaryColor != r.primaryColor ||
                 primaryMinZoomLevel != r.primaryMinZoomLevel ||
                 primaryMaxZoomLevel != r.primaryMaxZoomLevel ||
@@ -521,6 +567,8 @@ namespace OsmAnd
                 !qFuzzyCompare(secondaryGranularity, r.secondaryGranularity) ||
                 !qFuzzyCompare(secondaryThickness, r.secondaryThickness) ||
                 secondaryFormat != r.secondaryFormat ||
+                secondaryTopMarginFactor != r.secondaryTopMarginFactor ||
+                secondaryBottomMarginFactor != r.secondaryBottomMarginFactor ||
                 secondaryColor != r.secondaryColor ||
                 secondaryMinZoomLevel != r.secondaryMinZoomLevel ||
                 secondaryMaxZoomLevel != r.secondaryMaxZoomLevel;
