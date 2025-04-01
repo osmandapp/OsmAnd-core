@@ -72,7 +72,7 @@ def aarArtifact = artifacts.add('OsmAndCore_androidNativeRelease', aarFile.get()
 // Uploading artifacts to local path
 group = "net.osmand"
 //archivesBaseName = "OsmAndCore_androidNativeRelease"
-version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "5.0"
+version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "master-snapshot"
 project.afterEvaluate {
     publishing {
         repositories {
