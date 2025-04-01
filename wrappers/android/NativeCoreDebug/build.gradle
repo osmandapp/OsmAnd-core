@@ -71,7 +71,7 @@ def aarDebArtifact = artifacts.add('OsmAndCore_androidNativeDebug', aarDebFile.g
 // Uploading artifacts to local path
 group = "net.osmand"
 //archivesBaseName = "OsmAndCore_androidNativeDebug"
-version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "master-snapshot"
+version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "5.0"
 project.afterEvaluate {
     publishing {
         repositories {
