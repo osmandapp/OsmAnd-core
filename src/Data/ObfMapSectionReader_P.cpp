@@ -500,7 +500,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     const VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric,
-    bool coastlineOnly)
+    bool coastlineOnly,
+    bool& storeInCache)
 {
     const auto cis = reader.getCodedInputStream().get();
 
@@ -574,7 +575,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 auto oldLimit = cis->PushLimit(length);
                 
                 readMapObject(reader, section, environment, optimizationEvaluator, evaluationResult,
-                    baseId, tree, mapObject, bbox31, metric);
+                    baseId, tree, mapObject, bbox31, storeInCache, metric);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -669,6 +670,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
     const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
     std::shared_ptr<OsmAnd::BinaryMapObject>& mapObject,
     const AreaI* bbox31,
+    bool& storeInCache,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
     const auto cis = reader.getCodedInputStream().get();
@@ -925,7 +927,12 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 cis->PopLimit(oldLimit);
 
                 if (!isPresent)
+                {
                     cis->Skip(cis->BytesUntilLimit());
+                    if (mapObject)
+                        mapObject.reset();
+                    storeInCache = false;
+                }
 
                 break;
             }
@@ -1203,7 +1210,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 std::shared_ptr<const DataBlock> dataBlock;
                 std::shared_ptr<const DataBlock> sharedBlockReference;
                 proper::shared_future< std::shared_ptr<const DataBlock> > futureSharedBlockReference;
-                if (cache->obtainReferenceOrFutureReferenceOrMakePromise(blockId, zoom, levelZooms, sharedBlockReference, futureSharedBlockReference))
+                bool dontRead = cache->obtainReferenceOrFutureReferenceOrMakePromise(
+                    blockId, zoom, levelZooms, sharedBlockReference, futureSharedBlockReference);
+                if (dontRead)
                 {
                     // Got reference or future reference
 
@@ -1218,11 +1227,19 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     }
                     else
                     {
-                        // Wait until it will be loaded
-                        dataBlock = futureSharedBlockReference.get();
+                        try
+                        {
+                            // Wait until it will be loaded
+                            dataBlock = futureSharedBlockReference.get();
+                        }
+                        catch(const std::exception& e)
+                        {
+                            dontRead = false;
+                        }
                     }
                 }
-                else
+                bool storeInCache = true;
+                if (!dontRead)
                 {
                     // Made a promise, so load entire block into temporary storage
                     QList< std::shared_ptr<const BinaryMapObject> > mapObjects;
@@ -1247,7 +1264,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                         nullptr,
                         nullptr,
                         metric ? &localMetric : nullptr,
-                        coastlineOnly);
+                        coastlineOnly,
+                        storeInCache);
 
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
                     cis->PopLimit(oldLimit);
@@ -1258,13 +1276,19 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                    
                     // Create a data block and share it
                     dataBlock.reset(new DataBlock(blockId, treeNode->area31, treeNode->surfaceType, mapObjects));
-                    cache->fulfilPromiseAndReference(blockId, levelZooms, dataBlock);                    
+                    if (storeInCache)
+                        cache->fulfilPromiseAndReference(blockId, levelZooms, dataBlock);
+                    else
+                        cache->breakPromise(blockId);
                 }
 
-                if (outReferencedCacheEntries)
-                    outReferencedCacheEntries->push_back(dataBlock);
-                else
-                    danglingReferencedCacheEntries.push_back(dataBlock);
+                if (storeInCache)
+                {
+                    if (outReferencedCacheEntries)
+                        outReferencedCacheEntries->push_back(dataBlock);
+                    else
+                        danglingReferencedCacheEntries.push_back(dataBlock);
+                }
 
                 // Process data block
                 for (const auto& mapObject : constOf(dataBlock->mapObjects))
@@ -1314,6 +1338,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 cis->ReadVarint32(&length);
                 const auto oldLimit = cis->PushLimit(length);
 
+                bool storeInCache = false;
                 readMapObjectsBlock(reader,
                                     section,
                                     environment,
@@ -1327,7 +1352,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                                     visitor,
                                     queryController,
                                     metric,
-                                    coastlineOnly);
+                                    coastlineOnly,
+                                    storeInCache);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);

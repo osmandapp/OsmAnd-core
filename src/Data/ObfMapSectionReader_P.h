@@ -110,7 +110,8 @@ namespace OsmAnd
             const VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric,
-            bool coastlineOnly);
+            bool coastlineOnly,
+            bool& storeInCache);
 
         static void readMapObjectId(
             const ObfReader_P& reader,
@@ -128,6 +129,7 @@ namespace OsmAnd
             const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
             std::shared_ptr<OsmAnd::BinaryMapObject>& mapObjectOut,
             const AreaI* bbox31,
+            bool& storeInCache,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 
         enum : uint32_t {
