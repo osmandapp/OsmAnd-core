@@ -1210,9 +1210,10 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 std::shared_ptr<const DataBlock> dataBlock;
                 std::shared_ptr<const DataBlock> sharedBlockReference;
                 proper::shared_future< std::shared_ptr<const DataBlock> > futureSharedBlockReference;
-                bool dontRead = cache->obtainReferenceOrFutureReferenceOrMakePromise(
+                bool forceRead = false;
+                bool withReference = cache->obtainReferenceOrFutureReferenceOrMakePromise(
                     blockId, zoom, levelZooms, sharedBlockReference, futureSharedBlockReference);
-                if (dontRead)
+                if (withReference)
                 {
                     // Got reference or future reference
 
@@ -1234,12 +1235,12 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                         }
                         catch(const std::exception& e)
                         {
-                            dontRead = false;
+                            forceRead = true;
                         }
                     }
                 }
                 bool storeInCache = true;
-                if (!dontRead)
+                if (!withReference || forceRead)
                 {
                     // Made a promise, so load entire block into temporary storage
                     QList< std::shared_ptr<const BinaryMapObject> > mapObjects;
@@ -1276,13 +1277,16 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                    
                     // Create a data block and share it
                     dataBlock.reset(new DataBlock(blockId, treeNode->area31, treeNode->surfaceType, mapObjects));
-                    if (storeInCache)
-                        cache->fulfilPromiseAndReference(blockId, levelZooms, dataBlock);
-                    else
-                        cache->breakPromise(blockId);
+                    if (!forceRead)
+                    {
+                        if (storeInCache)
+                            cache->fulfilPromiseAndReference(blockId, levelZooms, dataBlock);
+                        else
+                            cache->breakPromise(blockId);
+                    }
                 }
 
-                if (storeInCache)
+                if (storeInCache && !forceRead)
                 {
                     if (outReferencedCacheEntries)
                         outReferencedCacheEntries->push_back(dataBlock);
