@@ -337,10 +337,8 @@ public abstract class MapRendererView extends FrameLayout {
 
     @Override
     public void setVisibility(int visibility) {
-        synchronized (_mapRenderer) {
-            if (_renderingView != null) {
-                _renderingView.setVisibility(visibility);
-            }
+        if (_renderingView != null) {
+            _renderingView.setVisibility(visibility);
         }
         super.setVisibility(visibility);
     }
@@ -575,10 +573,8 @@ public abstract class MapRendererView extends FrameLayout {
         isPaused = true;
 
         // Inform rendering view that activity was paused
-        synchronized (_mapRenderer) {
-            if (isViewStarted && !isSuspended && _renderingView != null) {
-                _renderingView.onPause();
-            }
+        if (isViewStarted && !isSuspended && _renderingView != null) {
+            _renderingView.onPause();
         }
     }
 
@@ -587,15 +583,13 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
         isPaused = false;
 
-        synchronized (_mapRenderer) {
-            if (_renderingView != null) {
-                if (initOnResume && (isInitializing || isReinitializing)) {
-                    initOnResume = false;
-                    startRenderingView(null);
-                } else if (!isSuspended) {
-                    // Inform rendering view that activity was resumed
-                    _renderingView.onResume();
-                }
+        if (_renderingView != null) {
+            if (initOnResume && (isInitializing || isReinitializing)) {
+                initOnResume = false;
+                startRenderingView(null);
+            } else if (!isSuspended) {
+                // Inform rendering view that activity was resumed
+                _renderingView.onResume();
             }
         }
     }
@@ -605,10 +599,8 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         // Request GLSurfaceView render a frame
-        synchronized (_mapRenderer) {
-            if (!isSuspended && _renderingView != null) {
-                _renderingView.requestRender();
-            }
+        if (!isSuspended && _renderingView != null) {
+            _renderingView.requestRender();
         }
     }
 
