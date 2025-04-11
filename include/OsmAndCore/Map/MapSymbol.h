@@ -46,6 +46,8 @@ namespace OsmAnd
         QSet<MapSymbolIntersectionClassId> intersectsWithClasses;
 
         bool isHidden;
+        bool ignoreClick;
+
         FColorARGB modulationColor;
         int subsection;
 
