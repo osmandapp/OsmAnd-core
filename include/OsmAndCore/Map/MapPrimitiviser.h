@@ -184,7 +184,7 @@ namespace OsmAnd
             float intersectionMargin;
             float minDistance;
             float scaleFactor;
-            bool ignoreClick; // used to filter out "non-clickable" objects (getSymbolsIn calls from Apps)
+            bool ignoreClick;
 
             bool operator==(const Symbol& that) const;
             bool operator!=(const Symbol& that) const;

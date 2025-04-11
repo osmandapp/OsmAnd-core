@@ -148,11 +148,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::convertRenderableSymbolsToMapSymbolIn
         mapSymbolInfo.mapSymbol = renderable->mapSymbol;
         mapSymbolInfo.instanceParameters = renderable->genericInstanceParameters;
 
-        if (renderable->mapSymbol && renderable->mapSymbol->ignoreClick)
-        {
-            continue;
-        }
-
         output.push_back(qMove(mapSymbolInfo));
     }
 }
