@@ -183,6 +183,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     rasterizedSymbol->content = textSymbol->baseValue;
                     rasterizedSymbol->languageId = textSymbol->languageId;
                     rasterizedSymbol->minDistance = textSymbol->minDistance;
+                    rasterizedSymbol->ignoreClick = textSymbol->ignoreClick;
                     rasterizedSymbol->glyphsWidth = glyphsWidth;
                     group->symbols.push_back(qMove(rasterizedSymbol));
                 }
@@ -256,6 +257,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     rasterizedSymbol->content = textSymbol->baseValue;
                     rasterizedSymbol->languageId = textSymbol->languageId;
                     rasterizedSymbol->minDistance = textSymbol->minDistance;
+                    rasterizedSymbol->ignoreClick = textSymbol->ignoreClick;
                     rasterizedSymbol->location31 = textSymbol->location31;
                     rasterizedSymbol->offset = textSymbol->drawAlongPath ? PointI() : offset;
                     rasterizedSymbol->additionalOffset = textSymbol->drawAlongPath ? Nullable<PointI>() : additionalOffset;
@@ -386,6 +388,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 rasterizedSymbol->content = iconSymbol->resourceName;
                 rasterizedSymbol->languageId = LanguageId::Invariant;
                 rasterizedSymbol->minDistance = iconSymbol->minDistance;
+                rasterizedSymbol->ignoreClick = iconSymbol->ignoreClick;
                 rasterizedSymbol->location31 = iconSymbol->location31;
                 rasterizedSymbol->offset = symbolOffset;
                 rasterizedSymbol->drawAlongPath = iconSymbol->drawAlongPath;

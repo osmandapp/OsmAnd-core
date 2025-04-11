@@ -2181,7 +2181,9 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             text->underlayIconResourceNames.push_back(prepareIconValue(mapObject, iconResourceName));
         if (evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_2, iconResourceName))
             text->underlayIconResourceNames.push_back(prepareIconValue(mapObject, iconResourceName));
-        
+
+        evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_IGNORE_CLICK, text->ignoreClick);
+
         QString intersectsWith;
         ok = evaluationResult.getStringValue(
             env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTS_WITH,
@@ -2322,6 +2324,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_MIN_DISTANCE, icon->minDistance);
 
     primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_SHIELD, icon->shieldResourceName);
+
+    primitive->evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_IGNORE_CLICK, icon->ignoreClick);
 
     QString intersectsWith;
     ok = primitive->evaluationResult.getStringValue(

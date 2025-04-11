@@ -37,6 +37,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_IGNORE_POLYGON_AS_POINT_AREA, Output, Boolean, "
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_LEVEL, Output, Integer, "shadowLevel", false)
 
 // Text&Icon properties
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_IGNORE_CLICK, Output, Boolean, "ignoreClick", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTS_WITH, Output, String, "intersectsWith", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTION_SIZE_FACTOR, Output, Float, "intersectionSizeFactor", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTION_SIZE, Output, Float, "intersectionSize", true)

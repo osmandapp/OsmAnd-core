@@ -166,6 +166,7 @@ OsmAnd::MapPrimitiviser::Symbol::Symbol(const std::shared_ptr<const Primitive>& 
     , intersectionMargin(std::numeric_limits<float>::quiet_NaN())
     , minDistance(-1.0f)
     , scaleFactor(1.0f)
+    , ignoreClick(false)
 {
 }
 

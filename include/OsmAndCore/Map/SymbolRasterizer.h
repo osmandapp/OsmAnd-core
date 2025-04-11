@@ -75,6 +75,7 @@ namespace OsmAnd
             QString content;
             LanguageId languageId;
             float minDistance;
+            bool ignoreClick;
         };
 
         class OSMAND_CORE_API RasterizedSpriteSymbol : public RasterizedSymbol
