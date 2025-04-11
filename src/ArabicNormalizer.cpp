@@ -1,18 +1,31 @@
 #include "ArabicNormalizer.h"
 #include <QMap>
-#include <QRegularExpression>
+#include <QSet>
 
 // Arabic-specific character ranges
 static const QString ARABIC_DIGITS = QString::fromUtf16(u"٠١٢٣٤٥٦٧٨٩");
 static const QString DIGITS_REPLACEMENT = QStringLiteral("0123456789");
 
-static const QVector<QString> ARABIC_DIACRITIC_REGEX = {
-    QString::fromUtf8("[\u064B-\u065F]"),
-    QString::fromUtf8("[\u0610-\u061A]"),
-    QString::fromUtf8("[\u06D6-\u06ED]"),
-    QString::fromUtf8("\u0640"),
-    QString::fromUtf8("\u0670")
-};
+static QSet<QChar> createDiacriticSet()
+{
+    QSet<QChar> diacritics;
+    
+    // Add ranges of diacritic marks
+    for (ushort c = 0x064B; c <= 0x065F; ++c)
+        diacritics.insert(QChar(c));
+    for (ushort c = 0x0610; c <= 0x061A; ++c)
+        diacritics.insert(QChar(c));
+    for (ushort c = 0x06D6; c <= 0x06ED; ++c)
+        diacritics.insert(QChar(c));
+    
+    // Add individual characters
+    diacritics.insert(QChar(0x0640));
+    diacritics.insert(QChar(0x0670));
+    
+    return diacritics;
+}
+
+static const QSet<QChar> ARABIC_DIACRITICS = createDiacriticSet();
 
 static const QMap<QString, QString> ARABIC_DIACRITIC_REPLACE = {
     {QString::fromUtf8("\u0624"), QString::fromUtf8("\u0648")}, // Replace Waw Hamza Above by Waw
@@ -46,12 +59,13 @@ QString OsmAnd::ArabicNormalizer::normalize(const QString& text) {
         return text;
     }
 
-    QString result = text;
-
-    // Remove diacritics using regex
-    for (const QString& regexStr : ARABIC_DIACRITIC_REGEX) {
-        QRegularExpression regex(regexStr);
-        result.replace(regex, "");
+    QString result;
+    result.reserve(text.length());
+    // Remove diacritics in a single pass
+    for (const QChar& c : text) {
+        if (!ARABIC_DIACRITICS.contains(c)) {
+            result.append(c);
+        }
     }
 
     // Replace characters
