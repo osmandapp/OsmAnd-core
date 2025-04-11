@@ -13,8 +13,8 @@ namespace OsmAnd
     private:
         static QString replaceDigits(const QString& text);
         static bool isDiacritic(QChar c);
+        static bool isNeedReplace(QChar c);
         static bool isArabicDigit(QChar c);
-        static bool isKashida(QChar c);
         static bool isArabicCharacter(QChar c);
     };
 }
