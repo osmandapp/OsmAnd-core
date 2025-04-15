@@ -218,6 +218,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                 billboardRasterSymbol->content = rasterizedSpriteSymbol->content;
                 billboardRasterSymbol->languageId = rasterizedSpriteSymbol->languageId;
                 billboardRasterSymbol->minDistance = rasterizedSpriteSymbol->minDistance;
+                billboardRasterSymbol->ignoreClick = rasterizedSpriteSymbol->ignoreClick;
                 billboardRasterSymbol->position31 = rasterizedSpriteSymbol->location31;
                 billboardRasterSymbol->offset = rasterizedSpriteSymbol->offset;
                 billboardRasterSymbol->drawAlongPath = rasterizedSpriteSymbol->drawAlongPath;
@@ -255,6 +256,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                 onPathSymbol->content = rasterizedOnPathSymbol->content;
                 onPathSymbol->languageId = rasterizedOnPathSymbol->languageId;
                 onPathSymbol->minDistance = rasterizedOnPathSymbol->minDistance;
+                onPathSymbol->ignoreClick = rasterizedOnPathSymbol->ignoreClick;
                 onPathSymbol->shareablePath31 = shareablePath31;
                 assert(shareablePath31->size() >= 2);
                 onPathSymbol->glyphsWidth = rasterizedOnPathSymbol->glyphsWidth;

@@ -10,6 +10,7 @@ OsmAnd::MapSymbol::MapSymbol(
     , order(0)
     , contentClass(ContentClass::Unknown)
     , isHidden(false)
+    , ignoreClick(false)
     , subsection(0)
     , allowFastCheckByFrustum(true)
 {
