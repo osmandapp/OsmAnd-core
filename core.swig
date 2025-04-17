@@ -373,9 +373,12 @@ using namespace OsmAnd;
 #ifdef SWIG_JAVA
 	%include <swig/java/QHash.i>
 	%include <swig/java/QMap.i>
+	%include <swig/java/QPair.i>
 #endif
 %template(QStringStringHash) QHash<QString, QString>;
 %template(QStringStringMap) QMap<QString, QString>;
+%template(QStringStringPair) QPair<QString, QString>;
+%template(QStringStringList) QList<QPair<QString, QString>>;
 %template(QVariantIntHash) QHash<int, QVariant>;
 %template(QStringStringListHash) QHash<QString, QStringList>;
 
