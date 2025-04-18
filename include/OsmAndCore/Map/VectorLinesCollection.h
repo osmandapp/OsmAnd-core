@@ -29,7 +29,7 @@ namespace OsmAnd
 
     private:
         PrivateImplementation<VectorLinesCollection_P> _p;
-        
+
         std::weak_ptr<VectorLineArrowsProvider> _arrowsProvider;
         int64_t priority;
     protected:
@@ -42,7 +42,7 @@ namespace OsmAnd
         bool isEmpty() const;
         int getLinesCount() const;
         QList<std::shared_ptr<OsmAnd::VectorLine>> getLines() const;
-        bool removeLine(const std::shared_ptr<VectorLine>& line);
+        bool removeLine(const std::shared_ptr<OsmAnd::VectorLine>& line);
         void removeAllLines();
 
         const std::shared_ptr<VectorLineArrowsProvider> getVectorLineArrowsProvider();
@@ -60,7 +60,7 @@ namespace OsmAnd
             const IMapDataProvider::Request& request,
             const IMapDataProvider::ObtainDataAsyncCallback callback,
             const bool collectMetric = false) Q_DECL_OVERRIDE;
-        
+
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
 
