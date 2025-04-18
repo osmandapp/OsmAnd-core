@@ -49,7 +49,7 @@ namespace OsmAnd
 
         bool isApproximationEnabled() const;
         VectorLineBuilder& setApproximationEnabled(const bool enabled);
-        
+
         int getLineId() const;
         VectorLineBuilder& setLineId(const int lineId);
 
@@ -59,7 +59,7 @@ namespace OsmAnd
         // Get/set line width
         double getLineWidth() const;
         VectorLineBuilder& setLineWidth(const double width);
-        
+
         // Get/set single solid color for path (when colorization scheme is 0)
         FColorARGB getFillColor() const;
         VectorLineBuilder& setFillColor(const FColorARGB fillColor);
@@ -70,15 +70,15 @@ namespace OsmAnd
         // Get/set path points
         QVector<PointI> getPoints() const;
         VectorLineBuilder& setPoints(const QVector<PointI>& points);
-        
+
         // Get/set elevation of path points (in meters from sea level) for 3D vector line
         QList<float> getHeights() const;
         VectorLineBuilder& setHeights(const QList<float>& heights);
-        
+
         // Get/set color map (see get/set colorization scheme) for the path line
         QList<OsmAnd::FColorARGB> getColorizationMapping() const;
         OsmAnd::VectorLineBuilder& setColorizationMapping(const QList<OsmAnd::FColorARGB>& colorizationMapping);
-        
+
         // Get/set color map (see get/set colorization scheme) for the outline
         // using near and far outline colors as filters (see get/set near and far outline colors)
         QList<OsmAnd::FColorARGB> getOutlineColorizationMapping() const;
@@ -90,7 +90,7 @@ namespace OsmAnd
         // 2 (SOLID) - use solid colors for each segment from zero-based color map (see get/set colorization mapping)
         int getColorizationScheme() const;
         OsmAnd::VectorLineBuilder& setColorizationScheme(const int colorizationScheme);
-        
+
         // Get/set width for outline, which is:
         // for 2D vector line - usual outline of separate colouring,
         // for 3D vector line - filler of the same color under the line
@@ -127,13 +127,13 @@ namespace OsmAnd
 
         sk_sp<const SkImage> getPathIcon() const;
         VectorLineBuilder& setPathIcon(const SingleSkImage& image);
-        
+
         sk_sp<const SkImage> getSpecialPathIcon() const;
         VectorLineBuilder& setSpecialPathIcon(const SingleSkImage& image);
 
         float getPathIconStep() const;
         VectorLineBuilder& setPathIconStep(const float step);
-        
+
         float getSpecialPathIconStep() const;
         VectorLineBuilder& setSpecialPathIconStep(const float step);
 
@@ -151,8 +151,8 @@ namespace OsmAnd
         VectorLineBuilder& setJointStyle(const VectorLine::JointStyle jointStyle);
         VectorLineBuilder& setJointStyle(const int jointStyle);
 
-        std::shared_ptr<VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);
-        std::shared_ptr<VectorLine> build();
+        std::shared_ptr<OsmAnd::VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);
+        std::shared_ptr<OsmAnd::VectorLine> build();
     };
 }
 
