@@ -56,6 +56,7 @@ namespace OsmAnd
         float _model3DDirection;
 
         ColorARGB _pinIconModulationColor;
+        ColorARGB _onSurfaceIconModulationColor;
 
         class KeyedOnSurfaceRasterMapSymbol : public OnSurfaceRasterMapSymbol
         {
@@ -115,6 +116,9 @@ namespace OsmAnd
 
         ColorARGB getPinIconModulationColor() const;
         void setPinIconModulationColor(const ColorARGB colorValue);
+        
+        ColorARGB getOnSurfaceIconModulationColor() const;
+        void setOnSurfaceIconModulationColor(const ColorARGB colorValue);
 
         bool hasUnappliedChanges() const;
         

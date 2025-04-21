@@ -158,6 +158,16 @@ void OsmAnd::MapMarker::setPinIconModulationColor(const ColorARGB colorValue)
     _p->setPinIconModulationColor(colorValue);
 }
 
+OsmAnd::ColorARGB OsmAnd::MapMarker::getOnSurfaceIconModulationColor() const
+{
+    return _p->getOnSurfaceIconModulationColor();
+}
+
+void OsmAnd::MapMarker::setOnSurfaceIconModulationColor(const ColorARGB colorValue)
+{
+    _p->setOnSurfaceIconModulationColor(colorValue);
+}
+
 bool OsmAnd::MapMarker::hasUnappliedChanges() const
 {
     return _p->hasUnappliedChanges();

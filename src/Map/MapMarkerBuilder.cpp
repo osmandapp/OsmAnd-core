@@ -190,6 +190,18 @@ OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPinIconModulationColor(co
     return *this;
 }
 
+OsmAnd::ColorARGB OsmAnd::MapMarkerBuilder::getOnSurfaceIconModulationColor() const
+{
+    return _p->getOnSurfaceIconModulationColor();
+}
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setOnSurfaceIconModulationColor(const ColorARGB colorValue)
+{
+    _p->setOnSurfaceIconModulationColor(colorValue);
+
+    return *this;
+}
+
 QString OsmAnd::MapMarkerBuilder::getCaption() const
 {
     return _p->getCaption();

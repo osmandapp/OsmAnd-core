@@ -145,6 +145,9 @@ namespace OsmAnd
 
         ColorARGB getPinIconModulationColor() const;
         void setPinIconModulationColor(const ColorARGB colorValue);
+        
+        ColorARGB getOnSurfaceIconModulationColor() const;
+        void setOnSurfaceIconModulationColor(const ColorARGB colorValue);
 
         bool hasUnappliedChanges() const;
 
