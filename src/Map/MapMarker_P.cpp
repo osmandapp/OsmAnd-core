@@ -234,7 +234,7 @@ void OsmAnd::MapMarker_P::setOnSurfaceIconModulationColor(const ColorARGB colorV
 {
     QWriteLocker scopedLocker(&_lock);
 
-    if (_pinIconModulationColor != colorValue)
+    if (_onSurfaceIconModulationColor != colorValue)
     {
         _onSurfaceIconModulationColor = colorValue;
         _hasUnappliedChanges = true;
