@@ -239,6 +239,21 @@ void OsmAnd::MapMarkerBuilder_P::setPinIconModulationColor(const ColorARGB color
     _pinIconModulationColor = colorValue;
 }
 
+OsmAnd::ColorARGB OsmAnd::MapMarkerBuilder_P::getOnSurfaceIconModulationColor() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _onSurfaceIconModulationColor;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setOnSurfaceIconModulationColor(const ColorARGB colorValue)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _onSurfaceIconModulationColor = colorValue;
+}
+
+
 QString OsmAnd::MapMarkerBuilder_P::getCaption() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -400,6 +415,7 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
     marker->setHeight(_height);
     marker->setElevationScaleFactor(_elevationScaleFactor);
     marker->setPinIconModulationColor(_pinIconModulationColor);
+    marker->setOnSurfaceIconModulationColor(_onSurfaceIconModulationColor);
 
     if (marker->model3D)
     {

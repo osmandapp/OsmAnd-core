@@ -75,6 +75,9 @@ namespace OsmAnd
         ColorARGB getPinIconModulationColor() const;
         MapMarkerBuilder& setPinIconModulationColor(const ColorARGB colorValue);
         
+        ColorARGB getOnSurfaceIconModulationColor() const;
+        OsmAnd::MapMarkerBuilder& setOnSurfaceIconModulationColor(const ColorARGB colorValue);
+        
         QString getCaption() const;
         MapMarkerBuilder& setCaption(const QString& caption);
         TextRasterizer::Style getCaptionStyle() const;
