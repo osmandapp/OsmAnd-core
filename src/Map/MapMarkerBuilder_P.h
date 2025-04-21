@@ -57,6 +57,7 @@ namespace OsmAnd
         MapMarker::PinIconHorisontalAlignment _pinIconHorisontalAlignment;
         PointI _pinIconOffset;
         ColorARGB _pinIconModulationColor;
+        ColorARGB _onSurfaceIconModulationColor;
 
         QString _caption;
         TextRasterizer::Style _captionStyle;
@@ -111,6 +112,9 @@ namespace OsmAnd
 
         ColorARGB getPinIconModulationColor() const;
         void setPinIconModulationColor(const ColorARGB colorValue);
+        
+        ColorARGB getOnSurfaceIconModulationColor() const;
+        void setOnSurfaceIconModulationColor(const ColorARGB colorValue);
 
         QString getCaption() const;
         void setCaption(const QString& caption);

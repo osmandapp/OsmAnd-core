@@ -223,6 +223,24 @@ void OsmAnd::MapMarker_P::setPinIconModulationColor(const ColorARGB colorValue)
     }
 }
 
+OsmAnd::ColorARGB OsmAnd::MapMarker_P::getOnSurfaceIconModulationColor() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _onSurfaceIconModulationColor;
+}
+
+void OsmAnd::MapMarker_P::setOnSurfaceIconModulationColor(const ColorARGB colorValue)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_onSurfaceIconModulationColor != colorValue)
+    {
+        _onSurfaceIconModulationColor = colorValue;
+        _hasUnappliedChanges = true;
+    }
+}
+
 bool OsmAnd::MapMarker_P::hasUnappliedChanges() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -273,6 +291,7 @@ bool OsmAnd::MapMarker_P::applyChanges()
 
                 symbol->setElevation(_height);
                 symbol->setElevationScaleFactor(_elevationScaleFactor);
+                symbol->modulationColor = _onSurfaceIconModulationColor;
             }
         }
     }
