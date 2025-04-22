@@ -611,9 +611,6 @@ QHash<QString, int> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttrib
 {
     QHash<QString, int> map;
     
-    if (!owner)
-        return map;
-    
     const auto& mapStylePtr = owner->mapStyle;
     const auto& builtinDefs = owner->styleBuiltinValueDefs;
     const float displayDensity = owner->displayDensityFactor;
