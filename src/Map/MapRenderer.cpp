@@ -1955,24 +1955,6 @@ bool OsmAnd::MapRenderer::setFieldOfView(const float fieldOfView, bool forcedUpd
     return true;
 }
 
-bool OsmAnd::MapRenderer::setVisibleDistance(const float visibleDistance, bool forcedUpdate /*= false*/)
-{
-    QMutexLocker scopedLocker(&_requestedStateMutex);
-
-    if (visibleDistance < 0.0f)
-        return false;
-
-    bool update = forcedUpdate || !qFuzzyCompare(_requestedState.visibleDistance, visibleDistance);
-    if (!update)
-        return false;
-
-    _requestedState.visibleDistance = visibleDistance;
-
-    notifyRequestedStateWasUpdated(MapRendererStateChange::VisibleDistance);
-
-    return true;
-}
-
 bool OsmAnd::MapRenderer::setDetailedDistance(const float detailedDistance, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);

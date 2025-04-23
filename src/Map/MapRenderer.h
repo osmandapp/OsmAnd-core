@@ -181,8 +181,6 @@ namespace OsmAnd
             const PointI& location31, const float height, PointI& outLocation31) const = 0;
         virtual bool getLastProjectablePoint(const MapRendererInternalState& internalState,
             const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const = 0;
-        virtual bool getLastVisiblePoint(const MapRendererInternalState& internalState,
-            const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const = 0;
         virtual bool isPointProjectable(const MapRendererInternalState& internalState, const glm::vec3& point) const = 0;
         virtual bool isPointVisible(const MapRendererInternalState& internalState, const glm::vec3& point) const = 0;
         virtual bool getWorldPointFromScreenPoint(const MapRendererInternalState& internalState, const MapRendererState& state,
@@ -373,7 +371,6 @@ namespace OsmAnd
         virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFlip(bool flip, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFieldOfView(const float fieldOfView, bool forcedUpdate = false) Q_DECL_OVERRIDE;
-        virtual bool setVisibleDistance(const float visibleDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setDetailedDistance(const float detailedDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setSkyColor(const FColorRGB& color, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setAzimuth(const float azimuth, bool forcedUpdate = false) Q_DECL_OVERRIDE;

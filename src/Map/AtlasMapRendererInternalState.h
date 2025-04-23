@@ -52,6 +52,9 @@ namespace OsmAnd
         glm::vec2 groundCameraPosition;
         glm::vec3 worldCameraPosition;
         glm::mat4 mPerspectiveProjectionView;
+        glm::mat3 mGlobeRotationWithRadius;
+        glm::dmat3 mGlobeRotationPrecise;
+        glm::dmat3 mGlobeRotationPreciseInv;
         float zNear;
         float zFar;
         float projectionPlaneHalfHeight;
@@ -66,11 +69,14 @@ namespace OsmAnd
         float distanceFromTargetToFog;
         float fogShiftFactor;
         float skyHeightInKilometers;
-        float skyShift;
+        float skyTargetToCenter;
         float skyLine;
-        float zLowerDetail;
+        double globeRadius;
         double distanceFromCameraToGroundInMeters;        
         double metersPerUnit;
+        glm::dvec3 cameraRotatedPosition;
+        glm::dvec3 cameraRotatedDirection;
+        PointD cameraAngles;
         LatLon cameraCoordinates;
         float tileOnScreenScaleFactor;
         float scaleToRetainProjectedSize;

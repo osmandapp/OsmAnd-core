@@ -44,7 +44,6 @@ namespace OsmAnd
         Viewport,
         Flip,
         FieldOfView,
-        VisibleDistance,
         DetailedDistance,
         SkyColor,
         Azimuth,
@@ -79,7 +78,6 @@ namespace OsmAnd
         AreaI viewport;
         bool flip;
         float fieldOfView;
-        float visibleDistance;
         float detailedDistance;
         FColorRGB skyColor;
         float azimuth;
@@ -142,7 +140,6 @@ namespace OsmAnd
         AreaI viewport;
         bool flip;
         float fieldOfView;
-        float visibleDistance;
         float detailedDistance;
         FColorRGB skyColor;
         float azimuth;
