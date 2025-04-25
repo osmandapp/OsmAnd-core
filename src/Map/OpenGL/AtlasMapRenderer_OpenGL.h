@@ -23,7 +23,7 @@ namespace OsmAnd
     enum TileVisibility : int32_t
     {
         NotTestedYet = 0,
-        ZeroHeightVisible,
+        AlmostVisible,
         Visible,
         Invisible
     };
@@ -46,8 +46,8 @@ namespace OsmAnd
         const static float _maximumVisualZoom;
         const static double _minimumElevationAngle;
 
-        void computeVisibleArea(
-            InternalState* internalState, const MapRendererState& state, const float lowerDetail) const;
+        void computeVisibleArea(InternalState* internalState, const MapRendererState& state,
+            const float lowerDetail, const bool sortTiles) const;
         void updateFrustum(InternalState* internalState, const MapRendererState& state, const float lowerDetail) const;
         void computeTileset(const TileId targetTileId, const PointF targetInTileOffsetN,
             const PointF* points, QSet<TileId>* frustumTiles) const;
@@ -56,8 +56,8 @@ namespace OsmAnd
             const bool sortTiles) const;
         void computeUniqueTileset(InternalState* internalState, const MapRendererState& state,
             const ZoomLevel zoomLevel, const TileId targetTileId, const float lowerDetail, const bool sortTiles) const;
-        void insertTileId(QHash<TileId, TileVisibility>& nextTiles, const TileId& tileId) const;
-        void insertNearTileIds(QHash<TileId, TileVisibility>& nextTiles, const TileId& tileId) const;
+        void insertTileId(
+            QHash<TileId, TileVisibility>& nextTiles, const TileId& tileId, const bool almostVisible) const;
         bool isPointVisible(const glm::dvec3& point,
             const glm::dvec3& topN, const glm::dvec3& leftN, const glm::dvec3& bottomN, const glm::dvec3& rightN,
             const double& topD, const double& leftD, const double& bottomD, const double& rightD,

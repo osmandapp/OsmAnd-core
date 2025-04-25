@@ -30,7 +30,6 @@ namespace OsmAnd
         int visibleTilesCount;
         QMap<ZoomLevel, QVector<TileId>> visibleTiles;
         QMap<ZoomLevel, QSet<TileId>> visibleTilesSet;
-        QMap<ZoomLevel, QVector<TileId>> frustumTiles;
         QMap<ZoomLevel, QVector<TileId>> uniqueTiles;
         QMap<ZoomLevel, TileId> uniqueTilesTargets;
         QSet<TileId> extraDetailedTiles;
@@ -83,15 +82,8 @@ namespace OsmAnd
         float pixelInWorldProjectionScale;
         float sizeOfPixelInWorld;
         PointF skyplaneSize;
-        PointF leftMiddlePoint;
-        PointF rightMiddlePoint;
-        Frustum2DF frustum2D;
-        Frustum2D31 frustum2D31;
-        Frustum2D31 globalFrustum2D31;
-        Frustum2DF extraField2D;
-        Frustum2D31 extraFrustum2D31;
+        AreaI globalBBox31;
         PointI64 targetOffset;
-        Frustum2D31 elevatedFrustum2D31;
         glm::vec3 topVisibleEdgeN;
         glm::vec3 leftVisibleEdgeN;
         glm::vec3 bottomVisibleEdgeN;

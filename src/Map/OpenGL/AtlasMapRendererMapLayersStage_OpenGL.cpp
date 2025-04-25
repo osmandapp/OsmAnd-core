@@ -84,8 +84,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     GLname lastUsedProgram;
     bool withElevation = true;
     bool haveElevation = false;
-    auto tilesBegin = internalState.frustumTiles.cbegin();
-    for (auto itTiles = internalState.frustumTiles.cend(); itTiles != tilesBegin; itTiles--)
+    auto tilesBegin = internalState.visibleTiles.cbegin();
+    for (auto itTiles = internalState.visibleTiles.cend(); itTiles != tilesBegin; itTiles--)
     {
         const auto& tilesEntry = itTiles - 1;
         const auto& visibleTilesSet = internalState.visibleTilesSet.constFind(tilesEntry.key());
