@@ -89,7 +89,8 @@ namespace OsmAnd
         SecondaryGridXLast = 9,
         SecondaryGridYFirst = 10,
         SecondaryGridYMiddle = 11,
-        SecondaryGridYLast = 12
+        SecondaryGridYLast = 12,
+        AttachedToLine = 13
     };
 
     union TagValueId

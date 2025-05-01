@@ -38,6 +38,7 @@
 #include "GlmExtensions.h"
 #include "MapMarker.h"
 #include "VectorLine.h"
+#include "Map/OpenGL/Utilities_OpenGL.h"
 
 # define GRID_ITER_LIMIT 10
 # define GRID_ITER_PRECISION 200.0
@@ -1268,7 +1269,75 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const BillboardRasterMapSymbol>(mapSymbol))
     {
         const auto positionType = rasterMapSymbol->getPositionType();
-        if (positionType != PositionType::Coordinate31)
+        if (positionType == PositionType::AttachedToLine && rasterMapSymbol->linePoints.size() > 1)
+        {
+            int64_t intFull = INT32_MAX;
+            ++intFull;
+            const auto intHalf = static_cast<int32_t>(intFull >> 1);
+            const PointI shiftToCenter(intHalf, intHalf);
+                        
+            int firstIndersectionIndex = 0;
+            int secondIntersectionIndex = rasterMapSymbol->linePoints.size() - 1;
+            
+            for (int pointsCounter = 1; pointsCounter < rasterMapSymbol->linePoints.size(); ++pointsCounter)
+            {
+                const auto start = static_cast<PointI>(rasterMapSymbol->linePoints[pointsCounter - 1] + shiftToCenter);
+                const auto end = static_cast<PointI>(rasterMapSymbol->linePoints[pointsCounter] + shiftToCenter);
+                
+                auto pointOffset31 = Utilities::shortestVector31(currentState.target31, start);
+                auto pointOffsetFromTarget = Utilities::convert31toFloat(pointOffset31, currentState.zoomLevel) * AtlasMapRenderer::TileSize3D;
+                auto firstPointPositionInWorld = glm::vec3(pointOffsetFromTarget.x, 0.0f, pointOffsetFromTarget.y);
+                
+                pointOffset31 = Utilities::shortestVector31(currentState.target31, end);
+                pointOffsetFromTarget = Utilities::convert31toFloat(pointOffset31, currentState.zoomLevel) * AtlasMapRenderer::TileSize3D;
+                auto secondPointPositionInWorld = glm::vec3(pointOffsetFromTarget.x, 0.0f, pointOffsetFromTarget.y);
+                
+                float distance = 0;
+                bool interseced = false;
+                glm::vec3 intersectionPoint;
+                
+                if (Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState.topVisibleEdgeN, internalState.topVisibleEdgeN *
+                    internalState.topVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, intersectionPoint, &distance))
+                {
+                    firstIndersectionIndex = pointsCounter - 1;
+                }
+                
+                if (Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState.bottomVisibleEdgeN, internalState.bottomVisibleEdgeN *
+                    internalState.bottomVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, intersectionPoint, &distance))
+                {
+                    secondIntersectionIndex = pointsCounter - 1;
+                }
+                
+                if (Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState.leftVisibleEdgeN, internalState.leftVisibleEdgeN *
+                    internalState.leftVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, intersectionPoint, &distance))
+                {
+                    firstIndersectionIndex = pointsCounter - 1;
+                }
+                
+                if (Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState.rightVisibleEdgeN, internalState.rightVisibleEdgeN *
+                    internalState.rightVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, intersectionPoint, &distance))
+                {
+                    secondIntersectionIndex = pointsCounter - 1;
+                }
+            }
+            
+            const int intersectionDiff = secondIntersectionIndex - firstIndersectionIndex;
+            const int centerPoint = intersectionDiff / 2;
+            const int centerPointFraction = intersectionDiff % 2;
+            
+            const auto start = static_cast<PointI>(rasterMapSymbol->linePoints[firstIndersectionIndex + centerPoint] + shiftToCenter);
+            
+            if (centerPointFraction != 0)
+            {
+                const auto end = static_cast<PointI>(rasterMapSymbol->linePoints[firstIndersectionIndex + centerPoint + 1] + shiftToCenter);
+                position31 = start + ((end - start) / 2 );
+            }
+            else
+            {
+                position31 = start;
+            }
+        }
+        else if (positionType != PositionType::Coordinate31)
         {
             bool isPrimary = positionType == PositionType::PrimaryGridXFirst
                 || positionType == PositionType::PrimaryGridXMiddle

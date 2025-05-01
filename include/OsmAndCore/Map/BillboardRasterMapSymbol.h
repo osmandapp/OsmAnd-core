@@ -9,6 +9,7 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/RasterMapSymbol.h>
 #include <OsmAndCore/Map/IBillboardMapSymbol.h>
+#include <OsmAndCore/PointsAndAreas.h>
 
 namespace OsmAnd
 {
@@ -49,6 +50,8 @@ namespace OsmAnd
         float elevationScaleFactor;
         float getElevationScaleFactor() const;
         void setElevationScaleFactor(const float scaleFactor);
+        
+        QVector<PointI64> linePoints;
     };
 }
 

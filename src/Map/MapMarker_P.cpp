@@ -241,6 +241,17 @@ void OsmAnd::MapMarker_P::setOnSurfaceIconModulationColor(const ColorARGB colorV
     }
 }
 
+void OsmAnd::MapMarker_P::attachToVectorLine(const QVector<PointI64>& points)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_linePoints != points)
+    {
+        _linePoints = points;
+        _hasUnappliedChanges = true;
+    }
+}
+
 bool OsmAnd::MapMarker_P::hasUnappliedChanges() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -275,7 +286,16 @@ bool OsmAnd::MapMarker_P::applyChanges()
 
             if (const auto symbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol_))
             {
-                symbol->setPosition31(_position);
+                if (_linePoints.size() > 1)
+                {
+                    symbol->linePoints = _linePoints;
+                    symbol->positionType = PositionType::AttachedToLine;
+                }
+                else
+                {
+                    symbol->setPosition31(_position);
+                }
+                
                 symbol->setElevation(_height);
                 symbol->setElevationScaleFactor(_elevationScaleFactor);
                 symbol->modulationColor = _pinIconModulationColor;
@@ -392,6 +412,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
                         break;
                     }
                 case PositionType::Coordinate31:
+                case PositionType::AttachedToLine:
                     extraOffset.y = textImage->height() / 2 + owner->captionTopSpace;
             }
             const auto mapSymbolCaption = std::make_shared<BillboardRasterMapSymbol>(symbolsGroup);
@@ -404,8 +425,16 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
                 PointI(captionOffset.x + extraOffset.x, captionOffset.y + extraOffset.y));
             mapSymbolCaption->size = PointI(textImage->width(), textImage->height());
             mapSymbolCaption->languageId = LanguageId::Invariant;
-            mapSymbolCaption->position31 = _position;
-            mapSymbolCaption->setPositionType(positionType);
+            if (_linePoints.size() > 1)
+            {
+                mapSymbolCaption->linePoints = _linePoints;
+                mapSymbolCaption->positionType = PositionType::AttachedToLine;
+            }
+            else
+            {
+                mapSymbolCaption->position31 = _position;
+                mapSymbolCaption->setPositionType(positionType);
+            }
             mapSymbolCaption->setAdditionalPosition(owner->getAdditionalPosition());
             mapSymbolCaption->elevation = _height;
             mapSymbolCaption->elevationScaleFactor = _elevationScaleFactor;

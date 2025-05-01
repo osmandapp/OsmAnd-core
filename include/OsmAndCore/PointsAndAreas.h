@@ -186,6 +186,11 @@ namespace OsmAnd
         {
             return a == b;
         }
+        
+        static inline bool equal(const int64_t a, const int64_t b)
+        {
+            return a == b;
+        }
 
         friend struct OsmAnd::Area < T > ;
     };

@@ -168,6 +168,11 @@ void OsmAnd::MapMarker::setOnSurfaceIconModulationColor(const ColorARGB colorVal
     _p->setOnSurfaceIconModulationColor(colorValue);
 }
 
+void OsmAnd::MapMarker::attachToVectorLine(const QVector<PointI64>& segmentPoints)
+{
+    _p->attachToVectorLine(segmentPoints);
+}
+
 bool OsmAnd::MapMarker::hasUnappliedChanges() const
 {
     return _p->hasUnappliedChanges();

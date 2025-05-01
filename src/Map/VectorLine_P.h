@@ -16,6 +16,7 @@
 #include "IUpdatableMapSymbolsGroup.h"
 #include "OnSurfaceVectorMapSymbol.h"
 #include "VectorLine.h"
+#include "MapMarker.h"
 
 namespace OsmAnd
 {
@@ -58,6 +59,8 @@ namespace OsmAnd
         bool hasHeights() const;
     protected:
         VectorLine_P(VectorLine* const owner);
+        
+        QVector<std::shared_ptr<MapMarker>> _attachedMarkers;
 
         mutable QReadWriteLock _lock;
         mutable QReadWriteLock _arrowsOnPathLock;
@@ -139,7 +142,7 @@ namespace OsmAnd
             QList<QList<float>>& segmentDistances,
             QList<QList<FColorARGB>>& segmentColors,
             QList<QList<FColorARGB>>& segmentOutlineColors,
-            QList<QList<float>>& segmentHeights) const;
+            QList<QList<float>>& segmentHeights);
         static bool calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX);
 
     public:
@@ -163,6 +166,10 @@ namespace OsmAnd
 
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
+        
+        QVector<PointI64> getShortestPathPoints() const;
+        
+        void attachMarker(const std::shared_ptr<MapMarker>& marker);
         
         QList<float> getHeights() const;
         void setHeights(const QList<float>& heights);

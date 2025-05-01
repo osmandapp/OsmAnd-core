@@ -20,6 +20,7 @@
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
+#include <OsmAndCore/Map/MapMarker.h>
 
 namespace OsmAnd
 {
@@ -127,6 +128,8 @@ namespace OsmAnd
 
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
+        
+        void attachMarker(const std::shared_ptr<MapMarker>& marker);
 
         QList<float> getHeights() const;
         void setHeights(const QList<float>& heights);
