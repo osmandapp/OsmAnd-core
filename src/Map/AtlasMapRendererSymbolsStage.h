@@ -441,6 +441,8 @@ namespace OsmAnd
             const double coordinate, const double coord1, const double coord2, const PointI& pos1, const PointI& pos2,
             const bool isPrimary, const bool isAxisY, const double* pRefLon, int32_t& iteration) const;
         
+        PointI convertWorldPosTo31(const glm::vec3& worldPos);
+        
         // Debug-related:
         void addPathDebugLine(
             const QVector<PointI>& path31,

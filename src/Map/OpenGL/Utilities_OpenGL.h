@@ -40,6 +40,13 @@ namespace OsmAnd
             const glm::vec3& line1,
             glm::vec3& lineX,
             float* distance = nullptr);
+    
+        bool checkPlaneSegmentIntersection(
+            const glm::vec3& planeN,
+            const glm::vec3& planeO,
+            const glm::vec3& line0,
+            const glm::vec3& line1,
+            float& d0, glm::vec3& outIntersection);
     }
 }
 
