@@ -1099,14 +1099,14 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeUniqueTileset(InternalState* intern
 }
 
 inline bool OsmAnd::AtlasMapRenderer_OpenGL::isPointVisible(const InternalState& internalState, const glm::vec3& p,
-    bool skipTop, bool skipLeft, bool skipBottom, bool skipRight, bool skipFront, bool skipBack) const
+    bool skipTop, bool skipLeft, bool skipBottom, bool skipRight, bool skipFront, bool skipBack, float tolerance) const
 {
-    const auto top = skipTop || glm::dot(p, internalState.topVisibleEdgeN) <= internalState.topVisibleEdgeD;
-    const auto left = skipLeft || glm::dot(p, internalState.leftVisibleEdgeN) <= internalState.leftVisibleEdgeD;
-    const auto bottm = skipBottom || glm::dot(p, internalState.bottomVisibleEdgeN) <= internalState.bottomVisibleEdgeD;
-    const auto right = skipRight || glm::dot(p, internalState.rightVisibleEdgeN) <= internalState.rightVisibleEdgeD;
-    const auto front = skipFront || glm::dot(p, internalState.frontVisibleEdgeN) <= internalState.frontVisibleEdgeD;
-    const auto back = skipBack || glm::dot(p, internalState.backVisibleEdgeN) <= internalState.backVisibleEdgeD;
+    const auto top = skipTop || glm::dot(p, internalState.topVisibleEdgeN) <= internalState.topVisibleEdgeD + tolerance;
+    const auto left = skipLeft || glm::dot(p, internalState.leftVisibleEdgeN) <= internalState.leftVisibleEdgeD + tolerance;
+    const auto bottm = skipBottom || glm::dot(p, internalState.bottomVisibleEdgeN) <= internalState.bottomVisibleEdgeD + tolerance;
+    const auto right = skipRight || glm::dot(p, internalState.rightVisibleEdgeN) <= internalState.rightVisibleEdgeD + tolerance;
+    const auto front = skipFront || glm::dot(p, internalState.frontVisibleEdgeN) <= internalState.frontVisibleEdgeD + tolerance;
+    const auto back = skipBack || glm::dot(p, internalState.backVisibleEdgeN) <= internalState.backVisibleEdgeD + tolerance;
     return top && left && bottm && right && front && back;
 }
 
@@ -2579,11 +2579,11 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::isPointProjectable(
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::isPointVisible(
-    const MapRendererInternalState& internalState_, const glm::vec3& p) const
+    const MapRendererInternalState& internalState_, const glm::vec3& p, float tolerance) const
 {
     const auto internalState = static_cast<const InternalState*>(&internalState_);
 
-    return isPointVisible(*internalState, p, false, false, false, false, false, false);
+    return isPointVisible(*internalState, p, false, false, false, false, false, false, tolerance);
 }
 
 OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31() const

@@ -49,7 +49,7 @@ namespace OsmAnd
         void computeUniqueTileset(InternalState* internalState, const MapRendererState& state,
             const ZoomLevel zoomLevel, const TileId targetTileId, const bool sortTiles) const;
         bool isPointVisible(const InternalState& internalState, const glm::vec3& point, bool skipTop,
-            bool skipLeft, bool skipBottom, bool skipRight, bool skipFront, bool skipBack) const;
+            bool skipLeft, bool skipBottom, bool skipRight, bool skipFront, bool skipBack, float tolerance = 0.0f) const;
         bool isPointInsideTileBox(const glm::vec3& point, const glm::vec3& minPoint, const glm::vec3& maxPoint,
             bool skipTop, bool skipLeft, bool skipBottom, bool skipRight, bool skipFront, bool skipBack) const;
         bool isRayOnTileBox(const glm::vec3& startPoint, const glm::vec3& endPoint,
@@ -137,7 +137,7 @@ namespace OsmAnd
         bool getLastVisiblePoint(const MapRendererInternalState& internalState,
             const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const override;
         bool isPointProjectable(const MapRendererInternalState& internalState, const glm::vec3& point) const override;
-        bool isPointVisible(const MapRendererInternalState& internalState, const glm::vec3& point) const override;
+        bool isPointVisible(const MapRendererInternalState& internalState, const glm::vec3& point, float tolerance = 0.0) const override;
         bool getWorldPointFromScreenPoint(
             const MapRendererInternalState& internalState,
             const MapRendererState& state,

@@ -1275,11 +1275,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
             ++intFull;
             const auto intHalf = static_cast<int32_t>(intFull >> 1);
             const PointI shiftToCenter(intHalf, intHalf);
-                        
-            std::array<int, 2> intersectionSegments;
-            std::array<float, 2> intersectionDirections;
-            std::array<PointI, 2> intersections;
-            int intersectionIndex = 0;
+            
+            int intersectionCount = 0;
+            std::array<int, 2> intersectionSegments = {0, rasterMapSymbol->linePoints.size() - 1};
+            std::array<PointI, 2> intersections = {
+                static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0]] + shiftToCenter),
+                static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[1]] + shiftToCenter)
+            };
             
             for (int segmentIndex = 0; segmentIndex < rasterMapSymbol->linePoints.size() - 1; ++segmentIndex)
             {
@@ -1297,110 +1299,122 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 float d0;
                 glm::vec3 intersection;
                 
+                const float tolerance = 0.1;
+                
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.leftVisibleEdgeN, internalState.leftVisibleEdgeN *
                     internalState.leftVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    intersectionDirections[intersectionIndex] = d0;
-                    intersectionSegments[intersectionIndex] = segmentIndex;
-                    intersections[intersectionIndex] = convertWorldPosTo31(intersection);
-                    ++intersectionIndex;
+                    if (renderer->isPointVisible(internalState, intersection, tolerance))
+                    {
+                        const int intersectionIndex = d0 > 0 ? 0 : 1;
+                        intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
+                        intersections[intersectionIndex] = convertWorldPosTo31(intersection);
+                        ++intersectionCount;
+                    }
                 }
-                else if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.rightVisibleEdgeN, internalState.rightVisibleEdgeN *
+                
+                if (intersectionCount > 1)
+                {
+                    break;
+                }
+                
+                if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.rightVisibleEdgeN, internalState.rightVisibleEdgeN *
                     internalState.rightVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    intersectionDirections[intersectionIndex] = d0;
-                    intersectionSegments[intersectionIndex] = segmentIndex;
-                    intersections[intersectionIndex] = convertWorldPosTo31(intersection);
-                    ++intersectionIndex;
+                    if (renderer->isPointVisible(internalState, intersection, tolerance))
+                    {
+                        const int intersectionIndex = d0 > 0 ? 0 : 1;
+                        intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
+                        intersections[intersectionIndex] = convertWorldPosTo31(intersection);
+                        ++intersectionCount;
+                    }
+                }
+                
+                if (intersectionCount > 1)
+                {
+                    break;
                 }
                 
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.topVisibleEdgeN, internalState.topVisibleEdgeN *
                     internalState.topVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    intersectionDirections[intersectionIndex] = d0;
-                    intersectionSegments[intersectionIndex] = segmentIndex;
-                    intersections[intersectionIndex] = convertWorldPosTo31(intersection);
-                    ++intersectionIndex;
+                    if (renderer->isPointVisible(internalState, intersection, tolerance))
+                    {
+                        const int intersectionIndex = d0 > 0 ? 0 : 1;
+                        intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
+                        intersections[intersectionIndex] = convertWorldPosTo31(intersection);
+                        ++intersectionCount;
+                    }
                 }
-                else if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.bottomVisibleEdgeN, internalState.bottomVisibleEdgeN *
+                
+                if (intersectionCount > 1)
+                {
+                    break;
+                }
+                
+                if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.bottomVisibleEdgeN, internalState.bottomVisibleEdgeN *
                     internalState.bottomVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    intersectionDirections[intersectionIndex] = d0;
-                    intersectionSegments[intersectionIndex] = segmentIndex;
-                    intersections[intersectionIndex] = convertWorldPosTo31(intersection);
-                    ++intersectionIndex;
+                    if (renderer->isPointVisible(internalState, intersection, tolerance))
+                    {
+                        const int intersectionIndex = d0 > 0 ? 0 : 1;
+                        intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
+                        intersections[intersectionIndex] = convertWorldPosTo31(intersection);
+                        ++intersectionCount;
+                    }
                 }
+                
+                if (intersectionCount > 1)
+                {
+                    break;
+                }
+            }
+                       
+            const int centerSegmentIndex = (intersectionSegments[1] - intersectionSegments[0]) / 2;
+            const int centerSegmentIndexFraction = (intersectionSegments[1] - intersectionSegments[0]) % 2;
+            
+            const auto centerSegmentStart = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0] + centerSegmentIndex] + shiftToCenter);
+            const auto centerSegmentEnd = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0] + centerSegmentIndex + 1] + shiftToCenter);
+            
+            position31 = centerSegmentStart;
+            if (centerSegmentIndexFraction != 0) {
+                position31 = centerSegmentStart + ((centerSegmentEnd - centerSegmentStart) / 2);
             }
             
-            int firstIndersectionIndex = 0;
-            int secondIntersectionIndex = rasterMapSymbol->linePoints.size() - 1;
+            const auto firstIntersectionSegmentStartPoint = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0]]) + shiftToCenter;
+            const auto firstIntersectionSegmentEndPoint = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0] + 1]) + shiftToCenter;
+            const auto secontIntersectionSegmentStartPoint = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[1]]) + shiftToCenter;
+            const auto secontIntersectionSegmentEndPoint = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[1] - 1]) + shiftToCenter;
             
-            if (intersectionIndex == 0)
-            {
-                int centerSegmentIndex = (secondIntersectionIndex - firstIndersectionIndex) / 2;
-                int centerSegmentIndexFraction = (secondIntersectionIndex - firstIndersectionIndex) % 2;
-                
-                PointI start = static_cast<PointI>(rasterMapSymbol->linePoints[firstIndersectionIndex + centerSegmentIndex] + shiftToCenter);
-                
-                if (centerSegmentIndexFraction != 0)
-                {
-                    const auto end = static_cast<PointI>(rasterMapSymbol->linePoints[firstIndersectionIndex + centerSegmentIndex + 1] + shiftToCenter);
-                    position31 = start + ((end - start) / 2 );
-                }
-                else
-                {
-                    position31 = start;
-                }
-            }
-            else if (intersectionIndex == 1)
-            {
-                PointI start;
-                PointI end;
-                
-                if (intersectionDirections[0] > 0)
-                {
-                    firstIndersectionIndex = intersectionSegments[0];
-                    int centerSegmentIndex = (secondIntersectionIndex - firstIndersectionIndex) / 2;
-                    int centerSegmentIndexFraction = (secondIntersectionIndex - firstIndersectionIndex) % 2;
-                    
-                    const auto intersectionSegmentStart = static_cast<PointI>(rasterMapSymbol->linePoints[firstIndersectionIndex]) + shiftToCenter;
-                    auto distanceToIntersection = intersections[0] - intersectionSegmentStart;
-                    //distanceToIntersection.y = -distanceToIntersection.y;
-                    
-                    start = static_cast<PointI>(rasterMapSymbol->linePoints[firstIndersectionIndex + centerSegmentIndex] + shiftToCenter);
+            const auto firstSegmentVector = firstIntersectionSegmentEndPoint - firstIntersectionSegmentStartPoint;
+            const auto secondSegmentVector = secontIntersectionSegmentEndPoint - secontIntersectionSegmentStartPoint;
+            
+            const auto vectorToFirstIntersection = intersections[0] - firstIntersectionSegmentStartPoint;
+            const auto vectorToSecondIntersection = intersections[1] - secontIntersectionSegmentStartPoint;
+            
+            const float firsSegmendDiffX = static_cast<float>(vectorToFirstIntersection.x) / static_cast<float>(firstSegmentVector.x);
+            const float firsSegmendDiffY = static_cast<float>(vectorToFirstIntersection.y) / static_cast<float>(firstSegmentVector.y);
+            
+            const float secondSegmendDiffX = static_cast<float>(vectorToSecondIntersection.x) / static_cast<float>(secondSegmentVector.x);
+            const float secondSegmendDiffY = static_cast<float>(vectorToSecondIntersection.y) / static_cast<float>(secondSegmentVector.y);
 
-                    if (centerSegmentIndexFraction != 0)
-                    {
-                        start += distanceToIntersection;
-                        end = static_cast<PointI>(rasterMapSymbol->linePoints[firstIndersectionIndex + centerSegmentIndex + 1] + shiftToCenter);
-                        position31 = start + ((end - start) / 2 );
-                    }
-                    else
-                    {
-                        start += distanceToIntersection / 2;
-                        position31 = start;
-                    }
-                }
-                else
-                {
-                    secondIntersectionIndex = intersectionSegments[0] + 1;
-                    int centerSegmentIndex = (secondIntersectionIndex - firstIndersectionIndex) / 2;
-                    int centerSegmentIndexFraction = (secondIntersectionIndex - firstIndersectionIndex) % 2;
-                    
-                    start = static_cast<PointI>(rasterMapSymbol->linePoints[firstIndersectionIndex + centerSegmentIndex] + shiftToCenter);
-
-                    if (centerSegmentIndexFraction != 0)
-                    {
-                        end = static_cast<PointI>(rasterMapSymbol->linePoints[firstIndersectionIndex + centerSegmentIndex + 1] + shiftToCenter);
-                        end += intersections[0];
-                        position31 = start + ((end - start) / 2 );
-                    }
-                    else
-                    {
-                        position31 = start;
-                    }
-                }
-            }
+            auto centerSegmentVector1 = centerSegmentEnd - centerSegmentStart;
+            
+            const float angle = std::atan2(centerSegmentVector1.y, centerSegmentVector1.x) + (centerSegmentVector1.x < 0 ? M_PI : 0.0f);
+            mRotate = glm::mat2(std::cos(angle), -std::sin(angle), std::sin(angle), std::cos(angle));
+            
+            centerSegmentVector1.x *= firsSegmendDiffX;
+            centerSegmentVector1.y *= firsSegmendDiffY;
+            
+            auto centerSegmentVector2 = centerSegmentEnd - centerSegmentStart;
+            centerSegmentVector2.x *= secondSegmendDiffX;
+            centerSegmentVector2.y *= secondSegmendDiffY;
+            
+            position31.x += centerSegmentVector1.x != 0 ? centerSegmentVector1.x / 2 : 0;
+            position31.y += centerSegmentVector1.y != 0 ? centerSegmentVector1.y / 2 : 0;
+            
+            position31.x -= centerSegmentVector2.x != 0 ? centerSegmentVector2.x / 2 : 0;
+            position31.y -= centerSegmentVector2.y != 0 ? centerSegmentVector2.y / 2 : 0;
         }
         else if (positionType != PositionType::Coordinate31)
         {
