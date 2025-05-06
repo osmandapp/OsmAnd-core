@@ -371,6 +371,7 @@ namespace OsmAnd
         virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFlip(bool flip, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFieldOfView(const float fieldOfView, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setVisibleDistance(const float visibleDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setDetailedDistance(const float detailedDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setSkyColor(const FColorRGB& color, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setAzimuth(const float azimuth, bool forcedUpdate = false) Q_DECL_OVERRIDE;

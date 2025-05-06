@@ -1559,9 +1559,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     const auto zoomShift = MaxZoomLevel - zoomLevel;
     const PointI tile31(tileIdN.x << zoomShift, tileIdN.y << zoomShift);
     auto tileSize31 = 1u << zoomShift;
-    bool isOverX = tileSize31 + static_cast<uint32_t>(tile31.x) > 2147483647u;
-    bool isOverY = tileSize31 + static_cast<uint32_t>(tile31.y) > 2147483647u;
-    PointI nextTile31(isOverX ? 2147483647 : tile31.x + tileSize31, isOverY ? 2147483647 : tile31.y + tileSize31);
+    bool isOverX = tileSize31 + static_cast<uint32_t>(tile31.x) > INT32_MAX;
+    bool isOverY = tileSize31 + static_cast<uint32_t>(tile31.y) > INT32_MAX;
+    PointI nextTile31(isOverX ? INT32_MAX : tile31.x + tileSize31, isOverY ? INT32_MAX : tile31.y + tileSize31);
     PointI nextTile31N(isOverX ? 0 : nextTile31.x, isOverY ? 0 : nextTile31.y);
 
     // Calculate world coordinates and normal vectors of tile on globe
@@ -1714,7 +1714,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     glUniform4i(program.vs.param.tileCoords31,
         tile31.x,
         tile31.y,
-        1u << zoomShift & 2147483647u,
+        zoomShift < 31 ? 1 << zoomShift : INT32_MAX,
         zone << 4 | secondaryZoom << 2 | primaryZoom);
     GL_CHECK_RESULT;
 

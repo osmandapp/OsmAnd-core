@@ -57,12 +57,6 @@ namespace OsmAnd
             this->y = y;
         }
 
-        inline Point(const T& r)
-        {
-            this->x = r;
-            this->y = r;
-        }
-
 #if !defined(SWIG)
         inline Point(const glm::tvec2<T, glm::precision::defaultp>& that)
         {
@@ -75,11 +69,6 @@ namespace OsmAnd
             return PointT(x + r.x, y + r.y);
         }
 
-        inline PointT operator+(const T r) const
-        {
-            return PointT(x + r, y + r);
-        }
-
         inline PointT& operator+=(const PointT& r)
         {
             x += r.x;
@@ -90,11 +79,6 @@ namespace OsmAnd
         inline PointT operator-(const PointT& r) const
         {
             return PointT(x - r.x, y - r.y);
-        }
-
-        inline PointT operator-(const T r) const
-        {
-            return PointT(x - r, y - r);
         }
 
         inline PointT& operator-=(const PointT& r)

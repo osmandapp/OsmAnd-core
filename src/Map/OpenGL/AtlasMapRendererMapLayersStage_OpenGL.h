@@ -7,7 +7,6 @@
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
-#define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 #include "restore_internal_warnings.h"
 

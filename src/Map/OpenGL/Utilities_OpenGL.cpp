@@ -130,8 +130,8 @@ bool OsmAnd::Utilities_OpenGL_Common::rayIntersectsSphere(
     const auto a2 = 2.0 * a;
     auto r1 = p0 + v * ((-b + srd) / a2);
     auto r2 = p0 + v * ((-b - srd) / a2);
-    const bool r1p0 = glm::distance(p0, r1);
-    const bool r2p0 = glm::distance(p0, r2);
+    const auto r1p0 = glm::distance(p0, r1);
+    const auto r2p0 = glm::distance(p0, r2);
     const bool withR1 = glm::dot(r1 - p0, v) > 0.0;
     const bool withR2 = glm::dot(r2 - p0, v) > 0.0;
     if (!withR1 && !withR2)
@@ -156,10 +156,10 @@ bool OsmAnd::Utilities_OpenGL_Common::lineSegmentIntersectsSphere(
     const auto a2 = 2.0 * a;
     auto r1 = p0 + v * ((-b + srd) / a2);
     auto r2 = p0 + v * ((-b - srd) / a2);
-    const bool r1p0 = glm::distance(p0, r1);
-    const bool r1p1 = glm::distance(p1, r1);
-    const bool r2p0 = glm::distance(p0, r2);
-    const bool r2p1 = glm::distance(p1, r2);
+    const auto r1p0 = glm::distance(p0, r1);
+    const auto r1p1 = glm::distance(p1, r1);
+    const auto r2p0 = glm::distance(p0, r2);
+    const auto r2p1 = glm::distance(p1, r2);
     const auto vl = glm::length(v);
     const bool withR1 = r1p0 < vl && r1p1 < vl;
     const bool withR2 = r2p0 < vl && r2p1 < vl;
@@ -189,8 +189,8 @@ bool OsmAnd::Utilities_OpenGL_Common::rayIntersectsCone(
         const auto a2 = 2.0 * a;
         auto r1 = p0 + v * ((-b + srd) / a2);
         auto r2 = p0 + v * ((-b - srd) / a2);
-        const bool r1p0 = glm::distance(p0, r1);
-        const bool r2p0 = glm::distance(p0, r2);
+        const auto r1p0 = glm::distance(p0, r1);
+        const auto r2p0 = glm::distance(p0, r2);
         const bool withR1 = glm::dot(r1 - p0, v) > 0.0;
         const bool withR2 = glm::dot(r2 - p0, v) > 0.0;
         if (!withR1 && !withR2)

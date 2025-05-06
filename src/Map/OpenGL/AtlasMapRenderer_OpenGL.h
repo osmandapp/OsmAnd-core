@@ -3,7 +3,6 @@
 
 #include "stdlib_common.h"
 
-#define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 
 #include "QtExtensions.h"
@@ -23,9 +22,11 @@ namespace OsmAnd
     enum TileVisibility : int32_t
     {
         NotTestedYet = 0,
+        Invisible,
         AlmostVisible,
+        VisibleFlat,
         Visible,
-        Invisible
+        ExtraDetail
     };
 
     class AtlasMapRenderer_OpenGL : public AtlasMapRenderer
@@ -48,16 +49,10 @@ namespace OsmAnd
 
         void computeVisibleArea(InternalState* internalState, const MapRendererState& state,
             const float lowerDetail, const bool sortTiles) const;
-        void updateFrustum(InternalState* internalState, const MapRendererState& state, const float lowerDetail) const;
-        void computeTileset(const TileId targetTileId, const PointF targetInTileOffsetN,
-            const PointF* points, QSet<TileId>* frustumTiles) const;
-        void computeVisibleTileset(InternalState* internalState, const MapRendererState& state, const float highDetail,
-            const float lowerDetail, const float visibleDistance, const double elevationCosine,
-            const bool sortTiles) const;
-        void computeUniqueTileset(InternalState* internalState, const MapRendererState& state,
-            const ZoomLevel zoomLevel, const TileId targetTileId, const float lowerDetail, const bool sortTiles) const;
-        void insertTileId(
-            QHash<TileId, TileVisibility>& nextTiles, const TileId& tileId, const bool almostVisible) const;
+        double detailDistanceFactor(const int zoomShift) const;
+        void insertTileId(QHash<TileId, TileVisibility>& nextTiles,
+            const TileId& tileId, const double zDetail, const int32_t zoomShift,
+            const glm::dvec3& camPos, const glm::dvec3& camDir, const bool almostVisible) const;
         bool isPointVisible(const glm::dvec3& point,
             const glm::dvec3& topN, const glm::dvec3& leftN, const glm::dvec3& bottomN, const glm::dvec3& rightN,
             const double& topD, const double& leftD, const double& bottomD, const double& rightD,

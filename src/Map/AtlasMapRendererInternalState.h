@@ -58,6 +58,7 @@ namespace OsmAnd
         float zFar;
         float projectionPlaneHalfHeight;
         float projectionPlaneHalfWidth;
+        float projectionPlaneLowHalfHeight;
         float aspectRatio;
         float fovInRadians;
         float referenceTileSizeOnScreenInPixels;
@@ -82,8 +83,9 @@ namespace OsmAnd
         float pixelInWorldProjectionScale;
         float sizeOfPixelInWorld;
         PointF skyplaneSize;
-        AreaI globalBBox31;
         PointI64 targetOffset;
+        Frustum2D31 elevatedFrustum2D31;
+        Frustum2D31 globalFrustum2D31;
         glm::vec3 topVisibleEdgeN;
         glm::vec3 leftVisibleEdgeN;
         glm::vec3 bottomVisibleEdgeN;

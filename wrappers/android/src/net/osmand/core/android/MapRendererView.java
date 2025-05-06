@@ -868,6 +868,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setFieldOfView(fieldOfView);
     }
 
+    public final boolean setVisibleDistance(float visibleDistance) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setVisibleDistance(visibleDistance);
+    }
+
     public final boolean setDetailedDistance(float detailedDistance) {
         NativeCore.checkIfLoaded();
 
