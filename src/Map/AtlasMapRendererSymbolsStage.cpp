@@ -1288,28 +1288,35 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 const auto start = static_cast<PointI>(rasterMapSymbol->linePoints[segmentIndex] + shiftToCenter);
                 const auto end = static_cast<PointI>(rasterMapSymbol->linePoints[segmentIndex + 1] + shiftToCenter);
                 
-                auto pointOffset31 = Utilities::shortestVector31(currentState.target31, start);
-                auto pointOffsetFromTarget = Utilities::convert31toFloat(pointOffset31, currentState.zoomLevel) * AtlasMapRenderer::TileSize3D;
-                auto firstPointPositionInWorld = glm::vec3(pointOffsetFromTarget.x, 0.0f, pointOffsetFromTarget.y);
+                const auto pointOffset31 = Utilities::shortestVector31(currentState.target31, start);
+                const auto pointOffsetFromTarget = Utilities::convert31toFloat(pointOffset31, currentState.zoomLevel) * AtlasMapRenderer::TileSize3D;
+                const auto firstPointPositionInWorld = glm::vec3(pointOffsetFromTarget.x, 0.0f, pointOffsetFromTarget.y);
                 
-                pointOffset31 = Utilities::shortestVector31(currentState.target31, end);
-                pointOffsetFromTarget = Utilities::convert31toFloat(pointOffset31, currentState.zoomLevel) * AtlasMapRenderer::TileSize3D;
-                auto secondPointPositionInWorld = glm::vec3(pointOffsetFromTarget.x, 0.0f, pointOffsetFromTarget.y);
+                const auto secondPointOffset31 = Utilities::shortestVector31(currentState.target31, end);
+                const auto secondPointOffsetFromTarget = Utilities::convert31toFloat(secondPointOffset31, currentState.zoomLevel) * AtlasMapRenderer::TileSize3D;
+                const auto secondPointPositionInWorld = glm::vec3(secondPointOffsetFromTarget.x, 0.0f, secondPointOffsetFromTarget.y);
+                                
+                const float tolerance = 1.0f;
                 
                 float d0;
                 glm::vec3 intersection;
                 
-                const float tolerance = 0.1;
-                
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.leftVisibleEdgeN, internalState.leftVisibleEdgeN *
                     internalState.leftVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    if (renderer->isPointVisible(internalState, intersection, tolerance))
+                    if (renderer->isPointVisible(internalState, intersection, false, true, false, false, true, true, tolerance))
                     {
-                        const int intersectionIndex = d0 > 0 ? 0 : 1;
-                        intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
-                        intersections[intersectionIndex] = convertWorldPosTo31(intersection);
-                        ++intersectionCount;
+                        const auto intersection31 = convertWorldPosTo31(intersection);
+                        const bool isBetween = (intersection31.x >= std::min(start.x, end.x) && intersection31.x <= std::max(start.x, end.x)) &&
+                                       (intersection31.y >= std::min(start.y, end.y) && intersection31.y <= std::max(start.y, end.y));
+                                                
+                        if (isBetween)
+                        {
+                            const int intersectionIndex = d0 > 0 ? 0 : 1;
+                            intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
+                            intersections[intersectionIndex] = intersection31;
+                            ++intersectionCount;
+                        }
                     }
                 }
                 
@@ -1321,12 +1328,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.rightVisibleEdgeN, internalState.rightVisibleEdgeN *
                     internalState.rightVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    if (renderer->isPointVisible(internalState, intersection, tolerance))
+                    if (renderer->isPointVisible(internalState, intersection, false, false, false, true, true, true, tolerance))
                     {
-                        const int intersectionIndex = d0 > 0 ? 0 : 1;
-                        intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
-                        intersections[intersectionIndex] = convertWorldPosTo31(intersection);
-                        ++intersectionCount;
+                        const auto intersection31 = convertWorldPosTo31(intersection);
+                        const bool isBetween = (intersection31.x >= std::min(start.x, end.x) && intersection31.x <= std::max(start.x, end.x)) &&
+                                       (intersection31.y >= std::min(start.y, end.y) && intersection31.y <= std::max(start.y, end.y));
+                        
+                        if (isBetween)
+                        {
+                            const int intersectionIndex = d0 > 0 ? 0 : 1;
+                            intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
+                            intersections[intersectionIndex] = intersection31;
+                            ++intersectionCount;
+                        }
                     }
                 }
                 
@@ -1338,12 +1352,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.topVisibleEdgeN, internalState.topVisibleEdgeN *
                     internalState.topVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    if (renderer->isPointVisible(internalState, intersection, tolerance))
+                    if (renderer->isPointVisible(internalState, intersection, true, false, false, true, true, true, tolerance))
                     {
-                        const int intersectionIndex = d0 > 0 ? 0 : 1;
-                        intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
-                        intersections[intersectionIndex] = convertWorldPosTo31(intersection);
-                        ++intersectionCount;
+                        const auto intersection31 = convertWorldPosTo31(intersection);
+                        const bool isBetween = (intersection31.x >= std::min(start.x, end.x) && intersection31.x <= std::max(start.x, end.x)) &&
+                                       (intersection31.y >= std::min(start.y, end.y) && intersection31.y <= std::max(start.y, end.y));
+                        
+                        if (isBetween)
+                        {
+                            const int intersectionIndex = d0 > 0 ? 0 : 1;
+                            intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
+                            intersections[intersectionIndex] = intersection31;
+                            ++intersectionCount;
+                        }
                     }
                 }
                 
@@ -1355,12 +1376,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.bottomVisibleEdgeN, internalState.bottomVisibleEdgeN *
                     internalState.bottomVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    if (renderer->isPointVisible(internalState, intersection, tolerance))
+                    if (renderer->isPointVisible(internalState, intersection, false, false, true, true, true, true, tolerance))
                     {
-                        const int intersectionIndex = d0 > 0 ? 0 : 1;
-                        intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
-                        intersections[intersectionIndex] = convertWorldPosTo31(intersection);
-                        ++intersectionCount;
+                        const auto intersection31 = convertWorldPosTo31(intersection);
+                        const bool isBetween = (intersection31.x >= std::min(start.x, end.x) && intersection31.x <= std::max(start.x, end.x)) &&
+                                       (intersection31.y >= std::min(start.y, end.y) && intersection31.y <= std::max(start.y, end.y));
+                        
+                        if (isBetween)
+                        {
+                            const int intersectionIndex = d0 > 0 ? 0 : 1;
+                            intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
+                            intersections[intersectionIndex] = intersection31;
+                            ++intersectionCount;
+                        }
                     }
                 }
                 
@@ -1377,7 +1405,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
             const auto centerSegmentEnd = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0] + centerSegmentIndex + 1] + shiftToCenter);
             
             position31 = centerSegmentStart;
-            if (centerSegmentIndexFraction != 0) {
+            if (centerSegmentIndexFraction != 0)
+            {
                 position31 = centerSegmentStart + ((centerSegmentEnd - centerSegmentStart) / 2);
             }
             

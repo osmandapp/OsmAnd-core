@@ -2579,7 +2579,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::isPointProjectable(
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::isPointVisible(
-    const MapRendererInternalState& internalState_, const glm::vec3& p, float tolerance) const
+    const MapRendererInternalState& internalState_, const glm::vec3& p, bool skipTop, bool skipLeft,
+        bool skipBottom, bool skipRight, bool skipFront, bool skipBack, float tolerance) const
 {
     const auto internalState = static_cast<const InternalState*>(&internalState_);
 

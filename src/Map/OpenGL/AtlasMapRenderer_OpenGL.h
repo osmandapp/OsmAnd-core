@@ -137,7 +137,8 @@ namespace OsmAnd
         bool getLastVisiblePoint(const MapRendererInternalState& internalState,
             const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const override;
         bool isPointProjectable(const MapRendererInternalState& internalState, const glm::vec3& point) const override;
-        bool isPointVisible(const MapRendererInternalState& internalState, const glm::vec3& point, float tolerance = 0.0) const override;
+        bool isPointVisible(const MapRendererInternalState& internalState, const glm::vec3& point, bool skipTop = false,
+            bool skipLeft = false, bool skipBottom = false, bool skipRight = false, bool skipFront = false, bool skipBack = false, float tolerance = 0.0) const override;
         bool getWorldPointFromScreenPoint(
             const MapRendererInternalState& internalState,
             const MapRendererState& state,

@@ -75,7 +75,7 @@ bool OsmAnd::Utilities_OpenGL_Common::checkPlaneSegmentIntersection(
     float& d0, glm::vec3& outIntersection)
 {
     d0 = glm::dot(line0 - planeO, planeN);
-    const float  d1 = glm::dot(line1 - planeO, planeN);
+    const float d1 = glm::dot(line1 - planeO, planeN);
     
     if (d0 * d1 > 0.0f)
     {
