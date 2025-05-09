@@ -287,7 +287,7 @@ public abstract class MapRendererView extends FrameLayout {
                 synchronized (eglThread) {
                     eglThread.mapRenderer = _mapRenderer;
                     eglThread.startAndCompleteOperation(EGLThreadOperation.RELEASE_RENDERING);
-                }    
+                }
             }
 
             // Use previous frame rate limit for battery saving mode
@@ -313,7 +313,7 @@ public abstract class MapRendererView extends FrameLayout {
                 setupOptions.setGpuWorkerThreadPrologue(null);
                 setupOptions.setGpuWorkerThreadEpilogue(null);
             }
-            setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());    
+            setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());
             _mapRenderer.setup(setupOptions);
         }
 
@@ -333,6 +333,10 @@ public abstract class MapRendererView extends FrameLayout {
             initOnResume = isPaused;
             startRenderingView(context);
         }
+    }
+
+    public boolean setViewport(AreaI viewport, boolean forceUpdate) {
+        return this._mapRenderer.setViewport(viewport, forceUpdate);
     }
 
     @Override
@@ -458,7 +462,7 @@ public abstract class MapRendererView extends FrameLayout {
             synchronized (eglThread) {
                 eglThread.mapRenderer = _mapRenderer;
                 eglThread.startAndCompleteOperation(EGLThreadOperation.RELEASE_RENDERING);
-            }    
+            }
         }
     }
 
@@ -1337,7 +1341,7 @@ public abstract class MapRendererView extends FrameLayout {
             firstLocation31, firstHeightInMeters, firstScreenPoint,
             secondLocation31, secondHeightInMeters, secondScreenPoint
         );
-    } 
+    }
 
     public final boolean getZoomAndRotationAfterPinch(
                                             PointI firstLocation31, float firstHeightInMeters, PointI firstPoint,
@@ -1455,7 +1459,7 @@ public abstract class MapRendererView extends FrameLayout {
 
         return _mapRenderer.getTileSizeOnScreenInPixels();
     }
-    
+
     public final int getMaxMissingDataZoomShift() {
         NativeCore.checkIfLoaded();
 
@@ -2017,7 +2021,7 @@ public abstract class MapRendererView extends FrameLayout {
                     setupOptions.setGpuWorkerThreadPrologue(null);
                     setupOptions.setGpuWorkerThreadEpilogue(null);
                 }
-                setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());    
+                setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());
                 _mapRenderer.setup(setupOptions);
             }
 
@@ -2030,7 +2034,7 @@ public abstract class MapRendererView extends FrameLayout {
                     eglThread.ok = false;
                     eglThread.mapRenderer = _mapRenderer;
                     eglThread.surfaceWidth = width;
-                    eglThread.surfaceHeight = height;    
+                    eglThread.surfaceHeight = height;
                     eglThread.startAndCompleteOperation(EGLThreadOperation.INITIALIZE_RENDERING);
                     ok = eglThread.ok;
                 }
@@ -2039,7 +2043,7 @@ public abstract class MapRendererView extends FrameLayout {
                     if (isReinitializing) {
                         isReinitializing = false;
                         isSuspended = false;
-                    }    
+                    }
                     _frameStartTime = SystemClock.uptimeMillis();
                     _frameRenderTime = 0;
                     Log.v(TAG, "Rendering is initialized successfully");
@@ -2218,7 +2222,7 @@ public abstract class MapRendererView extends FrameLayout {
         public void initializeView(int bitmapWidth, int bitmapHeight) {
             if (isOffscreen) {
                 super.surfaceCreated(null);
-                super.surfaceChanged(null, 0, bitmapWidth, bitmapHeight);                
+                super.surfaceChanged(null, 0, bitmapWidth, bitmapHeight);
             }
         }
 
@@ -2253,7 +2257,7 @@ public abstract class MapRendererView extends FrameLayout {
         protected volatile ByteBuffer byteBuffer;
         protected volatile boolean renderingResultIsReady;
 
-        private final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;        
+        private final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
 
         /**
          * EGL attributes used to initialize EGL context:
@@ -2353,7 +2357,7 @@ public abstract class MapRendererView extends FrameLayout {
                                 if (gpuWorkerFakeSurface == null || gpuWorkerFakeSurface == EGL10.EGL_NO_SURFACE) {
                                     Log.e(TAG, "Failed to create GPU-worker EGL surface: " +
                                             getEglErrorString(egl.eglGetError()));
-            
+
                                     egl.eglDestroyContext(display, gpuWorkerContext);
                                     gpuWorkerContext = null;
                                     gpuWorkerFakeSurface = null;
@@ -2476,7 +2480,7 @@ public abstract class MapRendererView extends FrameLayout {
                             surface = null;
                         }
                         break;
-            
+
                         case DESTROY_CONTEXTS:
                         if (display != null) {
                             // Destroy main context
