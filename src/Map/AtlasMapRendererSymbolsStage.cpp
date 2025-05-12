@@ -1301,100 +1301,51 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 float d0;
                 glm::vec3 intersection;
                 
-                if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.leftVisibleEdgeN, internalState.leftVisibleEdgeN *
-                    internalState.leftVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
-                {
-                    if (renderer->isPointVisible(internalState, intersection, false, true, false, false, true, true, tolerance))
+                auto processIntersection = [&](const glm::vec3& intersection, float d0, bool checkLeft, bool checkRight, bool checkTop, bool checkBottom) -> bool {
+                    if (renderer->isPointVisible(internalState, intersection, checkLeft, checkRight, checkTop, checkBottom, true, true, tolerance))
                     {
                         const auto intersection31 = convertWorldPosTo31(intersection);
                         const bool isBetween = (intersection31.x >= std::min(start.x, end.x) && intersection31.x <= std::max(start.x, end.x)) &&
-                                       (intersection31.y >= std::min(start.y, end.y) && intersection31.y <= std::max(start.y, end.y));
-                                                
+                                             (intersection31.y >= std::min(start.y, end.y) && intersection31.y <= std::max(start.y, end.y));
+                        
                         if (isBetween)
                         {
                             const int intersectionIndex = d0 > 0 ? 0 : 1;
                             intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
                             intersections[intersectionIndex] = intersection31;
                             ++intersectionCount;
+                            return true;
                         }
                     }
-                }
+                    return false;
+                };
                 
-                if (intersectionCount > 1)
+                if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.leftVisibleEdgeN, internalState.leftVisibleEdgeN *
+                    internalState.leftVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    break;
+                    if (processIntersection(intersection, d0, false, true, false, false) && intersectionCount > 1)
+                        break;
                 }
                 
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.rightVisibleEdgeN, internalState.rightVisibleEdgeN *
                     internalState.rightVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    if (renderer->isPointVisible(internalState, intersection, false, false, false, true, true, true, tolerance))
-                    {
-                        const auto intersection31 = convertWorldPosTo31(intersection);
-                        const bool isBetween = (intersection31.x >= std::min(start.x, end.x) && intersection31.x <= std::max(start.x, end.x)) &&
-                                       (intersection31.y >= std::min(start.y, end.y) && intersection31.y <= std::max(start.y, end.y));
-                        
-                        if (isBetween)
-                        {
-                            const int intersectionIndex = d0 > 0 ? 0 : 1;
-                            intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
-                            intersections[intersectionIndex] = intersection31;
-                            ++intersectionCount;
-                        }
-                    }
-                }
-                
-                if (intersectionCount > 1)
-                {
-                    break;
+                    if (processIntersection(intersection, d0, false, false, false, true) && intersectionCount > 1)
+                        break;
                 }
                 
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.topVisibleEdgeN, internalState.topVisibleEdgeN *
                     internalState.topVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    if (renderer->isPointVisible(internalState, intersection, true, false, false, true, true, true, tolerance))
-                    {
-                        const auto intersection31 = convertWorldPosTo31(intersection);
-                        const bool isBetween = (intersection31.x >= std::min(start.x, end.x) && intersection31.x <= std::max(start.x, end.x)) &&
-                                       (intersection31.y >= std::min(start.y, end.y) && intersection31.y <= std::max(start.y, end.y));
-                        
-                        if (isBetween)
-                        {
-                            const int intersectionIndex = d0 > 0 ? 0 : 1;
-                            intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
-                            intersections[intersectionIndex] = intersection31;
-                            ++intersectionCount;
-                        }
-                    }
-                }
-                
-                if (intersectionCount > 1)
-                {
-                    break;
+                    if (processIntersection(intersection, d0, true, false, false, true) && intersectionCount > 1)
+                        break;
                 }
                 
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.bottomVisibleEdgeN, internalState.bottomVisibleEdgeN *
                     internalState.bottomVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    if (renderer->isPointVisible(internalState, intersection, false, false, true, true, true, true, tolerance))
-                    {
-                        const auto intersection31 = convertWorldPosTo31(intersection);
-                        const bool isBetween = (intersection31.x >= std::min(start.x, end.x) && intersection31.x <= std::max(start.x, end.x)) &&
-                                       (intersection31.y >= std::min(start.y, end.y) && intersection31.y <= std::max(start.y, end.y));
-                        
-                        if (isBetween)
-                        {
-                            const int intersectionIndex = d0 > 0 ? 0 : 1;
-                            intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
-                            intersections[intersectionIndex] = intersection31;
-                            ++intersectionCount;
-                        }
-                    }
-                }
-                
-                if (intersectionCount > 1)
-                {
-                    break;
+                    if (processIntersection(intersection, d0, false, false, true, true) && intersectionCount > 1)
+                        break;
                 }
             }
                        
