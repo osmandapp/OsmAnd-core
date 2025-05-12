@@ -2584,7 +2584,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::isPointVisible(
 {
     const auto internalState = static_cast<const InternalState*>(&internalState_);
 
-    return isPointVisible(*internalState, p, false, false, false, false, false, false, tolerance);
+    return isPointVisible(*internalState, p, skipTop, skipLeft, skipBottom, skipRight, skipFront, skipBack, tolerance);
 }
 
 OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31() const

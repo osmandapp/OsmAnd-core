@@ -1299,8 +1299,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 float d0;
                 glm::vec3 intersection;
                 
-                auto processIntersection = [&](const glm::vec3& intersection, float d0, bool checkLeft, bool checkRight, bool checkTop, bool checkBottom) -> bool {
-                    if (renderer->isPointVisible(internalState, intersection, checkLeft, checkRight, checkTop, checkBottom, true, true, tolerance))
+                auto processIntersection = [&](const glm::vec3& intersection, float d0) -> bool {
+                    if (renderer->isPointVisible(internalState, intersection, false, false, false, false, true, true, tolerance))
                     {
                         const auto intersection31 = convertWorldPosTo31(intersection);
                         const bool isBetween = (intersection31.x >= std::min(start.x, end.x) && intersection31.x <= std::max(start.x, end.x)) &&
@@ -1321,28 +1321,35 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.leftVisibleEdgeN, internalState.leftVisibleEdgeN *
                     internalState.leftVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    if (processIntersection(intersection, d0, false, true, false, false) && intersectionCount > 1)
+                    if (processIntersection(intersection, d0) && intersectionCount > 1)
                         break;
                 }
                 
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.rightVisibleEdgeN, internalState.rightVisibleEdgeN *
                     internalState.rightVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    if (processIntersection(intersection, d0, false, false, false, true) && intersectionCount > 1)
+                    if (processIntersection(intersection, d0) && intersectionCount > 1)
                         break;
                 }
                 
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.topVisibleEdgeN, internalState.topVisibleEdgeN *
                     internalState.topVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    if (processIntersection(intersection, d0, true, false, false, true) && intersectionCount > 1)
+                    if (processIntersection(intersection, d0) && intersectionCount > 1)
                         break;
                 }
                 
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.bottomVisibleEdgeN, internalState.bottomVisibleEdgeN *
                     internalState.bottomVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    if (processIntersection(intersection, d0, false, false, true, true) && intersectionCount > 1)
+                    if (processIntersection(intersection, d0) && intersectionCount > 1)
+                        break;
+                }
+                
+                if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.backVisibleEdgeN, internalState.backVisibleEdgeN *
+                    internalState.backVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
+                {
+                    if (processIntersection(intersection, d0) && intersectionCount > 1)
                         break;
                 }
             }
@@ -1391,29 +1398,36 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
             position31.x -= centerSegmentVector2.x != 0 ? centerSegmentVector2.x / 2 : 0;
             position31.y -= centerSegmentVector2.y != 0 ? centerSegmentVector2.y / 2 : 0;
             
-            const glm::vec3 centerSegmentWorldDirection = glm::vec3(convert31PosToWorld(centerSegmentEnd))
-                - glm::vec3(convert31PosToWorld(centerSegmentStart));
-            
-            const float camPitch = glm::radians( currentState.elevationAngle );
-            glm::mat3 rotX(1.0f);
-            
-            const float c = std::cos(camPitch);
-            const float s = std::sin(camPitch);
-            rotX[1][1] =  c;  rotX[1][2] = -s;
-            rotX[2][1] =  s;  rotX[2][2] =  c;
+            // New rotation
+            const glm::vec3 centerSegmentWorldStart = glm::vec3(convert31PosToWorld(centerSegmentStart));
+            const glm::vec3 centerSegmentWorldEnd = glm::vec3(convert31PosToWorld(centerSegmentEnd));
 
-            const glm::vec3 viewDir = rotX * centerSegmentWorldDirection;
-            const glm::vec2 screenDir = glm::normalize(glm::vec2(viewDir.x, viewDir.y));
+            // Must coorespond shader
+            const glm::vec3 centerSegmentScreenStart = glm::project(
+                centerSegmentWorldStart,
+                internalState.mCameraView,
+                internalState.mPerspectiveProjection,
+                internalState.glmViewport
+            );
 
+            const glm::vec3 centerSegmentScreenEnd = glm::project(
+                centerSegmentWorldEnd,
+                internalState.mCameraView,
+                internalState.mPerspectiveProjection,
+                internalState.glmViewport
+            );
+
+            glm::vec2 screenDir = centerSegmentScreenEnd - centerSegmentScreenStart;
+            screenDir = glm::normalize(screenDir);
+            
             const float angle = std::atan2(screenDir.y, screenDir.x) + (screenDir.x < 0.0f ? M_PI : 0.0f);
             const float cosAngle = std::cos(angle);
             const float sinAngle = std::sin(angle);
-            
-            // New rotation
-            mRotate = glm::mat2(cosAngle, -sinAngle, sinAngle,  cosAngle);
+
+            mRotate = glm::mat2(cosAngle, sinAngle, -sinAngle,  cosAngle);
             
             // New offset
-            offsetOnScreenOverride.x = rasterMapSymbol->size.y * -sinAngle;
+            offsetOnScreenOverride.x = rasterMapSymbol->size.y * sinAngle;
             offsetOnScreenOverride.y = rasterMapSymbol->size.y * cosAngle;
             overrideOffset = true;
         }
