@@ -677,7 +677,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     const auto& offsetOnScreen =
         (renderable->instanceParameters && renderable->instanceParameters->overridesOffset)
         ? renderable->instanceParameters->offset
-        : symbol->offset;
+        : renderable->offsetOnScreen;
     glUniform2i(_billboardRasterProgram.vs.param.onScreenOffset, offsetOnScreen.x, -offsetOnScreen.y);
     GL_CHECK_RESULT;
 

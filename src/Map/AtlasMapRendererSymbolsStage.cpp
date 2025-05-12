@@ -1265,6 +1265,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         : billboardMapSymbol->getPosition31();
 
     auto mRotate = glm::mat2(0.0f);
+    
+    bool overrideOffset = false;
+    PointI offsetOnScreenOverride = PointI(0, 0);
 
     if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const BillboardRasterMapSymbol>(mapSymbol))
     {
@@ -1285,16 +1288,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
             
             for (int segmentIndex = 0; segmentIndex < rasterMapSymbol->linePoints.size() - 1; ++segmentIndex)
             {
-                const auto start = static_cast<PointI>(rasterMapSymbol->linePoints[segmentIndex] + shiftToCenter);
-                const auto end = static_cast<PointI>(rasterMapSymbol->linePoints[segmentIndex + 1] + shiftToCenter);
+                const PointI start = static_cast<PointI>(rasterMapSymbol->linePoints[segmentIndex] + shiftToCenter);
+                const PointI end = static_cast<PointI>(rasterMapSymbol->linePoints[segmentIndex + 1] + shiftToCenter);
                 
-                const auto pointOffset31 = Utilities::shortestVector31(currentState.target31, start);
-                const auto pointOffsetFromTarget = Utilities::convert31toFloat(pointOffset31, currentState.zoomLevel) * AtlasMapRenderer::TileSize3D;
-                const auto firstPointPositionInWorld = glm::vec3(pointOffsetFromTarget.x, 0.0f, pointOffsetFromTarget.y);
-                
-                const auto secondPointOffset31 = Utilities::shortestVector31(currentState.target31, end);
-                const auto secondPointOffsetFromTarget = Utilities::convert31toFloat(secondPointOffset31, currentState.zoomLevel) * AtlasMapRenderer::TileSize3D;
-                const auto secondPointPositionInWorld = glm::vec3(secondPointOffsetFromTarget.x, 0.0f, secondPointOffsetFromTarget.y);
+                const glm::vec3 firstPointPositionInWorld = convert31PosToWorld(start);
+                const glm::vec3 secondPointPositionInWorld = convert31PosToWorld(end);
                                 
                 const float tolerance = 1.0f;
                 
@@ -1352,8 +1350,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
             const int centerSegmentIndex = (intersectionSegments[1] - intersectionSegments[0]) / 2;
             const int centerSegmentIndexFraction = (intersectionSegments[1] - intersectionSegments[0]) % 2;
             
-            const auto centerSegmentStart = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0] + centerSegmentIndex] + shiftToCenter);
-            const auto centerSegmentEnd = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0] + centerSegmentIndex + 1] + shiftToCenter);
+            const PointI centerSegmentStart = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0] + centerSegmentIndex] + shiftToCenter);
+            const PointI centerSegmentEnd = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0] + centerSegmentIndex + 1] + shiftToCenter);
             
             position31 = centerSegmentStart;
             if (centerSegmentIndexFraction != 0)
@@ -1361,16 +1359,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 position31 = centerSegmentStart + ((centerSegmentEnd - centerSegmentStart) / 2);
             }
             
-            const auto firstIntersectionSegmentStartPoint = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0]]) + shiftToCenter;
-            const auto firstIntersectionSegmentEndPoint = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0] + 1]) + shiftToCenter;
-            const auto secontIntersectionSegmentStartPoint = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[1]]) + shiftToCenter;
-            const auto secontIntersectionSegmentEndPoint = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[1] - 1]) + shiftToCenter;
+            const PointI firstIntersectionSegmentStartPoint = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0]]) + shiftToCenter;
+            const PointI firstIntersectionSegmentEndPoint = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0] + 1]) + shiftToCenter;
+            const PointI secontIntersectionSegmentStartPoint = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[1]]) + shiftToCenter;
+            const PointI secontIntersectionSegmentEndPoint = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[1] - 1]) + shiftToCenter;
             
-            const auto firstSegmentVector = firstIntersectionSegmentEndPoint - firstIntersectionSegmentStartPoint;
-            const auto secondSegmentVector = secontIntersectionSegmentEndPoint - secontIntersectionSegmentStartPoint;
+            const PointI firstSegmentVector = firstIntersectionSegmentEndPoint - firstIntersectionSegmentStartPoint;
+            const PointI secondSegmentVector = secontIntersectionSegmentEndPoint - secontIntersectionSegmentStartPoint;
             
-            const auto vectorToFirstIntersection = intersections[0] - firstIntersectionSegmentStartPoint;
-            const auto vectorToSecondIntersection = intersections[1] - secontIntersectionSegmentStartPoint;
+            const PointI vectorToFirstIntersection = intersections[0] - firstIntersectionSegmentStartPoint;
+            const PointI vectorToSecondIntersection = intersections[1] - secontIntersectionSegmentStartPoint;
             
             const float firsSegmendDiffX = static_cast<float>(vectorToFirstIntersection.x) / static_cast<float>(firstSegmentVector.x);
             const float firsSegmendDiffY = static_cast<float>(vectorToFirstIntersection.y) / static_cast<float>(firstSegmentVector.y);
@@ -1378,23 +1376,46 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
             const float secondSegmendDiffX = static_cast<float>(vectorToSecondIntersection.x) / static_cast<float>(secondSegmentVector.x);
             const float secondSegmendDiffY = static_cast<float>(vectorToSecondIntersection.y) / static_cast<float>(secondSegmentVector.y);
 
-            auto centerSegmentVector1 = centerSegmentEnd - centerSegmentStart;
-            
-            const float angle = std::atan2(centerSegmentVector1.y, centerSegmentVector1.x) + (centerSegmentVector1.x < 0 ? M_PI : 0.0f);
-            mRotate = glm::mat2(std::cos(angle), -std::sin(angle), std::sin(angle), std::cos(angle));
-            
+            PointI centerSegmentVector1 = centerSegmentEnd - centerSegmentStart;
             centerSegmentVector1.x *= firsSegmendDiffX;
             centerSegmentVector1.y *= firsSegmendDiffY;
             
-            auto centerSegmentVector2 = centerSegmentEnd - centerSegmentStart;
+            PointI centerSegmentVector2 = centerSegmentEnd - centerSegmentStart;
             centerSegmentVector2.x *= secondSegmendDiffX;
             centerSegmentVector2.y *= secondSegmendDiffY;
             
+            // New position
             position31.x += centerSegmentVector1.x != 0 ? centerSegmentVector1.x / 2 : 0;
             position31.y += centerSegmentVector1.y != 0 ? centerSegmentVector1.y / 2 : 0;
             
             position31.x -= centerSegmentVector2.x != 0 ? centerSegmentVector2.x / 2 : 0;
             position31.y -= centerSegmentVector2.y != 0 ? centerSegmentVector2.y / 2 : 0;
+            
+            const glm::vec3 centerSegmentWorldDirection = glm::vec3(convert31PosToWorld(centerSegmentEnd))
+                - glm::vec3(convert31PosToWorld(centerSegmentStart));
+            
+            const float camPitch = glm::radians( currentState.elevationAngle );
+            glm::mat3 rotX(1.0f);
+            
+            const float c = std::cos(camPitch);
+            const float s = std::sin(camPitch);
+            rotX[1][1] =  c;  rotX[1][2] = -s;
+            rotX[2][1] =  s;  rotX[2][2] =  c;
+
+            const glm::vec3 viewDir = rotX * centerSegmentWorldDirection;
+            const glm::vec2 screenDir = glm::normalize(glm::vec2(viewDir.x, viewDir.y));
+
+            const float angle = std::atan2(screenDir.y, screenDir.x) + (screenDir.x < 0.0f ? M_PI : 0.0f);
+            const float cosAngle = std::cos(angle);
+            const float sinAngle = std::sin(angle);
+            
+            // New rotation
+            mRotate = glm::mat2(cosAngle, -sinAngle, sinAngle,  cosAngle);
+            
+            // New offset
+            offsetOnScreenOverride.x = rasterMapSymbol->size.y * -sinAngle;
+            offsetOnScreenOverride.y = rasterMapSymbol->size.y * cosAngle;
+            overrideOffset = true;
         }
         else if (positionType != PositionType::Coordinate31)
         {
@@ -1759,10 +1780,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
 
     const auto& symbol = std::static_pointer_cast<const BillboardRasterMapSymbol>(mapSymbol);
 
-    const auto& offsetOnScreen =
+    auto offsetOnScreen =
         (instanceParameters && instanceParameters->overridesOffset)
         ? instanceParameters->offset
         : symbol->offset;
+    
+    offsetOnScreen = overrideOffset ? offsetOnScreenOverride : offsetOnScreen;
 
     // Calculate position on-screen coordinates (must correspond to calculation in shader)
     const auto symbolOnScreen = glm_extensions::project(
@@ -1799,6 +1822,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         renderable->offsetInTileN = offsetInTileN;
         renderable->opacityFactor = opacityFactor;
         renderable->visibleBBox = visibleBBox;
+        renderable->offsetOnScreen = offsetOnScreen;
 
         if (allowFastCheckByFrustum)
         {
@@ -4274,6 +4298,13 @@ OsmAnd::PointI OsmAnd::AtlasMapRendererSymbolsStage::convertWorldPosTo31(const g
     delta31 = Utilities::shortestVector31(delta31);
 
     return currentState.target31 + delta31;
+}
+
+glm::vec3 OsmAnd::AtlasMapRendererSymbolsStage::convert31PosToWorld(const PointI& position31)
+{
+    const auto pointOffset31 = Utilities::shortestVector31(currentState.target31, position31);
+    const auto pointOffsetFromTarget = Utilities::convert31toFloat(pointOffset31, currentState.zoomLevel) * AtlasMapRenderer::TileSize3D;
+    return glm::vec3(pointOffsetFromTarget.x, 0.0f, pointOffsetFromTarget.y);
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::addPathDebugLine(const QVector<PointI>& path31, const ColorARGB color) const
