@@ -1274,12 +1274,23 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         const auto positionType = rasterMapSymbol->getPositionType();
         if (positionType == PositionType::AttachedToLine && rasterMapSymbol->linePoints.size() > 1)
         {
+            enum Plane
+            {
+                Left,
+                Right,
+                Top,
+                Bottom,
+                Far,
+                None
+            };
+            
             int64_t intFull = INT32_MAX;
             ++intFull;
             const auto intHalf = static_cast<int32_t>(intFull >> 1);
             const PointI shiftToCenter(intHalf, intHalf);
             
             int intersectionCount = 0;
+            std::array<Plane, 2> intersectedWithPlane = {Plane::None, Plane::None};
             std::array<int, 2> intersectionSegments = {0, rasterMapSymbol->linePoints.size() - 1};
             std::array<PointI, 2> intersections = {
                 static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0]] + shiftToCenter),
@@ -1299,16 +1310,20 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 float d0;
                 glm::vec3 intersection;
                 
-                auto processIntersection = [&](const glm::vec3& intersection, float d0) -> bool {
+                auto processIntersection = [&](const glm::vec3& intersection, float d0, Plane intersectedWith) -> bool {
                     if (renderer->isPointVisible(internalState, intersection, false, false, false, false, true, true, tolerance))
                     {
+                        const int intersectionIndex = d0 > 0 ? 0 : 1;
                         const auto intersection31 = convertWorldPosTo31(intersection);
-                        const bool isBetween = (intersection31.x >= std::min(start.x, end.x) && intersection31.x <= std::max(start.x, end.x)) &&
-                                             (intersection31.y >= std::min(start.y, end.y) && intersection31.y <= std::max(start.y, end.y));
                         
-                        if (isBetween)
+                        const bool isBetween = (intersection31.x >= std::min(start.x, end.x) && intersection31.x <= std::max(start.x, end.x)) &&
+                            (intersection31.y >= std::min(start.y, end.y) && intersection31.y <= std::max(start.y, end.y));
+                        
+                        const bool alreadyIntersected = intersectedWithPlane[1 - intersectionIndex] == intersectedWith;
+                        
+                        if (isBetween && !alreadyIntersected)
                         {
-                            const int intersectionIndex = d0 > 0 ? 0 : 1;
+                            intersectedWithPlane[intersectionIndex] = intersectedWith;
                             intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
                             intersections[intersectionIndex] = intersection31;
                             ++intersectionCount;
@@ -1321,35 +1336,35 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.leftVisibleEdgeN, internalState.leftVisibleEdgeN *
                     internalState.leftVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    if (processIntersection(intersection, d0) && intersectionCount > 1)
+                    if (processIntersection(intersection, d0, Plane::Left) && intersectionCount > 1)
                         break;
                 }
                 
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.rightVisibleEdgeN, internalState.rightVisibleEdgeN *
                     internalState.rightVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    if (processIntersection(intersection, d0) && intersectionCount > 1)
+                    if (processIntersection(intersection, d0, Plane::Right) && intersectionCount > 1)
                         break;
                 }
                 
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.topVisibleEdgeN, internalState.topVisibleEdgeN *
                     internalState.topVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    if (processIntersection(intersection, d0) && intersectionCount > 1)
+                    if (processIntersection(intersection, d0, Plane::Top) && intersectionCount > 1)
                         break;
                 }
                 
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.bottomVisibleEdgeN, internalState.bottomVisibleEdgeN *
                     internalState.bottomVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    if (processIntersection(intersection, d0) && intersectionCount > 1)
+                    if (processIntersection(intersection, d0, Plane::Bottom) && intersectionCount > 1)
                         break;
                 }
                 
                 if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.backVisibleEdgeN, internalState.backVisibleEdgeN *
                     internalState.backVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
                 {
-                    if (processIntersection(intersection, d0) && intersectionCount > 1)
+                    if (processIntersection(intersection, d0, Plane::Far) && intersectionCount > 1)
                         break;
                 }
             }
