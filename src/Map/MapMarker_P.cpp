@@ -252,6 +252,17 @@ void OsmAnd::MapMarker_P::attachToVectorLine(const QVector<PointI64>& points)
     }
 }
 
+void OsmAnd::MapMarker_P::attachToVectorLine(QVector<PointI64>&& points)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_linePoints != points)
+    {
+        _linePoints = qMove(points);
+        _hasUnappliedChanges = true;
+    }
+}
+
 bool OsmAnd::MapMarker_P::hasUnappliedChanges() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -288,7 +299,7 @@ bool OsmAnd::MapMarker_P::applyChanges()
             {
                 if (_linePoints.size() > 1)
                 {
-                    symbol->linePoints = _linePoints;
+                    symbol->linePoints = qMove(_linePoints);
                     symbol->positionType = PositionType::AttachedToLine;
                 }
                 else
@@ -427,7 +438,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
             mapSymbolCaption->languageId = LanguageId::Invariant;
             if (_linePoints.size() > 1)
             {
-                mapSymbolCaption->linePoints = _linePoints;
+                mapSymbolCaption->linePoints = qMove(_linePoints);
                 mapSymbolCaption->positionType = PositionType::AttachedToLine;
             }
             else

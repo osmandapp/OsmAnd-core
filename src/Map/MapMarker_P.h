@@ -123,6 +123,7 @@ namespace OsmAnd
         void setOnSurfaceIconModulationColor(const ColorARGB colorValue);
         
         void attachToVectorLine(const QVector<PointI64>& segmentPoints);
+        void attachToVectorLine(QVector<PointI64>&& points);
 
         bool hasUnappliedChanges() const;
         

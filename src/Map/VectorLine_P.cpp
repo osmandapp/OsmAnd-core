@@ -812,12 +812,7 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
         pointsTotal = pointsSize;
         point31 = nextPoint31;
     }
-    
-    for (auto& attachedMarker : _attachedMarkers)
-    {
-        attachedMarker->attachToVectorLine(points64);
-    }
-    
+        
     auto minShiftX = static_cast<int32_t>(bbox.topLeft.x / intFull - (bbox.topLeft.x % intFull < 0 ? 1 : 0));
     auto minShiftY = static_cast<int32_t>(bbox.topLeft.y / intFull - (bbox.topLeft.y % intFull < 0 ? 1 : 0));
     auto maxShiftX = static_cast<int32_t>(bbox.bottomRight.x / intFull + (bbox.bottomRight.x % intFull < 0 ? 0 : 1));
@@ -1089,6 +1084,11 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
             outlineColors.clear();
             heights.clear();
         }
+    }
+    
+    for (auto& attachedMarker : _attachedMarkers)
+    {
+        attachedMarker->attachToVectorLine(qMove(points64));
     }
 }
 
