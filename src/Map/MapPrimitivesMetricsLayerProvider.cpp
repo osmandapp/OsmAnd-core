@@ -11,9 +11,9 @@ OsmAnd::MapPrimitivesMetricsLayerProvider::MapPrimitivesMetricsLayerProvider(
     const float densityFactor_ /*= 1.0f*/)
     : _p(new MapPrimitivesMetricsLayerProvider_P(this))
     , primitivesProvider(primitivesProvider_)
-    , tileSize(tileSize_)
     , densityFactor(densityFactor_)
 {
+    _p->tileSize = tileSize_;
 }
 
 OsmAnd::MapPrimitivesMetricsLayerProvider::~MapPrimitivesMetricsLayerProvider()
@@ -32,7 +32,7 @@ float OsmAnd::MapPrimitivesMetricsLayerProvider::getTileDensityFactor() const
 
 uint32_t OsmAnd::MapPrimitivesMetricsLayerProvider::getTileSize() const
 {
-    return tileSize;
+    return _p->tileSize;
 }
 
 bool OsmAnd::MapPrimitivesMetricsLayerProvider::supportsNaturalObtainData() const

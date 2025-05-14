@@ -22,6 +22,7 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(MapPrimitivesMetricsLayerProvider_P);
     private:
     protected:
+        uint32_t tileSize;
         MapPrimitivesMetricsLayerProvider_P(MapPrimitivesMetricsLayerProvider* const owner);
 
         struct RetainableCacheMetadata : public IMapDataProvider::RetainableCacheMetadata

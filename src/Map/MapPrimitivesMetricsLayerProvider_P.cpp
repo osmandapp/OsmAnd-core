@@ -56,12 +56,12 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
 
     // Prepare drawing canvas
     SkBitmap bitmap;
-    if (!bitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(owner->tileSize, owner->tileSize)))
+    if (!bitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(tileSize, tileSize)))
     {
         LogPrintf(LogSeverityLevel::Error,
             "Failed to allocate buffer for rasterization surface %dx%d",
-            owner->tileSize,
-            owner->tileSize);
+            tileSize,
+            tileSize);
         return false;
     }
     SkCanvas canvas(bitmap);
