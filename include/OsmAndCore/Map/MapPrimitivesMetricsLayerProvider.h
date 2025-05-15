@@ -60,7 +60,6 @@ namespace OsmAnd
         virtual ~MapPrimitivesMetricsLayerProvider();
 
         const std::shared_ptr<MapPrimitivesProvider> primitivesProvider;
-        const uint32_t tileSize;
         const float densityFactor;
 
         virtual MapStubStyle getDesiredStubsStyle() const Q_DECL_OVERRIDE;
