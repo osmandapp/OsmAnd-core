@@ -57,6 +57,8 @@ namespace OsmAnd
 
         ColorARGB _pinIconModulationColor;
         ColorARGB _onSurfaceIconModulationColor;
+        
+        QVector<PointI64> _linePoints;
 
         class KeyedOnSurfaceRasterMapSymbol : public OnSurfaceRasterMapSymbol
         {
@@ -119,6 +121,9 @@ namespace OsmAnd
         
         ColorARGB getOnSurfaceIconModulationColor() const;
         void setOnSurfaceIconModulationColor(const ColorARGB colorValue);
+        
+        void attachToVectorLine(const QVector<PointI64>& segmentPoints);
+        void attachToVectorLine(QVector<PointI64>&& points);
 
         bool hasUnappliedChanges() const;
         

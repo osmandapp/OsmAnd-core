@@ -68,3 +68,21 @@ bool OsmAnd::Utilities_OpenGL_Common::lineSegmentIntersectPlane(
 
     return true;
 }
+
+bool OsmAnd::Utilities_OpenGL_Common::checkPlaneSegmentIntersection(
+    const glm::vec3& planeN, const glm::vec3& planeO,
+    const glm::vec3& line0, const glm::vec3& line1,
+    float& d0, glm::vec3& outIntersection)
+{
+    d0 = glm::dot(line0 - planeO, planeN);
+    const float d1 = glm::dot(line1 - planeO, planeN);
+    
+    if (d0 * d1 > 0.0f)
+    {
+        return false;
+    }
+    
+    const float t = d0 / (d0 - d1);
+    outIntersection = line0 + t * (line1 - line0);
+    return true;
+}

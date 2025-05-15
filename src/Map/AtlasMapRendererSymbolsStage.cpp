@@ -38,6 +38,7 @@
 #include "GlmExtensions.h"
 #include "MapMarker.h"
 #include "VectorLine.h"
+#include "Map/OpenGL/Utilities_OpenGL.h"
 
 # define GRID_ITER_LIMIT 10
 # define GRID_ITER_PRECISION 200.0
@@ -1264,11 +1265,188 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         : billboardMapSymbol->getPosition31();
 
     auto mRotate = glm::mat2(0.0f);
+    
+    bool overrideOffset = false;
+    PointI offsetOnScreenOverride = PointI(0, 0);
 
     if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const BillboardRasterMapSymbol>(mapSymbol))
     {
         const auto positionType = rasterMapSymbol->getPositionType();
-        if (positionType != PositionType::Coordinate31)
+        if (positionType == PositionType::AttachedToLine && rasterMapSymbol->linePoints.size() > 1)
+        {
+            enum Plane
+            {
+                Left,
+                Right,
+                Top,
+                Bottom,
+                Far,
+                None
+            };
+            
+            int64_t intFull = INT32_MAX;
+            ++intFull;
+            const auto intHalf = static_cast<int32_t>(intFull >> 1);
+            const PointI shiftToCenter(intHalf, intHalf);
+            
+            int intersectionCount = 0;
+            std::array<Plane, 2> intersectedWithPlane = {Plane::None, Plane::None};
+            std::array<int, 2> intersectionSegments = {0, rasterMapSymbol->linePoints.size() - 1};
+            std::array<PointI, 2> intersections = {
+                static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0]] + shiftToCenter),
+                static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[1]] + shiftToCenter)
+            };
+            
+            for (int segmentIndex = 0; segmentIndex < rasterMapSymbol->linePoints.size() - 1; ++segmentIndex)
+            {
+                const PointI start = static_cast<PointI>(rasterMapSymbol->linePoints[segmentIndex] + shiftToCenter);
+                const PointI end = static_cast<PointI>(rasterMapSymbol->linePoints[segmentIndex + 1] + shiftToCenter);
+                
+                const glm::vec3 firstPointPositionInWorld = convert31PosToWorld(start);
+                const glm::vec3 secondPointPositionInWorld = convert31PosToWorld(end);
+                                
+                const float tolerance = 1.0f;
+                
+                float d0;
+                glm::vec3 intersection;
+                
+                auto processIntersection = [&](const glm::vec3& intersection, float d0, Plane intersectedWith) -> bool {
+                    if (renderer->isPointVisible(internalState, intersection, false, false, false, false, true, true, tolerance))
+                    {
+                        const int intersectionIndex = d0 > 0 ? 0 : 1;
+                        const auto intersection31 = convertWorldPosTo31(intersection);
+                        
+                        const bool isBetween = (intersection31.x >= std::min(start.x, end.x) && intersection31.x <= std::max(start.x, end.x)) &&
+                            (intersection31.y >= std::min(start.y, end.y) && intersection31.y <= std::max(start.y, end.y));
+                        
+                        const bool alreadyIntersected = intersectedWithPlane[1 - intersectionIndex] == intersectedWith;
+                        
+                        if (isBetween && !alreadyIntersected)
+                        {
+                            intersectedWithPlane[intersectionIndex] = intersectedWith;
+                            intersectionSegments[intersectionIndex] = d0 > 0 ? segmentIndex : segmentIndex + 1;
+                            intersections[intersectionIndex] = intersection31;
+                            ++intersectionCount;
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+                
+                if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.leftVisibleEdgeN, internalState.leftVisibleEdgeN *
+                    internalState.leftVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
+                {
+                    if (processIntersection(intersection, d0, Plane::Left) && intersectionCount > 1)
+                        break;
+                }
+                
+                if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.rightVisibleEdgeN, internalState.rightVisibleEdgeN *
+                    internalState.rightVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
+                {
+                    if (processIntersection(intersection, d0, Plane::Right) && intersectionCount > 1)
+                        break;
+                }
+                
+                if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.topVisibleEdgeN, internalState.topVisibleEdgeN *
+                    internalState.topVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
+                {
+                    if (processIntersection(intersection, d0, Plane::Top) && intersectionCount > 1)
+                        break;
+                }
+                
+                if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.bottomVisibleEdgeN, internalState.bottomVisibleEdgeN *
+                    internalState.bottomVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
+                {
+                    if (processIntersection(intersection, d0, Plane::Bottom) && intersectionCount > 1)
+                        break;
+                }
+                
+                if (Utilities_OpenGL_Common::checkPlaneSegmentIntersection(internalState.backVisibleEdgeN, internalState.backVisibleEdgeN *
+                    internalState.backVisibleEdgeD, firstPointPositionInWorld, secondPointPositionInWorld, d0, intersection))
+                {
+                    if (processIntersection(intersection, d0, Plane::Far) && intersectionCount > 1)
+                        break;
+                }
+            }
+                       
+            const int centerSegmentIndex = (intersectionSegments[1] - intersectionSegments[0]) / 2;
+            const int centerSegmentIndexFraction = (intersectionSegments[1] - intersectionSegments[0]) % 2;
+            
+            const PointI centerSegmentStart = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0] + centerSegmentIndex] + shiftToCenter);
+            const PointI centerSegmentEnd = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0] + centerSegmentIndex + 1] + shiftToCenter);
+            
+            position31 = centerSegmentStart;
+            if (centerSegmentIndexFraction != 0)
+            {
+                position31 = centerSegmentStart + ((centerSegmentEnd - centerSegmentStart) / 2);
+            }
+            
+            const PointI firstIntersectionSegmentStartPoint = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0]]) + shiftToCenter;
+            const PointI firstIntersectionSegmentEndPoint = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[0] + 1]) + shiftToCenter;
+            const PointI secontIntersectionSegmentStartPoint = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[1]]) + shiftToCenter;
+            const PointI secontIntersectionSegmentEndPoint = static_cast<PointI>(rasterMapSymbol->linePoints[intersectionSegments[1] - 1]) + shiftToCenter;
+            
+            const PointI firstSegmentVector = firstIntersectionSegmentEndPoint - firstIntersectionSegmentStartPoint;
+            const PointI secondSegmentVector = secontIntersectionSegmentEndPoint - secontIntersectionSegmentStartPoint;
+            
+            const PointI vectorToFirstIntersection = intersections[0] - firstIntersectionSegmentStartPoint;
+            const PointI vectorToSecondIntersection = intersections[1] - secontIntersectionSegmentStartPoint;
+            
+            const float firsSegmendDiffX = static_cast<float>(vectorToFirstIntersection.x) / static_cast<float>(firstSegmentVector.x);
+            const float firsSegmendDiffY = static_cast<float>(vectorToFirstIntersection.y) / static_cast<float>(firstSegmentVector.y);
+            
+            const float secondSegmendDiffX = static_cast<float>(vectorToSecondIntersection.x) / static_cast<float>(secondSegmentVector.x);
+            const float secondSegmendDiffY = static_cast<float>(vectorToSecondIntersection.y) / static_cast<float>(secondSegmentVector.y);
+
+            PointI centerSegmentVector1 = centerSegmentEnd - centerSegmentStart;
+            centerSegmentVector1.x *= firsSegmendDiffX;
+            centerSegmentVector1.y *= firsSegmendDiffY;
+            
+            PointI centerSegmentVector2 = centerSegmentEnd - centerSegmentStart;
+            centerSegmentVector2.x *= secondSegmendDiffX;
+            centerSegmentVector2.y *= secondSegmendDiffY;
+            
+            // New position
+            position31.x += centerSegmentVector1.x != 0 ? centerSegmentVector1.x / 2 : 0;
+            position31.y += centerSegmentVector1.y != 0 ? centerSegmentVector1.y / 2 : 0;
+            
+            position31.x -= centerSegmentVector2.x != 0 ? centerSegmentVector2.x / 2 : 0;
+            position31.y -= centerSegmentVector2.y != 0 ? centerSegmentVector2.y / 2 : 0;
+            
+            // New rotation
+            const glm::vec3 centerSegmentWorldStart = glm::vec3(convert31PosToWorld(centerSegmentStart));
+            const glm::vec3 centerSegmentWorldEnd = glm::vec3(convert31PosToWorld(centerSegmentEnd));
+
+            // Must coorespond shader
+            const glm::vec3 centerSegmentScreenStart = glm::project(
+                centerSegmentWorldStart,
+                internalState.mCameraView,
+                internalState.mPerspectiveProjection,
+                internalState.glmViewport
+            );
+
+            const glm::vec3 centerSegmentScreenEnd = glm::project(
+                centerSegmentWorldEnd,
+                internalState.mCameraView,
+                internalState.mPerspectiveProjection,
+                internalState.glmViewport
+            );
+
+            glm::vec2 screenDir = centerSegmentScreenEnd - centerSegmentScreenStart;
+            screenDir = glm::normalize(screenDir);
+            
+            const float angle = std::atan2(screenDir.y, screenDir.x) + (screenDir.x < 0.0f ? M_PI : 0.0f);
+            const float cosAngle = std::cos(angle);
+            const float sinAngle = std::sin(angle);
+
+            mRotate = glm::mat2(cosAngle, sinAngle, -sinAngle,  cosAngle);
+            
+            // New offset
+            offsetOnScreenOverride.x = rasterMapSymbol->size.y * sinAngle;
+            offsetOnScreenOverride.y = rasterMapSymbol->size.y * cosAngle;
+            overrideOffset = true;
+        }
+        else if (positionType != PositionType::Coordinate31)
         {
             bool isPrimary = positionType == PositionType::PrimaryGridXFirst
                 || positionType == PositionType::PrimaryGridXMiddle
@@ -1631,10 +1809,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
 
     const auto& symbol = std::static_pointer_cast<const BillboardRasterMapSymbol>(mapSymbol);
 
-    const auto& offsetOnScreen =
+    auto offsetOnScreen =
         (instanceParameters && instanceParameters->overridesOffset)
         ? instanceParameters->offset
         : symbol->offset;
+    
+    offsetOnScreen = overrideOffset ? offsetOnScreenOverride : offsetOnScreen;
 
     // Calculate position on-screen coordinates (must correspond to calculation in shader)
     const auto symbolOnScreen = glm_extensions::project(
@@ -1671,6 +1851,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         renderable->offsetInTileN = offsetInTileN;
         renderable->opacityFactor = opacityFactor;
         renderable->visibleBBox = visibleBBox;
+        renderable->offsetOnScreen = offsetOnScreen;
 
         if (allowFastCheckByFrustum)
         {
@@ -4133,6 +4314,26 @@ OsmAnd::PointI OsmAnd::AtlasMapRendererSymbolsStage::getApproximate31(
             s ? pos31 : pos1, s ? pos2 : pos31, isPrimary, isAxisY, pRefLon, iteration);
     }
     return pos31;
+}
+    
+OsmAnd::PointI OsmAnd::AtlasMapRendererSymbolsStage::convertWorldPosTo31(const glm::vec3& worldPos)
+{
+    const glm::vec2 floatTileOffset = glm::vec2(worldPos.x / AtlasMapRenderer::TileSize3D,
+        worldPos.z / AtlasMapRenderer::TileSize3D);
+    const uint32_t tileSize31 = 1u << (ZoomLevel::MaxZoomLevel - currentState.zoomLevel);
+
+    PointI delta31 = PointI(int(std::round(floatTileOffset.x * float(tileSize31))),
+        int(std::round(floatTileOffset.y * float(tileSize31))));
+    delta31 = Utilities::shortestVector31(delta31);
+
+    return currentState.target31 + delta31;
+}
+
+glm::vec3 OsmAnd::AtlasMapRendererSymbolsStage::convert31PosToWorld(const PointI& position31)
+{
+    const auto pointOffset31 = Utilities::shortestVector31(currentState.target31, position31);
+    const auto pointOffsetFromTarget = Utilities::convert31toFloat(pointOffset31, currentState.zoomLevel) * AtlasMapRenderer::TileSize3D;
+    return glm::vec3(pointOffsetFromTarget.x, 0.0f, pointOffsetFromTarget.y);
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::addPathDebugLine(const QVector<PointI>& path31, const ColorARGB color) const

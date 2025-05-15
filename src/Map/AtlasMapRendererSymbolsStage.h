@@ -62,6 +62,7 @@ namespace OsmAnd
             float elevationInMeters;
             TileId tileId;
             PointF offsetInTileN;
+            PointI offsetOnScreen;
         };
 
         struct RenderableModel3DSymbol : RenderableSymbol
@@ -440,6 +441,9 @@ namespace OsmAnd
         PointI getApproximate31(
             const double coordinate, const double coord1, const double coord2, const PointI& pos1, const PointI& pos2,
             const bool isPrimary, const bool isAxisY, const double* pRefLon, int32_t& iteration) const;
+        
+        PointI convertWorldPosTo31(const glm::vec3& worldPos);
+        glm::vec3 convert31PosToWorld(const PointI& position31);
         
         // Debug-related:
         void addPathDebugLine(

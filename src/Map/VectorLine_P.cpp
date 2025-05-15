@@ -153,6 +153,13 @@ QVector<OsmAnd::PointI> OsmAnd::VectorLine_P::getPoints() const
     return _points;
 }
 
+void OsmAnd::VectorLine_P::attachMarker(const std::shared_ptr<MapMarker>& marker)
+{
+    QReadLocker scopedLocker(&_lock);
+
+    _attachedMarkers.push_back(marker);
+}
+
 void OsmAnd::VectorLine_P::setPoints(const QVector<PointI>& points)
 {
     QWriteLocker scopedLocker(&_lock);
@@ -754,7 +761,7 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
     QList<QList<float>>& segmentDistances,
     QList<QList<FColorARGB>>& segmentColors,
     QList<QList<FColorARGB>>& segmentOutlineColors,
-    QList<QList<float>>& segmentHeights) const
+    QList<QList<float>>& segmentHeights)
 {
     // Use enlarged visible area
     const AreaI64 visibleBBox64(_visibleBBoxShifted);
@@ -805,6 +812,7 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
         pointsTotal = pointsSize;
         point31 = nextPoint31;
     }
+        
     auto minShiftX = static_cast<int32_t>(bbox.topLeft.x / intFull - (bbox.topLeft.x % intFull < 0 ? 1 : 0));
     auto minShiftY = static_cast<int32_t>(bbox.topLeft.y / intFull - (bbox.topLeft.y % intFull < 0 ? 1 : 0));
     auto maxShiftX = static_cast<int32_t>(bbox.bottomRight.x / intFull + (bbox.bottomRight.x % intFull < 0 ? 0 : 1));
@@ -1076,6 +1084,11 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
             outlineColors.clear();
             heights.clear();
         }
+    }
+    
+    for (auto& attachedMarker : _attachedMarkers)
+    {
+        attachedMarker->attachToVectorLine(qMove(points64));
     }
 }
 

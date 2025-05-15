@@ -148,6 +148,9 @@ namespace OsmAnd
         
         ColorARGB getOnSurfaceIconModulationColor() const;
         void setOnSurfaceIconModulationColor(const ColorARGB colorValue);
+        
+        void attachToVectorLine(const QVector<PointI64>& points);
+        void attachToVectorLine(QVector<PointI64>&& segmentPoints);
 
         bool hasUnappliedChanges() const;
 
