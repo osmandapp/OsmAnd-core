@@ -151,6 +151,8 @@ namespace OsmAnd
         
         void attachToVectorLine(const QVector<PointI64>& points);
         void attachToVectorLine(QVector<PointI64>&& segmentPoints);
+        
+        void setOffsetFromLine(int offset);
 
         bool hasUnappliedChanges() const;
 

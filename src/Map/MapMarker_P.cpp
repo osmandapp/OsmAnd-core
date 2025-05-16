@@ -263,6 +263,17 @@ void OsmAnd::MapMarker_P::attachToVectorLine(QVector<PointI64>&& points)
     }
 }
 
+void OsmAnd::MapMarker_P::setOffsetFromLine(int offset)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_offsetFromLine != offset)
+    {
+        _offsetFromLine = offset;
+        _hasUnappliedChanges = true;
+    }
+}
+
 bool OsmAnd::MapMarker_P::hasUnappliedChanges() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -300,6 +311,7 @@ bool OsmAnd::MapMarker_P::applyChanges()
                 if (_linePoints.size() > 1)
                 {
                     symbol->linePoints = qMove(_linePoints);
+                    symbol->offsetFromLine = _offsetFromLine;
                     symbol->positionType = PositionType::AttachedToLine;
                 }
                 else
@@ -439,6 +451,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
             if (_linePoints.size() > 1)
             {
                 mapSymbolCaption->linePoints = qMove(_linePoints);
+                mapSymbolCaption->offsetFromLine = _offsetFromLine;
                 mapSymbolCaption->positionType = PositionType::AttachedToLine;
             }
             else

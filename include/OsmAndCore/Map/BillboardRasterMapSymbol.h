@@ -52,6 +52,7 @@ namespace OsmAnd
         void setElevationScaleFactor(const float scaleFactor);
         
         QVector<PointI64> linePoints;
+        int offsetFromLine = 0;
     };
 }
 
