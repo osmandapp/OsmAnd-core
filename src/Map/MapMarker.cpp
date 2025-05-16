@@ -178,6 +178,11 @@ void OsmAnd::MapMarker::attachToVectorLine(QVector<PointI64>&& segmentPoints)
     _p->attachToVectorLine(qMove(segmentPoints));
 }
 
+void OsmAnd::MapMarker::setOffsetFromLine(int offset)
+{
+    _p->setOffsetFromLine(offset);
+}
+
 bool OsmAnd::MapMarker::hasUnappliedChanges() const
 {
     return _p->hasUnappliedChanges();

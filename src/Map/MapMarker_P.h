@@ -59,6 +59,7 @@ namespace OsmAnd
         ColorARGB _onSurfaceIconModulationColor;
         
         QVector<PointI64> _linePoints;
+        int _offsetFromLine = 0;
 
         class KeyedOnSurfaceRasterMapSymbol : public OnSurfaceRasterMapSymbol
         {
@@ -124,6 +125,8 @@ namespace OsmAnd
         
         void attachToVectorLine(const QVector<PointI64>& segmentPoints);
         void attachToVectorLine(QVector<PointI64>&& points);
+        
+        void setOffsetFromLine(int offset);
 
         bool hasUnappliedChanges() const;
         

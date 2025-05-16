@@ -1442,8 +1442,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
             mRotate = glm::mat2(cosAngle, sinAngle, -sinAngle,  cosAngle);
             
             // New offset
-            offsetOnScreenOverride.x = rasterMapSymbol->size.y * sinAngle;
-            offsetOnScreenOverride.y = rasterMapSymbol->size.y * cosAngle;
+            offsetOnScreenOverride.x = (rasterMapSymbol->size.y + rasterMapSymbol->offsetFromLine) * sinAngle;
+            offsetOnScreenOverride.y = (rasterMapSymbol->size.y + rasterMapSymbol->offsetFromLine) * cosAngle;
             overrideOffset = true;
         }
         else if (positionType != PositionType::Coordinate31)
