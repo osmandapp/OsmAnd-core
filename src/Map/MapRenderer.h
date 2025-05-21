@@ -127,7 +127,7 @@ namespace OsmAnd
         QAtomicInt _suspendSymbolsUpdateCounter;
         volatile int _symbolsUpdateInterval;
         volatile bool _updateSymbols;
-        volatile bool _freshSymbols;
+        volatile bool _symbolsLoading;
         volatile bool _targetIsElevated;
 
         // GPU worker related:
@@ -456,12 +456,10 @@ namespace OsmAnd
         virtual bool resumeSymbolsUpdate() Q_DECL_OVERRIDE;
         virtual int getSymbolsUpdateInterval() Q_DECL_OVERRIDE;
         virtual void setSymbolsUpdateInterval(int interval) Q_DECL_OVERRIDE;
-        virtual void shouldUpdateSymbols() Q_DECL_OVERRIDE;
+        virtual void setUpdateSymbols(bool update) Q_DECL_OVERRIDE;
         virtual bool needUpdatedSymbols() Q_DECL_OVERRIDE;
-        virtual void dontNeedUpdatedSymbols() Q_DECL_OVERRIDE;
-        virtual void setSymbolsUpdated() Q_DECL_OVERRIDE;
-        virtual bool freshSymbols() Q_DECL_OVERRIDE;
-        virtual void clearSymbolsUpdated() Q_DECL_OVERRIDE;
+        virtual void setSymbolsLoading(bool active) Q_DECL_OVERRIDE;
+        virtual bool isSymbolsLoadingActive() Q_DECL_OVERRIDE;
 
         // Debug-related:
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const Q_DECL_OVERRIDE;

@@ -45,7 +45,7 @@ OsmAnd::MapRenderer::MapRenderer(
     , _suspendSymbolsUpdateCounter(0)
     , _updateSymbols(false)
 	, _symbolsUpdateInterval(0)
-	, _freshSymbols(false)
+    , _symbolsLoading(false)
 	, _targetIsElevated(false)
     , _gpuWorkerThreadId(nullptr)
     , _gpuWorkerThreadIsAlive(false)
@@ -689,15 +689,6 @@ bool OsmAnd::MapRenderer::postRenderFrame(IMapRenderer_Metrics::Metric_renderFra
 
     // Flush all pending GPU commands
     flushRenderCommands();
-    
-    if (freshSymbols())
-        clearSymbolsUpdated();
-    else if (!isFrameInvalidated())
-    {
-        // Invalidate the last frame and request updated symbols for the next one
-        shouldUpdateSymbols();
-        invalidateFrame();
-    }
 
     return true;
 }
@@ -1274,7 +1265,11 @@ bool OsmAnd::MapRenderer::resumeSymbolsUpdate()
     }
 
     if (prevCounter == 1)
+    {
+        if (!isSymbolsLoadingActive())
+            setUpdateSymbols(true);
         invalidateFrame();
+    }
 
     return (prevCounter <= 1);
 }
@@ -1287,14 +1282,13 @@ int OsmAnd::MapRenderer::getSymbolsUpdateInterval()
 void OsmAnd::MapRenderer::setSymbolsUpdateInterval(int interval)
 {
     _symbolsUpdateInterval = interval;
-    clearSymbolsUpdated();
-    shouldUpdateSymbols();
+    setUpdateSymbols(true);
     invalidateFrame();
 }
 
-void OsmAnd::MapRenderer::shouldUpdateSymbols()
+void OsmAnd::MapRenderer::setUpdateSymbols(bool update)
 {
-    _updateSymbols = true;
+    _updateSymbols = update;
 }
 
 bool OsmAnd::MapRenderer::needUpdatedSymbols()
@@ -1302,24 +1296,14 @@ bool OsmAnd::MapRenderer::needUpdatedSymbols()
     return _updateSymbols;
 }
 
-void OsmAnd::MapRenderer::dontNeedUpdatedSymbols()
+void OsmAnd::MapRenderer::setSymbolsLoading(bool active)
 {
-    _updateSymbols = false;
+    _symbolsLoading = active;
 }
 
-void OsmAnd::MapRenderer::setSymbolsUpdated()
+bool OsmAnd::MapRenderer::isSymbolsLoadingActive()
 {
-    _freshSymbols = true;
-}
-
-bool OsmAnd::MapRenderer::freshSymbols()
-{
-    return _freshSymbols;
-}
-
-void OsmAnd::MapRenderer::clearSymbolsUpdated()
-{
-    _freshSymbols = false;
+    return _symbolsLoading;
 }
 
 OsmAnd::MapRendererState OsmAnd::MapRenderer::getState() const

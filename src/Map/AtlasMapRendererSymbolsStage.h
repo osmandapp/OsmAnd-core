@@ -149,7 +149,9 @@ namespace OsmAnd
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
             ScreenQuadTree& outIntersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric,
-            bool forceUpdate = false);
+            bool forceUpdate,
+            bool updateSuspended,
+            bool needUpdatedSymbols);
         bool obtainRenderableSymbols(
             const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
             const bool preRenderDenseSymbolsDepth,
@@ -159,6 +161,8 @@ namespace OsmAnd
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
         mutable MapRenderer::PublishedMapSymbolsByOrder _lastAcceptedMapSymbolsByOrder;
         std::chrono::high_resolution_clock::time_point _lastResumeSymbolsUpdateTime;
+        float _regularUpdateInterval;
+        bool _previouslySuspended;
 
         mutable QReadWriteLock _lastPreparedIntersectionsLock;
         ScreenQuadTree _lastPreparedIntersections;

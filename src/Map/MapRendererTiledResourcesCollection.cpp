@@ -3,6 +3,7 @@
 OsmAnd::MapRendererTiledResourcesCollection::MapRendererTiledResourcesCollection(const MapRendererResourceType type_)
     : MapRendererBaseResourcesCollection(type_)
     , _snapshot(new Snapshot(type_))
+    , _someResourceIsLoading(false)
 {
 }
 
@@ -77,6 +78,16 @@ bool OsmAnd::MapRendererTiledResourcesCollection::containsResource(
 bool OsmAnd::MapRendererTiledResourcesCollection::containsResources(const ZoomLevel zoomLevel) const
 {
     return hasEntries(zoomLevel);
+}
+
+void OsmAnd::MapRendererTiledResourcesCollection::setLoadingState(const bool isLoading)
+{
+    _someResourceIsLoading = isLoading;
+}
+
+bool OsmAnd::MapRendererTiledResourcesCollection::isLoading() const
+{
+    return _someResourceIsLoading;
 }
 
 int OsmAnd::MapRendererTiledResourcesCollection::getResourcesCount() const
@@ -282,4 +293,12 @@ bool OsmAnd::MapRendererTiledResourcesCollection::Snapshot::containsResources(co
     const auto& storage = _storage[zoomLevel];
 
     return !storage.isEmpty();
+}
+
+void OsmAnd::MapRendererTiledResourcesCollection::Snapshot::setLoadingState(const bool isLoading)
+{
+}
+
+bool OsmAnd::MapRendererTiledResourcesCollection::Snapshot::isLoading() const
+{
 }

@@ -56,6 +56,8 @@ namespace OsmAnd
                 const ZoomLevel zoomLevel,
                 const TiledResourceAcceptorCallback filter = nullptr) const;
             virtual bool containsResources(const ZoomLevel zoomLevel) const;
+            virtual void setLoadingState(const bool isLoading);
+            virtual bool isLoading() const;
 
         friend class OsmAnd::MapRendererTiledResourcesCollection;
         };
@@ -67,6 +69,7 @@ namespace OsmAnd
         void verifyNoUploadedResourcesPresent() const;
         virtual void removeAllEntries();
 
+        volatile bool _someResourceIsLoading;
         const std::shared_ptr<Snapshot> _snapshot;
         mutable QAtomicInt _collectionSnapshotInvalidatesCount;
         virtual void onCollectionModified() const;
@@ -82,6 +85,8 @@ namespace OsmAnd
             const ZoomLevel zoomLevel,
             const TiledResourceAcceptorCallback filter = nullptr) const;
         virtual bool containsResources(const ZoomLevel zoomLevel) const;
+        virtual void setLoadingState(const bool isLoading);
+        virtual bool isLoading() const;
 
         virtual int getResourcesCount() const;
         virtual void forEachResourceExecute(const ResourceActionCallback action);

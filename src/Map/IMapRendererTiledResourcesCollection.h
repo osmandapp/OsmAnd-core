@@ -34,6 +34,8 @@ namespace OsmAnd
             const ZoomLevel zoomLevel,
             const TiledResourceAcceptorCallback filter = nullptr) const = 0;
         virtual bool containsResources(const ZoomLevel zoomLevel) const = 0;
+        virtual void setLoadingState(const bool isLoading) = 0;
+        virtual bool isLoading() const = 0;
     };
 }
 

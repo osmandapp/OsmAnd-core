@@ -872,8 +872,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(
     if (sortTiles)
     {
         // Use underscaled resources carefully in accordance to total number of visible tiles
-        int zoomLevelOffset = qMin(state.surfaceZoomLevel - state.zoomLevel,
-            static_cast<int>(MaxMissingDataUnderZoomShift));
+        const auto zoomDelta = qFloor(log2(qMax(1.0,
+            static_cast<double>(1u << state.surfaceZoomLevel) * static_cast<double>(state.surfaceVisualZoom)
+            / (static_cast<double>(1u << state.zoomLevel) * static_cast<double>(state.visualZoom)))));
+        int zoomLevelOffset = qMin(zoomDelta, static_cast<int>(MaxMissingDataUnderZoomShift));
         if (zoomLevelOffset > 2 && internalState->visibleTilesCount > 1)
             zoomLevelOffset = 2;
         if (zoomLevelOffset > 1 && internalState->visibleTilesCount > MaxNumberOfTilesToUseUnderscaledTwice)

@@ -40,6 +40,9 @@
 #include "VectorLine.h"
 #include "Map/OpenGL/Utilities_OpenGL.h"
 
+# define REGULAR_UPDATE_INTERVAL_MS 1000.0f
+# define EXTENDED_UPDATE_INTERVAL_MS 3000.0f
+
 # define GRID_ITER_LIMIT 10
 # define GRID_ITER_PRECISION 200.0
 
@@ -53,6 +56,7 @@ const float OsmAnd::AtlasMapRendererSymbolsStage::_tiltThresholdOnPath3D = qCos(
 OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer_)
     : AtlasMapRendererStage(renderer_)
 {
+    _regularUpdateInterval = REGULAR_UPDATE_INTERVAL_MS;
     _lastResumeSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
 }
 
@@ -86,22 +90,46 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
         std::chrono::high_resolution_clock::now() - _lastResumeSymbolsUpdateTime).count() * 1000.0f;
     bool forceSymbolsUpdate = false;
     const auto symbolsUpdateInterval = static_cast<float>(renderer->getSymbolsUpdateInterval());
-    if (symbolsUpdateInterval > 0.0f)
+    const auto updateSuspended = renderer->isSymbolsUpdateSuspended();
+    bool needUpdatedSymbols = renderer->needUpdatedSymbols();
+    if (updateSuspended)
     {
-        forceSymbolsUpdate = timeSinceLastUpdate > symbolsUpdateInterval;
-
-        // Don't invalidate this possibly last frame if symbols are quite fresh
-        if (timeSinceLastUpdate < symbolsUpdateInterval / 2.0f)
-            renderer->setSymbolsUpdated();
+        _previouslySuspended = true;
+        forceSymbolsUpdate =
+            timeSinceLastUpdate > (symbolsUpdateInterval > 0.0f ? symbolsUpdateInterval : REGULAR_UPDATE_INTERVAL_MS);
     }
-    else if (timeSinceLastUpdate < 1000.0f)
+    else
     {
-        // Don't invalidate this possibly last frame if symbols aren't older than 1s
-        renderer->setSymbolsUpdated();
+        if (_previouslySuspended)
+        {
+            _previouslySuspended = false;
+            _regularUpdateInterval = EXTENDED_UPDATE_INTERVAL_MS;
+            _lastResumeSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
+            timeSinceLastUpdate = 0.0f;
+        }
+        forceSymbolsUpdate = timeSinceLastUpdate > _regularUpdateInterval;
+        if (_regularUpdateInterval == EXTENDED_UPDATE_INTERVAL_MS)
+        {
+            if (forceSymbolsUpdate)
+            {
+                _regularUpdateInterval = REGULAR_UPDATE_INTERVAL_MS;
+                if (renderer->isSymbolsLoadingActive())
+                {
+                    forceSymbolsUpdate = false;
+                    _lastResumeSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
+                }
+            }
+            else if (needUpdatedSymbols && renderer->isSymbolsLoadingActive())
+            {
+                renderer->setUpdateSymbols(false);
+                needUpdatedSymbols = false;
+            }
+        }
     }
 
     ScreenQuadTree intersections;
-    if (!obtainRenderableSymbols(renderableSymbols, intersections, metric, forceSymbolsUpdate))
+    if (!obtainRenderableSymbols(
+        renderableSymbols, intersections, metric, forceSymbolsUpdate, updateSuspended, needUpdatedSymbols))
     {
         // In case obtain failed due to lock, schedule another frame
         invalidateFrame();
@@ -216,7 +244,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
     ScreenQuadTree& outIntersections,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric,
-    bool forceUpdate /*= false*/)
+    bool forceUpdate,
+    bool updateSuspended,
+    bool needUpdatedSymbols)
 {
     bool result = false;
     
@@ -240,11 +270,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     
     Stopwatch stopwatch(metric != nullptr);
 
-    // Overscaled/underscaled symbol resources were removed
-    const auto needUpdatedSymbols = renderer->needUpdatedSymbols();
-
-    // In case symbols update was not suspended, process published symbols
-    if (!renderer->isSymbolsUpdateSuspended() || forceUpdate || needUpdatedSymbols)
+    // Process published symbols if needed
+    if (forceUpdate || (needUpdatedSymbols && !updateSuspended))
     {
         _lastAcceptedMapSymbolsByOrder.clear();
         result = obtainRenderableSymbols(
@@ -260,10 +287,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         if (result)
         {
             if (needUpdatedSymbols)
-                renderer->dontNeedUpdatedSymbols();
-
-            // Don't invalidate this possibly last frame with fresh symbols
-            renderer->setSymbolsUpdated();
+                renderer->setUpdateSymbols(false);
 
             _lastResumeSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
         }

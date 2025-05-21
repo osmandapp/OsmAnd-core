@@ -130,7 +130,6 @@ namespace OsmAnd
             QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& outOtherResourcesCollections) const;
 
         // Symbols-related:
-        bool _clearOldSymbolResources;
         void publishMapSymbol(
             const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
             const std::shared_ptr<const MapSymbol>& symbol,
