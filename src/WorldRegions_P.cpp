@@ -153,13 +153,17 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                     else
                     {
                         const auto it = unattachedBoundaryMapObjectsByRegions.find(fullRegionName);
-                        QList<std::shared_ptr<const OsmAnd::BinaryMapObject>> unattachedMapObjects;
                         if (it == unattachedBoundaryMapObjectsByRegions.end())
-                            unattachedBoundaryMapObjectsByRegions[fullRegionName] = unattachedMapObjects;
+                        {
+                            QList<std::shared_ptr<const OsmAnd::BinaryMapObject>> unattachedMapObjects;
+                            unattachedMapObjects << mapObject;
+
+                            unattachedBoundaryMapObjectsByRegions[fullRegionName] = qMove(unattachedMapObjects);
+                        }
                         else
-                            unattachedMapObjects = it.value();
-                        
-                        unattachedMapObjects << mapObject;
+                        {
+                            it.value() << mapObject;
+                        }
                     }
                     return false;
                 }
@@ -237,7 +241,8 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                     auto &unattachedMapObjects = it.value();
                     for (const auto &mapObject : unattachedMapObjects)
                     {
-                        addPolygonToRegionIfValid(mapObject, worldRegion);
+                        worldRegion->additionalPolygons << mapObject->points31;
+                        worldRegion->additionalMapObjects.push_back(mapObject);
                     }
                     unattachedBoundaryMapObjectsByRegions.remove(worldRegion->fullRegionName);
                 }
