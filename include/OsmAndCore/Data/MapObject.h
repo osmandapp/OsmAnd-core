@@ -18,6 +18,7 @@
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/ListMap.h>
 
+#define MIN_POINTS_TO_USE_SIMPLIFIED 1000
 namespace OsmAnd
 {
     class OSMAND_CORE_API VisibleAreaPoints

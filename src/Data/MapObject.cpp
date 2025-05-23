@@ -17,7 +17,6 @@
 static const int SHIFT_COORDINATES = 5;
 static const int LABEL_ZOOM_ENCODE = 26;
 
-static const int MIN_POINTS_TO_USE_SIMPLIFIED = 1000;
 static const int MIN_BBOX_FACTOR_TO_UPDATE_AREA = 2;
 static const float MIN_INNER_DELTA_TO_UPDATE_AREA = 0.5;
 static const float MIN_OUTER_DELTA_TO_UPDATE_AREA = 0.05;
@@ -327,8 +326,9 @@ bool OsmAnd::MapObject::updateVisibleArea(const AreaI& nextArea, int64_t nextAre
                     prevArea31 = vapItems[writeIndex]->area31;
                     if (nextAreaTime > prevAreaTime && shouldChangeArea(prevArea31, nextArea))
                     {
-                        auto nextPoints31 =
-                            path31 ? qMove(*path31) : Utilities::simplifyPathOutsideBBox(points31, nextArea);
+                        auto nextPoints31 = path31 ? qMove(*path31)
+                            :(points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED ? points31
+                                : Utilities::simplifyPathOutsideBBox(points31, nextArea));
                         if (nextPoints31.size() * MIN_BBOX_FACTOR_TO_UPDATE_AREA < points31.size())
                         {
                             delete vapItems[writeIndex];
