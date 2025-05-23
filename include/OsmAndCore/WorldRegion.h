@@ -46,6 +46,7 @@ namespace OsmAnd
         QVector<QVector<PointI>> additionalPolygons;
         
         std::shared_ptr<const OsmAnd::BinaryMapObject> mapObject;
+        QVector<std::shared_ptr<const OsmAnd::BinaryMapObject>> additionalMapObjects;
     };
 }
 
