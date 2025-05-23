@@ -25,7 +25,7 @@ namespace OsmAnd
         typedef WorldRegions::VisitorFunction VisitorFunction;
 
     private:
-        void addPolygonToRegionIfValid(const std::shared_ptr<const OsmAnd::BinaryMapObject>& mapObject, const std::shared_ptr<WorldRegion> &worldRegion) const;
+        void addPolygonToRegion(const std::shared_ptr<const OsmAnd::BinaryMapObject>& mapObject, const std::shared_ptr<WorldRegion> &worldRegion) const;
     protected:
         WorldRegions_P(WorldRegions* const owner);
     public:
