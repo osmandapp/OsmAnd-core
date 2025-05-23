@@ -18,6 +18,7 @@
 #include "MapPrimitivesProvider_Metrics.h"
 #include "MapPrimitiviser_Metrics.h"
 #include "ObfMapObjectsProvider_Metrics.h"
+#include "ObfMapSectionReader_Metrics.h"
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
 #include "MapPresentationEnvironment.h"
@@ -73,9 +74,14 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
         .arg(request.tileId.y)
         .arg(request.zoom);
     QString obtainBinaryMapObjectsElapsedTime(QLatin1String("?"));
+    QString maxObjectsPointCount(QLatin1String("?"));
     if (const auto obtainBinaryMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapObjectsProvider_Metrics::Metric_obtainData>(true))
     {
         obtainBinaryMapObjectsElapsedTime = QString::number(obtainBinaryMapObjectsMetric->elapsedTime, 'f', 2);
+        if (const auto maxObjectsPointCountMetric = obtainBinaryMapObjectsMetric->findSubmetricOfType<ObfMapSectionReader_Metrics::Metric_loadMapObjects>(true))
+        {
+            maxObjectsPointCount = QString::number(maxObjectsPointCountMetric->notSkippedMapObjectsPoints);
+        }
     }
     QString primitiviseElapsedTime(QLatin1String("?"));
     if (const auto primitiviseMetric = obtainDataMetric.findSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitiviseWithSurface>(true))
@@ -155,10 +161,11 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
             .arg(primitiviseMetric->obtainedTextSymbols + primitiviseMetric->obtainedIconSymbols);
         primitiviseElapsedTime = QString::number(primitiviseMetric->elapsedTime, 'f', 2);
     }
-    text += QString(QLatin1String("total r%1+p%2+?=%3s\n"))
+    text += QString(QLatin1String("total r%1+p%2+?=%3s %4p/o\n"))
         .arg(obtainBinaryMapObjectsElapsedTime)
         .arg(primitiviseElapsedTime)
-        .arg(QString::number(obtainDataMetric.elapsedTime, 'f', 2));
+        .arg(QString::number(obtainDataMetric.elapsedTime, 'f', 2))
+        .arg(maxObjectsPointCount);
     text = text.trimmed();
 
     const auto fontSize = 14.0f * owner->densityFactor;

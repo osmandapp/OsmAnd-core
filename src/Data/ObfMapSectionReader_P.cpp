@@ -797,7 +797,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 if (metric)
                 {
                     metric->elapsedTimeForNotSkippedMapObjectsPoints += mapObjectPointsStopwatch.elapsed();
-                    metric->notSkippedMapObjectsPoints += points31.size();
+                    metric->notSkippedMapObjectsPoints =
+                        std::max(metric->notSkippedMapObjectsPoints, static_cast<uint32_t>(points31.size()));
                 }
 
                 // In case bbox is not fully calculated, complete this task
@@ -1273,7 +1274,11 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
                     // Update metric
                     if (metric)
+                    {
                         metric->mapObjectsBlocksRead++;
+                        metric->notSkippedMapObjectsPoints =
+                            std::max(metric->notSkippedMapObjectsPoints, localMetric.notSkippedMapObjectsPoints);
+                    }
                    
                     // Create a data block and share it
                     dataBlock.reset(new DataBlock(blockId, treeNode->area31, treeNode->surfaceType, mapObjects));
