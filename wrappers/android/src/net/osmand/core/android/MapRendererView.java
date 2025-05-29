@@ -437,10 +437,12 @@ public abstract class MapRendererView extends FrameLayout {
 
         synchronized (_mapRenderer) {
             if (isSuspended) {
-                Log.v(TAG, "Stopping suspended renderer...");
-                synchronized (eglThread) {
-                    eglThread.mapRenderer = _mapRenderer;
-                    eglThread.startAndCompleteOperation(EGLThreadOperation.RELEASE_RENDERING);
+                if (_mapRenderer.isRenderingInitialized()) {
+                    Log.v(TAG, "Stopping suspended renderer...");
+                    synchronized (eglThread) {
+                        eglThread.mapRenderer = _mapRenderer;
+                        eglThread.startAndCompleteOperation(EGLThreadOperation.RELEASE_RENDERING);
+                    }
                 }
             } else {
                 Log.v(TAG, "Stopping active renderer...");
@@ -452,6 +454,21 @@ public abstract class MapRendererView extends FrameLayout {
             listeners = new ArrayList<>();
             _mapAnimator = null;
             _mapMarkersAnimator = null;
+        }
+
+        if (eglThread != null) {
+            synchronized (eglThread) {
+                eglThread.stopThread = true;
+                eglThread.notifyAll();
+                while (!eglThread.isStopped) {
+                    try {
+                        eglThread.wait();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }
+            eglThread = null;
         }
     }
 
@@ -720,6 +737,18 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.isSymbolsUpdateSuspended();
+    }
+
+    public final boolean isSymbolsLoadingActive() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.isSymbolsLoadingActive();
+    }
+
+    public final boolean isFrameInvalidated() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.isFrameInvalidated();
     }
 
     public final boolean suspendSymbolsUpdate() {
@@ -2256,6 +2285,8 @@ public abstract class MapRendererView extends FrameLayout {
 
         protected volatile ByteBuffer byteBuffer;
         protected volatile boolean renderingResultIsReady;
+        protected volatile boolean stopThread;
+        protected volatile boolean isStopped;
 
         private final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
 
@@ -2301,7 +2332,7 @@ public abstract class MapRendererView extends FrameLayout {
         @Override
         public void run() {
             egl = (EGL10) EGLContext.getEGL();
-            while (true) {
+            while (!stopThread) {
                 synchronized (this) {
                     switch (eglThreadOperation) {
                         case CHOOSE_CONFIG:
@@ -2468,6 +2499,8 @@ public abstract class MapRendererView extends FrameLayout {
                         break;
 
                         case RELEASE_RENDERING:
+                        _mapAnimationFinished = true;
+                        _mapMarkersAnimationFinished = true;
                         mapRenderer.releaseRendering(true);
                         break;
 
@@ -2515,6 +2548,10 @@ public abstract class MapRendererView extends FrameLayout {
                         Thread.currentThread().interrupt();
                     }
                 }
+            }
+            synchronized (this) {
+                isStopped = true;
+                notifyAll();
             }
         }
     }
