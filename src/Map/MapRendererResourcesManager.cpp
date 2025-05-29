@@ -2259,6 +2259,18 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     const auto state = entry->getState();
                     return state == MapRendererResourceState::Uploaded;
                 };
+            const auto isCompletedResource =
+                []
+                (const std::shared_ptr<MapRendererBaseTiledResource>& entry) -> bool
+                {
+                    // Resources marked as junk are not completed
+                    if (entry->isJunk)
+                        return false;
+
+                    const auto state = entry->getState();
+                    return state == MapRendererResourceState::Uploaded
+                        || state == MapRendererResourceState::Unavailable;
+                };
             for (const auto& tilesEntry : rangeOf(constOf(tiles)))
             {
                 if (isCustomVisibility && currentZoom > maxVisibleZoom)
@@ -2332,7 +2344,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                                 if (tiledResourcesCollection->containsResource(
                                         neededTileId,
                                         neededZoomForTile,
-                                        isUsableResource))
+                                        isCompletedResource))
                                 {
                                     atLeastOnePresent = true;
                                 }
