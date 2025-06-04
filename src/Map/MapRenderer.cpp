@@ -453,7 +453,10 @@ bool OsmAnd::MapRenderer::preUpdate(IMapRenderer_Metrics::Metric_update* const m
     Stopwatch updatesStopwatch(metric != nullptr);
     const auto& mapState = getMapState();
     if (_resources->checkForUpdatesAndApply(mapState))
+    {
+        setUpdateSymbols(true);
         invalidateFrame();
+    }
     if (metric)
         metric->elapsedTimeForUpdatesProcessing = updatesStopwatch.elapsed();
 
