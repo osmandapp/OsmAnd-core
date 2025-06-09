@@ -1,0 +1,21 @@
+--- upstream.original/libs/beast/test/extern/zlib-1.2.11/zutil.h	2018-12-05 20:58:16.000000000 +0100
++++ upstream.patched/libs/beast/test/extern/zlib-1.2.11/zutil.h	2025-06-05 22:01:54.358800827 +0200
+@@ -130,17 +130,8 @@
+ #  endif
+ #endif
+ 
+-#if defined(MACOS) || defined(TARGET_OS_MAC)
++#if defined(MACOS)
+ #  define OS_CODE  7
+-#  ifndef Z_SOLO
+-#    if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os
+-#      include <unix.h> /* for fdopen */
+-#    else
+-#      ifndef fdopen
+-#        define fdopen(fd,mode) NULL /* No fdopen() */
+-#      endif
+-#    endif
+-#  endif
+ #endif
+ 
+ #ifdef __acorn

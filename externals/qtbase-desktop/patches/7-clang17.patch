@@ -1,0 +1,19 @@
+--- upstream.original/src/3rdparty/freetype/src/gzip/zutil.h	2025-06-05 20:59:16.385692963 +0200
++++ upstream.patched/src/3rdparty/freetype/src/gzip/zutil.h	2025-06-05 22:36:16.933318339 +0200
+@@ -105,15 +105,8 @@
+ #  define OS_CODE  0x05
+ #endif
+ 
+-#if defined(MACOS) || defined(TARGET_OS_MAC)
++#if defined(MACOS)
+ #  define OS_CODE  0x07
+-#  if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os
+-#    include <unix.h> /* for fdopen */
+-#  else
+-#    ifndef fdopen
+-#      define fdopen(fd,mode) NULL /* No fdopen() */
+-#    endif
+-#  endif
+ #endif
+ 
+ #ifdef __50SERIES /* Prime/PRIMOS */
