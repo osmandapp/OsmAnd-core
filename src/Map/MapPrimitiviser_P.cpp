@@ -249,6 +249,23 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         }
     }
     
+    if (area31.top() == 838158336 && area31.left() == 1225156608) {
+        LogPrintf(LogSeverityLevel::Warning, "LATITUDE,LONGITUDE");
+        LogPrintf(LogSeverityLevel::Warning, "%.5f, %.5f", OsmAnd::Utilities::get31LatitudeY(area31.top()), OsmAnd::Utilities::get31LongitudeX(area31.left()));
+        LogPrintf(LogSeverityLevel::Warning, "%.5f, %.5f", OsmAnd::Utilities::get31LatitudeY(area31.top()), OsmAnd::Utilities::get31LongitudeX(area31.right()));
+        LogPrintf(LogSeverityLevel::Warning, "%.5f, %.5f", OsmAnd::Utilities::get31LatitudeY(area31.bottom()), OsmAnd::Utilities::get31LongitudeX(area31.right()));
+        LogPrintf(LogSeverityLevel::Warning, "%.5f, %.5f", OsmAnd::Utilities::get31LatitudeY(area31.bottom()), OsmAnd::Utilities::get31LongitudeX(area31.left()));
+        LogPrintf(LogSeverityLevel::Warning, "%.5f, %.5f", OsmAnd::Utilities::get31LatitudeY(area31.top()), OsmAnd::Utilities::get31LongitudeX(area31.left()));
+        for (std::shared_ptr<const MapObject> & mo : detailedmapCoastlineObjects)
+        {
+            LogPrintf(LogSeverityLevel::Warning, "LATITUDE,LONGITUDE");
+            for (const PointI & c : mo->points31)
+            {
+                LogPrintf(LogSeverityLevel::Warning, "%.5f, %.5f", OsmAnd::Utilities::get31LatitudeY(c.y),  OsmAnd::Utilities::get31LongitudeX(c.x));
+            }
+        }
+    }
+    
     bool hasContourLinesObjectOnly = contourLinesObjectsCount == detailedmapMapObjects.size();
     
     if (queryController && queryController->isAborted())
@@ -2439,6 +2456,21 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
             const auto & mapObj = convertFromLegacy(legacyCoastline.obj);
             size += mapObj->points31.size();
             outVectorized.push_back(mapObj);
+        }
+        if (size == 3)
+        {
+            PointI prev;
+            for (const auto & m : outVectorized)
+            {
+                for (const PointI & p : m->points31)
+                {
+                    if (prev == p)
+                    {
+                        return false;
+                    }
+                    prev = p;
+                }
+            }
         }
         if (size < 3)
         {
