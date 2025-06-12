@@ -32,6 +32,9 @@
 #include "FunctorQueryController.h"
 #include "QKeyValueIterator.h"
 
+#define ENLARGE_QUERY_BBOX_MIN_ZOOM 15
+#define ENLARGE_QUERY_BBOX_METERS 100
+
 OsmAnd::ObfDataInterface::ObfDataInterface(const QList< std::shared_ptr<const ObfReader> >& obfReaders_)
     : obfReaders(obfReaders_)
 {
@@ -273,6 +276,13 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
 
     QList<QString> regularMapNames;
     int roadMapsCount = 0;
+    
+    AreaI enlargedBBox31;
+    // Fix showing deleted objects in live updates https://github.com/osmandapp/OsmAnd/issues/14920#issuecomment-1538488529
+    const auto enlargeDeltaX = Utilities::metersToX31(ENLARGE_QUERY_BBOX_METERS);
+    const auto enlargeDeltaY = Utilities::metersToY31(ENLARGE_QUERY_BBOX_METERS);
+    enlargedBBox31 = bbox31->getEnlargedBy(PointI((int)enlargeDeltaX, (int)enlargeDeltaY));
+    
     for (const auto& obfReader : constOf(obfReaders))
     {
         const auto& obfInfo = obfReader->obtainInfo();
@@ -330,7 +340,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 mapSection,
                 environment,
                 zoom,
-                bbox31,
+                obfInfo->isBasemap ? bbox31 : &enlargedBBox31,
                 outBinaryMapObjects,
                 &surfaceTypeToMerge,
                 filterMapObjectsById,
@@ -427,7 +437,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                     obfReader,
                     routingSection,
                     RoutingDataLevel::Detailed,
-                    bbox31,
+                    obfInfo->isBasemap ? bbox31 : &enlargedBBox31,
                     outRoads,
                     filterRoadsById,
                     nullptr,
