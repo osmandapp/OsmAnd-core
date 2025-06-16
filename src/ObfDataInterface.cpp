@@ -32,6 +32,9 @@
 #include "FunctorQueryController.h"
 #include "QKeyValueIterator.h"
 
+#define ENLARGE_QUERY_BBOX_MAX_SIZE 65535
+#define ENLARGE_QUERY_BBOX_METERS 100
+
 OsmAnd::ObfDataInterface::ObfDataInterface(const QList< std::shared_ptr<const ObfReader> >& obfReaders_)
     : obfReaders(obfReaders_)
 {
@@ -60,6 +63,23 @@ bool OsmAnd::ObfDataInterface::loadObfFiles(
     return true;
 }
 
+OsmAnd::AreaI OsmAnd::ObfDataInterface::getEnlargedForLiveUpdate(const OsmAnd::AreaI* const bbox31)
+{
+    AreaI tileBBox31;
+    if (bbox31->width() >= ENLARGE_QUERY_BBOX_MAX_SIZE)
+    {
+        // Fix showing deleted objects in live updates https://github.com/osmandapp/OsmAnd/issues/14920#issuecomment-1538488529
+        const auto enlargeDeltaX = Utilities::metersToX31(ENLARGE_QUERY_BBOX_METERS);
+        const auto enlargeDeltaY = Utilities::metersToY31(ENLARGE_QUERY_BBOX_METERS);
+        tileBBox31 = bbox31->getEnlargedBy(PointI(enlargeDeltaX, enlargeDeltaY));
+    }
+    else
+    {
+        tileBBox31 = *bbox31;
+    }
+    return tileBBox31;
+}
+
 bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
     MapSurfaceType* outSurfaceType,
@@ -71,7 +91,8 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
     QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >* outReferencedCacheEntries /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric /*= nullptr*/,
-    bool coastlineOnly /*= false*/)
+    bool coastlineOnly /*= false*/,
+    bool enlargeArea /*= false*/)
 {
     auto mergedSurfaceType = MapSurfaceType::Undefined;
     std::shared_ptr<const ObfReader> basemapReader;
@@ -82,6 +103,7 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
             return false;
 
         const auto& obfInfo = obfReader->obtainInfo();
+        const auto tileBBox31 = enlargeArea && obfInfo->isLiveUpdate ? getEnlargedForLiveUpdate(bbox31) : *bbox31;
 
         // Handle main basemap
         if (obfInfo->isBasemapWithCoastlines)
@@ -110,7 +132,7 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
                 mapSection,
                 environment,
                 zoom,
-                bbox31,
+                &tileBBox31,
                 resultOut,
                 &surfaceTypeToMerge,
                 filterById,
@@ -198,7 +220,8 @@ bool OsmAnd::ObfDataInterface::loadRoads(
     ObfRoutingSectionReader::DataBlocksCache* cache /*= nullptr*/,
     QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* outReferencedCacheEntries /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
-    ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric /*= nullptr*/)
+    ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric /*= nullptr*/,
+    bool enlargeArea /*= false*/)
 {
     for (const auto& obfReader : constOf(obfReaders))
     {
@@ -206,6 +229,7 @@ bool OsmAnd::ObfDataInterface::loadRoads(
             return false;
 
         const auto& obfInfo = obfReader->obtainInfo();
+        const auto tileBBox31 = enlargeArea && obfInfo->isLiveUpdate ? getEnlargedForLiveUpdate(bbox31) : *bbox31;
         for (const auto& routingSection : constOf(obfInfo->routingSections))
         {
             if (queryController && queryController->isAborted())
@@ -215,7 +239,7 @@ bool OsmAnd::ObfDataInterface::loadRoads(
                 obfReader,
                 routingSection,
                 dataLevel,
-                bbox31,
+                &tileBBox31,
                 resultOut,
                 filterById,
                 nullptr,
@@ -266,7 +290,8 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* outReferencedRoadsCacheEntries /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const binaryMapObjectsMetric /*= nullptr*/,
-    ObfRoutingSectionReader_Metrics::Metric_loadRoads* const roadsMetric /*= nullptr*/)
+    ObfRoutingSectionReader_Metrics::Metric_loadRoads* const roadsMetric /*= nullptr*/,
+    bool enlargeArea /*= false*/)
 {
     auto mergedSurfaceType = MapSurfaceType::Undefined;
     std::shared_ptr<const ObfReader> basemapReader;
@@ -303,6 +328,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
             return false;
 
         const auto& obfInfo = obfReader->obtainInfo();
+        const auto tileBBox31 = enlargeArea && obfInfo->isLiveUpdate ? getEnlargedForLiveUpdate(bbox31) : *bbox31;
         QFileInfo fileInfo(obfReader->obfFile->filePath);
         if (obfReader->obfFile->filePath.contains(QStringLiteral(".road")) && regularMapNames.contains(fileInfo.baseName()))
             continue;
@@ -330,7 +356,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 mapSection,
                 environment,
                 zoom,
-                bbox31,
+                &tileBBox31,
                 outBinaryMapObjects,
                 &surfaceTypeToMerge,
                 filterMapObjectsById,
@@ -412,6 +438,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 return false;
 
             const auto& obfInfo = obfReader->obtainInfo();
+            const auto tileBBox31 = enlargeArea && obfInfo->isLiveUpdate ? getEnlargedForLiveUpdate(bbox31) : *bbox31;
             QFileInfo fileInfo(obfReader->obfFile->filePath);
             if (!obfReader->obfFile->filePath.contains(QStringLiteral(".road")) || regularMapNames.contains(fileInfo.baseName()))
                 continue;
@@ -427,7 +454,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                     obfReader,
                     routingSection,
                     RoutingDataLevel::Detailed,
-                    bbox31,
+                    &tileBBox31,
                     outRoads,
                     filterRoadsById,
                     nullptr,
