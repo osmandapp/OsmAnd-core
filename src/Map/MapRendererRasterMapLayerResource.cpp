@@ -65,7 +65,10 @@ bool OsmAnd::MapRendererRasterMapLayerResource::obtainData(
     const auto currentTime = QDateTime::currentMSecsSinceEpoch();
     request.areaTime = currentTime;
     request.queryController = queryController;
-    const auto requestSucceeded = provider->obtainTiledData(request, tiledData);
+
+    const bool isDebugStageEnabled = resourcesManager->renderer->getDebugSettings()->debugStageEnabled;
+    std::shared_ptr<Metric>* const outMetric = isDebugStageEnabled ? &metric : nullptr;
+    const auto requestSucceeded = provider->obtainTiledData(request, tiledData, outMetric);
     if (!requestSucceeded)
         return false;
     dataAvailable = static_cast<bool>(tiledData);

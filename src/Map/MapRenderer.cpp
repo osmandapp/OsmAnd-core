@@ -547,7 +547,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
     {
         QMutexLocker scopedLocker(&_requestedStateMutex);
 
-        bool adjustTarget = 
+        bool adjustTarget =
         _requestedState.fixedPixel.x >= 0 && _requestedState.fixedPixel.y >= 0
             && (!_targetIsElevated || _requestedState.fixedHeight == 0.0f)
             && _requestedState.elevationDataProvider && _requestedState.fixedLocation31 == _requestedState.target31
@@ -1301,6 +1301,18 @@ bool OsmAnd::MapRenderer::needUpdatedSymbols()
 
 void OsmAnd::MapRenderer::setSymbolsLoading(bool active)
 {
+    if (currentDebugSettings->debugStageEnabled)
+    {
+        if (_symbolsLoading == false && active == true)
+        {
+            symbolsLoadingStart.start();
+        }
+        else if (_symbolsLoading == true && active == false)
+        {
+            symbolsLoadingTime = symbolsLoadingStart.elapsed();
+        }
+    }
+
     _symbolsLoading = active;
 }
 
@@ -3310,4 +3322,9 @@ float OsmAnd::MapRenderer::getBasicThreadsCPULoad()
 int OsmAnd::MapRenderer::getWaitTime() const
 {
     return gpuAPI->waitTimeInMicroseconds.fetchAndStoreOrdered(0) / 1000;
+}
+
+float OsmAnd::MapRenderer::getPreviousElapsedSymbolsLoadingTime() const
+{
+    return symbolsLoadingTime;
 }

@@ -3493,3 +3493,41 @@ int64_t OsmAnd::MapRendererResourcesManager::ResourceRequestTask::calculatePrior
 
     return priority;
 }
+
+QVector<std::shared_ptr<const OsmAnd::Metric>> OsmAnd::MapRendererResourcesManager::getAllRasterMapLayerResourceMetrics() const
+{
+    QConditionalReadLocker scopedLocker(&_resourcesStoragesLock, !renderer->isInRenderThread());
+
+    QVector<std::shared_ptr<const Metric>> allMetrics;
+    const auto& resourcesCollections = _storageByType[static_cast<int>(MapRendererResourceType::MapLayer)];
+    const auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::MapLayer)];
+
+    for (const auto& resourcesCollection : constOf(resourcesCollections))
+    {
+        if (!bindings.collectionsToProviders.contains(resourcesCollection))
+            continue;
+
+        if (const auto tiledResourcesCollection = std::dynamic_pointer_cast<const MapRendererTiledResourcesCollection>(resourcesCollection))
+        {
+            tiledResourcesCollection->obtainEntries(nullptr,
+                [&allMetrics]
+                (const std::shared_ptr<MapRendererBaseTiledResource>& entry, bool& cancel) -> bool
+                {
+                    if (const auto rasterResource = std::dynamic_pointer_cast<const MapRendererRasterMapLayerResource>(entry))
+                    {
+                        const auto state = rasterResource->getState();
+                        if (rasterResource->metric && 
+                            (state == MapRendererResourceState::Uploaded ||
+                             state == MapRendererResourceState::IsBeingUsed ||
+                             state == MapRendererResourceState::Outdated))
+                        {
+                            allMetrics.push_back(rasterResource->metric);
+                        }
+                    }
+                    return false;
+                });
+        }
+    }
+
+    return allMetrics;
+}

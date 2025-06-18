@@ -268,6 +268,8 @@ namespace OsmAnd
         virtual void dumpResourcesInfo() const = 0;
         virtual float getBasicThreadsCPULoad() = 0;
         virtual int getWaitTime() const = 0;
+
+        virtual float getPreviousElapsedSymbolsLoadingTime() const = 0;
     };
 
     enum class MapRendererClass

@@ -216,6 +216,55 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
         }
     }
 
+    if (metric)
+    {
+        int totalSymbolsLoaded = 0;
+
+        for (const auto& metric : getResources().getAllRasterMapLayerResourceMetrics())
+        {
+            const auto& primitiviseMetric = metric->findSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitivise>(true);
+            if (primitiviseMetric)
+            {
+                totalSymbolsLoaded += primitiviseMetric->obtainedIconSymbols;
+                totalSymbolsLoaded += primitiviseMetric->obtainedTextSymbols;
+                totalSymbolsLoaded += primitiviseMetric->rejectedIconSymbols;
+                totalSymbolsLoaded += primitiviseMetric->rejectedTextSymbols;
+            }
+        }
+
+        const int totalSymbolsDrawn = metric->billboardSymbolsRendered + metric->onPathSymbolsRendered +
+            metric->model3DSymbolsRendered + metric->onSurfaceSymbolsRendered;
+
+        auto symbolGroup = std::make_shared<MapSymbolsGroup>();
+        auto symbol = std::make_shared<BillboardRasterMapSymbol>(symbolGroup);
+
+        const QString loadingState = renderer->isSymbolsLoadingActive() ? "loading," :
+            QString::asprintf("load time %fs,", renderer->getPreviousElapsedSymbolsLoadingTime());
+
+        symbol->content = QString::asprintf("Symbols: %s drawn %d, loaded: %d",
+            loadingState.toUtf8().constData(), totalSymbolsDrawn, totalSymbolsLoaded);
+
+        symbol->position31 = currentState.target31;
+        symbol->modulationColor = FColorARGB(1.0f, 0.0f, 0.0f, 0.0f);
+        symbol->image = TextRasterizer::getDefault()->rasterize(symbol->content, TextRasterizer::Style());
+
+        std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
+        bool gpuContextLost = false;
+        getGPUAPI()->uploadSymbolToGPU(symbol, gpuResource, true, &gpuContextLost);
+
+        auto renderable = std::make_shared<RenderableBillboardSymbol>();
+        renderable->mapSymbolGroup = symbolGroup;
+        renderable->mapSymbol = symbol;
+        renderable->position31 = symbol->position31;
+        renderable->positionInWorld = glm::vec3(0.0f, 10.0f, 0.0f);
+        renderable->mRotate = glm::mat2(1.0f);
+        renderable->opacityFactor = 1.0f;
+        renderable->gpuResource = gpuResource;
+
+        AlphaChannelType alphaChannelType = AlphaChannelType::Invalid;
+        renderBillboardSymbol(renderable, alphaChannelType);
+    }
+
     if (withJson)
     {
         auto jsonDocument = new QJsonDocument();
