@@ -244,9 +244,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
         symbol->content = QString::asprintf("Symbols: %s drawn %d, loaded: %d",
             loadingState.toUtf8().constData(), totalSymbolsDrawn, totalSymbolsLoaded);
 
+        TextRasterizer::Style style;
+        style.size = 32;
+
         symbol->position31 = currentState.target31;
         symbol->modulationColor = FColorARGB(1.0f, 0.0f, 0.0f, 0.0f);
-        symbol->image = TextRasterizer::getDefault()->rasterize(symbol->content, TextRasterizer::Style());
+        symbol->image = TextRasterizer::getDefault()->rasterize(symbol->content, style);
 
         std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
         bool gpuContextLost = false;

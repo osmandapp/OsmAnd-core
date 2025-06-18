@@ -23,6 +23,7 @@
 #include "QKeyValueIterator.h"
 #include <SqliteHeightmapTileProvider.h>
 #include <VectorLinesCollection.h>
+#include <AtlasMapRenderer_Metrics.h>
 
 //#define OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE 1
 #ifndef OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
@@ -662,10 +663,20 @@ bool OsmAnd::MapRenderer::renderFrame(IMapRenderer_Metrics::Metric_renderFrame* 
     bool ok = true;
 
     Stopwatch totalStopwatch(metric != nullptr);
-
-    ok = ok && preRenderFrame(metric);
-    ok = ok && doRenderFrame(metric);
-    ok = ok && postRenderFrame(metric);
+    
+    if (currentDebugSettings->debugStageEnabled && metric == nullptr)
+    {
+        auto atlasRendererMetrics = std::make_shared<AtlasMapRenderer_Metrics::Metric_renderFrame>();
+        ok = ok && preRenderFrame(atlasRendererMetrics.get());
+        ok = ok && doRenderFrame(atlasRendererMetrics.get());
+        ok = ok && postRenderFrame(atlasRendererMetrics.get());
+    }
+    else
+    {
+        ok = ok && preRenderFrame(metric);
+        ok = ok && doRenderFrame(metric);
+        ok = ok && postRenderFrame(metric);
+    }
 
     if (metric)
         metric->elapsedTime = totalStopwatch.elapsed();
