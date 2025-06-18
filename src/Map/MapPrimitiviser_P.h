@@ -127,6 +127,7 @@ namespace OsmAnd
             const PrimitivesCollection& primitives,
             MapStyleEvaluationResult& evaluationResult,
             MapStyleEvaluator& textEvaluator,
+            QHash<QString, int>& textOrderCache,
             SymbolsCollection& outSymbols,
             const std::shared_ptr<const IQueryController>& queryController,
             MapPrimitiviser_Metrics::Metric_primitivise* const metric);
@@ -137,6 +138,7 @@ namespace OsmAnd
             const std::shared_ptr<const Primitive>& primitive,
             MapStyleEvaluationResult& evaluationResult,
             MapStyleEvaluator& textEvaluator,
+            QHash<QString, int>& textOrderCache,
             SymbolsCollection& outSymbols,
             MapPrimitiviser_Metrics::Metric_primitivise* const metric);
 
@@ -146,6 +148,7 @@ namespace OsmAnd
             const std::shared_ptr<const Primitive>& primitive,
             MapStyleEvaluationResult& evaluationResult,
             MapStyleEvaluator& textEvaluator,
+            QHash<QString, int>& textOrderCache,
             SymbolsCollection& outSymbols,
             MapPrimitiviser_Metrics::Metric_primitivise* const metric);
 
@@ -155,6 +158,7 @@ namespace OsmAnd
             const std::shared_ptr<const Primitive>& primitive,
             MapStyleEvaluationResult& evaluationResult,
             MapStyleEvaluator& textEvaluator,
+            QHash<QString, int>& textOrderCache,
             SymbolsCollection& outSymbols,
             MapPrimitiviser_Metrics::Metric_primitivise* const metric);
 
@@ -165,6 +169,7 @@ namespace OsmAnd
             const PointI& location,
             MapStyleEvaluationResult& evaluationResult,
             MapStyleEvaluator& textEvaluator,
+            QHash<QString, int>& textOrderCache,
             SymbolsCollection& outSymbols,
             MapPrimitiviser_Metrics::Metric_primitivise* const metric);
 
