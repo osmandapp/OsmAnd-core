@@ -32,6 +32,7 @@
 #include "FunctorQueryController.h"
 #include "QKeyValueIterator.h"
 
+
 OsmAnd::ObfDataInterface::ObfDataInterface(const QList< std::shared_ptr<const ObfReader> >& obfReaders_)
     : obfReaders(obfReaders_)
 {
@@ -273,6 +274,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
 
     QList<QString> regularMapNames;
     int roadMapsCount = 0;
+    
     for (const auto& obfReader : constOf(obfReaders))
     {
         const auto& obfInfo = obfReader->obtainInfo();
