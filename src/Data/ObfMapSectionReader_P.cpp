@@ -23,6 +23,7 @@
 #include "MapStyleEvaluator.h"
 #include "MapStyleEvaluationResult.h"
 #include "MapStyleBuiltinValueDefinitions.h"
+#include <QRegularExpression>
 
 using google::protobuf::internal::WireFormatLite;
 
@@ -39,6 +40,7 @@ void OsmAnd::ObfMapSectionReader_P::read(
     const std::shared_ptr<ObfMapSectionInfo>& section)
 {
     const auto cis = reader.getCodedInputStream().get();
+    const QRegularExpression liveUpdateSourceRegex("(_[0-9]{2}){3}\\.obf");
 
     for (;;)
     {
@@ -58,10 +60,7 @@ void OsmAnd::ObfMapSectionReader_P::read(
                 section->isContourLines = section->name.contains(QLatin1String("contour"), Qt::CaseInsensitive);
                 const auto nameSize = section->name.size();
                 const auto underscore = QLatin1Char('_');
-                section->isLiveUpdate = nameSize > 8 &&
-                    !(section->name.at(nameSize - 3) != underscore
-                    || section->name.at(nameSize - 6) != underscore
-                    || section->name.at(nameSize - 9) != underscore);
+                section->isLiveUpdate = !section->isBasemap && liveUpdateSourceRegex.match(section->name).hasMatch();
                 break;
             }
             case OBF::OsmAndMapIndex::kRulesFieldNumber:

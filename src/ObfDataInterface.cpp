@@ -32,7 +32,6 @@
 #include "FunctorQueryController.h"
 #include "QKeyValueIterator.h"
 
-#define ENLARGE_QUERY_BBOX_MAX_SIZE 65535
 #define ENLARGE_QUERY_BBOX_METERS 100
 
 OsmAnd::ObfDataInterface::ObfDataInterface(const QList< std::shared_ptr<const ObfReader> >& obfReaders_)
@@ -63,10 +62,10 @@ bool OsmAnd::ObfDataInterface::loadObfFiles(
     return true;
 }
 
-OsmAnd::AreaI OsmAnd::ObfDataInterface::getEnlargedForLiveUpdate(const OsmAnd::AreaI* const bbox31)
+OsmAnd::AreaI OsmAnd::ObfDataInterface::getEnlargedForLiveUpdate(const OsmAnd::AreaI* const bbox31, ZoomLevel zoom)
 {
     AreaI tileBBox31;
-    if (bbox31->width() >= ENLARGE_QUERY_BBOX_MAX_SIZE)
+    if (zoom >= OsmAnd::ZoomLevel16)
     {
         // Fix showing deleted objects in live updates https://github.com/osmandapp/OsmAnd/issues/14920#issuecomment-1538488529
         const auto enlargeDeltaX = Utilities::metersToX31(ENLARGE_QUERY_BBOX_METERS);
@@ -103,7 +102,7 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
             return false;
 
         const auto& obfInfo = obfReader->obtainInfo();
-        const auto tileBBox31 = enlargeArea && obfInfo->isLiveUpdate ? getEnlargedForLiveUpdate(bbox31) : *bbox31;
+        const auto tileBBox31 = enlargeArea && obfInfo->isLiveUpdate ? getEnlargedForLiveUpdate(bbox31, zoom) : *bbox31;
 
         // Handle main basemap
         if (obfInfo->isBasemapWithCoastlines)
@@ -229,7 +228,6 @@ bool OsmAnd::ObfDataInterface::loadRoads(
             return false;
 
         const auto& obfInfo = obfReader->obtainInfo();
-        const auto tileBBox31 = enlargeArea && obfInfo->isLiveUpdate ? getEnlargedForLiveUpdate(bbox31) : *bbox31;
         for (const auto& routingSection : constOf(obfInfo->routingSections))
         {
             if (queryController && queryController->isAborted())
@@ -239,7 +237,7 @@ bool OsmAnd::ObfDataInterface::loadRoads(
                 obfReader,
                 routingSection,
                 dataLevel,
-                &tileBBox31,
+                bbox31,
                 resultOut,
                 filterById,
                 nullptr,
@@ -328,7 +326,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
             return false;
 
         const auto& obfInfo = obfReader->obtainInfo();
-        const auto tileBBox31 = enlargeArea && obfInfo->isLiveUpdate ? getEnlargedForLiveUpdate(bbox31) : *bbox31;
+        const auto tileBBox31 = enlargeArea && obfInfo->isLiveUpdate ? getEnlargedForLiveUpdate(bbox31, zoom) : *bbox31;
         QFileInfo fileInfo(obfReader->obfFile->filePath);
         if (obfReader->obfFile->filePath.contains(QStringLiteral(".road")) && regularMapNames.contains(fileInfo.baseName()))
             continue;
@@ -438,7 +436,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 return false;
 
             const auto& obfInfo = obfReader->obtainInfo();
-            const auto tileBBox31 = enlargeArea && obfInfo->isLiveUpdate ? getEnlargedForLiveUpdate(bbox31) : *bbox31;
+            const auto tileBBox31 = enlargeArea && obfInfo->isLiveUpdate ? getEnlargedForLiveUpdate(bbox31, zoom) : *bbox31;
             QFileInfo fileInfo(obfReader->obfFile->filePath);
             if (!obfReader->obfFile->filePath.contains(QStringLiteral(".road")) || regularMapNames.contains(fileInfo.baseName()))
                 continue;

@@ -45,7 +45,7 @@ namespace OsmAnd
             QList< std::shared_ptr<const ObfFile> >* outFiles = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
-        AreaI getEnlargedForLiveUpdate(const AreaI* const bbox31);
+        AreaI getEnlargedForLiveUpdate(const AreaI* const bbox31, const ZoomLevel zoom);
 
         bool loadBinaryMapObjects(
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,

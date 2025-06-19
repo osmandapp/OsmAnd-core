@@ -32,6 +32,7 @@
 #include "Stopwatch.h"
 #include "IObfsCollection.h"
 #include "ObfDataInterface.h"
+#include <QRegularExpression>
 
 OsmAnd::CachedOsmandIndexes_P::CachedOsmandIndexes_P(
     CachedOsmandIndexes* const owner_)
@@ -199,7 +200,8 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
     obfInfo->creationTimestamp = found->datemodified();
 
     Nullable<AreaI> globalBBox31;
-
+    const QRegularExpression liveUpdateSourceRegex("(_[0-9]{2}){3}\\.obf");
+    
     for (int i = 0; i < found->mapindex_size(); i++)
     {
         auto index = found->mapindex(i);
@@ -229,10 +231,7 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         mi->isBasemapWithCoastlines = mi->name == QLatin1String("basemap");
         const auto nameSize = mi->name.size();
         const auto underscore = QLatin1Char('_');
-        mi->isLiveUpdate = nameSize > 8 &&
-            !(mi->name.at(nameSize - 3) != underscore
-            || mi->name.at(nameSize - 6) != underscore
-            || mi->name.at(nameSize - 9) != underscore);
+        mi->isLiveUpdate = !mi->isBasemap && liveUpdateSourceRegex.match(mi->name).hasMatch();
         obfInfo->isBasemap = obfInfo->isBasemap || mi->isBasemap;
         obfInfo->isContourLines = obfInfo->isContourLines || mi->isContourLines;
         obfInfo->isBasemapWithCoastlines = obfInfo->isBasemapWithCoastlines || mi->isBasemapWithCoastlines;
