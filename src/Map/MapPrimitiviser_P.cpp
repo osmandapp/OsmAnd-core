@@ -2440,21 +2440,6 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
             size += mapObj->points31.size();
             outVectorized.push_back(mapObj);
         }
-        if (size == 3)
-        {
-            PointI prev;
-            for (const auto & m : outVectorized)
-            {
-                for (const PointI & p : m->points31)
-                {
-                    if (prev == p)
-                    {
-                        return false;
-                    }
-                    prev = p;
-                }
-            }
-        }
         if (size < 3)
         {
             // Polygon needs mimimum 3 points (bug with part of coastline on the border of tile)

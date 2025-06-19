@@ -22,6 +22,9 @@
 #include "Utilities.h"
 #include "Logging.h"
 
+#define ENLARGE_QUERY_BBOX_MIN_ZOOM 15
+#define ENLARGE_QUERY_BBOX_METERS 100
+
 OsmAnd::ObfMapObjectsProvider_P::ObfMapObjectsProvider_P(ObfMapObjectsProvider* owner_)
     : _binaryMapObjectsDataBlocksCache(new BinaryMapObjectsDataBlocksCache(false))
     , _roadsDataBlocksCache(new RoadsDataBlocksCache(false))
@@ -166,7 +169,19 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
 
     // Get bounding box that covers this tile
     const auto zoom = request.zoom;
-    const auto tileBBox31 = Utilities::tileBoundingBox31(request.tileId, zoom);
+    const auto originalTileBBox31 = Utilities::tileBoundingBox31(request.tileId, zoom);
+    AreaI tileBBox31;
+    if (zoom >= ENLARGE_QUERY_BBOX_MIN_ZOOM)
+    {
+        // Fix showing deleted objects in live updates https://github.com/osmandapp/OsmAnd/issues/14920#issuecomment-1538488529
+        const auto enlargeDeltaX = Utilities::metersToX31(ENLARGE_QUERY_BBOX_METERS);
+        const auto enlargeDeltaY = Utilities::metersToY31(ENLARGE_QUERY_BBOX_METERS);
+        tileBBox31 = originalTileBBox31.getEnlargedBy(PointI(enlargeDeltaX, enlargeDeltaY));
+    }
+    else
+    {
+        tileBBox31 = originalTileBBox31;
+    }
 
     // Obtain OBF data interface
     const Stopwatch obtainObfInterfaceStopwatch(metric != nullptr);
@@ -203,7 +218,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             &loadedNonSharedBinaryMapObjectsCounters,
             &allLoadedBinaryMapObjectsCounters,
             &allLoadedBinaryMapObjectIds,
-            tileBBox31,
+            originalTileBBox31,
             zoom,
             metric]
         (const std::shared_ptr<const ObfMapSectionInfo>& section,
@@ -231,7 +246,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             blockIds.insert(blockId);
 
             // This map object may be shared only in case it crosses bounds of a tile
-            const auto canNotBeShared = requestedZoom == zoom && tileBBox31.contains(bbox);
+            const auto canNotBeShared = requestedZoom == zoom && originalTileBBox31.contains(bbox);
 
             // If map object can not be shared, just read it
             if (canNotBeShared)
@@ -306,7 +321,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             &allLoadedRoadsCounters,
             &allLoadedBinaryMapObjectIds,
             &allLoadedRoadsIds,
-            tileBBox31,
+            originalTileBBox31,
             metric]
         (const std::shared_ptr<const ObfRoutingSectionInfo>& section,
             const ObfRoutingSectionReader::DataBlockId& blockId,
@@ -334,7 +349,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             blockIds.insert(blockId);
 
             // This road may be shared only in case it crosses bounds of a tile
-            const auto canNotBeShared = tileBBox31.contains(bbox);
+            const auto canNotBeShared = originalTileBBox31.contains(bbox);
 
             // If road can not be shared, just read it
             if (canNotBeShared)
@@ -407,9 +422,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             _binaryMapObjectsDataBlocksCache.get(),
             &referencedBinaryMapObjectsDataBlocks,
             nullptr,// query queryController
-            loadMapObjectsMetric.get(),
-            false,
-            true);
+            loadMapObjectsMetric.get());
     }
     else if (owner->mode == ObfMapObjectsProvider::Mode::OnlyRoads)
     {
@@ -429,8 +442,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             _roadsDataBlocksCache.get(),
             &referencedRoadsDataBlocks,
             nullptr,// query queryController
-            loadRoadsMetric.get(),
-            true);
+            loadRoadsMetric.get());
     }
     else if (owner->mode == ObfMapObjectsProvider::Mode::BinaryMapObjectsAndRoads)
     {
@@ -462,8 +474,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             &referencedRoadsDataBlocks,
             nullptr,// query queryController
             loadMapObjectsMetric.get(),
-            loadRoadsMetric.get(),
-            true);
+            loadRoadsMetric.get());
     }
     
     QList< std::shared_ptr<const BinaryMapObject> > loadedCoastlineMapObjects;

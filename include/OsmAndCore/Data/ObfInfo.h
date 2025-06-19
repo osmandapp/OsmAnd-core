@@ -37,7 +37,6 @@ namespace OsmAnd
         bool isBasemap;
         bool isBasemapWithCoastlines;
         bool isContourLines;
-        bool isLiveUpdate;
 
         QList< Ref<ObfMapSectionInfo> > mapSections;
         QList< Ref<ObfAddressSectionInfo> > addressSections;

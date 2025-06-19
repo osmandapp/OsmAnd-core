@@ -227,16 +227,9 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         mi->isBasemap = mi->name.contains(QLatin1String("basemap"), Qt::CaseInsensitive);
         mi->isContourLines = mi->name.contains(QLatin1String("contour"), Qt::CaseInsensitive);
         mi->isBasemapWithCoastlines = mi->name == QLatin1String("basemap");
-        const auto nameSize = mi->name.size();
-        const auto underscore = QLatin1Char('_');
-        mi->isLiveUpdate = nameSize > 8 &&
-            !(mi->name.at(nameSize - 3) != underscore
-            || mi->name.at(nameSize - 6) != underscore
-            || mi->name.at(nameSize - 9) != underscore);
         obfInfo->isBasemap = obfInfo->isBasemap || mi->isBasemap;
         obfInfo->isContourLines = obfInfo->isContourLines || mi->isContourLines;
         obfInfo->isBasemapWithCoastlines = obfInfo->isBasemapWithCoastlines || mi->isBasemapWithCoastlines;
-        obfInfo->isLiveUpdate = obfInfo->isLiveUpdate || mi->isLiveUpdate;
 
         obfInfo->mapSections.push_back(qMove(mi));
     }

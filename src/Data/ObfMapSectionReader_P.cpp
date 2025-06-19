@@ -56,12 +56,6 @@ void OsmAnd::ObfMapSectionReader_P::read(
                 section->isBasemap = section->name.contains(QLatin1String("basemap"), Qt::CaseInsensitive);
                 section->isBasemapWithCoastlines = section->name == QLatin1String("basemap");
                 section->isContourLines = section->name.contains(QLatin1String("contour"), Qt::CaseInsensitive);
-                const auto nameSize = section->name.size();
-                const auto underscore = QLatin1Char('_');
-                section->isLiveUpdate = nameSize > 8 &&
-                    !(section->name.at(nameSize - 3) != underscore
-                    || section->name.at(nameSize - 6) != underscore
-                    || section->name.at(nameSize - 9) != underscore);
                 break;
             }
             case OBF::OsmAndMapIndex::kRulesFieldNumber:
