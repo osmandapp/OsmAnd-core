@@ -229,8 +229,6 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         mi->isBasemap = mi->name.contains(QLatin1String("basemap"), Qt::CaseInsensitive);
         mi->isContourLines = mi->name.contains(QLatin1String("contour"), Qt::CaseInsensitive);
         mi->isBasemapWithCoastlines = mi->name == QLatin1String("basemap");
-        const auto nameSize = mi->name.size();
-        const auto underscore = QLatin1Char('_');
         mi->isLiveUpdate = !mi->isBasemap && liveUpdateSourceRegex.match(mi->name).hasMatch();
         obfInfo->isBasemap = obfInfo->isBasemap || mi->isBasemap;
         obfInfo->isContourLines = obfInfo->isContourLines || mi->isContourLines;
