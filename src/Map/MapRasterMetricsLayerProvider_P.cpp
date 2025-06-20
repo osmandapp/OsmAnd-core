@@ -56,40 +56,58 @@ bool OsmAnd::MapRasterMetricsLayerProvider_P::obtainData(
 
     // Prepare drawing canvas
     SkBitmap bitmap;
-    if (!bitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(owner->tileSize, owner->tileSize)))
+    if (!bitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(tileSize, tileSize)))
     {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to allocate buffer for rasterization surface %dx%d",
-            owner->tileSize,
-            owner->tileSize);
+        LogPrintf(LogSeverityLevel::Error, "Failed to allocate buffer for rasterization surface %dx%d", tileSize, tileSize);
         return false;
     }
     SkCanvas canvas(bitmap);
     canvas.clear(SK_ColorDKGRAY);
 
-    QString text;
-    text += QString(QLatin1String("TILE   %1x%2@%3\n"))
-        .arg(request.tileId.x)
-        .arg(request.tileId.y)
-        .arg(request.zoom);
+    QString text = QString(QLatin1String("TILE %1x%2 z%3\n")).arg(request.tileId.x).arg(request.tileId.y).arg(request.zoom);
+    
+    QString readTime = "?";
     if (const auto obtainBinaryMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapObjectsProvider_Metrics::Metric_obtainData>(true))
     {
-        text += QString(QLatin1String("obf read    %1s\n"))
-            .arg(QString::number(obtainBinaryMapObjectsMetric->elapsedTime, 'f', 3));
+        readTime = QString::number(obtainBinaryMapObjectsMetric->elapsedTime, 'f', 1);
     }
+
+    text += QString(QLatin1String("Read %1s,\n")).arg(readTime);
+    
+    QString orderTime = "0.0";
     if (const auto primitiviseMetric = obtainDataMetric.findSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitivise>(true))
     {
-        text += QString(QLatin1String("primitives  %1s\n"))
-            .arg(QString::number(primitiviseMetric->elapsedTime, 'f', 3));
+        orderTime = QString::number(primitiviseMetric->elapsedTimeForOrderEvaluation, 'f', 1);
     }
+
+    text += QString(QLatin1String("Order %1s,\n")).arg(orderTime);
+    
+    int areaCount = 0, lineCount = 0, pointCount = 0;
+    if (const auto primitiviseMetric = obtainDataMetric.findSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitivise>(true))
+    {
+        areaCount = primitiviseMetric->polygonPrimitives;
+        lineCount = primitiviseMetric->polylinePrimitives;
+        pointCount = primitiviseMetric->pointPrimitives;
+    }
+
+    text += QString(QLatin1String("Area %1, Line %2, pnts %3\n")).arg(areaCount).arg(lineCount).arg(pointCount);
+    
+    QString styleTime = "0.0";
+    if (const auto primitiviseMetric = obtainDataMetric.findSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitivise>(true))
+    {
+        styleTime = QString::number(primitiviseMetric->elapsedTime, 'f', 1);
+    }
+
+    text += QString(QLatin1String("Style %1s\n")).arg(styleTime);
+    
+    QString rasterizationTime = "0.0";
     if (const auto rasterizeMetric = obtainDataMetric.findSubmetricOfType<MapRasterizer_Metrics::Metric_rasterize>(true))
     {
-        text += QString(QLatin1String("rasterize   %1s\n"))
-            .arg(QString::number(rasterizeMetric->elapsedTime, 'f', 3));
+        rasterizationTime = QString::number(rasterizeMetric->elapsedTime, 'f', 1);
     }
-    text += QString(QLatin1String("--total--   %1s\n"))
-        .arg(QString::number(obtainDataMetric.elapsedTime, 'f', 3));
-    text = text.trimmed();
+
+    text += QString(QLatin1String("Rasterization %1s\n")).arg(rasterizationTime);
+    text += QString(QLatin1String("Total %1s")).arg(QString::number(obtainDataMetric.elapsedTime, 'f', 1));
 
     const auto fontSize = 14.0f * owner->densityFactor;
 
