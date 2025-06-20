@@ -1,0 +1,19 @@
+--- upstream.original/gdal/frmts/zlib/zutil.h	2025-06-05 21:02:49.473503737 +0200
++++ upstream.patched/gdal/frmts/zlib/zutil.h	2025-06-05 21:51:42.512027986 +0200
+@@ -110,15 +110,8 @@
+ #  endif
+ #endif
+ 
+-#if defined(MACOS) || defined(TARGET_OS_MAC)
++#if defined(MACOS)
+ #  define OS_CODE  0x07
+-#  if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os
+-#    include <unix.h> /* for fdopen */
+-#  else
+-#    ifndef fdopen
+-#      define fdopen(fd,mode) NULL /* No fdopen() */
+-#    endif
+-#  endif
+ #endif
+ 
+ #ifdef TOPS20
