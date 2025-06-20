@@ -61,7 +61,6 @@ namespace OsmAnd
         virtual ~MapRasterMetricsLayerProvider();
 
         const std::shared_ptr<MapRasterLayerProvider> rasterBitmapTileProvider;
-        const uint32_t tileSize;
         const float densityFactor;
 
         virtual MapStubStyle getDesiredStubsStyle() const;
