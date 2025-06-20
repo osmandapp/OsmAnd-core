@@ -417,9 +417,8 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         const auto textImage = textRasterizer->rasterize(caption, textStyle);
         if (textImage)
         {
-            auto positionType = owner->getPositionType();
             PointI extraOffset;
-            switch (positionType)
+            switch (_positionType)
             {
                 case PositionType::PrimaryGridXMiddle:
                 case PositionType::SecondaryGridXMiddle:
@@ -458,7 +457,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
             else
             {
                 mapSymbolCaption->position31 = _position;
-                mapSymbolCaption->setPositionType(positionType);
+                mapSymbolCaption->setPositionType(_positionType);
             }
             mapSymbolCaption->setAdditionalPosition(owner->getAdditionalPosition());
             mapSymbolCaption->elevation = _height;
