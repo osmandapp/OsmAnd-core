@@ -439,6 +439,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
                     extraOffset.y = textImage->height() / 2 + owner->captionTopSpace;
             }
             const auto mapSymbolCaption = std::make_shared<BillboardRasterMapSymbol>(symbolsGroup);
+            mapSymbolCaption->isHidden = _isHidden;
             mapSymbolCaption->order = order - 2;
             mapSymbolCaption->image = textImage;
             mapSymbolCaption->contentClass = OsmAnd::MapSymbol::ContentClass::Caption;
