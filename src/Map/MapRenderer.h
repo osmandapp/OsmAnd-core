@@ -27,6 +27,7 @@
 #include "MapRendererInternalState.h"
 #include "MapRendererResourcesManager.h"
 #include "MapSymbolsGroup.h"
+#include "Stopwatch.h"
 
 namespace OsmAnd
 {
@@ -158,6 +159,9 @@ namespace OsmAnd
         mutable QReadWriteLock _jsonDocumentLock;
         std::shared_ptr<const QJsonDocument> _jsonDocument;
         bool _jsonEnabled;
+
+        OsmAnd::Stopwatch symbolsLoadingStart;
+        float symbolsLoadingTime = 0;
 
         virtual AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const = 0;
         virtual AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const = 0;
@@ -476,6 +480,8 @@ namespace OsmAnd
         virtual void dumpResourcesInfo() const Q_DECL_OVERRIDE;
         virtual float getBasicThreadsCPULoad() Q_DECL_OVERRIDE;
         virtual int getWaitTime() const Q_DECL_OVERRIDE;
+
+        float getPreviousElapsedSymbolsLoadingTime() const override;
 
     friend struct OsmAnd::MapRendererInternalState;
     friend class OsmAnd::MapRendererStage;

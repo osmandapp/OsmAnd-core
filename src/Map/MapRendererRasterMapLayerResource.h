@@ -15,6 +15,7 @@
 namespace OsmAnd
 {
     class MapRendererResourcesManager;
+    struct Metric;
 
     class MapRendererRasterMapLayerResource : public MapRendererBaseTiledResource
     {
@@ -47,6 +48,8 @@ namespace OsmAnd
 
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU;
         mutable QAtomicInt resourceInGPULock;
+
+        std::shared_ptr<Metric> metric;
 
     friend class OsmAnd::MapRendererResourcesManager;
     };

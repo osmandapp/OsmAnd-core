@@ -23,6 +23,7 @@
 #include "QKeyValueIterator.h"
 #include <SqliteHeightmapTileProvider.h>
 #include <VectorLinesCollection.h>
+#include <AtlasMapRenderer_Metrics.h>
 
 //#define OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE 1
 #ifndef OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
@@ -547,7 +548,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
     {
         QMutexLocker scopedLocker(&_requestedStateMutex);
 
-        bool adjustTarget = 
+        bool adjustTarget =
         _requestedState.fixedPixel.x >= 0 && _requestedState.fixedPixel.y >= 0
             && (!_targetIsElevated || _requestedState.fixedHeight == 0.0f)
             && _requestedState.elevationDataProvider && _requestedState.fixedLocation31 == _requestedState.target31
@@ -662,10 +663,20 @@ bool OsmAnd::MapRenderer::renderFrame(IMapRenderer_Metrics::Metric_renderFrame* 
     bool ok = true;
 
     Stopwatch totalStopwatch(metric != nullptr);
-
-    ok = ok && preRenderFrame(metric);
-    ok = ok && doRenderFrame(metric);
-    ok = ok && postRenderFrame(metric);
+    
+    if (currentDebugSettings->debugStageEnabled && metric == nullptr)
+    {
+        auto atlasRendererMetrics = std::make_shared<AtlasMapRenderer_Metrics::Metric_renderFrame>();
+        ok = ok && preRenderFrame(atlasRendererMetrics.get());
+        ok = ok && doRenderFrame(atlasRendererMetrics.get());
+        ok = ok && postRenderFrame(atlasRendererMetrics.get());
+    }
+    else
+    {
+        ok = ok && preRenderFrame(metric);
+        ok = ok && doRenderFrame(metric);
+        ok = ok && postRenderFrame(metric);
+    }
 
     if (metric)
         metric->elapsedTime = totalStopwatch.elapsed();
@@ -1301,6 +1312,18 @@ bool OsmAnd::MapRenderer::needUpdatedSymbols()
 
 void OsmAnd::MapRenderer::setSymbolsLoading(bool active)
 {
+    if (currentDebugSettings->debugStageEnabled)
+    {
+        if (_symbolsLoading == false && active == true)
+        {
+            symbolsLoadingStart.start();
+        }
+        else if (_symbolsLoading == true && active == false)
+        {
+            symbolsLoadingTime = symbolsLoadingStart.elapsed();
+        }
+    }
+
     _symbolsLoading = active;
 }
 
@@ -3310,4 +3333,9 @@ float OsmAnd::MapRenderer::getBasicThreadsCPULoad()
 int OsmAnd::MapRenderer::getWaitTime() const
 {
     return gpuAPI->waitTimeInMicroseconds.fetchAndStoreOrdered(0) / 1000;
+}
+
+float OsmAnd::MapRenderer::getPreviousElapsedSymbolsLoadingTime() const
+{
+    return symbolsLoadingTime;
 }

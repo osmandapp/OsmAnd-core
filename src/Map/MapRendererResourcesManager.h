@@ -305,6 +305,7 @@ namespace OsmAnd
         bool allResourcesAreUploaded() const;
         void dumpResourcesInfo() const;
         float getBasicThreadsCPULoad();
+        QVector<std::shared_ptr<const Metric>> getAllRasterMapLayerResourceMetrics() const;
 
     friend class OsmAnd::MapRenderer;
     friend class OsmAnd::MapRendererBaseResource;
