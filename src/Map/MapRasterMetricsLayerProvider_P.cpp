@@ -67,20 +67,24 @@ bool OsmAnd::MapRasterMetricsLayerProvider_P::obtainData(
     QString text = QString(QLatin1String("TILE %1x%2 z%3\n")).arg(request.tileId.x).arg(request.tileId.y).arg(request.zoom);
     
     QString readTime = "?";
+    int readObjects = 0;
     if (const auto obtainBinaryMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapObjectsProvider_Metrics::Metric_obtainData>(true))
     {
         readTime = QString::number(obtainBinaryMapObjectsMetric->elapsedTime, 'f', 1);
+        readObjects = obtainBinaryMapObjectsMetric->objectsCount;
     }
 
-    text += QString(QLatin1String("Read %1s,\n")).arg(readTime);
+    text += QString(QLatin1String("Read %1s, %2 objects,\n")).arg(readTime).arg(readObjects);
     
     QString orderTime = "0.0";
+    int orderObjects = 0;
     if (const auto primitiviseMetric = obtainDataMetric.findSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitivise>(true))
     {
         orderTime = QString::number(primitiviseMetric->elapsedTimeForOrderEvaluation, 'f', 1);
+        orderObjects = primitiviseMetric->orderEvaluations;
     }
 
-    text += QString(QLatin1String("Order %1s,\n")).arg(orderTime);
+    text += QString(QLatin1String("Order %1s, %2 objects,\n")).arg(orderTime).arg(orderObjects);
     
     int areaCount = 0, lineCount = 0, pointCount = 0;
     if (const auto primitiviseMetric = obtainDataMetric.findSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitivise>(true))
