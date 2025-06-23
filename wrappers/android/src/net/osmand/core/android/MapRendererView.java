@@ -608,7 +608,7 @@ public abstract class MapRendererView extends FrameLayout {
             if (initOnResume && (isInitializing || isReinitializing)) {
                 initOnResume = false;
                 startRenderingView(null);
-            } else if (!isSuspended) {
+            } else if (isViewStarted && !isSuspended) {
                 // Inform rendering view that activity was resumed
                 _renderingView.onResume();
             }
@@ -620,7 +620,7 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         // Request GLSurfaceView render a frame
-        if (!isSuspended && _renderingView != null) {
+        if (isViewStarted && !isSuspended && _renderingView != null) {
             _renderingView.requestRender();
         }
     }
