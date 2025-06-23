@@ -310,11 +310,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         }
     }
     
-    if (area31.top() == 827326464 && area31.left() == 1217396736)
-    {
-        debugCoastline(area31, polygonizedCoastlineObjects);
-    }
-    
+
     
     bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
     bool shouldAddBasemapCoastlines = !detailedmapCoastlinesPresent
