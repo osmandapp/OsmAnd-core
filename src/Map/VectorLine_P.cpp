@@ -160,6 +160,13 @@ void OsmAnd::VectorLine_P::attachMarker(const std::shared_ptr<MapMarker>& marker
     _attachedMarkers.push_back(marker);
 }
 
+void OsmAnd::VectorLine_P::detachMarker(const std::shared_ptr<MapMarker>& marker)
+{
+    QReadLocker scopedLocker(&_lock);
+
+    _attachedMarkers.removeOne(marker);
+}
+
 void OsmAnd::VectorLine_P::setPoints(const QVector<PointI>& points)
 {
     QWriteLocker scopedLocker(&_lock);

@@ -130,6 +130,7 @@ namespace OsmAnd
         void setPoints(const QVector<PointI>& points);
         
         void attachMarker(const std::shared_ptr<MapMarker>& marker);
+        void detachMarker(const std::shared_ptr<MapMarker>& marker);
 
         QList<float> getHeights() const;
         void setHeights(const QList<float>& heights);
