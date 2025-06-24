@@ -173,7 +173,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > basemapMapObjects;
     QList< std::shared_ptr<const MapObject> > basemapCoastlineObjects;
     QList< std::shared_ptr<const MapObject> > extraCoastlineObjects;
-    QHash< int64_t, std::shared_ptr<const MapObject> > cycledStraightCoastlines;
+    QHash< QPair<int32_t, int32_t>, std::shared_ptr<const MapObject> > cycledStraightCoastlines;
     bool detailedBinaryMapObjectsPresent = false;
     bool roadsPresent = false;
     int contourLinesObjectsCount = 0;
@@ -238,8 +238,8 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
                 detailedmapCoastlineObjects.push_back(mapObject);
                 if (mapObject->points31.size() == 2)
                 {
-                    int64_t start = mapObject->points31[0].x + mapObject->points31[0].y;
-                    int64_t end = mapObject->points31[1].x + mapObject->points31[1].y;
+                    QPair<int32_t, int32_t> start = qMakePair(mapObject->points31[0].x, mapObject->points31[0].y);
+                    QPair<int32_t, int32_t> end = qMakePair(mapObject->points31[1].x, mapObject->points31[1].y);
                     cycledStraightCoastlines.insert(start, mapObject);
                     auto it = cycledStraightCoastlines.find(end);
                     if (it != cycledStraightCoastlines.end())
