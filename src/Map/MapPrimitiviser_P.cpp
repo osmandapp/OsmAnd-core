@@ -173,6 +173,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > basemapMapObjects;
     QList< std::shared_ptr<const MapObject> > basemapCoastlineObjects;
     QList< std::shared_ptr<const MapObject> > extraCoastlineObjects;
+    QHash< QPair<int32_t, int32_t>, std::shared_ptr<const MapObject> > cycledStraightCoastlines;
     bool detailedBinaryMapObjectsPresent = false;
     bool roadsPresent = false;
     int contourLinesObjectsCount = 0;
@@ -233,8 +234,22 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         {
             if (isBasemapObject)
                 basemapCoastlineObjects.push_back(mapObject);
-            else
+            else {
                 detailedmapCoastlineObjects.push_back(mapObject);
+                if (mapObject->points31.size() == 2)
+                {
+                    QPair<int32_t, int32_t> start = qMakePair(mapObject->points31[0].x, mapObject->points31[0].y);
+                    QPair<int32_t, int32_t> end = qMakePair(mapObject->points31[1].x, mapObject->points31[1].y);
+                    cycledStraightCoastlines.insert(start, mapObject);
+                    auto it = cycledStraightCoastlines.find(end);
+                    if (it != cycledStraightCoastlines.end())
+                    {
+                        // remove cycled coastlines that was simplified to straight line
+                        detailedmapCoastlineObjects.removeAll(mapObject);
+                        detailedmapCoastlineObjects.removeAll(*it);
+                    }
+                }
+            }
         }
         else
         {
@@ -295,6 +310,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         }
     }
     
+
     
     bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
     bool shouldAddBasemapCoastlines = !detailedmapCoastlinesPresent
