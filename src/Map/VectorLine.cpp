@@ -81,6 +81,11 @@ void OsmAnd::VectorLine::attachMarker(const std::shared_ptr<MapMarker>& marker)
     return _p->attachMarker(marker);
 }
 
+void OsmAnd::VectorLine::detachMarker(const std::shared_ptr<MapMarker>& marker)
+{
+    _p->detachMarker(marker);
+}
+
 void OsmAnd::VectorLine::setPoints(const QVector<OsmAnd::PointI>& points)
 {
     _p->setPoints(points);

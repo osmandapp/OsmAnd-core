@@ -170,7 +170,8 @@ namespace OsmAnd
         QVector<PointI64> getShortestPathPoints() const;
         
         void attachMarker(const std::shared_ptr<MapMarker>& marker);
-        
+        void detachMarker(const std::shared_ptr<MapMarker>& marker);
+
         QList<float> getHeights() const;
         void setHeights(const QList<float>& heights);
         
