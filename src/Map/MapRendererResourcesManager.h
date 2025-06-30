@@ -130,6 +130,9 @@ namespace OsmAnd
             QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& outOtherResourcesCollections) const;
 
         // Symbols-related:
+        std::chrono::high_resolution_clock::time_point _lastSymbolsUpdateTime;
+        bool _postponeSymbolsUpdate;
+        bool _clearSymbolsAfterUpdate;
         void publishMapSymbol(
             const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
             const std::shared_ptr<const MapSymbol>& symbol,

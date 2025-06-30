@@ -454,10 +454,7 @@ bool OsmAnd::MapRenderer::preUpdate(IMapRenderer_Metrics::Metric_update* const m
     Stopwatch updatesStopwatch(metric != nullptr);
     const auto& mapState = getMapState();
     if (_resources->checkForUpdatesAndApply(mapState))
-    {
-        setUpdateSymbols(true);
         invalidateFrame();
-    }
     if (metric)
         metric->elapsedTimeForUpdatesProcessing = updatesStopwatch.elapsed();
 
@@ -1279,11 +1276,7 @@ bool OsmAnd::MapRenderer::resumeSymbolsUpdate()
     }
 
     if (prevCounter == 1)
-    {
-        if (!isSymbolsLoadingActive())
-            setUpdateSymbols(true);
         invalidateFrame();
-    }
 
     return (prevCounter <= 1);
 }
@@ -1296,7 +1289,6 @@ int OsmAnd::MapRenderer::getSymbolsUpdateInterval()
 void OsmAnd::MapRenderer::setSymbolsUpdateInterval(int interval)
 {
     _symbolsUpdateInterval = interval;
-    setUpdateSymbols(true);
     invalidateFrame();
 }
 

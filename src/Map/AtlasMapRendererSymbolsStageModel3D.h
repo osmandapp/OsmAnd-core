@@ -53,7 +53,7 @@ namespace OsmAnd
             const std::shared_ptr<const MapSymbolsGroup>& mapSymbolGroup,
             const std::shared_ptr<const Model3DMapSymbol>& model3DMapSymbol,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
-            QList< std::shared_ptr<AtlasMapRendererSymbolsStage::RenderableSymbol> >& outRenderableSymbols,
+            std::shared_ptr<AtlasMapRendererSymbolsStage::RenderableSymbol>& outRenderableSymbol,
             const bool allowFastCheckByFrustum = true,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
         bool plotSymbol(

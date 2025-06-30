@@ -150,7 +150,6 @@ namespace OsmAnd
             ScreenQuadTree& outIntersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric,
             bool forceUpdate,
-            bool updateSuspended,
             bool needUpdatedSymbols);
         bool obtainRenderableSymbols(
             const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
@@ -161,7 +160,6 @@ namespace OsmAnd
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
         mutable MapRenderer::PublishedMapSymbolsByOrder _lastAcceptedMapSymbolsByOrder;
         std::chrono::high_resolution_clock::time_point _lastResumeSymbolsUpdateTime;
-        float _regularUpdateInterval;
         bool _previouslySuspended;
 
         mutable QReadWriteLock _lastPreparedIntersectionsLock;
@@ -198,7 +196,7 @@ namespace OsmAnd
             const std::shared_ptr<const MapSymbolsGroup::AdditionalSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
             ComputedPathsDataCache& computedPathsDataCache,
-            QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
+            std::shared_ptr<RenderableSymbol>& outRenderableSymbol,
             ScreenQuadTree& intersections,
             bool allowFastCheckByFrustum = true,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
@@ -215,7 +213,7 @@ namespace OsmAnd
             const std::shared_ptr<const IBillboardMapSymbol>& billboardMapSymbol,
             const std::shared_ptr<const MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
-            QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
+            std::shared_ptr<RenderableSymbol>& outRenderableSymbol,
             ScreenQuadTree& intersections,
             bool allowFastCheckByFrustum = true,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
@@ -241,7 +239,7 @@ namespace OsmAnd
             const std::shared_ptr<const IOnSurfaceMapSymbol>& onSurfaceMapSymbol,
             const std::shared_ptr<const MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
-            QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
+            std::shared_ptr<RenderableSymbol>& outRenderableSymbol,
             bool allowFastCheckByFrustum = true,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
         bool plotOnSurfaceSymbol(
@@ -267,7 +265,7 @@ namespace OsmAnd
             const std::shared_ptr<const MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
             ComputedPathsDataCache& computedPathsDataCache,
-            QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
+            std::shared_ptr<RenderableSymbol>& outRenderableSymbol,
             ScreenQuadTree& intersections,
             bool allowFastCheckByFrustum = true,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
