@@ -78,6 +78,10 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
     _threadCountPeriod = 0.0f;
     _basicThreadsCPULoad = 0.0f;
 
+    _lastSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
+    _postponeSymbolsUpdate = false;
+    _clearSymbolsAfterUpdate = false;
+    
     // Start worker thread
     _workerThreadIsAlive = true;
     _workerThread->start();
@@ -563,30 +567,19 @@ void OsmAnd::MapRendererResourcesManager::updateActiveZone(
     QMap<ZoomLevel, QVector<TileId>>& visibleTiles, QSet<TileId>& extraDetailedTiles,
     int zoomLevelOffset, int visibleTilesCount)
 {
-    // Check if update needed
-    bool update = true; //NOTE: So far this won't work, since resources won't be updated
-    update = update || (_activeTiles != activeTiles) || (_activeTilesTargets != activeTilesTargets)
-        || (_visibleTiles != visibleTiles)
-        || (_extraDetailedTiles != extraDetailedTiles)
-        || (_zoomLevelOffset != zoomLevelOffset)
-        || (_visibleTilesCount != visibleTilesCount);
+    // Lock worker wakeup mutex
+    QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
 
-    if (update)
-    {
-        // Lock worker wakeup mutex
-        QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
+    // Update active zone
+    _zoomLevelOffset = zoomLevelOffset;
+    _visibleTilesCount = visibleTilesCount;
+    _visibleTiles = visibleTiles;
+    _activeTiles = activeTiles;
+    _activeTilesTargets = activeTilesTargets;
+    _extraDetailedTiles = extraDetailedTiles;
 
-        // Update active zone
-        _zoomLevelOffset = zoomLevelOffset;
-        _visibleTilesCount = visibleTilesCount;
-        _visibleTiles = visibleTiles;
-        _activeTiles = activeTiles;
-        _activeTilesTargets = activeTilesTargets;
-        _extraDetailedTiles = extraDetailedTiles;
-
-        // Wake up the worker
-        _workerThreadWakeup.wakeAll();
-    }
+    // Wake up the worker
+    _workerThreadWakeup.wakeAll();
 }
 
 void OsmAnd::MapRendererResourcesManager::setResourceWorkerThreadsLimit(const unsigned int limit)
@@ -2067,6 +2060,10 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
 
     // Renew rendered symbols when ones of current zoom level are loaded
     bool shouldRedrawSymbols = false;
+    const auto timeSinceLastUpdate = std::chrono::duration<float>(
+        std::chrono::high_resolution_clock::now() - _lastSymbolsUpdateTime).count() * 1000.0f;
+    const bool symbolsCanBeUpdated = timeSinceLastUpdate > 500.0f;
+    const bool shouldUpdateSymbols = _postponeSymbolsUpdate && symbolsCanBeUpdated;
 
     // Use aggressive cache cleaning: remove all resources that are not needed
     for (const auto& resourcesCollection : constOf(resourcesCollections))
@@ -2296,32 +2293,16 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                         + std::min(1, maxMissingDataUnderZoomShift), static_cast<int>(maxZoom)));
 
                 const bool isLoading = tiledResourcesCollection->isLoading();
-                bool updateSymbolResources = isLoading;
+                const bool isLoadingOrWaiting = isLoading || shouldUpdateSymbols;
+                bool updateSymbolResources = isLoadingOrWaiting;
                 if (resourcesType == MapRendererResourceType::Symbols)
                 {
                     if (activeZoom != currentZoom)
                         continue;
 
                     // Keep overscaled/underscaled resources if symbols of current zoom level ain't ready yet
-                    if (updateSymbolResources)
+                    if (isLoadingOrWaiting)
                     {
-                        const auto isLoadingResource =
-                            []
-                            (const std::shared_ptr<MapRendererBaseTiledResource>& entry) -> bool
-                            {
-                                if (entry->isJunk)
-                                    return false;
-                                const auto state = entry->getState();
-                                return state == MapRendererResourceState::PreparedRenew
-                                    || state == MapRendererResourceState::PreparingRenew
-                                    || state == MapRendererResourceState::ProcessingRequest
-                                    || state == MapRendererResourceState::Ready
-                                    || state == MapRendererResourceState::Renewing
-                                    || state == MapRendererResourceState::Requested
-                                    || state == MapRendererResourceState::Requesting
-                                    || state == MapRendererResourceState::Uploading;
-                            };
-                        bool atLeastOnePresent = false;
                         for (const auto& activeTileId : constOf(activeTiles))
                         {
                             const auto neededZoomForTile = extraZoom != neededZoom
@@ -2331,38 +2312,26 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                             for (const auto& neededTileId : constOf(neededTiles))
                             {
                                 // Don't remove overscaled/underscaled resources while some resource is loading
-                                if (tiledResourcesCollection->containsResource(
-                                        neededTileId,
-                                        neededZoomForTile,
-                                        isLoadingResource))
-                                {
-                                    updateSymbolResources = false;
-                                    break;
-                                }
-
-                                // Don't remove overscaled/underscaled resources if no resource is there yet
-                                if (tiledResourcesCollection->containsResource(
+                                if (!tiledResourcesCollection->containsResource(
                                         neededTileId,
                                         neededZoomForTile,
                                         isCompletedResource))
                                 {
-                                    atLeastOnePresent = true;
+                                    updateSymbolResources = false;
+                                    break;
                                 }
                             }
                             if (!updateSymbolResources)
                                 break;
                         }
-                        updateSymbolResources = updateSymbolResources && atLeastOnePresent;
-                    }
-                    if (isLoading)
-                    {
                         if (updateSymbolResources)
                         {
-                            tiledResourcesCollection->setLoadingState(false);
+                            if (isLoading)
+                                tiledResourcesCollection->setLoadingState(false);
                             shouldRedrawSymbols = true;
                         }
                         else
-                            isLoadingSymbols = true;
+                            isLoadingSymbols = isLoading;
                     }
                 }
                 const int levelCount =
@@ -2404,13 +2373,13 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     {
                         const auto neededZoomForTile = extraZoom != neededZoom
                             && extraDetailedTiles.contains(activeTileId) ? extraZoom : neededZoom;
-                        if (updateSymbolResources)
+                        if (_clearSymbolsAfterUpdate)
                             continue;
                         for (int zoomShift = 1; zoomShift <= maxMissingDataUnderZoomShift; zoomShift++)
                         {
                             const auto underscaledZoom = static_cast<int>(neededZoomForTile) + zoomShift;
                             if (underscaledZoom <= maxZoom)
-                                {
+                            {
                                 const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
                                     activeTileId,
                                     zoomShift);
@@ -2568,13 +2537,26 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
         }
     }
 
-    renderer->setSymbolsLoading(isLoadingSymbols);
-
-    if (!isLoadingSymbols && shouldRedrawSymbols)
+    if (isLoadingSymbols)
     {
-        renderer->setUpdateSymbols(true);
+        _postponeSymbolsUpdate = false;
+        _clearSymbolsAfterUpdate = false;
+    }
+    else if (shouldRedrawSymbols || _postponeSymbolsUpdate)
+    {
+        _postponeSymbolsUpdate = !symbolsCanBeUpdated;
+        _clearSymbolsAfterUpdate = symbolsCanBeUpdated;
         renderer->invalidateFrame();
     }
+    else if (_clearSymbolsAfterUpdate)
+    {
+        _lastSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
+        renderer->setUpdateSymbols(true);
+        _clearSymbolsAfterUpdate = false;
+        renderer->invalidateFrame();
+    }
+
+    renderer->setSymbolsLoading(isLoadingSymbols);
 
     if (needsResourcesUploadOrUnload)
         requestResourcesUploadOrUnload();
