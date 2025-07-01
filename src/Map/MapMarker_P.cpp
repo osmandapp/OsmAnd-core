@@ -459,7 +459,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
                 mapSymbolCaption->position31 = _position;
                 mapSymbolCaption->setPositionType(_positionType);
             }
-            mapSymbolCaption->setAdditionalPosition(owner->getAdditionalPosition());
+            mapSymbolCaption->setAdditionalPosition(_additionalPositionParameter);
             mapSymbolCaption->elevation = _height;
             mapSymbolCaption->elevationScaleFactor = _elevationScaleFactor;
             symbolsGroup->symbols.push_back(mapSymbolCaption);
