@@ -112,27 +112,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
 
     bool ok = true;
 
-    GL_PUSH_GROUP_MARKER(QLatin1String("symbols"));
-
-    GL_CHECK_PRESENT(glUseProgram);
-    GL_CHECK_PRESENT(glActiveTexture);
-    GL_CHECK_PRESENT(glPolygonOffset);
-
     const auto gpuAPI = getGPUAPI();
-    const auto& internalState = getInternalState();
-
-    _lastUsedProgram = 0;
-
-    // Initially, configure for straight alpha channel type
     auto currentAlphaChannelType = AlphaChannelType::Straight;
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    GL_CHECK_RESULT;
 
-    // Initially, configure depth buffer offset for vector symbols (against z-fighting)
-    glPolygonOffset(0.0f, -2.0f);
-    GL_CHECK_RESULT;
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    GL_CHECK_RESULT;
+    prepareSymbolsDrawing();
 
     prepare(metric);
 
@@ -216,58 +199,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
         }
     }
 
-    if (metric)
-    {
-        int totalSymbolsLoaded = 0;
-
-        for (const auto& metric : getResources().getAllRasterMapLayerResourceMetrics())
-        {
-            const auto& primitiviseMetric = metric->findSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitivise>(true);
-            if (primitiviseMetric)
-            {
-                totalSymbolsLoaded += primitiviseMetric->obtainedIconSymbols;
-                totalSymbolsLoaded += primitiviseMetric->obtainedTextSymbols;
-                totalSymbolsLoaded += primitiviseMetric->rejectedIconSymbols;
-                totalSymbolsLoaded += primitiviseMetric->rejectedTextSymbols;
-            }
-        }
-
-        const int totalSymbolsDrawn = metric->billboardSymbolsRendered + metric->onPathSymbolsRendered +
-            metric->model3DSymbolsRendered + metric->onSurfaceSymbolsRendered;
-
-        auto symbolGroup = std::make_shared<MapSymbolsGroup>();
-        auto symbol = std::make_shared<BillboardRasterMapSymbol>(symbolGroup);
-
-        const QString loadingState = renderer->isSymbolsLoadingActive() ? "loading," :
-            QString::asprintf("load time %fs,", renderer->getPreviousElapsedSymbolsLoadingTime());
-
-        symbol->content = QString::asprintf("Symbols: %s drawn %d, loaded: %d",
-            loadingState.toUtf8().constData(), totalSymbolsDrawn, totalSymbolsLoaded);
-
-        TextRasterizer::Style style;
-        style.size = 32;
-
-        symbol->position31 = currentState.target31;
-        symbol->modulationColor = FColorARGB(1.0f, 0.0f, 0.0f, 0.0f);
-        symbol->image = TextRasterizer::getDefault()->rasterize(symbol->content, style);
-
-        std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
-        bool gpuContextLost = false;
-        getGPUAPI()->uploadSymbolToGPU(symbol, gpuResource, true, &gpuContextLost);
-
-        auto renderable = std::make_shared<RenderableBillboardSymbol>();
-        renderable->mapSymbolGroup = symbolGroup;
-        renderable->mapSymbol = symbol;
-        renderable->position31 = symbol->position31;
-        renderable->positionInWorld = glm::vec3(0.0f, 10.0f, 0.0f);
-        renderable->mRotate = glm::mat2(1.0f);
-        renderable->opacityFactor = 1.0f;
-        renderable->gpuResource = gpuResource;
-
-        AlphaChannelType alphaChannelType = AlphaChannelType::Invalid;
-        renderBillboardSymbol(renderable, alphaChannelType);
-    }
-
     if (withJson)
     {
         auto jsonDocument = new QJsonDocument();
@@ -275,19 +206,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
         renderer->setJSON(jsonDocument);
     }
 
-    // Unbind symbol texture from texture sampler
-    glActiveTexture(GL_TEXTURE0 + 0);
-    GL_CHECK_RESULT;
-    glBindTexture(GL_TEXTURE_2D, 0);
-    GL_CHECK_RESULT;
-
-    // Deactivate program
-    glUseProgram(0);
-    GL_CHECK_RESULT;
-
-    gpuAPI->unuseVAO();
-
-    GL_POP_GROUP_MARKER;
+    endSymbolsDrawing(gpuAPI);
 
     return ok;
 }
@@ -3530,4 +3449,92 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::reportCommonParameters(
             jsonObject.insert(QStringLiteral("id"), static_cast<long long>(binaryMapObject->id.getOsmId() >> 1));
         }
     }
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::drawDebugMetricSymbol(IMapRenderer_Metrics::Metric_renderFrame* metric_)
+{
+    const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
+
+    if (metric && isLongPrepareStage)
+    {
+        const auto gpuAPI = getGPUAPI();
+        prepareSymbolsDrawing();
+        
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        GL_CHECK_RESULT;
+
+        const int totalSymbolsDrawn = metric->billboardSymbolsRendered + metric->onPathSymbolsRendered +
+            metric->model3DSymbolsRendered + metric->onSurfaceSymbolsRendered;
+
+        const int totalSymbols = renderer->getSymbolsCount();
+
+        auto symbolGroup = std::make_shared<MapSymbolsGroup>();
+        auto symbol = std::make_shared<BillboardRasterMapSymbol>(symbolGroup);
+
+        symbol->content = QString::asprintf("Symbols  %fs  [ %d of %d labels ]",
+            metric->elapsedTimeForSymbolsStage, totalSymbolsDrawn, totalSymbols);
+
+        TextRasterizer::Style style;
+        style.size = 32;
+
+        symbol->position31 = currentState.target31;
+        symbol->modulationColor = FColorARGB(1.0f, 0.0f, 0.0f, 0.0f);
+        symbol->image = TextRasterizer::getDefault()->rasterize(symbol->content, style);
+
+        std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
+        bool gpuContextLost = false;
+        getGPUAPI()->uploadSymbolToGPU(symbol, gpuResource, true, &gpuContextLost);
+
+        auto renderable = std::make_shared<RenderableBillboardSymbol>();
+        renderable->mapSymbolGroup = symbolGroup;
+        renderable->mapSymbol = symbol;
+        renderable->position31 = symbol->position31;
+        renderable->positionInWorld = glm::vec3(0.0f, 10.0f, 0.0f);
+        renderable->mRotate = glm::mat2(1.0f);
+        renderable->opacityFactor = 1.0f;
+        renderable->gpuResource = gpuResource;
+
+        AlphaChannelType alphaChannelType = AlphaChannelType::Invalid;
+        renderBillboardSymbol(renderable, alphaChannelType);
+
+        endSymbolsDrawing(gpuAPI);
+    }
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::prepareSymbolsDrawing()
+{
+    GL_PUSH_GROUP_MARKER(QLatin1String("symbols"));
+
+    GL_CHECK_PRESENT(glUseProgram);
+    GL_CHECK_PRESENT(glActiveTexture);
+    GL_CHECK_PRESENT(glPolygonOffset);
+
+    _lastUsedProgram = 0;
+
+    // Initially, configure for straight alpha channel type
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GL_CHECK_RESULT;
+
+    // Initially, configure depth buffer offset for vector symbols (against z-fighting)
+    glPolygonOffset(0.0f, -2.0f);
+    GL_CHECK_RESULT;
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    GL_CHECK_RESULT;
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::endSymbolsDrawing(OsmAnd::GPUAPI_OpenGL* api)
+{
+    // Unbind symbol texture from texture sampler
+    glActiveTexture(GL_TEXTURE0 + 0);
+    GL_CHECK_RESULT;
+    glBindTexture(GL_TEXTURE_2D, 0);
+    GL_CHECK_RESULT;
+
+    // Deactivate program
+    glUseProgram(0);
+    GL_CHECK_RESULT;
+
+    api->unuseVAO();
+
+    GL_POP_GROUP_MARKER;
 }

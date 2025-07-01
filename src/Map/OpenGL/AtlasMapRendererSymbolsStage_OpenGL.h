@@ -353,6 +353,9 @@ namespace OsmAnd
             const double tileSize,
             const int elevationDataSamplerIndex);
         void reportCommonParameters(QJsonObject& jsonObject, const RenderableSymbol& renderableSymbol);
+
+        void prepareSymbolsDrawing();
+        void endSymbolsDrawing(OsmAnd::GPUAPI_OpenGL* api);
     public:
         explicit AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer);
         ~AtlasMapRendererSymbolsStage_OpenGL() override;
@@ -362,6 +365,8 @@ namespace OsmAnd
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) override;
         bool render(IMapRenderer_Metrics::Metric_renderFrame* metric) override;
         bool release(bool gpuContextLost) override;
+
+        void drawDebugMetricSymbol(IMapRenderer_Metrics::Metric_renderFrame* metric_) override;
 
     friend class AtlasMapRendererSymbolsStageModel3D_OpenGL;
     };
