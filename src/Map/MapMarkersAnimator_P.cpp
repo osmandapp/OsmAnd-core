@@ -264,7 +264,7 @@ bool OsmAnd::MapMarkersAnimator_P::update(const float timePassed)
     while(itAnimations.hasNext())
     {
         auto item = itAnimations.next();
-        auto& key = item.key();
+        auto key = item.key();
         auto& animations = item.value();
 
         {
