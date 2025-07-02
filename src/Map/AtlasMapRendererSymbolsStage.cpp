@@ -97,6 +97,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
     else if(!forceUpdate && !needUpdatedSymbols)
         invalidateFrame();
 
+    isLongPrepareStage = forceUpdate || needUpdatedSymbols;
+
     ScreenQuadTree intersections;
     if (!obtainRenderableSymbols(renderableSymbols, intersections, metric, forceUpdate, needUpdatedSymbols))
     {

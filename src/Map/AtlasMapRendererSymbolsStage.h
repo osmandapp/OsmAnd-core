@@ -473,6 +473,8 @@ namespace OsmAnd
 
         std::shared_ptr<AtlasMapRendererSymbolsStageModel3D> _model3DSubstage;
         virtual void createSubstages() = 0;
+
+        bool isLongPrepareStage = false;
     public:
         AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer);
         virtual ~AtlasMapRendererSymbolsStage();
@@ -493,6 +495,8 @@ namespace OsmAnd
             const AreaI& screenArea,
             QList<IMapRenderer::MapSymbolInformation>& outMapSymbols,
             const bool strict = false) const;
+
+        virtual void drawDebugMetricSymbol(IMapRenderer_Metrics::Metric_renderFrame* metric_) = 0;
 
         friend class AtlasMapRendererSymbolsStageModel3D;
     };
