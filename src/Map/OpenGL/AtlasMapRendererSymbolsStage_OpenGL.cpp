@@ -25,6 +25,7 @@
 #include "GlmExtensions.h"
 #include <OsmAndCore/Map/MapObjectsSymbolsProvider.h>
 #include <OsmAndCore/Data/BinaryMapObject.h>
+#include <SkCanvas.h>
 
 OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer_)
     : AtlasMapRendererSymbolsStage(renderer_)
@@ -3471,31 +3472,54 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::drawDebugMetricSymbol(IMapRend
         auto symbolGroup = std::make_shared<MapSymbolsGroup>();
         auto symbol = std::make_shared<BillboardRasterMapSymbol>(symbolGroup);
 
-        symbol->content = QString::asprintf("Symbols  %fs  [ %d of %d labels ]",
+        symbol->content = QString::asprintf("Symbols  %.4fs  [ %d of %d labels ]",
             metric->elapsedTimeForSymbolsStage, totalSymbolsDrawn, totalSymbols);
 
         TextRasterizer::Style style;
-        style.size = 32;
+        style.size = 48;
 
-        symbol->position31 = currentState.target31;
-        symbol->modulationColor = FColorARGB(1.0f, 0.0f, 0.0f, 0.0f);
-        symbol->image = TextRasterizer::getDefault()->rasterize(symbol->content, style);
+        const auto textImage = TextRasterizer::getDefault()->rasterize(symbol->content, style);
+        
+        if (textImage)
+        {
+            const int bgWidth = textImage->width() + 20;
+            const int bgHeight = textImage->height() + 20;
 
-        std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
-        bool gpuContextLost = false;
-        getGPUAPI()->uploadSymbolToGPU(symbol, gpuResource, true, &gpuContextLost);
+            SkBitmap backgroundBitmap;
+            if (backgroundBitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(bgWidth, bgHeight)))
+            {
+                backgroundBitmap.eraseColor(SK_ColorTRANSPARENT);
+                
+                SkCanvas canvas(backgroundBitmap);
+                SkPaint paint;
+                paint.setStyle(SkPaint::kFill_Style);
+                paint.setColor(SkColorSetARGB(200, 0, 0, 0));
 
-        auto renderable = std::make_shared<RenderableBillboardSymbol>();
-        renderable->mapSymbolGroup = symbolGroup;
-        renderable->mapSymbol = symbol;
-        renderable->position31 = symbol->position31;
-        renderable->positionInWorld = glm::vec3(0.0f, 10.0f, 0.0f);
-        renderable->mRotate = glm::mat2(1.0f);
-        renderable->opacityFactor = 1.0f;
-        renderable->gpuResource = gpuResource;
+                SkRect rect = SkRect::MakeLTRB(2, 2, bgWidth - 2, bgHeight - 2);
+                canvas.drawRoundRect(rect, 8, 8, paint);
+                
+                style.setBackgroundImage(backgroundBitmap.asImage());
+            }
 
-        AlphaChannelType alphaChannelType = AlphaChannelType::Invalid;
-        renderBillboardSymbol(renderable, alphaChannelType);
+            symbol->position31 = currentState.target31;
+            symbol->image = TextRasterizer::getDefault()->rasterize(symbol->content, style);
+
+            std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
+            bool gpuContextLost = false;
+            getGPUAPI()->uploadSymbolToGPU(symbol, gpuResource, true, &gpuContextLost);
+
+            auto renderable = std::make_shared<RenderableBillboardSymbol>();
+            renderable->mapSymbolGroup = symbolGroup;
+            renderable->mapSymbol = symbol;
+            renderable->position31 = symbol->position31;
+            renderable->positionInWorld = glm::vec3(0.0f, 10.0f, 0.0f);
+            renderable->mRotate = glm::mat2(1.0f);
+            renderable->opacityFactor = 1.0f;
+            renderable->gpuResource = gpuResource;
+
+            AlphaChannelType alphaChannelType = AlphaChannelType::Invalid;
+            renderBillboardSymbol(renderable, alphaChannelType);
+        }
 
         endSymbolsDrawing(gpuAPI);
     }
