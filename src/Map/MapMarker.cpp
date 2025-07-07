@@ -193,9 +193,9 @@ bool OsmAnd::MapMarker::applyChanges()
     return _p->applyChanges();
 }
 
-std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker::createSymbolsGroup() const
+std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker::createSymbolsGroup(int subsection) const
 {
-    return _p->createSymbolsGroup();
+    return _p->createSymbolsGroup(subsection);
 }
 
 OsmAnd::MapMarker::SymbolsGroup::SymbolsGroup(const std::shared_ptr<MapMarker_P>& mapMarkerP_)

@@ -344,7 +344,7 @@ bool OsmAnd::MapMarker_P::applyChanges()
     return true;
 }
 
-std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGroup() const
+std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGroup(int subsection) const
 {
     QReadLocker scopedLocker(&_lock);
 
@@ -365,6 +365,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
     if (owner->pinIcon)
     {
         const std::shared_ptr<BillboardRasterMapSymbol> pinIconSymbol(new BillboardRasterMapSymbol(symbolsGroup));
+        pinIconSymbol->subsection = subsection;
         pinIconSymbol->order = order++;
         pinIconSymbol->image = owner->pinIcon;
         pinIconSymbol->size = PointI(owner->pinIcon->width(), owner->pinIcon->height());
@@ -438,6 +439,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
                     extraOffset.y = textImage->height() / 2 + owner->captionTopSpace;
             }
             const auto mapSymbolCaption = std::make_shared<BillboardRasterMapSymbol>(symbolsGroup);
+            mapSymbolCaption->subsection = subsection;
             mapSymbolCaption->isHidden = _isHidden;
             mapSymbolCaption->order = order - 2;
             mapSymbolCaption->image = textImage;
@@ -489,6 +491,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         if (order < o)
             order = o;
         
+        onMapSurfaceIconSymbol->subsection = subsection;
         onMapSurfaceIconSymbol->order = o;
         
         onMapSurfaceIconSymbol->image = onMapSurfaceIcon;
@@ -513,6 +516,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
     {
         // Set Model3DMapSymbol from model3D 
         const std::shared_ptr<Model3DMapSymbol> model3DMapSymbol(new Model3DMapSymbol(symbolsGroup));
+        model3DMapSymbol->subsection = subsection;
         model3DMapSymbol->order = order++;
         model3DMapSymbol->position31 = _position;
         VectorMapSymbol::generateModel3DPrimitive(*model3DMapSymbol, owner->model3D, owner->model3DCustomMaterialColors);
@@ -529,9 +533,9 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
     return symbolsGroup;
 }
 
-std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::createSymbolsGroup() const
+std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::createSymbolsGroup(int subsection) const
 {
-    const auto inflatedSymbolsGroup = inflateSymbolsGroup();
+    const auto inflatedSymbolsGroup = inflateSymbolsGroup(subsection);
     registerSymbolsGroup(inflatedSymbolsGroup);
     return inflatedSymbolsGroup;
 }

@@ -56,6 +56,7 @@ OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRende
     : AtlasMapRendererStage(renderer_)
 {
     _lastResumeSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
+    _previouslyInvalidated = false;
 }
 
 OsmAnd::AtlasMapRendererSymbolsStage::~AtlasMapRendererSymbolsStage() = default;
@@ -92,10 +93,20 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
     const bool needUpdatedSymbols = renderer->needUpdatedSymbols();
     const bool forceUpdate = !isLoadingActive && timeSinceLastUpdate >
         (updateSuspended && symbolsUpdateInterval > 0.0f ? symbolsUpdateInterval : UPDATE_INTERVAL_MS);
+    int frameInvalidates = renderer->frameInvalidates();
     if (isLoadingActive)
+    {
         _lastResumeSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
-    else if(!forceUpdate && !needUpdatedSymbols)
+        _previouslyInvalidated = false;
+    }
+    else if(!forceUpdate && !needUpdatedSymbols
+        && (frameInvalidates == 1 && !_previouslyInvalidated || frameInvalidates > 1))
+    {
         invalidateFrame();
+        _previouslyInvalidated = true;
+    }
+    else
+        _previouslyInvalidated = false;
 
     isLongPrepareStage = forceUpdate || needUpdatedSymbols;
 
@@ -272,9 +283,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         return result;
     }
 
-    // Do not suspend VectorLine objects
+    // Do not suspend all VectorLine objects and MapMarker objects of updated subsections
+    const auto subsections = renderer->getSubsectionsToUpdate();
 
-    // Acquire fresh VectorLine objects from publishedMapSymbolsByOrder
+    // Acquire selected objects from publishedMapSymbolsByOrder
     MapRenderer::PublishedMapSymbolsByOrder filteredPublishedMapSymbols;
     for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(publishedMapSymbolsByOrder)))
     {
@@ -286,7 +298,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             const auto& mapSymbolsGroup = mapSymbolsEntry.first;
             const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
 
-            if (std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup))
+            if (std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
+                || (std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
+                    && !mapSymbolsGroup->symbols.isEmpty()
+                    && subsections.contains(mapSymbolsGroup->symbols.first()->subsection)))
             {
                 acceptedMapSymbols[mapSymbolsGroup] = mapSymbolsFromGroup;
             }
@@ -295,47 +310,46 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             filteredPublishedMapSymbols[order] = acceptedMapSymbols;
     }
 
-    // Filter out old VectorLine objects from _lastAcceptedMapSymbolsByOrder
-    MapRenderer::PublishedMapSymbolsByOrder filteredLastAcceptedMapSymbols;
-    for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(_lastAcceptedMapSymbolsByOrder)))
+    // Filter out selected objects from _lastAcceptedMapSymbolsByOrder
+    for (auto& mapSymbols : _lastAcceptedMapSymbolsByOrder)
     {
-        const auto order = mapSymbolsByOrderEntry.key();
-        const auto& mapSymbols = mapSymbolsByOrderEntry.value();
-        MapRenderer::PublishedMapSymbolsByGroup acceptedMapSymbols;
-        for (const auto& mapSymbolsEntry : constOf(mapSymbols))
-        {
-            const auto& mapSymbolsGroup = mapSymbolsEntry.first;
-            const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
+        auto itSymbols = mapSymbols.begin();
+        while (itSymbols != mapSymbols.end()) {
+            const auto& mapSymbolsGroup = itSymbols->first;
 
-            if (!std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup))
+            if (std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
+                || (std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
+                    && !mapSymbolsGroup->symbols.isEmpty()
+                    && subsections.contains(mapSymbolsGroup->symbols.first()->subsection)))
             {
-                acceptedMapSymbols[mapSymbolsGroup] = mapSymbolsFromGroup;
+                itSymbols = mapSymbols.erase(itSymbols);
             }
+            else
+                itSymbols++;
         }
-        filteredLastAcceptedMapSymbols[order] = acceptedMapSymbols;
     }
 
-    // Append new VectorLine objects to filteredLastAcceptedMapSymbols
+    // Append selected objects to _lastAcceptedMapSymbolsByOrder
     for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(filteredPublishedMapSymbols)))
     {
         const auto order = mapSymbolsByOrderEntry.key();
         const auto& mapSymbols = mapSymbolsByOrderEntry.value();
 
-        auto itAcceptedMapSymbols = filteredLastAcceptedMapSymbols.find(order);
-        if (itAcceptedMapSymbols != filteredLastAcceptedMapSymbols.end())
+        auto itAcceptedMapSymbols = _lastAcceptedMapSymbolsByOrder.find(order);
+        if (itAcceptedMapSymbols != _lastAcceptedMapSymbolsByOrder.end())
         {
             auto& acceptedMapSymbols = *itAcceptedMapSymbols;
             acceptedMapSymbols.insert(mapSymbols.begin(), mapSymbols.end());
         }
         else
         {
-            filteredLastAcceptedMapSymbols[order] = mapSymbols;
+            _lastAcceptedMapSymbolsByOrder[order] = mapSymbols;
         }
     }
 
     // Otherwise, use last accepted map symbols by order
     result = obtainRenderableSymbols(
-        filteredLastAcceptedMapSymbols,
+        _lastAcceptedMapSymbolsByOrder,
         false,
         outRenderableSymbols,
         outIntersections,
@@ -526,22 +540,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 const auto& mapSymbolsGroup = mapSymbolsEntry.first;
                 const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
 
-                const bool skipNotDenseSymbolGroup = preRenderDenseSymbolsDepth
-                    && !std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
-                    && !std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup);
+                const bool isFreshlyPublishedGroup =
+                    std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
+                    || std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup);
 
-                if (skipNotDenseSymbolGroup)
+                if (preRenderDenseSymbolsDepth && !isFreshlyPublishedGroup)
                     continue;
 
-                const auto freshlyPublishedGroup =
-                    std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup);
-
-                const bool canSkip = !applyFiltering && !freshlyPublishedGroup && !preRenderDenseSymbolsDepth;
-
-                const auto groupWithoutFiltering =
-                    std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup);
-
-                const bool withFiltering = applyFiltering && !groupWithoutFiltering;
+                const bool canSkip = !applyFiltering && !isFreshlyPublishedGroup && !preRenderDenseSymbolsDepth;
 
                 // Debug: showTooShortOnPathSymbolsRenderablesPaths
                 if (Q_UNLIKELY(debugSettings->showTooShortOnPathSymbolsRenderablesPaths) &&

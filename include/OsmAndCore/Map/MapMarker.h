@@ -156,7 +156,7 @@ namespace OsmAnd
 
         bool hasUnappliedChanges() const;
 
-        std::shared_ptr<SymbolsGroup> createSymbolsGroup() const;
+        std::shared_ptr<SymbolsGroup> createSymbolsGroup(int subsection) const;
 
     friend class OsmAnd::MapMarkerBuilder;
     friend class OsmAnd::MapMarkerBuilder_P;

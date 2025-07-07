@@ -104,6 +104,9 @@ namespace OsmAnd
         virtual void setSymbolsUpdateInterval(int interval) = 0;
         virtual void setUpdateSymbols(bool update) = 0;
         virtual bool needUpdatedSymbols() = 0;
+        virtual void updateSubsection(int subsection) = 0;
+        virtual void refreshSubsections(const QSet<int>& subsections) = 0;
+        virtual QSet<int> getSubsectionsToUpdate() = 0;
         virtual void setSymbolsLoading(bool active) = 0;
         virtual bool isSymbolsLoadingActive() = 0;
 
