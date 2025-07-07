@@ -27,6 +27,8 @@
 #include "SkiaUtilities.h"
 #include "Logging.h"
 
+#define MIN_SUBSECTION_TO_REDRAW_SEPARATELY 1000
+
 //#define OSMAND_LOG_RESOURCE_STATE_CHANGE 1
 #ifndef OSMAND_LOG_RESOURCE_STATE_CHANGE
 #   define OSMAND_LOG_RESOURCE_STATE_CHANGE 0
@@ -2064,6 +2066,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
         std::chrono::high_resolution_clock::now() - _lastSymbolsUpdateTime).count() * 1000.0f;
     const bool symbolsCanBeUpdated = timeSinceLastUpdate > 500.0f;
     const bool shouldUpdateSymbols = _postponeSymbolsUpdate && symbolsCanBeUpdated;
+    QSet<int> subsections;
 
     // Use aggressive cache cleaning: remove all resources that are not needed
     for (const auto& resourcesCollection : constOf(resourcesCollections))
@@ -2152,6 +2155,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
         if (const auto tiledResourcesCollection = std::dynamic_pointer_cast<IMapRendererTiledResourcesCollection>(resourcesCollection))
         {
             const auto tiledProvider = std::dynamic_pointer_cast<IMapTiledDataProvider>(dataProvider);
+            const auto symbolsProvider = std::dynamic_pointer_cast<IMapTiledSymbolsProvider>(dataProvider);
             const auto resourcesType = resourcesCollection->getType();
             const bool checkVisible = resourcesType != MapRendererResourceType::ElevationData;
 
@@ -2295,6 +2299,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                 const bool isLoading = tiledResourcesCollection->isLoading();
                 const bool isLoadingOrWaiting = isLoading || shouldUpdateSymbols;
                 bool updateSymbolResources = isLoadingOrWaiting;
+                int subsection = 0;
                 if (resourcesType == MapRendererResourceType::Symbols)
                 {
                     if (activeZoom != currentZoom)
@@ -2327,7 +2332,15 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                         if (updateSymbolResources)
                         {
                             if (isLoading)
+                            {
                                 tiledResourcesCollection->setLoadingState(false);
+                                if (symbolsProvider)
+                                {
+                                    subsection = renderer->getSymbolsProviderSubsection(symbolsProvider);
+                                    if (subsection >= MIN_SUBSECTION_TO_REDRAW_SEPARATELY)
+                                        subsections.insert(subsection);
+                                }
+                            }                            
                             shouldRedrawSymbols = true;
                         }
                         else
@@ -2373,8 +2386,11 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     {
                         const auto neededZoomForTile = extraZoom != neededZoom
                             && extraDetailedTiles.contains(activeTileId) ? extraZoom : neededZoom;
-                        if (_clearSymbolsAfterUpdate)
+                        if (_clearSymbolsAfterUpdate
+                            || (shouldRedrawSymbols && subsection >= MIN_SUBSECTION_TO_REDRAW_SEPARATELY))
+                        {
                             continue;
+                        }
                         for (int zoomShift = 1; zoomShift <= maxMissingDataUnderZoomShift; zoomShift++)
                         {
                             const auto underscaledZoom = static_cast<int>(neededZoomForTile) + zoomShift;
@@ -2536,6 +2552,9 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                 });
         }
     }
+
+    if (!subsections.isEmpty())
+        renderer->refreshSubsections(subsections);
 
     if (isLoadingSymbols)
     {

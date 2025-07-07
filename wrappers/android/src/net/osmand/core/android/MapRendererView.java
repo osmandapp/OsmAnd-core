@@ -887,6 +887,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.removeAllSymbolsProviders();
     }
 
+    public final void updateSubsection(int subsectionIndex) {
+        NativeCore.checkIfLoaded();
+
+        _mapRenderer.updateSubsection(subsectionIndex);
+    }
+
     public final boolean setSymbolSubsectionConfiguration(
             int subsectionIndex,
             SymbolSubsectionConfiguration symbolSubsectionConfiguration) {

@@ -78,7 +78,7 @@ namespace OsmAnd
 
         bool applyChanges();
 
-        std::shared_ptr<MapMarker::SymbolsGroup> inflateSymbolsGroup() const;
+        std::shared_ptr<MapMarker::SymbolsGroup> inflateSymbolsGroup(int subsection) const;
         mutable QReadWriteLock _symbolsGroupsRegistryLock;
         mutable QHash< MapSymbolsGroup*, std::weak_ptr< MapSymbolsGroup > > _symbolsGroupsRegistry;
         void registerSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const;
@@ -130,7 +130,7 @@ namespace OsmAnd
 
         bool hasUnappliedChanges() const;
         
-        std::shared_ptr<MapMarker::SymbolsGroup> createSymbolsGroup() const;
+        std::shared_ptr<MapMarker::SymbolsGroup> createSymbolsGroup(int subsection) const;
 
     friend class OsmAnd::MapMarker;
     friend class OsmAnd::MapMarkersCollection;

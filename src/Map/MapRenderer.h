@@ -28,6 +28,7 @@
 #include "MapRendererResourcesManager.h"
 #include "MapSymbolsGroup.h"
 #include "Stopwatch.h"
+#include "MapMarkersCollection.h"
 
 namespace OsmAnd
 {
@@ -112,6 +113,8 @@ namespace OsmAnd
         QAtomicInt _resourcesGpuSyncRequestsCounter;
 
         // Symbols-related:
+        QMutex _subsectionUpdateLock;
+        QSet<int> _subsectionsToUpdate;
         mutable QReadWriteLock _publishedMapSymbolsByOrderLock;
         PublishedMapSymbolsByOrder _publishedMapSymbolsByOrder;
         QHash< std::shared_ptr<const MapSymbolsGroup>, SmartPOD<unsigned int, 0> > _publishedMapSymbolsGroups;
@@ -216,6 +219,7 @@ namespace OsmAnd
         bool hasGpuWorkerThread() const;
         bool isInGpuWorkerThread() const;
         bool isInRenderThread() const;
+        int frameInvalidates() const;
 
         // Configuration-related:
         const std::shared_ptr<const MapRendererConfiguration>& currentConfiguration;
@@ -462,6 +466,9 @@ namespace OsmAnd
         virtual void setSymbolsUpdateInterval(int interval) Q_DECL_OVERRIDE;
         virtual void setUpdateSymbols(bool update) Q_DECL_OVERRIDE;
         virtual bool needUpdatedSymbols() Q_DECL_OVERRIDE;
+        virtual void updateSubsection(int subsection) Q_DECL_OVERRIDE;
+        virtual void refreshSubsections(const QSet<int>& subsections) Q_DECL_OVERRIDE;
+        virtual QSet<int> getSubsectionsToUpdate() Q_DECL_OVERRIDE;
         virtual void setSymbolsLoading(bool active) Q_DECL_OVERRIDE;
         virtual bool isSymbolsLoadingActive() Q_DECL_OVERRIDE;
 

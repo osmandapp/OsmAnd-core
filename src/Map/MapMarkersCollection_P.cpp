@@ -68,7 +68,7 @@ bool OsmAnd::MapMarkersCollection_P::obtainData(
         return false;
     auto& marker = *citMarker;
 
-    outData.reset(new IMapKeyedSymbolsProvider::Data(request.key, marker->createSymbolsGroup()));
+    outData.reset(new IMapKeyedSymbolsProvider::Data(request.key, marker->createSymbolsGroup(owner->subsection)));
 
     return true;
 }

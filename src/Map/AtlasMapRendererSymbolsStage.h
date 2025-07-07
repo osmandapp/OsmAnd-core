@@ -160,7 +160,7 @@ namespace OsmAnd
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
         mutable MapRenderer::PublishedMapSymbolsByOrder _lastAcceptedMapSymbolsByOrder;
         std::chrono::high_resolution_clock::time_point _lastResumeSymbolsUpdateTime;
-        bool _previouslySuspended;
+        bool _previouslyInvalidated;
 
         mutable QReadWriteLock _lastPreparedIntersectionsLock;
         ScreenQuadTree _lastPreparedIntersections;
