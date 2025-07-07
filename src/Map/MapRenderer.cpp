@@ -1642,6 +1642,9 @@ bool OsmAnd::MapRenderer::addSymbolsProvider(
         _requestedState.tiledSymbolsSubsections.insert(provider, subsectionIndex);
     }
 
+    if (auto amenitySymbolsProvider = std::dynamic_pointer_cast<AmenitySymbolsProvider>(provider))
+        amenitySymbolsProvider->subsection = subsectionIndex;
+
     notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
 
     return true;

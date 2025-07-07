@@ -29,6 +29,7 @@
 #include "MapSymbolsGroup.h"
 #include "Stopwatch.h"
 #include "MapMarkersCollection.h"
+#include "AmenitySymbolsProvider.h"
 
 namespace OsmAnd
 {

@@ -299,7 +299,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
 
             if (std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
-                || (std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
+                || ((std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
+                    || std::dynamic_pointer_cast<const AmenitySymbolsProvider::AmenitySymbolsGroup>(mapSymbolsGroup))
                     && !mapSymbolsGroup->symbols.isEmpty()
                     && subsections.contains(mapSymbolsGroup->symbols.first()->subsection)))
             {
@@ -318,7 +319,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             const auto& mapSymbolsGroup = itSymbols->first;
 
             if (std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
-                || (std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
+                || ((std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
+                    || std::dynamic_pointer_cast<const AmenitySymbolsProvider::AmenitySymbolsGroup>(mapSymbolsGroup))
                     && !mapSymbolsGroup->symbols.isEmpty()
                     && subsections.contains(mapSymbolsGroup->symbols.first()->subsection)))
             {
@@ -547,7 +549,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 if (preRenderDenseSymbolsDepth && !isFreshlyPublishedGroup)
                     continue;
 
-                const bool canSkip = !applyFiltering && !isFreshlyPublishedGroup && !preRenderDenseSymbolsDepth;
+                const bool canSkip = !applyFiltering && !isFreshlyPublishedGroup && !preRenderDenseSymbolsDepth
+                    && !std::dynamic_pointer_cast<const AmenitySymbolsProvider::AmenitySymbolsGroup>(mapSymbolsGroup);
 
                 // Debug: showTooShortOnPathSymbolsRenderablesPaths
                 if (Q_UNLIKELY(debugSettings->showTooShortOnPathSymbolsRenderablesPaths) &&
