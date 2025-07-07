@@ -1639,8 +1639,8 @@ bool OsmAnd::MapRenderer::addSymbolsProvider(
         QSet< std::shared_ptr<IMapTiledSymbolsProvider> > providers;
         providers.insert(provider);
         _requestedState.tiledSymbolsProviders[subsectionIndex] = providers;
-        _requestedState.tiledSymbolsSubsections.insert(provider, subsectionIndex);
     }
+    _requestedState.tiledSymbolsSubsections.insert(provider, subsectionIndex);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
 
@@ -1692,8 +1692,8 @@ bool OsmAnd::MapRenderer::addSymbolsProvider(
         QSet< std::shared_ptr<IMapKeyedSymbolsProvider> > providers;
         providers.insert(provider);
         _requestedState.keyedSymbolsProviders[subsectionIndex] = providers;
-        _requestedState.keyedSymbolsSubsections.insert(provider, subsectionIndex);
     }
+    _requestedState.keyedSymbolsSubsections.insert(provider, subsectionIndex);
 
     if (auto mapMarkersCollection = std::dynamic_pointer_cast<MapMarkersCollection>(provider))
         mapMarkersCollection->subsection = subsectionIndex;
