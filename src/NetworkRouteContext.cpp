@@ -100,6 +100,11 @@ void OsmAnd::NetworkRouteContext::setNetworkRouteKeyFilter(NetworkRouteKey & rou
     filter.keyFilter.insert(routeKey);
 }
 
+void OsmAnd::NetworkRouteContext::setNetworkFilter(NetworkRouteSelectorFilter & selectorFilter)
+{
+    filter = selectorFilter;
+}
+
 OsmAnd::NetworkRouteSelectorFilter::NetworkRouteSelectorFilter()
 {
 }

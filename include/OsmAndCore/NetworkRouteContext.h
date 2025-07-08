@@ -230,6 +230,7 @@ namespace OsmAnd
         NetworkRouteSelectorFilter filter;
         
         void setNetworkRouteKeyFilter(NetworkRouteKey & routeKey);
+        void setNetworkFilter(NetworkRouteSelectorFilter & selectorFilter);
         QHash<NetworkRouteKey, QList<std::shared_ptr<NetworkRouteSegment>>> loadRouteSegmentsBbox(AreaI area, NetworkRouteKey * rKey);
         int64_t getTileId(int32_t x31, int32_t y31) const;
         int64_t getTileId(int32_t x31, int32_t y31, int shiftR) const;
