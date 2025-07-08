@@ -67,6 +67,8 @@ bool OsmAnd::IconsProvider::obtainResourceByPath(const QString& path, QByteArray
 
 bool OsmAnd::IconsProvider::containsResource(const QString& name, bool colorable) const
 {
+    QMutexLocker scopedLocker(&_mutex);
+
     const auto resourcePath = makeIconPath(name, colorable);
     auto citName = _namesCache.constFind(resourcePath);
     if (citName == _namesCache.cend())
