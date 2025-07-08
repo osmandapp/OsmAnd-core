@@ -19,6 +19,7 @@ namespace OsmAnd
 
     private:
         mutable QMutex _mutex;
+        mutable QHash< QString, QString > _namesCache;
         mutable QHash< QString, sk_sp<const SkImage> > _cache;
 
         bool obtainIcon(const QString& name, const float scale, const bool colorable, sk_sp<const SkImage>& outIcon) const;
