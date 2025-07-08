@@ -71,6 +71,7 @@ namespace OsmAnd
 
     public:
         static const OsmRouteType* getByTag(const QString& tag);
+        static const OsmRouteType* getByRenderingPropertyAttr(const QString& renderingPropertyAttr);
 
         inline bool operator == (const OsmRouteType& other) const
         {
@@ -106,6 +107,7 @@ namespace OsmAnd
 
         static int getRouteQuantity(const QHash<QString, QString>& tags, const QString& tagPrefix);
         QString getTag() const;
+        QMap<QString, QString> tagsMap() const;
         QMap<QString, QString> tagsToGpx() const;
         static std::shared_ptr<NetworkRouteKey> fromGpx(const QMap<QString, QString> &networkRouteKeyTags);
         QString getKeyFromTag(const QString& tag) const;
