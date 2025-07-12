@@ -159,8 +159,6 @@ namespace OsmAnd
             MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
         mutable MapRenderer::PublishedMapSymbolsByOrder _lastAcceptedMapSymbolsByOrder;
-        QHash<int, int> _symbolCounts;
-        double _symbolZoomScale;
         std::chrono::high_resolution_clock::time_point _lastResumeSymbolsUpdateTime;
         bool _previouslyInvalidated;
 
