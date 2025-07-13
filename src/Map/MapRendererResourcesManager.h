@@ -262,6 +262,7 @@ namespace OsmAnd
             std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU,
             const std::shared_ptr<MapRendererBaseResource>& resource = nullptr);
         bool uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
+        void finishSymbolsUploadToGPU();
         bool adjustImageToConfiguration(
             const sk_sp<const SkImage>& input,
             sk_sp<SkImage>& output,

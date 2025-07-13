@@ -312,6 +312,8 @@ namespace OsmAnd
         GLint _maxVaryingFloats;
         GLint _maxVaryingVectors;
         GLint _maxVertexAttribs;
+        
+        volatile bool _pendingWaitUntilUploadIsComplete;
 
         bool releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU) override;
 
@@ -445,7 +447,7 @@ namespace OsmAnd
             bool waitForGPU,
             volatile bool* gpuContextLost) override;
 
-        void waitUntilUploadIsComplete(volatile bool* gpuContextLost) override;
+        void waitUntilUploadIsComplete(volatile bool* gpuContextLost, bool pending = false, bool force = true) override;
 
         virtual void pushDebugGroupMarker(const QString& title) = 0;
         virtual void popDebugGroupMarker() = 0;

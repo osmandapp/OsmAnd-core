@@ -332,7 +332,7 @@ namespace OsmAnd
             bool waitForGPU,
             volatile bool* gpuContextLost) = 0;
 
-        virtual void waitUntilUploadIsComplete(volatile bool* gpuContextLost) = 0;
+        virtual void waitUntilUploadIsComplete(volatile bool* gpuContextLost, bool pending = false, bool force = true) = 0;
 
         virtual AlphaChannelType getGpuResourceAlphaChannelType(const std::shared_ptr<const ResourceInGPU> gpuResource);
         float getGpuResourceTexelSize(const std::shared_ptr<const ResourceInGPU> gpuResource);

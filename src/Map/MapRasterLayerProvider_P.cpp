@@ -1,7 +1,7 @@
 #include "MapRasterLayerProvider_P.h"
 #include "MapRasterLayerProvider.h"
 
-//#define OSMAND_PERFORMANCE_METRICS 2
+//#define OSMAND_PERFORMANCE_METRICS 1
 #if !defined(OSMAND_PERFORMANCE_METRICS)
 #   define OSMAND_PERFORMANCE_METRICS 0
 #endif // !defined(OSMAND_PERFORMANCE_METRICS)

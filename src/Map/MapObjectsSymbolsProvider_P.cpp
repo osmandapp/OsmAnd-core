@@ -18,6 +18,12 @@
 #include "ObfMapObject.h"
 #include "ObfMapSectionInfo.h"
 #include "Utilities.h"
+#include "Stopwatch.h"
+
+//#define OSMAND_PERFORMANCE_METRICS 1
+#if !defined(OSMAND_PERFORMANCE_METRICS)
+#   define OSMAND_PERFORMANCE_METRICS 0
+#endif // !defined(OSMAND_PERFORMANCE_METRICS)
 
 #define MAX_PATHS_TO_ATTACH 20
 #define MAX_GAP_BETWEEN_PATHS 45
@@ -49,6 +55,14 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
     assert(owner->isMetaTiled() || !request.combineTilesData);
 
+    const Stopwatch totalTimeStopwatch(
+#if OSMAND_PERFORMANCE_METRICS
+        true
+#else
+        pOutMetric != nullptr
+#endif // OSMAND_PERFORMANCE_METRICS
+        );
+    
     QVector<TileId> tilesIds;
     if (request.combineTilesData)
         tilesIds = Utilities::getAllMetaTileIds(request.tileId);
@@ -160,6 +174,9 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         rasterizationFilter,
         nullptr);
 
+    int spriteSymbols = 0;
+    int onPathSymbols = 0;
+
     // Convert results
     auto& mapSymbolIntersectionClassesRegistry = MapSymbolIntersectionClassesRegistry::globalInstance();
     QList< std::shared_ptr<MapSymbolsGroup> > symbolsGroups;
@@ -208,6 +225,8 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             std::shared_ptr<MapSymbol> symbol;
             if (const auto rasterizedSpriteSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedSpriteSymbol>(rasterizedSymbol))
             {
+                spriteSymbols++;
+                
                 if (!hasAtLeastOneAlongPathBillboard && rasterizedSpriteSymbol->drawAlongPath)
                     hasAtLeastOneAlongPathBillboard = true;
                 if (!hasAtLeastOneSimpleBillboard && !rasterizedSpriteSymbol->drawAlongPath)
@@ -247,6 +266,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             }
             else if (const auto rasterizedOnPathSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedOnPathSymbol>(rasterizedSymbol))
             {
+                onPathSymbols++;
                 hasAtLeastOneOnPath = true;
 
                 const auto shareablePath31 = std::make_shared< QVector<PointI> >(path31);
@@ -499,6 +519,22 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         primitivesTile,
         primitivesTile ? new RetainableCacheMetadata(primitivesTile->retainableCacheMetadata) : nullptr));
 
+#if OSMAND_PERFORMANCE_METRICS
+#if OSMAND_PERFORMANCE_METRICS <= 1
+    auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
+    LogPrintf(LogSeverityLevel::Info,
+        ">>>> %ld: %d spriteSymbols, %d onPathSymbols obtained from %dx%d@%d in %fs",
+        millis,
+        spriteSymbols,
+        onPathSymbols,
+        request.tileId.x,
+        request.tileId.y,
+        request.zoom,
+        totalTimeStopwatch.elapsed());
+#endif // OSMAND_PERFORMANCE_METRICS <= 1
+#endif // OSMAND_PERFORMANCE_METRICS
+    
     return true;
 }
 

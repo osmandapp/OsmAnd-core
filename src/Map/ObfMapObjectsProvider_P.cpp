@@ -1,7 +1,7 @@
 #include "ObfMapObjectsProvider_P.h"
 #include "ObfMapObjectsProvider.h"
 
-//#define OSMAND_PERFORMANCE_METRICS 2
+//#define OSMAND_PERFORMANCE_METRICS 1
 #if !defined(OSMAND_PERFORMANCE_METRICS)
 #   define OSMAND_PERFORMANCE_METRICS 0
 #endif // !defined(OSMAND_PERFORMANCE_METRICS)
@@ -794,8 +794,11 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
 
 #if OSMAND_PERFORMANCE_METRICS
 #if OSMAND_PERFORMANCE_METRICS <= 1
+    auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
     LogPrintf(LogSeverityLevel::Info,
-        "%d map objects (%d unique, %d shared) read from %dx%d@%d in %fs",
+        ">>>> %ld: %d map objects (%d unique, %d shared) read from %dx%d@%d in %fs",
+        millis,
         allMapObjects.size(),
         allMapObjects.size() - sharedMapObjectsCount,
         sharedMapObjectsCount,

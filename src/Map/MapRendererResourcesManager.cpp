@@ -234,6 +234,11 @@ bool OsmAnd::MapRendererResourcesManager::uploadSymbolToGPU(
         &(renderer->gpuContextIsLost));
 }
 
+void OsmAnd::MapRendererResourcesManager::finishSymbolsUploadToGPU()
+{
+    renderer->gpuAPI->waitUntilUploadIsComplete(&(renderer->gpuContextIsLost), false, false);
+}
+
 bool OsmAnd::MapRendererResourcesManager::adjustImageToConfiguration(
     const sk_sp<const SkImage>& input,
     sk_sp<SkImage>& output,
@@ -1843,6 +1848,8 @@ unsigned int OsmAnd::MapRendererResourcesManager::uploadResources(
         }
     }
 
+    finishSymbolsUploadToGPU();
+    
     // If any resource failed to upload, report that more ready resources are available
     if (atLeastOneUploadFailed)
         moreThanLimitAvailable = true;

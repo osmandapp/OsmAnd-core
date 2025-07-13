@@ -1447,6 +1447,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             queryController,
             metric);
 
+        const auto prevSize = group->symbols.size();
+        
         collectSymbolsFromPrimitives(
             context,
             primitivisedObjects,
@@ -1457,66 +1459,63 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             group->symbols,
             queryController,
             metric);
-
+        
         // Filter out overlapping labels of points by placing them on the coarse grid
-        if (tileId.x >= 0 && tileId.y >= 0 && zoom < ZoomLevel18 && group->symbols.size() > 0
+        if (tileId.x >= 0 && tileId.y >= 0 && group->symbols.size() == 1 && prevSize == 0
             && primitivisedObjects->zoom >= MinZoomLevel && primitivisedObjects->zoom <= MaxZoomLevel)
         {
-            double k = 1.0;
-            if (const auto& textSymbol = std::dynamic_pointer_cast<const TextSymbol>(group->symbols.first()))
-                k = 2.0;
-                
-            const auto symbols = group->symbols;
-            const auto& symbol = group->symbols.first();
-            const auto minCell = -GRID_CELLS_PER_TILESIDE;
-            const auto maxCell = GRID_CELLS_PER_TILESIDE * 2.0;
-            const auto zoomShift = MaxZoomLevel - primitivisedObjects->zoom;
-            PointD filterCoords(symbol->location31);
-            filterCoords -= PointD(static_cast<double>(tileId.x << zoomShift),
-                                   static_cast<double>(tileId.y << zoomShift));
-            filterCoords *= (GRID_CELLS_PER_TILESIDE / k) / static_cast<double>(1u << zoomShift);
-            filterCoords.x = filterCoords.x > minCell && filterCoords.x < maxCell ? filterCoords.x : minCell;
-            filterCoords.y = filterCoords.y > minCell && filterCoords.y < maxCell ? filterCoords.y : minCell;
-            const auto gridCode = static_cast<int>(std::floor(filterCoords.y)) * 10000
-            + static_cast<int>(std::floor(filterCoords.x));
-            bool shouldInsert = true;
-            const auto& citGroup = tileGrid.constFind(gridCode);
-            if (citGroup != tileGrid.cend())
+            if (const auto& textSymbol = std::dynamic_pointer_cast<const TextSymbol>(group->symbols.back()))
             {
-                const auto& groupOnGrid = *citGroup;
-                shouldInsert = symbol->order < groupOnGrid->symbolsGroup->symbols.first()->order;
-                if (pSharedSymbolGroups)
+                const auto minCell = -GRID_CELLS_PER_TILESIDE;
+                const auto maxCell = GRID_CELLS_PER_TILESIDE * 2.0;
+                const auto zoomShift = MaxZoomLevel - primitivisedObjects->zoom;
+                PointD filterCoords(textSymbol->location31);
+                filterCoords -= PointD(
+                                       static_cast<double>(tileId.x << zoomShift), static_cast<double>(tileId.y << zoomShift));
+                filterCoords *= GRID_CELLS_PER_TILESIDE / static_cast<double>(1u << zoomShift);
+                filterCoords.x = filterCoords.x > minCell && filterCoords.x < maxCell ? filterCoords.x : minCell;
+                filterCoords.y = filterCoords.y > minCell && filterCoords.y < maxCell ? filterCoords.y : minCell;
+                const auto gridCode = static_cast<int>(std::floor(filterCoords.y)) * 10000
+                + static_cast<int>(std::floor(filterCoords.x));
+                bool shouldInsert = true;
+                const auto& citGroup = tileGrid.constFind(gridCode);
+                if (citGroup != tileGrid.cend())
                 {
-                    group->symbols.clear();
-                    if (shouldInsert && groupOnGrid->canBeShared)
-                        pSharedSymbolGroups->fulfilPromiseAndReference(groupOnGrid->sharingKey, group);
-                    if (!shouldInsert && canBeShared)
-                        pSharedSymbolGroups->fulfilPromiseAndReference(sharingKey, group);
+                    const auto& groupOnGrid = *citGroup;
+                    shouldInsert = textSymbol->order < groupOnGrid->symbolsGroup->symbols.back()->order;
+                    if (pSharedSymbolGroups)
+                    {
+                        group->symbols.clear();
+                        if (shouldInsert && groupOnGrid->canBeShared)
+                            pSharedSymbolGroups->fulfilPromiseAndReference(groupOnGrid->sharingKey, group);
+                        if (!shouldInsert && canBeShared)
+                            pSharedSymbolGroups->fulfilPromiseAndReference(sharingKey, group);
+                    }
                 }
+                if (shouldInsert)
+                {
+                    const std::shared_ptr<SymbolsGroup> preGroup(new SymbolsGroup(primitivesGroup->sourceObject));
+                    preGroup->symbols.push_back(qMove(textSymbol));
+                    const std::shared_ptr<GridSymbolsGroup> groupOnGrid(
+                                                                        new GridSymbolsGroup(preGroup, canBeShared, sharingKey));
+                    tileGrid.insert(gridCode, qMove(groupOnGrid));
+                }
+                group->symbols.clear();
+                canBeShared = false;
             }
-            if (shouldInsert)
-            {
-                const std::shared_ptr<SymbolsGroup> preGroup(new SymbolsGroup(primitivesGroup->sourceObject));
-                preGroup->symbols << symbols;
-                const std::shared_ptr<GridSymbolsGroup> groupOnGrid(
-                                                                    new GridSymbolsGroup(preGroup, canBeShared, sharingKey));
-                tileGrid.insert(gridCode, qMove(groupOnGrid));
-            }
-            group->symbols.clear();
-            canBeShared = false;
         }
-
+        
         // Update metric
         if (metric)
         {
             metric->elapsedTimeForSymbolsGroupsProcessing += symbolsGroupsProcessingStopwatch.elapsed();
             metric->symbolsGroupsProcessed++;
         }
-
+        
         // Add this group to shared cache
         if (pSharedSymbolGroups && canBeShared)
             pSharedSymbolGroups->fulfilPromiseAndReference(sharingKey, group);
-
+        
         // Empty groups are also inserted, to indicate that they are empty
         assert(!primitivisedObjects->symbolsGroups.contains(group->sourceObject));
         primitivisedObjects->symbolsGroups.insert(group->sourceObject, group);
