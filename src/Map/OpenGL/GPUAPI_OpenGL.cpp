@@ -60,7 +60,6 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , _maxVaryingFloats(32)
     , _maxVaryingVectors(15)
     , _maxVertexAttribs(16)
-    , _pendingWaitUntilUploadIsComplete(false)
     , glVersion(_glVersion)
     , glslVersion(_glslVersion)
     , extensions(_extensions)
@@ -1339,7 +1338,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
         alphaChannelType);
 
     if (waitForGPU)
-        waitUntilUploadIsComplete(gpuContextLost, true, false);
+        waitUntilUploadIsComplete(gpuContextLost);
 
     resourceInGPU = textureInGPU;
 
@@ -1455,24 +1454,10 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
     return true;
 }
 
-void OsmAnd::GPUAPI_OpenGL::waitUntilUploadIsComplete(volatile bool* gpuContextLost, bool pending/* = false*/, bool force/* = true*/)
+void OsmAnd::GPUAPI_OpenGL::waitUntilUploadIsComplete(volatile bool* gpuContextLost)
 {
     if (*gpuContextLost)
         return;
-    
-    if (!force)
-    {
-        if (pending)
-        {
-            _pendingWaitUntilUploadIsComplete = true;
-            return;
-        }
-        else if (!_pendingWaitUntilUploadIsComplete)
-        {
-            return;
-        }
-    }
-    _pendingWaitUntilUploadIsComplete = false;
 
     const auto start = std::chrono::high_resolution_clock::now();
 

@@ -693,7 +693,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         {
             // Prepare data and upload to GPU
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
-            ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU);
+            ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU, false);
 
             uploaded++;
             
@@ -740,7 +740,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         {
             // Prepare data and upload to GPU
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
-            ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU);
+            ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU, false);
             
             uploaded++;
 
@@ -760,6 +760,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         if (anyUploadFailed)
             break;
     }
+
+    resourcesManager->finishSymbolsUploadToGPU();
 
     // If at least one symbol failed to upload, consider entire tile as failed to upload,
     // and unload its partial GPU resources

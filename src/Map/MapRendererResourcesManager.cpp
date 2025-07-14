@@ -225,18 +225,20 @@ bool OsmAnd::MapRendererResourcesManager::uploadTiledDataToGPU(
 
 bool OsmAnd::MapRendererResourcesManager::uploadSymbolToGPU(
     const std::shared_ptr<const MapSymbol>& mapSymbol,
-    std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
+    std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU,
+    bool waitForGPU /* = true */)
 {
     return renderer->gpuAPI->uploadSymbolToGPU(
         mapSymbol,
         outResourceInGPU,
-        renderer->setupOptions.gpuWorkerThreadEnabled,
+        waitForGPU && renderer->setupOptions.gpuWorkerThreadEnabled,
         &(renderer->gpuContextIsLost));
 }
 
 void OsmAnd::MapRendererResourcesManager::finishSymbolsUploadToGPU()
 {
-    renderer->gpuAPI->waitUntilUploadIsComplete(&(renderer->gpuContextIsLost), false, false);
+    if (renderer->setupOptions.gpuWorkerThreadEnabled)
+        renderer->gpuAPI->waitUntilUploadIsComplete(&(renderer->gpuContextIsLost));
 }
 
 bool OsmAnd::MapRendererResourcesManager::adjustImageToConfiguration(
@@ -1848,8 +1850,6 @@ unsigned int OsmAnd::MapRendererResourcesManager::uploadResources(
         }
     }
 
-    finishSymbolsUploadToGPU();
-    
     // If any resource failed to upload, report that more ready resources are available
     if (atLeastOneUploadFailed)
         moreThanLimitAvailable = true;

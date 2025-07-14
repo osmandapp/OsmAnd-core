@@ -1448,7 +1448,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             metric);
 
         const auto prevSize = group->symbols.size();
-        
+
         collectSymbolsFromPrimitives(
             context,
             primitivisedObjects,
@@ -1459,7 +1459,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             group->symbols,
             queryController,
             metric);
-        
+
         // Filter out overlapping labels of points by placing them on the coarse grid
         if (tileId.x >= 0 && tileId.y >= 0 && group->symbols.size() == 1 && prevSize == 0
             && primitivisedObjects->zoom >= MinZoomLevel && primitivisedObjects->zoom <= MaxZoomLevel)
@@ -1471,12 +1471,12 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
                 const auto zoomShift = MaxZoomLevel - primitivisedObjects->zoom;
                 PointD filterCoords(textSymbol->location31);
                 filterCoords -= PointD(
-                                       static_cast<double>(tileId.x << zoomShift), static_cast<double>(tileId.y << zoomShift));
+                    static_cast<double>(tileId.x << zoomShift), static_cast<double>(tileId.y << zoomShift));
                 filterCoords *= GRID_CELLS_PER_TILESIDE / static_cast<double>(1u << zoomShift);
                 filterCoords.x = filterCoords.x > minCell && filterCoords.x < maxCell ? filterCoords.x : minCell;
                 filterCoords.y = filterCoords.y > minCell && filterCoords.y < maxCell ? filterCoords.y : minCell;
                 const auto gridCode = static_cast<int>(std::floor(filterCoords.y)) * 10000
-                + static_cast<int>(std::floor(filterCoords.x));
+                    + static_cast<int>(std::floor(filterCoords.x));
                 bool shouldInsert = true;
                 const auto& citGroup = tileGrid.constFind(gridCode);
                 if (citGroup != tileGrid.cend())
@@ -1497,7 +1497,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
                     const std::shared_ptr<SymbolsGroup> preGroup(new SymbolsGroup(primitivesGroup->sourceObject));
                     preGroup->symbols.push_back(qMove(textSymbol));
                     const std::shared_ptr<GridSymbolsGroup> groupOnGrid(
-                                                                        new GridSymbolsGroup(preGroup, canBeShared, sharingKey));
+                        new GridSymbolsGroup(preGroup, canBeShared, sharingKey));
                     tileGrid.insert(gridCode, qMove(groupOnGrid));
                 }
                 group->symbols.clear();
