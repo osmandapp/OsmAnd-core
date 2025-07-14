@@ -20,7 +20,7 @@
 #include "Utilities.h"
 #include "Stopwatch.h"
 
-//#define OSMAND_PERFORMANCE_METRICS 1
+#define OSMAND_PERFORMANCE_METRICS 1
 #if !defined(OSMAND_PERFORMANCE_METRICS)
 #   define OSMAND_PERFORMANCE_METRICS 0
 #endif // !defined(OSMAND_PERFORMANCE_METRICS)
@@ -523,15 +523,13 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 #if OSMAND_PERFORMANCE_METRICS <= 1
     auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-    LogPrintf(LogSeverityLevel::Info,
-        ">>>> %ld: %d spriteSymbols, %d onPathSymbols obtained from %dx%d@%d in %fs",
-        millis,
+    LogPrintf(LogSeverityLevel::Info, ">>>> %ld TEXT %f: %d sprite, %d onPath obtained from %dx%d@%d",
+        millis, totalTimeStopwatch.elapsed(),
         spriteSymbols,
         onPathSymbols,
         request.tileId.x,
         request.tileId.y,
-        request.zoom,
-        totalTimeStopwatch.elapsed());
+        request.zoom);
 #endif // OSMAND_PERFORMANCE_METRICS <= 1
 #endif // OSMAND_PERFORMANCE_METRICS
     

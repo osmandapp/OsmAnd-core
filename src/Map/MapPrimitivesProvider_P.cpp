@@ -1,7 +1,7 @@
 #include "MapPrimitivesProvider_P.h"
 #include "MapPrimitivesProvider.h"
 
-//#define OSMAND_PERFORMANCE_METRICS 1
+#define OSMAND_PERFORMANCE_METRICS 1
 #if !defined(OSMAND_PERFORMANCE_METRICS)
 #   define OSMAND_PERFORMANCE_METRICS 0
 #endif // !defined(OSMAND_PERFORMANCE_METRICS)
@@ -287,16 +287,14 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
 #if OSMAND_PERFORMANCE_METRICS <= 1
     auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-    LogPrintf(LogSeverityLevel::Info,
-        ">>>> %ld: %d polygons, %d polylines, %d points primitivised from %dx%d@%d in %fs",
-        millis,
+    LogPrintf(LogSeverityLevel::Info, ">>>> %ld PRIMITIVES %f: %d polygons, %d polylines, %d points primitivised from %dx%d@%d",
+        millis, totalStopwatch.elapsed(),
         primitivisedObjects->polygons.size(),
         primitivisedObjects->polylines.size(),
         primitivisedObjects->polygons.size(),
         request.tileId.x,
         request.tileId.y,
-        request.zoom,
-        totalStopwatch.elapsed());
+        request.zoom);
 #else
     LogPrintf(LogSeverityLevel::Info,
         "%d polygons, %d polylines, %d points primitivised from %dx%d@%d in %fs:\n%s",

@@ -298,14 +298,14 @@ void OsmAnd::MapRenderer::processGpuWorker()
         {
             auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
             auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-            if (currentDebugSettings->debugStageEnabled)
+            //if (currentDebugSettings->debugStageEnabled)
             {
-                LogPrintf(LogSeverityLevel::Info,
-                          ">>>>> %ld: syncResourcesInGPU uploaded=%ld, unloaded=%ld in %fs",
-                          millis,
-                          resourcesUploadedCount,
-                          resourcesUnloadedCount,
-                          timer.elapsed());
+                auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+                auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
+                LogPrintf(LogSeverityLevel::Info, ">>>> %ld SYNC %f: syncResourcesInGPU %ld uploaded, %ld unloaded",
+                    millis, timer.elapsed(),
+                    resourcesUploadedCount,
+                    resourcesUnloadedCount);
             }
         }
         
@@ -1357,19 +1357,19 @@ QSet<int> OsmAnd::MapRenderer::getSubsectionsToUpdate()
 
 void OsmAnd::MapRenderer::setSymbolsLoading(bool active)
 {
-    if (currentDebugSettings->debugStageEnabled)
+    //if (currentDebugSettings->debugStageEnabled)
     {
         auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
         if (_symbolsLoading == false && active == true)
         {
-            LogPrintf(LogSeverityLevel::Info, ">>>> %ld: Start loading symbols", millis);
+            LogPrintf(LogSeverityLevel::Info, ">>>> %ld START", millis);
             symbolsLoadingStart.start();
         }
         else if (_symbolsLoading == true && active == false)
         {
             symbolsLoadingTime = symbolsLoadingStart.elapsed();
-            LogPrintf(LogSeverityLevel::Info, ">>>> %ld: Symbols loaded: %f", millis, symbolsLoadingTime);
+            LogPrintf(LogSeverityLevel::Info, ">>>> %ld FINISH %f", millis, symbolsLoadingTime);
         }
     }
 

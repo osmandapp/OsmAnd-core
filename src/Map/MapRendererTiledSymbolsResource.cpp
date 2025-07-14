@@ -842,7 +842,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 #if OSMAND_PERFORMANCE_METRICS <= 1
     auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-    LogPrintf(LogSeverityLevel::Info, ">>>>> %ld: uploadToGPU %d in %fs", millis, uploaded, timer.elapsed());
+    LogPrintf(LogSeverityLevel::Info, ">>>> %ld UPLOAD %f: uploadToGPU %d", millis, timer.elapsed(), uploaded);
 #endif // OSMAND_PERFORMANCE_METRICS <= 1
 #endif // OSMAND_PERFORMANCE_METRICS
 
@@ -948,7 +948,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
 #if OSMAND_PERFORMANCE_METRICS <= 1
     auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-    LogPrintf(LogSeverityLevel::Info, ">>>>> %ld: unloadFromGPU %d in %fs", millis, count, timer.elapsed());
+    LogPrintf(LogSeverityLevel::Info, ">>>> %ld UNLOAD %f: unloadFromGPU %d", millis, timer.elapsed(), count);
 #endif // OSMAND_PERFORMANCE_METRICS <= 1
 #endif // OSMAND_PERFORMANCE_METRICS
 }
