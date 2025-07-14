@@ -1807,12 +1807,20 @@ public abstract class MapRendererView extends FrameLayout {
                                       EGLConfig[] configs) {
             EGLConfig bestConfig = null;
             int maxDepthSize = -1;
+            boolean msaaFound = false;
+
+            // First try to find a config with MSAA
             for (EGLConfig config : configs) {
                 int d = findConfigAttrib(egl, display, config,
                         EGL10.EGL_DEPTH_SIZE, 0);
                 int s = findConfigAttrib(egl, display, config,
                         EGL10.EGL_STENCIL_SIZE, 0);
-                if ((d >= mDepthSize) && (s >= mStencilSize)) {
+                int sampleBuffers = findConfigAttrib(egl, display, config,
+                        EGL10.EGL_SAMPLE_BUFFERS, 0);
+                int samples = findConfigAttrib(egl, display, config,
+                        EGL10.EGL_SAMPLES, 0);
+
+                if ((d >= mDepthSize) && (s >= mStencilSize) && (sampleBuffers > 0) && (samples >= 4)) {
                     int r = findConfigAttrib(egl, display, config,
                             EGL10.EGL_RED_SIZE, 0);
                     int g = findConfigAttrib(egl, display, config,
@@ -1825,10 +1833,41 @@ public abstract class MapRendererView extends FrameLayout {
                         if (d > maxDepthSize) {
                             maxDepthSize = d;
                             bestConfig = config;
+                            msaaFound = true;
                         }
                     }
                 }
             }
+
+            if (bestConfig == null) {
+                for (EGLConfig config : configs) {
+                    int d = findConfigAttrib(egl, display, config,
+                            EGL10.EGL_DEPTH_SIZE, 0);
+                    int s = findConfigAttrib(egl, display, config,
+                            EGL10.EGL_STENCIL_SIZE, 0);
+                    if ((d >= mDepthSize) && (s >= mStencilSize)) {
+                        int r = findConfigAttrib(egl, display, config,
+                                EGL10.EGL_RED_SIZE, 0);
+                        int g = findConfigAttrib(egl, display, config,
+                                EGL10.EGL_GREEN_SIZE, 0);
+                        int b = findConfigAttrib(egl, display, config,
+                                EGL10.EGL_BLUE_SIZE, 0);
+                        int a = findConfigAttrib(egl, display, config,
+                                EGL10.EGL_ALPHA_SIZE, 0);
+                        if ((r == mRedSize) && (g == mGreenSize) && (b == mBlueSize) && (a == mAlphaSize)) {
+                            if (d > maxDepthSize) {
+                                maxDepthSize = d;
+                                bestConfig = config;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (msaaFound) {
+                Log.v(TAG, "Multisampling enabled");
+            }
+
             return bestConfig;
         }
 
