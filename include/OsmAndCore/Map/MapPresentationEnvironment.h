@@ -131,7 +131,7 @@ namespace OsmAnd
         MapStubStyle getDesiredStubsStyle() const;
         QString getWeatherContourLevels(const QString& weatherType, const ZoomLevel zoom) const;
         ColorARGB getTransportRouteColor(const bool nightMode, const QString& renderAttrName) const;
-        QHash<QString, int> getLineRenderingAttributes(const QString& renderAttrName) const;
+        QHash<QString, int64_t> getLineRenderingAttributes(const QString& renderAttrName) const;
         QHash<QString, int> getGpxColors() const;
         QHash<QString, QList<int>> getGpxWidth() const;
         QPair<QString, uint32_t> getRoadRenderingAttributes(const QString& renderAttrName, const QHash<QString, QString>& additionalSettings) const;

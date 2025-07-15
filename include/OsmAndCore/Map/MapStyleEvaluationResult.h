@@ -74,6 +74,7 @@ namespace OsmAnd
         bool getBooleanValue(const IMapStyle::ValueDefinitionId valueDefId, bool& outValue) const;
         bool getIntegerValue(const IMapStyle::ValueDefinitionId valueDefId, int& outValue) const;
         bool getIntegerValue(const IMapStyle::ValueDefinitionId valueDefId, unsigned int& outValue) const;
+        bool getIntegerValue(const IMapStyle::ValueDefinitionId valueDefId, int64_t& outValue) const;
         bool getFloatValue(const IMapStyle::ValueDefinitionId valueDefId, float& outValue) const;
         bool getStringValue(const IMapStyle::ValueDefinitionId valueDefId, QString& outValue) const;
 
