@@ -213,7 +213,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             blockIds.insert(blockId);
 
             // This map object may be shared only in case it crosses bounds of a tile
-            const auto canNotBeShared = requestedZoom == zoom && tileBBox31.contains(bbox);
+            const auto canNotBeShared = true;//requestedZoom == zoom && tileBBox31.contains(bbox);
 
             // If map object can not be shared, just read it
             if (canNotBeShared)
@@ -316,7 +316,8 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             blockIds.insert(blockId);
 
             // This road may be shared only in case it crosses bounds of a tile
-            const auto canNotBeShared = tileBBox31.contains(bbox);
+            // Sharing disabled
+            const auto canNotBeShared = true;//tileBBox31.contains(bbox);
 
             // If road can not be shared, just read it
             if (canNotBeShared)

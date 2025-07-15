@@ -57,7 +57,6 @@ OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRende
 {
     _lastResumeSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
     _previouslyInvalidated = false;
-    _performanceLogLoadingDone = true;
 }
 
 OsmAnd::AtlasMapRendererSymbolsStage::~AtlasMapRendererSymbolsStage() = default;
@@ -99,7 +98,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
     {
         _lastResumeSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
         _previouslyInvalidated = false;
-        _performanceLogLoadingDone = false;
     }
     else if(!forceUpdate && !needUpdatedSymbols
         && (frameInvalidates == 1 && !_previouslyInvalidated || frameInvalidates > 1))
@@ -273,6 +271,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 renderer->setUpdateSymbols(false);
 
             _lastResumeSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
+
+            if (OsmAnd::performanceLogsEnabled && outRenderableSymbols.size() > 0)
+            {
+                auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+                auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
+                LogPrintf(LogSeverityLevel::Info, ">>>> %ld INTERSECTION %f: plottedSymbols=%d",
+                          millis, stopwatch.elapsed(), static_cast<int>(outRenderableSymbols.size()));
+            }
         }
 
         if (metric)
@@ -280,18 +286,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             metric->elapsedTimeForObtainingRenderableSymbolsWithLock = stopwatch.elapsed();
             metric->elapsedTimeForObtainingRenderableSymbolsOnlyLock =
                 metric->elapsedTimeForObtainingRenderableSymbolsWithLock - metric->elapsedTimeForObtainingRenderableSymbols;
-        }
-
-        if (OsmAnd::performanceLogsEnabled && outRenderableSymbols.size() > 0)
-        {
-            if (!_performanceLogLoadingDone && !renderer->isSymbolsLoadingActive())
-            {
-                auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-                auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-                LogPrintf(LogSeverityLevel::Info, ">>>> %ld INTERSECTION %f: plottedSymbols=%d",
-                          millis, stopwatch.elapsed(), static_cast<int>(outRenderableSymbols.size()));
-                _performanceLogLoadingDone = true;
-            }
         }
         
         return result;

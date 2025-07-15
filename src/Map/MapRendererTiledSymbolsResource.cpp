@@ -92,6 +92,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     request.zoom = zoom;
     const auto& mapState = resourcesManager->renderer->getMapState();
     request.mapState = mapState;
+
+    /* Sharing disabled
     request.filterCallback =
         [provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups, &uniqueSymbolsGroupsKeys, checkUniqueKeys]
         (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup) -> bool
@@ -136,6 +138,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
             loadedSharedGroups.insert(sharingKey);
             return true;
         };
+    */
     request.combineTilesData = isMetaTiled;
 
     const auto requestSucceeded = provider->obtainTiledSymbols(request, tile);
@@ -394,6 +397,8 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
             }
             else
                 return;
+
+            /* Sharing disabled
             request.filterCallback =
                 [provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups, &uniqueSymbolsGroupsKeys, checkUniqueKeys]
                 (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup) -> bool
@@ -438,6 +443,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
                     loadedSharedGroups.insert(sharingKey);
                     return true;
                 };
+            */
             request.combineTilesData = self->isMetaTiled;
 
             const auto requestSucceeded = provider->obtainTiledSymbols(request, tile);
