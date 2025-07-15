@@ -204,7 +204,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         if (metric)
         {
             metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
-            _symbolsStage->drawDebugMetricSymbol(metric);
+            // Disable for now
+            //_symbolsStage->drawDebugMetricSymbol(metric);
         }
 
         glDepthMask(GL_TRUE);

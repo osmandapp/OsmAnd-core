@@ -40,11 +40,6 @@
 #include "VectorLine.h"
 #include "Map/OpenGL/Utilities_OpenGL.h"
 
-#define OSMAND_PERFORMANCE_METRICS 1
-#if !defined(OSMAND_PERFORMANCE_METRICS)
-#   define OSMAND_PERFORMANCE_METRICS 0
-#endif // !defined(OSMAND_PERFORMANCE_METRICS)
-
 # define UPDATE_INTERVAL_MS 1000.0f
 
 # define GRID_ITER_LIMIT 10
@@ -62,6 +57,7 @@ OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRende
 {
     _lastResumeSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
     _previouslyInvalidated = false;
+    _performanceLogLoadingDone = true;
 }
 
 OsmAnd::AtlasMapRendererSymbolsStage::~AtlasMapRendererSymbolsStage() = default;
@@ -103,6 +99,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
     {
         _lastResumeSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
         _previouslyInvalidated = false;
+        _performanceLogLoadingDone = false;
     }
     else if(!forceUpdate && !needUpdatedSymbols
         && (frameInvalidates == 1 && !_previouslyInvalidated || frameInvalidates > 1))
@@ -254,7 +251,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
     preRender(denseSymbols, metric);
     
-    Stopwatch stopwatch(metric != nullptr);
+    Stopwatch stopwatch(OsmAnd::performanceLogsEnabled || metric != nullptr);
 
     // Process published symbols if needed
     if (forceUpdate || needUpdatedSymbols)
@@ -285,6 +282,18 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 metric->elapsedTimeForObtainingRenderableSymbolsWithLock - metric->elapsedTimeForObtainingRenderableSymbols;
         }
 
+        if (OsmAnd::performanceLogsEnabled && outRenderableSymbols.size() > 0)
+        {
+            if (!_performanceLogLoadingDone && !renderer->isSymbolsLoadingActive())
+            {
+                auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+                auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
+                LogPrintf(LogSeverityLevel::Info, ">>>> %ld INTERSECTION %f: plottedSymbols=%d",
+                          millis, stopwatch.elapsed(), static_cast<int>(outRenderableSymbols.size()));
+                _performanceLogLoadingDone = true;
+            }
+        }
+        
         return result;
     }
 
@@ -376,13 +385,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric)
 {
-    const Stopwatch stopwatch(
-#if OSMAND_PERFORMANCE_METRICS
-        true
-#else
-        metric != nullptr
-#endif // OSMAND_PERFORMANCE_METRICS
-        );
+    const Stopwatch stopwatch(metric != nullptr);
 
     typedef std::list< std::shared_ptr<const RenderableSymbol> > PlottedSymbols;
     PlottedSymbols plottedSymbols;
@@ -1141,18 +1144,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
     if (metric)
         metric->elapsedTimeForObtainingRenderableSymbols = stopwatch.elapsed();
-
-#if OSMAND_PERFORMANCE_METRICS
-#if OSMAND_PERFORMANCE_METRICS <= 1
-    if (plottedSymbols.size() > 0)
-    {
-        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-        LogPrintf(LogSeverityLevel::Info, ">>>> %ld INTERSECTION %f: plottedSymbols=%d",
-                  millis, stopwatch.elapsed(), static_cast<int>(plottedSymbols.size()));
-    }
-#endif // OSMAND_PERFORMANCE_METRICS <= 1
-#endif // OSMAND_PERFORMANCE_METRICS
 
     return true;
 }

@@ -13,11 +13,6 @@
 #include "QRunnableFunctor.h"
 #include "Utilities.h"
 
-//#define OSMAND_PERFORMANCE_METRICS 1
-#if !defined(OSMAND_PERFORMANCE_METRICS)
-#   define OSMAND_PERFORMANCE_METRICS 0
-#endif // !defined(OSMAND_PERFORMANCE_METRICS)
-
 //#define OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE 1
 #ifndef OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
 #   define OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE 0
@@ -666,13 +661,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
 
 bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 {
-    const Stopwatch timer(
-#if OSMAND_PERFORMANCE_METRICS
-        true
-#else
-        false
-#endif // OSMAND_PERFORMANCE_METRICS
-        );
+    const Stopwatch timer(OsmAnd::performanceLogsEnabled);
     
     typedef std::pair< std::shared_ptr<MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > SymbolResourceEntry;
 
@@ -838,27 +827,18 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 #endif // OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
     }
 
-#if OSMAND_PERFORMANCE_METRICS
-#if OSMAND_PERFORMANCE_METRICS <= 1
-    auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-    LogPrintf(LogSeverityLevel::Info, ">>>> %ld UPLOAD %f: uploadToGPU %d", millis, timer.elapsed(), uploaded);
-#endif // OSMAND_PERFORMANCE_METRICS <= 1
-#endif // OSMAND_PERFORMANCE_METRICS
-
+//    if (OsmAnd::performanceLogsEnabled)
+//    {
+//        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+//        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
+//        LogPrintf(LogSeverityLevel::Info, ">>>> %ld UPLOAD %f: uploadToGPU %d", millis, timer.elapsed(), uploaded);
+//    }
     return true;
 }
 
 void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
 {
-    const Stopwatch timer(
-#if OSMAND_PERFORMANCE_METRICS
-        true
-#else
-        false
-#endif // OSMAND_PERFORMANCE_METRICS
-        );
-    
+    const Stopwatch timer(OsmAnd::performanceLogsEnabled);
     int count = 0;
     
     const auto link_ = link.lock();
@@ -944,13 +924,12 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
     }
     _referencedSharedGroupsResources.clear();
     
-#if OSMAND_PERFORMANCE_METRICS
-#if OSMAND_PERFORMANCE_METRICS <= 1
-    auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-    LogPrintf(LogSeverityLevel::Info, ">>>> %ld UNLOAD %f: unloadFromGPU %d", millis, timer.elapsed(), count);
-#endif // OSMAND_PERFORMANCE_METRICS <= 1
-#endif // OSMAND_PERFORMANCE_METRICS
+//    if (OsmAnd::performanceLogsEnabled)
+//    {
+//        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+//        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
+//        LogPrintf(LogSeverityLevel::Info, ">>>> %ld UNLOAD %f: unloadFromGPU %d", millis, timer.elapsed(), count);
+//    }
 }
 
 void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()

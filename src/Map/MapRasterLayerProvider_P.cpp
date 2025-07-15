@@ -1,11 +1,6 @@
 #include "MapRasterLayerProvider_P.h"
 #include "MapRasterLayerProvider.h"
 
-#define OSMAND_PERFORMANCE_METRICS 1
-#if !defined(OSMAND_PERFORMANCE_METRICS)
-#   define OSMAND_PERFORMANCE_METRICS 0
-#endif // !defined(OSMAND_PERFORMANCE_METRICS)
-
 #include "MapDataProviderHelpers.h"
 #include "MapPrimitivesProvider.h"
 #include "MapPrimitivesProvider_Metrics.h"
@@ -48,22 +43,9 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainData(
 bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
     const MapRasterLayerProvider::Request& request, 
     std::shared_ptr<MapRasterLayerProvider::Data>& outData,
-    MapRasterLayerProvider_Metrics::Metric_obtainData* const metric_)
+    MapRasterLayerProvider_Metrics::Metric_obtainData* const metric)
 {
-#if OSMAND_PERFORMANCE_METRICS
-    MapRasterLayerProvider_Metrics::Metric_obtainData localMetric;
-    const auto metric = metric_ ? metric_ : &localMetric;
-#else
-    const auto metric = metric_;
-#endif
-
-    const Stopwatch totalStopwatch(
-#if OSMAND_PERFORMANCE_METRICS
-        true
-#else
-        metric != nullptr
-#endif // OSMAND_PERFORMANCE_METRICS
-        );
+    const Stopwatch totalStopwatch(OsmAnd::performanceLogsEnabled || metric != nullptr);
 
     // Obtain offline map primitives tile
     std::shared_ptr<MapPrimitivesProvider::Data> primitivesTile;
@@ -103,6 +85,18 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
 
     if (metric)
         metric->elapsedTime += totalStopwatch.elapsed();
+
+    if (OsmAnd::performanceLogsEnabled)
+    {
+        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
+        LogPrintf(LogSeverityLevel::Info, ">>>> %ld RASTER %f: %dx%d@%d rasterized on CPU",
+            millis, totalStopwatch.elapsed(),
+            request.tileId.x,
+            request.tileId.y,
+            request.zoom);
+        //qPrintable(metric ? metric->toString(QLatin1String("\t - ")) : QLatin1String("(null)")));
+    }
 
     return true;
 }

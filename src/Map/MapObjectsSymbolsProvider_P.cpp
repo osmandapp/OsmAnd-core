@@ -20,11 +20,6 @@
 #include "Utilities.h"
 #include "Stopwatch.h"
 
-#define OSMAND_PERFORMANCE_METRICS 1
-#if !defined(OSMAND_PERFORMANCE_METRICS)
-#   define OSMAND_PERFORMANCE_METRICS 0
-#endif // !defined(OSMAND_PERFORMANCE_METRICS)
-
 #define MAX_PATHS_TO_ATTACH 20
 #define MAX_GAP_BETWEEN_PATHS 45
 #define MAX_ANGLE_BETWEEN_VECTORS M_PI_2
@@ -55,13 +50,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
     assert(owner->isMetaTiled() || !request.combineTilesData);
 
-    const Stopwatch totalTimeStopwatch(
-#if OSMAND_PERFORMANCE_METRICS
-        true
-#else
-        pOutMetric != nullptr
-#endif // OSMAND_PERFORMANCE_METRICS
-        );
+    const Stopwatch totalTimeStopwatch(OsmAnd::performanceLogsEnabled || pOutMetric != nullptr);
     
     QVector<TileId> tilesIds;
     if (request.combineTilesData)
@@ -519,19 +508,18 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         primitivesTile,
         primitivesTile ? new RetainableCacheMetadata(primitivesTile->retainableCacheMetadata) : nullptr));
 
-#if OSMAND_PERFORMANCE_METRICS
-#if OSMAND_PERFORMANCE_METRICS <= 1
-    auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-    LogPrintf(LogSeverityLevel::Info, ">>>> %ld TEXT %f: %d sprite, %d onPath obtained from %dx%d@%d",
-        millis, totalTimeStopwatch.elapsed(),
-        spriteSymbols,
-        onPathSymbols,
-        request.tileId.x,
-        request.tileId.y,
-        request.zoom);
-#endif // OSMAND_PERFORMANCE_METRICS <= 1
-#endif // OSMAND_PERFORMANCE_METRICS
+    if (OsmAnd::performanceLogsEnabled)
+    {
+        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
+        LogPrintf(LogSeverityLevel::Info, ">>>> %ld TEXT %f: %d sprite, %d onPath obtained from %dx%d@%d",
+            millis, totalTimeStopwatch.elapsed(),
+            spriteSymbols,
+            onPathSymbols,
+            request.tileId.x,
+            request.tileId.y,
+            request.zoom);
+    }
     
     return true;
 }

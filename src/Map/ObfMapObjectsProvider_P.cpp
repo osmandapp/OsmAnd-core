@@ -1,11 +1,6 @@
 #include "ObfMapObjectsProvider_P.h"
 #include "ObfMapObjectsProvider.h"
 
-#define OSMAND_PERFORMANCE_METRICS 1
-#if !defined(OSMAND_PERFORMANCE_METRICS)
-#   define OSMAND_PERFORMANCE_METRICS 0
-#endif // !defined(OSMAND_PERFORMANCE_METRICS)
-
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
 
@@ -61,15 +56,8 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
 bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     const ObfMapObjectsProvider::Request& request,
     std::shared_ptr<ObfMapObjectsProvider::Data>& outMapObjects,
-    ObfMapObjectsProvider_Metrics::Metric_obtainData* const metric_)
+    ObfMapObjectsProvider_Metrics::Metric_obtainData* const metric)
 {
-#if OSMAND_PERFORMANCE_METRICS
-    ObfMapObjectsProvider_Metrics::Metric_obtainData localMetric;
-    const auto metric = metric_ ? metric_ : &localMetric;
-#else
-    const auto metric = metric_;
-#endif
-
     std::shared_ptr<TileEntry> tileEntry;
     std::shared_ptr<TileSharedEntry> coastlineTileEntry;
     std::shared_ptr<ObfMapObjectsProvider::Data> coastlineTile = nullptr;
@@ -156,13 +144,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         tileEntry.reset();
     }
 
-    const Stopwatch totalTimeStopwatch(
-#if OSMAND_PERFORMANCE_METRICS
-        true
-#else
-        metric != nullptr
-#endif // OSMAND_PERFORMANCE_METRICS
-        );
+    const Stopwatch totalTimeStopwatch(OsmAnd::performanceLogsEnabled || metric != nullptr);
 
     // Get bounding box that covers this tile
     const auto zoom = request.zoom;
@@ -792,31 +774,20 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         metric->sharedObjectsCount += sharedMapObjectsCount;
     }
 
-#if OSMAND_PERFORMANCE_METRICS
-#if OSMAND_PERFORMANCE_METRICS <= 1
-    auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-    LogPrintf(LogSeverityLevel::Info, ">>>> %ld READ %f: %d map objects (%d unique, %d shared) read from %dx%d@%d",
-        millis, totalTimeStopwatch.elapsed(),
-        allMapObjects.size(),
-        allMapObjects.size() - sharedMapObjectsCount,
-        sharedMapObjectsCount,
-        request.tileId.x,
-        request.tileId.y,
-        request.zoom);
-#else
-    LogPrintf(LogSeverityLevel::Info,
-        "%d map objects (%d unique, %d shared) read from %dx%d@%d in %fs:\n%s",
-        allMapObjects.size(),
-        allMapObjects.size() - sharedMapObjectsCount,
-        sharedMapObjectsCount,
-        request.tileId.x,
-        request.tileId.y,
-        request.zoom,
-        totalTimeStopwatch.elapsed(),
-        qPrintable(metric ? metric->toString(false, QLatin1String("\t - ")) : QLatin1String("(null)")));
-#endif // OSMAND_PERFORMANCE_METRICS <= 1
-#endif // OSMAND_PERFORMANCE_METRICS
+    if (OsmAnd::performanceLogsEnabled)
+    {
+        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
+        LogPrintf(LogSeverityLevel::Info, ">>>> %ld READ %f: %d map objects (%d unique, %d shared) read from %dx%d@%d",
+            millis, totalTimeStopwatch.elapsed(),
+            allMapObjects.size(),
+            allMapObjects.size() - sharedMapObjectsCount,
+            sharedMapObjectsCount,
+            request.tileId.x,
+            request.tileId.y,
+            request.zoom);
+        //qPrintable(metric ? metric->toString(false, QLatin1String("\t - ")) : QLatin1String("(null)")));
+    }
 
     return true;
 }

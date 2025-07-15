@@ -296,9 +296,7 @@ void OsmAnd::MapRenderer::processGpuWorker()
         } while (_gpuWorkerThreadIsAlive && unprocessedRequests > 0);
         if (resourcesUploadedCount > 0 || resourcesUnloadedCount > 0)
         {
-            auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-            auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-            //if (currentDebugSettings->debugStageEnabled)
+            if (OsmAnd::performanceLogsEnabled)
             {
                 auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
                 auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
@@ -308,7 +306,6 @@ void OsmAnd::MapRenderer::processGpuWorker()
                     resourcesUnloadedCount);
             }
         }
-        
     }
     else if (isInRenderThread())
     {
@@ -1357,7 +1354,8 @@ QSet<int> OsmAnd::MapRenderer::getSubsectionsToUpdate()
 
 void OsmAnd::MapRenderer::setSymbolsLoading(bool active)
 {
-    //if (currentDebugSettings->debugStageEnabled)
+    OsmAnd::performanceLogsEnabled = currentDebugSettings->debugStageEnabled;
+    if (OsmAnd::performanceLogsEnabled)
     {
         auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();

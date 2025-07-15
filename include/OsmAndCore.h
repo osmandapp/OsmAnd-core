@@ -65,6 +65,8 @@ namespace OsmAnd
     class ICoreResourcesProvider;
     class IMemoryManager;
 
+    OSMAND_CORE_API extern bool performanceLogsEnabled;
+
     OSMAND_CORE_API int OSMAND_CORE_CALL InitializeCore(
         const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider, 
         const char* appFontsPath = nullptr);

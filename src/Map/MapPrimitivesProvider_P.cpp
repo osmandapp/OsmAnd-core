@@ -1,11 +1,6 @@
 #include "MapPrimitivesProvider_P.h"
 #include "MapPrimitivesProvider.h"
 
-#define OSMAND_PERFORMANCE_METRICS 1
-#if !defined(OSMAND_PERFORMANCE_METRICS)
-#   define OSMAND_PERFORMANCE_METRICS 0
-#endif // !defined(OSMAND_PERFORMANCE_METRICS)
-
 #include "IMapObjectsProvider.h"
 #include "Stopwatch.h"
 #include "Utilities.h"
@@ -107,15 +102,8 @@ void OsmAnd::MapPrimitivesProvider_P::collectPolygons(QList<std::shared_ptr<cons
 bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
     const MapPrimitivesProvider::Request& request,
     std::shared_ptr<MapPrimitivesProvider::Data>& outTiledPrimitives,
-    MapPrimitivesProvider_Metrics::Metric_obtainData* const metric_)
+    MapPrimitivesProvider_Metrics::Metric_obtainData* const metric)
 {
-#if OSMAND_PERFORMANCE_METRICS
-    MapPrimitivesProvider_Metrics::Metric_obtainData localMetric;
-    const auto metric = metric_ ? metric_ : &localMetric;
-#else
-    const auto metric = metric_;
-#endif
-
     const Stopwatch totalStopwatch(metric != nullptr);
 
     std::shared_ptr<TileEntry> tileEntry;
@@ -165,14 +153,6 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
             tileEntry.reset();
         }
     }
-
-    const Stopwatch totalTimeStopwatch(
-#if OSMAND_PERFORMANCE_METRICS
-        true
-#else
-        metric != nullptr
-#endif // OSMAND_PERFORMANCE_METRICS
-        );
 
     // Obtain map objects data tile
     std::shared_ptr<IMapObjectsProvider::Data> dataTile;
@@ -283,32 +263,20 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
     if (metric)
         metric->elapsedTime = totalStopwatch.elapsed();
 
-#if OSMAND_PERFORMANCE_METRICS
-#if OSMAND_PERFORMANCE_METRICS <= 1
-    auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-    LogPrintf(LogSeverityLevel::Info, ">>>> %ld PRIMITIVES %f: %d polygons, %d polylines, %d points primitivised from %dx%d@%d",
-        millis, totalStopwatch.elapsed(),
-        primitivisedObjects->polygons.size(),
-        primitivisedObjects->polylines.size(),
-        primitivisedObjects->polygons.size(),
-        request.tileId.x,
-        request.tileId.y,
-        request.zoom);
-#else
-    LogPrintf(LogSeverityLevel::Info,
-        "%d polygons, %d polylines, %d points primitivised from %dx%d@%d in %fs:\n%s",
-        primitivisedObjects->polygons.size(),
-        primitivisedObjects->polylines.size(),
-        primitivisedObjects->polygons.size(),
-        request.tileId.x,
-        request.tileId.y,
-        request.zoom,
-        totalStopwatch.elapsed(),
-        qPrintable(metric ? metric->toString(false, QLatin1String("\t - ")) : QLatin1String("(null)")));
-#endif // OSMAND_PERFORMANCE_METRICS <= 1
-#endif // OSMAND_PERFORMANCE_METRICS
-    
+    if (OsmAnd::performanceLogsEnabled)
+    {
+        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
+        LogPrintf(LogSeverityLevel::Info, ">>>> %ld PRIMITIVES %f: %d polygons, %d polylines, %d points primitivised from %dx%d@%d",
+            millis, totalStopwatch.elapsed(),
+            primitivisedObjects->polygons.size(),
+            primitivisedObjects->polylines.size(),
+            primitivisedObjects->polygons.size(),
+            request.tileId.x,
+            request.tileId.y,
+            request.zoom);
+        //qPrintable(metric ? metric->toString(false, QLatin1String("\t - ")) : QLatin1String("(null)")));
+    }
     return true;
 }
 

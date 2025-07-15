@@ -48,6 +48,8 @@
 
 namespace OsmAnd
 {
+    OSMAND_CORE_API bool performanceLogsEnabled = false;
+
     void initializeInAppThread();
     void releaseInAppThread();
     QThread* gMainThread;
