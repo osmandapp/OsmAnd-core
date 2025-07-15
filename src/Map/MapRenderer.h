@@ -164,6 +164,8 @@ namespace OsmAnd
         std::shared_ptr<const QJsonDocument> _jsonDocument;
         bool _jsonEnabled;
 
+        int _maxResourceThreadsLimit;
+
         OsmAnd::Stopwatch symbolsLoadingStart;
         float symbolsLoadingTime = 0;
 
@@ -482,6 +484,8 @@ namespace OsmAnd
         virtual void setJSON(const QJsonDocument* jsonDocument) Q_DECL_OVERRIDE;
         virtual QByteArray getJSON() const Q_DECL_OVERRIDE;
 
+        virtual int getDefaultThreadsLimit() Q_DECL_OVERRIDE;
+        virtual int getResourceWorkerThreadsLimit() Q_DECL_OVERRIDE;
         virtual void setResourceWorkerThreadsLimit(const unsigned int limit) Q_DECL_OVERRIDE;
         virtual void resetResourceWorkerThreadsLimit() Q_DECL_OVERRIDE;
         virtual unsigned int getActiveResourceRequestsCount() const Q_DECL_OVERRIDE;

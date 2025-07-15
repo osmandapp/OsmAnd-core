@@ -64,6 +64,7 @@ OsmAnd::MapRenderer::MapRenderer(
     , publishedMapSymbolsByOrder(_publishedMapSymbolsByOrder)
     , currentDebugSettings(_currentDebugSettingsAsConst)
     , _jsonEnabled(false)
+    , _maxResourceThreadsLimit(0)
 {
 }
 
@@ -416,6 +417,10 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
     _resources.reset(new MapRendererResourcesManager(this));
     if (!_resources->initializeDefaultResources())
         return false;
+
+    auto maxResourceThreadsLimit = _maxResourceThreadsLimit;
+    if (maxResourceThreadsLimit > 0)
+        _resources->setResourceWorkerThreadsLimit(maxResourceThreadsLimit);
 
     return true;
 }
@@ -3349,9 +3354,26 @@ QByteArray OsmAnd::MapRenderer::getJSON() const
     return _jsonDocument ? _jsonDocument->toJson() : QByteArray();
 }
 
+int OsmAnd::MapRenderer::getDefaultThreadsLimit()
+{
+    return QThread::idealThreadCount();
+}
+
+int OsmAnd::MapRenderer::getResourceWorkerThreadsLimit()
+{
+    const auto resources = _resources;
+    if (resources)
+        return  resources->getResourceWorkerThreadsLimit();
+
+    return _maxResourceThreadsLimit > 0 ? _maxResourceThreadsLimit : getDefaultThreadsLimit();
+}
+
 void OsmAnd::MapRenderer::setResourceWorkerThreadsLimit(const unsigned int limit)
 {
-    _resources->setResourceWorkerThreadsLimit(limit);
+    _maxResourceThreadsLimit = limit;
+    const auto resources = _resources;
+    if (resources)
+        resources->setResourceWorkerThreadsLimit(limit);
 }
 
 void OsmAnd::MapRenderer::resetResourceWorkerThreadsLimit()

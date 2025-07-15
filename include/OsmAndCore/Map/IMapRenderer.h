@@ -265,6 +265,8 @@ namespace OsmAnd
         virtual int getHeixelsPerTileSide() const = 0;
         virtual int getElevationDataTileSize() const = 0;
 
+        virtual int getDefaultThreadsLimit() = 0;
+        virtual int getResourceWorkerThreadsLimit() = 0;
         virtual void setResourceWorkerThreadsLimit(const unsigned int limit) = 0;
         virtual void resetResourceWorkerThreadsLimit() = 0;
         virtual unsigned int getActiveResourceRequestsCount() const = 0;

@@ -591,20 +591,25 @@ void OsmAnd::MapRendererResourcesManager::updateActiveZone(
     _workerThreadWakeup.wakeAll();
 }
 
+int OsmAnd::MapRendererResourcesManager::getResourceWorkerThreadsLimit()
+{
+    return _resourcesRequestWorkerPool.maxThreadCount();
+}
+
 void OsmAnd::MapRendererResourcesManager::setResourceWorkerThreadsLimit(const unsigned int limit)
 {
     _resourcesRequestWorkerPool.setMaxThreadCount(limit);
 
     if (_resourcesRequestWorkerPool.maxThreadCount() > 0)
     {
-        LogPrintf(LogSeverityLevel::Verbose,
-            "Map renderer will use %d concurrent worker(s) to process requests",
+        LogPrintf(LogSeverityLevel::Info,
+            ">>>> Map renderer will use %d concurrent worker(s) to process requests",
             _resourcesRequestWorkerPool.maxThreadCount());
     }
     else
     {
-        LogPrintf(LogSeverityLevel::Verbose,
-            "Map renderer will use unlimited number of concurrent workers to process requests");
+        LogPrintf(LogSeverityLevel::Info,
+            ">>>> Map renderer will use unlimited number of concurrent workers to process requests");
     }
 }
 
@@ -618,14 +623,14 @@ void OsmAnd::MapRendererResourcesManager::resetResourceWorkerThreadsLimit()
 
     if (_resourcesRequestWorkerPool.maxThreadCount() > 0)
     {
-        LogPrintf(LogSeverityLevel::Verbose,
-            "Map renderer will use %d concurrent worker(s) to process requests",
+        LogPrintf(LogSeverityLevel::Info,
+            ">>>> Map renderer will use %d concurrent worker(s) to process requests",
             _resourcesRequestWorkerPool.maxThreadCount());
     }
     else
     {
-        LogPrintf(LogSeverityLevel::Verbose,
-            "Map renderer will use unlimited number of concurrent workers to process requests");
+        LogPrintf(LogSeverityLevel::Info,
+            ">>>> Map renderer will use unlimited number of concurrent workers to process requests");
     }
 }
 

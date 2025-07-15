@@ -94,6 +94,7 @@ namespace OsmAnd
                 const QVector<TileId>& activeTiles,
                 const ZoomLevel activeZoom) const;
         };
+        int getResourceWorkerThreadsLimit();
         void setResourceWorkerThreadsLimit(const unsigned int limit);
         void resetResourceWorkerThreadsLimit();
         void reportActiveThread(const float delta);

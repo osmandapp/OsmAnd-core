@@ -669,6 +669,30 @@ public abstract class MapRendererView extends FrameLayout {
         _mapRenderer.setConfiguration(configuration);
     }
 
+    public final int getDefaultWorkerThreadsLimit() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getDefaultThreadsLimit();
+    }
+
+    public final int getResourceWorkerThreadsLimit() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getResourceWorkerThreadsLimit();
+    }
+
+    public final void setResourceWorkerThreadsLimit(int limit) {
+        NativeCore.checkIfLoaded();
+
+        _mapRenderer.setResourceWorkerThreadsLimit(limit);
+    }
+
+    public final void resetResourceWorkerThreadsLimit() {
+        NativeCore.checkIfLoaded();
+
+        _mapRenderer.resetResourceWorkerThreadsLimit();
+    }
+
     public final boolean isIdle() {
         NativeCore.checkIfLoaded();
 
