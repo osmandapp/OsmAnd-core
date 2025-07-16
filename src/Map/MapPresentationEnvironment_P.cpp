@@ -607,9 +607,9 @@ QPair<QString, uint32_t> OsmAnd::MapPresentationEnvironment_P::getRoadRenderingA
     return QPair<QString, uint32_t>(name, argb);
 }
 
-QHash<QString, int> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttributes(const QString& renderAttrName) const
+QHash<QString, int64_t> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttributes(const QString& renderAttrName) const
 {
-    int color = -1, shadowColor = -1, color_2 = -1, color_3 = -1;
+    int64_t color = -1, shadowColor = -1, color_2 = -1, color_3 = -1;
     float strokeWidth = -1.0f, strokeWidth_2 = -1.0f, strokeWidth_3 = -1.0f, shadowRadius = -1.0f;
     
     const auto& mapStyle = owner->mapStyle;
@@ -634,7 +634,7 @@ QHash<QString, int> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttrib
         }
     }
     
-    QHash<QString, int> map;
+    QHash<QString, int64_t> map;
     map.insert(QStringLiteral("color"), color);
     map.insert(QStringLiteral("strokeWidth"), strokeWidth);
     map.insert(QStringLiteral("shadowRadius"), shadowRadius);
