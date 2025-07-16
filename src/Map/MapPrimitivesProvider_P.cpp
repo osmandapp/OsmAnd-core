@@ -179,6 +179,8 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         return true;
     }
 
+    const Stopwatch primitivesStopwatch(OsmAnd::performanceLogsEnabled);
+
     // Get primitivised objects
     std::shared_ptr<MapPrimitiviser::PrimitivisedObjects> primitivisedObjects;
     if (owner->mode == MapPrimitivesProvider::Mode::AllObjectsWithoutPolygonFiltering)
@@ -268,7 +270,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
         LogPrintf(LogSeverityLevel::Info, ">>>> %ld PRIMITIVES %f: %d polygons, %d polylines, %d points primitivised from %dx%d@%d",
-            millis, totalStopwatch.elapsed(),
+            millis, primitivesStopwatch.elapsed(),
             primitivisedObjects->polygons.size(),
             primitivisedObjects->polylines.size(),
             primitivisedObjects->polygons.size(),

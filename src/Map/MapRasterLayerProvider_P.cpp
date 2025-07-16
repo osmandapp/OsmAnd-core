@@ -63,6 +63,8 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
         return true;
     }
 
+    const Stopwatch rasterizeStopwatch(OsmAnd::performanceLogsEnabled);
+
     // Perform actual rasterization
     const auto image = rasterize(request, primitivesTile, metric);
     if (!image)
@@ -91,7 +93,7 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
         auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
         LogPrintf(LogSeverityLevel::Info, ">>>> %ld RASTER %f: %dx%d@%d rasterized on CPU",
-            millis, totalStopwatch.elapsed(),
+            millis, rasterizeStopwatch.elapsed(),
             request.tileId.x,
             request.tileId.y,
             request.zoom);
