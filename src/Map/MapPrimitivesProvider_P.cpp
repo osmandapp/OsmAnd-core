@@ -104,7 +104,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
     std::shared_ptr<MapPrimitivesProvider::Data>& outTiledPrimitives,
     MapPrimitivesProvider_Metrics::Metric_obtainData* const metric)
 {
-    const Stopwatch totalStopwatch(metric != nullptr);
+    const Stopwatch totalStopwatch(OsmAnd::performanceLogsEnabled || metric != nullptr);
 
     std::shared_ptr<TileEntry> tileEntry;
 

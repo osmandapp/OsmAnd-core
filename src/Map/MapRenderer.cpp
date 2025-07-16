@@ -276,9 +276,10 @@ void OsmAnd::MapRenderer::processGpuWorker()
 {
     if (isInGpuWorkerThread())
     {
-        Stopwatch timer(true);
+        Stopwatch timer(OsmAnd::performanceLogsEnabled);
         unsigned int resourcesUploadedCount = 0u;
         unsigned int resourcesUnloadedCount = 0u;
+
         // In every layer we have, upload pending resources to GPU without limiting
         int unprocessedRequests = 0;
         do
