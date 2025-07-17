@@ -145,18 +145,6 @@ bool OsmAnd::MapStyleEvaluationResult::getIntegerValue(
     return true;
 }
 
-bool OsmAnd::MapStyleEvaluationResult::getIntegerValue(
-    const IMapStyle::ValueDefinitionId valueDefId,
-    int64_t& outValue) const
-{
-    QVariant value;
-    if (!getValue(valueDefId, value))
-        return false;
-
-    outValue = value.toLongLong();
-    return true;
-}
-
 bool OsmAnd::MapStyleEvaluationResult::getFloatValue(
     const IMapStyle::ValueDefinitionId valueDefId,
     float& outValue) const
