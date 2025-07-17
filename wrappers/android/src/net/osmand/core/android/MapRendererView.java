@@ -1714,8 +1714,57 @@ public abstract class MapRendererView extends FrameLayout {
             case EGL11.EGL_CONTEXT_LOST:
                 return "EGL_CONTEXT_LOST";
             default:
-                return "0x" + Integer.toHexString(error);
+                return "EGL_UNKNOWN_ERROR_" + error;
         }
+    }
+
+    public static boolean isMSAASupported() {
+        EGL10 egl = (EGL10) EGLContext.getEGL();
+        if (egl == null) {
+            Log.e(TAG, "Failed to obtain EGL interface");
+            return false;
+        }
+
+        EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
+        if (display == EGL10.EGL_NO_DISPLAY) {
+            Log.e(TAG, "Failed to get EGL display");
+            return false;
+        }
+
+        int[] version = new int[2];
+        if (!egl.eglInitialize(display, version)) {
+            Log.e(TAG, "Failed to initialize EGL display");
+            return false;
+        }
+
+        int[] configAttribs = {
+            EGL10.EGL_SURFACE_TYPE, EGL10.EGL_WINDOW_BIT | EGL10.EGL_PBUFFER_BIT,
+            EGL10.EGL_RENDERABLE_TYPE, 0x0040, // EGL_OPENGL_ES3_BIT_KHR
+            EGL10.EGL_RED_SIZE, 8,
+            EGL10.EGL_GREEN_SIZE, 8,
+            EGL10.EGL_BLUE_SIZE, 8,
+            EGL10.EGL_ALPHA_SIZE, 8,
+            EGL10.EGL_DEPTH_SIZE, 16,
+            EGL10.EGL_STENCIL_SIZE, 0,
+            EGL10.EGL_SAMPLE_BUFFERS, 1,
+            EGL10.EGL_SAMPLES, 4, // Try 4x MSAA
+            EGL10.EGL_NONE
+        };
+
+        int[] numConfigs = new int[1];
+        if (!egl.eglChooseConfig(display, configAttribs, null, 0, numConfigs)) {
+            Log.e(TAG, "Failed to query MSAA configs: " + getEglErrorString(egl.eglGetError()));
+            return false;
+        }
+
+        boolean msaaSupported = numConfigs[0] > 0;
+        Log.v(TAG, "MSAA support check: " + (msaaSupported ? "SUPPORTED" : "NOT SUPPORTED"));
+        
+        return msaaSupported;
+    }
+
+    public final void setModel3DMSAAEnabled(boolean enabled) {
+        _mapRenderer.setModel3DMSAAEnabled(enabled);
     }
 
     private abstract class BaseConfigChooser
@@ -1807,33 +1856,28 @@ public abstract class MapRendererView extends FrameLayout {
                                       EGLConfig[] configs) {
             EGLConfig bestConfig = null;
             int maxDepthSize = -1;
-            boolean msaaFound = false;
-
-            if (bestConfig == null) {
-                for (EGLConfig config : configs) {
-                    int d = findConfigAttrib(egl, display, config,
-                            EGL10.EGL_DEPTH_SIZE, 0);
-                    int s = findConfigAttrib(egl, display, config,
-                            EGL10.EGL_STENCIL_SIZE, 0);
-                    if ((d >= mDepthSize) && (s >= mStencilSize)) {
-                        int r = findConfigAttrib(egl, display, config,
-                                EGL10.EGL_RED_SIZE, 0);
-                        int g = findConfigAttrib(egl, display, config,
-                                EGL10.EGL_GREEN_SIZE, 0);
-                        int b = findConfigAttrib(egl, display, config,
-                                EGL10.EGL_BLUE_SIZE, 0);
-                        int a = findConfigAttrib(egl, display, config,
-                                EGL10.EGL_ALPHA_SIZE, 0);
-                        if ((r == mRedSize) && (g == mGreenSize) && (b == mBlueSize) && (a == mAlphaSize)) {
-                            if (d > maxDepthSize) {
-                                maxDepthSize = d;
-                                bestConfig = config;
-                            }
+            for (EGLConfig config : configs) {
+                int d = findConfigAttrib(egl, display, config,
+                        EGL10.EGL_DEPTH_SIZE, 0);
+                int s = findConfigAttrib(egl, display, config,
+                        EGL10.EGL_STENCIL_SIZE, 0);
+                if ((d >= mDepthSize) && (s >= mStencilSize)) {
+                    int r = findConfigAttrib(egl, display, config,
+                            EGL10.EGL_RED_SIZE, 0);
+                    int g = findConfigAttrib(egl, display, config,
+                            EGL10.EGL_GREEN_SIZE, 0);
+                    int b = findConfigAttrib(egl, display, config,
+                            EGL10.EGL_BLUE_SIZE, 0);
+                    int a = findConfigAttrib(egl, display, config,
+                            EGL10.EGL_ALPHA_SIZE, 0);
+                    if ((r == mRedSize) && (g == mGreenSize) && (b == mBlueSize) && (a == mAlphaSize)) {
+                        if (d > maxDepthSize) {
+                            maxDepthSize = d;
+                            bestConfig = config;
                         }
                     }
                 }
             }
-
             return bestConfig;
         }
 

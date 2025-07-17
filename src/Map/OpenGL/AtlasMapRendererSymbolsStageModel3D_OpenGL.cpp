@@ -9,8 +9,7 @@
 
 OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::AtlasMapRendererSymbolsStageModel3D_OpenGL(AtlasMapRendererSymbolsStage_OpenGL* const symbolsStage)
     : AtlasMapRendererSymbolsStageModel3D(symbolsStage)
-{ 
-    // Initialize multisample framebuffer
+{
     _multisampleFramebuffer.framebuffer = 0;
     _multisampleFramebuffer.colorRenderbuffer = 0;
     _multisampleFramebuffer.depthRenderbuffer = 0;
@@ -19,8 +18,7 @@ OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::AtlasMapRendererSymbolsStage
     _multisampleFramebuffer.width = 0;
     _multisampleFramebuffer.height = 0;
     _multisampleFramebuffer.samples = 4; // Default to 4x MSAA
-    
-    // Initialize quad program
+
     _quadProgram.id = 0;
     _quadVAO = 0;
     _quadVBO = 0;
@@ -296,7 +294,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::render(
     int viewportWidth = internalState.glmViewport[2];
     int viewportHeight = internalState.glmViewport[3];
 
-    if (resizeMultisampleFramebuffer(viewportWidth, viewportHeight))
+    if (getRenderer()->isModel3DMSAAEnabled() && resizeMultisampleFramebuffer(viewportWidth, viewportHeight))
     {
         return renderToMultisampleFramebuffer(renderable, currentAlphaChannelType);
     }

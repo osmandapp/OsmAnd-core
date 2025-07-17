@@ -273,6 +273,9 @@ namespace OsmAnd
         virtual int getWaitTime() const = 0;
 
         virtual float getPreviousElapsedSymbolsLoadingTime() const = 0;
+
+        virtual void setModel3DMSAAEnabled(bool enabled) = 0;
+        virtual bool isModel3DMSAAEnabled() const = 0;
     };
 
     enum class MapRendererClass
