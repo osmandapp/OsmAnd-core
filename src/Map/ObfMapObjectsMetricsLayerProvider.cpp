@@ -9,7 +9,7 @@ OsmAnd::ObfMapObjectsMetricsLayerProvider::ObfMapObjectsMetricsLayerProvider(
     const float densityFactor_ /*= 1.0f*/)
     : _p(new ObfMapObjectsMetricsLayerProvider_P(this))
     , dataProvider(dataProvider_)
-    , tileSize(tileSize_)
+    , _tileSize(tileSize_)
     , densityFactor(densityFactor_)
 {
 }
@@ -30,7 +30,7 @@ float OsmAnd::ObfMapObjectsMetricsLayerProvider::getTileDensityFactor() const
 
 uint32_t OsmAnd::ObfMapObjectsMetricsLayerProvider::getTileSize() const
 {
-    return tileSize;
+    return _tileSize;
 }
 
 bool OsmAnd::ObfMapObjectsMetricsLayerProvider::supportsNaturalObtainData() const

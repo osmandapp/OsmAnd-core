@@ -96,6 +96,7 @@
 #include <OsmAndCore/Map/MapRasterLayerProvider_Software.h>
 #include <OsmAndCore/Map/MapPrimitivesMetricsLayerProvider.h>
 #include <OsmAndCore/Map/MapRasterMetricsLayerProvider.h>
+#include <OsmAndCore/Map/ObfMapObjectsMetricsLayerProvider.h>
 #include <OsmAndCore/Map/IOnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
@@ -310,6 +311,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::MapRasterLayerProvider_Software)
 	%shared_ptr(OsmAnd::MapPrimitivesMetricsLayerProvider)
 	%shared_ptr(OsmAnd::MapRasterMetricsLayerProvider)
+	%shared_ptr(OsmAnd::ObfMapObjectsMetricsLayerProvider)
 	%shared_ptr(OsmAnd::IOnlineTileSources)
 	%shared_ptr(OsmAnd::IOnlineTileSources::Source)
 	%shared_ptr(OsmAnd::OnlineTileSources)
@@ -538,6 +540,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapRasterLayerProvider_Software.h>
 %include <OsmAndCore/Map/MapPrimitivesMetricsLayerProvider.h>
 %include <OsmAndCore/Map/MapRasterMetricsLayerProvider.h>
+%include <OsmAndCore/Map/ObfMapObjectsMetricsLayerProvider.h>
 %include <OsmAndCore/Map/IOnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
