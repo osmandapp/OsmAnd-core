@@ -1,7 +1,7 @@
 #include "MapRendererDebugSettings.h"
 
 OsmAnd::MapRendererDebugSettings::MapRendererDebugSettings()
-    : debugStageEnabled(true)
+    : debugStageEnabled(false)
     , excludeOnPathSymbolsFromProcessing(false)
     , excludeBillboardSymbolsFromProcessing(false)
     , excludeModel3DSymbolsFromProcessing(false)
