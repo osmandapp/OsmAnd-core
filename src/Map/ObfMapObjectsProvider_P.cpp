@@ -3,6 +3,7 @@
 
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
+#include <QSemaphore>
 
 #include "MapDataProviderHelpers.h"
 #include "ObfsCollection.h"
@@ -16,6 +17,8 @@
 #include "Stopwatch.h"
 #include "Utilities.h"
 #include "Logging.h"
+
+static QSemaphore readLimiter(2);
 
 OsmAnd::ObfMapObjectsProvider_P::ObfMapObjectsProvider_P(ObfMapObjectsProvider* owner_)
     : _binaryMapObjectsDataBlocksCache(new BinaryMapObjectsDataBlocksCache(false))
@@ -143,6 +146,8 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         _tileReferences.removeEntry(request.tileId, request.zoom);
         tileEntry.reset();
     }
+
+    readLimiter.acquire();
 
     const Stopwatch totalTimeStopwatch(OsmAnd::performanceLogsEnabled || metric != nullptr);
 
@@ -789,6 +794,8 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             request.zoom);
         //qPrintable(metric ? metric->toString(false, QLatin1String("\t - ")) : QLatin1String("(null)")));
     }
+
+    readLimiter.release();
 
     return true;
 }
