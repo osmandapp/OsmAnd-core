@@ -492,8 +492,8 @@ public abstract class MapRendererView extends FrameLayout {
             _renderingView.setPreserveEGLContextOnPause(true);
             _renderingView.setEGLContextClientVersion(3);
             eglThread.configChooser =
-                new ComponentSizeChooser(EGL_RED_SIZE, EGL_GREEN_SIZE, EGL_BLUE_SIZE,
-                                       EGL_ALPHA_SIZE, EGL_DEPTH_SIZE, EGL_STENCIL_SIZE);
+                new ComponentSizeChooser(RED_SIZE, GREEN_SIZE, BLUE_SIZE,
+                                       ALPHA_SIZE, DEPTH_SIZE, STENCIL_SIZE);
             _renderingView.setEGLConfigChooser(eglThread.configChooser);
             _renderingView.setEGLContextFactory(new EGLContextFactory());
             _renderingView.setEGLWindowSurfaceFactory(
@@ -1733,12 +1733,12 @@ public abstract class MapRendererView extends FrameLayout {
 
         int[] configSpec = {
             EGL10.EGL_SURFACE_TYPE, EGL10.EGL_WINDOW_BIT | EGL10.EGL_PBUFFER_BIT,
-            EGL10.EGL_RED_SIZE, EGL_RED_SIZE,
-            EGL10.EGL_GREEN_SIZE, EGL_GREEN_SIZE,
-            EGL10.EGL_BLUE_SIZE, EGL_BLUE_SIZE,
-            EGL10.EGL_ALPHA_SIZE, EGL_ALPHA_SIZE,
-            EGL10.EGL_DEPTH_SIZE, EGL_DEPTH_SIZE,
-            EGL10.EGL_STENCIL_SIZE, EGL_STENCIL_SIZE,
+            EGL10.EGL_RED_SIZE, RED_SIZE,
+            EGL10.EGL_GREEN_SIZE, GREEN_SIZE,
+            EGL10.EGL_BLUE_SIZE, BLUE_SIZE,
+            EGL10.EGL_ALPHA_SIZE, ALPHA_SIZE,
+            EGL10.EGL_DEPTH_SIZE, DEPTH_SIZE,
+            EGL10.EGL_STENCIL_SIZE, STENCIL_SIZE,
             EGL10.EGL_SAMPLE_BUFFERS, 1,
             EGL10.EGL_NONE
         };
