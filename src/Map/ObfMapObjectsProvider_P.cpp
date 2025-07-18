@@ -18,7 +18,7 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-static QSemaphore readLimiter(2);
+static QSemaphore readLimiter(1);
 
 OsmAnd::ObfMapObjectsProvider_P::ObfMapObjectsProvider_P(ObfMapObjectsProvider* owner_)
     : _binaryMapObjectsDataBlocksCache(new BinaryMapObjectsDataBlocksCache(false))

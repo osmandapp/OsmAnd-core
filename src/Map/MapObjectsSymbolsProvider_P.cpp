@@ -54,7 +54,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
     assert(owner->isMetaTiled() || !request.combineTilesData);
 
-    readLimiter.acquire();
+    //readLimiter.acquire();
 
     const Stopwatch totalTimeStopwatch(OsmAnd::performanceLogsEnabled || pOutMetric != nullptr);
     
@@ -127,7 +127,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         // Mark tile as empty
         outData.reset();
 
-        readLimiter.release();
+        //readLimiter.release();
         return true;
     }
 
@@ -529,7 +529,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             request.zoom);
     }
 
-    readLimiter.release();
+    //readLimiter.release();
     return true;
 }
 
