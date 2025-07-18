@@ -18,7 +18,8 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-static QSemaphore readLimiter(1);
+static QSemaphore readLimiter1(1);
+static QSemaphore readLimiter2(2);
 
 OsmAnd::ObfMapObjectsProvider_P::ObfMapObjectsProvider_P(ObfMapObjectsProvider* owner_)
     : _binaryMapObjectsDataBlocksCache(new BinaryMapObjectsDataBlocksCache(false))
@@ -31,6 +32,22 @@ OsmAnd::ObfMapObjectsProvider_P::ObfMapObjectsProvider_P(ObfMapObjectsProvider* 
 OsmAnd::ObfMapObjectsProvider_P::~ObfMapObjectsProvider_P()
 {
     _link->release();
+}
+
+void OsmAnd::ObfMapObjectsProvider_P::acquireThreadLock()
+{
+    if (owner->threadsLimit == 1)
+        readLimiter1.acquire();
+    else if (owner->threadsLimit == 2)
+        readLimiter2.acquire();
+}
+
+void OsmAnd::ObfMapObjectsProvider_P::releaseThreadLock()
+{
+    if (owner->threadsLimit == 1)
+        readLimiter1.release();
+    else if (owner->threadsLimit == 2)
+        readLimiter2.release();
 }
 
 bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
@@ -147,7 +164,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         tileEntry.reset();
     }
 
-    readLimiter.acquire();
+    acquireThreadLock();
 
     const Stopwatch totalTimeStopwatch(OsmAnd::performanceLogsEnabled || metric != nullptr);
 
@@ -795,7 +812,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         //qPrintable(metric ? metric->toString(false, QLatin1String("\t - ")) : QLatin1String("(null)")));
     }
 
-    readLimiter.release();
+    releaseThreadLock();
 
     return true;
 }

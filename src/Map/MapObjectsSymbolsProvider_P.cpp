@@ -6,8 +6,6 @@
 #include "QtExtensions.h"
 #include "QtCommon.h"
 
-#include <QSemaphore>
-
 #include "MapDataProviderHelpers.h"
 #include "MapSymbolIntersectionClassesRegistry.h"
 #include "MapPrimitivesProvider.h"
@@ -27,8 +25,6 @@
 #define MAX_ANGLE_BETWEEN_VECTORS M_PI_2
 
 #define BLOCK_LENGTH_COEFF 4.0f / 3.0f
-
-static QSemaphore readLimiter(2);
 
 OsmAnd::MapObjectsSymbolsProvider_P::MapObjectsSymbolsProvider_P(MapObjectsSymbolsProvider* owner_)
     : owner(owner_)
@@ -53,8 +49,6 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         : tileBBox31;
 
     assert(owner->isMetaTiled() || !request.combineTilesData);
-
-    //readLimiter.acquire();
 
     const Stopwatch totalTimeStopwatch(OsmAnd::performanceLogsEnabled || pOutMetric != nullptr);
     
@@ -126,8 +120,6 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
     {
         // Mark tile as empty
         outData.reset();
-
-        //readLimiter.release();
         return true;
     }
 
@@ -528,8 +520,6 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             request.tileId.y,
             request.zoom);
     }
-
-    //readLimiter.release();
     return true;
 }
 

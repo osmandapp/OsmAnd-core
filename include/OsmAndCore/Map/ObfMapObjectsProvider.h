@@ -44,15 +44,17 @@ namespace OsmAnd
     public:
         ObfMapObjectsProvider(
             const std::shared_ptr<const IObfsCollection>& obfsCollection,
-            const Mode mode = Mode::BinaryMapObjectsAndRoads);
+            const Mode mode = Mode::BinaryMapObjectsAndRoads,
+            const int threadsLimit = 0);
         virtual ~ObfMapObjectsProvider();
 
         std::shared_ptr<const MapPresentationEnvironment> environment;
         const std::shared_ptr<const IObfsCollection> obfsCollection;
         const Mode mode;
+        const int threadsLimit;
 
-        virtual ZoomLevel getMinZoom() const;
-        virtual ZoomLevel getMaxZoom() const;
+        virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
 
         virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
         virtual bool obtainData(
