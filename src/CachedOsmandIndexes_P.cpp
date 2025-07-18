@@ -200,7 +200,7 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
     obfInfo->creationTimestamp = found->datemodified();
 
     Nullable<AreaI> globalBBox31;
-    const QRegularExpression liveUpdateSourceRegex("(_[0-9]{2}){3}\\.obf");
+    const QRegularExpression liveUpdateSourceRegex("(_[0-9]{2}){3}");
     
     for (int i = 0; i < found->mapindex_size(); i++)
     {

@@ -40,7 +40,7 @@ void OsmAnd::ObfMapSectionReader_P::read(
     const std::shared_ptr<ObfMapSectionInfo>& section)
 {
     const auto cis = reader.getCodedInputStream().get();
-    const QRegularExpression liveUpdateSourceRegex("(_[0-9]{2}){3}\\.obf");
+    const QRegularExpression liveUpdateSourceRegex("(_[0-9]{2}){3}");
 
     for (;;)
     {
