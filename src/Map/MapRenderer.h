@@ -167,6 +167,8 @@ namespace OsmAnd
         OsmAnd::Stopwatch symbolsLoadingStart;
         float symbolsLoadingTime = 0;
 
+        bool model3DMSAAEnabled = false;
+
         virtual AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const = 0;
         virtual AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const = 0;
         virtual double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const = 0;
@@ -490,6 +492,9 @@ namespace OsmAnd
         virtual int getWaitTime() const Q_DECL_OVERRIDE;
 
         float getPreviousElapsedSymbolsLoadingTime() const override;
+
+        void setModel3DMSAAEnabled(bool enabled) override;
+        bool isModel3DMSAAEnabled() const override;
 
     friend struct OsmAnd::MapRendererInternalState;
     friend class OsmAnd::MapRendererStage;

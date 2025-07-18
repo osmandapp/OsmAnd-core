@@ -3362,3 +3362,13 @@ float OsmAnd::MapRenderer::getPreviousElapsedSymbolsLoadingTime() const
 {
     return symbolsLoadingTime;
 }
+
+void OsmAnd::MapRenderer::setModel3DMSAAEnabled(bool enabled)
+{
+    model3DMSAAEnabled = enabled;
+}
+
+bool OsmAnd::MapRenderer::isModel3DMSAAEnabled() const
+{
+    return model3DMSAAEnabled;
+}

@@ -55,15 +55,66 @@ namespace OsmAnd
             } fs;
         } _program;
 
+        // Fullscreen quad program for compositing
+        struct QuadProgram
+        {
+            GLname id;
+            QByteArray binaryCache;
+            GLenum cacheFormat;
+
+            // Vertex data
+            struct
+            {
+                // Input data
+                struct
+                {
+                    GLlocation vertexPosition;
+                    GLlocation vertexTexCoord;
+                } in;
+            } vs;
+            // Fragment data
+            struct
+            {
+                // Params
+                struct
+                {
+                    GLlocation texture;
+                } param;
+            } fs;
+        } _quadProgram;
+
+        // Fullscreen quad VAO/VBO
+        GLuint _quadVAO;
+        GLuint _quadVBO;
+
+        struct MultisampleFramebuffer
+        {
+            GLuint framebuffer;
+            GLuint colorRenderbuffer;
+            GLuint depthRenderbuffer;
+            GLuint resolveTexture;
+            bool initialized;
+            int width;
+            int height;
+            int samples;
+        } _multisampleFramebuffer;
+
     public:
         AtlasMapRendererSymbolsStageModel3D_OpenGL(AtlasMapRendererSymbolsStage_OpenGL* const symbolsStage);
         virtual ~AtlasMapRendererSymbolsStageModel3D_OpenGL();
 
-        bool initialize() override;
-        bool render(
-            const std::shared_ptr<const RenderableModel3DSymbol>& renderable,
-            AlphaChannelType& currentAlphaChannelType) override;
-        bool release(const bool gpuContextLost) override;
+        virtual bool initialize() override;
+        virtual bool render(const std::shared_ptr<const RenderableModel3DSymbol>& renderable, AlphaChannelType& currentAlphaChannelType) override;
+        virtual bool release(const bool gpuContextLost) override;
+
+    private:
+        bool createMultisampleFramebuffer(int width, int height);
+        void releaseMultisampleFramebuffer();
+        bool resizeMultisampleFramebuffer(int width, int height);
+        bool renderModel3D(const std::shared_ptr<const RenderableModel3DSymbol>& renderable, AlphaChannelType& currentAlphaChannelType);
+        bool renderToMultisampleFramebuffer(const std::shared_ptr<const RenderableModel3DSymbol>& renderable, AlphaChannelType& currentAlphaChannelType);
+        void resolveMultisampleFramebuffer();
+        void compositeResolvedTexture();
     };
 }
 
