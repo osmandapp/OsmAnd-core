@@ -43,7 +43,6 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
-import javax.microedition.khronos.opengles.GL;
 import javax.microedition.khronos.opengles.GL10;
 
 import java.nio.ByteBuffer;
@@ -1755,12 +1754,12 @@ public abstract class MapRendererView extends FrameLayout {
         return hasMSAA;
     }
 
-    private static final int EGL_RED_SIZE = 8;
-    private static final int EGL_GREEN_SIZE = 8;
-    private static final int EGL_BLUE_SIZE = 8;
-    private static final int EGL_ALPHA_SIZE = 0;
-    private static final int EGL_DEPTH_SIZE = 16;
-    private static final int EGL_STENCIL_SIZE = 0;
+    private static final int RED_SIZE = 8;
+    private static final int GREEN_SIZE = 8;
+    private static final int BLUE_SIZE = 8;
+    private static final int ALPHA_SIZE = 0;
+    private static final int DEPTH_SIZE = 16;
+    private static final int STENCIL_SIZE = 0;
 
     private static boolean msaaEnabled = false;
 
