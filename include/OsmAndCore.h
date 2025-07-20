@@ -64,8 +64,11 @@ namespace OsmAnd
 {
     class ICoreResourcesProvider;
     class IMemoryManager;
+    struct MapRendererPerformanceMetrics;
 
-    OSMAND_CORE_API extern bool performanceLogsEnabled;
+    OSMAND_CORE_API MapRendererPerformanceMetrics& OSMAND_CORE_CALL getPerformanceMetrics();
+    OSMAND_CORE_API bool OSMAND_CORE_CALL isPerformanceMetricsEnabled();
+    OSMAND_CORE_API void OSMAND_CORE_CALL enablePerformanceMetrics(const bool enable);
 
     OSMAND_CORE_API int OSMAND_CORE_CALL InitializeCore(
         const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider, 

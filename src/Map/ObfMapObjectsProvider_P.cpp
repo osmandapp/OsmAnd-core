@@ -17,6 +17,7 @@
 #include "Stopwatch.h"
 #include "Utilities.h"
 #include "Logging.h"
+#include "MapRendererPerformanceMetrics.h"
 
 static QSemaphore readLimiter1(1);
 static QSemaphore readLimiter2(2);
@@ -166,7 +167,9 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
 
     acquireThreadLock();
 
-    const Stopwatch totalTimeStopwatch(OsmAnd::performanceLogsEnabled || metric != nullptr);
+    const Stopwatch totalTimeStopwatch(metric != nullptr);
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().readStart();
 
     // Get bounding box that covers this tile
     const auto zoom = request.zoom;
@@ -797,20 +800,8 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         metric->sharedObjectsCount += sharedMapObjectsCount;
     }
 
-    if (OsmAnd::performanceLogsEnabled)
-    {
-        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-        LogPrintf(LogSeverityLevel::Info, ">>>> %ld READ %f: %d map objects (%d unique, %d shared) read from %dx%d@%d",
-            millis, totalTimeStopwatch.elapsed(),
-            allMapObjects.size(),
-            allMapObjects.size() - sharedMapObjectsCount,
-            sharedMapObjectsCount,
-            request.tileId.x,
-            request.tileId.y,
-            request.zoom);
-        //qPrintable(metric ? metric->toString(false, QLatin1String("\t - ")) : QLatin1String("(null)")));
-    }
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().readFinish(request.tileId, request.zoom, allMapObjects.size(), sharedMapObjectsCount);
 
     releaseThreadLock();
 

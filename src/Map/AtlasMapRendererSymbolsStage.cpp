@@ -39,6 +39,7 @@
 #include "MapMarker.h"
 #include "VectorLine.h"
 #include "Map/OpenGL/Utilities_OpenGL.h"
+#include "MapRendererPerformanceMetrics.h"
 
 # define UPDATE_INTERVAL_MS 1000.0f
 
@@ -249,7 +250,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
     preRender(denseSymbols, metric);
     
-    Stopwatch stopwatch(OsmAnd::performanceLogsEnabled || metric != nullptr);
+    Stopwatch stopwatch(metric != nullptr);
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().intersectionStart();
 
     // Process published symbols if needed
     if (forceUpdate || needUpdatedSymbols)
@@ -272,13 +275,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
             _lastResumeSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
 
-            if (OsmAnd::performanceLogsEnabled && outRenderableSymbols.size() > 0)
-            {
-                auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-                auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-                LogPrintf(LogSeverityLevel::Info, ">>>> %ld INTERSECTION %f: plottedSymbols=%d",
-                          millis, stopwatch.elapsed(), static_cast<int>(outRenderableSymbols.size()));
-            }
+            if (OsmAnd::isPerformanceMetricsEnabled())
+                OsmAnd::getPerformanceMetrics().intersectionFinish(static_cast<int>(outRenderableSymbols.size()));
         }
 
         if (metric)

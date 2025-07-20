@@ -26,6 +26,7 @@
 #include "Utilities.h"
 #include "SkiaUtilities.h"
 #include "Logging.h"
+#include "MapRendererPerformanceMetrics.h"
 
 #define MIN_SUBSECTION_TO_REDRAW_SEPARATELY 1000
 
@@ -618,7 +619,7 @@ void OsmAnd::MapRendererResourcesManager::resetResourceWorkerThreadsLimit()
 #if OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
     _resourcesRequestWorkerPool.setMaxThreadCount(1);
 #else // !OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
-    _resourcesRequestWorkerPool.setMaxThreadCount(QThread::idealThreadCount());
+    _resourcesRequestWorkerPool.setMaxThreadCount(QThread::idealThreadCount() / 2);
 #endif // OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
 
     if (_resourcesRequestWorkerPool.maxThreadCount() > 0)

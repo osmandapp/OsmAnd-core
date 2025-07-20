@@ -6,6 +6,7 @@
 #include "Utilities.h"
 #include "Logging.h"
 #include "ObfMapObject.h"
+#include "MapRendererPerformanceMetrics.h"
 
 OsmAnd::MapPrimitivesProvider_P::MapPrimitivesProvider_P(MapPrimitivesProvider* owner_)
     : _primitiviserCache(new MapPrimitiviser::Cache())
@@ -104,7 +105,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
     std::shared_ptr<MapPrimitivesProvider::Data>& outTiledPrimitives,
     MapPrimitivesProvider_Metrics::Metric_obtainData* const metric)
 {
-    const Stopwatch totalStopwatch(OsmAnd::performanceLogsEnabled || metric != nullptr);
+    const Stopwatch totalStopwatch(metric != nullptr);
 
     std::shared_ptr<TileEntry> tileEntry;
 
@@ -179,7 +180,8 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         return true;
     }
 
-    const Stopwatch primitivesStopwatch(OsmAnd::performanceLogsEnabled);
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().primitivesStart();
 
     // Get primitivised objects
     std::shared_ptr<MapPrimitiviser::PrimitivisedObjects> primitivisedObjects;
@@ -265,20 +267,9 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
     if (metric)
         metric->elapsedTime = totalStopwatch.elapsed();
 
-    if (OsmAnd::performanceLogsEnabled)
-    {
-        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-        LogPrintf(LogSeverityLevel::Info, ">>>> %ld PRIMITIVES %f: %d polygons, %d polylines, %d points primitivised from %dx%d@%d",
-            millis, primitivesStopwatch.elapsed(),
-            primitivisedObjects->polygons.size(),
-            primitivisedObjects->polylines.size(),
-            primitivisedObjects->polygons.size(),
-            request.tileId.x,
-            request.tileId.y,
-            request.zoom);
-        //qPrintable(metric ? metric->toString(false, QLatin1String("\t - ")) : QLatin1String("(null)")));
-    }
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().primitivesFinish(request.tileId, request.zoom, primitivisedObjects->polygons.size(), primitivisedObjects->polylines.size(), primitivisedObjects->points.size(), metric);
+
     return true;
 }
 

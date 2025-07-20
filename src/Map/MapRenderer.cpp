@@ -20,7 +20,9 @@
 #include "Utilities.h"
 #include "Logging.h"
 #include "Stopwatch.h"
+#include "MapRendererPerformanceMetrics.h"
 #include "QKeyValueIterator.h"
+
 #include <SqliteHeightmapTileProvider.h>
 #include <VectorLinesCollection.h>
 #include <AtlasMapRenderer_Metrics.h>
@@ -276,7 +278,9 @@ void OsmAnd::MapRenderer::processGpuWorker()
 {
     if (isInGpuWorkerThread())
     {
-        Stopwatch timer(OsmAnd::performanceLogsEnabled);
+        if (OsmAnd::isPerformanceMetricsEnabled())
+            OsmAnd::getPerformanceMetrics().syncStart();
+            
         unsigned int resourcesUploadedCount = 0u;
         unsigned int resourcesUnloadedCount = 0u;
 
@@ -295,19 +299,11 @@ void OsmAnd::MapRenderer::processGpuWorker()
                 resourcesUnloadedCount += resourcesUnloaded;
             }
             unprocessedRequests = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
+            
         } while (_gpuWorkerThreadIsAlive && unprocessedRequests > 0);
-        if (resourcesUploadedCount > 0 || resourcesUnloadedCount > 0)
-        {
-            if (OsmAnd::performanceLogsEnabled)
-            {
-                auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-                auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-                LogPrintf(LogSeverityLevel::Info, ">>>> %ld SYNC %f: syncResourcesInGPU %ld uploaded, %ld unloaded",
-                    millis, timer.elapsed(),
-                    resourcesUploadedCount,
-                    resourcesUnloadedCount);
-            }
-        }
+
+        if (OsmAnd::isPerformanceMetricsEnabled())
+            OsmAnd::getPerformanceMetrics().syncFinish(resourcesUploadedCount, resourcesUnloadedCount);
     }
     else if (isInRenderThread())
     {
@@ -1360,20 +1356,19 @@ QSet<int> OsmAnd::MapRenderer::getSubsectionsToUpdate()
 
 void OsmAnd::MapRenderer::setSymbolsLoading(bool active)
 {
-    OsmAnd::performanceLogsEnabled = currentDebugSettings->debugStageEnabled;
-    if (OsmAnd::performanceLogsEnabled)
+    if (currentDebugSettings->debugStageEnabled || OsmAnd::isPerformanceMetricsEnabled())
     {
-        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
         if (_symbolsLoading == false && active == true)
         {
-            LogPrintf(LogSeverityLevel::Info, ">>>> %ld START 0.0:", millis);
             symbolsLoadingStart.start();
+            if (OsmAnd::isPerformanceMetricsEnabled())
+                OsmAnd::getPerformanceMetrics().startSymbolsLoading();
         }
         else if (_symbolsLoading == true && active == false)
         {
             symbolsLoadingTime = symbolsLoadingStart.elapsed();
-            LogPrintf(LogSeverityLevel::Info, ">>>> %ld FINISH %f:", millis, symbolsLoadingTime);
+            if (OsmAnd::isPerformanceMetricsEnabled())
+                OsmAnd::getPerformanceMetrics().stopSymbolsLoading();
         }
     }
 

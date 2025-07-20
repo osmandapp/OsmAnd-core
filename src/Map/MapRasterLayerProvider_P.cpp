@@ -7,6 +7,7 @@
 #include "MapPrimitiviser.h"
 #include "MapRasterizer.h"
 #include "Stopwatch.h"
+#include "MapRendererPerformanceMetrics.h"
 
 OsmAnd::MapRasterLayerProvider_P::MapRasterLayerProvider_P(MapRasterLayerProvider* const owner_)
     : owner(owner_)
@@ -45,7 +46,7 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
     std::shared_ptr<MapRasterLayerProvider::Data>& outData,
     MapRasterLayerProvider_Metrics::Metric_obtainData* const metric)
 {
-    const Stopwatch totalStopwatch(OsmAnd::performanceLogsEnabled || metric != nullptr);
+    const Stopwatch totalStopwatch(metric != nullptr);
 
     // Obtain offline map primitives tile
     std::shared_ptr<MapPrimitivesProvider::Data> primitivesTile;
@@ -63,7 +64,8 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
         return true;
     }
 
-    const Stopwatch rasterizeStopwatch(OsmAnd::performanceLogsEnabled);
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().rasterStart();
 
     // Perform actual rasterization
     const auto image = rasterize(request, primitivesTile, metric);
@@ -88,17 +90,8 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
     if (metric)
         metric->elapsedTime += totalStopwatch.elapsed();
 
-    if (OsmAnd::performanceLogsEnabled)
-    {
-        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-        LogPrintf(LogSeverityLevel::Info, ">>>> %ld RASTER %f: %dx%d@%d rasterized on CPU",
-            millis, rasterizeStopwatch.elapsed(),
-            request.tileId.x,
-            request.tileId.y,
-            request.zoom);
-        //qPrintable(metric ? metric->toString(QLatin1String("\t - ")) : QLatin1String("(null)")));
-    }
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().rasterFinish(request.tileId, request.zoom);
 
     return true;
 }

@@ -12,6 +12,7 @@
 #include "QKeyValueIterator.h"
 #include "QRunnableFunctor.h"
 #include "Utilities.h"
+#include "MapRendererPerformanceMetrics.h"
 
 //#define OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE 1
 #ifndef OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
@@ -667,7 +668,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
 
 bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 {
-    const Stopwatch timer(OsmAnd::performanceLogsEnabled);
+    const Stopwatch timer(OsmAnd::isPerformanceMetricsEnabled());
     
     typedef std::pair< std::shared_ptr<MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > SymbolResourceEntry;
 
@@ -833,7 +834,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 #endif // OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
     }
 
-//    if (OsmAnd::performanceLogsEnabled)
+//    if (OsmAnd::isPerformanceMetricsEnabled())
 //    {
 //        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
 //        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
@@ -844,7 +845,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 
 void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
 {
-    const Stopwatch timer(OsmAnd::performanceLogsEnabled);
+    const Stopwatch timer(OsmAnd::isPerformanceMetricsEnabled());
     int count = 0;
     
     const auto link_ = link.lock();
@@ -930,7 +931,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
     }
     _referencedSharedGroupsResources.clear();
     
-//    if (OsmAnd::performanceLogsEnabled)
+//    if (OsmAnd::isPerformanceMetricsEnabled())
 //    {
 //        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
 //        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
