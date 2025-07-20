@@ -1740,6 +1740,8 @@ public abstract class MapRendererView extends FrameLayout {
             EGL10.EGL_DEPTH_SIZE, DEPTH_SIZE,
             EGL10.EGL_STENCIL_SIZE, STENCIL_SIZE,
             EGL10.EGL_SAMPLE_BUFFERS, 1,
+            EGL10.EGL_SAMPLES, 2, 
+            EGL10.EGL_RENDERABLE_TYPE, 0x0040,
             EGL10.EGL_NONE
         };
 
