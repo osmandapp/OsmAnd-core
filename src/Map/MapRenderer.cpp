@@ -1362,13 +1362,13 @@ void OsmAnd::MapRenderer::setSymbolsLoading(bool active)
         {
             symbolsLoadingStart.start();
             if (OsmAnd::isPerformanceMetricsEnabled())
-                OsmAnd::getPerformanceMetrics().startSymbolsLoading();
+                OsmAnd::getPerformanceMetrics().startSymbolsLoading(getState().zoomLevel);
         }
         else if (_symbolsLoading == true && active == false)
         {
             symbolsLoadingTime = symbolsLoadingStart.elapsed();
             if (OsmAnd::isPerformanceMetricsEnabled())
-                OsmAnd::getPerformanceMetrics().stopSymbolsLoading();
+                OsmAnd::getPerformanceMetrics().stopSymbolsLoading(getState().zoomLevel);
         }
     }
 

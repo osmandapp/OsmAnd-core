@@ -31,8 +31,8 @@ namespace OsmAnd
 
         bool enabled;
                 
-        void startSymbolsLoading();
-        void stopSymbolsLoading();
+        void startSymbolsLoading(const ZoomLevel zoom);
+        void stopSymbolsLoading(const ZoomLevel zoom);
         
         int totalRead;
         float totalReadDuration;

@@ -12,7 +12,7 @@ OsmAnd::MapRendererPerformanceMetrics::~MapRendererPerformanceMetrics()
 {
 }
 
-void OsmAnd::MapRendererPerformanceMetrics::startSymbolsLoading()
+void OsmAnd::MapRendererPerformanceMetrics::startSymbolsLoading(const ZoomLevel zoom)
 {
     symbolsLoadingTimer.start();
     
@@ -44,19 +44,20 @@ void OsmAnd::MapRendererPerformanceMetrics::startSymbolsLoading()
 
     auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-    LogPrintf(LogSeverityLevel::Info, ">>>> %ld START 0.0:", millis);
+    LogPrintf(LogSeverityLevel::Info, ">>>> %ld START 0.0: %dz", millis, zoom);
 }
 
-void OsmAnd::MapRendererPerformanceMetrics::stopSymbolsLoading()
+void OsmAnd::MapRendererPerformanceMetrics::stopSymbolsLoading(const ZoomLevel zoom)
 {
     auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-    LogPrintf(LogSeverityLevel::Info, ">>>> %ld FINISH %f: TOTAL read %d %f, primitives %d %f, raster %d %f, text %d %f, sync %d %f", millis, symbolsLoadingTimer.elapsed(),
-        totalRead, totalReadDuration,
-        totalPrimitives, totalPrimitivesDuration,
-        totalRaster, totalRasterDuration,
-        totalText, totalTextDuration,
-        totalSync, totalSyncDuration);
+    LogPrintf(LogSeverityLevel::Info, ">>>> %ld FINISH %f: %dz Read %f (%d) Primitives %f (%d) Raster %f (%d) Text %f (%d) Sync %f (%d)",
+        millis, symbolsLoadingTimer.elapsed(), zoom,
+        totalReadDuration, totalRead,
+        totalPrimitivesDuration, totalPrimitives,
+        totalRasterDuration, totalRaster,
+        totalTextDuration, totalText,
+        totalSyncDuration, totalSync);
 }
 
 void OsmAnd::MapRendererPerformanceMetrics::readStart()
