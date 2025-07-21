@@ -12,11 +12,7 @@
 #include "QKeyValueIterator.h"
 #include "QRunnableFunctor.h"
 #include "Utilities.h"
-
-//#define OSMAND_PERFORMANCE_METRICS 1
-#if !defined(OSMAND_PERFORMANCE_METRICS)
-#   define OSMAND_PERFORMANCE_METRICS 0
-#endif // !defined(OSMAND_PERFORMANCE_METRICS)
+#include "MapRendererPerformanceMetrics.h"
 
 //#define OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE 1
 #ifndef OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
@@ -97,6 +93,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     request.zoom = zoom;
     const auto& mapState = resourcesManager->renderer->getMapState();
     request.mapState = mapState;
+
+    /* Sharing disabled
     request.filterCallback =
         [provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups, &uniqueSymbolsGroupsKeys, checkUniqueKeys]
         (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup) -> bool
@@ -141,6 +139,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
             loadedSharedGroups.insert(sharingKey);
             return true;
         };
+    */
     request.combineTilesData = isMetaTiled;
 
     const auto requestSucceeded = provider->obtainTiledSymbols(request, tile);
@@ -399,6 +398,8 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
             }
             else
                 return;
+
+            /* Sharing disabled
             request.filterCallback =
                 [provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups, &uniqueSymbolsGroupsKeys, checkUniqueKeys]
                 (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup) -> bool
@@ -443,6 +444,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
                     loadedSharedGroups.insert(sharingKey);
                     return true;
                 };
+            */
             request.combineTilesData = self->isMetaTiled;
 
             const auto requestSucceeded = provider->obtainTiledSymbols(request, tile);
@@ -666,13 +668,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
 
 bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 {
-    const Stopwatch timer(
-#if OSMAND_PERFORMANCE_METRICS
-        true
-#else
-        false
-#endif // OSMAND_PERFORMANCE_METRICS
-        );
+    const Stopwatch timer(OsmAnd::isPerformanceMetricsEnabled());
     
     typedef std::pair< std::shared_ptr<MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > SymbolResourceEntry;
 
@@ -838,27 +834,18 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 #endif // OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
     }
 
-#if OSMAND_PERFORMANCE_METRICS
-#if OSMAND_PERFORMANCE_METRICS <= 1
-    auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-    LogPrintf(LogSeverityLevel::Info, ">>>> %ld UPLOAD %f: uploadToGPU %d", millis, timer.elapsed(), uploaded);
-#endif // OSMAND_PERFORMANCE_METRICS <= 1
-#endif // OSMAND_PERFORMANCE_METRICS
-
+//    if (OsmAnd::isPerformanceMetricsEnabled())
+//    {
+//        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+//        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
+//        LogPrintf(LogSeverityLevel::Info, ">>>> %ld UPLOAD %f: uploadToGPU %d", millis, timer.elapsed(), uploaded);
+//    }
     return true;
 }
 
 void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
 {
-    const Stopwatch timer(
-#if OSMAND_PERFORMANCE_METRICS
-        true
-#else
-        false
-#endif // OSMAND_PERFORMANCE_METRICS
-        );
-    
+    const Stopwatch timer(OsmAnd::isPerformanceMetricsEnabled());
     int count = 0;
     
     const auto link_ = link.lock();
@@ -944,13 +931,12 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
     }
     _referencedSharedGroupsResources.clear();
     
-#if OSMAND_PERFORMANCE_METRICS
-#if OSMAND_PERFORMANCE_METRICS <= 1
-    auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-    LogPrintf(LogSeverityLevel::Info, ">>>> %ld UNLOAD %f: unloadFromGPU %d", millis, timer.elapsed(), count);
-#endif // OSMAND_PERFORMANCE_METRICS <= 1
-#endif // OSMAND_PERFORMANCE_METRICS
+//    if (OsmAnd::isPerformanceMetricsEnabled())
+//    {
+//        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+//        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
+//        LogPrintf(LogSeverityLevel::Info, ">>>> %ld UNLOAD %f: unloadFromGPU %d", millis, timer.elapsed(), count);
+//    }
 }
 
 void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()

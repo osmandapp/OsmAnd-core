@@ -1,13 +1,9 @@
 #include "ObfMapObjectsProvider_P.h"
 #include "ObfMapObjectsProvider.h"
 
-#define OSMAND_PERFORMANCE_METRICS 1
-#if !defined(OSMAND_PERFORMANCE_METRICS)
-#   define OSMAND_PERFORMANCE_METRICS 0
-#endif // !defined(OSMAND_PERFORMANCE_METRICS)
-
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
+#include <QSemaphore>
 
 #include "MapDataProviderHelpers.h"
 #include "ObfsCollection.h"
@@ -21,6 +17,10 @@
 #include "Stopwatch.h"
 #include "Utilities.h"
 #include "Logging.h"
+#include "MapRendererPerformanceMetrics.h"
+
+static QSemaphore readLimiter1(1);
+static QSemaphore readLimiter2(2);
 
 OsmAnd::ObfMapObjectsProvider_P::ObfMapObjectsProvider_P(ObfMapObjectsProvider* owner_)
     : _binaryMapObjectsDataBlocksCache(new BinaryMapObjectsDataBlocksCache(false))
@@ -33,6 +33,22 @@ OsmAnd::ObfMapObjectsProvider_P::ObfMapObjectsProvider_P(ObfMapObjectsProvider* 
 OsmAnd::ObfMapObjectsProvider_P::~ObfMapObjectsProvider_P()
 {
     _link->release();
+}
+
+void OsmAnd::ObfMapObjectsProvider_P::acquireThreadLock()
+{
+    if (owner->threadsLimit == 1)
+        readLimiter1.acquire();
+    else if (owner->threadsLimit == 2)
+        readLimiter2.acquire();
+}
+
+void OsmAnd::ObfMapObjectsProvider_P::releaseThreadLock()
+{
+    if (owner->threadsLimit == 1)
+        readLimiter1.release();
+    else if (owner->threadsLimit == 2)
+        readLimiter2.release();
 }
 
 bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
@@ -61,15 +77,8 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
 bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     const ObfMapObjectsProvider::Request& request,
     std::shared_ptr<ObfMapObjectsProvider::Data>& outMapObjects,
-    ObfMapObjectsProvider_Metrics::Metric_obtainData* const metric_)
+    ObfMapObjectsProvider_Metrics::Metric_obtainData* const metric)
 {
-#if OSMAND_PERFORMANCE_METRICS
-    ObfMapObjectsProvider_Metrics::Metric_obtainData localMetric;
-    const auto metric = metric_ ? metric_ : &localMetric;
-#else
-    const auto metric = metric_;
-#endif
-
     std::shared_ptr<TileEntry> tileEntry;
     std::shared_ptr<TileSharedEntry> coastlineTileEntry;
     std::shared_ptr<ObfMapObjectsProvider::Data> coastlineTile = nullptr;
@@ -156,13 +165,11 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         tileEntry.reset();
     }
 
-    const Stopwatch totalTimeStopwatch(
-#if OSMAND_PERFORMANCE_METRICS
-        true
-#else
-        metric != nullptr
-#endif // OSMAND_PERFORMANCE_METRICS
-        );
+    acquireThreadLock();
+
+    const Stopwatch totalTimeStopwatch(metric != nullptr);
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().readStart();
 
     // Get bounding box that covers this tile
     const auto zoom = request.zoom;
@@ -231,7 +238,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             blockIds.insert(blockId);
 
             // This map object may be shared only in case it crosses bounds of a tile
-            const auto canNotBeShared = requestedZoom == zoom && tileBBox31.contains(bbox);
+            const auto canNotBeShared = true;//requestedZoom == zoom && tileBBox31.contains(bbox);
 
             // If map object can not be shared, just read it
             if (canNotBeShared)
@@ -334,7 +341,8 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             blockIds.insert(blockId);
 
             // This road may be shared only in case it crosses bounds of a tile
-            const auto canNotBeShared = tileBBox31.contains(bbox);
+            // Sharing disabled
+            const auto canNotBeShared = true;//tileBBox31.contains(bbox);
 
             // If road can not be shared, just read it
             if (canNotBeShared)
@@ -792,31 +800,10 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         metric->sharedObjectsCount += sharedMapObjectsCount;
     }
 
-#if OSMAND_PERFORMANCE_METRICS
-#if OSMAND_PERFORMANCE_METRICS <= 1
-    auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-    LogPrintf(LogSeverityLevel::Info, ">>>> %ld READ %f: %d map objects (%d unique, %d shared) read from %dx%d@%d",
-        millis, totalTimeStopwatch.elapsed(),
-        allMapObjects.size(),
-        allMapObjects.size() - sharedMapObjectsCount,
-        sharedMapObjectsCount,
-        request.tileId.x,
-        request.tileId.y,
-        request.zoom);
-#else
-    LogPrintf(LogSeverityLevel::Info,
-        "%d map objects (%d unique, %d shared) read from %dx%d@%d in %fs:\n%s",
-        allMapObjects.size(),
-        allMapObjects.size() - sharedMapObjectsCount,
-        sharedMapObjectsCount,
-        request.tileId.x,
-        request.tileId.y,
-        request.zoom,
-        totalTimeStopwatch.elapsed(),
-        qPrintable(metric ? metric->toString(false, QLatin1String("\t - ")) : QLatin1String("(null)")));
-#endif // OSMAND_PERFORMANCE_METRICS <= 1
-#endif // OSMAND_PERFORMANCE_METRICS
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().readFinish(request.tileId, request.zoom, allMapObjects.size(), sharedMapObjectsCount);
+
+    releaseThreadLock();
 
     return true;
 }

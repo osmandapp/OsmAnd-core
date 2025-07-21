@@ -20,7 +20,9 @@
 #include "Utilities.h"
 #include "Logging.h"
 #include "Stopwatch.h"
+#include "MapRendererPerformanceMetrics.h"
 #include "QKeyValueIterator.h"
+
 #include <SqliteHeightmapTileProvider.h>
 #include <VectorLinesCollection.h>
 #include <AtlasMapRenderer_Metrics.h>
@@ -64,6 +66,7 @@ OsmAnd::MapRenderer::MapRenderer(
     , publishedMapSymbolsByOrder(_publishedMapSymbolsByOrder)
     , currentDebugSettings(_currentDebugSettingsAsConst)
     , _jsonEnabled(false)
+    , _maxResourceThreadsLimit(0)
 {
 }
 
@@ -275,9 +278,12 @@ void OsmAnd::MapRenderer::processGpuWorker()
 {
     if (isInGpuWorkerThread())
     {
-        Stopwatch timer(true);
+        if (OsmAnd::isPerformanceMetricsEnabled())
+            OsmAnd::getPerformanceMetrics().syncStart();
+            
         unsigned int resourcesUploadedCount = 0u;
         unsigned int resourcesUnloadedCount = 0u;
+
         // In every layer we have, upload pending resources to GPU without limiting
         int unprocessedRequests = 0;
         do
@@ -293,22 +299,11 @@ void OsmAnd::MapRenderer::processGpuWorker()
                 resourcesUnloadedCount += resourcesUnloaded;
             }
             unprocessedRequests = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
+            
         } while (_gpuWorkerThreadIsAlive && unprocessedRequests > 0);
-        if (resourcesUploadedCount > 0 || resourcesUnloadedCount > 0)
-        {
-            auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-            auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-            //if (currentDebugSettings->debugStageEnabled)
-            {
-                auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-                auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-                LogPrintf(LogSeverityLevel::Info, ">>>> %ld SYNC %f: syncResourcesInGPU %ld uploaded, %ld unloaded",
-                    millis, timer.elapsed(),
-                    resourcesUploadedCount,
-                    resourcesUnloadedCount);
-            }
-        }
-        
+
+        if (OsmAnd::isPerformanceMetricsEnabled())
+            OsmAnd::getPerformanceMetrics().syncFinish(resourcesUploadedCount, resourcesUnloadedCount);
     }
     else if (isInRenderThread())
     {
@@ -419,6 +414,10 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
     _resources.reset(new MapRendererResourcesManager(this));
     if (!_resources->initializeDefaultResources())
         return false;
+
+    auto maxResourceThreadsLimit = _maxResourceThreadsLimit;
+    if (maxResourceThreadsLimit > 0)
+        _resources->setResourceWorkerThreadsLimit(maxResourceThreadsLimit);
 
     return true;
 }
@@ -1357,19 +1356,19 @@ QSet<int> OsmAnd::MapRenderer::getSubsectionsToUpdate()
 
 void OsmAnd::MapRenderer::setSymbolsLoading(bool active)
 {
-    //if (currentDebugSettings->debugStageEnabled)
+    if (currentDebugSettings->debugStageEnabled || OsmAnd::isPerformanceMetricsEnabled())
     {
-        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
         if (_symbolsLoading == false && active == true)
         {
-            LogPrintf(LogSeverityLevel::Info, ">>>> %ld START", millis);
             symbolsLoadingStart.start();
+            if (OsmAnd::isPerformanceMetricsEnabled())
+                OsmAnd::getPerformanceMetrics().startSymbolsLoading(getState().zoomLevel);
         }
         else if (_symbolsLoading == true && active == false)
         {
             symbolsLoadingTime = symbolsLoadingStart.elapsed();
-            LogPrintf(LogSeverityLevel::Info, ">>>> %ld FINISH %f", millis, symbolsLoadingTime);
+            if (OsmAnd::isPerformanceMetricsEnabled())
+                OsmAnd::getPerformanceMetrics().stopSymbolsLoading(getState().zoomLevel);
         }
     }
 
@@ -3351,9 +3350,26 @@ QByteArray OsmAnd::MapRenderer::getJSON() const
     return _jsonDocument ? _jsonDocument->toJson() : QByteArray();
 }
 
+int OsmAnd::MapRenderer::getDefaultThreadsLimit()
+{
+    return QThread::idealThreadCount();
+}
+
+int OsmAnd::MapRenderer::getResourceWorkerThreadsLimit()
+{
+    const auto resources = _resources;
+    if (resources)
+        return  resources->getResourceWorkerThreadsLimit();
+
+    return _maxResourceThreadsLimit > 0 ? _maxResourceThreadsLimit : getDefaultThreadsLimit();
+}
+
 void OsmAnd::MapRenderer::setResourceWorkerThreadsLimit(const unsigned int limit)
 {
-    _resources->setResourceWorkerThreadsLimit(limit);
+    _maxResourceThreadsLimit = limit;
+    const auto resources = _resources;
+    if (resources)
+        resources->setResourceWorkerThreadsLimit(limit);
 }
 
 void OsmAnd::MapRenderer::resetResourceWorkerThreadsLimit()

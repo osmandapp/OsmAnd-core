@@ -60,13 +60,13 @@ namespace OsmAnd
         virtual ~ObfMapObjectsMetricsLayerProvider();
 
         const std::shared_ptr<ObfMapObjectsProvider> dataProvider;
-        const uint32_t tileSize;
+        const uint32_t _tileSize;
         const float densityFactor;
 
-        virtual MapStubStyle getDesiredStubsStyle() const;
+        virtual MapStubStyle getDesiredStubsStyle() const Q_DECL_OVERRIDE;
 
-        virtual float getTileDensityFactor() const;
-        virtual uint32_t getTileSize() const;
+        virtual float getTileDensityFactor() const Q_DECL_OVERRIDE;
+        virtual uint32_t getTileSize() const Q_DECL_OVERRIDE;
 
         virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
         virtual bool obtainData(
@@ -85,8 +85,8 @@ namespace OsmAnd
             std::shared_ptr<Data>& outData,
             std::shared_ptr<Metric>* const pOutMetric = nullptr);
 
-        virtual ZoomLevel getMinZoom() const;
-        virtual ZoomLevel getMaxZoom() const;
+        virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
     };
 }
 

@@ -240,6 +240,10 @@ namespace OsmAnd
 
         static QString getObfSectionDate(const std::shared_ptr<const ObfSectionInfo>& sectionInfo);
         static QString formatObfSectionName(const std::shared_ptr<const ObfSectionInfo>& sectionInfo, const bool withDate);
+
+        void acquireThreadLock();
+        void releaseThreadLock();
+
     public:
         ~ObfMapObjectsProvider_P();
 
