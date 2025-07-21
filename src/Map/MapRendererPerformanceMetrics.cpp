@@ -15,12 +15,6 @@ OsmAnd::MapRendererPerformanceMetrics::~MapRendererPerformanceMetrics()
 void OsmAnd::MapRendererPerformanceMetrics::startSymbolsLoading(const ZoomLevel zoom)
 {
     symbolsLoadingTimer.start();
-    
-    primitivesTimer.start();
-    rasterTimer.start();
-    textTimer.start();
-    syncTimer.start();
-    intersectionTimer.start();
 
     totalRead = 0;
     totalReadDuration = 0.0f;
@@ -41,7 +35,7 @@ void OsmAnd::MapRendererPerformanceMetrics::startSymbolsLoading(const ZoomLevel 
     totalSync = 0;
     totalSyncDuration = 0.0f;
     lastSyncTime = 0.0f;
-
+    
     auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
     LogPrintf(LogSeverityLevel::Info, ">>>> %ld START 0.0: %dz", millis, zoom);
@@ -137,6 +131,16 @@ void OsmAnd::MapRendererPerformanceMetrics::textFinish(const TileId tileId, cons
 void OsmAnd::MapRendererPerformanceMetrics::syncStart()
 {
     syncTimer.start();
+    
+    totalSyncUnloadCollect = 0;
+    totalSyncUnloadCollectDuration = 0.0;
+    totalSyncUnloadGPU = 0;
+    totalSyncUnloadGPUDuration = 0.0;
+
+    totalSyncUploadCollect = 0;
+    totalSyncUploadCollectDuration = 0.0;
+    totalSyncUploadGPU = 0;
+    totalSyncUploadGPUDuration = 0.0;
 }
 
 void OsmAnd::MapRendererPerformanceMetrics::syncFinish(const int resourcesUploadedCount, const int resourcesUnloadedCount)
@@ -149,9 +153,57 @@ void OsmAnd::MapRendererPerformanceMetrics::syncFinish(const int resourcesUpload
     {
         auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-        LogPrintf(LogSeverityLevel::Info, ">>>> %ld SYNC %f: syncResourcesInGPU %ld uploaded, %ld unloaded",
-                  millis, syncTimer.elapsed(), resourcesUploadedCount, resourcesUnloadedCount);
+        LogPrintf(LogSeverityLevel::Info, ">>>> %ld SYNC %f: upload %f (%d) %f (%d) unload %f (%d) %f (%d)",
+                  millis, syncTimer.elapsed(),
+                  totalSyncUploadCollectDuration, totalSyncUploadCollect,
+                  totalSyncUploadGPUDuration, totalSyncUploadGPU,
+                  totalSyncUnloadCollectDuration, totalSyncUnloadCollect,
+                  totalSyncUnloadGPUDuration, totalSyncUnloadGPU);
     }
+}
+
+void OsmAnd::MapRendererPerformanceMetrics::syncUnloadCollectStart()
+{
+    syncUnloadCollectTimer.start();
+}
+
+void OsmAnd::MapRendererPerformanceMetrics::syncUnloadCollectFinish(const int count)
+{
+    totalSyncUnloadCollect += count;
+    totalSyncUnloadCollectDuration += syncUnloadCollectTimer.elapsed();
+}
+
+void OsmAnd::MapRendererPerformanceMetrics::syncUnloadGPUStart()
+{
+    syncUnloadGPUTimer.start();
+}
+
+void OsmAnd::MapRendererPerformanceMetrics::syncUnloadGPUFinish(const int count)
+{
+    totalSyncUnloadGPU += count;
+    totalSyncUnloadGPUDuration += syncUnloadGPUTimer.elapsed();
+}
+
+void OsmAnd::MapRendererPerformanceMetrics::syncUploadCollectStart()
+{
+    syncUploadCollectTimer.start();
+}
+
+void OsmAnd::MapRendererPerformanceMetrics::syncUploadCollectFinish(const int count)
+{
+    totalSyncUploadCollect += count;
+    totalSyncUploadCollectDuration += syncUploadCollectTimer.elapsed();
+}
+
+void OsmAnd::MapRendererPerformanceMetrics::syncUploadGPUStart()
+{
+    syncUploadGPUTimer.start();
+}
+
+void OsmAnd::MapRendererPerformanceMetrics::syncUploadGPUFinish(const int count)
+{
+    totalSyncUploadGPU += count;
+    totalSyncUploadGPUDuration += syncUploadGPUTimer.elapsed();
 }
 
 void OsmAnd::MapRendererPerformanceMetrics::intersectionStart()
