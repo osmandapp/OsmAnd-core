@@ -1504,18 +1504,18 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
                 canBeShared = false;
             }
         }
-
+        
         // Update metric
         if (metric)
         {
             metric->elapsedTimeForSymbolsGroupsProcessing += symbolsGroupsProcessingStopwatch.elapsed();
             metric->symbolsGroupsProcessed++;
         }
-
+        
         // Add this group to shared cache
         if (pSharedSymbolGroups && canBeShared)
             pSharedSymbolGroups->fulfilPromiseAndReference(sharingKey, group);
-
+        
         // Empty groups are also inserted, to indicate that they are empty
         assert(!primitivisedObjects->symbolsGroups.contains(group->sourceObject));
         primitivisedObjects->symbolsGroups.insert(group->sourceObject, group);

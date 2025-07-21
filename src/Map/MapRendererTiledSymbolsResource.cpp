@@ -13,6 +13,11 @@
 #include "QRunnableFunctor.h"
 #include "Utilities.h"
 
+//#define OSMAND_PERFORMANCE_METRICS 1
+#if !defined(OSMAND_PERFORMANCE_METRICS)
+#   define OSMAND_PERFORMANCE_METRICS 0
+#endif // !defined(OSMAND_PERFORMANCE_METRICS)
+
 //#define OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE 1
 #ifndef OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
 #   define OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE 0
@@ -661,11 +666,20 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
 
 bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 {
+    const Stopwatch timer(
+#if OSMAND_PERFORMANCE_METRICS
+        true
+#else
+        false
+#endif // OSMAND_PERFORMANCE_METRICS
+        );
+    
     typedef std::pair< std::shared_ptr<MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > SymbolResourceEntry;
 
     bool ok;
     bool anyUploadFailed = false;
-
+    int uploaded = 0;
+    
     const auto link_ = link.lock();
     if (!link_)
         return false;
@@ -679,8 +693,10 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         {
             // Prepare data and upload to GPU
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
-            ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU);
+            ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU, false);
 
+            uploaded++;
+            
             // If upload have failed, stop
             if (!ok)
             {
@@ -724,7 +740,9 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         {
             // Prepare data and upload to GPU
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
-            ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU);
+            ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU, false);
+            
+            uploaded++;
 
             // If upload have failed, stop
             if (!ok)
@@ -742,6 +760,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         if (anyUploadFailed)
             break;
     }
+
+    resourcesManager->finishSymbolsUploadToGPU();
 
     // If at least one symbol failed to upload, consider entire tile as failed to upload,
     // and unload its partial GPU resources
@@ -818,11 +838,29 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 #endif // OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
     }
 
+#if OSMAND_PERFORMANCE_METRICS
+#if OSMAND_PERFORMANCE_METRICS <= 1
+    auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
+    LogPrintf(LogSeverityLevel::Info, ">>>> %ld UPLOAD %f: uploadToGPU %d", millis, timer.elapsed(), uploaded);
+#endif // OSMAND_PERFORMANCE_METRICS <= 1
+#endif // OSMAND_PERFORMANCE_METRICS
+
     return true;
 }
 
 void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
 {
+    const Stopwatch timer(
+#if OSMAND_PERFORMANCE_METRICS
+        true
+#else
+        false
+#endif // OSMAND_PERFORMANCE_METRICS
+        );
+    
+    int count = 0;
+    
     const auto link_ = link.lock();
     if (!link_)
         return;
@@ -866,7 +904,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
     {
         MapSymbolsGroup::SharingKey sharingKey;
         groupResources->group->obtainSharingKey(sharingKey);
-
+        count++;
         bool wasRemoved = false;
         uintmax_t* pRefsRemaining = nullptr;
 #if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
@@ -905,6 +943,14 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
         }
     }
     _referencedSharedGroupsResources.clear();
+    
+#if OSMAND_PERFORMANCE_METRICS
+#if OSMAND_PERFORMANCE_METRICS <= 1
+    auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
+    LogPrintf(LogSeverityLevel::Info, ">>>> %ld UNLOAD %f: unloadFromGPU %d", millis, timer.elapsed(), count);
+#endif // OSMAND_PERFORMANCE_METRICS <= 1
+#endif // OSMAND_PERFORMANCE_METRICS
 }
 
 void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()

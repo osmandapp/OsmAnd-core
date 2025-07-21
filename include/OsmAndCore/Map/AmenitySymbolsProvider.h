@@ -76,6 +76,8 @@ namespace OsmAnd
             const int baseOrder = 10000);
         virtual ~AmenitySymbolsProvider();
 
+        int subsection;
+
         const std::shared_ptr<const IObfsCollection> obfsCollection;
         const float displayDensityFactor;
         const float referenceTileSizeOnScreenInPixels;

@@ -1,7 +1,7 @@
 #include "MapRasterLayerProvider_Software_P.h"
 #include "MapRasterLayerProvider_Software.h"
 
-//#define OSMAND_PERFORMANCE_METRICS 2
+#define OSMAND_PERFORMANCE_METRICS 1
 #if !defined(OSMAND_PERFORMANCE_METRICS)
 #   define OSMAND_PERFORMANCE_METRICS 0
 #endif // !defined(OSMAND_PERFORMANCE_METRICS)
@@ -81,12 +81,13 @@ sk_sp<SkImage> OsmAnd::MapRasterLayerProvider_Software_P::rasterize(
 
 #if OSMAND_PERFORMANCE_METRICS
 #if OSMAND_PERFORMANCE_METRICS <= 1
-    LogPrintf(LogSeverityLevel::Info,
-        "%dx%d@%d rasterized on CPU in %fs",
-        tileId.x,
-        tileId.y,
-        zoom,
-        totalStopwatch.elapsed());
+    auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
+    LogPrintf(LogSeverityLevel::Info, ">>>> %ld RASTER %f: %dx%d@%d rasterized on CPU",
+        millis, totalStopwatch.elapsed(),
+        request.tileId.x,
+        request.tileId.y,
+        request.zoom);
 #else
     LogPrintf(LogSeverityLevel::Info,
         "%dx%d@%d rasterized on CPU in %fs:\n%s",
