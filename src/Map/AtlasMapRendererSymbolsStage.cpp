@@ -2098,9 +2098,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         position31, ZoomLevel31), currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
 
     // Get elevation scale factor (affects distance from the surface)
+    bool isRasterMapSymbol = false;
     float elevationFactor = 1.0f;
     if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const OnSurfaceRasterMapSymbol>(mapSymbol))
+    {
         elevationFactor = rasterMapSymbol->getElevationScaleFactor();
+        isRasterMapSymbol = true;
+    }
     else if (const auto& vectorMapSymbol = std::dynamic_pointer_cast<const OnSurfaceVectorMapSymbol>(mapSymbol))
         elevationFactor = vectorMapSymbol->getElevationScaleFactor();
 
@@ -2114,13 +2118,17 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
     float surfaceInWorld = 0.0f;
     std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
     PointF offsetInScaledTileN = offsetInTileN;
-    if (getElevationData(tileId, currentState.zoomLevel, offsetInScaledTileN, &elevationData) != InvalidZoomLevel
+    bool elevationDataIsNotReady = false;
+    if (getElevationData(tileId, currentState.zoomLevel, offsetInScaledTileN,
+        &elevationData, &elevationDataIsNotReady) != InvalidZoomLevel
             && elevationData && elevationData->getValue(offsetInScaledTileN, surfaceInMeters))
     {
         float scaleFactor =
             currentState.elevationConfiguration.dataScaleFactor * currentState.elevationConfiguration.zScaleFactor;
         surfaceInWorld = scaleFactor * surfaceInMeters / metersPerUnit;
     }
+    else if (isRasterMapSymbol && elevationDataIsNotReady)
+        return;
     float elevationInWorld = surfaceInWorld;
     float elevationInMeters = NAN;
     if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const OnSurfaceRasterMapSymbol>(mapSymbol))
