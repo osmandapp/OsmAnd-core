@@ -257,6 +257,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     // Process published symbols if needed
     if (forceUpdate || needUpdatedSymbols)
     {
+        applyMapState(renderer->getMapState());
+        clearSymbolsLongStageDebugHelper();
+
         _lastAcceptedMapSymbolsByOrder.clear();
         result = obtainRenderableSymbols(
             publishedMapSymbolsByOrder,
@@ -285,8 +288,15 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             metric->elapsedTimeForObtainingRenderableSymbolsOnlyLock =
                 metric->elapsedTimeForObtainingRenderableSymbolsWithLock - metric->elapsedTimeForObtainingRenderableSymbols;
         }
-        
+
+        drawSymbolsLongStageDebugHelperBboxes();
+
         return result;
+    }
+
+    if (!isMapStateChanged(renderer->getMapState()))
+    {
+        drawSymbolsLongStageDebugHelperBboxes();
     }
 
     // Do not suspend all VectorLine objects and MapMarker objects of updated subsections
@@ -419,7 +429,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             for (auto& symbolRef : symbolsRefs)
             {
                 if (Q_UNLIKELY(stage->debugSettings->showSymbolsBBoxesRejectedByPresentationMode))
-                    stage->addIntersectionDebugBox(symbolRef.renderable, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
+                    stage->symbolsLongStageDebugHelper.debugSymbolsBBoxesRejectedByPresentationMode.push_back(symbolRef.renderable->intersectionBBox);
 
 #if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
                 bool intersectsWithOthers = !symbolRef.renderable->mapSymbol->intersectsWithClasses.isEmpty();
@@ -453,7 +463,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                     continue;
 
                 if (Q_UNLIKELY(stage->debugSettings->showSymbolsBBoxesRejectedByPresentationMode))
-                    stage->addIntersectionDebugBox(symbolRef.renderable, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
+                    stage->symbolsLongStageDebugHelper.debugSymbolsBBoxesRejectedByPresentationMode.push_back(symbolRef.renderable->intersectionBBox);
 
 #if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
                 const auto removed = intersections.removeOne(symbolRef.renderable, symbolRef.renderable->intersectionBBox);
@@ -483,7 +493,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                     continue;
 
                 if (Q_UNLIKELY(stage->debugSettings->showSymbolsBBoxesRejectedByPresentationMode))
-                    stage->addIntersectionDebugBox(symbolRef.renderable, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
+                    stage->symbolsLongStageDebugHelper.debugSymbolsBBoxesRejectedByPresentationMode.push_back(symbolRef.renderable->intersectionBBox);
 
 #if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
                 const auto removed = intersections.removeOne(symbolRef.renderable, symbolRef.renderable->intersectionBBox);
@@ -567,7 +577,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                     {
                         if (const auto onPathMapSymbol = std::dynamic_pointer_cast<IOnPathMapSymbol>(mapSymbol))
                         {
-                            addPathDebugLine(onPathMapSymbol->getPath31(), ColorARGB::fromSkColor(SK_ColorYELLOW));
+                            symbolsLongStageDebugHelper.debugTooShortOnPathSymbolsRenderablesPaths.push_back(onPathMapSymbol->getPath31());
                         }
                     }
                 }
@@ -751,7 +761,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                     {
                         if (const auto onPathMapSymbol = std::dynamic_pointer_cast<IOnPathMapSymbol>(mapSymbol))
                         {
-                            addPathDebugLine(onPathMapSymbol->getPath31(), ColorARGB::fromSkColor(SK_ColorYELLOW));
+                            symbolsLongStageDebugHelper.debugTooShortOnPathSymbolsRenderablesPaths.push_back(onPathMapSymbol->getPath31());
                         }
                     }
                 }
@@ -2963,7 +2973,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
     if (intersects)
     {
         if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck))
-            addIntersectionDebugBox(renderable, ColorARGB::fromSkColor(SK_ColorRED).withAlpha(50));
+            symbolsLongStageDebugHelper.debugSymbolsBBoxesRejectedByIntersection.push_back(renderable->intersectionBBox);
         return false;
     }
     return true;
@@ -3039,10 +3049,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
     if (hasSimilarContent)
     {
         if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck))
-            addIntersectionDebugBox(renderable, ColorARGB(50, 160, 0, 255));
+            symbolsLongStageDebugHelper.debugSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbol.push_back(renderable->intersectionBBox);
 
         if (Q_UNLIKELY(debugSettings->showSymbolsCheckBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck))
-            addIntersectionDebugBox(renderable->intersectionBBox.getEnlargedBy(symbol->minDistance), ColorARGB(50, 160, 0, 255), false);
+            symbolsLongStageDebugHelper.debugSymbolsCheckBBoxesRejectedByMinDistanceToSameContentFromOtherSymbol.push_back(renderable->intersectionBBox.getEnlargedBy(symbol->minDistance));
 
         return false;
     }
@@ -4440,4 +4450,74 @@ OsmAnd::AtlasMapRendererSymbolsStage::RenderableModel3DSymbol::~RenderableModel3
 
 OsmAnd::AtlasMapRendererSymbolsStage::RenderableOnSurfaceSymbol::~RenderableOnSurfaceSymbol()
 {
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage::isMapStateChanged(const MapState& mapState) const
+{
+    bool changed = symbolsLongStageDebugHelper.mapZoomLevel != mapState.zoomLevel;
+    changed |= symbolsLongStageDebugHelper.surfaceZoomLevel != mapState.surfaceZoomLevel;
+    changed |= qAbs(symbolsLongStageDebugHelper.mapVisualZoom - mapState.visualZoom) > 0.25;
+    changed |= qAbs(symbolsLongStageDebugHelper.surfaceVisualZoom - mapState.surfaceVisualZoom) > 0.25;
+    changed |= symbolsLongStageDebugHelper.hasElevationDataProvider != mapState.hasElevationDataProvider;
+    changed |= symbolsLongStageDebugHelper.target31 != mapState.target31;
+    if (!changed && symbolsLongStageDebugHelper.visibleBBoxShifted != mapState.visibleBBoxShifted)
+    {
+        const AreaI64 visibleBBoxShifted(symbolsLongStageDebugHelper.visibleBBoxShifted);
+        auto bboxShiftPoint = visibleBBoxShifted.topLeft - mapState.visibleBBoxShifted.topLeft;
+        bool bboxChanged = abs(bboxShiftPoint.x) > visibleBBoxShifted.width()
+            || abs(bboxShiftPoint.y) > visibleBBoxShifted.height();
+        changed |= bboxChanged;
+    }
+
+    return changed;
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage::applyMapState(const MapState& mapState)
+{
+    symbolsLongStageDebugHelper.metersPerPixel = mapState.metersPerPixel;
+    symbolsLongStageDebugHelper.visibleBBoxShifted = mapState.visibleBBoxShifted;
+    symbolsLongStageDebugHelper.mapZoomLevel = mapState.zoomLevel;
+    symbolsLongStageDebugHelper.mapVisualZoom = mapState.visualZoom;
+    symbolsLongStageDebugHelper.surfaceZoomLevel = mapState.surfaceZoomLevel;
+    symbolsLongStageDebugHelper.surfaceVisualZoom = mapState.surfaceVisualZoom;
+    symbolsLongStageDebugHelper.mapVisualZoomShift = mapState.visualZoomShift;
+    symbolsLongStageDebugHelper.hasElevationDataProvider = mapState.hasElevationDataProvider;
+    symbolsLongStageDebugHelper.target31 = mapState.target31;
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage::clearSymbolsLongStageDebugHelper()
+{
+    symbolsLongStageDebugHelper.debugSymbolsBBoxesRejectedByIntersection.clear();
+    symbolsLongStageDebugHelper.debugSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbol.clear();
+    symbolsLongStageDebugHelper.debugSymbolsCheckBBoxesRejectedByMinDistanceToSameContentFromOtherSymbol.clear();
+    symbolsLongStageDebugHelper.debugSymbolsBBoxesRejectedByPresentationMode.clear();
+    symbolsLongStageDebugHelper.debugTooShortOnPathSymbolsRenderablesPaths.clear();
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage::drawSymbolsLongStageDebugHelperBboxes()
+{
+    for (const auto& bbox : symbolsLongStageDebugHelper.debugSymbolsBBoxesRejectedByIntersection)
+    {
+        addIntersectionDebugBox(bbox, ColorARGB::fromSkColor(SK_ColorRED).withAlpha(50));
+    }
+
+    for (const auto& bbox : symbolsLongStageDebugHelper.debugSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbol)
+    {
+        addIntersectionDebugBox(bbox, ColorARGB(50, 160, 0, 255));
+    }
+
+    for (const auto& bbox : symbolsLongStageDebugHelper.debugSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbol)
+    {
+        addIntersectionDebugBox(bbox, ColorARGB(50, 160, 0, 255), false);
+    }
+
+    for (const auto& bbox : symbolsLongStageDebugHelper.debugSymbolsBBoxesRejectedByPresentationMode)
+    {
+        addIntersectionDebugBox(bbox, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
+    }
+
+    for (const auto& path : symbolsLongStageDebugHelper.debugTooShortOnPathSymbolsRenderablesPaths)
+    {
+        addPathDebugLine(path, ColorARGB::fromSkColor(SK_ColorYELLOW));
+    }
 }
