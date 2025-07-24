@@ -743,7 +743,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     }
                 }
 
-                if (isPresent)
+                if (isPresent && environment)
                 {
                     // Evaluate order early to reject hidden or tiny object
                     bool skipUnclosedPolygon = !mapObject->containsTag("boundary");
@@ -1231,14 +1231,14 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     {
         const auto shift = zoomShift - 1;
         const auto halfSize = 1 << shift;
-        tileId.x = (tileId.x + (bbox31->left() >> shift & 1 ? 1 : 0) << zoomShift) + halfSize;
-        tileId.y = (tileId.y + (bbox31->top() >> shift & 1 ? 1 : 0) << zoomShift) + halfSize;
+        tileId.x = ((tileId.x + (bbox31->left() >> shift & 1 ? 1 : 0)) << zoomShift) + halfSize;
+        tileId.y = ((tileId.y + (bbox31->top() >> shift & 1 ? 1 : 0)) << zoomShift) + halfSize;
     }
     const PointD tileCoords(static_cast<double>(tileId.x), static_cast<double>(tileId.y));
     const auto tileFactor = GRID_CELLS_PER_TILESIDE / static_cast<double>(1u << zoomShift);
     auto areaScaleDivisor31ToPixel = static_cast<double>(1u << zoomShift) / 256.0;
     areaScaleDivisor31ToPixel *= areaScaleDivisor31ToPixel;
-    const auto polygonAreaMinimalThreshold = environment->getPolygonAreaMinimalThreshold(zoom);
+    const auto polygonAreaMinimalThreshold = environment ? environment->getPolygonAreaMinimalThreshold(zoom) : 0.0;
 
     ObfMapSectionReader_Metrics::Metric_loadMapObjects localMetric;
 
