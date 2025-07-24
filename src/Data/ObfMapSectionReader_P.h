@@ -100,8 +100,13 @@ namespace OsmAnd
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<const MapPresentationEnvironment>& environment,
-            MapStyleEvaluator& optimizationEvaluator,
+            MapStyleEvaluator& evaluator,
             MapStyleEvaluationResult& evaluationResult,
+            QSet<uint>& filteringGrid,
+            const PointD& tileCoords,
+            const double tileFactor,
+            const double areaScaleDivisor31ToPixel,
+            const double polygonAreaMinimalThreshold,
             const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
             const DataBlockId& blockId,
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
@@ -110,8 +115,7 @@ namespace OsmAnd
             const VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric,
-            bool coastlineOnly,
-            bool& storeInCache);
+            bool coastlineOnly);
 
         static void readMapObjectId(
             const ObfReader_P& reader,
@@ -123,13 +127,17 @@ namespace OsmAnd
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<const MapPresentationEnvironment>& environment,
-            MapStyleEvaluator& optimizationEvaluator,
+            MapStyleEvaluator& evaluator,
             MapStyleEvaluationResult& evaluationResult,
+            QSet<uint>& filteringGrid,
+            const PointD& tileCoords,
+            const double tileFactor,
+            const double areaScaleDivisor31ToPixel,
+            const double polygonAreaMinimalThreshold,
             uint64_t baseId,
             const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
             std::shared_ptr<OsmAnd::BinaryMapObject>& mapObjectOut,
             const AreaI* bbox31,
-            bool& storeInCache,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 
         enum : uint32_t {

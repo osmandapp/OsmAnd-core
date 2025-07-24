@@ -134,6 +134,12 @@ namespace OsmAnd
         QList< QVector< PointI > > innerPolygonsPoints31;
         AreaI bbox31;
 
+        // Style information
+        bool isPolygonArea;
+        bool isPointArea;
+        int zOrder;
+        MapObjectType objectType;
+
         mutable volatile int vapIndex;
         mutable VisibleAreaPoints* vapItems[2];
         mutable QAtomicInt vapCounts[2];

@@ -38,9 +38,6 @@
 #define MAX_POLYGON_ORDER_IN_POLYGONS_LIST 10
 #define MIN_POLYLINE_ORDER_IN_POLYLINES_LIST (MAX_POLYGON_ORDER_IN_POLYGONS_LIST + 1)
 
-// Filtering grid dimension in cells per tile side
-#define GRID_CELLS_PER_TILESIDE 32.0
-
 OsmAnd::MapPrimitiviser_P::MapPrimitiviser_P(MapPrimitiviser* const owner_)
     : owner(owner_)
 {
@@ -832,105 +829,114 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
         //}
         //////////////////////////////////////////////////////////////////////////
 
-        const Stopwatch orderEvaluationStopwatch(metric != nullptr);
-
-        // Setup tag+value-specific input data
-        orderEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
-        orderEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedAttribute.value);
-
-        evaluationResult.clear();
-        ok = orderEvaluator.evaluate(mapObject, MapStyleRulesetType::Order, &evaluationResult);
-
-        if (metric)
+        auto zOrder = mapObject->zOrder;
+        auto objectType = mapObject->objectType;
+        if (!mapObject->isPolygonArea && !mapObject->isPointArea)
         {
-            metric->elapsedTimeForOrderEvaluation += orderEvaluationStopwatch.elapsed();
-            metric->orderEvaluations++;
-        }
+            const Stopwatch orderEvaluationStopwatch(metric != nullptr);
 
-        const Stopwatch orderProcessingStopwatch(metric != nullptr);
+            // Setup tag+value-specific input data
+            orderEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
+            orderEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedAttribute.value);
 
-        // If evaluation failed, skip
-        if (!ok)
-        {
+            evaluationResult.clear();
+            ok = orderEvaluator.evaluate(mapObject, MapStyleRulesetType::Order, &evaluationResult);
+
             if (metric)
             {
-                metric->elapsedTimeForOrderProcessing += orderProcessingStopwatch.elapsed();
-                metric->orderRejects++;
+                metric->elapsedTimeForOrderEvaluation += orderEvaluationStopwatch.elapsed();
+                metric->orderEvaluations++;
             }
 
-            continue;
-        }
+            const Stopwatch orderProcessingStopwatch(metric != nullptr);
 
-        int objectType_;
-        if (!evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_OBJECT_TYPE, objectType_))
-        {
-            if (metric)
+            // If evaluation failed, skip
+            if (!ok)
             {
-                metric->elapsedTimeForOrderProcessing += orderProcessingStopwatch.elapsed();
-                metric->orderRejects++;
+                if (metric)
+                {
+                    metric->elapsedTimeForOrderProcessing += orderProcessingStopwatch.elapsed();
+                    metric->orderRejects++;
+                }
+
+                continue;
             }
 
-            continue;
-        }
-        const auto objectType = static_cast<PrimitiveType>(objectType_);
-
-        int zOrder = -1;
-        if (!evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder) || zOrder < 0)
-        {
-            if (metric)
+            int objectType_;
+            if (!evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_OBJECT_TYPE, objectType_))
             {
-                metric->elapsedTimeForOrderProcessing += orderProcessingStopwatch.elapsed();
-                metric->orderRejects++;
+                if (metric)
+                {
+                    metric->elapsedTimeForOrderProcessing += orderProcessingStopwatch.elapsed();
+                    metric->orderRejects++;
+                }
+
+                continue;
+            }
+            objectType = static_cast<PrimitiveType>(objectType_);
+
+            zOrder = -1;
+            if (!evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder) || zOrder < 0)
+            {
+                if (metric)
+                {
+                    metric->elapsedTimeForOrderProcessing += orderProcessingStopwatch.elapsed();
+                    metric->orderRejects++;
+                }
+
+                continue;
             }
 
-            continue;
+            int shadowLevel = 0;
+            evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_LEVEL, shadowLevel);
         }
-
-        int shadowLevel = 0;
-        evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_LEVEL, shadowLevel);
-
         if (objectType == PrimitiveType::Polygon)
         {
             const Stopwatch polygonProcessingStopwatch(metric != nullptr);
 
-            // Perform checks on data
-            if (mapObject->points31.size() <= 2)
+            bool ignorePolygonArea = false;
+            bool ignorePolygonAsPointArea = false;
+            if (!mapObject->isPolygonArea && !mapObject->isPointArea)
             {
-                if (metric)
-                    metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
+
+                // Perform checks on data
+                if (mapObject->points31.size() <= 2)
+                {
+                    if (metric)
+                        metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
 
 #if OSMAND_VERBOSE_MAP_PRIMITIVISER
-                LogPrintf(LogSeverityLevel::Warning,
-                    "MapObject %s primitive is processed as polygon, but has only %d point(s)",
-                    qPrintable(mapObject->toString()),
-                    mapObject->points31.size());
+                    LogPrintf(LogSeverityLevel::Warning,
+                        "MapObject %s primitive is processed as polygon, but has only %d point(s)",
+                        qPrintable(mapObject->toString()),
+                        mapObject->points31.size());
 #endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
-                continue;
-            }
-            if (skipUnclosedPolygon && !mapObject->isClosedFigure())
-            {
-                if (metric)
-                    metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
+                    continue;
+                }
+                if (skipUnclosedPolygon && !mapObject->isClosedFigure())
+                {
+                    if (metric)
+                        metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
 
 #if OSMAND_VERBOSE_MAP_PRIMITIVISER
-                LogPrintf(LogSeverityLevel::Warning,
-                    "MapObject %s primitive is processed as polygon, but isn't closed",
-                    qPrintable(mapObject->toString()));
+                    LogPrintf(LogSeverityLevel::Warning,
+                        "MapObject %s primitive is processed as polygon, but isn't closed",
+                        qPrintable(mapObject->toString()));
 #endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
-                continue;
-            }
-            if (skipUnclosedPolygon && !mapObject->isClosedFigure(true))
-            {
-                if (metric)
-                    metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
+                    continue;
+                }
+                if (skipUnclosedPolygon && !mapObject->isClosedFigure(true))
+                {
+                    if (metric)
+                        metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
 
 #if OSMAND_VERBOSE_MAP_PRIMITIVISER
-                LogPrintf(LogSeverityLevel::Warning,
-                    "MapObject %s primitive is processed as polygon, but isn't closed (inner)",
-                    qPrintable(mapObject->toString()));
+                    LogPrintf(LogSeverityLevel::Warning,
+                        "MapObject %s primitive is processed as polygon, but isn't closed (inner)",
+                        qPrintable(mapObject->toString()));
 #endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
-                continue;
-            }
+                    continue;
+                }
 
             //////////////////////////////////////////////////////////////////////////
             //if ((mapObject->id >> 1) == 266877135u)
@@ -939,35 +945,34 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             //}
             //////////////////////////////////////////////////////////////////////////
 
-            // Check size of polygon
-            auto ignorePolygonArea = false;
-            evaluationResult.getBooleanValue(
-                env->styleBuiltinValueDefs->id_OUTPUT_IGNORE_POLYGON_AREA,
-                ignorePolygonArea);
+                // Check size of polygon
+                evaluationResult.getBooleanValue(
+                    env->styleBuiltinValueDefs->id_OUTPUT_IGNORE_POLYGON_AREA,
+                    ignorePolygonArea);
 
-            auto ignorePolygonAsPointArea = false;
-            evaluationResult.getBooleanValue(
-                env->styleBuiltinValueDefs->id_OUTPUT_IGNORE_POLYGON_AS_POINT_AREA,
-                ignorePolygonAsPointArea);
+                evaluationResult.getBooleanValue(
+                    env->styleBuiltinValueDefs->id_OUTPUT_IGNORE_POLYGON_AS_POINT_AREA,
+                    ignorePolygonAsPointArea);
 
-            if (doubledPolygonArea31 < 0.0)
-                doubledPolygonArea31 = Utilities::doubledPolygonArea(mapObject->points31);
+                if (doubledPolygonArea31 < 0.0)
+                    doubledPolygonArea31 = Utilities::doubledPolygonArea(mapObject->points31);
 
-            if ((!ignorePolygonArea || !ignorePolygonAsPointArea) && !rejectByArea.isSet())
-            {
-                const auto polygonArea31 = static_cast<double>(doubledPolygonArea31)* 0.5;
-                const auto areaScaleDivisor31ToPixel =
-                    primitivisedObjects->scaleDivisor31ToPixel.x * primitivisedObjects->scaleDivisor31ToPixel.y;
-                const auto polygonAreaInPixels = polygonArea31 / areaScaleDivisor31ToPixel;
-                const auto polygonAreaInAbstractPixels =
-                    polygonAreaInPixels / (env->displayDensityFactor * env->displayDensityFactor);
-                rejectByArea =
-                    primitivisedObjects->scaleDivisor31ToPixel.x >= 0.0 &&
-                    primitivisedObjects->scaleDivisor31ToPixel.y >= 0.0 &&
-                    polygonAreaInAbstractPixels <= context.polygonAreaMinimalThreshold;
+                if ((!ignorePolygonArea || !ignorePolygonAsPointArea) && !rejectByArea.isSet())
+                {
+                    const auto polygonArea31 = static_cast<double>(doubledPolygonArea31)* 0.5;
+                    const auto areaScaleDivisor31ToPixel =
+                        primitivisedObjects->scaleDivisor31ToPixel.x * primitivisedObjects->scaleDivisor31ToPixel.y;
+                    const auto polygonAreaInPixels = polygonArea31 / areaScaleDivisor31ToPixel;
+                    const auto polygonAreaInAbstractPixels =
+                        polygonAreaInPixels / (env->displayDensityFactor * env->displayDensityFactor);
+                    rejectByArea =
+                        primitivisedObjects->scaleDivisor31ToPixel.x >= 0.0 &&
+                        primitivisedObjects->scaleDivisor31ToPixel.y >= 0.0 &&
+                        polygonAreaInAbstractPixels <= context.polygonAreaMinimalThreshold;
+                }
             }
-
-            if (!rejectByArea.isSet() || *rejectByArea.getValuePtrOrNullptr() == false || ignorePolygonArea)
+            if (mapObject->isPolygonArea || (!mapObject->isPointArea &&
+                (!rejectByArea.isSet() || *rejectByArea.getValuePtrOrNullptr() == false || ignorePolygonArea)))
             {
                 const Stopwatch polygonEvaluationStopwatch(metric != nullptr);
 
@@ -1025,7 +1030,8 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             if (metric)
                 metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
 
-            if (!rejectByArea.isSet() || *rejectByArea.getValuePtrOrNullptr() == false || ignorePolygonAsPointArea)
+            if (mapObject->isPointArea || (!mapObject->isPolygonArea &&
+                (!rejectByArea.isSet() || *rejectByArea.getValuePtrOrNullptr() == false || ignorePolygonAsPointArea)))
             {
                 const Stopwatch pointEvaluationStopwatch(metric != nullptr);
 
@@ -1367,9 +1373,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
     textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
     textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
 
-    // Use coarse grid of tile symbols for preliminary overlap filtering
-    QHash<int, std::shared_ptr<const GridSymbolsGroup>> tileGrid;
-
     // Local cache to speed up textOrder evaluation (based on name tag only!)
     QHash<QString, int> textOrderCache;
 
@@ -1387,7 +1390,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
         // (using shared cache is only allowed for non-generated MapObjects),
         // then symbols group can be shared
         MapObject::SharingKey sharingKey;
-        auto canBeShared = primitivesGroup->sourceObject->obtainSharingKey(sharingKey);
+        const auto canBeShared = primitivesGroup->sourceObject->obtainSharingKey(sharingKey);
 
         //////////////////////////////////////////////////////////////////////////
         //if ((primitivesGroup->sourceObject->id >> 1) == 1937897178u)
@@ -1447,8 +1450,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             queryController,
             metric);
 
-        const auto prevSize = group->symbols.size();
-
         collectSymbolsFromPrimitives(
             context,
             primitivisedObjects,
@@ -1460,51 +1461,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             queryController,
             metric);
 
-        // Filter out overlapping labels of points by placing them on the coarse grid
-        if (tileId.x >= 0 && tileId.y >= 0 && group->symbols.size() == 1 && prevSize == 0
-            && primitivisedObjects->zoom >= MinZoomLevel && primitivisedObjects->zoom <= MaxZoomLevel)
-        {
-            if (const auto& textSymbol = std::dynamic_pointer_cast<const TextSymbol>(group->symbols.back()))
-            {
-                const auto minCell = -GRID_CELLS_PER_TILESIDE;
-                const auto maxCell = GRID_CELLS_PER_TILESIDE * 2.0;
-                const auto zoomShift = MaxZoomLevel - primitivisedObjects->zoom;
-                PointD filterCoords(textSymbol->location31);
-                filterCoords -= PointD(
-                    static_cast<double>(tileId.x << zoomShift), static_cast<double>(tileId.y << zoomShift));
-                filterCoords *= GRID_CELLS_PER_TILESIDE / static_cast<double>(1u << zoomShift);
-                filterCoords.x = filterCoords.x > minCell && filterCoords.x < maxCell ? filterCoords.x : minCell;
-                filterCoords.y = filterCoords.y > minCell && filterCoords.y < maxCell ? filterCoords.y : minCell;
-                const auto gridCode = static_cast<int>(std::floor(filterCoords.y)) * 10000
-                    + static_cast<int>(std::floor(filterCoords.x));
-                bool shouldInsert = true;
-                const auto& citGroup = tileGrid.constFind(gridCode);
-                if (citGroup != tileGrid.cend())
-                {
-                    const auto& groupOnGrid = *citGroup;
-                    shouldInsert = textSymbol->order < groupOnGrid->symbolsGroup->symbols.back()->order;
-                    if (pSharedSymbolGroups)
-                    {
-                        group->symbols.clear();
-                        if (shouldInsert && groupOnGrid->canBeShared)
-                            pSharedSymbolGroups->fulfilPromiseAndReference(groupOnGrid->sharingKey, group);
-                        if (!shouldInsert && canBeShared)
-                            pSharedSymbolGroups->fulfilPromiseAndReference(sharingKey, group);
-                    }
-                }
-                if (shouldInsert)
-                {
-                    const std::shared_ptr<SymbolsGroup> preGroup(new SymbolsGroup(primitivesGroup->sourceObject));
-                    preGroup->symbols.push_back(qMove(textSymbol));
-                    const std::shared_ptr<GridSymbolsGroup> groupOnGrid(
-                        new GridSymbolsGroup(preGroup, canBeShared, sharingKey));
-                    tileGrid.insert(gridCode, qMove(groupOnGrid));
-                }
-                group->symbols.clear();
-                canBeShared = false;
-            }
-        }
-        
         // Update metric
         if (metric)
         {
@@ -1519,15 +1475,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
         // Empty groups are also inserted, to indicate that they are empty
         assert(!primitivisedObjects->symbolsGroups.contains(group->sourceObject));
         primitivisedObjects->symbolsGroups.insert(group->sourceObject, group);
-    }
-
-    // Keep only those symbols, that left on the filter grid
-    for (const auto& groupOnGrid : constOf(tileGrid))
-    {
-        const auto& lastGroup = qMove(groupOnGrid->symbolsGroup);
-        if (pSharedSymbolGroups && groupOnGrid->canBeShared)
-            pSharedSymbolGroups->fulfilPromiseAndReference(groupOnGrid->sharingKey, lastGroup);
-        primitivisedObjects->symbolsGroups.insert(lastGroup->sourceObject, lastGroup);
     }
 
     int failCounter = 0;
