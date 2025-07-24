@@ -257,8 +257,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     // Process published symbols if needed
     if (forceUpdate || needUpdatedSymbols)
     {
-        applyMapState(renderer->getMapState());
-        clearSymbolsLongStageDebugHelper();
+        if (debugSettings->debugStageEnabled)
+        {
+            applyMapState(renderer->getMapState());
+            clearSymbolsLongStageDebugHelper();
+        }
 
         _lastAcceptedMapSymbolsByOrder.clear();
         result = obtainRenderableSymbols(
@@ -286,17 +289,23 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         {
             metric->elapsedTimeForObtainingRenderableSymbolsWithLock = stopwatch.elapsed();
             metric->elapsedTimeForObtainingRenderableSymbolsOnlyLock =
-                metric->elapsedTimeForObtainingRenderableSymbolsWithLock - metric->elapsedTimeForObtainingRenderableSymbols;
+            metric->elapsedTimeForObtainingRenderableSymbolsWithLock - metric->elapsedTimeForObtainingRenderableSymbols;
         }
 
-        drawSymbolsLongStageDebugHelperBboxes();
+        if (debugSettings->debugStageEnabled)
+        {
+            drawSymbolsLongStageDebugHelperBboxes();
+        }
 
         return result;
     }
 
-    if (!isMapStateChanged(renderer->getMapState()))
+    if (debugSettings->debugStageEnabled)
     {
-        drawSymbolsLongStageDebugHelperBboxes();
+        if (!isMapStateChanged(renderer->getMapState()))
+        {
+            drawSymbolsLongStageDebugHelperBboxes();
+        }
     }
 
     // Do not suspend all VectorLine objects and MapMarker objects of updated subsections
