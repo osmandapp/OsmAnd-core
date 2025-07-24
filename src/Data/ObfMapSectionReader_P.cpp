@@ -1226,8 +1226,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     QSet<uint> filteringGrid;
 
     const auto zoomShift = MaxZoomLevel - zoom;
-    auto tileId = TileId::fromXY(bbox31->left() >> zoomShift, bbox31->top() >> zoomShift);
-    if (zoomShift > 0)
+    auto tileId = bbox31 ? TileId::fromXY(bbox31->left() >> zoomShift, bbox31->top() >> zoomShift) : TileId::zero();
+    if (bbox31 && zoomShift > 0)
     {
         const auto shift = zoomShift - 1;
         const auto halfSize = 1 << shift;
