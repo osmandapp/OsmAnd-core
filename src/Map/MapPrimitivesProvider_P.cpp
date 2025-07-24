@@ -85,9 +85,9 @@ QList<std::shared_ptr<const OsmAnd::MapObject>> OsmAnd::MapPrimitivesProvider_P:
 
 void OsmAnd::MapPrimitivesProvider_P::collectPolygons(QList<std::shared_ptr<const OsmAnd::MapObject>> & polygons, 
                                                       const std::shared_ptr<const MapObject> & mapObj,
-                                                      const MapPrimitiviser::PrimitiveType & type, const PointI & point)
+                                                      const MapObjectType & type, const PointI & point)
 {
-    if (type == MapPrimitiviser::PrimitiveType::Polygon)
+    if (type == MapObjectType::Polygon)
     {
         if (OsmAnd::Utilities::contains(mapObj->points31, point))
         {
