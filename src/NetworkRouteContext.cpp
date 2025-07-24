@@ -190,7 +190,7 @@ const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::getByTag(const QString& tag)
 const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::getByRenderingPropertyAttr(const QString& renderingPropertyAttr)
 {
     for (const auto routeType : VALUES)
-        if (routeType->renderingPropertyAttr == renderingPropertyAttr)
+        if (!routeType->renderingPropertyAttr.isEmpty() && routeType->renderingPropertyAttr == renderingPropertyAttr)
             return routeType;
 
     return nullptr;
