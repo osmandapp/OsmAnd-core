@@ -25,7 +25,7 @@ namespace OsmAnd
     public:
         typedef MapPrimitiviser::CoastlineMapObject CoastlineMapObject;
         typedef MapPrimitiviser::SurfaceMapObject SurfaceMapObject;
-        typedef MapPrimitiviser::PrimitiveType PrimitiveType;
+        typedef MapObjectType PrimitiveType;
         typedef MapPrimitiviser::Primitive Primitive;
         typedef MapPrimitiviser::PrimitivesCollection PrimitivesCollection;
         typedef MapPrimitiviser::PrimitivesGroup PrimitivesGroup;

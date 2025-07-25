@@ -183,14 +183,14 @@ void OsmAnd::MapRasterizer_P::rasterizeMapPrimitives(
         if (queryController && queryController->isAborted())
             return;
 
-        if (primitive->type == MapPrimitiviser::PrimitiveType::Polygon)
+        if (primitive->type == MapObjectType::Polygon)
         {
             rasterizePolygon(
                 context,
                 canvas,
                 primitive);
         }
-        else if (primitive->type == MapPrimitiviser::PrimitiveType::Polyline)
+        else if (primitive->type == MapObjectType::Polyline)
         {
             rasterizePolyline(
                 context,

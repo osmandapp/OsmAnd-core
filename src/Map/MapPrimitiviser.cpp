@@ -103,7 +103,7 @@ OsmAnd::MapPrimitiviser::PrimitivesGroup::~PrimitivesGroup()
 
 OsmAnd::MapPrimitiviser::Primitive::Primitive(
     const std::shared_ptr<const PrimitivesGroup>& group_,
-    const PrimitiveType type_,
+    const MapObjectType type_,
     const uint32_t typeRuleIdIndex_)
     : group(group_)
     , sourceObject(group_->sourceObject)
@@ -116,7 +116,7 @@ OsmAnd::MapPrimitiviser::Primitive::Primitive(
 
 OsmAnd::MapPrimitiviser::Primitive::Primitive(
     const std::shared_ptr<const PrimitivesGroup>& group_,
-    const PrimitiveType type_,
+    const MapObjectType type_,
     const uint32_t typeRuleIdIndex_,
     const MapStyleEvaluationResult& evaluationResult_)
     : group(group_)
