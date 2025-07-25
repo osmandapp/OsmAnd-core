@@ -1792,6 +1792,9 @@ void OsmAnd::MapRendererResourcesManager::unloadResourcesFrom(
     if (renderer->gpuContextIsLost)
         return;
 
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().syncUnloadCollectStart();
+
     // Select all resources with "UnloadPending" state
     QList< std::shared_ptr<MapRendererBaseResource> > resources;
     collection->obtainResources(&resources,
@@ -1805,9 +1808,17 @@ void OsmAnd::MapRendererResourcesManager::unloadResourcesFrom(
             // Accept this resource
             return true;
         });
+
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().syncUnloadCollectFinish(resources.size());
+
     if (resources.isEmpty())
         return;
 
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().syncUnloadGPUStart();
+
+    int count = 0;
     // Unload from GPU all selected resources
     for (const auto& resource : constOf(resources))
     {
@@ -1833,7 +1844,11 @@ void OsmAnd::MapRendererResourcesManager::unloadResourcesFrom(
 
         // Count uploaded resources
         totalUnloaded++;
+        count++;
     }
+    
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().syncUnloadGPUFinish(count);
 }
 
 unsigned int OsmAnd::MapRendererResourcesManager::uploadResources(
@@ -1875,6 +1890,9 @@ bool OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
     if (renderer->gpuContextIsLost)
         return true;
 
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().syncUploadCollectStart();
+
     // Select all resources with "Ready" state
     QList< std::shared_ptr<MapRendererBaseResource> > resources;
     collection->obtainResources(&resources,
@@ -1900,11 +1918,19 @@ bool OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
             // Accept this resource
             return true;
         });
+    
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().syncUploadCollectFinish(resources.size());
+
     if (resources.isEmpty())
         return true;
 
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().syncUploadGPUStart();
+
     bool result = true;
 
+    int count = 0;
     // Upload to GPU all selected resources
     for (const auto& resource : constOf(resources))
     {
@@ -2030,7 +2056,12 @@ bool OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
 
         // Count uploaded resources
         totalUploaded++;
+        count++;
     }
+
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().syncUploadGPUFinish(count);
+
     return result;
 }
 

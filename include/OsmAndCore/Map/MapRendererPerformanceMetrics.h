@@ -23,7 +23,13 @@ namespace OsmAnd
         Stopwatch primitivesTimer;
         Stopwatch rasterTimer;
         Stopwatch textTimer;
+
         Stopwatch syncTimer;
+        Stopwatch syncUnloadCollectTimer;
+        Stopwatch syncUnloadGPUTimer;
+        Stopwatch syncUploadCollectTimer;
+        Stopwatch syncUploadGPUTimer;
+
         Stopwatch intersectionTimer;
 
         MapRendererPerformanceMetrics();
@@ -63,7 +69,25 @@ namespace OsmAnd
         float lastSyncTime;
         void syncStart();
         void syncFinish(const int resourcesUploadedCount, const int resourcesUnloadedCount);
-        
+
+        int totalSyncUnloadCollect;
+        float totalSyncUnloadCollectDuration;
+        void syncUnloadCollectStart();
+        void syncUnloadCollectFinish(const int count);
+        int totalSyncUnloadGPU;
+        float totalSyncUnloadGPUDuration;
+        void syncUnloadGPUStart();
+        void syncUnloadGPUFinish(const int count);
+
+        int totalSyncUploadCollect;
+        float totalSyncUploadCollectDuration;
+        void syncUploadCollectStart();
+        void syncUploadCollectFinish(const int count);
+        int totalSyncUploadGPU;
+        float totalSyncUploadGPUDuration;
+        void syncUploadGPUStart();
+        void syncUploadGPUFinish(const int count);
+
         void intersectionStart();
         void intersectionFinish(const int renderableSymbols);
     };
