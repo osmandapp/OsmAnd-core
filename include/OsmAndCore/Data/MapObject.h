@@ -135,10 +135,15 @@ namespace OsmAnd
         AreaI bbox31;
 
         // Style information
-        bool isPolygonArea;
-        bool isPointArea;
-        int zOrder;
-        MapObjectType objectType;
+        struct Preorder
+        {
+            int zOrder;
+            MapObjectType objectType;
+            bool ignorePolygonArea;
+            bool ignorePolygonAsPointArea;
+        };
+        QVector<Preorder> preOrder;
+        bool isPreordered;
 
         mutable volatile int vapIndex;
         mutable VisibleAreaPoints* vapItems[2];

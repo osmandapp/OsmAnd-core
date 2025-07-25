@@ -47,8 +47,7 @@ OsmAnd::MapObject::MapObject()
     , labelY(0)
     , isCoastline(false)
     , vapIndex(0)
-    , isPolygonArea(false)
-    , isPointArea(false)
+    , isPreordered(false)
 {
     vapItems[0] = nullptr;
     vapItems[1] = nullptr;

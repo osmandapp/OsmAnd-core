@@ -501,8 +501,6 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     QSet<uint>& filteringGrid,
     const PointD& tileCoords,
     const double tileFactor,
-    const double areaScaleDivisor31ToPixel,
-    const double polygonAreaMinimalThreshold,
     const std::shared_ptr<const ObfMapSectionLevelTreeNode>& tree,
     const DataBlockId& blockId,
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
@@ -584,9 +582,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 std::shared_ptr<OsmAnd::BinaryMapObject> mapObject;
                 auto oldLimit = cis->PushLimit(length);
                 
-                readMapObject(reader, section, environment, evaluator, evaluationResult, filteringGrid, tileCoords,
-                    tileFactor, areaScaleDivisor31ToPixel, polygonAreaMinimalThreshold, baseId, tree, mapObject,
-                    bbox31, metric);
+                readMapObject(reader, section, environment, evaluator, evaluationResult,
+                    filteringGrid, tileCoords, tileFactor, baseId, tree, mapObject, bbox31, metric);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -680,8 +677,6 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
     QSet<uint>& filteringGrid,
     const PointD& tileCoords,
     const double tileFactor,
-    const double areaScaleDivisor31ToPixel,
-    const double polygonAreaMinimalThreshold,
     uint64_t baseId,
     const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
     std::shared_ptr<OsmAnd::BinaryMapObject>& mapObject,
@@ -745,7 +740,9 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
                 if (isPresent && environment)
                 {
-                    // Evaluate order early to reject hidden or tiny object
+                    // Evaluate order early to reject hidden object
+                    mapObject->isPreordered = true;
+                    mapObject->preOrder.resize(attributeIdsCount);
                     bool skipUnclosedPolygon = !mapObject->containsTag("boundary");
                     double doubledPolygonArea31 = -1.0;
                     bool rejectByArea = false;
@@ -763,6 +760,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     bool isEvaluated = false;
                     for (auto attributeIdIdx = 0; attributeIdIdx < attributeIdsCount; attributeIdIdx++, pAttributeId++)
                     {
+                        auto& preorder = mapObject->preOrder[attributeIdIdx];
+                        preorder.zOrder = -1;
                         const auto& decodedAttribute = decRules[*pAttributeId];
                         evaluator.setStringValue(
                             environment->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
@@ -774,63 +773,35 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                             int zOrder = -1;
                             int objectType;
                             if (!evaluationResult.getIntegerValue(
-                                    environment->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder))
+                                environment->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder) || zOrder < 0)
                                 continue;
-                            else if (zOrder < 0)
-                            {
-                                isPresent = false;
-                                break;
-                            }
                             else if (!evaluationResult.getIntegerValue(
                                 environment->styleBuiltinValueDefs->id_OUTPUT_OBJECT_TYPE, objectType))
                                 continue;
                             else
                             {
                                 isEvaluated = true;
-                                mapObject->zOrder = zOrder;
-                                mapObject->objectType = static_cast<MapObjectType>(objectType);
-                                if (mapObject->objectType == MapObjectType::Polygon)
+                                preorder.zOrder = zOrder;
+                                preorder.objectType = static_cast<MapObjectType>(objectType);
+                                preorder.ignorePolygonArea = false;
+                                preorder.ignorePolygonAsPointArea = false;
+                                if (preorder.objectType == MapObjectType::Polygon)
                                 {
                                     if (mapObject->points31.size() <= 2 || (skipUnclosedPolygon
                                         && (!isClosedFigure || !mapObject->isClosedFigure(true))))
-                                    {
-                                        isPresent = false;
-                                        break;
-                                    }
+                                        continue;
                                     else
                                     {
-                                        // Check size of polygon
                                         auto ignorePolygonArea = false;
                                         evaluationResult.getBooleanValue(
                                             environment->styleBuiltinValueDefs->id_OUTPUT_IGNORE_POLYGON_AREA,
                                             ignorePolygonArea);
-
                                         auto ignorePolygonAsPointArea = false;
                                         evaluationResult.getBooleanValue(
                                             environment->styleBuiltinValueDefs->id_OUTPUT_IGNORE_POLYGON_AS_POINT_AREA,
                                             ignorePolygonAsPointArea);
-
-                                        if (doubledPolygonArea31 < 0.0)
-                                            doubledPolygonArea31 = Utilities::doubledPolygonArea(mapObject->points31);
-
-                                        if ((!ignorePolygonArea || !ignorePolygonAsPointArea) && !withRejectByArea)
-                                        {
-                                            const auto polygonArea31 = static_cast<double>(doubledPolygonArea31)* 0.5;
-                                            const auto polygonAreaInPixels = polygonArea31 / areaScaleDivisor31ToPixel;
-                                            const auto polygonAreaInAbstractPixels = polygonAreaInPixels /
-                                                environment->displayDensityFactor * environment->displayDensityFactor;
-                                            rejectByArea = polygonAreaInAbstractPixels <= polygonAreaMinimalThreshold;
-                                            withRejectByArea = true;
-                                        }
-                                        if (!withRejectByArea || !rejectByArea || ignorePolygonArea)
-                                            mapObject->isPolygonArea = true;
-                                        if (!withRejectByArea || !rejectByArea || ignorePolygonAsPointArea)
-                                            mapObject->isPointArea = true;
-                                        if (!mapObject->isPolygonArea && !mapObject->isPointArea)
-                                        {
-                                            isPresent = false;
-                                            break;
-                                        }
+                                        preorder.ignorePolygonArea = ignorePolygonArea;
+                                        preorder.ignorePolygonAsPointArea = ignorePolygonAsPointArea;
                                     }
                                 }
                             }
@@ -1236,9 +1207,6 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     }
     const PointD tileCoords(static_cast<double>(tileId.x), static_cast<double>(tileId.y));
     const auto tileFactor = GRID_CELLS_PER_TILESIDE / static_cast<double>(1u << zoomShift);
-    auto areaScaleDivisor31ToPixel = static_cast<double>(1u << zoomShift) / 256.0;
-    areaScaleDivisor31ToPixel *= areaScaleDivisor31ToPixel;
-    const auto polygonAreaMinimalThreshold = environment ? environment->getPolygonAreaMinimalThreshold(zoom) : 0.0;
 
     ObfMapSectionReader_Metrics::Metric_loadMapObjects localMetric;
 
@@ -1433,8 +1401,6 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                         filteringGrid,
                         tileCoords,
                         tileFactor,
-                        areaScaleDivisor31ToPixel,
-                        polygonAreaMinimalThreshold,
                         treeNode,
                         blockId,
                         &mapObjects,
@@ -1526,8 +1492,6 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                                     filteringGrid,
                                     tileCoords,
                                     tileFactor,
-                                    areaScaleDivisor31ToPixel,
-                                    polygonAreaMinimalThreshold,
                                     treeNode,
                                     blockId,
                                     resultOut,

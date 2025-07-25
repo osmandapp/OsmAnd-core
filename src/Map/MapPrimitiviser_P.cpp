@@ -829,9 +829,17 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
         //}
         //////////////////////////////////////////////////////////////////////////
 
-        auto zOrder = mapObject->zOrder;
-        auto objectType = mapObject->objectType;
-        if (!mapObject->isPolygonArea && !mapObject->isPointArea)
+        int zOrder = -1;
+        PrimitiveType objectType;
+        if (mapObject->isPreordered)
+        {
+            auto& preorder = mapObject->preOrder[attributeIdIndex];
+            zOrder = preorder.zOrder;
+            if (zOrder < 0)
+                continue;
+            objectType = preorder.objectType;
+        }
+        else
         {
             const Stopwatch orderEvaluationStopwatch(metric != nullptr);
 
@@ -894,49 +902,44 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
         {
             const Stopwatch polygonProcessingStopwatch(metric != nullptr);
 
-            bool ignorePolygonArea = false;
-            bool ignorePolygonAsPointArea = false;
-            if (!mapObject->isPolygonArea && !mapObject->isPointArea)
+            // Perform checks on data
+            if (!mapObject->isPreordered && mapObject->points31.size() <= 2)
             {
-
-                // Perform checks on data
-                if (mapObject->points31.size() <= 2)
-                {
-                    if (metric)
-                        metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
+                if (metric)
+                    metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
 
 #if OSMAND_VERBOSE_MAP_PRIMITIVISER
-                    LogPrintf(LogSeverityLevel::Warning,
-                        "MapObject %s primitive is processed as polygon, but has only %d point(s)",
-                        qPrintable(mapObject->toString()),
-                        mapObject->points31.size());
+                LogPrintf(LogSeverityLevel::Warning,
+                    "MapObject %s primitive is processed as polygon, but has only %d point(s)",
+                    qPrintable(mapObject->toString()),
+                    mapObject->points31.size());
 #endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
-                    continue;
-                }
-                if (skipUnclosedPolygon && !mapObject->isClosedFigure())
-                {
-                    if (metric)
-                        metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
+                continue;
+            }
+            if (!mapObject->isPreordered && skipUnclosedPolygon && !mapObject->isClosedFigure())
+            {
+                if (metric)
+                    metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
 
 #if OSMAND_VERBOSE_MAP_PRIMITIVISER
-                    LogPrintf(LogSeverityLevel::Warning,
-                        "MapObject %s primitive is processed as polygon, but isn't closed",
-                        qPrintable(mapObject->toString()));
+                LogPrintf(LogSeverityLevel::Warning,
+                    "MapObject %s primitive is processed as polygon, but isn't closed",
+                    qPrintable(mapObject->toString()));
 #endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
-                    continue;
-                }
-                if (skipUnclosedPolygon && !mapObject->isClosedFigure(true))
-                {
-                    if (metric)
-                        metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
+                continue;
+            }
+            if (!mapObject->isPreordered && skipUnclosedPolygon && !mapObject->isClosedFigure(true))
+            {
+                if (metric)
+                    metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
 
 #if OSMAND_VERBOSE_MAP_PRIMITIVISER
-                    LogPrintf(LogSeverityLevel::Warning,
-                        "MapObject %s primitive is processed as polygon, but isn't closed (inner)",
-                        qPrintable(mapObject->toString()));
+                LogPrintf(LogSeverityLevel::Warning,
+                    "MapObject %s primitive is processed as polygon, but isn't closed (inner)",
+                    qPrintable(mapObject->toString()));
 #endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
-                    continue;
-                }
+                continue;
+            }
 
             //////////////////////////////////////////////////////////////////////////
             //if ((mapObject->id >> 1) == 266877135u)
@@ -945,34 +948,43 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             //}
             //////////////////////////////////////////////////////////////////////////
 
-                // Check size of polygon
+            // Check size of polygon
+            auto ignorePolygonArea = false;
+            auto ignorePolygonAsPointArea = false;
+            if (mapObject->isPreordered)
+            {
+                auto& preorder = mapObject->preOrder[attributeIdIndex];
+                ignorePolygonArea = preorder.ignorePolygonArea;
+                ignorePolygonAsPointArea = preorder.ignorePolygonAsPointArea;
+            }
+            else
+            {
                 evaluationResult.getBooleanValue(
                     env->styleBuiltinValueDefs->id_OUTPUT_IGNORE_POLYGON_AREA,
                     ignorePolygonArea);
-
                 evaluationResult.getBooleanValue(
                     env->styleBuiltinValueDefs->id_OUTPUT_IGNORE_POLYGON_AS_POINT_AREA,
                     ignorePolygonAsPointArea);
-
-                if (doubledPolygonArea31 < 0.0)
-                    doubledPolygonArea31 = Utilities::doubledPolygonArea(mapObject->points31);
-
-                if ((!ignorePolygonArea || !ignorePolygonAsPointArea) && !rejectByArea.isSet())
-                {
-                    const auto polygonArea31 = static_cast<double>(doubledPolygonArea31)* 0.5;
-                    const auto areaScaleDivisor31ToPixel =
-                        primitivisedObjects->scaleDivisor31ToPixel.x * primitivisedObjects->scaleDivisor31ToPixel.y;
-                    const auto polygonAreaInPixels = polygonArea31 / areaScaleDivisor31ToPixel;
-                    const auto polygonAreaInAbstractPixels =
-                        polygonAreaInPixels / (env->displayDensityFactor * env->displayDensityFactor);
-                    rejectByArea =
-                        primitivisedObjects->scaleDivisor31ToPixel.x >= 0.0 &&
-                        primitivisedObjects->scaleDivisor31ToPixel.y >= 0.0 &&
-                        polygonAreaInAbstractPixels <= context.polygonAreaMinimalThreshold;
-                }
             }
-            if (mapObject->isPolygonArea || (!mapObject->isPointArea &&
-                (!rejectByArea.isSet() || *rejectByArea.getValuePtrOrNullptr() == false || ignorePolygonArea)))
+
+            if (doubledPolygonArea31 < 0.0)
+                doubledPolygonArea31 = Utilities::doubledPolygonArea(mapObject->points31);
+
+            if ((!ignorePolygonArea || !ignorePolygonAsPointArea) && !rejectByArea.isSet())
+            {
+                const auto polygonArea31 = static_cast<double>(doubledPolygonArea31)* 0.5;
+                const auto areaScaleDivisor31ToPixel =
+                    primitivisedObjects->scaleDivisor31ToPixel.x * primitivisedObjects->scaleDivisor31ToPixel.y;
+                const auto polygonAreaInPixels = polygonArea31 / areaScaleDivisor31ToPixel;
+                const auto polygonAreaInAbstractPixels =
+                    polygonAreaInPixels / (env->displayDensityFactor * env->displayDensityFactor);
+                rejectByArea =
+                    primitivisedObjects->scaleDivisor31ToPixel.x >= 0.0 &&
+                    primitivisedObjects->scaleDivisor31ToPixel.y >= 0.0 &&
+                    polygonAreaInAbstractPixels <= context.polygonAreaMinimalThreshold;
+            }
+
+            if (!rejectByArea.isSet() || *rejectByArea.getValuePtrOrNullptr() == false || ignorePolygonArea)
             {
                 const Stopwatch polygonEvaluationStopwatch(metric != nullptr);
 
@@ -1030,8 +1042,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             if (metric)
                 metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
 
-            if (mapObject->isPointArea || (!mapObject->isPolygonArea &&
-                (!rejectByArea.isSet() || *rejectByArea.getValuePtrOrNullptr() == false || ignorePolygonAsPointArea)))
+            if (!rejectByArea.isSet() || *rejectByArea.getValuePtrOrNullptr() == false || ignorePolygonAsPointArea)
             {
                 const Stopwatch pointEvaluationStopwatch(metric != nullptr);
 
