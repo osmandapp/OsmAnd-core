@@ -45,6 +45,9 @@ namespace OsmAnd
         /* Number of MapObjectBlock referenced */                                               \
         FIELD_ACTION(unsigned int, mapObjectsBlocksReferenced, "");                             \
                                                                                                 \
+        /* Number of rejected MapObjects */                                                     \
+        FIELD_ACTION(unsigned int, rejectedMapObjects, "");                                     \
+                                                                                                \
         /* Number of visited MapObjects */                                                      \
         FIELD_ACTION(unsigned int, visitedMapObjects, "");                                      \
                                                                                                 \
