@@ -53,7 +53,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
     const Stopwatch totalTimeStopwatch(pOutMetric != nullptr);
     if (OsmAnd::isPerformanceMetricsEnabled())
-        OsmAnd::getPerformanceMetrics().textStart();
+        OsmAnd::getPerformanceMetrics().textStart(request.tileId);
     
     QVector<TileId> tilesIds;
     if (request.combineTilesData)

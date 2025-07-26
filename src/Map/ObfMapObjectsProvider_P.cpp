@@ -84,6 +84,8 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     std::shared_ptr<ObfMapObjectsProvider::Data> coastlineTile = nullptr;
     TileId overscaledTileId;
     
+    const Stopwatch allocateTimeStopwatch(OsmAnd::isPerformanceMetricsEnabled());
+
     if (request.zoom > _coastlineZoom)
     {
         int zoomShift = request.zoom - _coastlineZoom - 1;
@@ -164,12 +166,14 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         _tileReferences.removeEntry(request.tileId, request.zoom);
         tileEntry.reset();
     }
-
+    
+    const float allocationTime = allocateTimeStopwatch.elapsed();
+    
     acquireThreadLock();
 
     const Stopwatch totalTimeStopwatch(metric != nullptr);
     if (OsmAnd::isPerformanceMetricsEnabled())
-        OsmAnd::getPerformanceMetrics().readStart();
+        OsmAnd::getPerformanceMetrics().readStart(request.tileId);
 
     // Get bounding box that covers this tile
     const auto zoom = request.zoom;
@@ -801,7 +805,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     }
 
     if (OsmAnd::isPerformanceMetricsEnabled())
-        OsmAnd::getPerformanceMetrics().readFinish(request.tileId, request.zoom, allMapObjects.size(), sharedMapObjectsCount);
+        OsmAnd::getPerformanceMetrics().readFinish(request.tileId, request.zoom, allMapObjects.size(), sharedMapObjectsCount, allocationTime);
 
     releaseThreadLock();
 

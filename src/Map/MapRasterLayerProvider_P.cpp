@@ -65,7 +65,7 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
     }
 
     if (OsmAnd::isPerformanceMetricsEnabled())
-        OsmAnd::getPerformanceMetrics().rasterStart();
+        OsmAnd::getPerformanceMetrics().rasterStart(request.tileId);
 
     // Perform actual rasterization
     const auto image = rasterize(request, primitivesTile, metric);

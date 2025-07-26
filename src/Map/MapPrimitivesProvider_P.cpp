@@ -181,7 +181,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
     }
 
     if (OsmAnd::isPerformanceMetricsEnabled())
-        OsmAnd::getPerformanceMetrics().primitivesStart();
+        OsmAnd::getPerformanceMetrics().primitivesStart(request.tileId);
 
     // Get primitivised objects
     std::shared_ptr<MapPrimitiviser::PrimitivisedObjects> primitivisedObjects;

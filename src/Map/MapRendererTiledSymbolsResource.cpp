@@ -668,14 +668,13 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
 
 bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 {
-    const Stopwatch timer(OsmAnd::isPerformanceMetricsEnabled());
-    
     typedef std::pair< std::shared_ptr<MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > SymbolResourceEntry;
 
     bool ok;
     bool anyUploadFailed = false;
-    int uploaded = 0;
-    
+    int uploadedIcons = 0;
+    int uploadedCaptions = 0;
+
     const auto link_ = link.lock();
     if (!link_)
         return false;
@@ -691,7 +690,10 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
             ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU, false);
 
-            uploaded++;
+            if (symbol->contentClass == MapSymbol::ContentClass::Icon)
+                uploadedIcons++;
+            if (symbol->contentClass == MapSymbol::ContentClass::Caption)
+                uploadedCaptions++;
             
             // If upload have failed, stop
             if (!ok)
@@ -738,8 +740,6 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
             ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU, false);
             
-            uploaded++;
-
             // If upload have failed, stop
             if (!ok)
             {
@@ -834,20 +834,17 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 #endif // OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
     }
 
-//    if (OsmAnd::isPerformanceMetricsEnabled())
-//    {
-//        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-//        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-//        LogPrintf(LogSeverityLevel::Info, ">>>> %ld UPLOAD %f: uploadToGPU %d", millis, timer.elapsed(), uploaded);
-//    }
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().uploadedToGPU(uploadedIcons, uploadedCaptions);
+
     return true;
 }
 
 void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
 {
-    const Stopwatch timer(OsmAnd::isPerformanceMetricsEnabled());
-    int count = 0;
-    
+    int unloadedIcons = 0;
+    int unloadedCaptions = 0;
+
     const auto link_ = link.lock();
     if (!link_)
         return;
@@ -882,6 +879,14 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
 
         // For unique group resources it's safe to clear 'MapSymbol->ResourceInGPU' map
         groupResources->resourcesInGPU.clear();
+        
+        for (const auto& symbol : constOf(groupResources->group->symbols))
+        {
+            if (symbol->contentClass == MapSymbol::ContentClass::Icon)
+                unloadedIcons++;
+            if (symbol->contentClass == MapSymbol::ContentClass::Caption)
+                unloadedCaptions++;
+        }
     }
     _uniqueGroupsResources.clear();
 
@@ -891,7 +896,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
     {
         MapSymbolsGroup::SharingKey sharingKey;
         groupResources->group->obtainSharingKey(sharingKey);
-        count++;
+
         bool wasRemoved = false;
         uintmax_t* pRefsRemaining = nullptr;
 #if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
@@ -931,12 +936,8 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
     }
     _referencedSharedGroupsResources.clear();
     
-//    if (OsmAnd::isPerformanceMetricsEnabled())
-//    {
-//        auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-//        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-//        LogPrintf(LogSeverityLevel::Info, ">>>> %ld UNLOAD %f: unloadFromGPU %d", millis, timer.elapsed(), count);
-//    }
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().unloadedFromGPU(unloadedIcons, unloadedCaptions);
 }
 
 void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()
