@@ -270,6 +270,22 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
         if (result)
         {
+            _symbolCounts.clear();
+            for (const auto& mapSymbols : constOf(_lastAcceptedMapSymbolsByOrder))
+            {
+                const auto& citSymbolsEnd = mapSymbols.cend();
+                for (auto citSymbols = mapSymbols.cbegin(); citSymbols != citSymbolsEnd; citSymbols++) {
+                    const auto& mapSymbolsGroup = citSymbols->first;
+                    if (mapSymbolsGroup->symbols.isEmpty()
+                        || std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup))
+                        continue;
+                    int subsection = (std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup) ||
+                        std::dynamic_pointer_cast<const AmenitySymbolsProvider::AmenitySymbolsGroup>(mapSymbolsGroup))
+                            ? mapSymbolsGroup->symbols.first()->subsection : 0;
+                    _symbolCounts.insert(subsection, _symbolCounts.value(subsection) + 1);
+                }
+            }
+            _symbolZoomScale = static_cast<double>(1u << currentState.zoomLevel) * currentState.visualZoom;
             if (needUpdatedSymbols)
                 renderer->setUpdateSymbols(false);
 
@@ -291,6 +307,23 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
     // Do not suspend all VectorLine objects and MapMarker objects of updated subsections
     const auto subsections = renderer->getSubsectionsToUpdate();
+    const auto symbolZoomScale = static_cast<double>(1u << currentState.zoomLevel);
+    auto symbolZoomFactor = static_cast<float>(symbolZoomScale / _symbolZoomScale);
+    symbolZoomFactor *= symbolZoomFactor;
+    const bool shrinkSymbolSections = symbolZoomFactor < 1.0f;
+    if (shrinkSymbolSections)
+        symbolZoomFactor = 1.0f - symbolZoomFactor;
+    QHash<int, int> removeSymbolsCounts;
+    if (shrinkSymbolSections)
+    {
+        for (const auto& lastAcceptedSymbolsCount : rangeOf(constOf(_symbolCounts)))
+        {
+            const auto key = lastAcceptedSymbolsCount.key();
+            const auto count = lastAcceptedSymbolsCount.value();
+            const auto removeCount = static_cast<int>(static_cast<float>(count) * symbolZoomFactor);
+            removeSymbolsCounts.insert(key, removeCount);
+        }
+    }
 
     // Acquire selected objects from publishedMapSymbolsByOrder
     MapRenderer::PublishedMapSymbolsByOrder filteredPublishedMapSymbols;
@@ -303,14 +336,18 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         {
             const auto& mapSymbolsGroup = mapSymbolsEntry.first;
             const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
-
-            if (std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
-                || ((std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
-                    || std::dynamic_pointer_cast<const AmenitySymbolsProvider::AmenitySymbolsGroup>(mapSymbolsGroup))
-                    && !mapSymbolsGroup->symbols.isEmpty()
-                    && subsections.contains(mapSymbolsGroup->symbols.first()->subsection)))
-            {
+            if (std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup))
                 acceptedMapSymbols[mapSymbolsGroup] = mapSymbolsFromGroup;
+            else if ((std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
+                || std::dynamic_pointer_cast<const AmenitySymbolsProvider::AmenitySymbolsGroup>(mapSymbolsGroup))
+                    && !mapSymbolsGroup->symbols.isEmpty())
+            {
+                int subsection = mapSymbolsGroup->symbols.first()->subsection;
+                if (subsections.contains(subsection))
+                {
+                    acceptedMapSymbols[mapSymbolsGroup] = mapSymbolsFromGroup;
+                    _symbolCounts.insert(subsection, _symbolCounts.value(subsection) + 1);
+                }
             }
         }
         if (!acceptedMapSymbols.empty())
@@ -318,24 +355,47 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     }
 
     // Filter out selected objects from _lastAcceptedMapSymbolsByOrder
-    for (auto& mapSymbols : _lastAcceptedMapSymbolsByOrder)
+    auto itMapSymbolsByOrder = _lastAcceptedMapSymbolsByOrder.end();
+    auto itMapSymbolsByOrderBegin = _lastAcceptedMapSymbolsByOrder.begin();
+    while (itMapSymbolsByOrder != itMapSymbolsByOrderBegin)
     {
-        auto itSymbols = mapSymbols.begin();
-        while (itSymbols != mapSymbols.end()) {
+        itMapSymbolsByOrder--;
+        auto itSymbols = itMapSymbolsByOrder->begin();
+        while (itSymbols != itMapSymbolsByOrder->end()) {
             const auto& mapSymbolsGroup = itSymbols->first;
-
-            if (std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
-                || ((std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
-                    || std::dynamic_pointer_cast<const AmenitySymbolsProvider::AmenitySymbolsGroup>(mapSymbolsGroup))
-                    && !mapSymbolsGroup->symbols.isEmpty()
-                    && subsections.contains(mapSymbolsGroup->symbols.first()->subsection)))
-            {
-                itSymbols = mapSymbols.erase(itSymbols);
-            }
+            if (std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup))
+                itSymbols = itMapSymbolsByOrder->erase(itSymbols);
             else
-                itSymbols++;
+            {
+                bool quickSymbols = (std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
+                    || std::dynamic_pointer_cast<const AmenitySymbolsProvider::AmenitySymbolsGroup>(mapSymbolsGroup))
+                        && !mapSymbolsGroup->symbols.isEmpty();
+                int subsection = quickSymbols ? mapSymbolsGroup->symbols.first()->subsection : 0;
+                if (quickSymbols && subsections.contains(subsection))
+                {
+                    itSymbols = itMapSymbolsByOrder->erase(itSymbols);
+                    _symbolCounts.insert(subsection, _symbolCounts.value(subsection) - 1);
+                }
+                else if (shrinkSymbolSections)
+                {
+                    int symbolCount = removeSymbolsCounts.value(subsection);
+                    if (symbolCount > 0)
+                    {
+                        itSymbols = itMapSymbolsByOrder->erase(itSymbols);
+                        _symbolCounts.insert(subsection, _symbolCounts.value(subsection) - 1);
+                        removeSymbolsCounts.insert(subsection, symbolCount - 1);
+                    }
+                    else
+                        itSymbols++;
+                }
+                else
+                    itSymbols++;
+            }
         }
     }
+
+    if (shrinkSymbolSections)
+        _symbolZoomScale = symbolZoomScale;
 
     // Append selected objects to _lastAcceptedMapSymbolsByOrder
     for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(filteredPublishedMapSymbols)))
