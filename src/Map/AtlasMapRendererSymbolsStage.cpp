@@ -56,6 +56,7 @@ const float OsmAnd::AtlasMapRendererSymbolsStage::_tiltThresholdOnPath3D = qCos(
 OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer_)
     : AtlasMapRendererStage(renderer_)
 {
+    pLastAcceptedMapSymbolsByOrder.reset(new MapRenderer::PublishedMapSymbolsByOrder());
     _lastResumeSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
     _previouslyInvalidated = false;
 }
@@ -76,7 +77,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::release(bool gpuContextLost)
         _lastVisibleSymbols.clear();
     }
 
-    _lastAcceptedMapSymbolsByOrder.clear();
+    pLastAcceptedMapSymbolsByOrder->clear();
     denseSymbols.clear();
     renderableSymbols.clear();
     return true;
@@ -257,13 +258,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     // Process published symbols if needed
     if (forceUpdate || needUpdatedSymbols)
     {
-        _lastAcceptedMapSymbolsByOrder.clear();
+        pLastAcceptedMapSymbolsByOrder->clear();
         result = obtainRenderableSymbols(
             publishedMapSymbolsByOrder,
             false,
             outRenderableSymbols,
             outIntersections,
-            &_lastAcceptedMapSymbolsByOrder,
+            pLastAcceptedMapSymbolsByOrder.get(),
             metric);
 
         publishedMapSymbolsByOrderLock.unlock();
@@ -274,6 +275,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 renderer->setUpdateSymbols(false);
 
             _lastResumeSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
+            _updatedSymbolsZoomLevel = currentState.zoomLevel;
 
             if (OsmAnd::isPerformanceMetricsEnabled())
                 OsmAnd::getPerformanceMetrics().intersectionFinish(static_cast<int>(outRenderableSymbols.size()));
@@ -317,8 +319,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             filteredPublishedMapSymbols[order] = acceptedMapSymbols;
     }
 
-    // Filter out selected objects from _lastAcceptedMapSymbolsByOrder
-    for (auto& mapSymbols : _lastAcceptedMapSymbolsByOrder)
+    // Filter out selected objects from *pLastAcceptedMapSymbolsByOrder
+    for (auto& mapSymbols : *pLastAcceptedMapSymbolsByOrder)
     {
         auto itSymbols = mapSymbols.begin();
         while (itSymbols != mapSymbols.end()) {
@@ -337,27 +339,53 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         }
     }
 
-    // Append selected objects to _lastAcceptedMapSymbolsByOrder
+    // Append selected objects to *pLastAcceptedMapSymbolsByOrder
+    auto& lastAcceptedMapSymbolsByOrder = *pLastAcceptedMapSymbolsByOrder;
     for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(filteredPublishedMapSymbols)))
     {
         const auto order = mapSymbolsByOrderEntry.key();
         const auto& mapSymbols = mapSymbolsByOrderEntry.value();
 
-        auto itAcceptedMapSymbols = _lastAcceptedMapSymbolsByOrder.find(order);
-        if (itAcceptedMapSymbols != _lastAcceptedMapSymbolsByOrder.end())
+        auto itAcceptedMapSymbols = lastAcceptedMapSymbolsByOrder.find(order);
+        if (itAcceptedMapSymbols != lastAcceptedMapSymbolsByOrder.end())
         {
             auto& acceptedMapSymbols = *itAcceptedMapSymbols;
             acceptedMapSymbols.insert(mapSymbols.begin(), mapSymbols.end());
         }
         else
         {
-            _lastAcceptedMapSymbolsByOrder[order] = mapSymbols;
+            lastAcceptedMapSymbolsByOrder[order] = mapSymbols;
         }
+    }
+
+    // Filter out unnecessary symbols from *pLastAcceptedMapSymbolsByOrder when zooming out
+    if (currentState.zoomLevel < _updatedSymbolsZoomLevel)
+    {
+        MapRenderer::PublishedMapSymbolsByOrder* filteredLastAcceptedMapSymbols(
+            new MapRenderer::PublishedMapSymbolsByOrder());
+
+        result = obtainRenderableSymbols(
+            *pLastAcceptedMapSymbolsByOrder,
+            false,
+            outRenderableSymbols,
+            outIntersections,
+            filteredLastAcceptedMapSymbols,
+            metric);
+
+        publishedMapSymbolsByOrderLock.unlock();
+
+        if (result)
+        {
+            _updatedSymbolsZoomLevel = currentState.zoomLevel;
+            pLastAcceptedMapSymbolsByOrder.reset(filteredLastAcceptedMapSymbols);
+        }
+
+        return result;
     }
 
     // Otherwise, use last accepted map symbols by order
     result = obtainRenderableSymbols(
-        _lastAcceptedMapSymbolsByOrder,
+        *pLastAcceptedMapSymbolsByOrder,
         false,
         outRenderableSymbols,
         outIntersections,
