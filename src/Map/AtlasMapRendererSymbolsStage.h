@@ -158,9 +158,10 @@ namespace OsmAnd
             ScreenQuadTree& outIntersections,
             MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
-        mutable MapRenderer::PublishedMapSymbolsByOrder _lastAcceptedMapSymbolsByOrder;
+        std::unique_ptr<MapRenderer::PublishedMapSymbolsByOrder> pLastAcceptedMapSymbolsByOrder;
         std::chrono::high_resolution_clock::time_point _lastResumeSymbolsUpdateTime;
         bool _previouslyInvalidated;
+        ZoomLevel _updatedSymbolsZoomLevel;
 
         mutable QReadWriteLock _lastPreparedIntersectionsLock;
         ScreenQuadTree _lastPreparedIntersections;
