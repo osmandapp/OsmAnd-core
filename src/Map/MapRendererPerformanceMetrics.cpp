@@ -4,7 +4,7 @@
 #include <QMutexLocker>
 
 OsmAnd::MapRendererPerformanceMetrics::MapRendererPerformanceMetrics()
-    : enabled(true)
+    : enabled(false)
 {
 }
 
