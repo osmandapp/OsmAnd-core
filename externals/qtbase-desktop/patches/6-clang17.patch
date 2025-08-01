@@ -1,0 +1,26 @@
+--- upstream.original/src/3rdparty/zlib/src/zutil.h	2025-06-05 20:59:16.442135734 +0200
++++ upstream.patched/src/3rdparty/zlib/src/zutil.h	2025-06-05 22:28:33.128790041 +0200
+@@ -139,22 +139,8 @@
+ #  endif
+ #endif
+ 
+-#if defined(MACOS) || defined(TARGET_OS_MAC)
++#if defined(MACOS)
+ #  define OS_CODE  7
+-#  ifndef Z_SOLO
+-#    if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os
+-#      include <unix.h> /* for fdopen */
+-#    else
+-//     We need to include stdio.h here because zlib.h will include TargetConditionals.h
+-//     This will define TARGET_OS_MAC that leads to this check.
+-//     Since zutil.h will include gzguts.h and gzguts.h includes stdio.h
+-//     AFTER check for fdopen we need to include stdio.h directly
+-#      include <stdio.h>
+-#      ifndef fdopen
+-#        define fdopen(fd,mode) NULL /* No fdopen() */
+-#      endif
+-#    endif
+-#  endif
+ #endif
+ 
+ #ifdef __acorn
