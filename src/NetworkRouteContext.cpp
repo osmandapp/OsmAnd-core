@@ -100,6 +100,11 @@ void OsmAnd::NetworkRouteContext::setNetworkRouteKeyFilter(NetworkRouteKey & rou
     filter.keyFilter.insert(routeKey);
 }
 
+void OsmAnd::NetworkRouteContext::setNetworkFilter(NetworkRouteSelectorFilter & selectorFilter)
+{
+    filter = selectorFilter;
+}
+
 OsmAnd::NetworkRouteSelectorFilter::NetworkRouteSelectorFilter()
 {
 }
@@ -177,6 +182,15 @@ const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::getByTag(const QString& tag)
 {
     for (const auto routeType : VALUES)
         if (routeType->name == tag)
+            return routeType;
+
+    return nullptr;
+}
+
+const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::getByRenderingPropertyAttr(const QString& renderingPropertyAttr)
+{
+    for (const auto routeType : VALUES)
+        if (!routeType->renderingPropertyAttr.isEmpty() && routeType->renderingPropertyAttr == renderingPropertyAttr)
             return routeType;
 
     return nullptr;
@@ -290,6 +304,19 @@ QMap<QString, QString> OsmAnd::NetworkRouteKey::tagsToGpx() const
 {
     QMap<QString, QString> networkRouteKey;
     networkRouteKey.insert(NETWORK_ROUTE_TYPE, getTag());
+    for (auto & tag : tags)
+    {
+        QString key = getKeyFromTag(tag);
+        QString value = getValue(key);
+        if (!value.isEmpty())
+            networkRouteKey.insert(key, value);
+    }
+    return networkRouteKey;
+}
+
+QMap<QString, QString> OsmAnd::NetworkRouteKey::tagsMap() const
+{
+    QMap<QString, QString> networkRouteKey;
     for (auto & tag : tags)
     {
         QString key = getKeyFromTag(tag);
