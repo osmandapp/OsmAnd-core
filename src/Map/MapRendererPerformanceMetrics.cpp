@@ -3,8 +3,7 @@
 #include "Logging.h"
 
 OsmAnd::MapRendererPerformanceMetrics::MapRendererPerformanceMetrics()
-    : enabled(true)
-//    , disableSymbolsStage(false)
+    : enabled(false)
 {
 }
 
