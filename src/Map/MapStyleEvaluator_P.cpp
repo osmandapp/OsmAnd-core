@@ -196,11 +196,10 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
                 const auto valueString = owner->mapStyle->getStringById(constantRuleValue.asSimple.asUInt);
                 auto equalSignIdx = valueString.indexOf(QLatin1Char('='));
                 auto notSignIdx = valueString.indexOf(QLatin1Char('!'));
-                if (notSignIdx >= 0)
+                if (notSignIdx == 0)
                 {
-                    const QString value = "";
-                    const auto& tagRef = valueString.midRef(notSignIdx, equalSignIdx);
-                    const auto& valueRef = value.leftRef(0);
+                    const auto& tagRef = valueString.midRef(notSignIdx + 1);
+                    const auto& valueRef = QStringRef();
                     evaluationResult = !mapObject->containsAttribute(tagRef, valueRef, true);
                 }
                 else if (equalSignIdx >= 0)
