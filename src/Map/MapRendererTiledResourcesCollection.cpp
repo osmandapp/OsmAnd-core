@@ -301,4 +301,5 @@ void OsmAnd::MapRendererTiledResourcesCollection::Snapshot::setLoadingState(cons
 
 bool OsmAnd::MapRendererTiledResourcesCollection::Snapshot::isLoading() const
 {
+    return false;
 }
