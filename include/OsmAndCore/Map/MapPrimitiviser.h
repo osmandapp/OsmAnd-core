@@ -28,13 +28,6 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(MapPrimitiviser);
     public:
-        enum class PrimitiveType : uint32_t
-        {
-            Point = 1,
-            Polyline = 2,
-            Polygon = 3,
-        };
-
         enum {
             LastZoomToUseBasemap = ZoomLevel11,
             DetailedLandDataMinZoom = ZoomLevel12,
@@ -95,12 +88,12 @@ namespace OsmAnd
         protected:
             Primitive(
                 const std::shared_ptr<const PrimitivesGroup>& group,
-                const PrimitiveType type,
+                const MapObjectType type,
                 const uint32_t typeRuleIdIndex);
 
             Primitive(
                 const std::shared_ptr<const PrimitivesGroup>& group,
-                const PrimitiveType type,
+                const MapObjectType type,
                 const uint32_t typeRuleIdIndex,
                 const MapStyleEvaluationResult& evaluationResult);
         public:
@@ -109,7 +102,7 @@ namespace OsmAnd
             const std::weak_ptr<const PrimitivesGroup> group;
             const std::shared_ptr<const MapObject> sourceObject;
 
-            const PrimitiveType type;
+            const MapObjectType type;
             const uint32_t attributeIdIndex;
             const MapStyleEvaluationResult::Packed evaluationResult;
 

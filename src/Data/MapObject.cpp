@@ -47,6 +47,7 @@ OsmAnd::MapObject::MapObject()
     , labelY(0)
     , isCoastline(false)
     , vapIndex(0)
+    , isPreordered(false)
 {
     vapItems[0] = nullptr;
     vapItems[1] = nullptr;

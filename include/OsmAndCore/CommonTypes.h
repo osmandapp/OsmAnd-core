@@ -123,6 +123,13 @@ namespace OsmAnd
         ZoomLevelsCount = static_cast<unsigned>(ZoomLevel::MaxZoomLevel) + 1u
     };
 
+    enum class MapObjectType : uint32_t
+    {
+        Point = 1,
+        Polyline = 2,
+        Polygon = 3,
+    };
+
     typedef std::function<bool(const TileId tileId, const ZoomLevel zoomLevel)> TileAcceptorFunction;
 
     enum class LanguageId
