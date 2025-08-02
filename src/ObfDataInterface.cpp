@@ -1434,7 +1434,7 @@ QPair<int, int> OsmAnd::ObfDataInterface::getPoiAdditonalFilter(const QPair<QStr
             if (filteredTopIndex && filteredTopIndex->possibleValues.size() > 0)
             {
                 poiAdditionalFilter.first = outSubtypes->subtypes.indexOf(filteredTopIndex);
-                poiAdditionalFilter.second = filteredTopIndex->possibleValues.indexOf(value);
+                poiAdditionalFilter.second = filteredTopIndex->possibleValues.indexOf(QRegExp(value, Qt::CaseInsensitive),0);
             }
         }
     }
