@@ -183,6 +183,11 @@ void OsmAnd::MapMarker::setOffsetFromLine(int offset)
     _p->setOffsetFromLine(offset);
 }
 
+void OsmAnd::MapMarker::setUpdateAfterCreated(bool updateAfterCreated)
+{
+    _p->setUpdateAfterCreated(updateAfterCreated);
+}
+
 bool OsmAnd::MapMarker::hasUnappliedChanges() const
 {
     return _p->hasUnappliedChanges();
