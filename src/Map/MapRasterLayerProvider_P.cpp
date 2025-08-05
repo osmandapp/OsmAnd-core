@@ -46,6 +46,11 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
     std::shared_ptr<MapRasterLayerProvider::Data>& outData,
     MapRasterLayerProvider_Metrics::Metric_obtainData* const metric)
 {
+    const auto& queryController = request.queryController;
+
+    if (queryController->isAborted())
+        return false;
+
     const Stopwatch totalStopwatch(metric != nullptr);
 
     // Obtain offline map primitives tile
@@ -54,6 +59,10 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
         request,
         primitivesTile,
         metric ? metric->findOrAddSubmetricOfType<MapPrimitivesProvider_Metrics::Metric_obtainData>().get() : nullptr);
+
+    if (queryController->isAborted())
+        return false;
+
     if (!primitivesTile || primitivesTile->primitivisedObjects->isEmpty())
     {
         outData.reset();
@@ -69,6 +78,10 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
 
     // Perform actual rasterization
     const auto image = rasterize(request, primitivesTile, metric);
+
+    if (queryController->isAborted())
+        return false;
+
     if (!image)
     {
         if (metric)

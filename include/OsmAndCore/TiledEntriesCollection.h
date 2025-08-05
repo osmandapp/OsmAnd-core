@@ -190,7 +190,8 @@ namespace OsmAnd
                 onCollectionModified();
         }
 
-        virtual void removeEntry(const TileId tileId, const ZoomLevel zoom)
+        virtual void removeEntry(const TileId tileId, const ZoomLevel zoom,
+            std::function<bool(const std::shared_ptr<ENTRY>& entry)> filter = nullptr)
         {
             QWriteLocker scopedLocker(&_collectionLock);
 
@@ -199,10 +200,14 @@ namespace OsmAnd
             if (itEntry == storage.end())
                 return;
 
-            itEntry.value()->unlink();
-            storage.erase(itEntry);
+            const auto doRemove = (filter == nullptr) || filter(itEntry.value());
+            if (doRemove)
+            {
+                itEntry.value()->unlink();
+                storage.erase(itEntry);
 
-            onCollectionModified();
+                onCollectionModified();
+            }
         }
 
         virtual void removeEntries(std::function<bool(const std::shared_ptr<ENTRY>& entry, bool& cancel)> filter = nullptr)
