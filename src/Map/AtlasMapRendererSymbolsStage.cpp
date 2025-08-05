@@ -659,14 +659,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                                 continue;
                         }
 
-                        const auto& referencesOrigins = citSymbolInfo->referenceOrigins;
+                        const auto& referenceOrigins = citSymbolInfo->referenceOrigins;
 
                         std::shared_ptr<RenderableSymbol> renderableSymbol;
                         obtainRenderablesFromSymbol(
                             mapSymbolsGroup,
                             mapSymbol,
                             nullptr,
-                            referencesOrigins,
+                            referenceOrigins,
                             computedPathsDataCache,
                             renderableSymbol,
                             outIntersections,
@@ -683,7 +683,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                                     pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
 
                                 auto& plottedSymbolInfo = (*pAcceptedMapSymbols)[mapSymbolsGroup][mapSymbol];
-                                plottedSymbolInfo.referenceOrigins = referencesOrigins;
+                                plottedSymbolInfo.referenceOrigins = referenceOrigins;
                                 plottedSymbolInfo.plottedInstances.push_back(nullptr);
                             }
                             plottedMapSymbolsFromGroup.push_back(mapSymbol);
@@ -712,7 +712,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         const auto citSymbolInfo = mapSymbolsFromGroup.constFind(mapSymbol);
                         if (citSymbolInfo == mapSymbolsFromGroup.cend())
                             continue;
-                        const auto& referencesOrigins = citSymbolInfo->referenceOrigins;
+                        const auto& referenceOrigins = citSymbolInfo->referenceOrigins;
 
                         // If symbol is not references in additional group reference, also skip
                         const auto citAdditionalSymbolInstance = additionalGroupInstance->symbols.constFind(mapSymbol);
@@ -735,7 +735,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             mapSymbolsGroup,
                             mapSymbol,
                             additionalSymbolInstance,
-                            referencesOrigins,
+                            referenceOrigins,
                             computedPathsDataCache,
                             renderableSymbol,
                             outIntersections,
@@ -752,7 +752,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                                     pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
 
                                 auto& plottedSymbolInfo = (*pAcceptedMapSymbols)[mapSymbolsGroup][mapSymbol];
-                                plottedSymbolInfo.referenceOrigins = referencesOrigins;
+                                plottedSymbolInfo.referenceOrigins = referenceOrigins;
                                 plottedSymbolInfo.plottedInstances.push_back(additionalSymbolInstance);
                             }
                             plottedMapSymbolsFromGroup.push_back(mapSymbol);
@@ -832,14 +832,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         const auto citSymbolInfo = mapSymbolsFromGroup.constFind(mapSymbol);
                         if (citSymbolInfo == mapSymbolsFromGroup.cend())
                             continue;
-                        const auto& referencesOrigins = citSymbolInfo->referenceOrigins;
+                        const auto& referenceOrigins = citSymbolInfo->referenceOrigins;
 
                         std::shared_ptr<RenderableSymbol> renderableSymbol;
                         obtainRenderablesFromSymbol(
                             mapSymbolsGroup,
                             mapSymbol,
                             nullptr,
-                            referencesOrigins,
+                            referenceOrigins,
                             computedPathsDataCache,
                             renderableSymbol,
                             outIntersections,
@@ -864,7 +864,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         const auto citSymbolInfo = mapSymbolsFromGroup.constFind(mapSymbol);
                         if (citSymbolInfo == mapSymbolsFromGroup.cend())
                             continue;
-                        const auto& referencesOrigins = citSymbolInfo->referenceOrigins;
+                        const auto& referenceOrigins = citSymbolInfo->referenceOrigins;
 
                         // If symbol is not references in additional group reference, also skip
                         const auto citAdditionalSymbolInstance = additionalGroupInstance->symbols.constFind(mapSymbol);
@@ -877,7 +877,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             mapSymbolsGroup,
                             mapSymbol,
                             additionalSymbolInstance,
-                            referencesOrigins,
+                            referenceOrigins,
                             computedPathsDataCache,
                             renderableSymbol,
                             outIntersections,

@@ -41,6 +41,11 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
     std::shared_ptr<IMapDataProvider::Data>& outData,
     std::shared_ptr<Metric>* const pOutMetric)
 {
+    const auto& queryController = request_.queryController;
+
+    if (queryController->isAborted())
+        return false;
+
     if (pOutMetric)
         pOutMetric->reset();
     const auto& request = MapDataProviderHelpers::castRequest<MapObjectsSymbolsProvider::Request>(request_);
@@ -78,6 +83,9 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
         std::shared_ptr<MapPrimitivesProvider::Data> tilePrimitives;
         owner->primitivesProvider->obtainTiledPrimitives(tileRequest, tilePrimitives); 
+
+        if (queryController->isAborted())
+            return false;
 
         if (tilePrimitives)
         {
@@ -117,6 +125,9 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         if (originalTile)
             primitivesTile = tilePrimitives;
     }
+
+    if (queryController->isAborted())
+        return false;
 
     // If tile has nothing to be rasterized, mark that data is not available for it
     if (!anyTilePrimitivesObtained || primitivisedSymbolsGroups.isEmpty())
@@ -164,7 +175,10 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         mapPresentationEnvironment,
         rasterizedSymbolsGroups,
         rasterizationFilter,
-        nullptr);
+        queryController);
+
+    if (queryController->isAborted())
+        return false;
 
     int spriteSymbols = 0;
     int onPathSymbols = 0;
@@ -174,6 +188,9 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
     QList< std::shared_ptr<MapSymbolsGroup> > symbolsGroups;
     for (const auto& rasterizedGroup : constOf(rasterizedSymbolsGroups))
     {
+        if (queryController->isAborted())
+            return false;
+
         const auto& mapObject = rasterizedGroup->mapObject;
 
         //////////////////////////////////////////////////////////////////////////

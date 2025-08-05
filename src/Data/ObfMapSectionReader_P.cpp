@@ -1308,6 +1308,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                         }
                     }
                 }
+                bool storeInCache = true;
                 if (!withReference || forceRead)
                 {
                     // Made a promise, so load entire block into temporary storage
@@ -1334,12 +1335,14 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                         nullptr,
                         nullptr,
                         nullptr,
-                        nullptr,
+                        queryController,
                         metric ? &localMetric : nullptr,
                         coastlineOnly);
 
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
                     cis->PopLimit(oldLimit);
+
+                    storeInCache = !queryController || !queryController->isAborted();
 
                     // Update metric
                     if (metric)
@@ -1352,10 +1355,15 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     // Create a data block and share it
                     dataBlock.reset(new DataBlock(blockId, treeNode->area31, treeNode->surfaceType, mapObjects));
                     if (!forceRead)
-                        cache->fulfilPromiseAndReference(blockId, levelZooms, dataBlock);
+                    {
+                        if (storeInCache)
+                            cache->fulfilPromiseAndReference(blockId, levelZooms, dataBlock);
+                        else
+                            cache->breakPromise(blockId);
+                    }
                 }
 
-                if (!forceRead)
+                if (storeInCache && !forceRead)
                 {
                     if (outReferencedCacheEntries)
                         outReferencedCacheEntries->push_back(dataBlock);
