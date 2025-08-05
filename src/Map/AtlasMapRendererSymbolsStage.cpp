@@ -325,14 +325,18 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             const auto& mapSymbolsGroup = mapSymbolsEntry.first;
             const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
 
+            const auto isMapSymbolGroup = std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup);
             if (std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
-                || ((std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
+                || ((isMapSymbolGroup
                     || std::dynamic_pointer_cast<const AmenitySymbolsProvider::AmenitySymbolsGroup>(mapSymbolsGroup))
                     && !mapSymbolsGroup->symbols.isEmpty()
                     && (subsections.contains(mapSymbolsGroup->symbols.first()->subsection)
                         || mapSymbolsGroup->symbols.first()->updateAfterCreated)))
             {
-                mapSymbolsGroup->symbols.first()->updateAfterCreated = false;
+                if (isMapSymbolGroup)
+                {
+                    mapSymbolsGroup->symbols.first()->updateAfterCreated = false;
+                }
                 acceptedMapSymbols[mapSymbolsGroup] = mapSymbolsFromGroup;
             }
         }
