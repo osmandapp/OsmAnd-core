@@ -2448,7 +2448,14 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                                 for (auto tileIdx = 0; tileIdx < tilesCount; tileIdx++)
                                 {
                                     const auto& underscaledTileId = *(pUnderscaledTileIdN++);
-                                    neededTilesMap[static_cast<ZoomLevel>(underscaledZoom)].insert(underscaledTileId);
+                                    const auto underscaledZoomLevel = static_cast<ZoomLevel>(underscaledZoom);
+                                    if (tiledResourcesCollection->containsResource(
+                                            underscaledTileId,
+                                            underscaledZoomLevel,
+                                            isCompletedResource))
+                                    {
+                                        neededTilesMap[underscaledZoomLevel].insert(underscaledTileId);
+                                    }
                                 }
                             }
                         }
@@ -2460,7 +2467,14 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                                 const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(
                                     activeTileId,
                                     zoomShift);
-                                neededTilesMap[static_cast<ZoomLevel>(overscaledZoom)].insert(overscaledTileId);
+                                const auto overscaledZoomLevel = static_cast<ZoomLevel>(overscaledZoom);
+                                if (tiledResourcesCollection->containsResource(
+                                        overscaledTileId,
+                                        overscaledZoomLevel,
+                                        isCompletedResource))
+                                {
+                                    neededTilesMap[overscaledZoomLevel].insert(overscaledTileId);
+                                }
                             }
                         }
                         continue;                        
