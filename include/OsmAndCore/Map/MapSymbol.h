@@ -50,6 +50,7 @@ namespace OsmAnd
 
         FColorARGB modulationColor;
         int subsection;
+        bool updateAfterCreated;
 
         bool allowFastCheckByFrustum;
     };
