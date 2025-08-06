@@ -63,6 +63,8 @@ namespace OsmAnd
         TextRasterizer::Style _captionStyle;
         double _captionTopSpace;
 
+        bool _updateAfterCreated = false;
+
         QHash< MapMarker::OnSurfaceIconKey, sk_sp<const SkImage> > _onMapSurfaceIcons;
 
         std::shared_ptr<const Model3D> _model3D;
@@ -136,6 +138,8 @@ namespace OsmAnd
         void clearModel3DCustomMaterialColors();
         int getModel3DMaxSizeInPixels() const;
         void setModel3DMaxSizeInPixels(const int maxSizeInPixels);
+
+        void setUpdateAfterCreated(bool updateAfterCreated);
 
         std::shared_ptr<MapMarker> buildAndAddToCollection(const std::shared_ptr<MapMarkersCollection>& collection);
 

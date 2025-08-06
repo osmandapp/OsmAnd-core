@@ -383,6 +383,13 @@ void OsmAnd::MapMarkerBuilder_P::setModel3DMaxSizeInPixels(const int maxSizeInPi
     _model3DMaxSizeInPixels = maxSizeInPixels;
 }
 
+void OsmAnd::MapMarkerBuilder_P::setUpdateAfterCreated(bool updateAfterCreated)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _updateAfterCreated = updateAfterCreated;
+}
+
 std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToCollection(
     const std::shared_ptr<MapMarkersCollection>& collection)
 {
@@ -416,6 +423,7 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
     marker->setElevationScaleFactor(_elevationScaleFactor);
     marker->setPinIconModulationColor(_pinIconModulationColor);
     marker->setOnSurfaceIconModulationColor(_onSurfaceIconModulationColor);
+    marker->setUpdateAfterCreated(_updateAfterCreated);
 
     if (marker->model3D)
     {

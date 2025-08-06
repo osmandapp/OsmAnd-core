@@ -319,3 +319,10 @@ OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setModel3DMaxSizeInPixels(co
 
     return *this;
 }
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setUpdateAfterCreated(bool updateAfterCreated)
+{
+    _p->setUpdateAfterCreated(updateAfterCreated);
+
+    return *this;
+}

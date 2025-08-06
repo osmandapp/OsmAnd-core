@@ -332,6 +332,13 @@ void OsmAnd::VectorLineBuilder_P::setElevationScaleFactor(const float scaleFacto
     _elevationScaleFactor = scaleFactor;
 }
 
+void OsmAnd::VectorLineBuilder_P::attachMarker(const std::shared_ptr<MapMarker>& marker)
+{
+    QReadLocker scopedLocker(&_lock);
+
+    _attachedMarkers.push_back(marker);
+}
+
 sk_sp<const SkImage> OsmAnd::VectorLineBuilder_P::getPathIcon() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -479,6 +486,12 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
     line->setElevatedLineVisibility(_isElevatedLineVisible);
     line->setSurfaceLineVisibility(_isSurfaceLineVisible);
     line->setElevationScaleFactor(_elevationScaleFactor);
+
+    for (const auto& marker : _attachedMarkers)
+    {
+        line->attachMarker(marker);
+    }
+
     line->applyChanges();
     
     return line;
