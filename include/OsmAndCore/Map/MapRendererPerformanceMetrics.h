@@ -18,7 +18,7 @@ namespace OsmAnd
 {
     class Stopwatch;
 
-    struct OSMAND_CORE_API MapRendererPerformanceMetrics
+    struct OSMAND_CORE_API MapRendererPerformanceMetrics Q_DECL_FINAL
     {
         Stopwatch symbolsLoadingTimer;
 
@@ -39,42 +39,46 @@ namespace OsmAnd
         virtual ~MapRendererPerformanceMetrics();
 
         bool enabled;
-                
+        
+        const QString getLastResult();
+        
         void startSymbolsLoading(const ZoomLevel zoom);
         void stopSymbolsLoading(const ZoomLevel zoom);
         
+        float lastSymbolsLoadingDuration;
+
         // --- Read Stage ---
         int totalRead;
         float totalReadDuration;
-        float lastReadTime;
+        float lastTotalReadDuration;
         void readStart(const TileId tileId);
         void readFinish(const TileId tileId, const ZoomLevel zoom, const int allMapObjectsCount, const int sharedMapObjectsCount, const float allocationTime, ObfMapObjectsProvider_Metrics::Metric_obtainData* const metric = nullptr);
 
         // --- Primitives Stage ---
         int totalPrimitives;
         float totalPrimitivesDuration;
-        float lastPrimitivesTime;
+        float lastTotalPrimitivesDuration;
         void primitivesStart(const TileId tileId);
         void primitivesFinish(const TileId tileId, const ZoomLevel zoom, const int polygons, const int polylines, const int points, MapPrimitivesProvider_Metrics::Metric_obtainData* const metric = nullptr);
 
         // --- Raster Stage ---
         int totalRaster;
         float totalRasterDuration;
-        float lastRasterTime;
+        float lastTotalRasterDuration;
         void rasterStart(const TileId tileId);
         void rasterFinish(const TileId tileId, const ZoomLevel zoom, MapRasterLayerProvider_Metrics::Metric_obtainData* const metric = nullptr);
 
         // --- Text Stage ---
         int totalText;
         float totalTextDuration;
-        float lastTextTime;
+        float lastTotalTextDuration;
         void textStart(const TileId tileId);
         void textFinish(const TileId tileId, const ZoomLevel zoom, const int spriteSymbols, const int onPathSymbols);
         
         // --- Sync Stage ---
         int totalSync;
         float totalSyncDuration;
-        float lastSyncTime;
+        float lastTotalSyncDuration;
         void syncStart();
         void syncFinish(const int resourcesUploadedCount, const int resourcesUnloadedCount);
         int totalUnloadedIcons;

@@ -5,6 +5,12 @@
 
 OsmAnd::MapRendererPerformanceMetrics::MapRendererPerformanceMetrics()
     : enabled(false)
+    , lastSymbolsLoadingDuration(0.0f)
+    , lastTotalReadDuration(0.0f)
+    , lastTotalPrimitivesDuration(0.0f)
+    , lastTotalRasterDuration(0.0f)
+    , lastTotalTextDuration(0.0f)
+    , lastTotalSyncDuration(0.0f)
 {
 }
 
@@ -16,6 +22,21 @@ OsmAnd::MapRendererPerformanceMetrics::~MapRendererPerformanceMetrics()
     qDeleteAll(textTimers);
 }
 
+const QString OsmAnd::MapRendererPerformanceMetrics::getLastResult()
+{
+    QMutexLocker locker(&mutex);
+
+    QString res = QString("%1 All: %2 Rd, %3 Pr, %4 Rst, %5 Txt, %6 Sn")
+        .arg(lastSymbolsLoadingDuration, 0, 'f', 2)
+        .arg(lastTotalReadDuration, 0, 'f', 2)
+        .arg(lastTotalPrimitivesDuration, 0, 'f', 2)
+        .arg(lastTotalRasterDuration, 0, 'f', 2)
+        .arg(lastTotalTextDuration, 0, 'f', 2)
+        .arg(lastTotalSyncDuration, 0, 'f', 2);
+        
+    return res;
+}
+
 void OsmAnd::MapRendererPerformanceMetrics::startSymbolsLoading(const ZoomLevel zoom)
 {
     QMutexLocker locker(&mutex);
@@ -24,31 +45,26 @@ void OsmAnd::MapRendererPerformanceMetrics::startSymbolsLoading(const ZoomLevel 
 
     totalRead = 0;
     totalReadDuration = 0.0f;
-    lastReadTime = 0.0f;
     qDeleteAll(readTimers);
     readTimers.clear();
     
     totalPrimitives = 0;
     totalPrimitivesDuration = 0.0f;
-    lastPrimitivesTime = 0.0f;
     qDeleteAll(primitivesTimers);
     primitivesTimers.clear();
     
     totalRaster = 0;
     totalRasterDuration = 0.0f;
-    lastRasterTime = 0.0f;
     qDeleteAll(rasterTimers);
     rasterTimers.clear();
     
     totalText = 0;
     totalTextDuration = 0.0f;
-    lastTextTime = 0.0f;
     qDeleteAll(textTimers);
     textTimers.clear();
     
     totalSync = 0;
     totalSyncDuration = 0.0f;
-    lastSyncTime = 0.0f;
     
     auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
@@ -58,6 +74,13 @@ void OsmAnd::MapRendererPerformanceMetrics::startSymbolsLoading(const ZoomLevel 
 void OsmAnd::MapRendererPerformanceMetrics::stopSymbolsLoading(const ZoomLevel zoom)
 {
     QMutexLocker locker(&mutex);
+    
+    lastSymbolsLoadingDuration = symbolsLoadingTimer.elapsed();
+    lastTotalReadDuration = totalReadDuration;
+    lastTotalPrimitivesDuration = totalPrimitivesDuration;
+    lastTotalRasterDuration = totalRasterDuration;
+    lastTotalTextDuration = totalTextDuration;
+    lastTotalSyncDuration = totalSyncDuration;
     
     auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
@@ -93,7 +116,6 @@ void OsmAnd::MapRendererPerformanceMetrics::readFinish(const TileId tileId, cons
             elapsed = timer->elapsed();
             totalRead++;
             totalReadDuration += elapsed + allocationTime;
-            lastReadTime = symbolsLoadingTimer.elapsed();
         }
     }
     
@@ -134,7 +156,6 @@ void OsmAnd::MapRendererPerformanceMetrics::primitivesFinish(const TileId tileId
             elapsed = timer->elapsed();
             totalPrimitives++;
             totalPrimitivesDuration += elapsed;
-            lastPrimitivesTime = symbolsLoadingTimer.elapsed();
         }
     }
     
@@ -172,7 +193,6 @@ void OsmAnd::MapRendererPerformanceMetrics::rasterFinish(const TileId tileId, co
             elapsed = timer->elapsed();
             totalRaster++;
             totalRasterDuration += elapsed;
-            lastRasterTime = symbolsLoadingTimer.elapsed();
         }
     }
     
@@ -211,7 +231,6 @@ void OsmAnd::MapRendererPerformanceMetrics::textFinish(const TileId tileId, cons
             elapsed = timer->elapsed();
             totalText++;
             totalTextDuration += elapsed;
-            lastTextTime = symbolsLoadingTimer.elapsed();
         }
     }
     
@@ -252,7 +271,6 @@ void OsmAnd::MapRendererPerformanceMetrics::syncFinish(const int resourcesUpload
 {
     totalSync++;
     totalSyncDuration += syncTimer.elapsed();
-    lastSyncTime = symbolsLoadingTimer.elapsed();
 
     if (resourcesUploadedCount > 0 || resourcesUnloadedCount > 0)
     {
