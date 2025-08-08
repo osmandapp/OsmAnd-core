@@ -267,6 +267,16 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setJointStyle(const int jo
     return *this;
 }
 
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::attachMarker(const std::shared_ptr<MapMarker>& marker)
+{
+    if (marker)
+    {
+        _p->attachMarker(marker);
+    }
+
+    return *this;
+}
+
 int OsmAnd::VectorLineBuilder::getColorizationScheme() const
 {
     return _p->getColorizationScheme();
