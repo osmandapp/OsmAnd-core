@@ -304,6 +304,7 @@ bool OsmAnd::MapMarker_P::applyChanges()
         for (const auto& symbol_ : constOf(symbolGroup->symbols))
         {
             symbol_->isHidden = _isHidden;
+            symbol_->updateAfterCreated = _updateAfterCreated;
 
             if (const auto symbol = std::dynamic_pointer_cast<Model3DMapSymbol>(symbol_))
             {

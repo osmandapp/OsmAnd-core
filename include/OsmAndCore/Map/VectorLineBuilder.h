@@ -151,6 +151,8 @@ namespace OsmAnd
         VectorLineBuilder& setJointStyle(const VectorLine::JointStyle jointStyle);
         VectorLineBuilder& setJointStyle(const int jointStyle);
 
+        VectorLineBuilder& attachMarker(const std::shared_ptr<MapMarker>& marker);
+
         std::shared_ptr<OsmAnd::VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);
         std::shared_ptr<OsmAnd::VectorLine> build();
     };
