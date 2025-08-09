@@ -2,6 +2,8 @@
 #define _OSMAND_CORE_CONCURRENT_WORKER_POOL_P_H_
 
 
+#include "stdlib_common.h"
+
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QList>
@@ -14,7 +16,6 @@
 #include <QQueue>
 #include "restore_internal_warnings.h"
 
-#include "stdlib_common.h"
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
 #include "WorkerPool.h"

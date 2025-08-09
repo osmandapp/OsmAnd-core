@@ -59,13 +59,15 @@ namespace std
     template<class CONTAINER_TYPE>
     inline void sort(CONTAINER_TYPE& container)
     {
-        return sort(std::begin(container), std::end(container));
+     //   return sort(std::begin(container), std::end(container));
+	return sort(container.begin(), container.end());
     }
 
     template<class CONTAINER_TYPE, class PREDICATE>
     inline void sort(CONTAINER_TYPE& container, PREDICATE predicate)
     {
-        return sort(std::begin(container), std::end(container), predicate);
+     //   return sort(std::begin(container), std::end(container), predicate);
+	return sort(container.begin(), container.end(), predicate);
     }
 }
 
