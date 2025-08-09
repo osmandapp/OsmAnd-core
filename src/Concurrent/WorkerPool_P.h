@@ -1,6 +1,7 @@
 #ifndef _OSMAND_CORE_CONCURRENT_WORKER_POOL_P_H_
 #define _OSMAND_CORE_CONCURRENT_WORKER_POOL_P_H_
 
+#include <QVector>
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
@@ -12,7 +13,6 @@
 #include <QThread>
 #include <QSet>
 #include <QQueue>
-#include <QVector>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
