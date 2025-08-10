@@ -16,7 +16,7 @@ namespace std
     inline auto find(CONTAINER_TYPE& container, const ITEM_TYPE& itemValue) -> decltype(begin(container))
     {
         // return find(std::begin(container), std::end(container), itemValue);
-        return find(std::begin(container), std::end(container), itemValue);
+        return find(container.begin(), container.end(), itemValue);
     }
 
     template<class CONTAINER_TYPE, class ITEM_TYPE>
@@ -30,7 +30,7 @@ namespace std
     inline auto find_if(CONTAINER_TYPE& container, PREDICATE predicate) -> decltype(begin(container))
     {
         // return find_if(std::begin(container), std::end(container), predicate);
-        return find_if(std::begin(container), container.end(), predicate);
+        return find_if(container.begin(), container.end(), predicate);
     }
 
     template<class CONTAINER_TYPE, class PREDICATE>
