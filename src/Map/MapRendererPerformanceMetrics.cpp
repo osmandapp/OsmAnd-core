@@ -217,7 +217,7 @@ void OsmAnd::MapRendererPerformanceMetrics::textStart(const TileId tileId)
     textTimers.insert(tileId.id, new Stopwatch(true));
 }
 
-void OsmAnd::MapRendererPerformanceMetrics::textFinish(const TileId tileId, const ZoomLevel zoom, const int spriteSymbols, const int onPathSymbols)
+void OsmAnd::MapRendererPerformanceMetrics::textFinish(const TileId tileId, const ZoomLevel zoom, const int spriteSymbols, const int onPathSymbols, const float allocationTime)
 {
     Stopwatch* timer = nullptr;
     float elapsed = 0.0f;
@@ -230,7 +230,7 @@ void OsmAnd::MapRendererPerformanceMetrics::textFinish(const TileId tileId, cons
         {
             elapsed = timer->elapsed();
             totalText++;
-            totalTextDuration += elapsed;
+            totalTextDuration += elapsed + allocationTime;
         }
     }
     
@@ -240,8 +240,7 @@ void OsmAnd::MapRendererPerformanceMetrics::textFinish(const TileId tileId, cons
         
         auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
-        LogPrintf(LogSeverityLevel::Info, ">>>> %ld TEXT %f: %d sprite, %d onPath obtained from %dx%d@%d",
-            millis, elapsed, spriteSymbols, onPathSymbols, tileId.x, tileId.y, zoom);
+        LogPrintf(LogSeverityLevel::Info, ">>>> %ld TEXT %f: %d sprite, %d onPath (%f alloc) obtained from %dx%d@%d", millis, elapsed, spriteSymbols, onPathSymbols, allocationTime, tileId.x, tileId.y, zoom);
     }
 }
 

@@ -73,7 +73,7 @@ namespace OsmAnd
         float totalTextDuration;
         float lastTotalTextDuration;
         void textStart(const TileId tileId);
-        void textFinish(const TileId tileId, const ZoomLevel zoom, const int spriteSymbols, const int onPathSymbols);
+        void textFinish(const TileId tileId, const ZoomLevel zoom, const int spriteSymbols, const int onPathSymbols, const float allocationTime);
         
         // --- Sync Stage ---
         int totalSync;

@@ -57,8 +57,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
     assert(owner->isMetaTiled() || !request.combineTilesData);
 
     const Stopwatch totalTimeStopwatch(pOutMetric != nullptr);
-    if (OsmAnd::isPerformanceMetricsEnabled())
-        OsmAnd::getPerformanceMetrics().textStart(request.tileId);
+    const Stopwatch allocateTimeStopwatch(OsmAnd::isPerformanceMetricsEnabled());
     
     QVector<TileId> tilesIds;
     if (request.combineTilesData)
@@ -136,6 +135,11 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         outData.reset();
         return true;
     }
+
+    const float allocationTime = allocateTimeStopwatch.elapsed();
+
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().textStart(request.tileId);
 
     CombinePathsResult combinePathsResult;
     if (!owner->isMetaTiled() || request.combineTilesData)
@@ -529,7 +533,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         primitivesTile ? new RetainableCacheMetadata(primitivesTile->retainableCacheMetadata) : nullptr));
 
     if (OsmAnd::isPerformanceMetricsEnabled())
-        OsmAnd::getPerformanceMetrics().textFinish(request.tileId, request.zoom, spriteSymbols, onPathSymbols);
+        OsmAnd::getPerformanceMetrics().textFinish(request.tileId, request.zoom, spriteSymbols, onPathSymbols, allocationTime);
 
     return true;
 }
