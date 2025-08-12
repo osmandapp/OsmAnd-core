@@ -33,7 +33,7 @@ function download
 	fi
 }
 
-# Should point to local path, exposed to public as http://creator.osmand.net/dependencies-mirror/
+# Should point to local path, exposed to public as http://builder.osmand.net/dependencies-mirror/
 if [ -z "$DEPENDENCIES_MIRROR" ]; then
 	DEPENDENCIES_MIRROR=$1
 fi
