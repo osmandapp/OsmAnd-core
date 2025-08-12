@@ -8,5 +8,5 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SRCLOC/../../../build/utils/functions.sh"
 
-prepareUpstreamFromTarArchive "$SRCLOC" "https://builder.osmand.net/dependencies-mirror/icu4c-52-1.tar.gz"
+prepareUpstreamFromTarArchive "$SRCLOC" "https://creator.osmand.net/dependencies-mirror/icu4c-52-1.tar.gz"
 patchUpstream "$SRCLOC"
