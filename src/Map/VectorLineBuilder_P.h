@@ -69,6 +69,8 @@ namespace OsmAnd
         bool _pathIconOnSurface;
         float _screenScale;
 
+        QVector<std::shared_ptr<MapMarker>> _attachedMarkers;
+
     public:
         virtual ~VectorLineBuilder_P();
 
@@ -158,6 +160,8 @@ namespace OsmAnd
 
         float getElevationScaleFactor() const;
         void setElevationScaleFactor(const float scaleFactor);
+
+        void attachMarker(const std::shared_ptr<MapMarker>& marker);
 
         std::shared_ptr<VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);
         std::shared_ptr<VectorLine> build();

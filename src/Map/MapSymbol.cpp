@@ -12,6 +12,7 @@ OsmAnd::MapSymbol::MapSymbol(
     , isHidden(false)
     , ignoreClick(false)
     , subsection(0)
+    , updateAfterCreated(false)
     , allowFastCheckByFrustum(true)
 {
 }

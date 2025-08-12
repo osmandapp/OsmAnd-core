@@ -158,9 +158,10 @@ namespace OsmAnd
             ScreenQuadTree& outIntersections,
             MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
-        mutable MapRenderer::PublishedMapSymbolsByOrder _lastAcceptedMapSymbolsByOrder;
+        std::unique_ptr<MapRenderer::PublishedMapSymbolsByOrder> pLastAcceptedMapSymbolsByOrder;
         std::chrono::high_resolution_clock::time_point _lastResumeSymbolsUpdateTime;
         bool _previouslyInvalidated;
+        ZoomLevel _updatedSymbolsZoomLevel;
 
         mutable QReadWriteLock _lastPreparedIntersectionsLock;
         ScreenQuadTree _lastPreparedIntersections;
@@ -499,6 +500,30 @@ namespace OsmAnd
         virtual void drawDebugMetricSymbol(IMapRenderer_Metrics::Metric_renderFrame* metric_) = 0;
 
         friend class AtlasMapRendererSymbolsStageModel3D;
+
+        struct SymbolsLongStageDebugHelper
+        {
+            QVector<ScreenQuadTree::BBox> debugSymbolsBBoxesRejectedByIntersection;
+            QVector<ScreenQuadTree::BBox> debugSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbol;
+            QVector<ScreenQuadTree::BBox> debugSymbolsCheckBBoxesRejectedByMinDistanceToSameContentFromOtherSymbol;
+            QVector<ScreenQuadTree::BBox> debugSymbolsBBoxesRejectedByPresentationMode;
+            QVector<QVector<PointI>> debugTooShortOnPathSymbolsRenderablesPaths;
+
+            double metersPerPixel;
+            AreaI visibleBBoxShifted;
+            ZoomLevel mapZoomLevel;
+            ZoomLevel surfaceZoomLevel;
+            float mapVisualZoom;
+            float surfaceVisualZoom;
+            float mapVisualZoomShift;
+            bool hasElevationDataProvider;
+            PointI target31;
+        } mutable symbolsLongStageDebugHelper;
+
+        bool isMapStateChanged(const MapState& mapState) const;
+        void applyMapState(const MapState& mapState);
+        void clearSymbolsLongStageDebugHelper();
+        void drawSymbolsLongStageDebugHelperBboxes();
     };
 }
 

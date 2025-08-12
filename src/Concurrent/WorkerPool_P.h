@@ -1,18 +1,19 @@
 #ifndef _OSMAND_CORE_CONCURRENT_WORKER_POOL_P_H_
 #define _OSMAND_CORE_CONCURRENT_WORKER_POOL_P_H_
 
+
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QList>
+#include <QVector>
 #include <QAtomicInt>
 #include <QWaitCondition>
 #include <QMutex>
 #include <QThread>
 #include <QSet>
 #include <QQueue>
-#include <QVector>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"

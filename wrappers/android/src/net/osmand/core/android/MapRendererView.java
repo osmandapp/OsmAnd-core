@@ -769,6 +769,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.isSymbolsLoadingActive();
     }
 
+    public final float getSymbolsLoadingTime() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getPreviousElapsedSymbolsLoadingTime();
+    }
+
     public final boolean isFrameInvalidated() {
         NativeCore.checkIfLoaded();
 

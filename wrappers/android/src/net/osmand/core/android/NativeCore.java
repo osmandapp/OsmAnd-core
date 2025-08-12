@@ -166,6 +166,16 @@ public class NativeCore {
             OsmAndCore.enablePerformanceMetrics(enable);
         }
     }
+
+    public static String getLastPerformanceMetricsResult() {
+        if (!s_loadedNativeLibraries)
+            return "";
+
+        synchronized (s_initSync) {
+            return OsmAndCore.getLastPerformanceMetricsResult();
+        }
+    }
+
     /**
      * This exception means that loadNativeCore() was never called, or never succeeded.
      */

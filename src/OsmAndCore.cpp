@@ -176,6 +176,11 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::enablePerformanceMetrics(const boo
     performanceMetrics.enabled = enable;
 }
 
+OSMAND_CORE_API const QString OSMAND_CORE_CALL OsmAnd::getLastPerformanceMetricsResult()
+{
+    return performanceMetrics.getLastResult();
+}
+
 OSMAND_CORE_API const std::shared_ptr<const OsmAnd::ICoreResourcesProvider>& OSMAND_CORE_CALL OsmAnd::getCoreResourcesProvider()
 {
     return gCoreResourcesProvider;

@@ -273,6 +273,12 @@ void OsmAnd::MapMarker_P::setOffsetFromLine(int offset)
         _hasUnappliedChanges = true;
     }
 }
+void OsmAnd::MapMarker_P::setUpdateAfterCreated(bool updateAfterCreated)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _updateAfterCreated = updateAfterCreated;
+}
 
 bool OsmAnd::MapMarker_P::hasUnappliedChanges() const
 {
@@ -298,6 +304,7 @@ bool OsmAnd::MapMarker_P::applyChanges()
         for (const auto& symbol_ : constOf(symbolGroup->symbols))
         {
             symbol_->isHidden = _isHidden;
+            symbol_->updateAfterCreated = _updateAfterCreated;
 
             if (const auto symbol = std::dynamic_pointer_cast<Model3DMapSymbol>(symbol_))
             {
@@ -365,6 +372,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
     if (owner->pinIcon)
     {
         const std::shared_ptr<BillboardRasterMapSymbol> pinIconSymbol(new BillboardRasterMapSymbol(symbolsGroup));
+        pinIconSymbol->updateAfterCreated = _updateAfterCreated;
         pinIconSymbol->subsection = subsection;
         pinIconSymbol->order = order++;
         pinIconSymbol->image = owner->pinIcon;
@@ -439,6 +447,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
                     extraOffset.y = textImage->height() / 2 + owner->captionTopSpace;
             }
             const auto mapSymbolCaption = std::make_shared<BillboardRasterMapSymbol>(symbolsGroup);
+            mapSymbolCaption->updateAfterCreated = _updateAfterCreated;
             mapSymbolCaption->subsection = subsection;
             mapSymbolCaption->isHidden = _isHidden;
             mapSymbolCaption->order = order - 2;
@@ -490,7 +499,8 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         int o = (int)(surfOrder + (long)key);
         if (order < o)
             order = o;
-        
+
+        onMapSurfaceIconSymbol->updateAfterCreated = _updateAfterCreated;
         onMapSurfaceIconSymbol->subsection = subsection;
         onMapSurfaceIconSymbol->order = o;
         
@@ -516,6 +526,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
     {
         // Set Model3DMapSymbol from model3D 
         const std::shared_ptr<Model3DMapSymbol> model3DMapSymbol(new Model3DMapSymbol(symbolsGroup));
+        model3DMapSymbol->updateAfterCreated = _updateAfterCreated;
         model3DMapSymbol->subsection = subsection;
         model3DMapSymbol->order = order++;
         model3DMapSymbol->position31 = _position;

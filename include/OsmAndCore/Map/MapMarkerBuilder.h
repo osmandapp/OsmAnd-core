@@ -99,6 +99,8 @@ namespace OsmAnd
         int getModel3DMaxSizeInPixels() const;
         MapMarkerBuilder& setModel3DMaxSizeInPixels(const int maxSizeInPixels);
 
+        OsmAnd::MapMarkerBuilder& setUpdateAfterCreated(bool updateAfterCreated);
+
         std::shared_ptr<MapMarker> buildAndAddToCollection(const std::shared_ptr<MapMarkersCollection>& collection);
     };
 }

@@ -154,6 +154,8 @@ namespace OsmAnd
         
         void setOffsetFromLine(int offset);
 
+        void setUpdateAfterCreated(bool updateAfterCreated);
+
         bool hasUnappliedChanges() const;
 
         std::shared_ptr<SymbolsGroup> createSymbolsGroup(int subsection) const;

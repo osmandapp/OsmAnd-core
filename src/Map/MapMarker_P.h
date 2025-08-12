@@ -61,6 +61,8 @@ namespace OsmAnd
         QVector<PointI64> _linePoints;
         int _offsetFromLine = 0;
 
+        bool _updateAfterCreated = false;
+
         class KeyedOnSurfaceRasterMapSymbol : public OnSurfaceRasterMapSymbol
         {
         private:
@@ -127,6 +129,8 @@ namespace OsmAnd
         void attachToVectorLine(QVector<PointI64>&& points);
         
         void setOffsetFromLine(int offset);
+
+        void setUpdateAfterCreated(bool updateAfterCreated);
 
         bool hasUnappliedChanges() const;
         
