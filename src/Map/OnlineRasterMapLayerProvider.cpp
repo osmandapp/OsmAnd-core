@@ -27,6 +27,7 @@ OsmAnd::OnlineRasterMapLayerProvider::OnlineRasterMapLayerProvider(
     , alphaChannelPresence(AlphaChannelPresence::NotPresent)
     , tileDensityFactor(tileSource->bitDensity / 16.0)
 {
+    _threadPool->setMaxThreadCount(1);
     _p->_localCachePath = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath(pathSuffix);
     if (_p->_localCachePath.isEmpty())
         _p->_localCachePath = QLatin1String(".");
