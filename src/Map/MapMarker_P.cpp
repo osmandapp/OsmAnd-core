@@ -18,6 +18,7 @@ OsmAnd::MapMarker_P::MapMarker_P(MapMarker* const owner_)
     , textRasterizer(TextRasterizer::getDefault())
     , _model3DDirection(-90.0f)
     , _positionType(PositionType::Coordinate31)
+    , _hasUnappliedPrimitiveChanges(false)
 {
 }
 
@@ -280,11 +281,42 @@ void OsmAnd::MapMarker_P::setUpdateAfterCreated(bool updateAfterCreated)
     _updateAfterCreated = updateAfterCreated;
 }
 
+void OsmAnd::MapMarker_P::setCaption(const QString& caption)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_caption != caption)
+    {
+        _caption = caption;
+        _hasUnappliedChanges = true;
+        _hasUnappliedPrimitiveChanges = true;
+    }
+}
+
+void OsmAnd::MapMarker_P::setCaptionStyle(const TextRasterizer::Style& captionStyle)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_captionStyle != captionStyle)
+    {
+        _captionStyle = captionStyle;
+        _hasUnappliedChanges = true;
+        _hasUnappliedPrimitiveChanges = true;
+    }
+}
+
 bool OsmAnd::MapMarker_P::hasUnappliedChanges() const
 {
     QReadLocker scopedLocker(&_lock);
 
     return _hasUnappliedChanges;
+}
+
+bool OsmAnd::MapMarker_P::hasUnappliedPrimitiveChanges() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _hasUnappliedPrimitiveChanges;
 }
 
 bool OsmAnd::MapMarker_P::applyChanges()
@@ -347,6 +379,7 @@ bool OsmAnd::MapMarker_P::applyChanges()
     }
 
     _hasUnappliedChanges = false;
+    _hasUnappliedPrimitiveChanges = false;
 
     return true;
 }
@@ -419,10 +452,10 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         captionOffset.y = owner->pinIcon->height() / 2 + offset.y;
     }
 
-    const auto caption = owner->caption;
+    const auto caption = _caption;
     if (!caption.isEmpty())
     {
-        const auto textStyle = owner->captionStyle;
+        const auto textStyle = _captionStyle;
         const auto textImage = textRasterizer->rasterize(caption, textStyle);
         if (textImage)
         {

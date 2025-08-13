@@ -84,8 +84,6 @@ namespace OsmAnd
             const PinIconVerticalAlignment pinIconVerticalAlignment,
             const PinIconHorisontalAlignment pinIconHorisontalAlignment,
             const PointI pinIconOffset,
-            const QString& caption,
-            const TextRasterizer::Style captionStyle,
             const double captionTopSpace,
             const QHash< OnSurfaceIconKey, sk_sp<const SkImage> >& onMapSurfaceIcons,
             const std::shared_ptr<const Model3D>& model3D,
@@ -108,8 +106,6 @@ namespace OsmAnd
         const QHash<QString, FColorARGB> model3DCustomMaterialColors;
         const bool isAccuracyCircleSupported;
         const FColorRGB accuracyCircleBaseColor;
-        const QString caption;
-        const TextRasterizer::Style captionStyle;
         const double captionTopSpace;
 
         bool isHidden() const;
@@ -156,7 +152,11 @@ namespace OsmAnd
 
         void setUpdateAfterCreated(bool updateAfterCreated);
 
+        void setCaption(const QString& caption);
+        void setCaptionStyle(const TextRasterizer::Style& captionStyle);
+
         bool hasUnappliedChanges() const;
+        bool hasUnappliedPrimitiveChanges() const;
 
         std::shared_ptr<SymbolsGroup> createSymbolsGroup(int subsection) const;
 

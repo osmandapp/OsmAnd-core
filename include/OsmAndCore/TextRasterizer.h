@@ -149,6 +149,25 @@ namespace OsmAnd
                 return *this;
             }
 #endif // !defined(SWIG)
+
+            inline bool operator==(const Style& other) const
+            {
+                return wrapWidth == other.wrapWidth &&
+                       maxLines == other.maxLines &&
+                       size == other.size &&
+                       bold == other.bold &&
+                       italic == other.italic &&
+                       color == other.color &&
+                       haloRadius == other.haloRadius &&
+                       haloColor == other.haloColor &&
+                       backgroundImage == other.backgroundImage &&
+                       textAlignment == other.textAlignment;
+            }
+
+            inline bool operator!=(const Style& other) const
+            {
+                return !(*this == other);
+            }
         };
 
     private:
