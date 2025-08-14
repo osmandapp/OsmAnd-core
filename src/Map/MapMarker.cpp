@@ -250,7 +250,5 @@ OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::MapMarker::SymbolsGroup:
 
 bool OsmAnd::MapMarker::SymbolsGroup::supportsResourcesRenew()
 {
-    if (const auto mapMarkerP = _mapMarkerP.lock())
-        return mapMarkerP->hasUnappliedPrimitiveChanges();
     return false;
 }
