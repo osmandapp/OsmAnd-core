@@ -38,6 +38,7 @@ namespace OsmAnd
 
         mutable QReadWriteLock _lock;
         bool _hasUnappliedChanges;
+        bool _hasUnappliedPrimitiveChanges;
 
         bool _isHidden;
 
@@ -62,6 +63,9 @@ namespace OsmAnd
         int _offsetFromLine = 0;
 
         bool _updateAfterCreated = false;
+
+        QString _caption;
+        TextRasterizer::Style _captionStyle;
 
         class KeyedOnSurfaceRasterMapSymbol : public OnSurfaceRasterMapSymbol
         {
@@ -132,7 +136,11 @@ namespace OsmAnd
 
         void setUpdateAfterCreated(bool updateAfterCreated);
 
+        void setCaption(const QString& caption);
+        void setCaptionStyle(const TextRasterizer::Style& captionStyle);
+
         bool hasUnappliedChanges() const;
+        bool hasUnappliedPrimitiveChanges() const;
         
         std::shared_ptr<MapMarker::SymbolsGroup> createSymbolsGroup(int subsection) const;
 

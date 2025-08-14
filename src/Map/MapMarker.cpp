@@ -8,8 +8,6 @@ OsmAnd::MapMarker::MapMarker(
     const PinIconVerticalAlignment pinIconVerticalAlignment_,
     const PinIconHorisontalAlignment pinIconHorisontalAlignment_,
     const PointI pinIconOffset_,
-    const QString& caption_,
-    const TextRasterizer::Style captionStyle_,
     const double captionTopSpace_,
     const QHash< OnSurfaceIconKey, sk_sp<const SkImage> >& onMapSurfaceIcons_,
     const std::shared_ptr<const Model3D>& model3D_,
@@ -23,8 +21,6 @@ OsmAnd::MapMarker::MapMarker(
     , pinIconVerticalAlignment(pinIconVerticalAlignment_)
     , pinIconHorisontalAlignment(pinIconHorisontalAlignment_)
     , pinIconOffset(pinIconOffset_)
-    , caption(caption_)
-    , captionStyle(captionStyle_)
     , captionTopSpace(captionTopSpace_)
     , onMapSurfaceIcons(onMapSurfaceIcons_)
     , model3D(model3D_)
@@ -188,9 +184,24 @@ void OsmAnd::MapMarker::setUpdateAfterCreated(bool updateAfterCreated)
     _p->setUpdateAfterCreated(updateAfterCreated);
 }
 
+void OsmAnd::MapMarker::setCaption(const QString& caption_)
+{
+    _p->setCaption(caption_);
+}
+
+void OsmAnd::MapMarker::setCaptionStyle(const TextRasterizer::Style& captionStyle_)
+{
+    _p->setCaptionStyle(captionStyle_);
+}
+
 bool OsmAnd::MapMarker::hasUnappliedChanges() const
 {
     return _p->hasUnappliedChanges();
+}
+
+bool OsmAnd::MapMarker::hasUnappliedPrimitiveChanges() const
+{
+    return _p->hasUnappliedPrimitiveChanges();
 }
 
 bool OsmAnd::MapMarker::applyChanges()
@@ -224,7 +235,7 @@ const OsmAnd::MapMarker* OsmAnd::MapMarker::SymbolsGroup::getMapMarker() const
 bool OsmAnd::MapMarker::SymbolsGroup::updatesPresent()
 {
     if (const auto mapMarkerP = _mapMarkerP.lock())
-        return mapMarkerP->hasUnappliedChanges();
+        return mapMarkerP->hasUnappliedChanges() || mapMarkerP->hasUnappliedPrimitiveChanges();
 
     return false;
 }
