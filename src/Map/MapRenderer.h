@@ -27,6 +27,9 @@
 #include "MapRendererInternalState.h"
 #include "MapRendererResourcesManager.h"
 #include "MapSymbolsGroup.h"
+#include "Stopwatch.h"
+#include "MapMarkersCollection.h"
+#include "AmenitySymbolsProvider.h"
 
 namespace OsmAnd
 {
@@ -111,6 +114,8 @@ namespace OsmAnd
         QAtomicInt _resourcesGpuSyncRequestsCounter;
 
         // Symbols-related:
+        QMutex _subsectionUpdateLock;
+        QSet<int> _subsectionsToUpdate;
         mutable QReadWriteLock _publishedMapSymbolsByOrderLock;
         PublishedMapSymbolsByOrder _publishedMapSymbolsByOrder;
         QHash< std::shared_ptr<const MapSymbolsGroup>, SmartPOD<unsigned int, 0> > _publishedMapSymbolsGroups;
@@ -158,6 +163,11 @@ namespace OsmAnd
         mutable QReadWriteLock _jsonDocumentLock;
         std::shared_ptr<const QJsonDocument> _jsonDocument;
         bool _jsonEnabled;
+
+        int _maxResourceThreadsLimit;
+
+        OsmAnd::Stopwatch symbolsLoadingStart;
+        float symbolsLoadingTime = 0;
 
         virtual AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const = 0;
         virtual AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const = 0;
@@ -212,6 +222,7 @@ namespace OsmAnd
         bool hasGpuWorkerThread() const;
         bool isInGpuWorkerThread() const;
         bool isInRenderThread() const;
+        int frameInvalidates() const;
 
         // Configuration-related:
         const std::shared_ptr<const MapRendererConfiguration>& currentConfiguration;
@@ -458,6 +469,9 @@ namespace OsmAnd
         virtual void setSymbolsUpdateInterval(int interval) Q_DECL_OVERRIDE;
         virtual void setUpdateSymbols(bool update) Q_DECL_OVERRIDE;
         virtual bool needUpdatedSymbols() Q_DECL_OVERRIDE;
+        virtual void updateSubsection(int subsection) Q_DECL_OVERRIDE;
+        virtual void refreshSubsections(const QSet<int>& subsections) Q_DECL_OVERRIDE;
+        virtual QSet<int> getSubsectionsToUpdate() Q_DECL_OVERRIDE;
         virtual void setSymbolsLoading(bool active) Q_DECL_OVERRIDE;
         virtual bool isSymbolsLoadingActive() Q_DECL_OVERRIDE;
 
@@ -470,12 +484,16 @@ namespace OsmAnd
         virtual void setJSON(const QJsonDocument* jsonDocument) Q_DECL_OVERRIDE;
         virtual QByteArray getJSON() const Q_DECL_OVERRIDE;
 
+        virtual int getDefaultThreadsLimit() Q_DECL_OVERRIDE;
+        virtual int getResourceWorkerThreadsLimit() Q_DECL_OVERRIDE;
         virtual void setResourceWorkerThreadsLimit(const unsigned int limit) Q_DECL_OVERRIDE;
         virtual void resetResourceWorkerThreadsLimit() Q_DECL_OVERRIDE;
         virtual unsigned int getActiveResourceRequestsCount() const Q_DECL_OVERRIDE;
         virtual void dumpResourcesInfo() const Q_DECL_OVERRIDE;
         virtual float getBasicThreadsCPULoad() Q_DECL_OVERRIDE;
         virtual int getWaitTime() const Q_DECL_OVERRIDE;
+
+        float getPreviousElapsedSymbolsLoadingTime() const override;
 
     friend struct OsmAnd::MapRendererInternalState;
     friend class OsmAnd::MapRendererStage;

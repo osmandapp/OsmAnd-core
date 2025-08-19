@@ -38,6 +38,7 @@ namespace OsmAnd
 
         mutable QReadWriteLock _lock;
         bool _hasUnappliedChanges;
+        bool _hasUnappliedPrimitiveChanges;
 
         bool _isHidden;
 
@@ -61,6 +62,11 @@ namespace OsmAnd
         QVector<PointI64> _linePoints;
         int _offsetFromLine = 0;
 
+        bool _updateAfterCreated = false;
+
+        QString _caption;
+        TextRasterizer::Style _captionStyle;
+
         class KeyedOnSurfaceRasterMapSymbol : public OnSurfaceRasterMapSymbol
         {
         private:
@@ -78,7 +84,7 @@ namespace OsmAnd
 
         bool applyChanges();
 
-        std::shared_ptr<MapMarker::SymbolsGroup> inflateSymbolsGroup() const;
+        std::shared_ptr<MapMarker::SymbolsGroup> inflateSymbolsGroup(int subsection) const;
         mutable QReadWriteLock _symbolsGroupsRegistryLock;
         mutable QHash< MapSymbolsGroup*, std::weak_ptr< MapSymbolsGroup > > _symbolsGroupsRegistry;
         void registerSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const;
@@ -128,9 +134,15 @@ namespace OsmAnd
         
         void setOffsetFromLine(int offset);
 
+        void setUpdateAfterCreated(bool updateAfterCreated);
+
+        void setCaption(const QString& caption);
+        void setCaptionStyle(const TextRasterizer::Style& captionStyle);
+
         bool hasUnappliedChanges() const;
+        bool hasUnappliedPrimitiveChanges() const;
         
-        std::shared_ptr<MapMarker::SymbolsGroup> createSymbolsGroup() const;
+        std::shared_ptr<MapMarker::SymbolsGroup> createSymbolsGroup(int subsection) const;
 
     friend class OsmAnd::MapMarker;
     friend class OsmAnd::MapMarkersCollection;

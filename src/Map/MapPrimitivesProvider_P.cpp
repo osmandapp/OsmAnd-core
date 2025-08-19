@@ -1,16 +1,12 @@
 #include "MapPrimitivesProvider_P.h"
 #include "MapPrimitivesProvider.h"
 
-//#define OSMAND_PERFORMANCE_METRICS 2
-#if !defined(OSMAND_PERFORMANCE_METRICS)
-#   define OSMAND_PERFORMANCE_METRICS 0
-#endif // !defined(OSMAND_PERFORMANCE_METRICS)
-
 #include "IMapObjectsProvider.h"
 #include "Stopwatch.h"
 #include "Utilities.h"
 #include "Logging.h"
 #include "ObfMapObject.h"
+#include "MapRendererPerformanceMetrics.h"
 
 OsmAnd::MapPrimitivesProvider_P::MapPrimitivesProvider_P(MapPrimitivesProvider* owner_)
     : _primitiviserCache(new MapPrimitiviser::Cache())
@@ -107,14 +103,19 @@ void OsmAnd::MapPrimitivesProvider_P::collectPolygons(QList<std::shared_ptr<cons
 bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
     const MapPrimitivesProvider::Request& request,
     std::shared_ptr<MapPrimitivesProvider::Data>& outTiledPrimitives,
-    MapPrimitivesProvider_Metrics::Metric_obtainData* const metric_)
+    MapPrimitivesProvider_Metrics::Metric_obtainData* const metric)
 {
-#if OSMAND_PERFORMANCE_METRICS
-    MapPrimitivesProvider_Metrics::Metric_obtainData localMetric;
-    const auto metric = metric_ ? metric_ : &localMetric;
-#else
-    const auto metric = metric_;
-#endif
+    const auto& queryController = request.queryController;
+
+    if (queryController->isAborted())
+        return false;
+
+    const auto empty =
+        []
+        (const std::shared_ptr<TileEntry>& entry) -> bool
+        {
+            return !entry->dataWeakRef.lock();
+        };
 
     const Stopwatch totalStopwatch(metric != nullptr);
 
@@ -137,10 +138,10 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         // In case tile entry is being loaded, wait until it will finish loading
         if (tileEntry->getState() == TileState::Loading)
         {
-            QReadLocker scopedLcoker(&tileEntry->loadedConditionLock);
+            QReadLocker scopedLocker(&tileEntry->loadedConditionLock);
 
             // If tile is in 'Loading' state, wait until it will become 'Loaded'
-            while (tileEntry->getState() != TileState::Loaded)
+            while (tileEntry->getState() == TileState::Loading)
                 REPEAT_UNTIL(tileEntry->loadedCondition.wait(&tileEntry->loadedConditionLock));
         }
 
@@ -153,7 +154,8 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         else
         {
             // Otherwise, try to lock tile reference
-            outTiledPrimitives = tileEntry->dataWeakRef.lock();
+            if (tileEntry->getState() == TileState::Loaded)
+                outTiledPrimitives = tileEntry->dataWeakRef.lock();
 
             // If successfully locked, just return it
             if (outTiledPrimitives)
@@ -161,18 +163,26 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
 
             // Otherwise consider this tile entry as expired, remove it from collection (it's safe to do that right now)
             // This will enable creation of new entry on next loop cycle
-            _tileReferences.removeEntry(request.tileId, request.zoom);
+            _tileReferences.removeEntry(request.tileId, request.zoom, empty);
             tileEntry.reset();
+
+            if (queryController->isAborted())
+                return false;
         }
     }
 
-    const Stopwatch totalTimeStopwatch(
-#if OSMAND_PERFORMANCE_METRICS
-        true
-#else
-        metric != nullptr
-#endif // OSMAND_PERFORMANCE_METRICS
-        );
+    if (queryController->isAborted())
+    {
+        tileEntry->setState(TileState::Cancelled);
+        {
+            QWriteLocker scopedLocker(&tileEntry->loadedConditionLock);
+            tileEntry->loadedCondition.wakeAll();
+        }
+        _tileReferences.removeEntry(request.tileId, request.zoom, empty);
+        tileEntry.reset();
+
+        return false;
+    }
 
     // Obtain map objects data tile
     std::shared_ptr<IMapObjectsProvider::Data> dataTile;
@@ -183,6 +193,20 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         metric ? &submetric : nullptr);
     if (metric && submetric)
         metric->addOrReplaceSubmetric(submetric);
+
+    if (queryController->isAborted())
+    {
+        tileEntry->setState(TileState::Cancelled);
+        {
+            QWriteLocker scopedLocker(&tileEntry->loadedConditionLock);
+            tileEntry->loadedCondition.wakeAll();
+        }
+        _tileReferences.removeEntry(request.tileId, request.zoom, empty);
+        tileEntry.reset();
+
+        return false;
+    }
+
     if (!dataTile)
     {
         // Store flag that there was no data and mark tile entry as 'Loaded'
@@ -191,13 +215,16 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
 
         // Notify that tile has been loaded
         {
-            QWriteLocker scopedLcoker(&tileEntry->loadedConditionLock);
+            QWriteLocker scopedLocker(&tileEntry->loadedConditionLock);
             tileEntry->loadedCondition.wakeAll();
         }
 
         outTiledPrimitives.reset();
         return true;
     }
+
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().primitivesStart(request.tileId);
 
     // Get primitivised objects
     std::shared_ptr<MapPrimitiviser::PrimitivisedObjects> primitivisedObjects;
@@ -210,7 +237,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
             //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
             //NOTE: Maybe a QuadTree-based cache with leaf-only locking will save up much. Or use supernodes, like DataBlock
             nullptr, //_primitiviserCache,
-            nullptr,
+            queryController,
             metric ? metric->findOrAddSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects>().get() : nullptr);
     }
     else if (owner->mode == MapPrimitivesProvider::Mode::AllObjectsWithPolygonFiltering)
@@ -223,7 +250,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
             //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
             //NOTE: Maybe a QuadTree-based cache with leaf-only locking will save up much. Or use supernodes, like DataBlock
             nullptr, //_primitiviserCache,
-            nullptr,
+            queryController,
             metric ? metric->findOrAddSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects>().get() : nullptr);
     }
     else if (owner->mode == MapPrimitivesProvider::Mode::WithoutSurface)
@@ -236,7 +263,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
             //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
             //NOTE: Maybe a QuadTree-based cache with leaf-only locking will save up much. Or use supernodes, like DataBlock
             nullptr, //_primitiviserCache,
-            nullptr,
+            queryController,
             metric ? metric->findOrAddSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitiviseWithoutSurface>().get() : nullptr);
     }
     else // if (owner->mode == MapPrimitivesProvider::Mode::WithSurface)
@@ -254,8 +281,21 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
             //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
             //NOTE: Maybe a QuadTree-based cache with leaf-only locking will save up much. Or use supernodes, like DataBlock
             nullptr, //_primitiviserCache,
-            nullptr,
+            queryController,
             metric ? metric->findOrAddSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitiviseWithSurface>().get() : nullptr);
+    }
+
+    if (queryController->isAborted())
+    {
+        tileEntry->setState(TileState::Cancelled);
+        {
+            QWriteLocker scopedLocker(&tileEntry->loadedConditionLock);
+            tileEntry->loadedCondition.wakeAll();
+        }
+        _tileReferences.removeEntry(request.tileId, request.zoom, empty);
+        tileEntry.reset();
+
+        return false;
     }
 
     // Create tile
@@ -276,38 +316,16 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
 
     // Notify that tile has been loaded
     {
-        QWriteLocker scopedLcoker(&tileEntry->loadedConditionLock);
+        QWriteLocker scopedLocker(&tileEntry->loadedConditionLock);
         tileEntry->loadedCondition.wakeAll();
     }
 
     if (metric)
         metric->elapsedTime = totalStopwatch.elapsed();
 
-#if OSMAND_PERFORMANCE_METRICS
-#if OSMAND_PERFORMANCE_METRICS <= 1
-    LogPrintf(LogSeverityLevel::Info,
-        "%d polygons, %d polylines, %d points primitivised from %dx%d@%d in %fs",
-        primitivisedObjects->polygons.size(),
-        primitivisedObjects->polylines.size(),
-        primitivisedObjects->polygons.size(),
-        request.tileId.x,
-        request.tileId.y,
-        request.zoom,
-        totalStopwatch.elapsed());
-#else
-    LogPrintf(LogSeverityLevel::Info,
-        "%d polygons, %d polylines, %d points primitivised from %dx%d@%d in %fs:\n%s",
-        primitivisedObjects->polygons.size(),
-        primitivisedObjects->polylines.size(),
-        primitivisedObjects->polygons.size(),
-        request.tileId.x,
-        request.tileId.y,
-        request.zoom,
-        totalStopwatch.elapsed(),
-        qPrintable(metric ? metric->toString(false, QLatin1String("\t - ")) : QLatin1String("(null)")));
-#endif // OSMAND_PERFORMANCE_METRICS <= 1
-#endif // OSMAND_PERFORMANCE_METRICS
-    
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().primitivesFinish(request.tileId, request.zoom, primitivisedObjects->polygons.size(), primitivisedObjects->polylines.size(), primitivisedObjects->points.size(), metric);
+
     return true;
 }
 

@@ -95,6 +95,8 @@
 #include <OsmAndCore/Map/MapRasterLayerProvider.h>
 #include <OsmAndCore/Map/MapRasterLayerProvider_Software.h>
 #include <OsmAndCore/Map/MapPrimitivesMetricsLayerProvider.h>
+#include <OsmAndCore/Map/MapRasterMetricsLayerProvider.h>
+#include <OsmAndCore/Map/ObfMapObjectsMetricsLayerProvider.h>
 #include <OsmAndCore/Map/IOnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
@@ -308,6 +310,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::MapRasterLayerProvider)
 	%shared_ptr(OsmAnd::MapRasterLayerProvider_Software)
 	%shared_ptr(OsmAnd::MapPrimitivesMetricsLayerProvider)
+	%shared_ptr(OsmAnd::MapRasterMetricsLayerProvider)
+	%shared_ptr(OsmAnd::ObfMapObjectsMetricsLayerProvider)
 	%shared_ptr(OsmAnd::IOnlineTileSources)
 	%shared_ptr(OsmAnd::IOnlineTileSources::Source)
 	%shared_ptr(OsmAnd::OnlineTileSources)
@@ -428,6 +432,7 @@ using namespace OsmAnd;
 	%template(QListVectorLine) QList<std::shared_ptr<OsmAnd::VectorLine>>;
 	%template(QListFColorARGB) QList<OsmAnd::FColorARGB>;
 	%template(QListMapMarker) QList<std::shared_ptr<OsmAnd::MapMarker>>;
+	%template(QVectorMapMarker) QVector<std::shared_ptr<OsmAnd::MapMarker>>;
 	%template(QListPointI) QList<OsmAnd::Point<int32_t>>;
 	%template(QListMapTiledCollectionPoint) QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>>;
 	%template(QListIAnimation) QList<std::shared_ptr<OsmAnd::IAnimation>>;
@@ -535,6 +540,8 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapRasterLayerProvider.h>
 %include <OsmAndCore/Map/MapRasterLayerProvider_Software.h>
 %include <OsmAndCore/Map/MapPrimitivesMetricsLayerProvider.h>
+%include <OsmAndCore/Map/MapRasterMetricsLayerProvider.h>
+%include <OsmAndCore/Map/ObfMapObjectsMetricsLayerProvider.h>
 %include <OsmAndCore/Map/IOnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>

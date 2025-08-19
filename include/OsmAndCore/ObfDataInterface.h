@@ -45,6 +45,8 @@ namespace OsmAnd
             QList< std::shared_ptr<const ObfFile> >* outFiles = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
+        AreaI getEnlargedForLiveUpdate(const AreaI* const bbox31, const ZoomLevel zoom);
+
         bool loadBinaryMapObjects(
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
             MapSurfaceType* outSurfaceType,
@@ -56,7 +58,8 @@ namespace OsmAnd
             QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >* outReferencedCacheEntries = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric = nullptr,
-            bool coastlineOnly = false);
+            bool coastlineOnly = false,
+            bool enlargeArea = false);
 
         bool loadRoads(
             const RoutingDataLevel dataLevel,
@@ -67,7 +70,8 @@ namespace OsmAnd
             ObfRoutingSectionReader::DataBlocksCache* cache = nullptr,
             QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* outReferencedCacheEntries = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr,
-            ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric = nullptr);
+            ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric = nullptr,
+            bool enlargeArea = false);
 
         bool loadRoutingTreeNodes(
             const std::shared_ptr<const ObfReader>& obfReader,
@@ -90,7 +94,8 @@ namespace OsmAnd
             QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* outReferencedRoadsCacheEntries = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const binaryMapObjectsMetric = nullptr,
-            ObfRoutingSectionReader_Metrics::Metric_loadRoads* const roadsMetric = nullptr);
+            ObfRoutingSectionReader_Metrics::Metric_loadRoads* const roadsMetric = nullptr,
+            bool enlargeArea = false);
 
         bool loadAmenityCategories(
             QHash<QString, QStringList>* outCategories,

@@ -188,7 +188,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
     {
         // Prepare data and upload to GPU
         std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
-        ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU);
+        ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU, false);
 
         // If upload have failed, stop
         if (!ok)
@@ -202,6 +202,8 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
         // Mark this symbol as uploaded
         uploaded.insert(symbol, qMove(resourceInGPU));
     }
+
+    resourcesManager->finishSymbolsUploadToGPU();
 
     // If at least one symbol failed to upload, consider entire tile as failed to upload,
     // and unload its partial GPU resources

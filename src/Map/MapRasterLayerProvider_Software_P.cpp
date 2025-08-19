@@ -1,11 +1,6 @@
 #include "MapRasterLayerProvider_Software_P.h"
 #include "MapRasterLayerProvider_Software.h"
 
-//#define OSMAND_PERFORMANCE_METRICS 2
-#if !defined(OSMAND_PERFORMANCE_METRICS)
-#   define OSMAND_PERFORMANCE_METRICS 0
-#endif // !defined(OSMAND_PERFORMANCE_METRICS)
-
 #include "ignore_warnings_on_external_includes.h"
 #include <SkStream.h>
 #include <SkBitmap.h>
@@ -35,22 +30,9 @@ OsmAnd::MapRasterLayerProvider_Software_P::~MapRasterLayerProvider_Software_P()
 sk_sp<SkImage> OsmAnd::MapRasterLayerProvider_Software_P::rasterize(
     const MapRasterLayerProvider::Request& request,
     const std::shared_ptr<const MapPrimitivesProvider::Data>& primitivesTile,
-    MapRasterLayerProvider_Metrics::Metric_obtainData* const metric_)
+    MapRasterLayerProvider_Metrics::Metric_obtainData* const metric)
 {
-#if OSMAND_PERFORMANCE_METRICS
-    MapRasterLayerProvider_Metrics::Metric_obtainData localMetric;
-    const auto metric = metric_ ? metric_ : &localMetric;
-#else
-    const auto metric = metric_;
-#endif
-
-    const Stopwatch totalStopwatch(
-#if OSMAND_PERFORMANCE_METRICS
-        true
-#else
-        metric != nullptr
-#endif // OSMAND_PERFORMANCE_METRICS
-        );
+    const Stopwatch totalStopwatch(metric != nullptr);
 
     // Allocate rasterization target
     const auto tileSize = owner->getTileSize();
@@ -78,25 +60,6 @@ sk_sp<SkImage> OsmAnd::MapRasterLayerProvider_Software_P::rasterize(
         nullptr,
         metric ? metric->findOrAddSubmetricOfType<MapRasterizer_Metrics::Metric_rasterize>().get() : nullptr,
         request.queryController);
-
-#if OSMAND_PERFORMANCE_METRICS
-#if OSMAND_PERFORMANCE_METRICS <= 1
-    LogPrintf(LogSeverityLevel::Info,
-        "%dx%d@%d rasterized on CPU in %fs",
-        tileId.x,
-        tileId.y,
-        zoom,
-        totalStopwatch.elapsed());
-#else
-    LogPrintf(LogSeverityLevel::Info,
-        "%dx%d@%d rasterized on CPU in %fs:\n%s",
-        tileId.x,
-        tileId.y,
-        zoom,
-        totalStopwatch.elapsed(),
-        qPrintable(metric ? metric->toString(QLatin1String("\t - ")) : QLatin1String("(null)")));
-#endif // OSMAND_PERFORMANCE_METRICS <= 1
-#endif // OSMAND_PERFORMANCE_METRICS
 
     return bitmap.asImage();
 }

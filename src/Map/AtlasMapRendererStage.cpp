@@ -11,7 +11,10 @@ OsmAnd::AtlasMapRendererStage::AtlasMapRendererStage(AtlasMapRenderer* const ren
 OsmAnd::AtlasMapRendererStage::~AtlasMapRendererStage() = default;
 
 std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererStage::captureElevationDataResource(
-    TileId normalizedTileId, ZoomLevel zoomLevel, std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource /*= nullptr*/) const
+    TileId normalizedTileId,
+    ZoomLevel zoomLevel,
+    std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource /* = nullptr */,
+    bool* isNotReady /* = nullptr */) const
 {
     if (!currentState.elevationDataProvider)
         return nullptr;
@@ -38,18 +41,21 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererSta
 
             return gpuResource;
         }
+        else if (isNotReady)
+            *isNotReady = true;
     }
 
     return nullptr;
 }
 
 OsmAnd::ZoomLevel OsmAnd::AtlasMapRendererStage::getElevationData(TileId normalizedTileId, ZoomLevel zoomLevel,
-    PointF& offsetInTileN, std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource /*= nullptr*/) const
+    PointF& offsetInTileN, std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource /* = nullptr */,
+    bool* isNotReady /* = nullptr */) const
 {
     if (!currentState.elevationDataProvider)
         return ZoomLevel::InvalidZoomLevel;
 
-    if (captureElevationDataResource(normalizedTileId, zoomLevel, pOutSource))
+    if (captureElevationDataResource(normalizedTileId, zoomLevel, pOutSource, isNotReady))
         return zoomLevel;
 
     const auto maxMissingDataZoomShift = currentState.elevationDataProvider->getMaxMissingDataZoomShift();
@@ -80,7 +86,7 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRendererStage::getElevationData(TileId normali
             underscaledTileIdN.x += innerOffset.x;
             underscaledTileIdN.y += innerOffset.y;
             const auto underscaledZoomLevel = static_cast<ZoomLevel>(underscaledZoom);
-            if (captureElevationDataResource(underscaledTileIdN, underscaledZoomLevel, pOutSource))
+            if (captureElevationDataResource(underscaledTileIdN, underscaledZoomLevel, pOutSource, isNotReady))
             {
                 offsetInTileN.x = offsetN.x - static_cast<float>(innerOffset.x);
                 offsetInTileN.y = offsetN.y - static_cast<float>(innerOffset.y);
@@ -100,7 +106,7 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRendererStage::getElevationData(TileId normali
                 &texCoordsOffset,
                 &texCoordsScale);
             const auto overscaledZoomLevel = static_cast<ZoomLevel>(overscaledZoom);
-            if (captureElevationDataResource(overscaledTileIdN, overscaledZoomLevel, pOutSource))
+            if (captureElevationDataResource(overscaledTileIdN, overscaledZoomLevel, pOutSource, isNotReady))
             {
                 offsetInTileN.x = texCoordsOffset.x + offsetInTileN.x * texCoordsScale.x;
                 offsetInTileN.y = texCoordsOffset.y + offsetInTileN.y * texCoordsScale.y;

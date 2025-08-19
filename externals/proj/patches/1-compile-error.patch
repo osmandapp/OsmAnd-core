@@ -1,0 +1,10 @@
+--- upstream.original/src/projections/s2.cpp	2024-10-31 23:28:14
++++ upstream.patched/src/projections/s2.cpp	2025-08-09 17:17:10
+@@ -52,6 +52,7 @@
+ 
+ #include <errno.h>
+ #include <cmath>
++#include <cstdint>
+ 
+ #include "proj.h"
+ #include "proj_internal.h"

@@ -6,10 +6,12 @@
 
 OsmAnd::ObfMapObjectsProvider::ObfMapObjectsProvider(
     const std::shared_ptr<const IObfsCollection>& obfsCollection_,
-    const Mode mode_ /*= Mode::BinaryMapObjectsAndRoads*/)
+    const Mode mode_ /*= Mode::BinaryMapObjectsAndRoads*/,
+    const int threadsLimit_ /*= 0*/)
     : _p(new ObfMapObjectsProvider_P(this))
     , obfsCollection(obfsCollection_)
     , mode(mode_)
+    , threadsLimit(threadsLimit_)
 {
 }
 

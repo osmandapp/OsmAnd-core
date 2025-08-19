@@ -149,6 +149,33 @@ public class NativeCore {
         }
     }
 
+    public static boolean isPerformanceLogsEnabled() {
+        if (!s_loadedNativeLibraries)
+            return false;
+
+        synchronized (s_initSync) {
+            return OsmAndCore.isPerformanceMetricsEnabled();
+        }
+    }
+
+    public static void enablePerformanceLogs(boolean enable) {
+        if (!s_loadedNativeLibraries)
+            return;
+
+        synchronized (s_initSync) {
+            OsmAndCore.enablePerformanceMetrics(enable);
+        }
+    }
+
+    public static String getLastPerformanceMetricsResult() {
+        if (!s_loadedNativeLibraries)
+            return "";
+
+        synchronized (s_initSync) {
+            return OsmAndCore.getLastPerformanceMetricsResult();
+        }
+    }
+
     /**
      * This exception means that loadNativeCore() was never called, or never succeeded.
      */

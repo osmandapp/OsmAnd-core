@@ -20,9 +20,12 @@
 #include "Utilities.h"
 #include "Logging.h"
 #include "Stopwatch.h"
+#include "MapRendererPerformanceMetrics.h"
 #include "QKeyValueIterator.h"
+
 #include <SqliteHeightmapTileProvider.h>
 #include <VectorLinesCollection.h>
+#include <AtlasMapRenderer_Metrics.h>
 
 //#define OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE 1
 #ifndef OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
@@ -63,6 +66,7 @@ OsmAnd::MapRenderer::MapRenderer(
     , publishedMapSymbolsByOrder(_publishedMapSymbolsByOrder)
     , currentDebugSettings(_currentDebugSettingsAsConst)
     , _jsonEnabled(false)
+    , _maxResourceThreadsLimit(0)
 {
 }
 
@@ -93,6 +97,11 @@ bool OsmAnd::MapRenderer::isInGpuWorkerThread() const
 bool OsmAnd::MapRenderer::isInRenderThread() const
 {
     return (_renderThreadId == QThread::currentThreadId());
+}
+
+int OsmAnd::MapRenderer::frameInvalidates() const
+{
+    return _frameInvalidatesToBeProcessed;
 }
 
 OsmAnd::MapRendererSetupOptions OsmAnd::MapRenderer::getSetupOptions() const
@@ -269,6 +278,12 @@ void OsmAnd::MapRenderer::processGpuWorker()
 {
     if (isInGpuWorkerThread())
     {
+        if (OsmAnd::isPerformanceMetricsEnabled())
+            OsmAnd::getPerformanceMetrics().syncStart();
+            
+        unsigned int resourcesUploadedCount = 0u;
+        unsigned int resourcesUnloadedCount = 0u;
+
         // In every layer we have, upload pending resources to GPU without limiting
         int unprocessedRequests = 0;
         do
@@ -278,9 +293,17 @@ void OsmAnd::MapRenderer::processGpuWorker()
             unsigned int resourcesUnloaded = 0u;
             _resources->syncResourcesInGPU(0, nullptr, &resourcesUploaded, &resourcesUnloaded);
             if (resourcesUploaded > 0 || resourcesUnloaded > 0)
+            {
                 invalidateFrame();
+                resourcesUploadedCount += resourcesUploaded;
+                resourcesUnloadedCount += resourcesUnloaded;
+            }
             unprocessedRequests = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
+            
         } while (_gpuWorkerThreadIsAlive && unprocessedRequests > 0);
+
+        if (OsmAnd::isPerformanceMetricsEnabled())
+            OsmAnd::getPerformanceMetrics().syncFinish(resourcesUploadedCount, resourcesUnloadedCount);
     }
     else if (isInRenderThread())
     {
@@ -392,6 +415,10 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
     if (!_resources->initializeDefaultResources())
         return false;
 
+    auto maxResourceThreadsLimit = _maxResourceThreadsLimit;
+    if (maxResourceThreadsLimit > 0)
+        _resources->setResourceWorkerThreadsLimit(maxResourceThreadsLimit);
+
     return true;
 }
 
@@ -453,10 +480,7 @@ bool OsmAnd::MapRenderer::preUpdate(IMapRenderer_Metrics::Metric_update* const m
     Stopwatch updatesStopwatch(metric != nullptr);
     const auto& mapState = getMapState();
     if (_resources->checkForUpdatesAndApply(mapState))
-    {
-        setUpdateSymbols(true);
         invalidateFrame();
-    }
     if (metric)
         metric->elapsedTimeForUpdatesProcessing = updatesStopwatch.elapsed();
 
@@ -547,7 +571,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
     {
         QMutexLocker scopedLocker(&_requestedStateMutex);
 
-        bool adjustTarget = 
+        bool adjustTarget =
         _requestedState.fixedPixel.x >= 0 && _requestedState.fixedPixel.y >= 0
             && (!_targetIsElevated || _requestedState.fixedHeight == 0.0f)
             && _requestedState.elevationDataProvider && _requestedState.fixedLocation31 == _requestedState.target31
@@ -662,10 +686,20 @@ bool OsmAnd::MapRenderer::renderFrame(IMapRenderer_Metrics::Metric_renderFrame* 
     bool ok = true;
 
     Stopwatch totalStopwatch(metric != nullptr);
-
-    ok = ok && preRenderFrame(metric);
-    ok = ok && doRenderFrame(metric);
-    ok = ok && postRenderFrame(metric);
+    
+    if (currentDebugSettings->debugStageEnabled && metric == nullptr)
+    {
+        auto atlasRendererMetrics = std::make_shared<AtlasMapRenderer_Metrics::Metric_renderFrame>();
+        ok = ok && preRenderFrame(atlasRendererMetrics.get());
+        ok = ok && doRenderFrame(atlasRendererMetrics.get());
+        ok = ok && postRenderFrame(atlasRendererMetrics.get());
+    }
+    else
+    {
+        ok = ok && preRenderFrame(metric);
+        ok = ok && doRenderFrame(metric);
+        ok = ok && postRenderFrame(metric);
+    }
 
     if (metric)
         metric->elapsedTime = totalStopwatch.elapsed();
@@ -1268,11 +1302,7 @@ bool OsmAnd::MapRenderer::resumeSymbolsUpdate()
     }
 
     if (prevCounter == 1)
-    {
-        if (!isSymbolsLoadingActive())
-            setUpdateSymbols(true);
         invalidateFrame();
-    }
 
     return (prevCounter <= 1);
 }
@@ -1285,7 +1315,6 @@ int OsmAnd::MapRenderer::getSymbolsUpdateInterval()
 void OsmAnd::MapRenderer::setSymbolsUpdateInterval(int interval)
 {
     _symbolsUpdateInterval = interval;
-    setUpdateSymbols(true);
     invalidateFrame();
 }
 
@@ -1299,8 +1328,50 @@ bool OsmAnd::MapRenderer::needUpdatedSymbols()
     return _updateSymbols;
 }
 
+void OsmAnd::MapRenderer::updateSubsection(int subsection)
+{
+    QMutexLocker scopedLocker(&_subsectionUpdateLock);
+
+    _subsectionsToUpdate.insert(subsection);
+}
+
+void OsmAnd::MapRenderer::refreshSubsections(const QSet<int>& subsections)
+{
+    {
+        QMutexLocker scopedLocker(&_subsectionUpdateLock);
+
+        _subsectionsToUpdate.unite(subsections);
+    }
+    invalidateFrame();
+}
+
+QSet<int> OsmAnd::MapRenderer::getSubsectionsToUpdate()
+{
+    QMutexLocker scopedLocker(&_subsectionUpdateLock);
+
+    auto result = _subsectionsToUpdate;
+    _subsectionsToUpdate.clear();
+    return result;
+}
+
 void OsmAnd::MapRenderer::setSymbolsLoading(bool active)
 {
+    if (currentDebugSettings->debugStageEnabled || OsmAnd::isPerformanceMetricsEnabled())
+    {
+        if (_symbolsLoading == false && active == true)
+        {
+            symbolsLoadingStart.start();
+            if (OsmAnd::isPerformanceMetricsEnabled())
+                OsmAnd::getPerformanceMetrics().startSymbolsLoading(getState().zoomLevel);
+        }
+        else if (_symbolsLoading == true && active == false)
+        {
+            symbolsLoadingTime = symbolsLoadingStart.elapsed();
+            if (OsmAnd::isPerformanceMetricsEnabled())
+                OsmAnd::getPerformanceMetrics().stopSymbolsLoading(getState().zoomLevel);
+        }
+    }
+
     _symbolsLoading = active;
 }
 
@@ -1594,6 +1665,10 @@ bool OsmAnd::MapRenderer::addSymbolsProvider(
         providers.insert(provider);
         _requestedState.tiledSymbolsProviders[subsectionIndex] = providers;
     }
+    _requestedState.tiledSymbolsSubsections.insert(provider, subsectionIndex);
+
+    if (auto amenitySymbolsProvider = std::dynamic_pointer_cast<AmenitySymbolsProvider>(provider))
+        amenitySymbolsProvider->subsection = subsectionIndex;
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
 
@@ -1646,6 +1721,10 @@ bool OsmAnd::MapRenderer::addSymbolsProvider(
         providers.insert(provider);
         _requestedState.keyedSymbolsProviders[subsectionIndex] = providers;
     }
+    _requestedState.keyedSymbolsSubsections.insert(provider, subsectionIndex);
+
+    if (auto mapMarkersCollection = std::dynamic_pointer_cast<MapMarkersCollection>(provider))
+        mapMarkersCollection->subsection = subsectionIndex;
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
 
@@ -1667,11 +1746,8 @@ bool OsmAnd::MapRenderer::hasSymbolsProvider(
     if (!provider)
         return false;
 
-    for (const auto& tiledSymbolsSubsection : constOf(_requestedState.tiledSymbolsProviders))
-    {
-        if (tiledSymbolsSubsection.contains(provider))
-            return true;
-    }
+    if (_requestedState.tiledSymbolsSubsections.contains(provider))
+        return true;
 
     return false;
 }
@@ -1684,11 +1760,8 @@ bool OsmAnd::MapRenderer::hasSymbolsProvider(
     if (!provider)
         return false;
 
-    for (const auto& keyedSymbolsSubsection : constOf(_requestedState.keyedSymbolsProviders))
-    {
-        if (keyedSymbolsSubsection.contains(provider))
-            return true;
-    }
+    if (_requestedState.keyedSymbolsSubsections.contains(provider))
+        return true;
 
     return false;
 }
@@ -1701,13 +1774,8 @@ int OsmAnd::MapRenderer::getSymbolsProviderSubsection(
     if (!provider)
         return 0;
 
-    for (const auto& subsectionEntry : rangeOf(constOf(_requestedState.tiledSymbolsProviders)))
-    {
-        const auto subsectionIndex = subsectionEntry.key();
-        const auto& subsection = subsectionEntry.value();
-        if (subsection.contains(provider))
-            return subsectionIndex;
-    }
+    if (_requestedState.tiledSymbolsSubsections.contains(provider))
+        return _requestedState.tiledSymbolsSubsections.value(provider);
 
     return 0;
 }
@@ -1720,13 +1788,8 @@ int OsmAnd::MapRenderer::getSymbolsProviderSubsection(
     if (!provider)
         return 0;
 
-    for (const auto& subsectionEntry : rangeOf(constOf(_requestedState.keyedSymbolsProviders)))
-    {
-        const auto subsectionIndex = subsectionEntry.key();
-        const auto& subsection = subsectionEntry.value();
-        if (subsection.contains(provider))
-            return subsectionIndex;
-    }
+    if (_requestedState.keyedSymbolsSubsections.contains(provider))
+        return _requestedState.keyedSymbolsSubsections.value(provider);
 
     return 0;
 }
@@ -1749,6 +1812,8 @@ bool OsmAnd::MapRenderer::removeSymbolsProvider(
             update = true;
         }
     }
+    _requestedState.tiledSymbolsSubsections.remove(provider);
+
     if (!update)
         return false;
 
@@ -1794,6 +1859,8 @@ bool OsmAnd::MapRenderer::removeSymbolsProvider(
             }
         }
     }
+    _requestedState.keyedSymbolsSubsections.remove(provider);
+
     if (!update)
         return false;
 
@@ -1817,7 +1884,9 @@ bool OsmAnd::MapRenderer::removeAllSymbolsProviders(bool forcedUpdate /*= false*
     const auto update =
         forcedUpdate ||
         !_requestedState.tiledSymbolsProviders.isEmpty() ||
-        !_requestedState.keyedSymbolsProviders.isEmpty();
+        !_requestedState.tiledSymbolsSubsections.isEmpty() ||
+        !_requestedState.keyedSymbolsProviders.isEmpty() ||
+        !_requestedState.keyedSymbolsSubsections.isEmpty();
     if (!update)
         return false;
 
@@ -1834,7 +1903,9 @@ bool OsmAnd::MapRenderer::removeAllSymbolsProviders(bool forcedUpdate /*= false*
     }
 
     _requestedState.tiledSymbolsProviders.clear();
+    _requestedState.tiledSymbolsSubsections.clear();
     _requestedState.keyedSymbolsProviders.clear();
+    _requestedState.keyedSymbolsSubsections.clear();
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
 
@@ -3279,9 +3350,26 @@ QByteArray OsmAnd::MapRenderer::getJSON() const
     return _jsonDocument ? _jsonDocument->toJson() : QByteArray();
 }
 
+int OsmAnd::MapRenderer::getDefaultThreadsLimit()
+{
+    return QThread::idealThreadCount();
+}
+
+int OsmAnd::MapRenderer::getResourceWorkerThreadsLimit()
+{
+    const auto resources = _resources;
+    if (resources)
+        return  resources->getResourceWorkerThreadsLimit();
+
+    return _maxResourceThreadsLimit > 0 ? _maxResourceThreadsLimit : getDefaultThreadsLimit();
+}
+
 void OsmAnd::MapRenderer::setResourceWorkerThreadsLimit(const unsigned int limit)
 {
-    _resources->setResourceWorkerThreadsLimit(limit);
+    _maxResourceThreadsLimit = limit;
+    const auto resources = _resources;
+    if (resources)
+        resources->setResourceWorkerThreadsLimit(limit);
 }
 
 void OsmAnd::MapRenderer::resetResourceWorkerThreadsLimit()
@@ -3310,4 +3398,9 @@ float OsmAnd::MapRenderer::getBasicThreadsCPULoad()
 int OsmAnd::MapRenderer::getWaitTime() const
 {
     return gpuAPI->waitTimeInMicroseconds.fetchAndStoreOrdered(0) / 1000;
+}
+
+float OsmAnd::MapRenderer::getPreviousElapsedSymbolsLoadingTime() const
+{
+    return symbolsLoadingTime;
 }

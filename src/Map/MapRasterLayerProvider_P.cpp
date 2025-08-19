@@ -1,17 +1,13 @@
 #include "MapRasterLayerProvider_P.h"
 #include "MapRasterLayerProvider.h"
 
-//#define OSMAND_PERFORMANCE_METRICS 2
-#if !defined(OSMAND_PERFORMANCE_METRICS)
-#   define OSMAND_PERFORMANCE_METRICS 0
-#endif // !defined(OSMAND_PERFORMANCE_METRICS)
-
 #include "MapDataProviderHelpers.h"
 #include "MapPrimitivesProvider.h"
 #include "MapPrimitivesProvider_Metrics.h"
 #include "MapPrimitiviser.h"
 #include "MapRasterizer.h"
 #include "Stopwatch.h"
+#include "MapRendererPerformanceMetrics.h"
 
 OsmAnd::MapRasterLayerProvider_P::MapRasterLayerProvider_P(MapRasterLayerProvider* const owner_)
     : owner(owner_)
@@ -48,22 +44,14 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainData(
 bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
     const MapRasterLayerProvider::Request& request, 
     std::shared_ptr<MapRasterLayerProvider::Data>& outData,
-    MapRasterLayerProvider_Metrics::Metric_obtainData* const metric_)
+    MapRasterLayerProvider_Metrics::Metric_obtainData* const metric)
 {
-#if OSMAND_PERFORMANCE_METRICS
-    MapRasterLayerProvider_Metrics::Metric_obtainData localMetric;
-    const auto metric = metric_ ? metric_ : &localMetric;
-#else
-    const auto metric = metric_;
-#endif
+    const auto& queryController = request.queryController;
 
-    const Stopwatch totalStopwatch(
-#if OSMAND_PERFORMANCE_METRICS
-        true
-#else
-        metric != nullptr
-#endif // OSMAND_PERFORMANCE_METRICS
-        );
+    if (queryController->isAborted())
+        return false;
+
+    const Stopwatch totalStopwatch(metric != nullptr);
 
     // Obtain offline map primitives tile
     std::shared_ptr<MapPrimitivesProvider::Data> primitivesTile;
@@ -71,6 +59,10 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
         request,
         primitivesTile,
         metric ? metric->findOrAddSubmetricOfType<MapPrimitivesProvider_Metrics::Metric_obtainData>().get() : nullptr);
+
+    if (queryController->isAborted())
+        return false;
+
     if (!primitivesTile || primitivesTile->primitivisedObjects->isEmpty())
     {
         outData.reset();
@@ -81,8 +73,15 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
         return true;
     }
 
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().rasterStart(request.tileId);
+
     // Perform actual rasterization
     const auto image = rasterize(request, primitivesTile, metric);
+
+    if (queryController->isAborted())
+        return false;
+
     if (!image)
     {
         if (metric)
@@ -103,6 +102,9 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
 
     if (metric)
         metric->elapsedTime += totalStopwatch.elapsed();
+
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().rasterFinish(request.tileId, request.zoom);
 
     return true;
 }

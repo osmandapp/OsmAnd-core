@@ -104,6 +104,9 @@ namespace OsmAnd
         virtual void setSymbolsUpdateInterval(int interval) = 0;
         virtual void setUpdateSymbols(bool update) = 0;
         virtual bool needUpdatedSymbols() = 0;
+        virtual void updateSubsection(int subsection) = 0;
+        virtual void refreshSubsections(const QSet<int>& subsections) = 0;
+        virtual QSet<int> getSubsectionsToUpdate() = 0;
         virtual void setSymbolsLoading(bool active) = 0;
         virtual bool isSymbolsLoadingActive() = 0;
 
@@ -262,12 +265,16 @@ namespace OsmAnd
         virtual int getHeixelsPerTileSide() const = 0;
         virtual int getElevationDataTileSize() const = 0;
 
+        virtual int getDefaultThreadsLimit() = 0;
+        virtual int getResourceWorkerThreadsLimit() = 0;
         virtual void setResourceWorkerThreadsLimit(const unsigned int limit) = 0;
         virtual void resetResourceWorkerThreadsLimit() = 0;
         virtual unsigned int getActiveResourceRequestsCount() const = 0;
         virtual void dumpResourcesInfo() const = 0;
         virtual float getBasicThreadsCPULoad() = 0;
         virtual int getWaitTime() const = 0;
+
+        virtual float getPreviousElapsedSymbolsLoadingTime() const = 0;
     };
 
     enum class MapRendererClass

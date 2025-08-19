@@ -368,6 +368,20 @@ bool OsmAnd::MapObject::containsAttribute(
     if (citTagsGroup == attributeMapping->encodeMap.cend())
         return false;
 
+    if (valueRef.isEmpty())
+    {
+        // return true if contains any
+        for (auto it = citTagsGroup->constBegin(); it != citTagsGroup->constEnd(); ++it)
+        {
+            if ((checkAdditional ? additionalAttributeIds : attributeIds).contains(it.value()))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     const auto citAttributeId = citTagsGroup->constFind(valueRef);
     if (citAttributeId == citTagsGroup->cend())
         return false;

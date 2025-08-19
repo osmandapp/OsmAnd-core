@@ -75,17 +75,22 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
         .arg(request.zoom);
     QString obtainBinaryMapObjectsElapsedTime(QLatin1String("?"));
     QString maxObjectsPointCount(QLatin1String("?"));
+    QString rejectedMapObjectCount(QLatin1String("?"));
     if (const auto obtainBinaryMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapObjectsProvider_Metrics::Metric_obtainData>(true))
     {
         obtainBinaryMapObjectsElapsedTime = QString::number(obtainBinaryMapObjectsMetric->elapsedTime, 'f', 2);
-        if (const auto maxObjectsPointCountMetric = obtainBinaryMapObjectsMetric->findSubmetricOfType<ObfMapSectionReader_Metrics::Metric_loadMapObjects>(true))
+        if (const auto obfMapSectionReaderMetric = obtainBinaryMapObjectsMetric->findSubmetricOfType<ObfMapSectionReader_Metrics::Metric_loadMapObjects>(true))
         {
-            maxObjectsPointCount = QString::number(maxObjectsPointCountMetric->notSkippedMapObjectsPoints);
+            maxObjectsPointCount = QString::number(obfMapSectionReaderMetric->notSkippedMapObjectsPoints);
+            rejectedMapObjectCount = QString::number(obfMapSectionReaderMetric->rejectedMapObjects);
         }
     }
     QString primitiviseElapsedTime(QLatin1String("?"));
     if (const auto primitiviseMetric = obtainDataMetric.findSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitiviseWithSurface>(true))
     {
+        text += QString(QLatin1String("rejected %1    max size %2p/o\n"))
+            .arg(rejectedMapObjectCount)
+            .arg(maxObjectsPointCount);
         text += QString(QLatin1String("order %1/-%2 %3s ~%4us/e\n"))
             .arg(primitiviseMetric->orderEvaluations)
             .arg(primitiviseMetric->orderRejects)
@@ -134,10 +139,10 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
             .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesGroups, 'f', 2))
             .arg(QString::number(primitiviseMetric->elapsedTimeForFutureSharedPrimitivesGroups, 'f', 2))
             .arg(QString::number(primitiviseMetric->elapsedTimeForPrimitives, 'f', 2));
-        text += QString(QLatin1String("d/b/c %1s/%2s/%3s\n"))
-            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromDetailedmap, 'f', 2))
-            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromBasemap, 'f', 2))
-            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromCoastlines, 'f', 2));
+//        text += QString(QLatin1String("d/b/c %1s/%2s/%3s\n"))
+//            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromDetailedmap, 'f', 2))
+//            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromBasemap, 'f', 2))
+//            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromCoastlines, 'f', 2));
         text += QString(QLatin1String("txt %1(-%2) %3s ~%4us/e ~%5us/p\n"))
             .arg(primitiviseMetric->obtainedTextSymbols)
             .arg(primitiviseMetric->rejectedTextSymbols)
@@ -161,11 +166,10 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
             .arg(primitiviseMetric->obtainedTextSymbols + primitiviseMetric->obtainedIconSymbols);
         primitiviseElapsedTime = QString::number(primitiviseMetric->elapsedTime, 'f', 2);
     }
-    text += QString(QLatin1String("total r%1+p%2+?=%3s %4p/o\n"))
+    text += QString(QLatin1String("total r%1+p%2+?=%3s\n"))
         .arg(obtainBinaryMapObjectsElapsedTime)
         .arg(primitiviseElapsedTime)
-        .arg(QString::number(obtainDataMetric.elapsedTime, 'f', 2))
-        .arg(maxObjectsPointCount);
+        .arg(QString::number(obtainDataMetric.elapsedTime, 'f', 2));
     text = text.trimmed();
 
     const auto fontSize = 14.0f * owner->densityFactor;

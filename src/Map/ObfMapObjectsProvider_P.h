@@ -168,24 +168,8 @@ namespace OsmAnd
             Undefined = -1,
 
             Loading,
-            Loaded
-        };
-        struct TileEntry : TiledEntriesCollectionEntryWithState < TileEntry, TileState, TileState::Undefined >
-        {
-            TileEntry(const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom)
-                : TiledEntriesCollectionEntryWithState(collection, tileId, zoom)
-            {
-            }
-
-            virtual ~TileEntry()
-            {
-                safeUnlink();
-            }
-
-            std::weak_ptr<ObfMapObjectsProvider::Data> dataWeakRef;
-
-            QReadWriteLock loadedConditionLock;
-            QWaitCondition loadedCondition;
+            Loaded,
+            Cancelled
         };
         struct TileSharedEntry : TiledEntriesCollectionEntryWithState < TileSharedEntry, TileState, TileState::Undefined >
         {
@@ -204,7 +188,6 @@ namespace OsmAnd
             QReadWriteLock loadedConditionLock;
             QWaitCondition loadedCondition;
         };
-        mutable TiledEntriesCollection<TileEntry> _tileReferences;
         const ZoomLevel _coastlineZoom = ZoomLevel::ZoomLevel13;
         mutable TiledEntriesCollection<TileSharedEntry> _coastlineReferences;
 
@@ -216,7 +199,7 @@ namespace OsmAnd
             RetainableCacheMetadata(
                 const ZoomLevel zoom,
                 const std::shared_ptr<Link>& link,
-                const std::shared_ptr<TileEntry>& tileEntry,
+                const std::shared_ptr<TileSharedEntry>& tileSharedEntry,
                 const std::shared_ptr<ObfMapSectionReader::DataBlocksCache>& binaryMapObjectsDataBlocksCache,
                 const QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >& referencedBinaryMapObjectsDataBlocks,
                 const QList< std::shared_ptr<const BinaryMapObject> >& referencedBinaryMapObjects,
@@ -227,7 +210,7 @@ namespace OsmAnd
 
             ZoomLevel zoom;
             Link::WeakEnd weakLink;
-            std::weak_ptr<TileEntry> tileEntryWeakRef;
+            std::weak_ptr<TileSharedEntry> tileEntryWeakRef;
 
             std::weak_ptr<ObfMapSectionReader::DataBlocksCache> binaryMapObjectsDataBlocksCacheWeakRef;
             QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> > referencedBinaryMapObjectsDataBlocks;
@@ -240,6 +223,10 @@ namespace OsmAnd
 
         static QString getObfSectionDate(const std::shared_ptr<const ObfSectionInfo>& sectionInfo);
         static QString formatObfSectionName(const std::shared_ptr<const ObfSectionInfo>& sectionInfo, const bool withDate);
+
+        void acquireThreadLock();
+        void releaseThreadLock();
+
     public:
         ~ObfMapObjectsProvider_P();
 

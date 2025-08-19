@@ -134,8 +134,10 @@ namespace OsmAnd
         ElevationConfiguration elevationConfiguration;
         GridConfiguration gridConfiguration;
 
-        QMap<int, QSet< std::shared_ptr<IMapTiledSymbolsProvider> > > tiledSymbolsProviders;
-        QMap<int, QSet< std::shared_ptr<IMapKeyedSymbolsProvider> > > keyedSymbolsProviders;
+        QHash<int, QSet<std::shared_ptr<IMapTiledSymbolsProvider>>> tiledSymbolsProviders;
+        QHash<std::shared_ptr<IMapTiledSymbolsProvider>, int> tiledSymbolsSubsections;
+        QHash<int, QSet<std::shared_ptr<IMapKeyedSymbolsProvider>>> keyedSymbolsProviders;
+        QHash<std::shared_ptr<IMapKeyedSymbolsProvider>, int> keyedSymbolsSubsections;
         QMap<int, SymbolSubsectionConfiguration > symbolSubsectionConfigurations;
 
         PointI windowSize;

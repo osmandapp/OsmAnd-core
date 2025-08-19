@@ -383,6 +383,13 @@ void OsmAnd::MapMarkerBuilder_P::setModel3DMaxSizeInPixels(const int maxSizeInPi
     _model3DMaxSizeInPixels = maxSizeInPixels;
 }
 
+void OsmAnd::MapMarkerBuilder_P::setUpdateAfterCreated(bool updateAfterCreated)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _updateAfterCreated = updateAfterCreated;
+}
+
 std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToCollection(
     const std::shared_ptr<MapMarkersCollection>& collection)
 {
@@ -396,8 +403,6 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
         _pinIconVerticalAlignment,
         _pinIconHorisontalAlignment,
         _pinIconOffset,
-        _caption,
-        _captionStyle,
         _captionTopSpace,
         detachedOf(_onMapSurfaceIcons),
         _model3D,
@@ -405,6 +410,8 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
         _isAccuracyCircleSupported,
         _accuracyCircleBaseColor));
     
+    marker->setCaption(_caption);
+    marker->setCaptionStyle(_captionStyle);
     marker->setIsHidden(_isHidden);
     if (_isAccuracyCircleSupported)
     {
@@ -416,6 +423,7 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
     marker->setElevationScaleFactor(_elevationScaleFactor);
     marker->setPinIconModulationColor(_pinIconModulationColor);
     marker->setOnSurfaceIconModulationColor(_onSurfaceIconModulationColor);
+    marker->setUpdateAfterCreated(_updateAfterCreated);
 
     if (marker->model3D)
     {

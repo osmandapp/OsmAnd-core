@@ -29,6 +29,7 @@
 #include "EmbeddedTypefaceFinder_internal.h"
 #include "TextRasterizer_internal.h"
 #include "MapSymbolIntersectionClassesRegistry_private.h"
+#include "MapRendererPerformanceMetrics.h"
 
 #if defined(OSMAND_TARGET_OS_)
 #   error CMAKE_TARGET_OS defined incorrectly
@@ -55,6 +56,7 @@ namespace OsmAnd
 
     std::shared_ptr<const ICoreResourcesProvider> gCoreResourcesProvider;
     QString fontPath;
+    MapRendererPerformanceMetrics performanceMetrics;
 }
 
 int _dummyArgc = 1;
@@ -102,7 +104,7 @@ OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::InitializeCore(
     gCoreResourcesProvider = coreResourcesProvider;
 
     fontPath = QString(appFontsPath);
-
+    
     Logger::get()->addLogSink(std::shared_ptr<ILogSink>(new DefaultLogSink()));
 
     InflateExplicitReferences();
@@ -157,6 +159,26 @@ OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::InitializeCore(
 #endif
 
     return 32;
+}
+
+OSMAND_CORE_API OsmAnd::MapRendererPerformanceMetrics& OSMAND_CORE_CALL OsmAnd::getPerformanceMetrics()
+{
+    return performanceMetrics;
+}
+
+OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::isPerformanceMetricsEnabled()
+{
+    return performanceMetrics.enabled;
+}
+
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::enablePerformanceMetrics(const bool enable)
+{
+    performanceMetrics.enabled = enable;
+}
+
+OSMAND_CORE_API const QString OSMAND_CORE_CALL OsmAnd::getLastPerformanceMetricsResult()
+{
+    return performanceMetrics.getLastResult();
 }
 
 OSMAND_CORE_API const std::shared_ptr<const OsmAnd::ICoreResourcesProvider>& OSMAND_CORE_CALL OsmAnd::getCoreResourcesProvider()

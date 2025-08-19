@@ -9,9 +9,9 @@ OsmAnd::MapRasterMetricsLayerProvider::MapRasterMetricsLayerProvider(
     const float densityFactor_ /*= 1.0f*/)
     : _p(new MapRasterMetricsLayerProvider_P(this))
     , rasterBitmapTileProvider(rasterBitmapTileProvider_)
-    , tileSize(tileSize_)
     , densityFactor(densityFactor_)
 {
+    _p->tileSize = tileSize_;
 }
 
 OsmAnd::MapRasterMetricsLayerProvider::~MapRasterMetricsLayerProvider()
@@ -30,7 +30,7 @@ float OsmAnd::MapRasterMetricsLayerProvider::getTileDensityFactor() const
 
 uint32_t OsmAnd::MapRasterMetricsLayerProvider::getTileSize() const
 {
-    return tileSize;
+    return _p->tileSize;
 }
 
 bool OsmAnd::MapRasterMetricsLayerProvider::supportsNaturalObtainData() const

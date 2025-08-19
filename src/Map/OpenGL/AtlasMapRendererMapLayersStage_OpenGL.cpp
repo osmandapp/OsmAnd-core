@@ -995,12 +995,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    lowp vec4 circle = param_fs_myLocationColor;                                                                   ""\n"
             "    vec2 vMyToPos = v2f_position.xz - param_fs_myLocation.xy;                                                      ""\n"
             "    float dist = length(vMyToPos);                                                                                 ""\n"
-            "    circle.a = dist > param_fs_myLocation.z ? 0.0 : circle.a * (dist + 0.05 > param_fs_myLocation.z ? 2.0 : 1.0);  ""\n"
+            "    float fdist = min(pow(min(dist / param_fs_myLocation.z, 1.0), 100.0), 1.0);                                    ""\n"
+            "    circle.a = (1.0 - fdist) * (1.0 + 2.0 * fdist) * circle.a;                                                           ""\n"
             "                                                                                                                   ""\n"
             //   Calculate color of heading sector
             "    lowp vec4 sector = param_fs_myLocationColor;                                                                   ""\n"
             "    float fdir = dot(vec2(sin(param_fs_myDirection.x), -cos(param_fs_myDirection.x)), vMyToPos / dist);            ""\n"
-            "    sector.a = dist >= param_fs_myDirection.y ? 0.0 : (fdir < 0.7071 ? 0.0 : 1.0 - dist / param_fs_myDirection.y); ""\n"
+            "    fdir = pow(min(max(fdir / 0.7071, 0.0), 1.0), 10.0);                                                           ""\n"
+            "    sector.a = dist >= param_fs_myDirection.y ? 0.0 : fdir * (1.0 - dist / param_fs_myDirection.y);                ""\n"
             "                                                                                                                   ""\n"
             //   Calculate colors of grids
             "    lowp vec4 primaryColor = param_fs_primaryGridColor;                                                            ""\n"

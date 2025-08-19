@@ -136,6 +136,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
             const auto mapSymbolsGroup = std::make_shared<AmenitySymbolsGroup>(amenity);
 
             const auto mapSymbol = std::make_shared<BillboardRasterMapSymbol>(mapSymbolsGroup);
+            mapSymbol->subsection = owner->subsection;
             mapSymbol->order = order;
             mapSymbol->image = icon;
             mapSymbol->size = PointI(icon->width(), icon->height());
@@ -153,6 +154,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
                 if (textImage)
                 {
                     const auto mapSymbolCaption = std::make_shared<BillboardRasterMapSymbol>(mapSymbolsGroup);
+                    mapSymbolCaption->subsection = owner->subsection;
                     mapSymbolCaption->order = order + 1;
                     mapSymbolCaption->image = textImage;
                     mapSymbolCaption->contentClass = OsmAnd::MapSymbol::ContentClass::Caption;

@@ -1,13 +1,9 @@
 #include "ObfMapObjectsProvider_P.h"
 #include "ObfMapObjectsProvider.h"
 
-//#define OSMAND_PERFORMANCE_METRICS 2
-#if !defined(OSMAND_PERFORMANCE_METRICS)
-#   define OSMAND_PERFORMANCE_METRICS 0
-#endif // !defined(OSMAND_PERFORMANCE_METRICS)
-
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
+#include <QSemaphore>
 
 #include "MapDataProviderHelpers.h"
 #include "ObfsCollection.h"
@@ -21,9 +17,10 @@
 #include "Stopwatch.h"
 #include "Utilities.h"
 #include "Logging.h"
+#include "MapRendererPerformanceMetrics.h"
 
-#define ENLARGE_QUERY_BBOX_MIN_ZOOM 15
-#define ENLARGE_QUERY_BBOX_METERS 100
+static QSemaphore readLimiter1(1);
+static QSemaphore readLimiter2(2);
 
 OsmAnd::ObfMapObjectsProvider_P::ObfMapObjectsProvider_P(ObfMapObjectsProvider* owner_)
     : _binaryMapObjectsDataBlocksCache(new BinaryMapObjectsDataBlocksCache(false))
@@ -36,6 +33,22 @@ OsmAnd::ObfMapObjectsProvider_P::ObfMapObjectsProvider_P(ObfMapObjectsProvider* 
 OsmAnd::ObfMapObjectsProvider_P::~ObfMapObjectsProvider_P()
 {
     _link->release();
+}
+
+void OsmAnd::ObfMapObjectsProvider_P::acquireThreadLock()
+{
+    if (owner->threadsLimit == 1)
+        readLimiter1.acquire();
+    else if (owner->threadsLimit == 2)
+        readLimiter2.acquire();
+}
+
+void OsmAnd::ObfMapObjectsProvider_P::releaseThreadLock()
+{
+    if (owner->threadsLimit == 1)
+        readLimiter1.release();
+    else if (owner->threadsLimit == 2)
+        readLimiter2.release();
 }
 
 bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
@@ -64,20 +77,26 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
 bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     const ObfMapObjectsProvider::Request& request,
     std::shared_ptr<ObfMapObjectsProvider::Data>& outMapObjects,
-    ObfMapObjectsProvider_Metrics::Metric_obtainData* const metric_)
+    ObfMapObjectsProvider_Metrics::Metric_obtainData* const metric)
 {
-#if OSMAND_PERFORMANCE_METRICS
-    ObfMapObjectsProvider_Metrics::Metric_obtainData localMetric;
-    const auto metric = metric_ ? metric_ : &localMetric;
-#else
-    const auto metric = metric_;
-#endif
+    const auto& queryController = request.queryController;
 
-    std::shared_ptr<TileEntry> tileEntry;
+    if (queryController->isAborted())
+        return false;
+
+    const auto empty =
+        []
+        (const std::shared_ptr<TileSharedEntry>& entry) -> bool
+        {
+            return !entry->dataSharedRef;
+        };
+
     std::shared_ptr<TileSharedEntry> coastlineTileEntry;
     std::shared_ptr<ObfMapObjectsProvider::Data> coastlineTile = nullptr;
     TileId overscaledTileId;
     
+    const Stopwatch allocateTimeStopwatch(OsmAnd::isPerformanceMetricsEnabled());
+
     if (request.zoom > _coastlineZoom)
     {
         int zoomShift = request.zoom - _coastlineZoom - 1;
@@ -99,21 +118,25 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             // In case tile entry is being loaded, wait until it will finish loading
             if (coastlineTileEntry->getState() == TileState::Loading)
             {
-                QReadLocker scopedLcoker(&coastlineTileEntry->loadedConditionLock);
+                QReadLocker scopedLocker(&coastlineTileEntry->loadedConditionLock);
 
                 // If tile is in 'Loading' state, wait until it will become 'Loaded'
-                while (coastlineTileEntry->getState() != TileState::Loaded)
+                while (coastlineTileEntry->getState() == TileState::Loading)
                     REPEAT_UNTIL(coastlineTileEntry->loadedCondition.wait(&coastlineTileEntry->loadedConditionLock));
             }
             
             // Try to lock coastline tile reference
-            coastlineTile = coastlineTileEntry->dataSharedRef;
+            if (coastlineTileEntry->getState() == TileState::Loaded)
+                coastlineTile = coastlineTileEntry->dataSharedRef;
             
             // Otherwise consider this coastline tile entry as expired
             if (!coastlineTile)
             {
-                _coastlineReferences.removeEntry(overscaledTileId, static_cast<ZoomLevel>(_coastlineZoom + 1));
+                _coastlineReferences.removeEntry(overscaledTileId, static_cast<ZoomLevel>(_coastlineZoom + 1), empty);
                 coastlineTileEntry.reset();
+
+                if (queryController->isAborted())
+                    return false;
             }
             else
             {
@@ -122,66 +145,33 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         }
     }
 
-    for (;;)
+    if (queryController->isAborted())
     {
-        // Try to obtain previous instance of tile
-        _tileReferences.obtainOrAllocateEntry(tileEntry, request.tileId, request.zoom,
-            []
-            (const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
-            {
-                return new TileEntry(collection, tileId, zoom);
-            });
-
-        // If state is "Undefined", change it to "Loading" and proceed with loading
-        if (tileEntry->setStateIf(TileState::Undefined, TileState::Loading))
-            break;
-
-        // In case tile entry is being loaded, wait until it will finish loading
-        if (tileEntry->getState() == TileState::Loading)
+        if (request.zoom > _coastlineZoom && !coastlineTile)
         {
-            QReadLocker scopedLcoker(&tileEntry->loadedConditionLock);
-
-            // If tile is in 'Loading' state, wait until it will become 'Loaded'
-            while (tileEntry->getState() != TileState::Loaded)
-                REPEAT_UNTIL(tileEntry->loadedCondition.wait(&tileEntry->loadedConditionLock));
+            coastlineTileEntry->setState(TileState::Cancelled);
+            {
+                QWriteLocker scopedLocker(&coastlineTileEntry->loadedConditionLock);
+                coastlineTileEntry->loadedCondition.wakeAll();
+            }
+            _coastlineReferences.removeEntry(overscaledTileId, static_cast<ZoomLevel>(_coastlineZoom + 1), empty);
+            coastlineTileEntry.reset();
         }
 
-        // Try to lock tile reference
-        outMapObjects = tileEntry->dataWeakRef.lock();
-
-        // If successfully locked, just return it
-        if (outMapObjects)
-            return true;
-
-        // Otherwise consider this tile entry as expired, remove it from collection (it's safe to do that right now)
-        // This will enable creation of new entry on next loop cycle
-        _tileReferences.removeEntry(request.tileId, request.zoom);
-        tileEntry.reset();
+        return false;
     }
+    
+    const float allocationTime = allocateTimeStopwatch.elapsed();
+    
+    acquireThreadLock();
 
-    const Stopwatch totalTimeStopwatch(
-#if OSMAND_PERFORMANCE_METRICS
-        true
-#else
-        metric != nullptr
-#endif // OSMAND_PERFORMANCE_METRICS
-        );
+    const Stopwatch totalTimeStopwatch(metric != nullptr);
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().readStart(request.tileId);
 
     // Get bounding box that covers this tile
     const auto zoom = request.zoom;
-    const auto originalTileBBox31 = Utilities::tileBoundingBox31(request.tileId, zoom);
-    AreaI tileBBox31;
-    if (zoom >= ENLARGE_QUERY_BBOX_MIN_ZOOM)
-    {
-        // Fix showing deleted objects in live updates https://github.com/osmandapp/OsmAnd/issues/14920#issuecomment-1538488529
-        const auto enlargeDeltaX = Utilities::metersToX31(ENLARGE_QUERY_BBOX_METERS);
-        const auto enlargeDeltaY = Utilities::metersToY31(ENLARGE_QUERY_BBOX_METERS);
-        tileBBox31 = originalTileBBox31.getEnlargedBy(PointI(enlargeDeltaX, enlargeDeltaY));
-    }
-    else
-    {
-        tileBBox31 = originalTileBBox31;
-    }
+    const auto tileBBox31 = Utilities::tileBoundingBox31(request.tileId, zoom);
 
     // Obtain OBF data interface
     const Stopwatch obtainObfInterfaceStopwatch(metric != nullptr);
@@ -203,7 +193,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     // BinaryMapObjects:
     QList< std::shared_ptr< const ObfMapSectionReader::DataBlock > > referencedBinaryMapObjectsDataBlocks;
     QList< std::shared_ptr<const BinaryMapObject> > referencedBinaryMapObjects;
-    QList< proper::shared_future< std::shared_ptr<const BinaryMapObject> > > futureReferencedBinaryMapObjects;
+    QHash< UniqueBinaryMapObjectId, proper::shared_future< std::shared_ptr<const BinaryMapObject> > > futureReferencedBinaryMapObjects;
     QList< std::shared_ptr<const BinaryMapObject> > loadedBinaryMapObjects;
     QList< std::shared_ptr<const BinaryMapObject> > loadedSharedBinaryMapObjects;
     QHash< ObfObjectId, QSet<ObfMapSectionReader::DataBlockId> > allLoadedBinaryMapObjectIds;
@@ -218,7 +208,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             &loadedNonSharedBinaryMapObjectsCounters,
             &allLoadedBinaryMapObjectsCounters,
             &allLoadedBinaryMapObjectIds,
-            originalTileBBox31,
+            tileBBox31,
             zoom,
             metric]
         (const std::shared_ptr<const ObfMapSectionInfo>& section,
@@ -246,7 +236,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             blockIds.insert(blockId);
 
             // This map object may be shared only in case it crosses bounds of a tile
-            const auto canNotBeShared = requestedZoom == zoom && originalTileBBox31.contains(bbox);
+            const auto canNotBeShared = true;//requestedZoom == zoom && tileBBox31.contains(bbox);
 
             // If map object can not be shared, just read it
             if (canNotBeShared)
@@ -284,7 +274,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
                 }
                 else
                 {
-                    futureReferencedBinaryMapObjects.push_back(qMove(futureSharedMapObjectReference));
+                    futureReferencedBinaryMapObjects.insert(id, qMove(futureSharedMapObjectReference));
                 }
 
                 if (metric)
@@ -305,7 +295,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     // Roads:
     QList< std::shared_ptr< const ObfRoutingSectionReader::DataBlock > > referencedRoadsDataBlocks;
     QList< std::shared_ptr<const Road> > referencedRoads;
-    QList< proper::shared_future< std::shared_ptr<const Road> > > futureReferencedRoads;
+    QHash< UniqueRoadId, proper::shared_future< std::shared_ptr<const Road> > > futureReferencedRoads;
     QList< std::shared_ptr<const Road> > loadedRoads;
     QList< std::shared_ptr<const Road> > loadedSharedRoads;
     QHash< ObfObjectId, QSet<ObfRoutingSectionReader::DataBlockId> > allLoadedRoadsIds;
@@ -321,7 +311,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             &allLoadedRoadsCounters,
             &allLoadedBinaryMapObjectIds,
             &allLoadedRoadsIds,
-            originalTileBBox31,
+            tileBBox31,
             metric]
         (const std::shared_ptr<const ObfRoutingSectionInfo>& section,
             const ObfRoutingSectionReader::DataBlockId& blockId,
@@ -349,7 +339,8 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             blockIds.insert(blockId);
 
             // This road may be shared only in case it crosses bounds of a tile
-            const auto canNotBeShared = originalTileBBox31.contains(bbox);
+            // Sharing disabled
+            const auto canNotBeShared = true;//tileBBox31.contains(bbox);
 
             // If road can not be shared, just read it
             if (canNotBeShared)
@@ -385,7 +376,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
                 }
                 else
                 {
-                    futureReferencedRoads.push_back(qMove(futureSharedRoadReference));
+                    futureReferencedRoads.insert(id, qMove(futureSharedRoadReference));
                 }
 
                 if (metric)
@@ -421,8 +412,10 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             binaryMapObjectsFilteringFunctor,
             _binaryMapObjectsDataBlocksCache.get(),
             &referencedBinaryMapObjectsDataBlocks,
-            nullptr,// query queryController
-            loadMapObjectsMetric.get());
+            request.queryController,
+            loadMapObjectsMetric.get(),
+            false,
+            true);
     }
     else if (owner->mode == ObfMapObjectsProvider::Mode::OnlyRoads)
     {
@@ -441,8 +434,9 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             nullptr,// visitor
             _roadsDataBlocksCache.get(),
             &referencedRoadsDataBlocks,
-            nullptr,// query queryController
-            loadRoadsMetric.get());
+            request.queryController,
+            loadRoadsMetric.get(),
+            true);
     }
     else if (owner->mode == ObfMapObjectsProvider::Mode::BinaryMapObjectsAndRoads)
     {
@@ -472,9 +466,10 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             roadsFilteringFunctor,
             _roadsDataBlocksCache.get(),
             &referencedRoadsDataBlocks,
-            nullptr,// query queryController
+            request.queryController,
             loadMapObjectsMetric.get(),
-            loadRoadsMetric.get());
+            loadRoadsMetric.get(),
+            true);
     }
     
     QList< std::shared_ptr<const BinaryMapObject> > loadedCoastlineMapObjects;
@@ -521,7 +516,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             coastlineObjectsFilteringFunctor,
             nullptr,
             nullptr,
-            nullptr,// query queryController
+            request.queryController,
             nullptr,
             true// coastlineOnly
         );
@@ -571,10 +566,21 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         _sharedRoads.breakPromise(loadedSharedRoadsCounter);
     }
 
+    bool isCancelled = queryController->isAborted();
+
     int failCounter = 0;
     // Request all future map objects (both binary and roads)
-    for (auto& futureBinaryMapObject : futureReferencedBinaryMapObjects)
+    for (const auto& itFutureBinaryMapObject : rangeOf(futureReferencedBinaryMapObjects))
     {
+        auto& futureBinaryMapObjectId = itFutureBinaryMapObject.key();
+        auto& futureBinaryMapObject = itFutureBinaryMapObject.value();
+        isCancelled = isCancelled || queryController->isAborted();
+        if (isCancelled)
+        {
+            _sharedBinaryMapObjects.releaseFutureReference(futureBinaryMapObjectId, request.zoom);
+            continue; 
+        }
+
         auto timeout = proper::chrono::system_clock::now() + proper::chrono::seconds(3);
         if (proper::future_status::ready == futureBinaryMapObject.wait_until(timeout))
         {
@@ -600,8 +606,17 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         }
     }
 
-    for (auto& futureRoad : futureReferencedRoads)
+    for (const auto& itFutureRoad : rangeOf(futureReferencedRoads))
     {
+        auto& futureRoadId = itFutureRoad.key();
+        auto& futureRoad = itFutureRoad.value();
+        isCancelled = isCancelled || queryController->isAborted();
+        if (isCancelled)
+        {
+            _sharedRoads.releaseFutureReference(futureRoadId);
+            continue; 
+        }
+
         auto timeout = proper::chrono::system_clock::now() + proper::chrono::seconds(3);
         if (proper::future_status::ready == futureRoad.wait_until(timeout))
         {
@@ -630,6 +645,25 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     if (metric)
         metric->elapsedTimeForRead += totalReadTimeStopwatch.elapsed();
     
+    isCancelled = isCancelled || queryController->isAborted();
+    if (isCancelled)
+    {
+        if (request.zoom > _coastlineZoom && !coastlineTile)
+        {
+            coastlineTileEntry->setState(TileState::Cancelled);
+            {
+                QWriteLocker scopedLocker(&coastlineTileEntry->loadedConditionLock);
+                coastlineTileEntry->loadedCondition.wakeAll();
+            }
+            _coastlineReferences.removeEntry(overscaledTileId, static_cast<ZoomLevel>(_coastlineZoom + 1), empty);
+            coastlineTileEntry.reset();
+        }
+
+        releaseThreadLock();
+
+        return false;
+    }
+
     if (request.zoom > _coastlineZoom && !coastlineTile)
     {
         QList< std::shared_ptr<const MapObject> > coastlineMapObjects;
@@ -669,6 +703,12 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     const auto allRoads = loadedRoads + referencedRoads;
     for (const auto& binaryMapObject : constOf(allBinaryMapObjects))
     {   
+        if (queryController->isAborted())
+        {
+            releaseThreadLock();
+            return false;
+        }
+
         const auto id = binaryMapObject->id;
         if (allLoadedBinaryMapObjectIds[id].size() > 1)
         {
@@ -683,6 +723,12 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     }
     for (const auto& road : constOf(allRoads))
     {   
+        if (queryController->isAborted())
+        {
+            releaseThreadLock();
+            return false;
+        }
+
         const auto id = road->id;
         if (allLoadedRoadsIds[id].size() > 1)
         {
@@ -699,6 +745,12 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     bool addDuplicates = zoom <= ObfMapObjectsProvider::AddDuplicatedMapObjectsMaxZoom;
     for (auto& duplicates : duplicatedMapObjects.values())
     {
+        if (queryController->isAborted())
+        {
+            releaseThreadLock();
+            return false;
+        }
+
         // Sort duplicated ObfMapObjects by maps date and data completeness
         std::sort(duplicates.begin(), duplicates.end(),
             []
@@ -764,7 +816,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         new RetainableCacheMetadata(
             request.zoom,
             _link,
-            tileEntry,
+            coastlineTileEntry,
             _binaryMapObjectsDataBlocksCache,
             referencedBinaryMapObjectsDataBlocks,
             referencedBinaryMapObjects + loadedSharedBinaryMapObjects,
@@ -785,16 +837,6 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         }
     }
 
-    // Store weak reference to new tile and mark it as 'Loaded'
-    tileEntry->dataWeakRef = newTile;
-    tileEntry->setState(TileState::Loaded);
-
-    // Notify that tile has been loaded
-    {
-        QWriteLocker scopedLcoker(&tileEntry->loadedConditionLock);
-        tileEntry->loadedCondition.wakeAll();
-    }
-
     if (metric)
     {
         metric->elapsedTime += totalTimeStopwatch.elapsed();
@@ -803,30 +845,10 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         metric->sharedObjectsCount += sharedMapObjectsCount;
     }
 
-#if OSMAND_PERFORMANCE_METRICS
-#if OSMAND_PERFORMANCE_METRICS <= 1
-    LogPrintf(LogSeverityLevel::Info,
-        "%d map objects (%d unique, %d shared) read from %dx%d@%d in %fs",
-        allMapObjects.size(),
-        allMapObjects.size() - sharedMapObjectsCount,
-        sharedMapObjectsCount,
-        request.tileId.x,
-        request.tileId.y,
-        request.zoom,
-        totalTimeStopwatch.elapsed());
-#else
-    LogPrintf(LogSeverityLevel::Info,
-        "%d map objects (%d unique, %d shared) read from %dx%d@%d in %fs:\n%s",
-        allMapObjects.size(),
-        allMapObjects.size() - sharedMapObjectsCount,
-        sharedMapObjectsCount,
-        request.tileId.x,
-        request.tileId.y,
-        request.zoom,
-        totalTimeStopwatch.elapsed(),
-        qPrintable(metric ? metric->toString(false, QLatin1String("\t - ")) : QLatin1String("(null)")));
-#endif // OSMAND_PERFORMANCE_METRICS <= 1
-#endif // OSMAND_PERFORMANCE_METRICS
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().readFinish(request.tileId, request.zoom, allMapObjects.size(), sharedMapObjectsCount, allocationTime);
+
+    releaseThreadLock();
 
     return true;
 }
@@ -917,7 +939,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::RoadsDataBlocksCache::shouldCacheBlock(
 OsmAnd::ObfMapObjectsProvider_P::RetainableCacheMetadata::RetainableCacheMetadata(
     const ZoomLevel zoom_,
     const std::shared_ptr<Link>& link,
-    const std::shared_ptr<TileEntry>& tileEntry,
+    const std::shared_ptr<TileSharedEntry>& tileSharedEntry,
     const std::shared_ptr<ObfMapSectionReader::DataBlocksCache>& binaryMapObjectsDataBlocksCache,
     const QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >& referencedBinaryMapObjectsDataBlocks_,
     const QList< std::shared_ptr<const BinaryMapObject> >& referencedBinaryMapObjects_,
@@ -926,7 +948,7 @@ OsmAnd::ObfMapObjectsProvider_P::RetainableCacheMetadata::RetainableCacheMetadat
     const QList< std::shared_ptr<const Road> >& referencedRoads_)
     : zoom(zoom_)
     , weakLink(link->getWeak())
-    , tileEntryWeakRef(tileEntry)
+    , tileEntryWeakRef(tileSharedEntry)
     , binaryMapObjectsDataBlocksCacheWeakRef(binaryMapObjectsDataBlocksCache)
     , referencedBinaryMapObjectsDataBlocks(referencedBinaryMapObjectsDataBlocks_)
     , referencedBinaryMapObjects(referencedBinaryMapObjects_)

@@ -33,7 +33,7 @@ function download
 	fi
 }
 
-# Should point to local path, exposed to public as http://creator.osmand.net/dependencies-mirror/
+# Should point to local path, exposed to public as http://builder.osmand.net/dependencies-mirror/
 if [ -z "$DEPENDENCIES_MIRROR" ]; then
 	DEPENDENCIES_MIRROR=$1
 fi
@@ -57,7 +57,8 @@ download "http://sourceforge.net/projects/ogl-math/files/glm-0.9.5.3/glm-0.9.5.3
 download "https://github.com/unicode-org/icu/archive/release-52-1.tar.gz" "$DEPENDENCIES_MIRROR/icu4c-52-1.tar.gz"
 #download "http://download.icu-project.org/files/icu4c/52.1/icu4c-52_1-src.tgz" "$DEPENDENCIES_MIRROR/icu4c-52_1-src.tgz"
 download "http://www.ijg.org/files/jpegsrc.v9.tar.gz" "$DEPENDENCIES_MIRROR/jpegsrc.v9.tar.gz"
-download "http://www.libarchive.org/downloads/libarchive-3.1.2.tar.gz" "$DEPENDENCIES_MIRROR/libarchive-3.1.2.tar.gz"
+#download "http://www.libarchive.org/downloads/libarchive-3.1.2.tar.gz" "$DEPENDENCIES_MIRROR/libarchive-3.1.2.tar.gz"
+download "https://downloads.videolan.org/pub/contrib/libarchive/libarchive-3.1.2.tar.gz" "$DEPENDENCIES_MIRROR/libarchive-3.1.2.tar.gz"
 download "http://sourceforge.net/projects/libpng/files/libpng16/older-releases/1.6.16/libpng-1.6.16.tar.xz/download" "$DEPENDENCIES_MIRROR/libpng-1.6.16.tar.xz"
 download "https://github.com/google/protobuf/releases/download/v2.5.0/protobuf-2.5.0.tar.bz2" "$DEPENDENCIES_MIRROR/protobuf-2.5.0.tar.bz2"
 download "https://zlib.net/fossils/zlib-1.2.11.tar.gz" "$DEPENDENCIES_MIRROR/zlib-1.2.11.tar.gz"

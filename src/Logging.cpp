@@ -11,7 +11,7 @@ OsmAnd::Logger::Logger()
 #if OSMAND_DEBUG
         static_cast<int>(LogSeverityLevel::Debug))
 #else
-        static_cast<int>(LogSeverityLevel::Warning))
+        static_cast<int>(LogSeverityLevel::Info))
 #endif // OSMAND_DEBUG
 {
 }

@@ -611,35 +611,37 @@ QHash<QString, int> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttrib
 {
     int color = -1, shadowColor = -1, color_2 = -1, color_3 = -1;
     float strokeWidth = -1.0f, strokeWidth_2 = -1.0f, strokeWidth_3 = -1.0f, shadowRadius = -1.0f;
-    MapStyleEvaluator evaluator(owner->mapStyle, owner->displayDensityFactor);
-    applyTo(evaluator);
-    auto renderAttr = owner->mapStyle->getAttribute(renderAttrName);
-    MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
-
-    if (renderAttr)
+    
+    const auto& mapStyle = owner->mapStyle;
+    QHash<QString, int> map;
+    if (mapStyle)
     {
-        if (evaluator.evaluate(renderAttr, &evalResult))
+        MapStyleEvaluator evaluator(mapStyle, owner->displayDensityFactor);
+        applyTo(evaluator);
+        
+        auto renderAttr = mapStyle->getAttribute(renderAttrName);
+        MapStyleEvaluationResult evalResult(mapStyle->getValueDefinitionsCount());
+        
+        if (renderAttr && evaluator.evaluate(renderAttr, &evalResult))
         {
-            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_COLOR, color);
-            evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH, strokeWidth);
-            evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
-            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor);
-            evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_2, strokeWidth_2);
-            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_COLOR_2, color_2);
-            evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_3, strokeWidth_3);
-            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_COLOR_3, color_3);
+            if (evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_COLOR, color))
+                map.insert(QStringLiteral("color"), color);
+            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH, strokeWidth))
+                map.insert(QStringLiteral("strokeWidth"), strokeWidth);
+            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius))
+                map.insert(QStringLiteral("shadowRadius"), shadowRadius);
+            if (evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor))
+                map.insert(QStringLiteral("shadowColor"), shadowColor);
+            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_2, strokeWidth_2))
+                map.insert(QStringLiteral("strokeWidth_2"), strokeWidth_2);
+            if (evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_COLOR_2, color_2))
+                map.insert(QStringLiteral("color_2"), color_2);
+            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_3, strokeWidth_3))
+                map.insert(QStringLiteral("strokeWidth_3"), strokeWidth_3);
+            if (evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_COLOR_3, color_3))
+                map.insert(QStringLiteral("color_3"), color_3);
         }
     }
-    QHash<QString, int> map;
-    map.insert(QStringLiteral("color"), color);
-    map.insert(QStringLiteral("strokeWidth"), strokeWidth);
-    map.insert(QStringLiteral("shadowRadius"), shadowRadius);
-    map.insert(QStringLiteral("shadowColor"), shadowColor);
-    map.insert(QStringLiteral("strokeWidth_2"), strokeWidth_2);
-    map.insert(QStringLiteral("color_2"), color_2);
-    map.insert(QStringLiteral("strokeWidth_3"), strokeWidth_3);
-    map.insert(QStringLiteral("color_3"), color_3);
-
     return map;
 }
 

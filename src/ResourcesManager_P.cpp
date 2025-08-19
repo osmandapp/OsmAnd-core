@@ -1139,17 +1139,22 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 // ignore old DepthContourRegion
                 break;
             case ResourceType::DepthMapRegion:
+            {
                 // '[region]_2.depth.obf.zip' -> '[region].depth.obf'
-                resourceId = QString(name)
-                    .remove(QLatin1String("_2.depth.obf.zip"))
-                    .toLower()
-                    .append(QLatin1String(".depth.obf"));
+                QString id = QString(name).toLower();
+                
+                if (id.endsWith("_2.depth.obf.zip"))
+                    id.replace("_2.depth.obf.zip", ".depth.obf");
+                else if (id.endsWith(".depth.obf.zip"))
+                    id.chop(4);
+                
+                resourceId = id;
                 downloadUrl =
                     owner->repositoryBaseUrl +
                     QLatin1String("/download?depth=yes&file=") +
                     QUrl::toPercentEncoding(name);
                 break;
-                break;
+            }
             case ResourceType::WikiMapRegion:
                 // '[region]_2.wiki.obf.zip' -> '[region].wiki.obf'
                 resourceId = QString(name)

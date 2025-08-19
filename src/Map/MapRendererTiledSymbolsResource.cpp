@@ -12,6 +12,7 @@
 #include "QKeyValueIterator.h"
 #include "QRunnableFunctor.h"
 #include "Utilities.h"
+#include "MapRendererPerformanceMetrics.h"
 
 //#define OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE 1
 #ifndef OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
@@ -92,6 +93,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     request.zoom = zoom;
     const auto& mapState = resourcesManager->renderer->getMapState();
     request.mapState = mapState;
+
+    /* Sharing disabled
     request.filterCallback =
         [provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups, &uniqueSymbolsGroupsKeys, checkUniqueKeys]
         (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup) -> bool
@@ -136,6 +139,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
             loadedSharedGroups.insert(sharingKey);
             return true;
         };
+    */
     request.combineTilesData = isMetaTiled;
 
     const auto requestSucceeded = provider->obtainTiledSymbols(request, tile);
@@ -394,6 +398,8 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
             }
             else
                 return;
+
+            /* Sharing disabled
             request.filterCallback =
                 [provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups, &uniqueSymbolsGroupsKeys, checkUniqueKeys]
                 (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup) -> bool
@@ -438,6 +444,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
                     loadedSharedGroups.insert(sharingKey);
                     return true;
                 };
+            */
             request.combineTilesData = self->isMetaTiled;
 
             const auto requestSucceeded = provider->obtainTiledSymbols(request, tile);
@@ -665,6 +672,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 
     bool ok;
     bool anyUploadFailed = false;
+    int uploadedIcons = 0;
+    int uploadedCaptions = 0;
 
     const auto link_ = link.lock();
     if (!link_)
@@ -679,8 +688,13 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         {
             // Prepare data and upload to GPU
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
-            ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU);
+            ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU, false);
 
+            if (symbol->contentClass == MapSymbol::ContentClass::Icon)
+                uploadedIcons++;
+            if (symbol->contentClass == MapSymbol::ContentClass::Caption)
+                uploadedCaptions++;
+            
             // If upload have failed, stop
             if (!ok)
             {
@@ -724,8 +738,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         {
             // Prepare data and upload to GPU
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
-            ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU);
-
+            ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU, false);
+            
             // If upload have failed, stop
             if (!ok)
             {
@@ -742,6 +756,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         if (anyUploadFailed)
             break;
     }
+
+    resourcesManager->finishSymbolsUploadToGPU();
 
     // If at least one symbol failed to upload, consider entire tile as failed to upload,
     // and unload its partial GPU resources
@@ -818,11 +834,17 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 #endif // OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
     }
 
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().uploadedToGPU(uploadedIcons, uploadedCaptions);
+
     return true;
 }
 
 void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
 {
+    int unloadedIcons = 0;
+    int unloadedCaptions = 0;
+
     const auto link_ = link.lock();
     if (!link_)
         return;
@@ -857,6 +879,14 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
 
         // For unique group resources it's safe to clear 'MapSymbol->ResourceInGPU' map
         groupResources->resourcesInGPU.clear();
+        
+        for (const auto& symbol : constOf(groupResources->group->symbols))
+        {
+            if (symbol->contentClass == MapSymbol::ContentClass::Icon)
+                unloadedIcons++;
+            if (symbol->contentClass == MapSymbol::ContentClass::Caption)
+                unloadedCaptions++;
+        }
     }
     _uniqueGroupsResources.clear();
 
@@ -905,6 +935,9 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
         }
     }
     _referencedSharedGroupsResources.clear();
+    
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().unloadedFromGPU(unloadedIcons, unloadedCaptions);
 }
 
 void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()

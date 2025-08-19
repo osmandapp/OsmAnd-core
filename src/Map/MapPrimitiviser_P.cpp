@@ -38,9 +38,6 @@
 #define MAX_POLYGON_ORDER_IN_POLYGONS_LIST 10
 #define MIN_POLYLINE_ORDER_IN_POLYLINES_LIST (MAX_POLYGON_ORDER_IN_POLYGONS_LIST + 1)
 
-// Filtering grid dimension in cells per tile side
-#define GRID_CELLS_PER_TILESIDE 32.0
-
 OsmAnd::MapPrimitiviser_P::MapPrimitiviser_P(MapPrimitiviser* const owner_)
     : owner(owner_)
 {
@@ -173,6 +170,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > basemapMapObjects;
     QList< std::shared_ptr<const MapObject> > basemapCoastlineObjects;
     QList< std::shared_ptr<const MapObject> > extraCoastlineObjects;
+    QHash< QPair<int32_t, int32_t>, std::shared_ptr<const MapObject> > cycledStraightCoastlines;
     bool detailedBinaryMapObjectsPresent = false;
     bool roadsPresent = false;
     int contourLinesObjectsCount = 0;
@@ -233,8 +231,22 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         {
             if (isBasemapObject)
                 basemapCoastlineObjects.push_back(mapObject);
-            else
+            else {
                 detailedmapCoastlineObjects.push_back(mapObject);
+                if (mapObject->points31.size() == 2)
+                {
+                    QPair<int32_t, int32_t> start = qMakePair(mapObject->points31[0].x, mapObject->points31[0].y);
+                    QPair<int32_t, int32_t> end = qMakePair(mapObject->points31[1].x, mapObject->points31[1].y);
+                    cycledStraightCoastlines.insert(start, mapObject);
+                    auto it = cycledStraightCoastlines.find(end);
+                    if (it != cycledStraightCoastlines.end())
+                    {
+                        // remove cycled coastlines that was simplified to straight line
+                        detailedmapCoastlineObjects.removeAll(mapObject);
+                        detailedmapCoastlineObjects.removeAll(*it);
+                    }
+                }
+            }
         }
         else
         {
@@ -295,6 +307,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         }
     }
     
+
     
     bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
     bool shouldAddBasemapCoastlines = !detailedmapCoastlinesPresent
@@ -1351,8 +1364,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
     textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
     textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
 
-    // Use coarse grid of tile symbols for preliminary overlap filtering
-    QHash<int, std::shared_ptr<const GridSymbolsGroup>> tileGrid;
+    // Local cache to speed up textOrder evaluation (based on name tag only!)
+    QHash<QString, int> textOrderCache;
 
     //NOTE: Em, I'm not sure this is still true
     //NOTE: Since 2 tiles with same MapObject may have different set of polylines, generated from it,
@@ -1368,7 +1381,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
         // (using shared cache is only allowed for non-generated MapObjects),
         // then symbols group can be shared
         MapObject::SharingKey sharingKey;
-        auto canBeShared = primitivesGroup->sourceObject->obtainSharingKey(sharingKey);
+        const auto canBeShared = primitivesGroup->sourceObject->obtainSharingKey(sharingKey);
 
         //////////////////////////////////////////////////////////////////////////
         //if ((primitivesGroup->sourceObject->id >> 1) == 1937897178u)
@@ -1412,6 +1425,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             primitivesGroup->polygons,
             evaluationResult,
             textEvaluator,
+            textOrderCache,
             group->symbols,
             queryController,
             metric);
@@ -1422,11 +1436,10 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             primitivesGroup->polylines,
             evaluationResult,
             textEvaluator,
+            textOrderCache,
             group->symbols,
             queryController,
             metric);
-
-        const auto prevSize = group->symbols.size();
 
         collectSymbolsFromPrimitives(
             context,
@@ -1434,54 +1447,10 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             primitivesGroup->points,
             evaluationResult,
             textEvaluator,
+            textOrderCache,
             group->symbols,
             queryController,
             metric);
-
-        // Filter out overlapping labels of points by placing them on the coarse grid
-        if (tileId.x >= 0 && tileId.y >= 0 && group->symbols.size() == 1 && prevSize == 0
-            && primitivisedObjects->zoom >= MinZoomLevel && primitivisedObjects->zoom <= MaxZoomLevel)
-        {
-            if (const auto& textSymbol = std::dynamic_pointer_cast<const TextSymbol>(group->symbols.back()))
-            {
-                const auto minCell = -GRID_CELLS_PER_TILESIDE;
-                const auto maxCell = GRID_CELLS_PER_TILESIDE * 2.0;
-                const auto zoomShift = MaxZoomLevel - primitivisedObjects->zoom;
-                PointD filterCoords(textSymbol->location31);
-                filterCoords -= PointD(
-                    static_cast<double>(tileId.x << zoomShift), static_cast<double>(tileId.y << zoomShift));
-                filterCoords *= GRID_CELLS_PER_TILESIDE / static_cast<double>(1u << zoomShift);
-                filterCoords.x = filterCoords.x > minCell && filterCoords.x < maxCell ? filterCoords.x : minCell;
-                filterCoords.y = filterCoords.y > minCell && filterCoords.y < maxCell ? filterCoords.y : minCell;
-                const auto gridCode = static_cast<int>(std::floor(filterCoords.y)) * 10000
-                    + static_cast<int>(std::floor(filterCoords.x));
-                bool shouldInsert = true;
-                const auto& citGroup = tileGrid.constFind(gridCode);
-                if (citGroup != tileGrid.cend())
-                {
-                    const auto& groupOnGrid = *citGroup;
-                    shouldInsert = textSymbol->order < groupOnGrid->symbolsGroup->symbols.back()->order;
-                    if (pSharedSymbolGroups)
-                    {
-                        group->symbols.clear();
-                        if (shouldInsert && groupOnGrid->canBeShared)
-                            pSharedSymbolGroups->fulfilPromiseAndReference(groupOnGrid->sharingKey, group);
-                        if (!shouldInsert && canBeShared)
-                            pSharedSymbolGroups->fulfilPromiseAndReference(sharingKey, group);
-                    }
-                }
-                if (shouldInsert)
-                {
-                    const std::shared_ptr<SymbolsGroup> preGroup(new SymbolsGroup(primitivesGroup->sourceObject));
-                    preGroup->symbols.push_back(qMove(textSymbol));
-                    const std::shared_ptr<GridSymbolsGroup> groupOnGrid(
-                        new GridSymbolsGroup(preGroup, canBeShared, sharingKey));
-                    tileGrid.insert(gridCode, qMove(groupOnGrid));
-                }
-                group->symbols.clear();
-                canBeShared = false;
-            }
-        }
 
         // Update metric
         if (metric)
@@ -1489,23 +1458,14 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             metric->elapsedTimeForSymbolsGroupsProcessing += symbolsGroupsProcessingStopwatch.elapsed();
             metric->symbolsGroupsProcessed++;
         }
-
+        
         // Add this group to shared cache
         if (pSharedSymbolGroups && canBeShared)
             pSharedSymbolGroups->fulfilPromiseAndReference(sharingKey, group);
-
+        
         // Empty groups are also inserted, to indicate that they are empty
         assert(!primitivisedObjects->symbolsGroups.contains(group->sourceObject));
         primitivisedObjects->symbolsGroups.insert(group->sourceObject, group);
-    }
-
-    // Keep only those symbols, that left on the filter grid
-    for (const auto& groupOnGrid : constOf(tileGrid))
-    {
-        const auto& lastGroup = qMove(groupOnGrid->symbolsGroup);
-        if (pSharedSymbolGroups && groupOnGrid->canBeShared)
-            pSharedSymbolGroups->fulfilPromiseAndReference(groupOnGrid->sharingKey, lastGroup);
-        primitivisedObjects->symbolsGroups.insert(lastGroup->sourceObject, lastGroup);
     }
 
     int failCounter = 0;
@@ -1539,6 +1499,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
     const PrimitivesCollection& primitives,
     MapStyleEvaluationResult& evaluationResult,
     MapStyleEvaluator& textEvaluator,
+    QHash<QString, int>& textOrderCache,
     SymbolsCollection& outSymbols,
     const std::shared_ptr<const IQueryController>& queryController,
     MapPrimitiviser_Metrics::Metric_primitivise* const metric)
@@ -1567,6 +1528,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
                 primitive,
                 evaluationResult,
                 textEvaluator,
+                textOrderCache,
                 outSymbols,
                 metric);
         }
@@ -1583,6 +1545,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
                     primitive,
                     evaluationResult,
                     textEvaluator,
+                    textOrderCache,
                     outSymbols,
                     metric);
             }
@@ -1596,6 +1559,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolygon(
     const std::shared_ptr<const Primitive>& primitive,
     MapStyleEvaluationResult& evaluationResult,
     MapStyleEvaluator& textEvaluator,
+    QHash<QString, int>& textOrderCache,
     SymbolsCollection& outSymbols,
     MapPrimitiviser_Metrics::Metric_primitivise* const metric)
 {
@@ -1625,6 +1589,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolygon(
         Utilities::normalizeCoordinates(center, ZoomLevel31),
         evaluationResult,
         textEvaluator,
+        textOrderCache,
         outSymbols,
         metric);
 }
@@ -1635,6 +1600,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolyline(
     const std::shared_ptr<const Primitive>& primitive,
     MapStyleEvaluationResult& evaluationResult,
     MapStyleEvaluator& textEvaluator,
+    QHash<QString, int>& textOrderCache,
     SymbolsCollection& outSymbols,
     MapPrimitiviser_Metrics::Metric_primitivise* const metric)
 {
@@ -1653,6 +1619,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolyline(
         center,
         evaluationResult,
         textEvaluator,
+        textOrderCache,
         outSymbols,
         metric);
 }
@@ -1663,6 +1630,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
     const std::shared_ptr<const Primitive>& primitive,
     MapStyleEvaluationResult& evaluationResult,
     MapStyleEvaluator& textEvaluator,
+    QHash<QString, int>& textOrderCache,
     SymbolsCollection& outSymbols,
     MapPrimitiviser_Metrics::Metric_primitivise* const metric)
 {
@@ -1724,6 +1692,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
         center,
         evaluationResult,
         textEvaluator,
+        textOrderCache,
         outSymbols,
         metric);
 }
@@ -1735,6 +1704,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     const PointI& location,
     MapStyleEvaluationResult& evaluationResult,
     MapStyleEvaluator& textEvaluator,
+    QHash<QString, int>& textOrderCache,
     SymbolsCollection& outSymbols,
     MapPrimitiviser_Metrics::Metric_primitivise* const metric)
 {
@@ -1759,6 +1729,10 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     // Set common evaluator settings
     textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
     textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedAttribute.value);
+    QString tagWithValue = decodedAttribute.tag;
+    tagWithValue.append(QStringLiteral(" = "));
+    tagWithValue.append(decodedAttribute.value);
+    tagWithValue.append(QStringLiteral(", "));
 
     // Get captions and their order
     auto captions = mapObject->captions;
@@ -1769,212 +1743,219 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     bool hasLocalizedName = false;
     bool hasEnglishName = false;
     uint32_t localizedNameRuleId = std::numeric_limits<uint32_t>::max();
-    {
-        const auto citCaptionsEnd = captions.cend();
+    const auto citCaptionsEnd = captions.cend();
 
-        // Look for localized name
-        const auto& localeLanguageId = env->getLocaleLanguageId().toLower();
-        const auto citLocalizedNameRuleId = attributeMapping->localizedNameAttributes.constFind(&localeLanguageId);
-        if (citLocalizedNameRuleId != attributeMapping->localizedNameAttributes.cend())
-            localizedNameRuleId = *citLocalizedNameRuleId;
-        
-        // sort captionsOrder by textOrder property
-        QHash<uint32_t, int> textOrderMap;
-        for (const auto& captionAttributeId : constOf(captionsOrder))
+    // Look for localized name
+    const auto& localeLanguageId = env->getLocaleLanguageId().toLower();
+    const auto citLocalizedNameRuleId = attributeMapping->localizedNameAttributes.constFind(&localeLanguageId);
+    if (citLocalizedNameRuleId != attributeMapping->localizedNameAttributes.cend())
+        localizedNameRuleId = *citLocalizedNameRuleId;
+    
+    // sort captionsOrder by textOrder property
+    QHash<uint32_t, int> textOrderMap;
+
+    int textOrder;
+
+    for (const auto& captionAttributeId : constOf(captionsOrder))
+    {
+        QString captionAttributeTag;
+        if (captionAttributeId != attributeMapping->nativeNameAttributeId && captionAttributeId != localizedNameRuleId)
+            captionAttributeTag = attributeMapping->decodeMap[captionAttributeId].tag;
+        QString cacheKey = tagWithValue;
+        cacheKey.append(captionAttributeTag);
+        if (!textOrderCache.contains(cacheKey))
         {
-            const auto& caption = constOf(captions)[captionAttributeId];
-            textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, caption.length());
-            QString captionAttributeTag;
-            if (captionAttributeId != attributeMapping->nativeNameAttributeId && captionAttributeId != localizedNameRuleId)
-                captionAttributeTag = attributeMapping->decodeMap[captionAttributeId].tag;
             textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_NAME_TAG, captionAttributeTag);
             evaluationResult.clear();
             textEvaluator.evaluate(mapObject, MapStyleRulesetType::Text, &evaluationResult);
-            int textOrder = 100;
+            textOrder = 100;
             evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, textOrder);
-            textOrderMap.insert(captionAttributeId, textOrder);
+            textOrderCache.insert(cacheKey, textOrder);
         }
-        std::sort(captionsOrder.begin(), captionsOrder.end(), [&textOrderMap] (uint32_t c1, uint32_t c2) {
-            return textOrderMap.value(c1) < textOrderMap.value(c2);
-        });
+        else
+            textOrder = textOrderCache.value(cacheKey);
+        textOrderMap.insert(captionAttributeId, textOrder);
+    }
+    std::sort(captionsOrder.begin(), captionsOrder.end(), [&textOrderMap] (uint32_t c1, uint32_t c2) {
+        return textOrderMap.value(c1) < textOrderMap.value(c2);
+    });
 
-        // Look for native name
-        auto citNativeName =
-            (attributeMapping->nativeNameAttributeId == std::numeric_limits<uint32_t>::max())
-            ? citCaptionsEnd
-            : captions.constFind(attributeMapping->nativeNameAttributeId);
-        hasNativeName = (citNativeName != citCaptionsEnd);
-        auto nativeNameOrder = hasNativeName
-            ? captionsOrder.indexOf(citNativeName.key())
-            : -1;
-        
-        auto citLocalizedName =
-            (localizedNameRuleId == std::numeric_limits<uint32_t>::max())
-            ? citCaptionsEnd
-            : captions.constFind(localizedNameRuleId);
-        hasLocalizedName = (citLocalizedName != citCaptionsEnd);
-        auto localizedNameOrder = hasLocalizedName
-            ? captionsOrder.indexOf(citLocalizedName.key())
-            : -1;
-        
-        auto citEnglishName =
-            (attributeMapping->enNameAttributeId == std::numeric_limits<uint32_t>::max())
-            ? citCaptionsEnd
-            : captions.constFind(attributeMapping->enNameAttributeId);
-        hasEnglishName = (citEnglishName != citCaptionsEnd);
-        
+    // Look for native name
+    auto citNativeName =
+        (attributeMapping->nativeNameAttributeId == std::numeric_limits<uint32_t>::max())
+        ? citCaptionsEnd
+        : captions.constFind(attributeMapping->nativeNameAttributeId);
+    hasNativeName = (citNativeName != citCaptionsEnd);
+    auto nativeNameOrder = hasNativeName
+        ? captionsOrder.indexOf(citNativeName.key())
+        : -1;
+    
+    auto citLocalizedName =
+        (localizedNameRuleId == std::numeric_limits<uint32_t>::max())
+        ? citCaptionsEnd
+        : captions.constFind(localizedNameRuleId);
+    hasLocalizedName = (citLocalizedName != citCaptionsEnd);
+    auto localizedNameOrder = hasLocalizedName
+        ? captionsOrder.indexOf(citLocalizedName.key())
+        : -1;
+    
+    auto citEnglishName =
+        (attributeMapping->enNameAttributeId == std::numeric_limits<uint32_t>::max())
+        ? citCaptionsEnd
+        : captions.constFind(attributeMapping->enNameAttributeId);
+    hasEnglishName = (citEnglishName != citCaptionsEnd);
+    
 
-        // According to presentation settings, adjust set of captions
-        switch (env->getLanguagePreference())
+    // According to presentation settings, adjust set of captions
+    switch (env->getLanguagePreference())
+    {
+        case MapPresentationEnvironment::LanguagePreference::NativeOnly:
         {
-            case MapPresentationEnvironment::LanguagePreference::NativeOnly:
+            // Remove localized name if such exists
+            if (hasLocalizedName)
             {
-                // Remove localized name if such exists
-                if (hasLocalizedName)
-                {
-                    captions.remove(localizedNameRuleId);
-                    captionsOrder.removeOne(localizedNameRuleId);
-                    hasLocalizedName = false;
-                    citLocalizedName = citCaptionsEnd;
-                    localizedNameOrder = -1;
-                }
-                break;
+                captions.remove(localizedNameRuleId);
+                captionsOrder.removeOne(localizedNameRuleId);
+                hasLocalizedName = false;
+                citLocalizedName = citCaptionsEnd;
+                localizedNameOrder = -1;
             }
-
-            case MapPresentationEnvironment::LanguagePreference::LocalizedOrNative:
-            {
-                // Only one should be shown, thus remove native if localized exist
-                if (hasLocalizedName && hasNativeName)
-                {
-                    captions.remove(attributeMapping->nativeNameAttributeId);
-                    captionsOrder.removeOne(attributeMapping->nativeNameAttributeId);
-                    hasNativeName = false;
-                    citNativeName = citCaptionsEnd;
-                    nativeNameOrder = -1;
-                }
-                break;
-            }
-
-            case MapPresentationEnvironment::LanguagePreference::NativeAndLocalized:
-            {
-                // Both should be shown if available, and in correct order
-                if (hasNativeName && hasLocalizedName && localizedNameOrder < nativeNameOrder)
-                {
-                    captionsOrder.swap(localizedNameOrder, nativeNameOrder);
-                    qSwap(localizedNameOrder, nativeNameOrder);
-                }
-                break;
-            }
-
-            case MapPresentationEnvironment::LanguagePreference::NativeAndLocalizedOrTransliterated:
-            {
-                // Both should be present, so add transliterated in case localized is missing, and in correct order
-                if (hasNativeName && hasLocalizedName && localizedNameOrder < nativeNameOrder)
-                {
-                    captionsOrder.swap(localizedNameOrder, nativeNameOrder);
-                    qSwap(localizedNameOrder, nativeNameOrder);
-                }
-                else if (hasNativeName && !hasLocalizedName)
-                {
-                    const auto latinNameValue = (hasEnglishName) ? citEnglishName.value() : ICU::transliterateToLatin(citNativeName.value());
-
-                    citLocalizedName = captions.insert(localizedNameRuleId, latinNameValue);
-                    localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId) + 1;
-                    captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
-                    hasLocalizedName = true;
-                }
-                break;
-            }
-
-            case MapPresentationEnvironment::LanguagePreference::LocalizedAndNative:
-            {
-                // Both should be shown if available, and in correct order
-                if (hasLocalizedName && hasNativeName && nativeNameOrder < localizedNameOrder)
-                {
-                    captionsOrder.swap(nativeNameOrder, localizedNameOrder);
-                    qSwap(nativeNameOrder, localizedNameOrder);
-                }
-                break;
-            }
-
-            case MapPresentationEnvironment::LanguagePreference::LocalizedOrTransliteratedAndNative:
-            {
-                // Both should be present, so add transliterated in case localized is missing, and in correct order
-                if (hasLocalizedName && hasNativeName && nativeNameOrder < localizedNameOrder)
-                {
-                    captionsOrder.swap(nativeNameOrder, localizedNameOrder);
-                    qSwap(nativeNameOrder, localizedNameOrder);
-                }
-                else if (!hasLocalizedName && hasNativeName)
-                {
-                    const auto latinNameValue = (hasEnglishName) ? citEnglishName.value() : ICU::transliterateToLatin(citNativeName.value());
-
-                    citLocalizedName = captions.insert(localizedNameRuleId, latinNameValue);
-                    localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId);
-                    captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
-                    hasLocalizedName = true;
-                }
-                break;
-            }
-
-            case MapPresentationEnvironment::LanguagePreference::LocalizedOrTransliterated:
-            {
-                // If there's no localized name, transliterate native name (if exists)
-                if (!hasLocalizedName && hasNativeName)
-                {
-                    const auto latinNameValue = (hasEnglishName) ? citEnglishName.value() : ICU::transliterateToLatin(citNativeName.value());
-
-                    citLocalizedName = captions.insert(localizedNameRuleId, latinNameValue);
-                    localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId);
-                    captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
-                    hasLocalizedName = true;
-                }
-                
-                // Only one should be shown, thus remove native if localized exist
-                if (hasLocalizedName && hasNativeName)
-                {
-                    captions.remove(attributeMapping->nativeNameAttributeId);
-                    captionsOrder.removeOne(attributeMapping->nativeNameAttributeId);
-                    hasNativeName = false;
-                    citNativeName = citCaptionsEnd;
-                    nativeNameOrder = -1;
-                }
-                break;
-            }
-
-            default:
-                assert(false);
-                return;
+            break;
         }
 
-        // In case both languages are present, but they are equal (without accents and diacritics)
-        if (hasNativeName && hasLocalizedName)
+        case MapPresentationEnvironment::LanguagePreference::LocalizedOrNative:
         {
-            assert(citNativeName != citCaptionsEnd);
-            const auto pureNativeName = ICU::stripAccentsAndDiacritics(citNativeName.value());
-
-            assert(citLocalizedName != citCaptionsEnd);
-            const auto pureLocalizedName = ICU::stripAccentsAndDiacritics(citLocalizedName.value());
-
-            if (pureNativeName.compare(pureLocalizedName, Qt::CaseInsensitive) == 0)
+            // Only one should be shown, thus remove native if localized exist
+            if (hasLocalizedName && hasNativeName)
             {
-                // Keep first one
-                if (nativeNameOrder < localizedNameOrder)
-                {
-                    captions.remove(localizedNameRuleId);
-                    captionsOrder.removeOne(localizedNameRuleId);
-                    hasLocalizedName = false;
-                    citLocalizedName = citCaptionsEnd;
-                    localizedNameOrder = -1;
-                }
-                else // if (localizedNameOrder < nativeNameOrder)
-                {
-                    captions.remove(attributeMapping->nativeNameAttributeId);
-                    captionsOrder.removeOne(attributeMapping->nativeNameAttributeId);
-                    hasNativeName = false;
-                    citNativeName = citCaptionsEnd;
-                    nativeNameOrder = -1;
-                }
+                captions.remove(attributeMapping->nativeNameAttributeId);
+                captionsOrder.removeOne(attributeMapping->nativeNameAttributeId);
+                hasNativeName = false;
+                citNativeName = citCaptionsEnd;
+                nativeNameOrder = -1;
+            }
+            break;
+        }
+
+        case MapPresentationEnvironment::LanguagePreference::NativeAndLocalized:
+        {
+            // Both should be shown if available, and in correct order
+            if (hasNativeName && hasLocalizedName && localizedNameOrder < nativeNameOrder)
+            {
+                captionsOrder.swap(localizedNameOrder, nativeNameOrder);
+                qSwap(localizedNameOrder, nativeNameOrder);
+            }
+            break;
+        }
+
+        case MapPresentationEnvironment::LanguagePreference::NativeAndLocalizedOrTransliterated:
+        {
+            // Both should be present, so add transliterated in case localized is missing, and in correct order
+            if (hasNativeName && hasLocalizedName && localizedNameOrder < nativeNameOrder)
+            {
+                captionsOrder.swap(localizedNameOrder, nativeNameOrder);
+                qSwap(localizedNameOrder, nativeNameOrder);
+            }
+            else if (hasNativeName && !hasLocalizedName)
+            {
+                const auto latinNameValue = (hasEnglishName) ? citEnglishName.value() : ICU::transliterateToLatin(citNativeName.value());
+
+                citLocalizedName = captions.insert(localizedNameRuleId, latinNameValue);
+                localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId) + 1;
+                captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
+                hasLocalizedName = true;
+            }
+            break;
+        }
+
+        case MapPresentationEnvironment::LanguagePreference::LocalizedAndNative:
+        {
+            // Both should be shown if available, and in correct order
+            if (hasLocalizedName && hasNativeName && nativeNameOrder < localizedNameOrder)
+            {
+                captionsOrder.swap(nativeNameOrder, localizedNameOrder);
+                qSwap(nativeNameOrder, localizedNameOrder);
+            }
+            break;
+        }
+
+        case MapPresentationEnvironment::LanguagePreference::LocalizedOrTransliteratedAndNative:
+        {
+            // Both should be present, so add transliterated in case localized is missing, and in correct order
+            if (hasLocalizedName && hasNativeName && nativeNameOrder < localizedNameOrder)
+            {
+                captionsOrder.swap(nativeNameOrder, localizedNameOrder);
+                qSwap(nativeNameOrder, localizedNameOrder);
+            }
+            else if (!hasLocalizedName && hasNativeName)
+            {
+                const auto latinNameValue = (hasEnglishName) ? citEnglishName.value() : ICU::transliterateToLatin(citNativeName.value());
+
+                citLocalizedName = captions.insert(localizedNameRuleId, latinNameValue);
+                localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId);
+                captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
+                hasLocalizedName = true;
+            }
+            break;
+        }
+
+        case MapPresentationEnvironment::LanguagePreference::LocalizedOrTransliterated:
+        {
+            // If there's no localized name, transliterate native name (if exists)
+            if (!hasLocalizedName && hasNativeName)
+            {
+                const auto latinNameValue = (hasEnglishName) ? citEnglishName.value() : ICU::transliterateToLatin(citNativeName.value());
+
+                citLocalizedName = captions.insert(localizedNameRuleId, latinNameValue);
+                localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId);
+                captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
+                hasLocalizedName = true;
+            }
+            
+            // Only one should be shown, thus remove native if localized exist
+            if (hasLocalizedName && hasNativeName)
+            {
+                captions.remove(attributeMapping->nativeNameAttributeId);
+                captionsOrder.removeOne(attributeMapping->nativeNameAttributeId);
+                hasNativeName = false;
+                citNativeName = citCaptionsEnd;
+                nativeNameOrder = -1;
+            }
+            break;
+        }
+
+        default:
+            assert(false);
+            return;
+    }
+
+    // In case both languages are present, but they are equal (without accents and diacritics)
+    if (hasNativeName && hasLocalizedName)
+    {
+        assert(citNativeName != citCaptionsEnd);
+        const auto pureNativeName = ICU::stripAccentsAndDiacritics(citNativeName.value());
+
+        assert(citLocalizedName != citCaptionsEnd);
+        const auto pureLocalizedName = ICU::stripAccentsAndDiacritics(citLocalizedName.value());
+
+        if (pureNativeName.compare(pureLocalizedName, Qt::CaseInsensitive) == 0)
+        {
+            // Keep first one
+            if (nativeNameOrder < localizedNameOrder)
+            {
+                captions.remove(localizedNameRuleId);
+                captionsOrder.removeOne(localizedNameRuleId);
+                hasLocalizedName = false;
+                citLocalizedName = citCaptionsEnd;
+                localizedNameOrder = -1;
+            }
+            else // if (localizedNameOrder < nativeNameOrder)
+            {
+                captions.remove(attributeMapping->nativeNameAttributeId);
+                captionsOrder.removeOne(attributeMapping->nativeNameAttributeId);
+                hasNativeName = false;
+                citNativeName = citCaptionsEnd;
+                nativeNameOrder = -1;
             }
         }
     }
@@ -2439,6 +2420,21 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
             const auto & mapObj = convertFromLegacy(legacyCoastline.obj);
             size += mapObj->points31.size();
             outVectorized.push_back(mapObj);
+        }
+        if (size == 3)
+        {
+            PointI prev;
+            for (const auto & m : outVectorized)
+            {
+                for (const PointI & p : m->points31)
+                {
+                    if (prev == p)
+                    {
+                        return false;
+                    }
+                    prev = p;
+                }
+            }
         }
         if (size < 3)
         {

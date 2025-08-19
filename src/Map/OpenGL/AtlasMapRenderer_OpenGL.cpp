@@ -201,11 +201,15 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         if (!_symbolsStage->render(metric))
             ok = false;
 
+        if (metric)
+        {
+            metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
+            // Disable for now
+            //_symbolsStage->drawDebugMetricSymbol(metric);
+        }
+
         glDepthMask(GL_TRUE);
         GL_CHECK_RESULT;
-
-        if (metric)
-            metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
     }
 
     // Restore straight color blending

@@ -84,8 +84,6 @@ namespace OsmAnd
             const PinIconVerticalAlignment pinIconVerticalAlignment,
             const PinIconHorisontalAlignment pinIconHorisontalAlignment,
             const PointI pinIconOffset,
-            const QString& caption,
-            const TextRasterizer::Style captionStyle,
             const double captionTopSpace,
             const QHash< OnSurfaceIconKey, sk_sp<const SkImage> >& onMapSurfaceIcons,
             const std::shared_ptr<const Model3D>& model3D,
@@ -108,8 +106,6 @@ namespace OsmAnd
         const QHash<QString, FColorARGB> model3DCustomMaterialColors;
         const bool isAccuracyCircleSupported;
         const FColorRGB accuracyCircleBaseColor;
-        const QString caption;
-        const TextRasterizer::Style captionStyle;
         const double captionTopSpace;
 
         bool isHidden() const;
@@ -154,9 +150,15 @@ namespace OsmAnd
         
         void setOffsetFromLine(int offset);
 
-        bool hasUnappliedChanges() const;
+        void setUpdateAfterCreated(bool updateAfterCreated);
 
-        std::shared_ptr<SymbolsGroup> createSymbolsGroup() const;
+        void setCaption(const QString& caption);
+        void setCaptionStyle(const TextRasterizer::Style& captionStyle);
+
+        bool hasUnappliedChanges() const;
+        bool hasUnappliedPrimitiveChanges() const;
+
+        std::shared_ptr<SymbolsGroup> createSymbolsGroup(int subsection) const;
 
     friend class OsmAnd::MapMarkerBuilder;
     friend class OsmAnd::MapMarkerBuilder_P;

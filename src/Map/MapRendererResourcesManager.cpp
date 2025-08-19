@@ -26,6 +26,9 @@
 #include "Utilities.h"
 #include "SkiaUtilities.h"
 #include "Logging.h"
+#include "MapRendererPerformanceMetrics.h"
+
+#define MIN_SUBSECTION_TO_REDRAW_SEPARATELY 1000
 
 //#define OSMAND_LOG_RESOURCE_STATE_CHANGE 1
 #ifndef OSMAND_LOG_RESOURCE_STATE_CHANGE
@@ -78,6 +81,10 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
     _threadCountPeriod = 0.0f;
     _basicThreadsCPULoad = 0.0f;
 
+    _lastSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
+    _postponeSymbolsUpdate = false;
+    _clearSymbolsAfterUpdate = false;
+    
     // Start worker thread
     _workerThreadIsAlive = true;
     _workerThread->start();
@@ -219,13 +226,20 @@ bool OsmAnd::MapRendererResourcesManager::uploadTiledDataToGPU(
 
 bool OsmAnd::MapRendererResourcesManager::uploadSymbolToGPU(
     const std::shared_ptr<const MapSymbol>& mapSymbol,
-    std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
+    std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU,
+    bool waitForGPU /* = true */)
 {
     return renderer->gpuAPI->uploadSymbolToGPU(
         mapSymbol,
         outResourceInGPU,
-        renderer->setupOptions.gpuWorkerThreadEnabled,
+        waitForGPU && renderer->setupOptions.gpuWorkerThreadEnabled,
         &(renderer->gpuContextIsLost));
+}
+
+void OsmAnd::MapRendererResourcesManager::finishSymbolsUploadToGPU()
+{
+    if (renderer->setupOptions.gpuWorkerThreadEnabled)
+        renderer->gpuAPI->waitUntilUploadIsComplete(&(renderer->gpuContextIsLost));
 }
 
 bool OsmAnd::MapRendererResourcesManager::adjustImageToConfiguration(
@@ -563,30 +577,24 @@ void OsmAnd::MapRendererResourcesManager::updateActiveZone(
     QMap<ZoomLevel, QVector<TileId>>& visibleTiles, QSet<TileId>& extraDetailedTiles,
     int zoomLevelOffset, int visibleTilesCount)
 {
-    // Check if update needed
-    bool update = true; //NOTE: So far this won't work, since resources won't be updated
-    update = update || (_activeTiles != activeTiles) || (_activeTilesTargets != activeTilesTargets)
-        || (_visibleTiles != visibleTiles)
-        || (_extraDetailedTiles != extraDetailedTiles)
-        || (_zoomLevelOffset != zoomLevelOffset)
-        || (_visibleTilesCount != visibleTilesCount);
+    // Lock worker wakeup mutex
+    QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
 
-    if (update)
-    {
-        // Lock worker wakeup mutex
-        QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
+    // Update active zone
+    _zoomLevelOffset = zoomLevelOffset;
+    _visibleTilesCount = visibleTilesCount;
+    _visibleTiles = visibleTiles;
+    _activeTiles = activeTiles;
+    _activeTilesTargets = activeTilesTargets;
+    _extraDetailedTiles = extraDetailedTiles;
 
-        // Update active zone
-        _zoomLevelOffset = zoomLevelOffset;
-        _visibleTilesCount = visibleTilesCount;
-        _visibleTiles = visibleTiles;
-        _activeTiles = activeTiles;
-        _activeTilesTargets = activeTilesTargets;
-        _extraDetailedTiles = extraDetailedTiles;
+    // Wake up the worker
+    _workerThreadWakeup.wakeAll();
+}
 
-        // Wake up the worker
-        _workerThreadWakeup.wakeAll();
-    }
+int OsmAnd::MapRendererResourcesManager::getResourceWorkerThreadsLimit()
+{
+    return _resourcesRequestWorkerPool.maxThreadCount();
 }
 
 void OsmAnd::MapRendererResourcesManager::setResourceWorkerThreadsLimit(const unsigned int limit)
@@ -595,14 +603,14 @@ void OsmAnd::MapRendererResourcesManager::setResourceWorkerThreadsLimit(const un
 
     if (_resourcesRequestWorkerPool.maxThreadCount() > 0)
     {
-        LogPrintf(LogSeverityLevel::Verbose,
-            "Map renderer will use %d concurrent worker(s) to process requests",
+        LogPrintf(LogSeverityLevel::Info,
+            ">>>> Map renderer will use %d concurrent worker(s) to process requests",
             _resourcesRequestWorkerPool.maxThreadCount());
     }
     else
     {
-        LogPrintf(LogSeverityLevel::Verbose,
-            "Map renderer will use unlimited number of concurrent workers to process requests");
+        LogPrintf(LogSeverityLevel::Info,
+            ">>>> Map renderer will use unlimited number of concurrent workers to process requests");
     }
 }
 
@@ -611,19 +619,19 @@ void OsmAnd::MapRendererResourcesManager::resetResourceWorkerThreadsLimit()
 #if OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
     _resourcesRequestWorkerPool.setMaxThreadCount(1);
 #else // !OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
-    _resourcesRequestWorkerPool.setMaxThreadCount(QThread::idealThreadCount());
+    _resourcesRequestWorkerPool.setMaxThreadCount(QThread::idealThreadCount() / 2);
 #endif // OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
 
     if (_resourcesRequestWorkerPool.maxThreadCount() > 0)
     {
-        LogPrintf(LogSeverityLevel::Verbose,
-            "Map renderer will use %d concurrent worker(s) to process requests",
+        LogPrintf(LogSeverityLevel::Info,
+            ">>>> Map renderer will use %d concurrent worker(s) to process requests",
             _resourcesRequestWorkerPool.maxThreadCount());
     }
     else
     {
-        LogPrintf(LogSeverityLevel::Verbose,
-            "Map renderer will use unlimited number of concurrent workers to process requests");
+        LogPrintf(LogSeverityLevel::Info,
+            ">>>> Map renderer will use unlimited number of concurrent workers to process requests");
     }
 }
 
@@ -1784,6 +1792,9 @@ void OsmAnd::MapRendererResourcesManager::unloadResourcesFrom(
     if (renderer->gpuContextIsLost)
         return;
 
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().syncUnloadCollectStart();
+
     // Select all resources with "UnloadPending" state
     QList< std::shared_ptr<MapRendererBaseResource> > resources;
     collection->obtainResources(&resources,
@@ -1797,9 +1808,17 @@ void OsmAnd::MapRendererResourcesManager::unloadResourcesFrom(
             // Accept this resource
             return true;
         });
+
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().syncUnloadCollectFinish(resources.size());
+
     if (resources.isEmpty())
         return;
 
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().syncUnloadGPUStart();
+
+    int count = 0;
     // Unload from GPU all selected resources
     for (const auto& resource : constOf(resources))
     {
@@ -1825,7 +1844,11 @@ void OsmAnd::MapRendererResourcesManager::unloadResourcesFrom(
 
         // Count uploaded resources
         totalUnloaded++;
+        count++;
     }
+    
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().syncUnloadGPUFinish(count);
 }
 
 unsigned int OsmAnd::MapRendererResourcesManager::uploadResources(
@@ -1867,6 +1890,9 @@ bool OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
     if (renderer->gpuContextIsLost)
         return true;
 
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().syncUploadCollectStart();
+
     // Select all resources with "Ready" state
     QList< std::shared_ptr<MapRendererBaseResource> > resources;
     collection->obtainResources(&resources,
@@ -1892,11 +1918,19 @@ bool OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
             // Accept this resource
             return true;
         });
+    
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().syncUploadCollectFinish(resources.size());
+
     if (resources.isEmpty())
         return true;
 
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().syncUploadGPUStart();
+
     bool result = true;
 
+    int count = 0;
     // Upload to GPU all selected resources
     for (const auto& resource : constOf(resources))
     {
@@ -2022,7 +2056,12 @@ bool OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
 
         // Count uploaded resources
         totalUploaded++;
+        count++;
     }
+
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().syncUploadGPUFinish(count);
+
     return result;
 }
 
@@ -2067,6 +2106,11 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
 
     // Renew rendered symbols when ones of current zoom level are loaded
     bool shouldRedrawSymbols = false;
+    const auto timeSinceLastUpdate = std::chrono::duration<float>(
+        std::chrono::high_resolution_clock::now() - _lastSymbolsUpdateTime).count() * 1000.0f;
+    const bool symbolsCanBeUpdated = timeSinceLastUpdate > 500.0f;
+    const bool shouldUpdateSymbols = _postponeSymbolsUpdate && symbolsCanBeUpdated;
+    QSet<int> subsections;
 
     // Use aggressive cache cleaning: remove all resources that are not needed
     for (const auto& resourcesCollection : constOf(resourcesCollections))
@@ -2155,6 +2199,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
         if (const auto tiledResourcesCollection = std::dynamic_pointer_cast<IMapRendererTiledResourcesCollection>(resourcesCollection))
         {
             const auto tiledProvider = std::dynamic_pointer_cast<IMapTiledDataProvider>(dataProvider);
+            const auto symbolsProvider = std::dynamic_pointer_cast<IMapTiledSymbolsProvider>(dataProvider);
             const auto resourcesType = resourcesCollection->getType();
             const bool checkVisible = resourcesType != MapRendererResourceType::ElevationData;
 
@@ -2296,32 +2341,17 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                         + std::min(1, maxMissingDataUnderZoomShift), static_cast<int>(maxZoom)));
 
                 const bool isLoading = tiledResourcesCollection->isLoading();
-                bool updateSymbolResources = isLoading;
+                const bool isLoadingOrWaiting = isLoading || shouldUpdateSymbols;
+                bool updateSymbolResources = isLoadingOrWaiting;
+                int subsection = 0;
                 if (resourcesType == MapRendererResourceType::Symbols)
                 {
                     if (activeZoom != currentZoom)
                         continue;
 
                     // Keep overscaled/underscaled resources if symbols of current zoom level ain't ready yet
-                    if (updateSymbolResources)
+                    if (isLoadingOrWaiting)
                     {
-                        const auto isLoadingResource =
-                            []
-                            (const std::shared_ptr<MapRendererBaseTiledResource>& entry) -> bool
-                            {
-                                if (entry->isJunk)
-                                    return false;
-                                const auto state = entry->getState();
-                                return state == MapRendererResourceState::PreparedRenew
-                                    || state == MapRendererResourceState::PreparingRenew
-                                    || state == MapRendererResourceState::ProcessingRequest
-                                    || state == MapRendererResourceState::Ready
-                                    || state == MapRendererResourceState::Renewing
-                                    || state == MapRendererResourceState::Requested
-                                    || state == MapRendererResourceState::Requesting
-                                    || state == MapRendererResourceState::Uploading;
-                            };
-                        bool atLeastOnePresent = false;
                         for (const auto& activeTileId : constOf(activeTiles))
                         {
                             const auto neededZoomForTile = extraZoom != neededZoom
@@ -2331,38 +2361,34 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                             for (const auto& neededTileId : constOf(neededTiles))
                             {
                                 // Don't remove overscaled/underscaled resources while some resource is loading
-                                if (tiledResourcesCollection->containsResource(
-                                        neededTileId,
-                                        neededZoomForTile,
-                                        isLoadingResource))
-                                {
-                                    updateSymbolResources = false;
-                                    break;
-                                }
-
-                                // Don't remove overscaled/underscaled resources if no resource is there yet
-                                if (tiledResourcesCollection->containsResource(
+                                if (!tiledResourcesCollection->containsResource(
                                         neededTileId,
                                         neededZoomForTile,
                                         isCompletedResource))
                                 {
-                                    atLeastOnePresent = true;
+                                    updateSymbolResources = false;
+                                    break;
                                 }
                             }
                             if (!updateSymbolResources)
                                 break;
                         }
-                        updateSymbolResources = updateSymbolResources && atLeastOnePresent;
-                    }
-                    if (isLoading)
-                    {
                         if (updateSymbolResources)
                         {
-                            tiledResourcesCollection->setLoadingState(false);
+                            if (isLoading)
+                            {
+                                tiledResourcesCollection->setLoadingState(false);
+                                if (symbolsProvider)
+                                {
+                                    subsection = renderer->getSymbolsProviderSubsection(symbolsProvider);
+                                    if (subsection >= MIN_SUBSECTION_TO_REDRAW_SEPARATELY)
+                                        subsections.insert(subsection);
+                                }
+                            }                            
                             shouldRedrawSymbols = true;
                         }
                         else
-                            isLoadingSymbols = true;
+                            isLoadingSymbols = isLoading;
                     }
                 }
                 const int levelCount =
@@ -2404,13 +2430,16 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     {
                         const auto neededZoomForTile = extraZoom != neededZoom
                             && extraDetailedTiles.contains(activeTileId) ? extraZoom : neededZoom;
-                        if (updateSymbolResources)
+                        if (_clearSymbolsAfterUpdate
+                            || (shouldRedrawSymbols && subsection >= MIN_SUBSECTION_TO_REDRAW_SEPARATELY))
+                        {
                             continue;
+                        }
                         for (int zoomShift = 1; zoomShift <= maxMissingDataUnderZoomShift; zoomShift++)
                         {
                             const auto underscaledZoom = static_cast<int>(neededZoomForTile) + zoomShift;
                             if (underscaledZoom <= maxZoom)
-                                {
+                            {
                                 const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
                                     activeTileId,
                                     zoomShift);
@@ -2419,7 +2448,14 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                                 for (auto tileIdx = 0; tileIdx < tilesCount; tileIdx++)
                                 {
                                     const auto& underscaledTileId = *(pUnderscaledTileIdN++);
-                                    neededTilesMap[static_cast<ZoomLevel>(underscaledZoom)].insert(underscaledTileId);
+                                    const auto underscaledZoomLevel = static_cast<ZoomLevel>(underscaledZoom);
+                                    if (tiledResourcesCollection->containsResource(
+                                            underscaledTileId,
+                                            underscaledZoomLevel,
+                                            isCompletedResource))
+                                    {
+                                        neededTilesMap[underscaledZoomLevel].insert(underscaledTileId);
+                                    }
                                 }
                             }
                         }
@@ -2431,7 +2467,14 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                                 const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(
                                     activeTileId,
                                     zoomShift);
-                                neededTilesMap[static_cast<ZoomLevel>(overscaledZoom)].insert(overscaledTileId);
+                                const auto overscaledZoomLevel = static_cast<ZoomLevel>(overscaledZoom);
+                                if (tiledResourcesCollection->containsResource(
+                                        overscaledTileId,
+                                        overscaledZoomLevel,
+                                        isCompletedResource))
+                                {
+                                    neededTilesMap[overscaledZoomLevel].insert(overscaledTileId);
+                                }
                             }
                         }
                         continue;                        
@@ -2568,13 +2611,29 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
         }
     }
 
-    renderer->setSymbolsLoading(isLoadingSymbols);
+    if (!subsections.isEmpty())
+        renderer->refreshSubsections(subsections);
 
-    if (!isLoadingSymbols && shouldRedrawSymbols)
+    if (isLoadingSymbols)
     {
-        renderer->setUpdateSymbols(true);
+        _postponeSymbolsUpdate = false;
+        _clearSymbolsAfterUpdate = false;
+    }
+    else if (shouldRedrawSymbols || _postponeSymbolsUpdate)
+    {
+        _postponeSymbolsUpdate = !symbolsCanBeUpdated;
+        _clearSymbolsAfterUpdate = symbolsCanBeUpdated;
         renderer->invalidateFrame();
     }
+    else if (_clearSymbolsAfterUpdate)
+    {
+        _lastSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
+        renderer->setUpdateSymbols(true);
+        _clearSymbolsAfterUpdate = false;
+        renderer->invalidateFrame();
+    }
+
+    renderer->setSymbolsLoading(isLoadingSymbols);
 
     if (needsResourcesUploadOrUnload)
         requestResourcesUploadOrUnload();
@@ -2643,7 +2702,7 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(
         // If resource request is being processed, keep the entry until processing is complete.
 
         // Cancel the task
-        if (resource->type == MapRendererResourceType::MapLayer && resource->supportsObtainDataAsync())
+        if (resource->type == MapRendererResourceType::MapLayer)
         {
             assert(resource->_cancelRequestCallback != nullptr);
             resource->_cancelRequestCallback();
@@ -3492,4 +3551,42 @@ int64_t OsmAnd::MapRendererResourcesManager::ResourceRequestTask::calculatePrior
     priority -= dX*dX + dY*dY;
 
     return priority;
+}
+
+QVector<std::shared_ptr<const OsmAnd::Metric>> OsmAnd::MapRendererResourcesManager::getAllRasterMapLayerResourceMetrics() const
+{
+    QConditionalReadLocker scopedLocker(&_resourcesStoragesLock, !renderer->isInRenderThread());
+
+    QVector<std::shared_ptr<const Metric>> allMetrics;
+    const auto& resourcesCollections = _storageByType[static_cast<int>(MapRendererResourceType::MapLayer)];
+    const auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::MapLayer)];
+
+    for (const auto& resourcesCollection : constOf(resourcesCollections))
+    {
+        if (!bindings.collectionsToProviders.contains(resourcesCollection))
+            continue;
+
+        if (const auto tiledResourcesCollection = std::dynamic_pointer_cast<const MapRendererTiledResourcesCollection>(resourcesCollection))
+        {
+            tiledResourcesCollection->obtainEntries(nullptr,
+                [&allMetrics]
+                (const std::shared_ptr<MapRendererBaseTiledResource>& entry, bool& cancel) -> bool
+                {
+                    if (const auto rasterResource = std::dynamic_pointer_cast<const MapRendererRasterMapLayerResource>(entry))
+                    {
+                        const auto state = rasterResource->getState();
+                        if (rasterResource->metric && 
+                            (state == MapRendererResourceState::Uploaded ||
+                             state == MapRendererResourceState::IsBeingUsed ||
+                             state == MapRendererResourceState::Outdated))
+                        {
+                            allMetrics.push_back(rasterResource->metric);
+                        }
+                    }
+                    return false;
+                });
+        }
+    }
+
+    return allMetrics;
 }

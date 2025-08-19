@@ -30,22 +30,9 @@ OsmAnd::MapRasterLayerProvider_GPU_P::~MapRasterLayerProvider_GPU_P()
 sk_sp<SkImage> OsmAnd::MapRasterLayerProvider_GPU_P::rasterize(
     const MapRasterLayerProvider::Request& request,
     const std::shared_ptr<const MapPrimitivesProvider::Data>& primitivesTile,
-    MapRasterLayerProvider_Metrics::Metric_obtainData* const metric_)
+    MapRasterLayerProvider_Metrics::Metric_obtainData* const metric)
 {
-#if OSMAND_PERFORMANCE_METRICS
-    MapRasterLayerProvider_Metrics::Metric_obtainData localMetric;
-    const auto metric = metric_ ? metric_ : &localMetric;
-#else
-    const auto metric = metric_;
-#endif
-
-    const Stopwatch totalStopwatch(
-#if OSMAND_PERFORMANCE_METRICS
-        true
-#else
-        metric != nullptr
-#endif // OSMAND_PERFORMANCE_METRICS
-        );
+    const Stopwatch totalStopwatch(metric != nullptr);
 
     //TODO: SkGpuDevice
     // Allocate rasterization target
@@ -74,25 +61,6 @@ sk_sp<SkImage> OsmAnd::MapRasterLayerProvider_GPU_P::rasterize(
         nullptr,
         metric ? metric->findOrAddSubmetricOfType<MapRasterizer_Metrics::Metric_rasterize>().get() : nullptr,
         request.queryController);
-
-#if OSMAND_PERFORMANCE_METRICS
-#if OSMAND_PERFORMANCE_METRICS <= 1
-    LogPrintf(LogSeverityLevel::Info,
-        "%dx%d@%d rasterized on CPU in %fs",
-        tileId.x,
-        tileId.y,
-        zoom,
-        totalStopwatch.elapsed());
-#else
-    LogPrintf(LogSeverityLevel::Info,
-        "%dx%d@%d rasterized on CPU in %fs:\n%s",
-        tileId.x,
-        tileId.y,
-        zoom,
-        totalStopwatch.elapsed(),
-        qPrintable(metric ? metric->toString(QLatin1String("\t - ")) : QLatin1String("(null)")));
-#endif // OSMAND_PERFORMANCE_METRICS <= 1
-#endif // OSMAND_PERFORMANCE_METRICS
 
     return bitmap.asImage();
 }

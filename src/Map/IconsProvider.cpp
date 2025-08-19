@@ -67,13 +67,21 @@ bool OsmAnd::IconsProvider::obtainResourceByPath(const QString& path, QByteArray
 
 bool OsmAnd::IconsProvider::containsResource(const QString& name, bool colorable) const
 {
+    QMutexLocker scopedLocker(&_mutex);
+
     const auto resourcePath = makeIconPath(name, colorable);
-    bool ok = false;
-    ok = ok || externalResourcesProvider && externalResourcesProvider->containsResource(resourcePath, displayDensityFactor);
-    ok = ok || externalResourcesProvider && externalResourcesProvider->containsResource(resourcePath);
-    ok = ok || getCoreResourcesProvider()->containsResource(resourcePath, displayDensityFactor);
-    ok = ok || getCoreResourcesProvider()->containsResource(resourcePath);
-    return ok;
+    auto citName = _namesCache.constFind(resourcePath);
+    if (citName == _namesCache.cend())
+    {
+        bool ok = false;
+        ok = ok || externalResourcesProvider && externalResourcesProvider->containsResource(resourcePath, displayDensityFactor);
+        ok = ok || externalResourcesProvider && externalResourcesProvider->containsResource(resourcePath);
+        ok = ok || getCoreResourcesProvider()->containsResource(resourcePath, displayDensityFactor);
+        ok = ok || getCoreResourcesProvider()->containsResource(resourcePath);
+
+        citName = _namesCache.insert(resourcePath, ok ? resourcePath : QString());
+    }
+    return !((*citName).isNull());
 }
 
 QString OsmAnd::IconsProvider::makeIconKey(const QString& name, const float scale, const bool colorable) const

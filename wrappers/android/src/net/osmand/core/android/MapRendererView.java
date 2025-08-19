@@ -43,7 +43,6 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
-import javax.microedition.khronos.opengles.GL;
 import javax.microedition.khronos.opengles.GL10;
 
 import java.nio.ByteBuffer;
@@ -493,7 +492,8 @@ public abstract class MapRendererView extends FrameLayout {
             _renderingView.setPreserveEGLContextOnPause(true);
             _renderingView.setEGLContextClientVersion(3);
             eglThread.configChooser =
-                new ComponentSizeChooser(8, 8, 8, 0, 16, 0);
+                new ComponentSizeChooser(RED_SIZE, GREEN_SIZE, BLUE_SIZE,
+                                       ALPHA_SIZE, DEPTH_SIZE, STENCIL_SIZE);
             _renderingView.setEGLConfigChooser(eglThread.configChooser);
             _renderingView.setEGLContextFactory(new EGLContextFactory());
             _renderingView.setEGLWindowSurfaceFactory(
@@ -608,7 +608,7 @@ public abstract class MapRendererView extends FrameLayout {
             if (initOnResume && (isInitializing || isReinitializing)) {
                 initOnResume = false;
                 startRenderingView(null);
-            } else if (!isSuspended) {
+            } else if (isViewStarted && !isSuspended) {
                 // Inform rendering view that activity was resumed
                 _renderingView.onResume();
             }
@@ -620,7 +620,7 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         // Request GLSurfaceView render a frame
-        if (!isSuspended && _renderingView != null) {
+        if (isViewStarted && !isSuspended && _renderingView != null) {
             _renderingView.requestRender();
         }
     }
@@ -667,6 +667,30 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         _mapRenderer.setConfiguration(configuration);
+    }
+
+    public final int getDefaultWorkerThreadsLimit() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getDefaultThreadsLimit();
+    }
+
+    public final int getResourceWorkerThreadsLimit() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getResourceWorkerThreadsLimit();
+    }
+
+    public final void setResourceWorkerThreadsLimit(int limit) {
+        NativeCore.checkIfLoaded();
+
+        _mapRenderer.setResourceWorkerThreadsLimit(limit);
+    }
+
+    public final void resetResourceWorkerThreadsLimit() {
+        NativeCore.checkIfLoaded();
+
+        _mapRenderer.resetResourceWorkerThreadsLimit();
     }
 
     public final boolean isIdle() {
@@ -743,6 +767,12 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.isSymbolsLoadingActive();
+    }
+
+    public final float getSymbolsLoadingTime() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getPreviousElapsedSymbolsLoadingTime();
     }
 
     public final boolean isFrameInvalidated() {
@@ -885,6 +915,12 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.removeAllSymbolsProviders();
+    }
+
+    public final void updateSubsection(int subsectionIndex) {
+        NativeCore.checkIfLoaded();
+
+        _mapRenderer.updateSubsection(subsectionIndex);
     }
 
     public final boolean setSymbolSubsectionConfiguration(
@@ -1712,6 +1748,61 @@ public abstract class MapRendererView extends FrameLayout {
         }
     }
 
+    public static boolean isMSAASupported() {
+        EGL10 egl = (EGL10) EGLContext.getEGL();
+        EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
+
+        if (display == EGL10.EGL_NO_DISPLAY) {
+            return false;
+        }
+
+        int[] version = new int[2];
+        if (!egl.eglInitialize(display, version)) {
+            return false;
+        }
+
+        int[] configSpec = {
+            EGL10.EGL_SURFACE_TYPE, EGL10.EGL_WINDOW_BIT | EGL10.EGL_PBUFFER_BIT,
+            EGL10.EGL_RED_SIZE, RED_SIZE,
+            EGL10.EGL_GREEN_SIZE, GREEN_SIZE,
+            EGL10.EGL_BLUE_SIZE, BLUE_SIZE,
+            EGL10.EGL_ALPHA_SIZE, ALPHA_SIZE,
+            EGL10.EGL_DEPTH_SIZE, DEPTH_SIZE,
+            EGL10.EGL_STENCIL_SIZE, STENCIL_SIZE,
+            EGL10.EGL_SAMPLE_BUFFERS, 1,
+            EGL10.EGL_SAMPLES, 2, 
+            EGL10.EGL_RENDERABLE_TYPE, 0x0040,
+            EGL10.EGL_NONE
+        };
+
+        int[] numConfig = new int[1];
+        if (!egl.eglChooseConfig(display, configSpec, null, 0, numConfig)) {
+            egl.eglTerminate(display);
+            return false;
+        }
+
+        boolean hasMSAA = numConfig[0] > 0;
+        egl.eglTerminate(display);
+        return hasMSAA;
+    }
+
+    private static final int RED_SIZE = 8;
+    private static final int GREEN_SIZE = 8;
+    private static final int BLUE_SIZE = 8;
+    private static final int ALPHA_SIZE = 0;
+    private static final int DEPTH_SIZE = 16;
+    private static final int STENCIL_SIZE = 0;
+
+    private static boolean msaaEnabled = false;
+
+    public static boolean isMSAAEnabled() {
+        return msaaEnabled;
+    }
+
+    public static void setMSAAEnabled(boolean enableMSAA) {
+        msaaEnabled = isMSAASupported() && enableMSAA;
+    }
+
     private abstract class BaseConfigChooser
             implements GLSurfaceView.EGLConfigChooser {
         public BaseConfigChooser(int[] configSpec) {
@@ -1799,31 +1890,65 @@ public abstract class MapRendererView extends FrameLayout {
         @Override
         public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display,
                                       EGLConfig[] configs) {
-            EGLConfig bestConfig = null;
-            int maxDepthSize = -1;
+            EGLConfig bestMSAA4xConfig = null;
+            EGLConfig bestOtherMSAAConfig = null;
+            EGLConfig bestNonMSAAConfig = null;
+            int maxMSAA4xDepth = -1;
+            int maxOtherMSAADepth = -1;
+            int maxOtherMSAASamples = -1;
+            int maxNonMSAADepth = -1;
+
             for (EGLConfig config : configs) {
-                int d = findConfigAttrib(egl, display, config,
-                        EGL10.EGL_DEPTH_SIZE, 0);
-                int s = findConfigAttrib(egl, display, config,
-                        EGL10.EGL_STENCIL_SIZE, 0);
-                if ((d >= mDepthSize) && (s >= mStencilSize)) {
-                    int r = findConfigAttrib(egl, display, config,
-                            EGL10.EGL_RED_SIZE, 0);
-                    int g = findConfigAttrib(egl, display, config,
-                            EGL10.EGL_GREEN_SIZE, 0);
-                    int b = findConfigAttrib(egl, display, config,
-                            EGL10.EGL_BLUE_SIZE, 0);
-                    int a = findConfigAttrib(egl, display, config,
-                            EGL10.EGL_ALPHA_SIZE, 0);
-                    if ((r == mRedSize) && (g == mGreenSize) && (b == mBlueSize) && (a == mAlphaSize)) {
-                        if (d > maxDepthSize) {
-                            maxDepthSize = d;
-                            bestConfig = config;
+                int depth = findConfigAttrib(egl, display, config, EGL10.EGL_DEPTH_SIZE, 0);
+                int stencil = findConfigAttrib(egl, display, config, EGL10.EGL_STENCIL_SIZE, 0);
+                if (depth < mDepthSize || stencil < mStencilSize) {
+                    continue;
+                }
+
+                int red = findConfigAttrib(egl, display, config, EGL10.EGL_RED_SIZE, 0);
+                int green = findConfigAttrib(egl, display, config, EGL10.EGL_GREEN_SIZE, 0);
+                int blue = findConfigAttrib(egl, display, config, EGL10.EGL_BLUE_SIZE, 0);
+                int alpha = findConfigAttrib(egl, display, config, EGL10.EGL_ALPHA_SIZE, 0);
+                if (red != mRedSize || green != mGreenSize || blue != mBlueSize || alpha != mAlphaSize) {
+                    continue;
+                }
+
+                int sampleBuffers = findConfigAttrib(egl, display, config, EGL10.EGL_SAMPLE_BUFFERS, 0);
+                int samples = findConfigAttrib(egl, display, config, EGL10.EGL_SAMPLES, 0);
+
+                if (sampleBuffers == 1 && samples >= 2) {
+                    if (samples == 4) {
+                        // Prefer 4x MSAA
+                        if (depth >= maxMSAA4xDepth) {
+                            bestMSAA4xConfig = config;
+                            maxMSAA4xDepth = depth;
                         }
+                    } else {
+                        // Other MSAA levels
+                        if (samples > maxOtherMSAASamples ||
+                            (samples == maxOtherMSAASamples && depth >= maxOtherMSAADepth)) {
+                            bestOtherMSAAConfig = config;
+                            maxOtherMSAADepth = depth;
+                            maxOtherMSAASamples = samples;
+                        }
+                    }
+                } else if (sampleBuffers == 0) {
+                    if (depth >= maxNonMSAADepth) {
+                        bestNonMSAAConfig = config;
+                        maxNonMSAADepth = depth;
                     }
                 }
             }
-            return bestConfig;
+
+            if (isMSAAEnabled()) {
+                return bestMSAA4xConfig != null ? bestMSAA4xConfig :
+                       bestOtherMSAAConfig != null ? bestOtherMSAAConfig :
+                       bestNonMSAAConfig;
+            } else {
+                return bestNonMSAAConfig != null ? bestNonMSAAConfig :
+                       bestOtherMSAAConfig != null ? bestOtherMSAAConfig :
+                       bestMSAA4xConfig;
+            }
         }
 
         private int findConfigAttrib(EGL10 egl, EGLDisplay display,

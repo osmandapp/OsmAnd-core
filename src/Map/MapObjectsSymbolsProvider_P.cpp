@@ -18,6 +18,8 @@
 #include "ObfMapObject.h"
 #include "ObfMapSectionInfo.h"
 #include "Utilities.h"
+#include "Stopwatch.h"
+#include "MapRendererPerformanceMetrics.h"
 
 #define MAX_PATHS_TO_ATTACH 20
 #define MAX_GAP_BETWEEN_PATHS 45
@@ -39,6 +41,11 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
     std::shared_ptr<IMapDataProvider::Data>& outData,
     std::shared_ptr<Metric>* const pOutMetric)
 {
+    const auto& queryController = request_.queryController;
+
+    if (queryController->isAborted())
+        return false;
+
     if (pOutMetric)
         pOutMetric->reset();
     const auto& request = MapDataProviderHelpers::castRequest<MapObjectsSymbolsProvider::Request>(request_);
@@ -49,6 +56,9 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
     assert(owner->isMetaTiled() || !request.combineTilesData);
 
+    const Stopwatch totalTimeStopwatch(pOutMetric != nullptr);
+    const Stopwatch allocateTimeStopwatch(OsmAnd::isPerformanceMetricsEnabled());
+    
     QVector<TileId> tilesIds;
     if (request.combineTilesData)
         tilesIds = Utilities::getAllMetaTileIds(request.tileId);
@@ -72,6 +82,9 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
         std::shared_ptr<MapPrimitivesProvider::Data> tilePrimitives;
         owner->primitivesProvider->obtainTiledPrimitives(tileRequest, tilePrimitives); 
+
+        if (queryController->isAborted())
+            return false;
 
         if (tilePrimitives)
         {
@@ -112,6 +125,9 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             primitivesTile = tilePrimitives;
     }
 
+    if (queryController->isAborted())
+        return false;
+
     // If tile has nothing to be rasterized, mark that data is not available for it
     if (!anyTilePrimitivesObtained || primitivisedSymbolsGroups.isEmpty())
     {
@@ -119,6 +135,11 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         outData.reset();
         return true;
     }
+
+    const float allocationTime = allocateTimeStopwatch.elapsed();
+
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().textStart(request.tileId);
 
     CombinePathsResult combinePathsResult;
     if (!owner->isMetaTiled() || request.combineTilesData)
@@ -158,13 +179,22 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         mapPresentationEnvironment,
         rasterizedSymbolsGroups,
         rasterizationFilter,
-        nullptr);
+        queryController);
+
+    if (queryController->isAborted())
+        return false;
+
+    int spriteSymbols = 0;
+    int onPathSymbols = 0;
 
     // Convert results
     auto& mapSymbolIntersectionClassesRegistry = MapSymbolIntersectionClassesRegistry::globalInstance();
     QList< std::shared_ptr<MapSymbolsGroup> > symbolsGroups;
     for (const auto& rasterizedGroup : constOf(rasterizedSymbolsGroups))
     {
+        if (queryController->isAborted())
+            return false;
+
         const auto& mapObject = rasterizedGroup->mapObject;
 
         //////////////////////////////////////////////////////////////////////////
@@ -208,6 +238,8 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             std::shared_ptr<MapSymbol> symbol;
             if (const auto rasterizedSpriteSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedSpriteSymbol>(rasterizedSymbol))
             {
+                spriteSymbols++;
+                
                 if (!hasAtLeastOneAlongPathBillboard && rasterizedSpriteSymbol->drawAlongPath)
                     hasAtLeastOneAlongPathBillboard = true;
                 if (!hasAtLeastOneSimpleBillboard && !rasterizedSpriteSymbol->drawAlongPath)
@@ -247,6 +279,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             }
             else if (const auto rasterizedOnPathSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedOnPathSymbol>(rasterizedSymbol))
             {
+                onPathSymbols++;
                 hasAtLeastOneOnPath = true;
 
                 const auto shareablePath31 = std::make_shared< QVector<PointI> >(path31);
@@ -498,6 +531,9 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         symbolsGroups,
         primitivesTile,
         primitivesTile ? new RetainableCacheMetadata(primitivesTile->retainableCacheMetadata) : nullptr));
+
+    if (OsmAnd::isPerformanceMetricsEnabled())
+        OsmAnd::getPerformanceMetrics().textFinish(request.tileId, request.zoom, spriteSymbols, onPathSymbols, allocationTime);
 
     return true;
 }
