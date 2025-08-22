@@ -292,12 +292,12 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
 
                     // Next symbol should also take into account:
-                    //  - height / 2
+                    //  - height
                     //  - extra top/bottom space (which should be in texture, but not rendered, since transparent)
                     //  - spacing between lines
                     if (!textSymbol->drawAlongPath)
                     {
-                        const auto halfHeight = rasterizedText->height() / 2;
+                        const auto halfHeight = rasterizedText->height();
 
                         auto currentTopOffset = offset.y;
                         auto currentBottomOffset = offset.y;
