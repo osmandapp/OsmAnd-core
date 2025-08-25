@@ -297,7 +297,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     //  - spacing between lines
                     if (!textSymbol->drawAlongPath)
                     {
-                        const auto halfHeight = rasterizedText->height();
+                        const auto textHeight = rasterizedText->height();
 
                         auto currentTopOffset = offset.y;
                         auto currentBottomOffset = offset.y;
@@ -307,10 +307,10 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                             currentBottomOffset = std::max(currentBottomOffset, additionalOffset->y);
                         }
 
-                        const auto topAdvance = -qCeil(halfHeight + symbolExtraTopSpace + lineSpacing);
+                        const auto topAdvance = -qCeil(textHeight + symbolExtraTopSpace + lineSpacing);
                         topOffset = std::min(topOffset, currentTopOffset + topAdvance);
 
-                        const auto bottomAdvance = qCeil(halfHeight + symbolExtraBottomSpace + lineSpacing);
+                        const auto bottomAdvance = qCeil(textHeight + symbolExtraBottomSpace + lineSpacing);
                         bottomOffset = std::max(bottomOffset, currentBottomOffset + bottomAdvance);
                     }
                 }
