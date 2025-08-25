@@ -292,12 +292,12 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
 
                     // Next symbol should also take into account:
-                    //  - height / 2
+                    //  - height
                     //  - extra top/bottom space (which should be in texture, but not rendered, since transparent)
                     //  - spacing between lines
                     if (!textSymbol->drawAlongPath)
                     {
-                        const auto halfHeight = rasterizedText->height() / 2;
+                        const auto textHeight = rasterizedText->height();
 
                         auto currentTopOffset = offset.y;
                         auto currentBottomOffset = offset.y;
@@ -307,10 +307,10 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                             currentBottomOffset = std::max(currentBottomOffset, additionalOffset->y);
                         }
 
-                        const auto topAdvance = -qCeil(halfHeight + symbolExtraTopSpace + lineSpacing);
+                        const auto topAdvance = -qCeil(textHeight + symbolExtraTopSpace + lineSpacing);
                         topOffset = std::min(topOffset, currentTopOffset + topAdvance);
 
-                        const auto bottomAdvance = qCeil(halfHeight + symbolExtraBottomSpace + lineSpacing);
+                        const auto bottomAdvance = qCeil(textHeight + symbolExtraBottomSpace + lineSpacing);
                         bottomOffset = std::max(bottomOffset, currentBottomOffset + bottomAdvance);
                     }
                 }

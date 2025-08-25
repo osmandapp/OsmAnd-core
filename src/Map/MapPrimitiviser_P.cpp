@@ -1963,6 +1963,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     // Process captions in order how captions where declared in OBF source (what is being controlled by 'rendering_types.xml')
     bool ok;
     bool extraCaptionTextAdded = false;
+    bool isOneCaptionGrup = false;
     uint32_t extraCaptionRuleId = std::numeric_limits<uint32_t>::max();
     for (const auto& captionAttributeId : constOf(captionsOrder))
     {
@@ -2053,7 +2054,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         text->placement = placement;
 
         bool textPositioningTaken = std::any_of(outSymbols,
-            [text]
+            [text, isOneCaptionGrup]
             (const std::shared_ptr<const Symbol>& otherSymbol) -> bool
             {
                 if (const auto otherTextSymbol = std::dynamic_pointer_cast<const TextSymbol>(otherSymbol))
@@ -2066,7 +2067,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                         && !otherTextSymbol->drawOnPath;
                     bool equalPlacement = text->placement == otherTextSymbol->placement;
 
-                    return bothAlongPath || bothOnPath || bothWithoutPath && equalPlacement;
+                    return bothAlongPath || bothOnPath || (bothWithoutPath && (equalPlacement && !isOneCaptionGrup));
                 }
                 return false;
             });
@@ -2219,6 +2220,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         }
 
         outSymbols.push_back(qMove(text));
+        isOneCaptionGrup = true;
         if (metric)
         {
             metric->elapsedTimeForTextSymbolsProcessing += textProcessingStopwatch.elapsed();
