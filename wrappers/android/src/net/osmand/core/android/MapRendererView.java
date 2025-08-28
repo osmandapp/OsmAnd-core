@@ -98,6 +98,9 @@ public abstract class MapRendererView extends FrameLayout {
     private volatile int _maxFrameRate;
     private volatile long _maxFrameTime;
 
+    private volatile boolean _frameRateChanged = false;
+    private final Object _frameRateLock = new Object();
+
     /**
      * Rendering time metrics
      */
@@ -256,15 +259,11 @@ public abstract class MapRendererView extends FrameLayout {
         // Set display density factor
         setupOptions.setDisplayDensityFactor(_inWindow ? getResources().getDisplayMetrics().density : 1.0f);
 
-        // Disable battery saving mode
-        disableBatterySavingMode();
-
         // Get already present renderer if available
         IMapRenderer oldRenderer = oldView != null ? oldView.suspendRenderer() : null;
 
         if (oldRenderer == null) {
-            // Set initial frame rate limit for battery saving mode
-            setMaximumFrameRate(20); // 20 frames per seconds
+            setMaximumFrameRate(1);
 
             isReinitializing = (isSuspended && _mapRenderer != null && _mapRenderer.isRenderingInitialized());
             if (!isReinitializing) {
@@ -615,7 +614,7 @@ public abstract class MapRendererView extends FrameLayout {
         }
     }
 
-    public final void requestRender() {
+    private final void requestRender() {
         //Log.v(TAG, "requestRender()");
         NativeCore.checkIfLoaded();
 
@@ -1584,19 +1583,56 @@ public abstract class MapRendererView extends FrameLayout {
 
     public final void enableBatterySavingMode() {
         _batterySavingMode = true;
+        setMaximumFrameRate(20);
     }
 
     public final void disableBatterySavingMode() {
         _batterySavingMode = false;
+        setMaximumFrameRate(_maxFrameRate);
     }
 
     public final int getMaximumFrameRate() {
         return _maxFrameRate;
     }
 
+    public final int getMaxAllowedFrameRate() {
+        return _batterySavingMode ? 20 : getMaxHardwareFrameRate();
+    }
+
     public final void setMaximumFrameRate(int maximumFramesPerSecond) {
-        _maxFrameRate = maximumFramesPerSecond;
-        _maxFrameTime = Math.round(1000.0f / (float) maximumFramesPerSecond);
+        synchronized (_frameRateLock) {
+            maximumFramesPerSecond = Math.min(maximumFramesPerSecond, getMaxAllowedFrameRate());
+
+            _maxFrameRate = maximumFramesPerSecond;
+            _maxFrameTime = Math.round(1000.0f / (float) _maxFrameRate);
+            _frameRateChanged = true;
+
+            _frameRateLock.notifyAll();
+        }
+    }
+
+    public final int getMaxHardwareFrameRate() {
+
+        int maxFrameRate = 60;
+        try {
+            android.view.Display display = null;
+            if (_renderingView != null && _renderingView.getContext() != null) {
+                android.view.WindowManager windowManager = (android.view.WindowManager)
+                    _renderingView.getContext().getSystemService(android.content.Context.WINDOW_SERVICE);
+                if (windowManager != null) {
+                    display = windowManager.getDefaultDisplay();
+                }
+            }
+
+            if (display != null) {
+                float refreshRate = display.getRefreshRate();
+                maxFrameRate = Math.round(refreshRate);
+            }
+        } catch (Exception e) {
+
+        }
+
+        return maxFrameRate;
     }
 
     public final float getBasicThreadsCPULoad() {
@@ -2265,11 +2301,17 @@ public abstract class MapRendererView extends FrameLayout {
             _frameRateLast1K =
                 _frameRateLast1K > 0.0 ? (_frameRateLast1K * 999.0f + _frameRate) / 1000.0f : _frameRate;
 
-            if (_batterySavingMode && _maxFrameRate > 0) {
+            if (_maxFrameRate > 0) {
                 long extraTime = _maxFrameTime - _frameRenderTime;
                 if (extraTime > 0) {
                     try {
-                        Thread.sleep(extraTime);
+                        synchronized (_frameRateLock) {
+                            if (_frameRateChanged) {
+                                _frameRateChanged = false;
+                            } else {
+                                _frameRateLock.wait(extraTime);
+                            }
+                        }
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }
@@ -2595,6 +2637,7 @@ public abstract class MapRendererView extends FrameLayout {
 
                         case INITIALIZE_RENDERING:
                         ok = mapRenderer.initializeRendering(false);
+                        requestRender();
                         break;
 
                         case RENDER_FRAME:
@@ -2620,6 +2663,7 @@ public abstract class MapRendererView extends FrameLayout {
                             } else {
                                 egl.eglSwapBuffers(display, surface);
                             }
+                            requestRender();
                         }
                         break;
 
