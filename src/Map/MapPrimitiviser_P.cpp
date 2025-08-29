@@ -1761,6 +1761,14 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         QString captionAttributeTag;
         if (captionAttributeId != attributeMapping->nativeNameAttributeId && captionAttributeId != localizedNameRuleId)
             captionAttributeTag = attributeMapping->decodeMap[captionAttributeId].tag;
+
+        if (captionAttributeTag.contains("_name") || captionAttributeTag.contains("brand") || captionAttributeTag.contains("route_id")
+            || captionAttributeTag.contains("route_members_ids") || captionAttributeTag.contains("wikidata"))
+        {
+            captionsOrder.removeOne(captionAttributeId);
+            continue;
+        }
+
         QString cacheKey = tagWithValue;
         cacheKey.append(captionAttributeTag);
         if (!textOrderCache.contains(cacheKey))
