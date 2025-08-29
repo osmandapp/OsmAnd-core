@@ -1762,8 +1762,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         if (captionAttributeId != attributeMapping->nativeNameAttributeId && captionAttributeId != localizedNameRuleId)
             captionAttributeTag = attributeMapping->decodeMap[captionAttributeId].tag;
 
-        if (captionAttributeTag.contains("_name") || captionAttributeTag.contains("brand") || captionAttributeTag.contains("route_id")
-            || captionAttributeTag.contains("route_members_ids") || captionAttributeTag.contains("wikidata"))
+        if (captionAttributeTag.contains("_name") || captionAttributeTag == "brand" || captionAttributeTag.contains("wikidata")
+            || captionAttributeTag == "route_id" || captionAttributeTag == "route_members_ids")
         {
             captionsOrder.removeOne(captionAttributeId);
             continue;
