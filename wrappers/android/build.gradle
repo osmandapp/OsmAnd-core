@@ -2,56 +2,56 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.1'
+        classpath 'com.android.tools.build:gradle:8.7.3'
     }
 }
+
+apply plugin: 'com.android.library'
+apply plugin: 'ivy-publish'
+
+import org.apache.tools.ant.taskdefs.condition.Os
 
 allprojects {
     repositories {
         google()
         mavenCentral()
-        jcenter()
     }
 }
 
-apply plugin: 'eclipse'
-apply plugin: 'com.android.library'
-apply plugin: 'ivy-publish'
-
-import java.util.regex.Matcher
-import java.util.regex.Pattern
-import org.apache.tools.ant.taskdefs.condition.Os
-
 android {
+    namespace "net.osmand.core"
+    compileSdk 35
+    buildToolsVersion = "35.0.0"
+
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion 34
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    // Enable the buildConfig feature, which is required for custom buildConfigFields.
+    buildFeatures {
+        buildConfig = true
+    }
+
     sourceSets {
         main {
             manifest.srcFile "AndroidManifest.xml"
-            java.srcDirs = [
-                "./src",
-                "./gen/java"
-            ]
-            jniLibs.srcDirs = [
-                "./jniLibs/NDK",
-                "./jniLibs/Qt"
-            ]
-            jni.srcDirs = []
+            java.srcDirs = ["./src", "./gen/java"]
+            jniLibs.srcDirs = ["./jniLibs/NDK", "./jniLibs/Qt"]
+            // jni.srcDirs is deprecated and should not be used.
+            // Place C/C++ sources in src/main/cpp by default.
             assets.srcDirs = ["./assets"]
         }
     }
-    compileSdkVersion 29
-    buildToolsVersion "29.0.3"
 
-    defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion 21
-    }
-
-    // Seems this has no effect at all, since not propagated. So should be inserted in host application
     aaptOptions {
-        // Don't compress any resources
         noCompress "qz", "png"
     }
 
@@ -65,59 +65,49 @@ android {
             jniDebuggable true
             buildConfigField "boolean", "USE_DEBUG_LIBRARIES", "true"
         }
-
         release {
             debuggable false
             jniDebuggable false
             buildConfigField "boolean", "USE_DEBUG_LIBRARIES", "false"
         }
     }
+
 }
 
 // Java sources generation tasks
 task cleanupSwig(type: Delete) {
     description "Clean-up old generated SWIG Java interface"
-
-    delete "./gen"
+    delete fileTree("./gen")
 }
 
 task swigGenerateJava(type: Exec) {
     description "Generate SWIG Java interface"
-
     dependsOn cleanupSwig
+    // This makes the 'gen' directory available to the build
+    outputs.dir(file("./gen/java"))
 
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         commandLine "cmd", "/c", "bash --login " + file("../java/generate.sh").getAbsolutePath() + " " + projectDir.getAbsolutePath()
     } else {
         commandLine "sh", file("../java/generate.sh").getAbsolutePath(), projectDir.getAbsolutePath()
     }
-
-    doLast {
-        if (execResult.exitValue != 0) {
-            throw new GradleException()
-        }
-    }
 }
-
-
 
 // NDK libraries tasks
 task cleanupNdkSharedLibs(type: Delete) {
     description "Clean-up NDK shared libraries"
-
     delete "./jniLibs/NDK"
 }
 
 task copyNdkSharedLibs(type: Copy) {
     description "Copy NDK shared libraries"
-
     dependsOn cleanupNdkSharedLibs
 
     from("$System.env.ANDROID_NDK/sources/cxx-stl/llvm-libc++/libs") {
         include "armeabi-v7a/libc++_shared.so"
         include "arm64-v8a/libc++_shared.so"
         include "x86/libc++_shared.so"
-	include "x86_64/libc++_shared.so"
+        include "x86_64/libc++_shared.so"
     }
 
     into "./jniLibs/NDK"
@@ -127,13 +117,11 @@ task copyNdkSharedLibs(type: Copy) {
 // Qt shared libraries tasks
 task cleanupQtSharedLibs(type: Delete) {
     description "Clean-up Qt shared libraries"
-
     delete "./jniLibs/Qt"
 }
 
 task copyQtSharedLibs(type: Copy) {
     description "Copy Qt shared libraries"
-
     dependsOn cleanupQtSharedLibs
 
     from("../../externals/qtbase-android") {
@@ -152,17 +140,15 @@ task copyQtSharedLibs(type: Copy) {
 // Qt JAR libraries tasks
 task cleanupQtJarLibs(type: Delete) {
     description "Clean-up Qt JAR libraries"
-
     delete "./libs/Qt"
 }
 
 task copyQtJarLibs(type: Copy) {
     description "Copy Qt JAR libraries"
-
     dependsOn cleanupQtJarLibs
 
     from("../../externals/qtbase-android") {
-        include "upstream.patched.android.clang-*.shared/jar/*-bundled.jar"
+        include "upstream.patched.android.clang-*.shared/jar/*.jar"
         eachFile { fileCopyDetails ->
             fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.clang\-.*\.shared\/jar\/(.*)/, '$1')
         }
@@ -172,193 +158,135 @@ task copyQtJarLibs(type: Copy) {
     includeEmptyDirs = false
 }
 
-// OsmAnd resources tasks
 task cleanupOsmAndResources(type: Delete) {
     description "Clean-up OsmAnd resources"
-
     delete "./assets/OsmAndCore_ResourcesBundle"
+    delete "./assets/OsmAndCore_ResourcesBundle.index"
 }
 
 task copyOsmAndResources(type: Copy) {
     description "Copy OsmAnd resources"
-
     dependsOn cleanupOsmAndResources
-
-    // Map styles and related:
-    from("../../../resources/rendering_styles") {
-        include "default.render.xml"
-        include "default.map_styles_presets.xml"
-        eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "map/styles/" + fileCopyDetails.path
-        }
-    }
-
-    // Map icons
-    from("../../../resources/rendering_styles/style-icons/map-icons-svg") {
-        include "mx_*.svg"
-        include "c_mx_*.svg"
-        eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "map/icons/" + fileCopyDetails.path.replaceAll(/(c_)?mx_(.*)\.svg/, '$1$2.svg')
-        }
-    }
-    from("../../../resources/rendering_styles/style-icons/map-shaders-svg") {
-        include "h_*.svg"
-        include "c_h_*.svg"
-        eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "map/shaders_and_shields/" + fileCopyDetails.path.replaceAll(/(c_)?h_(.*)\.svg/, '$1$2.svg')
-        }
-    }
-
-    // Misc map resources:
-    from("../../../resources/rendering_styles/stubs/[ddf=1.0]") {
-        include "*.png"
-        eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "[ddf=1.0]/map/stubs/" + fileCopyDetails.path
-        }
-    }
-    from("../../../resources/rendering_styles/stubs/[ddf=1.5]") {
-        include "*.png"
-        eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "[ddf=1.5]/map/stubs/" + fileCopyDetails.path
-        }
-    }
-    from("../../../resources/rendering_styles/stubs/[ddf=2.0]") {
-        include "*.png"
-        eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "[ddf=2.0]/map/stubs/" + fileCopyDetails.path
-        }
-    }
-    from("../../../resources/rendering_styles/stubs/[ddf=3.0]") {
-        include "*.png"
-        eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "[ddf=3.0]/map/stubs/" + fileCopyDetails.path
-        }
-    }
-    
-    from("../../../resources/rendering_styles/stubs") {
-        include "*.png"
-        eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "map/stubs/" + fileCopyDetails.path
-        }
-    }
-
-    // Routing:
-    from("../../../resources/routing") {
-        include "routing.xml"
-        eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "routing/" + fileCopyDetails.path
-        }
-    }
-
-    // Fonts:
-    from("../../../resources/rendering_styles/fonts") {
-        include "**/*.ttf"
-        eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "map/fonts/" + fileCopyDetails.path
-        }
-    }
-
-    // Misc resources
-    from("../../../resources/misc/icu4c") {
-        include "*.dat"
-        eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "misc/icu4c/" + fileCopyDetails.path.replaceAll(/icudt\d+([lb])\.dat/, 'icu-data-$1.dat')
-        }
-    }
-
+    outputs.dir("./assets/OsmAndCore_ResourcesBundle") 
+    from("../../../resources/rendering_styles") { include "default.render.xml", "default.map_styles_presets.xml"; eachFile { it.path = "map/styles/" + it.path } }
+    from("../../../resources/rendering_styles/style-icons/map-icons-svg") { include "mx_*.svg", "c_mx_*.svg"; eachFile { it.path = "map/icons/" + it.path.replaceAll(/(c_)?mx_(.*)\.svg/, '$1$2.svg') } }
+    from("../../../resources/rendering_styles/style-icons/map-shaders-svg") { include "h_*.svg", "c_h_*.svg"; eachFile { it.path = "map/shaders_and_shields/" + it.path.replaceAll(/(c_)?h_(.*)\.svg/, '$1$2.svg') } }
+    from("../../../resources/rendering_styles/stubs/[ddf=1.0]") { include "*.png"; eachFile { it.path = "[ddf=1.0]/map/stubs/" + it.path } }
+    from("../../../resources/rendering_styles/stubs/[ddf=1.5]") { include "*.png"; eachFile { it.path = "[ddf=1.5]/map/stubs/" + it.path } }
+    from("../../../resources/rendering_styles/stubs/[ddf=2.0]") { include "*.png"; eachFile { it.path = "[ddf=2.0]/map/stubs/" + it.path } }
+    from("../../../resources/rendering_styles/stubs/[ddf=3.0]") { include "*.png"; eachFile { it.path = "[ddf=3.0]/map/stubs/" + it.path } }
+    from("../../../resources/rendering_styles/stubs") { include "*.png"; eachFile { it.path = "map/stubs/" + it.path } }
+    from("../../../resources/routing") { include "routing.xml"; eachFile { it.path = "routing/" + it.path } }
+    from("../../../resources/rendering_styles/fonts") { include "**/*.ttf"; eachFile { it.path = "map/fonts/" + it.path } }
+    from("../../../resources/misc/icu4c") { include "*.dat"; eachFile { it.path = "misc/icu4c/" + it.path.replaceAll(/icudt\d+([lb])\.dat/, 'icu-data-$1.dat') } }
     into "./assets/OsmAndCore_ResourcesBundle"
     includeEmptyDirs = false
 }
 
-// OsmAnd resources indexing task
 task indexOsmAndResources {
     dependsOn copyOsmAndResources
     description = "Index OsmAnd resources"
+    def outputIndexFile = file("./assets/OsmAndCore_ResourcesBundle.index")
+    inputs.dir("./assets/OsmAndCore_ResourcesBundle")
+    outputs.file(outputIndexFile)
 
     doLast {
         def resources = fileTree("./assets/OsmAndCore_ResourcesBundle") {
             include "**/*.*"
         }.collect {
-            relativePath(it).replace('\\', '/').replaceAll("assets/OsmAndCore_ResourcesBundle/", "")
+            it.toURI().normalize().path.substring(file("./assets/OsmAndCore_ResourcesBundle").toURI().normalize().path.length())
         }
-
-        def indexFile = file("./assets/OsmAndCore_ResourcesBundle.index")
-        indexFile.text = resources.join('\n')
+        outputIndexFile.text = resources.join('\n')
     }
 }
 
-task packOsmAndResources() {
-    description "Pack OsmAnd resources"
+task packOsmAndResources(type: Exec) {
+    description = "Pack OsmAnd resources"
     dependsOn copyOsmAndResources
 
-    doLast {
-        exec {
-            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                commandLine "cmd", "/c", "bash --login " + file("./pack-resources.sh").getAbsolutePath() + " " + projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
-            } else {
-                commandLine "sh", file("./pack-resources.sh").getAbsolutePath(), projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
-            }
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        commandLine "cmd", "/c", "bash --login " + file("./pack-resources.sh").getAbsolutePath() + " " + projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
+    } else {
+        commandLine "sh", file("./pack-resources.sh").getAbsolutePath(), projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
+    }
+}
+
+
+android.libraryVariants.all { variant ->
+    def mergeJniLibsTask = tasks.findByName("merge${variant.name.capitalize()}JniLibFolders")
+    if (mergeJniLibsTask != null) {
+        mergeJniLibsTask.dependsOn copyNdkSharedLibs, copyQtSharedLibs
+    }
+    def packageAssetsTask = tasks.findByName("package${variant.name.capitalize()}Assets")
+    if (packageAssetsTask != null) {
+        packageAssetsTask.dependsOn indexOsmAndResources, packOsmAndResources, copyOsmAndResources // All tasks that modify /assets
+    }
+    def extractAnnotationsTask = tasks.findByName("extract${variant.name.capitalize()}Annotations")
+    if (extractAnnotationsTask != null) {
+        extractAnnotationsTask.dependsOn swigGenerateJava, copyQtJarLibs
+    }
+    def mergeJavaResourcesTask = tasks.findByName("merge${variant.name.capitalize()}JavaResource")
+    if (mergeJavaResourcesTask != null) {
+        mergeJavaResourcesTask.dependsOn copyQtJarLibs
+    }
+    def copyJarsTask = tasks.findByName("copy${variant.name.capitalize()}JniLibsProjectAndLocalJars")
+    if (copyJarsTask != null) {
+        copyJarsTask.dependsOn copyQtJarLibs
+    }
+}
+
+afterEvaluate {
+    android.libraryVariants.configureEach { variant ->
+        variant.javaCompileProvider.configure {
+            dependsOn swigGenerateJava, indexOsmAndResources, packOsmAndResources, copyNdkSharedLibs, copyQtSharedLibs, copyQtJarLibs
         }
     }
 }
 
 
-afterEvaluate {
-	android.libraryVariants.all { variant ->
-		variant.javaCompiler.dependsOn(swigGenerateJava, indexOsmAndResources, packOsmAndResources, copyNdkSharedLibs, copyQtSharedLibs, copyQtJarLibs)
-	}
-}
-
-
-// artifacts {
-// 	 archives file("build/intermediates/runtime_library_classes_jar/release/classes.jar")) {
-// 		name "OsmAndCore_android"
-// 		type "jar"
-// 	}
-// }
-configurations {
-    OsmAndCore_android
-}
-def srcFile = layout.buildDirectory.file('intermediates/runtime_library_classes_jar/release/classes.jar')
-def srcArtifact = artifacts.add('OsmAndCore_android', srcFile.get().asFile) {
-    name "OsmAndCore_android"
-	type "jar"
-}
-def aarFile = layout.buildDirectory.file('outputs/aar/OsmAndCore_android-release.aar')
-def aarArtifact = artifacts.add('OsmAndCore_android', aarFile.get().asFile) {
-    name "OsmAndCore_android"
-	type "aar"
-}
-// Uploading artifacts to local path
-group = "net.osmand"
-version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "master-snapshot"
-project.afterEvaluate {
-	publishing {
-		repositories {
-			ivy {
-				url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
-				patternLayout {
-					artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
-				}
-			}
-			publications {
-				jar(IvyPublication) {
-					artifact(srcArtifact)
-				}
-				mainAar(IvyPublication) {
-					artifact(bundleReleaseAar) {
-						name "OsmAndCore_android"
-						module "OsmAndCore_android"
-						type "aar"
-					}
-				}
-			}
-		}
-	}
-}
-
 dependencies {
-    compile fileTree(dir: "libs", include: ["**/*.jar"])
-    releaseCompile project(":OsmAndCore_androidNativeRelease")
-    debugCompile project(":OsmAndCore_androidNativeDebug")
+    implementation fileTree(dir: "libs", include: ["**/*.jar"])
+    implementation project(":OsmAndCore_androidNative")
 }
+
+// // The publishing configuration needs to be deferred until after the Android plugin
+// // has created all the variants and components. Using afterEvaluate solves this.
+// afterEvaluate {
+//     group = "net.osmand"
+//     version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "master-snapshot"
+
+//     publishing {
+//         repositories {
+//             ivy {
+//                 name "localIvy" // Give the repository a name
+//                 url = uri(System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: layout.buildDirectory.dir("repo"))
+//                 // The patternLayout is now configured inside the ivy repository block.
+//                 patternLayout {
+//                     artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
+//                 }
+//             }
+//         }
+//         publications {
+//             // This publication will publish the AAR file, which is the standard for Android libraries.
+//             releaseAar(IvyPublication) {
+//                 // 'from components' is the modern way to specify what to publish.
+//                 // 'release' is the component for the release build type.
+//                 from components.release
+
+//                 // The artifact details are often inferred, but can be customized.
+//                 artifactId = "OsmAndCore_android"
+//             }
+
+//             // If you still need to publish the classes.jar specifically, you can define another publication.
+//             // However, this is less common as the AAR contains the JAR.
+//             releaseJar(IvyPublication) {
+//                 from components.release
+//                 artifact(tasks.named('bundleReleaseClassesJar')) {
+//                     // This customizes the artifact, but it's taken from the component.
+//                     // You might not need this if the AAR is sufficient.
+//                 }
+//                 artifactId = "OsmAndCore_android-classes" // Use a different artifactId to avoid conflicts
+//             }
+//         }
+//     }
+// }
