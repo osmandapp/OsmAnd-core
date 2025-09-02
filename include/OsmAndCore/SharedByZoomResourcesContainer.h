@@ -36,14 +36,16 @@ namespace OsmAnd
         {
             typedef typename SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::AvailableResourceEntry base;
 
-            AvailableResourceEntry(const uintmax_t refCounter_, const ResourcePtr& resourcePtr_, const QSet<ZoomLevel>& zoomLevels_)
+            AvailableResourceEntry(const uintmax_t refCounter_, const ResourcePtr& resourcePtr_,
+                const QSet<ZoomLevel>& zoomLevels_)
                 : base(refCounter_, resourcePtr_)
                 , zoomLevels(zoomLevels_)
             {
             }
 
 #ifdef Q_COMPILER_RVALUE_REFS
-            AvailableResourceEntry(const uintmax_t refCounter_, ResourcePtr&& resourcePtr_, const QSet<ZoomLevel>& zoomLevels_)
+            AvailableResourceEntry(const uintmax_t refCounter_, ResourcePtr&& resourcePtr_,
+                const QSet<ZoomLevel>& zoomLevels_)
                 : base(refCounter_, resourcePtr_)
                 , zoomLevels(zoomLevels_)
             {
@@ -75,22 +77,26 @@ namespace OsmAnd
         typedef SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE> base;
 
         typedef std::shared_ptr<AvailableResourceEntry> AvailableResourceEntryPtr;
-        QSet< AvailableResourceEntryPtr > _availableResourceEntriesStorage;
+        QHash< ZoomLevel, QSet< AvailableResourceEntryPtr > > _availableResourceEntriesStorage;
         std::array< QHash< KEY_TYPE, AvailableResourceEntryPtr >, ZoomLevelsCount> _availableResources;
 
         typedef std::shared_ptr<PromisedResourceEntry> PromisedResourceEntryPtr;
-        QHash< KEY_TYPE, PromisedResourceEntryPtr > _promisedResourceEntriesStorage;
+        QHash< ZoomLevel, QHash< KEY_TYPE, PromisedResourceEntryPtr > > _promisedResourceEntriesStorage;
         std::array< QHash< KEY_TYPE, PromisedResourceEntryPtr >, ZoomLevelsCount> _promisedResources;
+
+        const bool _useSeparateZoomLevels;
     protected:
     public:
-        SharedByZoomResourcesContainer()
+        SharedByZoomResourcesContainer(bool useSeparateZoomLevels = false)
+        : _useSeparateZoomLevels(useSeparateZoomLevels)
         {
         }
         virtual ~SharedByZoomResourcesContainer()
         {
         }
 
-        void insert(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr& resourcePtr)
+        void insert(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr& resourcePtr,
+            const ZoomLevel zoomLevel = ZoomLevel0)
         {
             QMutexLocker scopedLocker(&this->_containerMutex);
 
@@ -120,11 +126,12 @@ namespace OsmAnd
                 _availableResources[level].insert(key, newEntryPtr);
             }
             
-            _availableResourceEntriesStorage.insert(qMove(newEntryPtr));
+            _availableResourceEntriesStorage[zoomLevel].insert(qMove(newEntryPtr));
         }
 
 #ifdef Q_COMPILER_RVALUE_REFS
-        void insert(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr&& resourcePtr)
+        void insert(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr&& resourcePtr,
+            const ZoomLevel zoomLevel = ZoomLevel0)
         {
             QMutexLocker scopedLocker(&this->_containerMutex);
 
@@ -150,11 +157,12 @@ namespace OsmAnd
                 _availableResources[level].insert(key, newEntryPtr);
             }
 
-            _availableResourceEntriesStorage.insert(qMove(newEntryPtr));
+            _availableResourceEntriesStorage[zoomLevel].insert(qMove(newEntryPtr));
         }
 #endif // Q_COMPILER_RVALUE_REFS
 
-        void insertAndReference(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, const ResourcePtr& resourcePtr)
+        void insertAndReference(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, const ResourcePtr& resourcePtr,
+            const ZoomLevel zoomLevel = ZoomLevel0)
         {
             QMutexLocker scopedLocker(&this->_containerMutex);
 
@@ -179,7 +187,7 @@ namespace OsmAnd
                 _availableResources[level].insert(key, newEntryPtr);
             }
 
-            _availableResourceEntriesStorage.insert(qMove(newEntryPtr));
+            _availableResourceEntriesStorage[zoomLevel].insert(qMove(newEntryPtr));
         }
 
         bool obtainReference(const KEY_TYPE& key, const ZoomLevel level, ResourcePtr& outResourcePtr)
@@ -226,7 +234,8 @@ namespace OsmAnd
             return true;
         }
 
-        bool releaseReference(const KEY_TYPE& key, const ZoomLevel level, ResourcePtr& resourcePtr, const bool autoClean = true, bool* outWasCleaned = nullptr, uintmax_t* outRemainingReferences = nullptr)
+        bool releaseReference(const KEY_TYPE& key, const ZoomLevel level, ResourcePtr& resourcePtr,
+            const bool autoClean = true, bool* outWasCleaned = nullptr, uintmax_t* outRemainingReferences = nullptr)
         {
             QMutexLocker scopedLocker(&this->_containerMutex);
 
@@ -266,7 +275,8 @@ namespace OsmAnd
                     assert(removedCount == 1);
                 }
 
-                _availableResourceEntriesStorage.remove(availableResourceEntry);
+                _availableResourceEntriesStorage[_useSeparateZoomLevels ? level : ZoomLevel0].remove(
+                    availableResourceEntry);
                 availableResources.erase(itAvailableResourceEntry);
 
                 if (outWasCleaned)
@@ -277,7 +287,8 @@ namespace OsmAnd
             return true;
         }
         
-        void makePromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels)
+        void makePromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels,
+            const ZoomLevel zoomLevel = ZoomLevel0)
         {
             //QMutexLocker scopedLocker(&this->_containerMutex);
 
@@ -301,10 +312,11 @@ namespace OsmAnd
                 _promisedResources[level].insert(key, newEntryPtr);
             }
 
-            _promisedResourceEntriesStorage.insert(key, qMove(newEntryPtr));
+            _promisedResourceEntriesStorage[zoomLevel].insert(key, qMove(newEntryPtr));
         }
 
-        void breakPromise(const KEY_TYPE& key)
+        void breakPromise(const KEY_TYPE& key,
+            const ZoomLevel zoomLevel = ZoomLevel0)
         {
             QMutexLocker scopedLocker(&this->_containerMutex);
 
@@ -316,8 +328,8 @@ namespace OsmAnd
                 qPrintable(Utilities::stringifyZoomLevels(levels)));
 #endif
 
-            const auto& itPromisedEntryPtr = _promisedResourceEntriesStorage.find(key);
-            if (itPromisedEntryPtr == _promisedResourceEntriesStorage.end())
+            const auto& itPromisedEntryPtr = _promisedResourceEntriesStorage[zoomLevel].find(key);
+            if (itPromisedEntryPtr == _promisedResourceEntriesStorage[zoomLevel].end())
                 return;
             const auto& levels = itPromisedEntryPtr.value()->zoomLevels;
             PromisedResourceEntryPtr promisedEntryPtr;
@@ -335,11 +347,12 @@ namespace OsmAnd
                 promisedResources.erase(itPromisedResourceEntry);
             }
 
-            _promisedResourceEntriesStorage.remove(key);
+            _promisedResourceEntriesStorage[zoomLevel].remove(key);
             promisedEntryPtr->promise.set_exception(proper::make_exception_ptr(std::runtime_error("Promise was broken")));
         }
 
-        void fulfilPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr& resourcePtr)
+        void fulfilPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr& resourcePtr,
+            const ZoomLevel zoomLevel = ZoomLevel0)
         {
             QMutexLocker scopedLocker(&this->_containerMutex);
 
@@ -366,12 +379,13 @@ namespace OsmAnd
                     promisedEntryPtr = *itPromisedResourceEntry;
                 promisedResources.erase(itPromisedResourceEntry);
             }
-            _promisedResourceEntriesStorage.remove(key);
+            _promisedResourceEntriesStorage[zoomLevel].remove(key);
 
             if (promisedEntryPtr->refCounter <= 0)
                 return;
 
-            const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(promisedEntryPtr->refCounter, qMove(resourcePtr), levels));
+            const AvailableResourceEntryPtr newEntryPtr(
+                new AvailableResourceEntry(promisedEntryPtr->refCounter, qMove(resourcePtr), levels));
 #ifndef Q_COMPILER_RVALUE_REFS
             resourcePtr.reset();
 #else
@@ -388,12 +402,13 @@ namespace OsmAnd
                 _availableResources[level].insert(key, newEntryPtr);
             }
 
-            _availableResourceEntriesStorage.insert(newEntryPtr);
+            _availableResourceEntriesStorage[zoomLevel].insert(newEntryPtr);
             promisedEntryPtr->promise.set_value(newEntryPtr->resourcePtr);
         }
 
 #ifdef Q_COMPILER_RVALUE_REFS
-        void fulfilPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr&& resourcePtr)
+        void fulfilPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr&& resourcePtr,
+            const ZoomLevel zoomLevel = ZoomLevel0)
         {
             QMutexLocker scopedLocker(&this->_containerMutex);
 
@@ -420,12 +435,13 @@ namespace OsmAnd
                     promisedEntryPtr = *itPromisedResourceEntry;
                 promisedResources.erase(itPromisedResourceEntry);
             }
-            _promisedResourceEntriesStorage.remove(key);
+            _promisedResourceEntriesStorage[zoomLevel].remove(key);
 
             if (promisedEntryPtr->refCounter <= 0)
                 return;
 
-            const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(promisedEntryPtr->refCounter, qMove(resourcePtr), levels));
+            const AvailableResourceEntryPtr newEntryPtr(
+                new AvailableResourceEntry(promisedEntryPtr->refCounter, qMove(resourcePtr), levels));
             assert(resourcePtr.use_count() == 0);
 
             for(const auto& level : constOf(levels))
@@ -438,12 +454,13 @@ namespace OsmAnd
                 _availableResources[level].insert(key, newEntryPtr);
             }
 
-            _availableResourceEntriesStorage.insert(newEntryPtr);
+            _availableResourceEntriesStorage[zoomLevel].insert(newEntryPtr);
             promisedEntryPtr->promise.set_value(newEntryPtr->resourcePtr);
         }
 #endif // Q_COMPILER_RVALUE_REFS
 
-        void fulfilPromiseAndReference(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, const ResourcePtr& resourcePtr)
+        void fulfilPromiseAndReference(const KEY_TYPE& key, const QSet<ZoomLevel>& levels,
+            const ResourcePtr& resourcePtr, const ZoomLevel zoomLevel = ZoomLevel0)
         {
             QMutexLocker scopedLocker(&this->_containerMutex);
 
@@ -470,9 +487,10 @@ namespace OsmAnd
                     promisedEntryPtr = *itPromisedResourceEntry;
                 promisedResources.erase(itPromisedResourceEntry);
             }
-            _promisedResourceEntriesStorage.remove(key);
+            _promisedResourceEntriesStorage[zoomLevel].remove(key);
 
-            const AvailableResourceEntryPtr newEntryPtr(new AvailableResourceEntry(promisedEntryPtr->refCounter + 1, resourcePtr, levels));
+            const AvailableResourceEntryPtr newEntryPtr(
+                new AvailableResourceEntry(promisedEntryPtr->refCounter + 1, resourcePtr, levels));
 
             for(const auto& level : constOf(levels))
             {
@@ -484,11 +502,12 @@ namespace OsmAnd
                 _availableResources[level].insert(key, newEntryPtr);
             }
 
-            _availableResourceEntriesStorage.insert(newEntryPtr);
+            _availableResourceEntriesStorage[zoomLevel].insert(newEntryPtr);
             promisedEntryPtr->promise.set_value(newEntryPtr->resourcePtr);
         }
 
-        bool obtainFutureReference(const KEY_TYPE& key, const ZoomLevel level, proper::shared_future<ResourcePtr>& outFutureResourcePtr)
+        bool obtainFutureReference(const KEY_TYPE& key, const ZoomLevel level,
+            proper::shared_future<ResourcePtr>& outFutureResourcePtr)
         {
             //QMutexLocker scopedLocker(&this->_containerMutex);
 
@@ -544,7 +563,13 @@ namespace OsmAnd
             return true;
         }
 
-        bool obtainReferenceOrFutureReferenceOrMakePromise(const KEY_TYPE& key, const ZoomLevel level, const QSet<ZoomLevel>& levels, ResourcePtr& outResourcePtr, proper::shared_future<ResourcePtr>& outFutureResourcePtr, bool withPromise = true)
+        bool obtainReferenceOrFutureReferenceOrMakePromise(
+            const KEY_TYPE& key,
+            const ZoomLevel level,
+            const QSet<ZoomLevel>& levels,
+            ResourcePtr& outResourcePtr,
+            proper::shared_future<ResourcePtr>& outFutureResourcePtr,
+            bool withPromise = true)
         {
             QMutexLocker scopedLocker(&this->_containerMutex);
 
@@ -586,7 +611,7 @@ namespace OsmAnd
                 return true;
 
             if (withPromise)
-                makePromise(key, levels);
+                makePromise(key, levels, _useSeparateZoomLevels ? level : ZoomLevel0);
             return false;
         }
 

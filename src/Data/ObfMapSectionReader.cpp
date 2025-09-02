@@ -61,6 +61,7 @@ OsmAnd::ObfMapSectionReader::DataBlock::~DataBlock()
 }
 
 OsmAnd::ObfMapSectionReader::DataBlocksCache::DataBlocksCache()
+    : SharedByZoomResourcesContainer(true)
 {
 }
 
