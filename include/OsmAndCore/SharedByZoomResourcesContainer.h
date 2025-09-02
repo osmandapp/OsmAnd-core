@@ -77,11 +77,11 @@ namespace OsmAnd
         typedef SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE> base;
 
         typedef std::shared_ptr<AvailableResourceEntry> AvailableResourceEntryPtr;
-        QHash< ZoomLevel, QSet< AvailableResourceEntryPtr > > _availableResourceEntriesStorage;
+        std::array< QSet< AvailableResourceEntryPtr >, ZoomLevelsCount > _availableResourceEntriesStorage;
         std::array< QHash< KEY_TYPE, AvailableResourceEntryPtr >, ZoomLevelsCount> _availableResources;
 
         typedef std::shared_ptr<PromisedResourceEntry> PromisedResourceEntryPtr;
-        QHash< ZoomLevel, QHash< KEY_TYPE, PromisedResourceEntryPtr > > _promisedResourceEntriesStorage;
+        std::array< QHash< KEY_TYPE, PromisedResourceEntryPtr >, ZoomLevelsCount > _promisedResourceEntriesStorage;
         std::array< QHash< KEY_TYPE, PromisedResourceEntryPtr >, ZoomLevelsCount> _promisedResources;
 
         const bool _useSeparateZoomLevels;
