@@ -1357,9 +1357,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     if (!forceRead)
                     {
                         if (storeInCache)
-                            cache->fulfilPromiseAndReference(blockId, levelZooms, dataBlock);
+                            cache->fulfilPromiseAndReference(blockId, levelZooms, dataBlock, zoom);
                         else
-                            cache->breakPromise(blockId);
+                            cache->breakPromise(blockId, zoom);
                     }
                 }
 
