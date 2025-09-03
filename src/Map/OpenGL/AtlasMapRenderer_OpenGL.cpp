@@ -113,7 +113,13 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     _debugStage->clear();
 
     // Setup viewport
-    glViewport(_internalState.glmViewport[0], _internalState.glmViewport[1], _internalState.glmViewport[2], _internalState.glmViewport[3]);
+    double viewportScale = getViewportScale();
+    const auto x = _internalState.glmViewport[0] + (_internalState.glmViewport[2] - _internalState.glmViewport[2] * viewportScale) * 0.5;
+    const auto y = _internalState.glmViewport[1] + (_internalState.glmViewport[3] - _internalState.glmViewport[3] * viewportScale) * 0.5;
+    const auto w = _internalState.glmViewport[2] * viewportScale;
+    const auto h = _internalState.glmViewport[3] * viewportScale;
+
+    glViewport(x, y, w, h);
     GL_CHECK_RESULT;
 
     // Set background color

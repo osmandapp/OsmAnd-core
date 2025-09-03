@@ -1976,6 +1976,26 @@ bool OsmAnd::MapRenderer::setViewport(const AreaI& viewport, bool forcedUpdate /
     return true;
 }
 
+bool OsmAnd::MapRenderer::setViewportScale(double scale, bool forcedUpdate /*= false*/)
+{
+    scale = std::max(scale, 1.0);
+
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update = forcedUpdate || qFuzzyCompare(glViewportScale, scale);
+    if (!update)
+        return false;
+
+    glViewportScale = scale;
+
+    return true;
+}
+
+double OsmAnd::MapRenderer::getViewportScale()
+{
+    return glViewportScale;
+}
+
 bool OsmAnd::MapRenderer::setFlip(bool flip, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);

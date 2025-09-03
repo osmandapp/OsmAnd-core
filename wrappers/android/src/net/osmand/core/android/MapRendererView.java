@@ -338,6 +338,10 @@ public abstract class MapRendererView extends FrameLayout {
         return this._mapRenderer.setViewport(viewport, forceUpdate);
     }
 
+    public boolean setViewportScale(double scale, boolean forceUpdate) {
+        return this._mapRenderer.setViewportScale(scale, forceUpdate);
+    }
+
     @Override
     public void setVisibility(int visibility) {
         if (_renderingView != null) {

@@ -383,6 +383,8 @@ namespace OsmAnd
 
         virtual bool setWindowSize(const PointI& windowSize, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setViewportScale(double scale, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual double getViewportScale() Q_DECL_OVERRIDE;
         virtual bool setFlip(bool flip, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFieldOfView(const float fieldOfView, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setVisibleDistance(const float visibleDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;
