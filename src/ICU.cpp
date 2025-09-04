@@ -36,6 +36,18 @@ const Collator* g_pIcuCollator = nullptr;
 QReadWriteLock collatorsLock;
 QHash<Qt::HANDLE, Collator*> collatorsMap;
 
+// RAII wrapper for ICU Transliterator
+using TransliteratorPtr = std::unique_ptr<icu::Transliterator, void(*)(icu::Transliterator*)>;
+
+// Helper to create RAII transliterator clones
+inline TransliteratorPtr makeTransliteratorClone(const icu::Transliterator* src) {
+    return TransliteratorPtr(src ? src->clone() : nullptr, [](icu::Transliterator* p) { delete p; });
+}
+
+// Thread-local caches
+thread_local TransliteratorPtr tl_anyToLatin(nullptr, [](icu::Transliterator* p) { delete p; });
+thread_local TransliteratorPtr tl_accentsConverter(nullptr, [](icu::Transliterator* p) { delete p; });
+
 // Thread-safe and fast wrapper over Collator->clone() @alex-osm version
 const Collator* getThreadSafeCollator()
 {
@@ -167,6 +179,31 @@ void OsmAnd::ICU::release()
     u_cleanup();
 }
 
+// Ensure thread-local transliterators are initialized
+inline bool initThreadLocalTransliterators() {
+    if (!tl_anyToLatin) {
+        if (!g_pIcuAnyToLatinTransliterator) {
+            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Global Any-to-Latin transliterator not initialized.");
+            return false;
+        }
+        tl_anyToLatin = makeTransliteratorClone(g_pIcuAnyToLatinTransliterator);
+        if (!tl_anyToLatin) {
+            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to clone Any-to-Latin transliterator.");
+            return false;
+        }
+    }
+
+    if (!tl_accentsConverter && g_pIcuAccentsAndDiacriticsConverter) {
+        tl_accentsConverter = makeTransliteratorClone(g_pIcuAccentsAndDiacriticsConverter);
+        if (!tl_accentsConverter) {
+            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to clone accents/diacritics transliterator.");
+            return false;
+        }
+    }
+
+    return true;
+}
+
 OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const QString& input)
 {
     QString output;
@@ -267,50 +304,30 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::transliterateToLatin(
     const bool keepAccentsAndDiacriticsInInput /*= true*/,
     const bool keepAccentsAndDiacriticsInOutput /*= true*/)
 {
-    QString output;
-    UErrorCode icuError = U_ZERO_ERROR;
-    bool ok = true;
-
-    const auto pAnyToLatinTransliterator = g_pIcuAnyToLatinTransliterator->clone();
-    if (pAnyToLatinTransliterator == nullptr || U_FAILURE(icuError))
-    {
-        LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
-        if (pAnyToLatinTransliterator != nullptr)
-            delete pAnyToLatinTransliterator;
+    if (!initThreadLocalTransliterators()) {
         return input;
     }
 
-    // Transliterate from any to latin
-    UnicodeString icuString(reinterpret_cast<const UChar*>(input.unicode()), input.length());
-    pAnyToLatinTransliterator->transliterate(icuString);
-    output = QString(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length());
+    icu::UnicodeString icuString(reinterpret_cast<const UChar*>(input.constData()), input.length());
 
-    // If input and output differ at this point or accents/diacritics should be converted,
-    // normalize the output again
-    if ((input.compare(output, Qt::CaseInsensitive) != 0 || !keepAccentsAndDiacriticsInInput) && !keepAccentsAndDiacriticsInOutput)
+    // Step 1: Any → Latin
+    tl_anyToLatin->transliterate(icuString);
+
+    QString output(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length());
+
+    // Step 2: Optionally strip accents/diacritics
+    if ((input.compare(output, Qt::CaseInsensitive) != 0 || !keepAccentsAndDiacriticsInInput) &&
+        !keepAccentsAndDiacriticsInOutput)
     {
-        const auto pIcuAccentsAndDiacriticsConverter = g_pIcuAccentsAndDiacriticsConverter->clone();
-        ok = pIcuAccentsAndDiacriticsConverter != nullptr && U_SUCCESS(icuError);
-        if (ok)
-        {
-            pIcuAccentsAndDiacriticsConverter->transliterate(icuString);
+        if (tl_accentsConverter) {
+            tl_accentsConverter->transliterate(icuString);
             output = QString(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length());
         }
-
-        if (pIcuAccentsAndDiacriticsConverter != nullptr)
-            delete pIcuAccentsAndDiacriticsConverter;
     }
-    
-    if (pAnyToLatinTransliterator != nullptr)
-        delete pAnyToLatinTransliterator;
 
-    if (!ok)
-    {
-        LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
-        return input;
-    }
     return output;
 }
+
 
 OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(
     const QString& input,
