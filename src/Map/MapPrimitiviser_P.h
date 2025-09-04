@@ -124,6 +124,7 @@ namespace OsmAnd
         static void collectSymbolsFromPrimitives(
             const Context& context,
             const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
+            const TileId tileId,
             const PrimitivesCollection& primitives,
             MapStyleEvaluationResult& evaluationResult,
             MapStyleEvaluator& textEvaluator,
@@ -155,6 +156,7 @@ namespace OsmAnd
         static void obtainSymbolsFromPoint(
             const Context& context,
             const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
+            const TileId tileId,
             const std::shared_ptr<const Primitive>& primitive,
             MapStyleEvaluationResult& evaluationResult,
             MapStyleEvaluator& textEvaluator,
