@@ -1379,9 +1379,10 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
 
         // If using shared context is allowed, check if this group was already processed
         // (using shared cache is only allowed for non-generated MapObjects),
-        // then symbols group can be shared
+        // then symbols group can be shared (excluding labeled polygons)
         MapObject::SharingKey sharingKey;
-        const auto canBeShared = primitivesGroup->sourceObject->obtainSharingKey(sharingKey);
+        const auto canBeShared = primitivesGroup->sourceObject->obtainSharingKey(sharingKey)
+            && (primitivesGroup->polygons.isEmpty() || primitivesGroup->points.isEmpty());
 
         //////////////////////////////////////////////////////////////////////////
         //if ((primitivesGroup->sourceObject->id >> 1) == 1937897178u)
@@ -1422,6 +1423,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
         collectSymbolsFromPrimitives(
             context,
             primitivisedObjects,
+            tileId,
             primitivesGroup->polygons,
             evaluationResult,
             textEvaluator,
@@ -1433,6 +1435,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
         collectSymbolsFromPrimitives(
             context,
             primitivisedObjects,
+            tileId,
             primitivesGroup->polylines,
             evaluationResult,
             textEvaluator,
@@ -1444,6 +1447,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
         collectSymbolsFromPrimitives(
             context,
             primitivisedObjects,
+            tileId,
             primitivesGroup->points,
             evaluationResult,
             textEvaluator,
@@ -1496,6 +1500,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
 void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
     const Context& context,
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
+    const TileId tileId,
     const PrimitivesCollection& primitives,
     MapStyleEvaluationResult& evaluationResult,
     MapStyleEvaluator& textEvaluator,
@@ -1542,6 +1547,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
                 obtainSymbolsFromPoint(
                     context,
                     primitivisedObjects,
+                    tileId,
                     primitive,
                     evaluationResult,
                     textEvaluator,
@@ -1627,6 +1633,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolyline(
 void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
     const Context& context,
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
+    const TileId tileId,
     const std::shared_ptr<const Primitive>& primitive,
     MapStyleEvaluationResult& evaluationResult,
     MapStyleEvaluator& textEvaluator,
@@ -1675,6 +1682,17 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
         center_.y /= pointsCount;
 
         center = Utilities::normalizeCoordinates(center_, ZoomLevel31);
+    }
+
+    // Don't process symbols from labeled polygons if label positions are out of this tile
+    if (points31.size() != 1)
+    {
+        const auto zoomShift = MaxZoomLevel - primitivisedObjects->zoom;
+        const auto tileSize = static_cast<int>((1u << zoomShift) - 1u);
+        const PointI topLeft(tileId.x << zoomShift, tileId.y << zoomShift);
+        const PointI botRight(topLeft.x + tileSize, topLeft.y + tileSize);
+        if (center.x < topLeft.x || center.y < topLeft.y || center.x > botRight.x || center.y > botRight.y)
+            return;
     }
 
     obtainPrimitiveIcon(
