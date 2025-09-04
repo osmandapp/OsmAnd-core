@@ -245,6 +245,8 @@ namespace OsmAnd
             TransformFeedback,
             ProgramPipeline,
         };
+
+        GLint _viewportDimensions[2];
     private:
         bool uploadTiledDataAsTextureToGPU(
             const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,

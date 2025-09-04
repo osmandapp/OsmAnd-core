@@ -1982,7 +1982,7 @@ bool OsmAnd::MapRenderer::setViewportScale(double scale, bool forcedUpdate /*= f
 
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    bool update = forcedUpdate || qFuzzyCompare(glViewportScale, scale);
+    bool update = forcedUpdate || qFuzzyCompare(glViewportScale, scale) || scale <= getMaxViewportScale();
     if (!update)
         return false;
 
@@ -1991,7 +1991,7 @@ bool OsmAnd::MapRenderer::setViewportScale(double scale, bool forcedUpdate /*= f
     return true;
 }
 
-double OsmAnd::MapRenderer::getViewportScale()
+double OsmAnd::MapRenderer::getViewportScale() const
 {
     return glViewportScale;
 }

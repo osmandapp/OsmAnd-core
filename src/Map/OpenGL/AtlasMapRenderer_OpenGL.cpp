@@ -2849,6 +2849,15 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getPixelsToMetersScaleFactor(const MapRe
     return metersPerPixel;
 }
 
+double OsmAnd::AtlasMapRenderer_OpenGL::getMaxViewportScale() const
+{
+    const auto gpuAPI = getGPUAPI();
+    const double scale = std::min((double)gpuAPI->_viewportDimensions[0] / (double)_internalState.glmViewport[2],
+          (double)gpuAPI->_viewportDimensions[1] / (double)_internalState.glmViewport[3]);
+    
+    return scale;
+}
+
 OsmAnd::AtlasMapRendererSkyStage* OsmAnd::AtlasMapRenderer_OpenGL::createSkyStage()
 {
     return new AtlasMapRendererSkyStage_OpenGL(this);
