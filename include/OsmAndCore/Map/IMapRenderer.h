@@ -138,7 +138,8 @@ namespace OsmAnd
         virtual bool setWindowSize(const PointI& windowSize, bool forcedUpdate = false) = 0;
         virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false) = 0;
         virtual bool setViewportScale(double scale, bool forcedUpdate = false) = 0;
-        virtual double getViewportScale() = 0;
+        virtual double getViewportScale() const = 0;
+        virtual double getMaxViewportScale() const = 0;
         virtual bool setFlip(bool flip, bool forcedUpdate = false) = 0;
         virtual bool setFieldOfView(const float fieldOfView, bool forcedUpdate = false) = 0;
         virtual bool setVisibleDistance(const float visibleDistance, bool forcedUpdate = false) = 0;
