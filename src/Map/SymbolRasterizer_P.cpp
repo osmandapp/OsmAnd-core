@@ -65,7 +65,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
 
         // Create group
         const std::shared_ptr<RasterizedSymbolsGroup> group(new RasterizedSymbolsGroup(
-            mapObject));
+            mapObject, symbolsGroup->canBeShownWithoutIcon));
 
         // Minimum and maximum offsets to allow column of symbols grow in both directions without overlapping
         // These offsets are computed only in case symbol is not on-path and not along-path
