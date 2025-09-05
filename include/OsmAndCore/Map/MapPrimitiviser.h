@@ -132,11 +132,12 @@ namespace OsmAnd
         private:
         protected:
             SymbolsGroup(
-                const std::shared_ptr<const MapObject>& sourceObject);
+                const std::shared_ptr<const MapObject>& sourceObject, bool canBeShownWithoutIcon = false);
         public:
             ~SymbolsGroup();
 
             const std::shared_ptr<const MapObject> sourceObject;
+            bool canBeShownWithoutIcon;
 
             SymbolsCollection symbols;
         

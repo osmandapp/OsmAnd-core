@@ -1381,8 +1381,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
         // (using shared cache is only allowed for non-generated MapObjects),
         // then symbols group can be shared (excluding labeled polygons)
         MapObject::SharingKey sharingKey;
-        const auto canBeShared = primitivesGroup->sourceObject->obtainSharingKey(sharingKey)
-            && (primitivesGroup->polygons.isEmpty() || primitivesGroup->points.isEmpty());
+        const bool isLabeledPolygon = !primitivesGroup->polygons.isEmpty() && !primitivesGroup->points.isEmpty();
+        const auto canBeShared = primitivesGroup->sourceObject->obtainSharingKey(sharingKey) && !isLabeledPolygon;
 
         //////////////////////////////////////////////////////////////////////////
         //if ((primitivesGroup->sourceObject->id >> 1) == 1937897178u)
@@ -1415,9 +1415,12 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
 
         const Stopwatch symbolsGroupsProcessingStopwatch(metric != nullptr);
 
+        // Allow displaying only captions for multi-labeled polygons
+        const bool canBeShownWithoutIcon = isLabeledPolygon && primitivesGroup->points.size() > 1;
+
         // Create a symbols group
         const std::shared_ptr<SymbolsGroup> group(new SymbolsGroup(
-            primitivesGroup->sourceObject));
+            primitivesGroup->sourceObject, canBeShownWithoutIcon));
 
         // For each primitive if primitive group, collect symbols from it
         collectSymbolsFromPrimitives(

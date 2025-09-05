@@ -40,10 +40,12 @@ namespace OsmAnd
         private:
         protected:
         public:
-            RasterizedSymbolsGroup(const std::shared_ptr<const MapObject>& mapObject);
+            RasterizedSymbolsGroup(const std::shared_ptr<const MapObject>& mapObject,
+                bool canBeShownWithoutIcon = false);
             virtual ~RasterizedSymbolsGroup();
 
             const std::shared_ptr<const MapObject> mapObject;
+            const bool canBeShownWithoutIcon;
             QList< std::shared_ptr<const RasterizedSymbol> > symbols;
         };
 

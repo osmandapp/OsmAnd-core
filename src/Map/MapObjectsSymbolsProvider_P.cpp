@@ -508,8 +508,11 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         {
             if (hasAtLeastOneSimpleBillboard && !(hasAtLeastOneOnPath || hasAtLeastOneAlongPathBillboard))
             {
-                group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowNoneIfIconIsNotShown;
-                group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnythingUntilFirstGap;
+                if (!rasterizedGroup->canBeShownWithoutIcon)
+                {
+                    group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowNoneIfIconIsNotShown;
+                    group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnythingUntilFirstGap;
+                }
             }
             else
             {

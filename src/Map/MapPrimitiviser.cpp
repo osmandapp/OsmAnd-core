@@ -134,8 +134,9 @@ OsmAnd::MapPrimitiviser::Primitive::~Primitive()
 }
 
 OsmAnd::MapPrimitiviser::SymbolsGroup::SymbolsGroup(
-    const std::shared_ptr<const MapObject>& sourceObject_)
+    const std::shared_ptr<const MapObject>& sourceObject_, bool canBeShownWithoutIcon_ /* = false */)
     : sourceObject(sourceObject_)
+    , canBeShownWithoutIcon(canBeShownWithoutIcon_)
 {
 }
 
