@@ -259,6 +259,9 @@ bool OsmAnd::GPUAPI_OpenGLES2plus::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES maximal vertex attributes %d", _maxVertexAttribs);
 
+    glGetIntegerv(GL_MAX_VIEWPORT_DIMS, _viewportDimensions);
+    GL_CHECK_RESULT;
+
     _isSupported_OES_vertex_array_object = extensions.contains("GL_OES_vertex_array_object");
     _isSupported_vertex_array_object = (glVersion >= 30) || _isSupported_OES_vertex_array_object;
 

@@ -169,6 +169,8 @@ namespace OsmAnd
         OsmAnd::Stopwatch symbolsLoadingStart;
         float symbolsLoadingTime = 0;
 
+        double glViewportScale = 1;
+
         virtual AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const = 0;
         virtual AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const = 0;
         virtual double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const = 0;
@@ -383,6 +385,8 @@ namespace OsmAnd
 
         virtual bool setWindowSize(const PointI& windowSize, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setViewportScale(double scale, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual double getViewportScale() const Q_DECL_OVERRIDE;
         virtual bool setFlip(bool flip, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFieldOfView(const float fieldOfView, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setVisibleDistance(const float visibleDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;
