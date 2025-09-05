@@ -159,13 +159,17 @@ namespace OsmAnd
             const QString& projResourcesPath,
             const uint32_t tileSize = 256,
             const float densityFactor = 1.0f,
-            const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient()));
+            const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient()),
+            const WeatherSource weatherSource = WeatherSource::GFS);
         virtual ~WeatherTileResourcesManager();
 
         bool networkAccessAllowed;
 
         const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> getBandSettings() const;
         void setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings);
+
+        WeatherSource getWeatherSource() const;
+        void setWeatherSource(const WeatherSource weatherSource);
 
         double getConvertedBandValue(const BandIndex band, const double value) const;
         QString getFormattedBandValue(const BandIndex band, const double value, const bool precise) const;
