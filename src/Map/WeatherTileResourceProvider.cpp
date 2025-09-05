@@ -21,9 +21,10 @@ OsmAnd::WeatherTileResourceProvider::WeatherTileResourceProvider(
     const QString& projResourcesPath,
     const uint32_t tileSize /*= 256*/,
     const float densityFactor /*= 1.0f*/,
-    const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
+    const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/,
+    const WeatherSource weatherSource /*= WeatherSource::GFS*/)
     : _p(new WeatherTileResourceProvider_P(this,
-        bandSettings, localCachePath, projResourcesPath, tileSize, densityFactor, webClient))
+        bandSettings, localCachePath, projResourcesPath, tileSize, densityFactor, webClient, weatherSource))
     , networkAccessAllowed(true)
 {
 }
@@ -209,6 +210,16 @@ bool OsmAnd::WeatherTileResourceProvider::removeTileData(
 bool OsmAnd::WeatherTileResourceProvider::closeProvider()
 {
     return _p->closeProvider();
+}
+
+OsmAnd::WeatherSource OsmAnd::WeatherTileResourceProvider::getWeatherSource() const
+{
+    return _p->getWeatherSource();
+}
+
+void OsmAnd::WeatherTileResourceProvider::setWeatherSource(const WeatherSource weatherSource)
+{
+    _p->setWeatherSource(weatherSource);
 }
 
 OsmAnd::WeatherTileResourceProvider::ValueRequest::ValueRequest()

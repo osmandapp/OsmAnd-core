@@ -22,6 +22,14 @@ namespace OsmAnd
         Raster = 0,
         Contour = 1,
     };
+
+    enum class WeatherSource
+    {
+        Undefined = -1,
+        
+        GFS = 0,
+        ECMWF = 1,
+    };
 }
 
 #endif // !defined(_OSMAND_CORE_WEATHER_COMMON_TYPES_H_)

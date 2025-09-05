@@ -15,7 +15,8 @@
 #include "FunctorQueryController.h"
 #include "GeoTileEvaluator.h"
 
-static const QString WEATHER_TILES_URL_PREFIX = QStringLiteral("https://osmand.net/weather/gfs/tiff/");
+static const QString GFS_WEATHER_TILES_URL_PREFIX = QStringLiteral("https://osmand.net/weather/gfs/tiff/");
+static const QString ECMWF_WEATHER_TILES_URL_PREFIX = QStringLiteral("https://osmand.net/weather/ecmwf/tiff/");
 
 // During this time period geotiff data in cache don't need to be updated (6 hours)
 static const int64_t GEOTIFF_RELEVANCE_PERIOD = 21600000;
@@ -33,7 +34,8 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     const QString& projResourcesPath_,
     const uint32_t tileSize_ /*= 256*/,
     const float densityFactor_ /*= 1.0f*/,
-    const std::shared_ptr<const IWebClient>& webClient_ /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
+    const std::shared_ptr<const IWebClient>& webClient_ /*= std::shared_ptr<const IWebClient>(new WebClient())*/,
+    const WeatherSource weatherSource_ /*= WeatherSource::GFS*/)
     : owner(owner_)
     , _obtainValueThreadPool(new QThreadPool())
     , _obtainCacheDataThreadPool(new QThreadPool())
@@ -48,6 +50,7 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     , projResourcesPath(projResourcesPath_)
     , tileSize(tileSize_)
     , densityFactor(densityFactor_)
+    , _weatherSource(weatherSource_)
 {
     _requestsCount.storeRelease(0);
 
@@ -288,7 +291,7 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
         std::shared_ptr<const IQueryController> queryController /*= nullptr*/)
 {
     auto dateTimeStr = Utilities::getDateTimeString(dateTime);
-    auto geoTileUrl = WEATHER_TILES_URL_PREFIX + dateTimeStr + "/"
+    auto geoTileUrl = getWeatherTilesUrlPrefix() + dateTimeStr + "/"
         + QString::number(zoom) + QStringLiteral("_")
         + QString::number(tileId.x) + QStringLiteral("_")
         + QString::number(15 - tileId.y) + QStringLiteral(".tiff.gz");
@@ -1598,5 +1601,28 @@ void OsmAnd::WeatherTileResourceProvider_P::DownloadGeoTileTask::run()
             request->forceDownload, localData, request->queryController) > 0;
 
         callback(res, ++downloadedTiles, tilesCount, nullptr);
+    }
+}
+
+OsmAnd::WeatherSource OsmAnd::WeatherTileResourceProvider_P::getWeatherSource() const
+{
+    return _weatherSource;
+}
+
+void OsmAnd::WeatherTileResourceProvider_P::setWeatherSource(const WeatherSource weatherSource)
+{
+    _weatherSource = weatherSource;
+}
+
+QString OsmAnd::WeatherTileResourceProvider_P::getWeatherTilesUrlPrefix() const
+{
+    switch (_weatherSource)
+    {
+        case WeatherSource::GFS:
+            return GFS_WEATHER_TILES_URL_PREFIX;
+        case WeatherSource::ECMWF:
+            return ECMWF_WEATHER_TILES_URL_PREFIX;
+        default:
+            return GFS_WEATHER_TILES_URL_PREFIX;
     }
 }

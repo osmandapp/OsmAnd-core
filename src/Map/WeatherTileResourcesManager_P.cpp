@@ -13,7 +13,8 @@ OsmAnd::WeatherTileResourcesManager_P::WeatherTileResourcesManager_P(
     const QString& projResourcesPath_,
     const uint32_t tileSize_ /*= 256*/,
     const float densityFactor_ /*= 1.0f*/,
-    const std::shared_ptr<const IWebClient>& webClient_ /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
+    const std::shared_ptr<const IWebClient>& webClient_ /*= std::shared_ptr<const IWebClient>(new WebClient())*/,
+    const WeatherSource weatherSource_ /*= WeatherSource::GFS*/)
     : owner(owner_)
     , _bandSettings(bandSettings_)
     , webClient(webClient_)
@@ -21,6 +22,7 @@ OsmAnd::WeatherTileResourcesManager_P::WeatherTileResourcesManager_P(
     , projResourcesPath(projResourcesPath_)
     , tileSize(tileSize_)
     , densityFactor(densityFactor_)
+    , _weatherSource(weatherSource_)
 {
 }
 
@@ -36,7 +38,8 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResource
         projResourcesPath,
         tileSize,
         densityFactor,
-        webClient
+        webClient,
+        _weatherSource
     );
 }
 
@@ -643,4 +646,18 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(int64_t beforeDateTime 
     }
 
     return res;
+}
+
+OsmAnd::WeatherSource OsmAnd::WeatherTileResourcesManager_P::getWeatherSource() const
+{
+    return _weatherSource;
+}
+
+void OsmAnd::WeatherTileResourcesManager_P::setWeatherSource(const WeatherSource weatherSource)
+{
+    _weatherSource = weatherSource;
+    if (_resourceProvider)
+    {
+        _resourceProvider->setWeatherSource(weatherSource);
+    }
 }
