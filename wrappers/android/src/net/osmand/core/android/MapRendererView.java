@@ -94,7 +94,6 @@ public abstract class MapRendererView extends FrameLayout {
      * Rendering global parameters
      */
     private volatile boolean _frameReadingMode;
-    private volatile boolean _batterySavingMode;
     private volatile int _maxFrameRate;
     private volatile long _maxFrameTime;
 
@@ -257,14 +256,12 @@ public abstract class MapRendererView extends FrameLayout {
         setupOptions.setDisplayDensityFactor(_inWindow ? getResources().getDisplayMetrics().density : 1.0f);
 
         // Disable battery saving mode
-        disableBatterySavingMode();
+        setMaximumFrameRate(0);
 
         // Get already present renderer if available
         IMapRenderer oldRenderer = oldView != null ? oldView.suspendRenderer() : null;
 
         if (oldRenderer == null) {
-            // Set initial frame rate limit for battery saving mode
-            setMaximumFrameRate(20); // 20 frames per seconds
 
             isReinitializing = (isSuspended && _mapRenderer != null && _mapRenderer.isRenderingInitialized());
             if (!isReinitializing) {
@@ -1586,25 +1583,13 @@ public abstract class MapRendererView extends FrameLayout {
         }
     }
 
-    public final boolean isBatterySavingModeEnabled() {
-        return _batterySavingMode;
-    }
-
-    public final void enableBatterySavingMode() {
-        _batterySavingMode = true;
-    }
-
-    public final void disableBatterySavingMode() {
-        _batterySavingMode = false;
-    }
-
     public final int getMaximumFrameRate() {
         return _maxFrameRate;
     }
 
     public final void setMaximumFrameRate(int maximumFramesPerSecond) {
         _maxFrameRate = maximumFramesPerSecond;
-        _maxFrameTime = Math.round(1000.0f / (float) maximumFramesPerSecond);
+        _maxFrameTime = maximumFramesPerSecond <= 0 ? 0 : Math.round(1000.0f / (float) maximumFramesPerSecond);
     }
 
     public final float getBasicThreadsCPULoad() {
@@ -1778,7 +1763,7 @@ public abstract class MapRendererView extends FrameLayout {
             EGL10.EGL_DEPTH_SIZE, DEPTH_SIZE,
             EGL10.EGL_STENCIL_SIZE, STENCIL_SIZE,
             EGL10.EGL_SAMPLE_BUFFERS, 1,
-            EGL10.EGL_SAMPLES, 2, 
+            EGL10.EGL_SAMPLES, 2,
             EGL10.EGL_RENDERABLE_TYPE, 0x0040,
             EGL10.EGL_NONE
         };
@@ -2273,7 +2258,7 @@ public abstract class MapRendererView extends FrameLayout {
             _frameRateLast1K =
                 _frameRateLast1K > 0.0 ? (_frameRateLast1K * 999.0f + _frameRate) / 1000.0f : _frameRate;
 
-            if (_batterySavingMode && _maxFrameRate > 0) {
+            if (_maxFrameRate > 0) {
                 long extraTime = _maxFrameTime - _frameRenderTime;
                 if (extraTime > 0) {
                     try {
