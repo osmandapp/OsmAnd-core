@@ -9,11 +9,13 @@ OsmAnd::WeatherRasterLayerProvider::WeatherRasterLayerProvider(
     const int64_t dateTimeLast,
     const int64_t dateTimeStep,
     const QList<BandIndex> bands,
-    const bool localData)
+    const bool localData,
+    const WeatherSource weatherSource)
     : _resourcesManager(resourcesManager)
     , _bands(bands)
     , _localData(localData)
     , weatherLayer(weatherLayer_)
+    , _weatherSource(weatherSource)
 {
     setDateTime(dateTimeFirst, dateTimeLast, dateTimeStep);
 }
@@ -82,6 +84,20 @@ void OsmAnd::WeatherRasterLayerProvider::setLocalData(const bool localData)
     QWriteLocker scopedLocker(&_lock);
 
     _localData = localData;
+}
+
+OsmAnd::WeatherSource OsmAnd::WeatherRasterLayerProvider::getWeatherSource() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _weatherSource;
+}
+
+void OsmAnd::WeatherRasterLayerProvider::setWeatherSource(const WeatherSource weatherSource)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _weatherSource = weatherSource;
 }
 
 OsmAnd::MapStubStyle OsmAnd::WeatherRasterLayerProvider::getDesiredStubsStyle() const

@@ -11,9 +11,10 @@ OsmAnd::WeatherTileResourcesManager::WeatherTileResourcesManager(
     const QString& projResourcesPath,
     const uint32_t tileSize /*= 256*/,
     const float densityFactor /*= 1.0f*/,
-    const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
+    const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/,
+    const WeatherSource weatherSource /*= WeatherSource::GFS*/)
     : _p(new WeatherTileResourcesManager_P(this,
-        bandSettings, localCachePath, projResourcesPath, tileSize, densityFactor, webClient))
+        bandSettings, localCachePath, projResourcesPath, tileSize, densityFactor, webClient, weatherSource))
     , networkAccessAllowed(true)
 {
 }
@@ -30,6 +31,16 @@ const QHash<OsmAnd::BandIndex, std::shared_ptr<const OsmAnd::GeoBandSettings>> O
 void OsmAnd::WeatherTileResourcesManager::setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings)
 {
     _p->setBandSettings(bandSettings);
+}
+
+OsmAnd::WeatherSource OsmAnd::WeatherTileResourcesManager::getWeatherSource() const
+{
+    return _p->getWeatherSource();
+}
+
+void OsmAnd::WeatherTileResourcesManager::setWeatherSource(const WeatherSource weatherSource)
+{
+    _p->setWeatherSource(weatherSource);
 }
 
 double OsmAnd::WeatherTileResourcesManager::getConvertedBandValue(const BandIndex band, const double value) const

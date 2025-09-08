@@ -176,7 +176,8 @@ namespace OsmAnd
             const QString& projResourcesPath,
             const uint32_t tileSize = 256,
             const float densityFactor = 1.0f,
-            const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient())
+            const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient()),
+            const WeatherSource weatherSource = WeatherSource::GFS
         );
         
     public:
@@ -188,6 +189,8 @@ namespace OsmAnd
         const QString projResourcesPath;
         const uint32_t tileSize;
         const float densityFactor;
+        
+        WeatherSource _weatherSource;
 
         void obtainValue(
             const WeatherTileResourceProvider::ValueRequest& request,
@@ -221,6 +224,11 @@ namespace OsmAnd
         
         const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> getBandSettings() const;
         void setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings);
+
+        WeatherSource getWeatherSource() const;
+        void setWeatherSource(const WeatherSource weatherSource);
+        
+        QString getWeatherTilesUrlPrefix() const;
 
         int getCurrentRequestVersion() const;
         int getAndUpdateRequestVersion(
