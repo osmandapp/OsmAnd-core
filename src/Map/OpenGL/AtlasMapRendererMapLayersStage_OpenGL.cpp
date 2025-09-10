@@ -277,23 +277,37 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         _rasterLayerTilePrograms.clear();
         for (auto numberOfLayersInBatch = _maxNumberOfRasterMapLayersInBatch; numberOfLayersInBatch >= 1; numberOfLayersInBatch--)
         {
-            RasterLayerTileProgram rasterLayerTileProgram;
-            const auto success = initializeRasterLayersProgram(numberOfLayersInBatch, rasterLayerTileProgram);
+            QVector<RasterLayerTileProgram> rasterLayerTilePrograms(RenderingFeatures::All + 1);
+            bool success = true;
+            for (int programFeatures = RenderingFeatures::All; programFeatures >= 0; programFeatures--)
+            {
+                success = initializeRasterLayersProgram(
+                    numberOfLayersInBatch, static_cast<RenderingFeatures>(programFeatures), rasterLayerTilePrograms);
+                if (!success)
+                    break;
+            }
             if (!success)
             {
                 supportedMaxNumberOfRasterMapLayersInBatch -= 1;
                 continue;
             }
-
-            _rasterLayerTilePrograms.insert(numberOfLayersInBatch, rasterLayerTileProgram);
+            _rasterLayerTilePrograms.insert(numberOfLayersInBatch, qMove(rasterLayerTilePrograms));
         }
     }
     else
     {
         for (auto numberOfLayersInBatch = _maxNumberOfRasterMapLayersInBatch; numberOfLayersInBatch >= 1; numberOfLayersInBatch--)
         {
-            auto& rasterLayerTileProgram = _rasterLayerTilePrograms[numberOfLayersInBatch];
-            const auto success = initializeRasterLayersProgram(numberOfLayersInBatch, rasterLayerTileProgram);
+            auto& rasterLayerTilePrograms = _rasterLayerTilePrograms[numberOfLayersInBatch];
+            bool success = true;
+            for (int programFeatures = RenderingFeatures::All; programFeatures >= 0; programFeatures--)
+            {
+                success = initializeRasterLayersProgram(
+                    numberOfLayersInBatch, static_cast<RenderingFeatures>(programFeatures), rasterLayerTilePrograms);
+                if (!success)
+                    break;
+            }
+
             if (!success)
             {
                 supportedMaxNumberOfRasterMapLayersInBatch -= 1;
@@ -324,7 +338,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
 
 bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgram(
     const unsigned int numberOfLayersInBatch,
-    RasterLayerTileProgram& outRasterLayerTileProgram)
+    const RenderingFeatures programFeatures,
+    QVector<RasterLayerTileProgram>& outRasterLayerTilePrograms)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -336,6 +351,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         { GlslVariableType::In, QStringLiteral("in_vs_vertexTexCoords"), 1 },
     });
     QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
+    auto& outRasterLayerTileProgram = outRasterLayerTilePrograms[programFeatures];
     outRasterLayerTileProgram.id = 0;
     if (!outRasterLayerTileProgram.binaryCache.isEmpty())
     {
@@ -344,7 +360,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     }
     if (!outRasterLayerTileProgram.id.isValid())
     {
-        const auto& vertexShader = QString::fromLatin1(
+        auto vertexShader = QStringLiteral(
             // Definitions
             "#define ELEVATION_VISUALIZATION_ENABLED %ElevationVisualizationEnabled%                                            ""\n"
             "                                                                                                                   ""\n"
@@ -360,9 +376,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
             "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
             "    PARAM_OUTPUT lowp vec4 v2f_elevationColor;                                                                     ""\n"
-            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n");
+        const auto& gridsInVertexShader_1 = QStringLiteral(
             "PARAM_OUTPUT vec4 v2f_primaryLocation;                                                                             ""\n"
-            "PARAM_OUTPUT vec4 v2f_secondaryLocation;                                                                           ""\n"
+            "PARAM_OUTPUT vec4 v2f_secondaryLocation;                                                                           ""\n");
+        vertexShader.append(QStringLiteral(
+            "%GridsInVertexShader_1%                                                                                            ""\n"
             "PARAM_OUTPUT vec4 v2f_position;                                                                                    ""\n"
             "                                                                                                                   ""\n"
             // Parameters: common data
@@ -381,7 +400,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    uniform vec4 param_vs_elevation_hillshadeConfiguration;                                                        ""\n"
             "    uniform vec4 param_vs_elevation_colorMapKeys[%MaxElevationColorMapEntriesCount%];                              ""\n"
             "    uniform vec4 param_vs_elevation_colorMapValues[%MaxElevationColorMapEntriesCount%];                            ""\n"
-            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"));
+        const auto& gridsInVertexShader_2 = QStringLiteral(
             "uniform vec4 param_vs_primaryGridAxisX;                                                                            ""\n"
             "uniform vec4 param_vs_secondaryGridAxisX;                                                                          ""\n"
             "uniform vec4 param_vs_primaryGridAxisY;                                                                            ""\n"
@@ -392,7 +412,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "uniform vec4 param_vs_primaryGridTileTop;                                                                          ""\n"
             "uniform vec4 param_vs_primaryGridTileBot;                                                                          ""\n"
             "uniform vec4 param_vs_secondaryGridTileTop;                                                                        ""\n"
-            "uniform vec4 param_vs_secondaryGridTileBot;                                                                        ""\n"
+            "uniform vec4 param_vs_secondaryGridTileBot;                                                                        ""\n");
+        vertexShader.append(QStringLiteral(
+            "%GridsInVertexShader_2%                                                                                            ""\n"
             "uniform vec2 param_vs_tileCoordsOffset;                                                                            ""\n"
             "uniform vec4 param_vs_elevation_scale;                                                                             ""\n"
             "uniform highp sampler2D param_vs_elevation_dataSampler;                                                            ""\n"
@@ -684,7 +706,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    v2f_mipmapLOD = 1.0 + (length(groundCameraToVertex) - mipmapBaseLevelEndDistance)                              ""\n"
             "        / (param_vs_scaleToRetainProjectedSize * param_vs_tileSize);                                               ""\n"
             "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-            "                                                                                                                   ""\n"
+            "                                                                                                                   ""\n"));
+        const auto& gridsInVertexShader_3 = QStringLiteral(            
             //   Calculate location using selected grid projection
             "    vec4 primary;                                                                                                  ""\n"
             "    vec4 secondary;                                                                                                ""\n"
@@ -787,11 +810,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "                                                                                                                   ""\n"
             //   Finally output processed modified vertex
             "    v2f_primaryLocation = primary;                                                                                 ""\n"
-            "    v2f_secondaryLocation = secondary;                                                                             ""\n"
+            "    v2f_secondaryLocation = secondary;                                                                             ""\n");
+        vertexShader.append(QStringLiteral(
+            "%GridsInVertexShader_3%                                                                                            ""\n"
             "    v2f_position = v;                                                                                              ""\n"
             "    v = param_vs_mPerspectiveProjectionView * v;                                                                   ""\n"
             "    gl_Position = v * param_vs_resultScale;                                                                        ""\n"
-            "}                                                                                                                  ""\n");
+            "}                                                                                                                  ""\n"));
         const auto& vertexShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
             "PARAM_OUTPUT vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                        ""\n");
         const auto& vertexShader_perRasterLayerParamsDeclaration = QString::fromLatin1(
@@ -815,7 +840,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "                }                                                                                                  ""\n"
             "                                                                                                                   ""\n");
 
-        const auto& fragmentShader = QString::fromLatin1(
+        auto fragmentShader = QStringLiteral(
             // Definitions
             "#define ELEVATION_VISUALIZATION_ENABLED %ElevationVisualizationEnabled%                                            ""\n"
             "                                                                                                                   ""\n"
@@ -827,10 +852,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
             "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
             "    PARAM_INPUT lowp vec4 v2f_elevationColor;                                                                      ""\n"
-            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n");
+        const auto& gridsInFragmentShader_1 = QStringLiteral(
             "PARAM_INPUT vec4 v2f_primaryLocation;                                                                              ""\n"
-            "PARAM_INPUT vec4 v2f_secondaryLocation;                                                                            ""\n"
-
+            "PARAM_INPUT vec4 v2f_secondaryLocation;                                                                            ""\n");
+        fragmentShader.append(QStringLiteral(
+            "%GridsInFragmentShader_1%                                                                                          ""\n"
             "PARAM_INPUT vec4 v2f_position;                                                                                     ""\n"
             "                                                                                                                   ""\n"
             // Parameters: common data
@@ -839,10 +866,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "uniform lowp vec4 param_fs_backgroundColor;                                                                        ""\n"
             "uniform lowp vec4 param_fs_myLocationColor;                                                                        ""\n"
             "uniform vec4 param_fs_myLocation;                                                                                  ""\n"
-            "uniform vec2 param_fs_myDirection;                                                                                 ""\n"
+            "uniform vec2 param_fs_myDirection;                                                                                 ""\n"));
+        const auto& gridsInFragmentShader_2 = QStringLiteral(
             "uniform vec4 param_fs_gridParameters;                                                                              ""\n"
             "uniform lowp vec4 param_fs_primaryGridColor;                                                                       ""\n"
-            "uniform lowp vec4 param_fs_secondaryGridColor;                                                                     ""\n"
+            "uniform lowp vec4 param_fs_secondaryGridColor;                                                                     ""\n");
+        fragmentShader.append(QStringLiteral(
+            "%GridsInFragmentShader_2%                                                                                          ""\n"
             "uniform vec4 param_fs_worldCameraPosition;                                                                         ""\n"
             "uniform vec4 param_fs_mistConfiguration;                                                                           ""\n"
             "uniform vec4 param_fs_mistColor;                                                                                   ""\n"
@@ -922,7 +952,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "                                                                                                                   ""\n"
             "void getTextureColor(in vec4 texCoordsOffsetAndScale, in vec4 transitionPhase, in float texelSize,                 ""\n"
             "        in sampler2D sampler, in vec2 texCoords, out lowp vec4 resultColor)                                        ""\n"
-            "{                                                                                                                  ""\n"
+            "{                                                                                                                  ""\n"));
+        const auto& dynamicsInFragmentShader = QStringLiteral(
             "    if (transitionPhase.x >= 0.0)                                                                                  ""\n"
             "    {                                                                                                              ""\n"
             //       Animate transition between textures
@@ -981,10 +1012,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "        lowp vec4 texColor = mix(texColorLeft, texColorRight, clamp(transitionPhase.x, 0.0, 1.0));                 ""\n"
             "        resultColor = vec4(mix(texColor.rgb, windColor.rgb, windColor.a), texColor.a);                             ""\n"
             "    }                                                                                                              ""\n"
-            "    else                                                                                                           ""\n"
-            "    {                                                                                                              ""\n"
+            "    else                                                                                                           ""\n");
+        fragmentShader.append(QStringLiteral(
+            "%DynamicsInFragmentShader%                                                                                         ""\n"
             "        fromTexture(sampler, texCoords, resultColor);                                                              ""\n"
-            "    }                                                                                                              ""\n"
             "}                                                                                                                  ""\n"
             "                                                                                                                   ""\n"
             "void main()                                                                                                        ""\n"
@@ -996,15 +1027,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    vec2 vMyToPos = v2f_position.xz - param_fs_myLocation.xy;                                                      ""\n"
             "    float dist = length(vMyToPos);                                                                                 ""\n"
             "    float fdist = min(pow(min(dist / param_fs_myLocation.z, 1.0), 100.0), 1.0);                                    ""\n"
-            "    circle.a = (1.0 - fdist) * (1.0 + 2.0 * fdist) * circle.a;                                                           ""\n"
+            "    circle.a = (1.0 - fdist) * (1.0 + 2.0 * fdist) * circle.a;                                                     ""\n"
             "                                                                                                                   ""\n"
             //   Calculate color of heading sector
             "    lowp vec4 sector = param_fs_myLocationColor;                                                                   ""\n"
             "    float fdir = dot(vec2(sin(param_fs_myDirection.x), -cos(param_fs_myDirection.x)), vMyToPos / dist);            ""\n"
             "    fdir = pow(min(max(fdir / 0.7071, 0.0), 1.0), 10.0);                                                           ""\n"
             "    sector.a = dist >= param_fs_myDirection.y ? 0.0 : fdir * (1.0 - dist / param_fs_myDirection.y);                ""\n"
-            "                                                                                                                   ""\n"
-            //   Calculate colors of grids
+            "                                                                                                                   ""\n"));
+        const auto& gridsInFragmentShader_3 = QStringLiteral(
             "    lowp vec4 primaryColor = param_fs_primaryGridColor;                                                            ""\n"
             "    primaryColor *= v2f_primaryLocation.x > -1e30 && v2f_primaryLocation.x < 1e30 ? 1.0 : 0.0;                     ""\n"
             "    primaryColor *= v2f_primaryLocation.y > -1e30 && v2f_primaryLocation.y < 1e30 ? 1.0 : 0.0;                     ""\n"
@@ -1043,7 +1074,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    secondaryColor = d.x > f.x && d.x < 1.0 - f.x && d.y > f.y && d.y < 1.0 - f.y ? vec4(0.0) : halfColor;         ""\n"
             "    secondaryColor.a += d.x > n.x && d.x < 1.0 - n.x && d.y > n.y && d.y < 1.0 - n.y ? 0.0 : halfAlfa;             ""\n"
             "    secondaryColor.a = primaryColor.a < param_fs_primaryGridColor.a ? secondaryColor.a : 0.0;                      ""\n"
-            "                                                                                                                   ""\n"
+            "                                                                                                                   ""\n");
+        fragmentShader.append(QStringLiteral(
+            //   Calculate colors of grids
+            "%GridsInFragmentShader_3%                                                                                          ""\n"
             //   Calculate mist color
             "    lowp vec4 mistColor = param_fs_mistColor;                                                                      ""\n"
             "    vec4 infrontPosition = v2f_position;                                                                           ""\n"
@@ -1086,15 +1120,18 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "        finalColor = mix(finalColor, mipmapDebugColor, 0.5);                                                       ""\n"
             "    }                                                                                                              ""\n"
 #endif
-            "                                                                                                                   ""\n"
+            "                                                                                                                   ""\n"));
+        const auto& gridsInFragmentShader_4 = QStringLiteral(
             "    mixColors(finalColor, secondaryColor * param_fs_lastBatch);                                                    ""\n"
-            "    mixColors(finalColor, primaryColor * param_fs_lastBatch);                                                      ""\n"
+            "    mixColors(finalColor, primaryColor * param_fs_lastBatch);                                                      ""\n");
+        fragmentShader.append(QStringLiteral(
+            "%GridsInFragmentShader_4%                                                                                          ""\n"
             "    mixColors(finalColor, circle * param_fs_lastBatch);                                                            ""\n"
             "    mixColors(finalColor, sector * param_fs_lastBatch);                                                            ""\n"
             "    mixColors(finalColor, mistColor * param_fs_lastBatch);                                                         ""\n"
             "    lowp vec4 overColor = mix(param_fs_backgroundColor, finalColor, finalColor.a);                                 ""\n"
             "    FRAGMENT_COLOR_OUTPUT = mix(overColor, finalColor, param_fs_blendingEnabled);                                  ""\n"
-            "}                                                                                                                  ""\n");
+            "}                                                                                                                  ""\n"));
         const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
             "    {                                                                                                              ""\n"
             "        lowp vec4 tc;                                                                                              ""\n"
@@ -1111,7 +1148,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         const auto& fragmentShader_perRasterLayerParamsDeclaration = QString::fromLatin1(
             "uniform FsRasterLayerTile param_fs_rasterTileLayer_%rasterLayerIndex%;                                             ""\n");
 
-        // Compile vertex shader
+        // Prepare vertex shader
         auto preprocessedVertexShader = vertexShader;
         QString preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsProcessingCode;
         QString preprocessedVertexShader_UnrolledPerRasterLayerParamsDeclarationCode;
@@ -1146,8 +1183,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         }
         preprocessedVertexShader.replace("%UnrolledPerElevationColorMapEntryCode%",
             preprocessedVertexShader_UnrolledPerElevationColorMapEntryCode);
-        preprocessedVertexShader.replace("%HeixelsPerTileSide%",
-            QString::number(AtlasMapRenderer::HeixelsPerTileSide - 1));
         preprocessedVertexShader.replace("%MaxElevationColorMapEntriesCount%",
             QString::number(ElevationConfiguration::MaxColorMapEntries));
         preprocessedVertexShader.replace("%SlopeAlgorithm_None%",
@@ -1172,18 +1207,26 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeMultidirectional)));
         preprocessedVertexShader.replace("%ElevationVisualizationEnabled%",
             QString::number(setupOptions.elevationVisualizationEnabled ? 1 : 0));
+        if ((programFeatures & RenderingFeatures::Grids) > 0)
+        {
+
+            preprocessedVertexShader.replace("%GridsInVertexShader_1%", gridsInVertexShader_1);
+            preprocessedVertexShader.replace("%GridsInVertexShader_2%", gridsInVertexShader_2);
+            preprocessedVertexShader.replace("%GridsInVertexShader_3%", gridsInVertexShader_3);
+        }
+        else
+        {
+            const auto emptyString = QString();
+            preprocessedVertexShader.replace("%GridsInVertexShader_1%", emptyString);
+            preprocessedVertexShader.replace("%GridsInVertexShader_2%", emptyString);
+            preprocessedVertexShader.replace("%GridsInVertexShader_3%", emptyString);
+        }
+        preprocessedVertexShader.replace("%HeixelsPerTileSide%",
+            QString::number(AtlasMapRenderer::HeixelsPerTileSide - 1));
         gpuAPI->preprocessVertexShader(preprocessedVertexShader);
         gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-        if (vsId == 0)
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile AtlasMapRendererMapLayersStage_OpenGL vertex shader for %d raster map layers",
-                numberOfLayersInBatch);
-            return false;
-        }
 
-        // Compile fragment shader
+        // Prepare fragment shader
         auto preprocessedFragmentShader = fragmentShader;
         QString preprocessedFragmentShader_UnrolledPerRasterLayerTexCoordsDeclarationCode;
         QString preprocessedFragmentShader_UnrolledPerRasterLayerParamsDeclarationCode;
@@ -1215,22 +1258,70 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode);
         preprocessedFragmentShader.replace("%ElevationVisualizationEnabled%",
             QString::number(setupOptions.elevationVisualizationEnabled ? 1 : 0));
+        if ((programFeatures & RenderingFeatures::Grids) > 0)
+        {
+            preprocessedFragmentShader.replace("%GridsInFragmentShader_1%", gridsInFragmentShader_1);
+            preprocessedFragmentShader.replace("%GridsInFragmentShader_2%", gridsInFragmentShader_2);
+            preprocessedFragmentShader.replace("%GridsInFragmentShader_3%", gridsInFragmentShader_3);
+            preprocessedFragmentShader.replace("%GridsInFragmentShader_4%", gridsInFragmentShader_4);
+        }
+        else
+        {
+            const auto emptyString = QString();
+            preprocessedFragmentShader.replace("%GridsInFragmentShader_1%", emptyString);
+            preprocessedFragmentShader.replace("%GridsInFragmentShader_2%", emptyString);
+            preprocessedFragmentShader.replace("%GridsInFragmentShader_3%", emptyString);
+            preprocessedFragmentShader.replace("%GridsInFragmentShader_4%", emptyString);
+        }
+        if ((programFeatures & RenderingFeatures::Dynamics) > 0)
+            preprocessedFragmentShader.replace("%DynamicsInFragmentShader%", dynamicsInFragmentShader);
+        else
+            preprocessedFragmentShader.replace("%DynamicsInFragmentShader%", QString());
         gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
         gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-        if (fsId == 0)
-        {
-            glDeleteShader(vsId);
-            GL_CHECK_RESULT;
 
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile AtlasMapRendererMapLayersStage_OpenGL fragment shader for %d raster map layers",
-                numberOfLayersInBatch);
-            return false;
+        // Read precompiled shaders if available or otherwise compile them and put the binary code in cache if possible
+        outRasterLayerTileProgram.binaryCache = gpuAPI->readProgramBinary(preprocessedVertexShader,
+            preprocessedFragmentShader, setupOptions.pathToOpenGLShadersCache, outRasterLayerTileProgram.cacheFormat);
+
+        if (!outRasterLayerTileProgram.binaryCache.isEmpty())
+        {
+            outRasterLayerTileProgram.id = getGPUAPI()->linkProgram(0, nullptr, variableLocations,
+                outRasterLayerTileProgram.binaryCache, outRasterLayerTileProgram.cacheFormat, true, &variablesMap);
         }
-        GLuint shaders[] = { vsId, fsId };
-        outRasterLayerTileProgram.id = getGPUAPI()->linkProgram(2, shaders, variableLocations,
-            outRasterLayerTileProgram.binaryCache, outRasterLayerTileProgram.cacheFormat, true, &variablesMap);
+        if (outRasterLayerTileProgram.binaryCache.isEmpty() || !outRasterLayerTileProgram.id.isValid())
+        {
+            const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+            if (vsId == 0)
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to compile AtlasMapRendererMapLayersStage_OpenGL vertex shader for %d raster map layers",
+                    numberOfLayersInBatch);
+                return false;
+            }
+            const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+            if (fsId == 0)
+            {
+                glDeleteShader(vsId);
+                GL_CHECK_RESULT;
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to compile AtlasMapRendererMapLayersStage_OpenGL fragment shader for %d raster map layers",
+                    numberOfLayersInBatch);
+                return false;
+            }
+            GLuint shaders[] = { vsId, fsId };
+            outRasterLayerTileProgram.id = getGPUAPI()->linkProgram(2, shaders, variableLocations,
+                outRasterLayerTileProgram.binaryCache, outRasterLayerTileProgram.cacheFormat, true, &variablesMap);
+            if (outRasterLayerTileProgram.id.isValid() && !outRasterLayerTileProgram.binaryCache.isEmpty())
+            {
+                gpuAPI->writeProgramBinary(
+                    preprocessedVertexShader,
+                    preprocessedFragmentShader,
+                    setupOptions.pathToOpenGLShadersCache,
+                    outRasterLayerTileProgram.binaryCache,
+                    outRasterLayerTileProgram.cacheFormat);
+            }
+        }
     }
     if (!outRasterLayerTileProgram.id.isValid())
     {
@@ -1301,26 +1392,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "param_vs_elevation_colorMapValues",
         GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.tileCoords31,
-        "param_vs_tileCoords31",
-        GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.primaryGridTileTop,
-        "param_vs_primaryGridTileTop",
-        GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.primaryGridTileBot,
-        "param_vs_primaryGridTileBot",
-        GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.secondaryGridTileTop,
-        "param_vs_secondaryGridTileTop",
-        GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.secondaryGridTileBot,
-        "param_vs_secondaryGridTileBot",
-        GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.vs.param.tileCoordsOffset,
         "param_vs_tileCoordsOffset",
         GlslVariableType::Uniform);
@@ -1344,22 +1415,45 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         outRasterLayerTileProgram.vs.param.elevationLayerDataPlace,
         "param_vs_elevationLayerDataPlace",
         GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.primaryGridAxisX,
-        "param_vs_primaryGridAxisX",
-        GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.secondaryGridAxisX,
-        "param_vs_secondaryGridAxisX",
-        GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.primaryGridAxisY,
-        "param_vs_primaryGridAxisY",
-        GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.secondaryGridAxisY,
-        "param_vs_secondaryGridAxisY",
-        GlslVariableType::Uniform);
+    if ((programFeatures & RenderingFeatures::Grids) > 0)
+    {
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.primaryGridAxisX,
+            "param_vs_primaryGridAxisX",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.secondaryGridAxisX,
+            "param_vs_secondaryGridAxisX",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.primaryGridAxisY,
+            "param_vs_primaryGridAxisY",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.secondaryGridAxisY,
+            "param_vs_secondaryGridAxisY",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.tileCoords31,
+            "param_vs_tileCoords31",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.primaryGridTileTop,
+            "param_vs_primaryGridTileTop",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.primaryGridTileBot,
+            "param_vs_primaryGridTileBot",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.secondaryGridTileTop,
+            "param_vs_secondaryGridTileTop",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.secondaryGridTileBot,
+            "param_vs_secondaryGridTileBot",
+            GlslVariableType::Uniform);
+    }
     ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.fs.param.lastBatch,
         "param_fs_lastBatch",
@@ -1384,18 +1478,21 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         outRasterLayerTileProgram.fs.param.myDirection,
         "param_fs_myDirection",
         GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.fs.param.gridParameters,
-        "param_fs_gridParameters",
-        GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.fs.param.primaryGridColor,
-        "param_fs_primaryGridColor",
-        GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.fs.param.secondaryGridColor,
-        "param_fs_secondaryGridColor",
-        GlslVariableType::Uniform);
+    if ((programFeatures & RenderingFeatures::Grids) > 0)
+    {
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.fs.param.gridParameters,
+            "param_fs_gridParameters",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.fs.param.primaryGridColor,
+            "param_fs_primaryGridColor",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.fs.param.secondaryGridColor,
+            "param_fs_secondaryGridColor",
+            GlslVariableType::Uniform);
+    }
     ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.fs.param.worldCameraPosition,
         "param_fs_worldCameraPosition",
@@ -1493,128 +1590,137 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     GL_PUSH_GROUP_MARKER(QStringLiteral("%1x%2@%3").arg(batch->tileId.x).arg(batch->tileId.y).arg(zoomLevel));
 
     // Activate proper program depending on number of captured layers
+    bool batchWithDynamics = batch->hasDynamics;
     const auto wasActivated = activateRasterLayersProgram(
         batchedLayersCount,
+        batchWithDynamics,
         elevationDataSamplerIndex,
         lastUsedProgram,
         zoomLevel);
-    const auto& program = _rasterLayerTilePrograms[batchedLayersCount];
-    const auto& vao = _rasterTileVAOs[batchedLayersCount];
+    const bool withGrids = currentState.gridConfiguration.primaryGrid || currentState.gridConfiguration.secondaryGrid;
+    const auto programFeatures = (withGrids ? static_cast<int>(RenderingFeatures::Grids) : 0)
+        | (batchWithDynamics ? static_cast<int>(RenderingFeatures::Dynamics) : 0);
+    const auto& program = _rasterLayerTilePrograms[batchedLayersCount][programFeatures];
+    const auto& vao = _rasterTileVAOs[batchedLayersCount][programFeatures];
 
     // Set tile coordinates
     const auto tileIdN = Utilities::normalizeTileId(batch->tileId, zoomLevel);
-    const auto zoomShift = MaxZoomLevel - zoomLevel;
-    PointI tile31(tileIdN.x << zoomShift, tileIdN.y << zoomShift);
-    auto tileSize31 = 1u << zoomShift;
-    if (tileSize31 + static_cast<uint32_t>(tile31.x) > 2147483647u)
-        tileSize31--;
-    if (tileSize31 + static_cast<uint32_t>(tile31.y) > 2147483647u)
-        tileSize31--;
-    PointI nextTile31(tile31.x + tileSize31, tile31.y + tileSize31);
-    const auto zoom = static_cast<int32_t>(zoomLevel);
-    PointI minZoom(
-        currentState.gridConfiguration.gridParameters[0].minZoom,
-        currentState.gridConfiguration.gridParameters[1].minZoom);
-    PointI maxZoomForFloat(
-        currentState.gridConfiguration.gridParameters[0].maxZoomForFloat,
-        currentState.gridConfiguration.gridParameters[1].maxZoomForFloat);
-    PointI maxZoomForMixed(
-        currentState.gridConfiguration.gridParameters[0].maxZoomForMixed,
-        currentState.gridConfiguration.gridParameters[1].maxZoomForMixed);
-    int primaryZoom = zoom > maxZoomForFloat.x ? (zoom > maxZoomForMixed.x ? 3 : 2) : (zoom < minZoom.x ? 0 : 1);
-    int secondaryZoom = zoom > maxZoomForFloat.y ? (zoom > maxZoomForMixed.y ? 3 : 2) : (zoom < minZoom.y ? 0 : 1);
-    auto zone = Utilities::getCodedZoneUTM(currentState.target31);
 
-    auto refLon = currentState.gridConfiguration.getPrimaryGridReference(currentState.target31);
-    PointI pointTR(nextTile31.x, tile31.y);
-    PointI pointBL(tile31.x, nextTile31.y);
-    auto refLonTL = currentState.gridConfiguration.getPrimaryGridReference(tile31);
-    auto refLonBR = currentState.gridConfiguration.getPrimaryGridReference(nextTile31);
-    auto refLonTR = currentState.gridConfiguration.getPrimaryGridReference(pointTR);
-    auto refLonBL = currentState.gridConfiguration.getPrimaryGridReference(pointBL);
-    auto isSmall = currentState.gridConfiguration.primaryGranularity != 0.0f
-        || currentState.gridConfiguration.primaryGap <= 1.0f;
-    if (!currentState.gridConfiguration.primaryGrid
-        || zoomLevel < currentState.gridConfiguration.primaryMinZoomLevel
-        || zoomLevel > currentState.gridConfiguration.primaryMaxZoomLevel
-        || (primaryZoom > 2 && !isSmall)
-        || (refLonTL != refLon && refLonBR != refLon && refLonTR != refLon && refLonBL != refLon))
-        primaryZoom = 0;
-    else
+    if (withGrids)
     {
-        auto gridTileTL = currentState.gridConfiguration.getPrimaryGridLocation(tile31, &refLon);
-        auto gridTileBR = currentState.gridConfiguration.getPrimaryGridLocation(nextTile31, &refLon);
-        auto gridTileTR = currentState.gridConfiguration.getPrimaryGridLocation(pointTR, &refLon);
-        auto gridTileBL = currentState.gridConfiguration.getPrimaryGridLocation(pointBL, &refLon);
-        auto tileTX = getGridFractions(gridTileTL.x, gridTileTR.x);
-        auto tileBX = getGridFractions(gridTileBL.x, gridTileBR.x);
-        auto tileLY = getGridFractions(gridTileTL.y, gridTileBL.y);
-        auto tileRY = getGridFractions(gridTileTR.y, gridTileBR.y);
-        auto shiftX = getFloatShift(tileTX.x, tileTX.y, tileBX.x, tileBX.y);
-        auto shiftY = getFloatShift(tileLY.x, tileLY.y, tileRY.x, tileRY.y);
-        glUniform4f(program.vs.param.primaryGridTileTop,
-            static_cast<float>(tileTX.x + shiftX.x),
-            static_cast<float>(tileLY.x + shiftY.x),
-            static_cast<float>(tileTX.y + shiftX.x),
-            static_cast<float>(tileRY.x + shiftY.y));
-        GL_CHECK_RESULT;
-        glUniform4f(program.vs.param.primaryGridTileBot,
-            static_cast<float>(tileBX.x + shiftX.y),
-            static_cast<float>(tileLY.y + shiftY.x),
-            static_cast<float>(tileBX.y + shiftX.y),
-            static_cast<float>(tileRY.y + shiftY.y));
+        const auto zoomShift = MaxZoomLevel - zoomLevel;
+        PointI tile31(tileIdN.x << zoomShift, tileIdN.y << zoomShift);
+        auto tileSize31 = 1u << zoomShift;
+        if (tileSize31 + static_cast<uint32_t>(tile31.x) > 2147483647u)
+            tileSize31--;
+        if (tileSize31 + static_cast<uint32_t>(tile31.y) > 2147483647u)
+            tileSize31--;
+        PointI nextTile31(tile31.x + tileSize31, tile31.y + tileSize31);
+        const auto zoom = static_cast<int32_t>(zoomLevel);
+        PointI minZoom(
+            currentState.gridConfiguration.gridParameters[0].minZoom,
+            currentState.gridConfiguration.gridParameters[1].minZoom);
+        PointI maxZoomForFloat(
+            currentState.gridConfiguration.gridParameters[0].maxZoomForFloat,
+            currentState.gridConfiguration.gridParameters[1].maxZoomForFloat);
+        PointI maxZoomForMixed(
+            currentState.gridConfiguration.gridParameters[0].maxZoomForMixed,
+            currentState.gridConfiguration.gridParameters[1].maxZoomForMixed);
+        int primaryZoom = zoom > maxZoomForFloat.x ? (zoom > maxZoomForMixed.x ? 3 : 2) : (zoom < minZoom.x ? 0 : 1);
+        int secondaryZoom = zoom > maxZoomForFloat.y ? (zoom > maxZoomForMixed.y ? 3 : 2) : (zoom < minZoom.y ? 0 : 1);
+        auto zone = Utilities::getCodedZoneUTM(currentState.target31);
+
+        auto refLon = currentState.gridConfiguration.getPrimaryGridReference(currentState.target31);
+        PointI pointTR(nextTile31.x, tile31.y);
+        PointI pointBL(tile31.x, nextTile31.y);
+        auto refLonTL = currentState.gridConfiguration.getPrimaryGridReference(tile31);
+        auto refLonBR = currentState.gridConfiguration.getPrimaryGridReference(nextTile31);
+        auto refLonTR = currentState.gridConfiguration.getPrimaryGridReference(pointTR);
+        auto refLonBL = currentState.gridConfiguration.getPrimaryGridReference(pointBL);
+        auto isSmall = currentState.gridConfiguration.primaryGranularity != 0.0f
+            || currentState.gridConfiguration.primaryGap <= 1.0f;
+        if (!currentState.gridConfiguration.primaryGrid
+            || zoomLevel < currentState.gridConfiguration.primaryMinZoomLevel
+            || zoomLevel > currentState.gridConfiguration.primaryMaxZoomLevel
+            || (primaryZoom > 2 && !isSmall)
+            || (refLonTL != refLon && refLonBR != refLon && refLonTR != refLon && refLonBL != refLon))
+            primaryZoom = 0;
+        else
+        {
+            auto gridTileTL = currentState.gridConfiguration.getPrimaryGridLocation(tile31, &refLon);
+            auto gridTileBR = currentState.gridConfiguration.getPrimaryGridLocation(nextTile31, &refLon);
+            auto gridTileTR = currentState.gridConfiguration.getPrimaryGridLocation(pointTR, &refLon);
+            auto gridTileBL = currentState.gridConfiguration.getPrimaryGridLocation(pointBL, &refLon);
+            auto tileTX = getGridFractions(gridTileTL.x, gridTileTR.x);
+            auto tileBX = getGridFractions(gridTileBL.x, gridTileBR.x);
+            auto tileLY = getGridFractions(gridTileTL.y, gridTileBL.y);
+            auto tileRY = getGridFractions(gridTileTR.y, gridTileBR.y);
+            auto shiftX = getFloatShift(tileTX.x, tileTX.y, tileBX.x, tileBX.y);
+            auto shiftY = getFloatShift(tileLY.x, tileLY.y, tileRY.x, tileRY.y);
+            glUniform4f(program.vs.param.primaryGridTileTop,
+                static_cast<float>(tileTX.x + shiftX.x),
+                static_cast<float>(tileLY.x + shiftY.x),
+                static_cast<float>(tileTX.y + shiftX.x),
+                static_cast<float>(tileRY.x + shiftY.y));
+            GL_CHECK_RESULT;
+            glUniform4f(program.vs.param.primaryGridTileBot,
+                static_cast<float>(tileBX.x + shiftX.y),
+                static_cast<float>(tileLY.y + shiftY.x),
+                static_cast<float>(tileBX.y + shiftX.y),
+                static_cast<float>(tileRY.y + shiftY.y));
+            GL_CHECK_RESULT;
+        }
+
+        refLon = currentState.gridConfiguration.getSecondaryGridReference(currentState.target31);
+        pointTR.x = nextTile31.x;
+        pointTR.y = tile31.y;
+        pointBL.x = tile31.x;
+        pointBL.y = nextTile31.y;
+        refLonTL = currentState.gridConfiguration.getSecondaryGridReference(tile31);
+        refLonBR = currentState.gridConfiguration.getSecondaryGridReference(nextTile31);
+        refLonTR = currentState.gridConfiguration.getSecondaryGridReference(pointTR);
+        refLonBL = currentState.gridConfiguration.getSecondaryGridReference(pointBL);
+        isSmall = currentState.gridConfiguration.secondaryGranularity != 0.0f
+            || currentState.gridConfiguration.secondaryGap <= 1.0f;
+        if (!currentState.gridConfiguration.secondaryGrid
+            || zoomLevel < currentState.gridConfiguration.secondaryMinZoomLevel
+            || zoomLevel > currentState.gridConfiguration.secondaryMaxZoomLevel
+            || (secondaryZoom > 2 && !isSmall)
+            || (refLonTL != refLon && refLonBR != refLon && refLonTR != refLon && refLonBL != refLon))
+            secondaryZoom = 0;
+        else
+        {
+            auto gridTileTL = currentState.gridConfiguration.getSecondaryGridLocation(tile31, &refLon);
+            auto gridTileBR = currentState.gridConfiguration.getSecondaryGridLocation(nextTile31, &refLon);
+            auto gridTileTR = currentState.gridConfiguration.getSecondaryGridLocation(pointTR, &refLon);
+            auto gridTileBL = currentState.gridConfiguration.getSecondaryGridLocation(pointBL, &refLon);
+            auto tileTX = getGridFractions(gridTileTL.x, gridTileTR.x);
+            auto tileBX = getGridFractions(gridTileBL.x, gridTileBR.x);
+            auto tileLY = getGridFractions(gridTileTL.y, gridTileBL.y);
+            auto tileRY = getGridFractions(gridTileTR.y, gridTileBR.y);
+            auto shiftX = getFloatShift(tileTX.x, tileTX.y, tileBX.x, tileBX.y);
+            auto shiftY = getFloatShift(tileLY.x, tileLY.y, tileRY.x, tileRY.y);
+            glUniform4f(program.vs.param.secondaryGridTileTop,
+                static_cast<float>(tileTX.x + shiftX.x),
+                static_cast<float>(tileLY.x + shiftY.x),
+                static_cast<float>(tileTX.y + shiftX.x),
+                static_cast<float>(tileRY.x + shiftY.y));
+            GL_CHECK_RESULT;
+            glUniform4f(program.vs.param.secondaryGridTileBot,
+                static_cast<float>(tileBX.x + shiftX.y),
+                static_cast<float>(tileLY.y + shiftY.x),
+                static_cast<float>(tileBX.y + shiftX.y),
+                static_cast<float>(tileRY.y + shiftY.y));
+            GL_CHECK_RESULT;
+        }
+
+        glUniform4i(program.vs.param.tileCoords31,
+            tile31.x,
+            tile31.y,
+            1u << zoomShift & 2147483647u,
+            zone << 4 | secondaryZoom << 2 | primaryZoom);
         GL_CHECK_RESULT;
     }
-
-    refLon = currentState.gridConfiguration.getSecondaryGridReference(currentState.target31);
-    pointTR.x = nextTile31.x;
-    pointTR.y = tile31.y;
-    pointBL.x = tile31.x;
-    pointBL.y = nextTile31.y;
-    refLonTL = currentState.gridConfiguration.getSecondaryGridReference(tile31);
-    refLonBR = currentState.gridConfiguration.getSecondaryGridReference(nextTile31);
-    refLonTR = currentState.gridConfiguration.getSecondaryGridReference(pointTR);
-    refLonBL = currentState.gridConfiguration.getSecondaryGridReference(pointBL);
-    isSmall = currentState.gridConfiguration.secondaryGranularity != 0.0f
-        || currentState.gridConfiguration.secondaryGap <= 1.0f;
-    if (!currentState.gridConfiguration.secondaryGrid
-        || zoomLevel < currentState.gridConfiguration.secondaryMinZoomLevel
-        || zoomLevel > currentState.gridConfiguration.secondaryMaxZoomLevel
-        || (secondaryZoom > 2 && !isSmall)
-        || (refLonTL != refLon && refLonBR != refLon && refLonTR != refLon && refLonBL != refLon))
-        secondaryZoom = 0;
-    else
-    {
-        auto gridTileTL = currentState.gridConfiguration.getSecondaryGridLocation(tile31, &refLon);
-        auto gridTileBR = currentState.gridConfiguration.getSecondaryGridLocation(nextTile31, &refLon);
-        auto gridTileTR = currentState.gridConfiguration.getSecondaryGridLocation(pointTR, &refLon);
-        auto gridTileBL = currentState.gridConfiguration.getSecondaryGridLocation(pointBL, &refLon);
-        auto tileTX = getGridFractions(gridTileTL.x, gridTileTR.x);
-        auto tileBX = getGridFractions(gridTileBL.x, gridTileBR.x);
-        auto tileLY = getGridFractions(gridTileTL.y, gridTileBL.y);
-        auto tileRY = getGridFractions(gridTileTR.y, gridTileBR.y);
-        auto shiftX = getFloatShift(tileTX.x, tileTX.y, tileBX.x, tileBX.y);
-        auto shiftY = getFloatShift(tileLY.x, tileLY.y, tileRY.x, tileRY.y);
-        glUniform4f(program.vs.param.secondaryGridTileTop,
-            static_cast<float>(tileTX.x + shiftX.x),
-            static_cast<float>(tileLY.x + shiftY.x),
-            static_cast<float>(tileTX.y + shiftX.x),
-            static_cast<float>(tileRY.x + shiftY.y));
-        GL_CHECK_RESULT;
-        glUniform4f(program.vs.param.secondaryGridTileBot,
-            static_cast<float>(tileBX.x + shiftX.y),
-            static_cast<float>(tileLY.y + shiftY.x),
-            static_cast<float>(tileBX.y + shiftX.y),
-            static_cast<float>(tileRY.y + shiftY.y));
-        GL_CHECK_RESULT;
-    }
-
-    glUniform4i(program.vs.param.tileCoords31,
-        tile31.x,
-        tile31.y,
-        1u << zoomShift & 2147483647u,
-        zone << 4 | secondaryZoom << 2 | primaryZoom);
-    GL_CHECK_RESULT;
 
     // Set tile coordinates offset
     const auto tileId = Utilities::getTileId(currentState.target31, zoomLevel);
@@ -1878,6 +1984,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
 
 bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     const unsigned int numberOfLayersInBatch,
+    const bool batchWithDynamics,
     const int elevationDataSamplerIndex,
     GLname& lastUsedProgram,
     const ZoomLevel zoomLevel)
@@ -1896,8 +2003,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     const auto& currentConfiguration = getCurrentConfiguration();
     const auto& internalState = getInternalState();
 
-    const auto& program = _rasterLayerTilePrograms[numberOfLayersInBatch];
-    const auto& vao = _rasterTileVAOs[numberOfLayersInBatch];
+    const bool withGrids = currentState.gridConfiguration.primaryGrid || currentState.gridConfiguration.secondaryGrid;
+    const auto programFeatures = (withGrids ? static_cast<int>(RenderingFeatures::Grids) : 0)
+        | (batchWithDynamics ? static_cast<int>(RenderingFeatures::Dynamics) : 0);
+    const auto& program = _rasterLayerTilePrograms[numberOfLayersInBatch][programFeatures];
+    const auto& vao = _rasterTileVAOs[numberOfLayersInBatch][programFeatures];
 
     if (lastUsedProgram == program.id)
         return false;
@@ -2014,51 +2124,54 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     GL_CHECK_RESULT;
 
     // Set parameters for grids
-    glUniform4f(program.vs.param.primaryGridAxisX,
-        currentState.gridConfiguration.gridParameters[0].factorX1,
-        currentState.gridConfiguration.gridParameters[0].factorX2,
-        currentState.gridConfiguration.gridParameters[0].factorX3,
-        currentState.gridConfiguration.gridParameters[0].offsetX);
-    GL_CHECK_RESULT;
-    glUniform4f(program.vs.param.secondaryGridAxisX,
-        currentState.gridConfiguration.gridParameters[1].factorX1,
-        currentState.gridConfiguration.gridParameters[1].factorX2,
-        currentState.gridConfiguration.gridParameters[1].factorX3,
-        currentState.gridConfiguration.gridParameters[1].offsetX);
-    GL_CHECK_RESULT;
-    glUniform4f(program.vs.param.primaryGridAxisY,
-        currentState.gridConfiguration.gridParameters[0].factorY1,
-        currentState.gridConfiguration.gridParameters[0].factorY2,
-        currentState.gridConfiguration.gridParameters[0].factorY3,
-        currentState.gridConfiguration.gridParameters[0].offsetY);
-    GL_CHECK_RESULT;
-    glUniform4f(program.vs.param.secondaryGridAxisY,
-        currentState.gridConfiguration.gridParameters[1].factorY1,
-        currentState.gridConfiguration.gridParameters[1].factorY2,
-        currentState.gridConfiguration.gridParameters[1].factorY3,
-        currentState.gridConfiguration.gridParameters[1].offsetY);
-    GL_CHECK_RESULT;
-    auto currentGaps = currentState.gridConfiguration.getCurrentGaps(
-        currentState.target31, currentState.surfaceZoomLevel);
-    auto density = renderer->getSetupOptions().displayDensityFactor;
-    glUniform4f(program.fs.param.gridParameters,
-        static_cast<float>(currentGaps.x),
-        currentState.gridConfiguration.primaryThickness * density / 2.0f,
-        static_cast<float>(currentGaps.y),
-        currentState.gridConfiguration.secondaryThickness * density / 2.0f);
-    GL_CHECK_RESULT;
-    glUniform4f(program.fs.param.primaryGridColor,
-        currentState.gridConfiguration.primaryColor.r,
-        currentState.gridConfiguration.primaryColor.g,
-        currentState.gridConfiguration.primaryColor.b,
-        currentState.gridConfiguration.primaryColor.a);
-    GL_CHECK_RESULT;
-    glUniform4f(program.fs.param.secondaryGridColor,
-        currentState.gridConfiguration.secondaryColor.r,
-        currentState.gridConfiguration.secondaryColor.g,
-        currentState.gridConfiguration.secondaryColor.b,
-        currentState.gridConfiguration.secondaryColor.a);
-    GL_CHECK_RESULT;
+    if (withGrids)
+    {
+        glUniform4f(program.vs.param.primaryGridAxisX,
+            currentState.gridConfiguration.gridParameters[0].factorX1,
+            currentState.gridConfiguration.gridParameters[0].factorX2,
+            currentState.gridConfiguration.gridParameters[0].factorX3,
+            currentState.gridConfiguration.gridParameters[0].offsetX);
+        GL_CHECK_RESULT;
+        glUniform4f(program.vs.param.secondaryGridAxisX,
+            currentState.gridConfiguration.gridParameters[1].factorX1,
+            currentState.gridConfiguration.gridParameters[1].factorX2,
+            currentState.gridConfiguration.gridParameters[1].factorX3,
+            currentState.gridConfiguration.gridParameters[1].offsetX);
+        GL_CHECK_RESULT;
+        glUniform4f(program.vs.param.primaryGridAxisY,
+            currentState.gridConfiguration.gridParameters[0].factorY1,
+            currentState.gridConfiguration.gridParameters[0].factorY2,
+            currentState.gridConfiguration.gridParameters[0].factorY3,
+            currentState.gridConfiguration.gridParameters[0].offsetY);
+        GL_CHECK_RESULT;
+        glUniform4f(program.vs.param.secondaryGridAxisY,
+            currentState.gridConfiguration.gridParameters[1].factorY1,
+            currentState.gridConfiguration.gridParameters[1].factorY2,
+            currentState.gridConfiguration.gridParameters[1].factorY3,
+            currentState.gridConfiguration.gridParameters[1].offsetY);
+        GL_CHECK_RESULT;
+        auto currentGaps = currentState.gridConfiguration.getCurrentGaps(
+            currentState.target31, currentState.surfaceZoomLevel);
+        auto density = renderer->getSetupOptions().displayDensityFactor;
+        glUniform4f(program.fs.param.gridParameters,
+            static_cast<float>(currentGaps.x),
+            currentState.gridConfiguration.primaryThickness * density / 2.0f,
+            static_cast<float>(currentGaps.y),
+            currentState.gridConfiguration.secondaryThickness * density / 2.0f);
+        GL_CHECK_RESULT;
+        glUniform4f(program.fs.param.primaryGridColor,
+            currentState.gridConfiguration.primaryColor.r,
+            currentState.gridConfiguration.primaryColor.g,
+            currentState.gridConfiguration.primaryColor.b,
+            currentState.gridConfiguration.primaryColor.a);
+        GL_CHECK_RESULT;
+        glUniform4f(program.fs.param.secondaryGridColor,
+            currentState.gridConfiguration.secondaryColor.r,
+            currentState.gridConfiguration.secondaryColor.g,
+            currentState.gridConfiguration.secondaryColor.b,
+            currentState.gridConfiguration.secondaryColor.a);
+        GL_CHECK_RESULT;
+    }
 
     // Set camera position for mist calculations
     glUniform4f(program.fs.param.worldCameraPosition,
@@ -2185,17 +2298,20 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterLayers(bool gpu
 
     releaseRasterTile(gpuContextLost);
 
-    for (auto& rasterLayerTileProgram : _rasterLayerTilePrograms)
+    for (auto& rasterLayerTilePrograms : _rasterLayerTilePrograms)
     {
-        if (!rasterLayerTileProgram.id.isValid())
-            continue;
-
-        if (!gpuContextLost)
+        for (int programFeature = 0; programFeature <= RenderingFeatures::All; programFeature++)
         {
-            glDeleteProgram(rasterLayerTileProgram.id);
-            GL_CHECK_RESULT;
+            if (!rasterLayerTilePrograms[programFeature].id.isValid())
+                continue;
+
+            if (!gpuContextLost)
+            {
+                glDeleteProgram(rasterLayerTilePrograms[programFeature].id);
+                GL_CHECK_RESULT;
+            }
+            rasterLayerTilePrograms[programFeature].id = 0;
         }
-        rasterLayerTileProgram.id = 0;
     }
 
     return true;
@@ -2301,35 +2417,39 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterTile()
 
     for (auto numberOfLayersInBatch = _maxNumberOfRasterMapLayersInBatch; numberOfLayersInBatch >= 1; numberOfLayersInBatch--)
     {
-        auto& rasterTileVAO = _rasterTileVAOs[numberOfLayersInBatch];
-        const auto& rasterLayerTileProgram = constOf(_rasterLayerTilePrograms)[numberOfLayersInBatch];
+        for (int programFeatures = 0; programFeatures <= RenderingFeatures::All; programFeatures++)
+        {
+            auto& rasterTileVAO = _rasterTileVAOs[numberOfLayersInBatch][programFeatures];
+            const auto& rasterLayerTileProgram =
+                constOf(_rasterLayerTilePrograms)[numberOfLayersInBatch][programFeatures];
 
-        rasterTileVAO = gpuAPI->allocateUninitializedVAO();
+            rasterTileVAO = gpuAPI->allocateUninitializedVAO();
 
-        // Bind IBO to VAO
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _rasterTileIBO);
-        GL_CHECK_RESULT;
+            // Bind IBO to VAO
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _rasterTileIBO);
+            GL_CHECK_RESULT;
 
-        // Bind VBO to VAO
-        glBindBuffer(GL_ARRAY_BUFFER, _rasterTileVBO);
-        GL_CHECK_RESULT;
+            // Bind VBO to VAO
+            glBindBuffer(GL_ARRAY_BUFFER, _rasterTileVBO);
+            GL_CHECK_RESULT;
 
-        glEnableVertexAttribArray(*rasterLayerTileProgram.vs.in.vertexPosition);
-        GL_CHECK_RESULT;
-        glVertexAttribPointer(*rasterLayerTileProgram.vs.in.vertexPosition,
-            2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXZ)));
-        GL_CHECK_RESULT;
-        glEnableVertexAttribArray(*rasterLayerTileProgram.vs.in.vertexTexCoords);
-        GL_CHECK_RESULT;
-        glVertexAttribPointer(*rasterLayerTileProgram.vs.in.vertexTexCoords,
-            2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
-        GL_CHECK_RESULT;
+            glEnableVertexAttribArray(*rasterLayerTileProgram.vs.in.vertexPosition);
+            GL_CHECK_RESULT;
+            glVertexAttribPointer(*rasterLayerTileProgram.vs.in.vertexPosition,
+                2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXZ)));
+            GL_CHECK_RESULT;
+            glEnableVertexAttribArray(*rasterLayerTileProgram.vs.in.vertexTexCoords);
+            GL_CHECK_RESULT;
+            glVertexAttribPointer(*rasterLayerTileProgram.vs.in.vertexTexCoords,
+                2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
+            GL_CHECK_RESULT;
 
-        gpuAPI->initializeVAO(rasterTileVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        GL_CHECK_RESULT;
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        GL_CHECK_RESULT;
+            gpuAPI->initializeVAO(rasterTileVAO);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            GL_CHECK_RESULT;
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            GL_CHECK_RESULT;
+        }
     }
 
     _rasterTileIndicesCount = indicesCount;
@@ -2344,12 +2464,15 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterTile(bool gpuCo
 
     GL_CHECK_PRESENT(glDeleteBuffers);
 
-    for (auto& rasterTileVAO : _rasterTileVAOs)
+    for (auto& rasterTileVAOs : _rasterTileVAOs)
     {
-        if (rasterTileVAO.isValid())
+        for (int programFeatures = 0; programFeatures <= RenderingFeatures::All; programFeatures++)
         {
-            gpuAPI->releaseVAO(rasterTileVAO, gpuContextLost);
-            rasterTileVAO.reset();
+            if (rasterTileVAOs[programFeatures].isValid())
+            {
+                gpuAPI->releaseVAO(rasterTileVAOs[programFeatures], gpuContextLost);
+                rasterTileVAOs[programFeatures].reset();
+            }
         }
     }
 
@@ -2689,6 +2812,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
         auto batch = Ref<PerTileBatchedLayers>::New(tileId, true);
         perTileBatchedLayers.push_back(batch);
         batch->elevationResourcesInGPU = elevationResources;
+        batch->hasDynamics = false;
 
         for (const auto& mapLayerEntry : rangeOf(constOf(currentState.mapLayersProviders)))
         {
@@ -2771,6 +2895,9 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
                                 absZoomShift,
                                 PointF(-xSubtile, -ySubtile),
                                 texCoordsScale));
+
+                            if (gpuResource->dateTimeNext - gpuResource->dateTimePrevious > 0)
+                                batch->hasDynamics = true;
                         }
                         else
                         {
@@ -2803,6 +2930,8 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
                     // Exact match, no zoom shift or offset
                     batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>::New(exactMatchGpuResource));
                     haveMatch = true;
+                    if (exactMatchGpuResource->dateTimeNext - exactMatchGpuResource->dateTimePrevious > 0)
+                        batch->hasDynamics = true;
                 }
             }
             if (!haveMatch)
@@ -2869,6 +2998,9 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
                                             absZoomShift,
                                             PointF(-xSubtile, -ySubtile),
                                             texCoordsScale));
+
+                                        if (gpuResource->dateTimeNext - gpuResource->dateTimePrevious > 0)
+                                            batch->hasDynamics = true;
                                     }
                                     else
                                     {
@@ -2907,6 +3039,10 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
                                     -absZoomShift,
                                     texCoordsOffset,
                                     texCoordsScale));
+
+                                if (gpuResource->dateTimeNext - gpuResource->dateTimePrevious > 0)
+                                    batch->hasDynamics = true;
+
                                 break;
                             }
                         }
@@ -2966,9 +3102,11 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
 
             if (!canBeBatched && !batch->layers.isEmpty())
             {
+                bool hasDynamics = batch->hasDynamics;
                 batch = new PerTileBatchedLayers(tileId, false);
                 perTileBatchedLayers.push_back(batch);
                 batch->elevationResourcesInGPU = elevationResources;
+                batch->hasDynamics = hasDynamics;
             }
             batch->layers.push_back(qMove(batchedLayer));
         }

@@ -4,6 +4,7 @@
 
 #include "QtExtensions.h"
 #include <QtMath>
+#include <QCryptographicHash>
 #include <QRegularExpression>
 #include <QRegExp>
 
@@ -87,6 +88,56 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
 }
 
 OsmAnd::GPUAPI_OpenGL::~GPUAPI_OpenGL() = default;
+
+bool OsmAnd::GPUAPI_OpenGL::writeProgramBinary(
+    const QString& vertexShaderSource,
+    const QString& fragmentShaderSource,
+    const QString& fileDir,
+    QByteArray& binaryCache,
+    GLenum& cacheFormat)
+{
+    QCryptographicHash hash(QCryptographicHash::Md5);
+    hash.addData(vertexShaderSource.toLatin1());
+    hash.addData(fragmentShaderSource.toLatin1());
+    const auto filename = QStringLiteral("GL_") + QString::fromLatin1(hash.result().toHex()) + QStringLiteral(".bin");
+    QFile file(fileDir + QDir::separator() + filename);
+    if (!file.open(QIODevice::WriteOnly))
+        return false;
+
+    QByteArray binaryCacheAndFormat(binaryCache);
+    binaryCacheAndFormat.append(reinterpret_cast<char*>(&cacheFormat), sizeof(GLenum));
+    const auto bytesWritten = file.write(binaryCacheAndFormat);
+    file.close();
+
+    return bytesWritten == binaryCache.size() + sizeof(GLenum);
+}
+
+QByteArray OsmAnd::GPUAPI_OpenGL::readProgramBinary(
+    const QString& vertexShaderSource,
+    const QString& fragmentShaderSource,
+    const QString& fileDir,
+    GLenum& cacheFormat)
+{
+    QCryptographicHash hash(QCryptographicHash::Md5);
+    hash.addData(vertexShaderSource.toLatin1());
+    hash.addData(fragmentShaderSource.toLatin1());
+    const auto filename = QStringLiteral("GL_") + QString::fromLatin1(hash.result().toHex()) + QStringLiteral(".bin");
+    QFile file(fileDir + QDir::separator() + filename);
+    if (!file.open(QIODevice::ReadOnly))
+        return QByteArray();
+
+    QByteArray binaryCacheAndFormat = file.readAll();
+    file.close();
+
+    const int binarySize = binaryCacheAndFormat.size() - sizeof(GLenum);
+    if (binarySize > 0)
+    {
+        cacheFormat = *(reinterpret_cast<GLenum*>(binaryCacheAndFormat.data() + binarySize));
+        return binaryCacheAndFormat.left(binarySize);
+    }
+
+    return QByteArray();
+}
 
 GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* source)
 {
@@ -179,8 +230,8 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* sourc
         delete[] logBuffer;
 
         glDeleteShader(shader);
+
         shader = 0;
-        return shader;
     }
 
     return shader;
@@ -242,7 +293,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
     }
 
     GLenum linkingResult;
-    if (_isSupported_program_binary && !binaryCache.isEmpty())
+    if (_isSupported_program_binary && !binaryCache.isEmpty() && (shadersCount < 1 || shaders == nullptr))
         linkingResult = linkProgramBinary(program, binaryCache, cacheFormat);
     else
     {

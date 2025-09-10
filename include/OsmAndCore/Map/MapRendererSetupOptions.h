@@ -99,6 +99,17 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
+        QString pathToOpenGLShadersCache;
+#if !defined(SWIG)
+        inline MapRendererSetupOptions& setPathToOpenGLShadersCache(
+            const QString& newPathToOpenGLShadersCache)
+        {
+            pathToOpenGLShadersCache = newPathToOpenGLShadersCache;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
         bool isValid() const;
     };
 }
