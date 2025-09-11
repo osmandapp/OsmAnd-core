@@ -56,7 +56,7 @@ namespace OsmAnd
         static const OsmRouteType* TROLLEYBUS;
         static const OsmRouteType* CLIMBING;
 
-        // OsmRouteType.UNKNOWN is used for TravelGpx OSM routes (Java).
+        // OsmRouteType.UNKNOWN is used for TravelGpx OSM routes.
         // It allows us to reuse code of RouteInfoCard, RouteKey icons, etc.
         static const OsmRouteType* UNKNOWN;
 
