@@ -1982,7 +1982,7 @@ bool OsmAnd::MapRenderer::setViewportScale(double scale, bool forcedUpdate /*= f
 
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    bool update = forcedUpdate || qFuzzyCompare(glViewportScale, scale) || scale <= getMaxViewportScale();
+    const bool update = forcedUpdate || qFuzzyCompare(glViewportScale, scale) || scale <= getMaxViewportScale();
     if (!update)
         return false;
 
@@ -1991,9 +1991,25 @@ bool OsmAnd::MapRenderer::setViewportScale(double scale, bool forcedUpdate /*= f
     return true;
 }
 
+bool OsmAnd::MapRenderer::setViewportShift(int x, int y, bool forcedUpdate /*= false*/)
+{
+    const bool update = forcedUpdate || glViewportShift != glm::vec2(x, y);
+    if (!update)
+        return false;
+
+    glViewportShift = glm::vec2(x, y);
+
+    return true;
+}
+
 double OsmAnd::MapRenderer::getViewportScale() const
 {
     return glViewportScale;
+}
+
+glm::vec2 OsmAnd::MapRenderer::getViewportShift() const
+{
+    return glViewportShift;
 }
 
 bool OsmAnd::MapRenderer::setFlip(bool flip, bool forcedUpdate /*= false*/)

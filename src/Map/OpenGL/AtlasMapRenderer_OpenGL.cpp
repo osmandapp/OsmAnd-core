@@ -113,9 +113,16 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     _debugStage->clear();
 
     // Setup viewport
-    double viewportScale = getViewportScale();
-    const auto x = _internalState.glmViewport[0] + (_internalState.glmViewport[2] - _internalState.glmViewport[2] * viewportScale) * 0.5;
-    const auto y = _internalState.glmViewport[1] + (_internalState.glmViewport[3] - _internalState.glmViewport[3] * viewportScale) * 0.5;
+    const double viewportScale = getViewportScale();
+    const glm::vec2 viewportShift = getViewportShift();
+
+    const auto scaleCenterX = (_internalState.glmViewport[2] * 0.5 - viewportShift.x) * (viewportScale - 1);
+    const auto scaleCentery = (_internalState.glmViewport[3] * 0.5 - viewportShift.y) * (viewportScale - 1);
+    const auto shiftX = (_internalState.glmViewport[2] - _internalState.glmViewport[2] * viewportScale) * 0.5 + scaleCenterX;
+    const auto shiftY = (_internalState.glmViewport[3] - _internalState.glmViewport[3] * viewportScale) * 0.5 + scaleCentery;
+
+    const auto x = _internalState.glmViewport[0] + shiftX;
+    const auto y = _internalState.glmViewport[1] + shiftY;
     const auto w = _internalState.glmViewport[2] * viewportScale;
     const auto h = _internalState.glmViewport[3] * viewportScale;
 

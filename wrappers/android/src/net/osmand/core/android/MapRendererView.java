@@ -339,6 +339,10 @@ public abstract class MapRendererView extends FrameLayout {
         return this._mapRenderer.setViewportScale(scale, forceUpdate);
     }
 
+    public boolean setViewportShift(int x, int y, boolean forceUpdate) {
+        return this._mapRenderer.setViewportShift(x, y, forceUpdate);
+    }
+
     public double getMaxViewportScale() {
         return this._mapRenderer.getMaxViewportScale();
     }
