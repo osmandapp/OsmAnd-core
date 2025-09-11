@@ -170,6 +170,7 @@ namespace OsmAnd
         float symbolsLoadingTime = 0;
 
         double glViewportScale = 1;
+        glm::vec2 glViewportShift = glm::vec2(0);
 
         virtual AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const = 0;
         virtual AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const = 0;
@@ -386,7 +387,9 @@ namespace OsmAnd
         virtual bool setWindowSize(const PointI& windowSize, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setViewportScale(double scale, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setViewportShift(int x, int y, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual double getViewportScale() const Q_DECL_OVERRIDE;
+        virtual glm::vec2 getViewportShift() const Q_DECL_OVERRIDE;
         virtual bool setFlip(bool flip, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFieldOfView(const float fieldOfView, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setVisibleDistance(const float visibleDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;
