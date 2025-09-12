@@ -36,7 +36,6 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
         _program.id = gpuAPI->linkProgram(0, nullptr, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
     if (!_program.id.isValid())
     {
-        // Compile vertex shader
         const QString vertexShader = QLatin1String(
             // Input data
             "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
@@ -65,15 +64,7 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
         auto preprocessedVertexShader = vertexShader;
         gpuAPI->preprocessVertexShader(preprocessedVertexShader);
         gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-        if (vsId == 0)
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile AtlasMapRendererSkyStage_OpenGL vertex shader");
-            return false;
-        }
 
-        // Compile fragment shader
         const QString fragmentShader = QLatin1String(
             // Input data
             "PARAM_INPUT vec2 v2f_position;                                                                                     ""\n"
@@ -102,18 +93,48 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
         QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
         gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
         gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-        if (fsId == 0)
-        {
-            glDeleteShader(vsId);
-            GL_CHECK_RESULT;
 
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile AtlasMapRendererSkyStage_OpenGL fragment shader");
-            return false;
+        // Read precompiled shaders if available or otherwise compile them and put the binary code in cache if possible
+        _program.binaryCache = gpuAPI->readProgramBinary(preprocessedVertexShader,
+            preprocessedFragmentShader, setupOptions.pathToOpenGLShadersCache, _program.cacheFormat);
+
+        if (!_program.binaryCache.isEmpty())
+        {
+            _program.id = gpuAPI->linkProgram(
+                0, nullptr, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
         }
-        const GLuint shaders[] = { vsId, fsId };
-        _program.id = gpuAPI->linkProgram(2, shaders, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
+        if (_program.binaryCache.isEmpty() || !_program.id.isValid())
+        {
+            const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+            if (vsId == 0)
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to compile AtlasMapRendererSkyStage_OpenGL vertex shader");
+                return false;
+            }
+            const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+            if (fsId == 0)
+            {
+                glDeleteShader(vsId);
+                GL_CHECK_RESULT;
+
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to compile AtlasMapRendererSkyStage_OpenGL fragment shader");
+                return false;
+            }
+            const GLuint shaders[] = { vsId, fsId };
+            _program.id = gpuAPI->linkProgram(
+                2, shaders, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
+            if (_program.id.isValid() && !_program.binaryCache.isEmpty())
+            {
+                gpuAPI->writeProgramBinary(
+                    preprocessedVertexShader,
+                    preprocessedFragmentShader,
+                    setupOptions.pathToOpenGLShadersCache,
+                    _program.binaryCache,
+                    _program.cacheFormat);
+            }
+        }
     }
     if (!_program.id.isValid())
     {

@@ -94,6 +94,7 @@ namespace OsmAnd
             const TileId tileId;
             const bool containsOriginLayer;
             bool lastBatch;
+            bool hasDynamics;
             QList< Ref<BatchedLayer> > layers;
             std::shared_ptr<QList<Ref<ElevationResource>>> elevationResourcesInGPU;
 
@@ -120,9 +121,19 @@ namespace OsmAnd
         GLsizei _rasterTileIndicesCount;
         GLname _rasterTileVBO;
         GLname _rasterTileIBO;
-        QHash<unsigned int, GLname> _rasterTileVAOs;
+        QHash<unsigned int, QHash<int, GLname>> _rasterTileVAOs;
         void initializeRasterTile();
         void releaseRasterTile(bool gpuContextLost);
+
+        enum RenderingFeatures : int
+        {
+            None = 0,
+            Grids,
+            Dynamics,
+
+            All
+        };
+
         struct RasterLayerTileProgram
         {
             GLname id;
@@ -208,11 +219,12 @@ namespace OsmAnd
                 } param;
             } fs;
         };
-        QMap<unsigned int, RasterLayerTileProgram> _rasterLayerTilePrograms;
+        QMap<unsigned int, QVector<RasterLayerTileProgram>> _rasterLayerTilePrograms;
         bool initializeRasterLayers();
         bool initializeRasterLayersProgram(
             const unsigned int numberOfLayersInBatch,
-            RasterLayerTileProgram& outRasterLayerTileProgram);
+            const RenderingFeatures programFeatures,
+            QVector<RasterLayerTileProgram>& outRasterLayerTilePrograms);
         bool renderRasterLayersBatch(
             const Ref<PerTileBatchedLayers>& batch,
             AlphaChannelType& currentAlphaChannelType,
@@ -237,6 +249,7 @@ namespace OsmAnd
         PointD getFloatShift(const double first1, const double second1, const double first2, const double second2);
         bool activateRasterLayersProgram(
             const unsigned int numberOfLayersInBatch,
+            const bool batchWithDynamics,
             const int elevationDataSamplerIndex,
             GLname& lastUsedProgram,
             const ZoomLevel zoomLevel);
