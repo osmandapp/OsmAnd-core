@@ -3,7 +3,6 @@ local NDK = [ os.environ ANDROID_NDK_ROOT ] ;
 local NDK_HOST = [ os.environ ANDROID_NDK_HOST ] ;
 local NDK_PLATFORM = [ os.environ ANDROID_NDK_PLATFORM ] ;
 local TOOLCHAIN_VERSION = [ os.environ ANDROID_NDK_TOOLCHAIN_VERSION ] ;
-
 # --------------------------------------------------------------------
 
 using clang : android
@@ -14,7 +13,6 @@ $(NDK)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/aarch64-linux-android$(NDK_PLATF
 <ranlib>$(NDK)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/llvm-ranlib
 <compileflags>-fexceptions
 <compileflags>-frtti
-#<compileflags>-Wall
 <compileflags>-fvisibility=hidden
 <compileflags>-fvisibility-inlines-hidden
 # Configuration taken from $(NDK)/toolchains/aarch64-linux-android-$(TOOLCHAIN_VERSION)/setup.mk
@@ -38,12 +36,8 @@ $(NDK)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/aarch64-linux-android$(NDK_PLATF
 <compileflags>-fstrict-aliasing
 # 'ARMv8a' section
 <compileflags>-march=armv8-a
-<compileflags>-mfloat-abi=softfp
-<compileflags>-mfpu=vfpv3-d16
-<linkflags>-march=armv7-a
-<linkflags>-Wl,--fix-cortex-a8
 # Various
 <cxxflags>-D_REENTRANT
 ;
 
-option.set keep-going : false ; 
+option.set keep-going : false ;

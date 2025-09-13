@@ -19,7 +19,7 @@ android {
 
     defaultConfig {
         minSdkVersion 24
-        targetSdkVersion 34
+        targetSdkVersion 35
     }
 
     compileOptions {
@@ -38,7 +38,7 @@ android {
 }
 
 // OsmAndCore JNI build task
-task buildOsmAndCore(type: Exec) {
+tasks.register('buildOsmAndCore', Exec) {
     description "Build OsmAndCore"
 
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
@@ -48,6 +48,6 @@ task buildOsmAndCore(type: Exec) {
     }
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     compileTask -> compileTask.dependsOn << buildOsmAndCore
 }

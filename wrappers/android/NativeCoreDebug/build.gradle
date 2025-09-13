@@ -1,8 +1,5 @@
 apply plugin: 'com.android.library'
-
-import java.util.regex.Matcher
-import java.util.regex.Pattern
-import org.apache.tools.ant.taskdefs.condition.Os
+apply plugin: 'ivy-publish'
 
 android {
     sourceSets {
@@ -21,7 +18,7 @@ android {
 
     defaultConfig {
         minSdkVersion 24
-        targetSdkVersion 34
+        targetSdkVersion 35
     }
 
     compileOptions {
@@ -33,20 +30,20 @@ android {
         abortOnError false
     }
 
-	aaptOptions {
-		// Don't compress any resources
-		noCompress "qz", "png"
-	}
+    aaptOptions {
+        // Don't compress any resources
+        noCompress "qz", "png"
+    }
 }
 
 // OsmAnd libraries tasks
-task cleanupOsmAndSharedLibs(type: Delete) {
+tasks.register('cleanupOsmAndSharedLibs', Delete) {
     description "Clean-up OsmAnd shared libraries"
 
     delete "./jniLibs/OsmAnd"
 }
 
-task copyOsmAndSharedLibs(type: Copy) {
+tasks.register('copyOsmAndSharedLibs', Copy) {
     description "Copy OsmAnd shared libraries"
 
     dependsOn cleanupOsmAndSharedLibs
@@ -63,50 +60,33 @@ task copyOsmAndSharedLibs(type: Copy) {
 }
 
 android.libraryVariants.all { variant ->
-    def mergeJniLibsTask = tasks.findByName("merge${variant.name.capitalize()}JniLibFolders")
-    if (mergeJniLibsTask != null) {
-        mergeJniLibsTask.dependsOn copyOsmAndSharedLibs
+    tasks.named("merge${variant.name.capitalize()}JniLibFolders").configure {
+        dependsOn copyOsmAndSharedLibs
     }
 }
 
-configurations {
-    OsmAndCore_androidNativeDebug
-}
-def aarDebFile = layout.buildDirectory.file('outputs/aar/OsmAndCore_androidNativeDebug-debug.aar')
-def aarDebArtifact = artifacts.add('OsmAndCore_androidNativeDebug', aarDebFile.get().asFile) {
-    name "OsmAndCore_androidNativeDebug"
-	type "aar"
-}
-
-// // Uploading artifacts to local path
-// group = "net.osmand"
-// //archivesBaseName = "OsmAndCore_androidNativeDebug"
-// version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "master-snapshot"
-// project.afterEvaluate {
-//     publishing {
-//         repositories {
-//             ivy {   
-//         //    credentials {
-//         //        username "" 
-//         //       password ""
-//         //   }
-//             url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
-//             patternLayout {
-//                 artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
-//             }
-//             }
-//             publications {
-//                 debugAar(IvyPublication) {
-//                     artifact(bundleDebugAar) {
-//                         name "OsmAndCore_androidNativeDebug"
-//                         module "OsmAndCore_androidNativeDebug"
-//                     }
-//                 }
-// 		    }
-//         }
-//     }
-// }
-
 dependencies {
     implementation project(":OsmAndCore_androidNative")
+}
+
+afterEvaluate {
+    group = "net.osmand"
+    version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "master-snapshot"
+
+    publishing {
+        repositories {
+            ivy {
+                url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
+                patternLayout {
+                    artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
+                    ivy "[organisation]/[module]/[revision]/ivy-[revision].xml"
+                }
+            }
+        }
+        publications {
+            debugAar(IvyPublication) {
+                artifact tasks.named('bundleDebugAar')
+            }
+        }
+    }
 }

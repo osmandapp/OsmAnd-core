@@ -68,6 +68,11 @@ file(GLOB gdal_ogr_ogrfs_frmts_mitab "upstream.patched/gdal/ogr/ogrsf_frmts/mita
 file(GLOB gdal_ogr_ogrfs_frmts_vrt "upstream.patched/gdal/ogr/ogrsf_frmts/vrt/*.c*")
 file(GLOB gdal_ogr_ogrfs_frmts_shape "upstream.patched/gdal/ogr/ogrsf_frmts/shape/*.c*")
 
+# Exclude generate_encoding_table.c on Android (depends on iconv)
+if (CMAKE_TARGET_OS STREQUAL "android")
+    list(REMOVE_ITEM gdal_ogr "${CMAKE_CURRENT_LIST_DIR}/upstream.patched/gdal/ogr/generate_encoding_table.c")
+endif()
+
 set(gdal_port
 	"upstream.patched/gdal/port/cpl_alibaba_oss.cpp"
 	"upstream.patched/gdal/port/cpl_atomic_ops.cpp"
@@ -180,6 +185,7 @@ add_library(gdal_static STATIC
 target_compile_definitions(gdal_static
 	PRIVATE
 		-DGDAL_COMPILATION
+		-DGDAL_USE_ICONV=OFF
 		-DHOST_FILLORDER=${HOST_FILLORDER}
 		-DHAVE_LIBZ=1
 		-DHAVE_EXPAT=1
