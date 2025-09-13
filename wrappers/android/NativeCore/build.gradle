@@ -13,12 +13,18 @@ android {
         }
     }
 
-    compileSdkVersion 21
-    buildToolsVersion "23.0.3"
+    namespace "net.osmand.core.nativeLibs"
+    compileSdk 35
+    buildToolsVersion = "35.0.0"
 
     defaultConfig {
-        minSdkVersion 9
-        targetSdkVersion 21
+        minSdkVersion 24
+        targetSdkVersion 34
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     lintOptions {
@@ -40,14 +46,8 @@ task buildOsmAndCore(type: Exec) {
     } else {
         commandLine "sh", file("../build.sh").getAbsolutePath()
     }
-
-    doLast {
-        if (execResult.exitValue != 0) {
-            throw new GradleException()
-        }
-     }
-
 }
+
 tasks.withType(JavaCompile) {
     compileTask -> compileTask.dependsOn << buildOsmAndCore
 }

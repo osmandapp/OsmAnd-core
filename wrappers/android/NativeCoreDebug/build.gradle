@@ -15,12 +15,18 @@ android {
         }
     }
 
-    compileSdkVersion 21
-    buildToolsVersion "23.0.3"
+    namespace "net.osmand.core.nativeLibs.debug"
+    compileSdk 35
+    buildToolsVersion = "35.0.0"
 
     defaultConfig {
-        minSdkVersion 9
-        targetSdkVersion 21
+        minSdkVersion 24
+        targetSdkVersion 34
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     lintOptions {
@@ -55,8 +61,12 @@ task copyOsmAndSharedLibs(type: Copy) {
     into "./jniLibs/OsmAnd"
     includeEmptyDirs = false
 }
-tasks.withType(JavaCompile) {
-    compileTask -> compileTask.dependsOn << copyOsmAndSharedLibs
+
+android.libraryVariants.all { variant ->
+    def mergeJniLibsTask = tasks.findByName("merge${variant.name.capitalize()}JniLibFolders")
+    if (mergeJniLibsTask != null) {
+        mergeJniLibsTask.dependsOn copyOsmAndSharedLibs
+    }
 }
 
 configurations {
@@ -68,35 +78,35 @@ def aarDebArtifact = artifacts.add('OsmAndCore_androidNativeDebug', aarDebFile.g
 	type "aar"
 }
 
-// Uploading artifacts to local path
-group = "net.osmand"
-//archivesBaseName = "OsmAndCore_androidNativeDebug"
-version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "master-snapshot"
-project.afterEvaluate {
-    publishing {
-        repositories {
-            ivy {   
-        //    credentials {
-        //        username "" 
-        //       password ""
-        //   }
-            url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
-            patternLayout {
-                artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
-            }
-            }
-            publications {
-                debugAar(IvyPublication) {
-                    artifact(bundleDebugAar) {
-                        name "OsmAndCore_androidNativeDebug"
-                        module "OsmAndCore_androidNativeDebug"
-                    }
-                }
-		    }
-        }
-    }
-}
+// // Uploading artifacts to local path
+// group = "net.osmand"
+// //archivesBaseName = "OsmAndCore_androidNativeDebug"
+// version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "master-snapshot"
+// project.afterEvaluate {
+//     publishing {
+//         repositories {
+//             ivy {   
+//         //    credentials {
+//         //        username "" 
+//         //       password ""
+//         //   }
+//             url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
+//             patternLayout {
+//                 artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
+//             }
+//             }
+//             publications {
+//                 debugAar(IvyPublication) {
+//                     artifact(bundleDebugAar) {
+//                         name "OsmAndCore_androidNativeDebug"
+//                         module "OsmAndCore_androidNativeDebug"
+//                     }
+//                 }
+// 		    }
+//         }
+//     }
+// }
 
 dependencies {
-    compile project(":OsmAndCore_androidNative")
+    implementation project(":OsmAndCore_androidNative")
 }
