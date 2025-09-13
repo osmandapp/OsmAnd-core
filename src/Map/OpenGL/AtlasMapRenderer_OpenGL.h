@@ -197,6 +197,8 @@ namespace OsmAnd
         
         double getTileSizeInMeters() const override;
         double getPixelsToMetersScaleFactor() const override;
+
+        double getMaxViewportScale() const override;
     };
 }
 

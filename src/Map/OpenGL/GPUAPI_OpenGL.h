@@ -245,6 +245,8 @@ namespace OsmAnd
             TransformFeedback,
             ProgramPipeline,
         };
+
+        GLint _viewportDimensions[2];
     private:
         bool uploadTiledDataAsTextureToGPU(
             const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
@@ -361,6 +363,17 @@ namespace OsmAnd
 
         virtual GLenum validateResult(const char* const function, const char* const file, const int line) = 0;
 
+        virtual bool writeProgramBinary(
+            const QString& vertexShaderSource,
+            const QString& fragmentShaderSource,
+            const QString& fileDir,
+            QByteArray& binaryCache,
+            GLenum& cacheFormat);
+        virtual QByteArray readProgramBinary(
+            const QString& vertexShaderSource,
+            const QString& fragmentShaderSource,
+            const QString& fileDir,
+            GLenum& cacheFormat);
         virtual GLuint compileShader(GLenum shaderType, const char* source);
         virtual GLuint linkProgram(
             GLuint shadersCount,

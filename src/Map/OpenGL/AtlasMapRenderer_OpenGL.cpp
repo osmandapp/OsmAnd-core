@@ -113,7 +113,20 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     _debugStage->clear();
 
     // Setup viewport
-    glViewport(_internalState.glmViewport[0], _internalState.glmViewport[1], _internalState.glmViewport[2], _internalState.glmViewport[3]);
+    const double viewportScale = getViewportScale();
+    const glm::vec2 viewportShift = getViewportShift();
+
+    const auto scaleCenterX = (_internalState.glmViewport[2] * 0.5 - viewportShift.x) * (viewportScale - 1);
+    const auto scaleCentery = (_internalState.glmViewport[3] * 0.5 - viewportShift.y) * (viewportScale - 1);
+    const auto shiftX = (_internalState.glmViewport[2] - _internalState.glmViewport[2] * viewportScale) * 0.5 + scaleCenterX;
+    const auto shiftY = (_internalState.glmViewport[3] - _internalState.glmViewport[3] * viewportScale) * 0.5 + scaleCentery;
+
+    const auto x = _internalState.glmViewport[0] + shiftX;
+    const auto y = _internalState.glmViewport[1] + shiftY;
+    const auto w = _internalState.glmViewport[2] * viewportScale;
+    const auto h = _internalState.glmViewport[3] * viewportScale;
+
+    glViewport(x, y, w, h);
     GL_CHECK_RESULT;
 
     // Set background color
@@ -2841,6 +2854,15 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getPixelsToMetersScaleFactor(const MapRe
     const auto tileSizeOnScreenInPixels = internalState->referenceTileSizeOnScreenInPixels * internalState->tileOnScreenScaleFactor;
     const auto metersPerPixel = Utilities::getMetersPerTileUnit(state.zoomLevel, internalState->targetTileId.y, tileSizeOnScreenInPixels);
     return metersPerPixel;
+}
+
+double OsmAnd::AtlasMapRenderer_OpenGL::getMaxViewportScale() const
+{
+    const auto gpuAPI = getGPUAPI();
+    const double scale = std::min((double)gpuAPI->_viewportDimensions[0] / (double)_internalState.glmViewport[2],
+          (double)gpuAPI->_viewportDimensions[1] / (double)_internalState.glmViewport[3]);
+    
+    return scale;
 }
 
 OsmAnd::AtlasMapRendererSkyStage* OsmAnd::AtlasMapRenderer_OpenGL::createSkyStage()

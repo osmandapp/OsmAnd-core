@@ -299,7 +299,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     }
     if (!_billboardRasterProgram.id.isValid())
     {
-        // Compile vertex shader
         const QString vertexShader = QLatin1String(
             // Input data
             "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
@@ -403,15 +402,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
         preprocessedVertexShader.replace("%TileSize3D%", QString::number(AtlasMapRenderer::TileSize3D));
         gpuAPI->preprocessVertexShader(preprocessedVertexShader);
         gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-        if (vsId == 0)
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
-            return false;
-        }
 
-        // Compile fragment shader
         const QString fragmentShader = QLatin1String(
             // Input data
             "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
@@ -430,19 +421,48 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
         auto preprocessedFragmentShader = fragmentShader;
         gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
         gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-        if (fsId == 0)
-        {
-            glDeleteShader(vsId);
-            GL_CHECK_RESULT;
 
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
-            return false;
+        // Read precompiled shaders if available or otherwise compile them and put the binary code in cache if possible
+        _billboardRasterProgram.binaryCache = gpuAPI->readProgramBinary(preprocessedVertexShader,
+            preprocessedFragmentShader, setupOptions.pathToOpenGLShadersCache, _billboardRasterProgram.cacheFormat);
+
+        if (!_billboardRasterProgram.binaryCache.isEmpty())
+        {
+            _billboardRasterProgram.id = gpuAPI->linkProgram(0, nullptr,
+                _billboardRasterProgram.binaryCache, _billboardRasterProgram.cacheFormat, true, &variablesMap);
         }
-        GLuint shaders[] = { vsId, fsId };
-        _billboardRasterProgram.id = gpuAPI->linkProgram(2, shaders,
-            _billboardRasterProgram.binaryCache, _billboardRasterProgram.cacheFormat, true, &variablesMap);
+        if (_billboardRasterProgram.binaryCache.isEmpty() || !_billboardRasterProgram.id.isValid())
+        {
+            const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+            if (vsId == 0)
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+                return false;
+            }
+            const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+            if (fsId == 0)
+            {
+                glDeleteShader(vsId);
+                GL_CHECK_RESULT;
+
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+                return false;
+            }
+            GLuint shaders[] = { vsId, fsId };
+            _billboardRasterProgram.id = gpuAPI->linkProgram(2, shaders,
+                _billboardRasterProgram.binaryCache, _billboardRasterProgram.cacheFormat, true, &variablesMap);
+            if (_billboardRasterProgram.id.isValid() && !_billboardRasterProgram.binaryCache.isEmpty())
+            {
+                gpuAPI->writeProgramBinary(
+                    preprocessedVertexShader,
+                    preprocessedFragmentShader,
+                    setupOptions.pathToOpenGLShadersCache,
+                    _billboardRasterProgram.binaryCache,
+                    _billboardRasterProgram.cacheFormat);
+            }
+        }
     }
     if (!_billboardRasterProgram.id.isValid())
     {
@@ -935,7 +955,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
     }
     if (!_onPath2dProgram.id.isValid())
     {
-        // Compile vertex shader
         const QString vertexShader = QLatin1String(
             // Input data
             "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
@@ -1012,15 +1031,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
         preprocessedVertexShader.replace("%MaxGlyphsPerDrawCall%", QString::number(maxGlyphsPerDrawCall));
         gpuAPI->preprocessVertexShader(preprocessedVertexShader);
         gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-        if (vsId == 0)
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
-            return false;
-        }
 
-        // Compile fragment shader
         const QString fragmentShader = QLatin1String(
             // Input data
             "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
@@ -1039,19 +1050,48 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
         auto preprocessedFragmentShader = fragmentShader;
         gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
         gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-        if (fsId == 0)
-        {
-            glDeleteShader(vsId);
-            GL_CHECK_RESULT;
 
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
-            return false;
+        // Read precompiled shaders if available or otherwise compile them and put the binary code in cache if possible
+        _onPath2dProgram.binaryCache = gpuAPI->readProgramBinary(preprocessedVertexShader,
+            preprocessedFragmentShader, setupOptions.pathToOpenGLShadersCache, _onPath2dProgram.cacheFormat);
+
+        if (!_onPath2dProgram.binaryCache.isEmpty())
+        {
+            _onPath2dProgram.id = gpuAPI->linkProgram(0, nullptr,
+                _onPath2dProgram.binaryCache, _onPath2dProgram.cacheFormat, true, &variablesMap);
         }
-        GLuint shaders[] = { vsId, fsId };
-        _onPath2dProgram.id = gpuAPI->linkProgram(2, shaders,
-            _onPath2dProgram.binaryCache, _onPath2dProgram.cacheFormat, true, &variablesMap);
+        if (_onPath2dProgram.binaryCache.isEmpty() || !_onPath2dProgram.id.isValid())
+        {
+            const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+            if (vsId == 0)
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+                return false;
+            }
+            const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+            if (fsId == 0)
+            {
+                glDeleteShader(vsId);
+                GL_CHECK_RESULT;
+
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+                return false;
+            }
+            GLuint shaders[] = { vsId, fsId };
+            _onPath2dProgram.id = gpuAPI->linkProgram(2, shaders,
+                _onPath2dProgram.binaryCache, _onPath2dProgram.cacheFormat, true, &variablesMap);
+            if (_onPath2dProgram.id.isValid() && !_onPath2dProgram.binaryCache.isEmpty())
+            {
+                gpuAPI->writeProgramBinary(
+                    preprocessedVertexShader,
+                    preprocessedFragmentShader,
+                    setupOptions.pathToOpenGLShadersCache,
+                    _onPath2dProgram.binaryCache,
+                    _onPath2dProgram.cacheFormat);
+            }
+        }
     }
     if (!_onPath2dProgram.id.isValid())
     {
@@ -1266,7 +1306,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
     }
     if (!_onPath3dProgram.id.isValid())
     {
-        // Compile vertex shader
         const QString vertexShader = QLatin1String(
             // Input data
             "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
@@ -1344,15 +1383,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
         preprocessedVertexShader.replace("%MaxGlyphsPerDrawCall%", QString::number(maxGlyphsPerDrawCall));
         gpuAPI->preprocessVertexShader(preprocessedVertexShader);
         gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-        if (vsId == 0)
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
-            return false;
-        }
 
-        // Compile fragment shader
         const QString fragmentShader = QLatin1String(
             // Input data
             "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
@@ -1371,19 +1402,48 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
         auto preprocessedFragmentShader = fragmentShader;
         gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
         gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-        if (fsId == 0)
-        {
-            glDeleteShader(vsId);
-            GL_CHECK_RESULT;
 
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
-            return false;
+        // Read precompiled shaders if available or otherwise compile them and put the binary code in cache if possible
+        _onPath3dProgram.binaryCache = gpuAPI->readProgramBinary(preprocessedVertexShader,
+            preprocessedFragmentShader, setupOptions.pathToOpenGLShadersCache, _onPath3dProgram.cacheFormat);
+
+        if (!_onPath3dProgram.binaryCache.isEmpty())
+        {
+            _onPath3dProgram.id = gpuAPI->linkProgram(0, nullptr,
+                _onPath3dProgram.binaryCache, _onPath3dProgram.cacheFormat, true, &variablesMap);
         }
-        GLuint shaders[] = { vsId, fsId };
-        _onPath3dProgram.id = gpuAPI->linkProgram(2, shaders,
-            _onPath3dProgram.binaryCache, _onPath3dProgram.cacheFormat, true, &variablesMap);
+        if (_onPath3dProgram.binaryCache.isEmpty() || !_onPath3dProgram.id.isValid())
+        {
+            const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+            if (vsId == 0)
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+                return false;
+            }
+            const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+            if (fsId == 0)
+            {
+                glDeleteShader(vsId);
+                GL_CHECK_RESULT;
+
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+                return false;
+            }
+            GLuint shaders[] = { vsId, fsId };
+            _onPath3dProgram.id = gpuAPI->linkProgram(2, shaders,
+                _onPath3dProgram.binaryCache, _onPath3dProgram.cacheFormat, true, &variablesMap);
+            if (_onPath3dProgram.id.isValid() && !_onPath3dProgram.binaryCache.isEmpty())
+            {
+                gpuAPI->writeProgramBinary(
+                    preprocessedVertexShader,
+                    preprocessedFragmentShader,
+                    setupOptions.pathToOpenGLShadersCache,
+                    _onPath3dProgram.binaryCache,
+                    _onPath3dProgram.cacheFormat);
+            }
+        }
     }
     if (!_onPath3dProgram.id.isValid())
     {
@@ -1915,7 +1975,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     }
     if (!_onSurfaceRasterProgram.id.isValid())
     {
-        // Compile vertex shader
         const QString vertexShader = QLatin1String(
             // Input data
             "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
@@ -1957,15 +2016,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
         preprocessedVertexShader.replace("%TileSize3D%", QString::number(AtlasMapRenderer::TileSize3D));
         gpuAPI->preprocessVertexShader(preprocessedVertexShader);
         gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-        if (vsId == 0)
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
-            return false;
-        }
 
-        // Compile fragment shader
         const QString fragmentShader = QLatin1String(
             // Input data
             "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
@@ -1984,19 +2035,48 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
         auto preprocessedFragmentShader = fragmentShader;
         gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
         gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-        if (fsId == 0)
-        {
-            glDeleteShader(vsId);
-            GL_CHECK_RESULT;
 
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
-            return false;
+        // Read precompiled shaders if available or otherwise compile them and put the binary code in cache if possible
+        _onSurfaceRasterProgram.binaryCache = gpuAPI->readProgramBinary(preprocessedVertexShader,
+            preprocessedFragmentShader, setupOptions.pathToOpenGLShadersCache, _onSurfaceRasterProgram.cacheFormat);
+
+        if (!_onSurfaceRasterProgram.binaryCache.isEmpty())
+        {
+            _onSurfaceRasterProgram.id = gpuAPI->linkProgram(0, nullptr,
+                _onSurfaceRasterProgram.binaryCache, _onSurfaceRasterProgram.cacheFormat, true, &variablesMap);
         }
-        GLuint shaders[] = { vsId, fsId };
-        _onSurfaceRasterProgram.id = gpuAPI->linkProgram(2, shaders,
-            _onSurfaceRasterProgram.binaryCache, _onSurfaceRasterProgram.cacheFormat, true, &variablesMap);
+        if (_onSurfaceRasterProgram.binaryCache.isEmpty() || !_onSurfaceRasterProgram.id.isValid())
+        {
+            const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+            if (vsId == 0)
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+                return false;
+            }
+            const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+            if (fsId == 0)
+            {
+                glDeleteShader(vsId);
+                GL_CHECK_RESULT;
+
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+                return false;
+            }
+            GLuint shaders[] = { vsId, fsId };
+            _onSurfaceRasterProgram.id = gpuAPI->linkProgram(2, shaders,
+                _onSurfaceRasterProgram.binaryCache, _onSurfaceRasterProgram.cacheFormat, true, &variablesMap);
+            if (_onSurfaceRasterProgram.id.isValid() && !_onSurfaceRasterProgram.binaryCache.isEmpty())
+            {
+                gpuAPI->writeProgramBinary(
+                    preprocessedVertexShader,
+                    preprocessedFragmentShader,
+                    setupOptions.pathToOpenGLShadersCache,
+                    _onSurfaceRasterProgram.binaryCache,
+                    _onSurfaceRasterProgram.cacheFormat);
+            }
+        }
     }
     if (!_onSurfaceRasterProgram.id.isValid())
     {
@@ -2298,7 +2378,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     }
     if (!_onSurfaceVectorProgram.id.isValid())
     {
-        // Compile vertex shader
         const QString vertexShader = QLatin1String(
             // Input data
             "INPUT vec4 in_vs_vertexPosition;                                                                                   ""\n"
@@ -2385,15 +2464,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
             QString::number(AtlasMapRenderer::HeixelsPerTileSide - 1));
         gpuAPI->preprocessVertexShader(preprocessedVertexShader);
         gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-        if (vsId == 0)
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
-            return false;
-        }
 
-        // Compile fragment shader
         const QString fragmentShader = QLatin1String(
             // Input data
             "PARAM_INPUT vec4 v2f_color;                                                                                        ""\n"
@@ -2411,19 +2482,48 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         auto preprocessedFragmentShader = fragmentShader;
         gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
         gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-        if (fsId == 0)
-        {
-            glDeleteShader(vsId);
-            GL_CHECK_RESULT;
 
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
-            return false;
+        // Read precompiled shaders if available or otherwise compile them and put the binary code in cache if possible
+        _onSurfaceVectorProgram.binaryCache = gpuAPI->readProgramBinary(preprocessedVertexShader,
+            preprocessedFragmentShader, setupOptions.pathToOpenGLShadersCache, _onSurfaceVectorProgram.cacheFormat);
+
+        if (!_onSurfaceVectorProgram.binaryCache.isEmpty())
+        {
+            _onSurfaceVectorProgram.id = gpuAPI->linkProgram(0, nullptr,
+                _onSurfaceVectorProgram.binaryCache, _onSurfaceVectorProgram.cacheFormat, true, &variablesMap);
         }
-        GLuint shaders[] = { vsId, fsId };
-        _onSurfaceVectorProgram.id = gpuAPI->linkProgram(2, shaders,
-            _onSurfaceVectorProgram.binaryCache, _onSurfaceVectorProgram.cacheFormat, true, &variablesMap);
+        if (_onSurfaceVectorProgram.binaryCache.isEmpty() || !_onSurfaceVectorProgram.id.isValid())
+        {
+            const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+            if (vsId == 0)
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+                return false;
+            }
+            const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+            if (fsId == 0)
+            {
+                glDeleteShader(vsId);
+                GL_CHECK_RESULT;
+
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+                return false;
+            }
+            GLuint shaders[] = { vsId, fsId };
+            _onSurfaceVectorProgram.id = gpuAPI->linkProgram(2, shaders,
+                _onSurfaceVectorProgram.binaryCache, _onSurfaceVectorProgram.cacheFormat, true, &variablesMap);
+            if (_onSurfaceVectorProgram.id.isValid() && !_onSurfaceVectorProgram.binaryCache.isEmpty())
+            {
+                gpuAPI->writeProgramBinary(
+                    preprocessedVertexShader,
+                    preprocessedFragmentShader,
+                    setupOptions.pathToOpenGLShadersCache,
+                    _onSurfaceVectorProgram.binaryCache,
+                    _onSurfaceVectorProgram.cacheFormat);
+            }
+        }
     }
     if (!_onSurfaceVectorProgram.id.isValid())
     {
@@ -2959,7 +3059,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeVisibilityCheck()
     }
     if (!_visibilityCheckProgram.id.isValid())
     {
-        // Compile vertex shader
         const QString vertexShader = QLatin1String(
             // Input data
             "INPUT lowp float in_vs_vertexPosition;                                                                             ""\n"
@@ -2987,15 +3086,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeVisibilityCheck()
         auto preprocessedVertexShader = vertexShader;
         gpuAPI->preprocessVertexShader(preprocessedVertexShader);
         gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-        const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-        if (vsId == 0)
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
-            return false;
-        }
 
-        // Compile fragment shader
         const QString fragmentShader = QLatin1String(
             "void main()                                                                                                        ""\n"
             "{                                                                                                                  ""\n"
@@ -3004,19 +3095,48 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeVisibilityCheck()
         auto preprocessedFragmentShader = fragmentShader;
         gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
         gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-        const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-        if (fsId == 0)
-        {
-            glDeleteShader(vsId);
-            GL_CHECK_RESULT;
 
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
-            return false;
+        // Read precompiled shaders if available or otherwise compile them and put the binary code in cache if possible
+        _visibilityCheckProgram.binaryCache = gpuAPI->readProgramBinary(preprocessedVertexShader,
+            preprocessedFragmentShader, setupOptions.pathToOpenGLShadersCache, _visibilityCheckProgram.cacheFormat);
+
+        if (!_visibilityCheckProgram.binaryCache.isEmpty())
+        {
+            _visibilityCheckProgram.id = gpuAPI->linkProgram(0, nullptr,
+                _visibilityCheckProgram.binaryCache, _visibilityCheckProgram.cacheFormat, true, &variablesMap);
         }
-        GLuint shaders[] = { vsId, fsId };
-        _visibilityCheckProgram.id = gpuAPI->linkProgram(2, shaders,
-            _visibilityCheckProgram.binaryCache, _visibilityCheckProgram.cacheFormat, true, &variablesMap);
+        if (_visibilityCheckProgram.binaryCache.isEmpty() || !_visibilityCheckProgram.id.isValid())
+        {
+            const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+            if (vsId == 0)
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+                return false;
+            }
+            const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+            if (fsId == 0)
+            {
+                glDeleteShader(vsId);
+                GL_CHECK_RESULT;
+
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+                return false;
+            }
+            GLuint shaders[] = { vsId, fsId };
+            _visibilityCheckProgram.id = gpuAPI->linkProgram(2, shaders,
+                _visibilityCheckProgram.binaryCache, _visibilityCheckProgram.cacheFormat, true, &variablesMap);
+            if (_visibilityCheckProgram.id.isValid() && !_visibilityCheckProgram.binaryCache.isEmpty())
+            {
+                gpuAPI->writeProgramBinary(
+                    preprocessedVertexShader,
+                    preprocessedFragmentShader,
+                    setupOptions.pathToOpenGLShadersCache,
+                    _visibilityCheckProgram.binaryCache,
+                    _visibilityCheckProgram.cacheFormat);
+            }
+        }
     }
     if (!_visibilityCheckProgram.id.isValid())
     {

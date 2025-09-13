@@ -22,8 +22,10 @@ void OsmAnd::SymbolRasterizer::rasterize(
     _p->rasterize(symbolsGroups, mapPresentationEnvironment, outSymbolsGroups, filter, queryController);
 }
 
-OsmAnd::SymbolRasterizer::RasterizedSymbolsGroup::RasterizedSymbolsGroup(const std::shared_ptr<const MapObject>& mapObject_)
+OsmAnd::SymbolRasterizer::RasterizedSymbolsGroup::RasterizedSymbolsGroup(
+    const std::shared_ptr<const MapObject>& mapObject_, bool canBeShownWithoutIcon_ /* = false */)
     : mapObject(mapObject_)
+    , canBeShownWithoutIcon(canBeShownWithoutIcon_)
 {
 }
 
