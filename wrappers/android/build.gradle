@@ -159,6 +159,8 @@ tasks.register('copyQtJarLibs', Copy) {
     description "Copy Qt JAR libraries"
     dependsOn cleanupQtJarLibs
 
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
     from("../../externals/qtbase-android") {
         include "upstream.patched.android.clang-*.shared/jar/*.jar"
         eachFile { fileCopyDetails ->
