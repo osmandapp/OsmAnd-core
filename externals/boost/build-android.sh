@@ -88,6 +88,7 @@ BOOST_CONFIGURATION=$(echo "
 	runtime-link=shared
 	variant=release
 	threadapi=pthread
+    cxxflags=\"-Wno-enum-constexpr-conversion\"
 	stage
 " | tr '\n' ' ')
 
