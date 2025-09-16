@@ -1,0 +1,16 @@
+--- upstream.original/boost/mpl/aux_/integral_wrapper.hpp	2025-09-16 17:44:45
++++ upstream.patched/boost/mpl/aux_/integral_wrapper.hpp	2025-09-16 17:45:23
+@@ -69,8 +69,11 @@ struct AUX_WRAPPER_NAME
+     typedef AUX_WRAPPER_INST( BOOST_MPL_AUX_STATIC_CAST(AUX_WRAPPER_VALUE_TYPE, (N + 1)) ) next;
+     typedef AUX_WRAPPER_INST( BOOST_MPL_AUX_STATIC_CAST(AUX_WRAPPER_VALUE_TYPE, (N - 1)) ) prior;
+ #else
+-    typedef AUX_WRAPPER_INST( BOOST_MPL_AUX_STATIC_CAST(AUX_WRAPPER_VALUE_TYPE, (value + 1)) ) next;
+-    typedef AUX_WRAPPER_INST( BOOST_MPL_AUX_STATIC_CAST(AUX_WRAPPER_VALUE_TYPE, (value - 1)) ) prior;
++    /* Avoid direct enum conversion of out-of-range literals (clang's
++       -Wenum-constexpr-conversion).  Perform arithmetics in int then
++       cast back to the enum/integral wrapper value type. */
++    typedef AUX_WRAPPER_INST( BOOST_MPL_AUX_STATIC_CAST(AUX_WRAPPER_VALUE_TYPE, ( static_cast<int>(value) + 1 )) ) next;
++    typedef AUX_WRAPPER_INST( BOOST_MPL_AUX_STATIC_CAST(AUX_WRAPPER_VALUE_TYPE, ( static_cast<int>(value) - 1 )) ) prior;
+ #endif
+ 
+     // enables uniform function call syntax for families of overloaded 
