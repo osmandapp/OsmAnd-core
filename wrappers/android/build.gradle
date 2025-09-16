@@ -99,14 +99,27 @@ tasks.register('cleanupNdkSharedLibs', Delete) {
 }
 
 tasks.register('copyNdkSharedLibs', Copy) {
-    description "Copy NDK shared libraries"
+    description = "Copy NDK shared libraries"
     dependsOn cleanupNdkSharedLibs
 
-    from("$System.env.ANDROID_NDK/sources/cxx-stl/llvm-libc++/libs") {
-        include "armeabi-v7a/libc++_shared.so"
-        include "arm64-v8a/libc++_shared.so"
-        include "x86/libc++_shared.so"
-        include "x86_64/libc++_shared.so"
+    def ndkRoot = System.getenv("ANDROID_NDK")
+    def sysrootLibs = "${ndkRoot}/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib"
+
+    from("${sysrootLibs}/aarch64-linux-android") {
+        include "libc++_shared.so"
+        into "arm64-v8a"
+    }
+    from("${sysrootLibs}/arm-linux-androideabi") {
+        include "libc++_shared.so"
+        into "armeabi-v7a"
+    }
+    from("${sysrootLibs}/x86_64-linux-android") {
+        include "libc++_shared.so"
+        into "x86_64"
+    }
+    from("${sysrootLibs}/i686-linux-android") {
+        include "libc++_shared.so"
+        into "x86"
     }
 
     into "./jniLibs/NDK"
