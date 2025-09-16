@@ -12,6 +12,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'ivy-publish'
 
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.internal.os.OperatingSystem
 
 def generatedOsmAndAssetsDir = layout.buildDirectory.dir("generated/osmand_assets").get().asFile
 
@@ -103,7 +104,18 @@ tasks.register('copyNdkSharedLibs', Copy) {
     dependsOn cleanupNdkSharedLibs
 
     def ndkRoot = System.getenv("ANDROID_NDK")
-    def sysrootLibs = "${ndkRoot}/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib"
+
+    def osName = OperatingSystem.current()
+    def hostTag
+    if (osName.isMacOsX()) {
+        hostTag = "darwin-x86_64"
+    } else if (osName.isLinux()) {
+        hostTag = "linux-x86_64"
+    } else {
+        throw new GradleException("Unsupported OS: $osName")
+    }
+
+    def sysrootLibs = "${ndkRoot}/toolchains/llvm/prebuilt/${hostTag}/sysroot/usr/lib"
 
     from("${sysrootLibs}/aarch64-linux-android") {
         include "libc++_shared.so"
