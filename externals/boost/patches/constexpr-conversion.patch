@@ -1,13 +1,27 @@
---- upstream.original/boost/mpl/aux_/integral_wrapper.hpp	2025-09-16 17:44:45
-+++ upstream.patched/boost/mpl/aux_/integral_wrapper.hpp	2025-09-16 17:58:26
-@@ -69,8 +69,8 @@ struct AUX_WRAPPER_NAME
-     typedef AUX_WRAPPER_INST( BOOST_MPL_AUX_STATIC_CAST(AUX_WRAPPER_VALUE_TYPE, (N + 1)) ) next;
-     typedef AUX_WRAPPER_INST( BOOST_MPL_AUX_STATIC_CAST(AUX_WRAPPER_VALUE_TYPE, (N - 1)) ) prior;
- #else
--    typedef AUX_WRAPPER_INST( BOOST_MPL_AUX_STATIC_CAST(AUX_WRAPPER_VALUE_TYPE, (value + 1)) ) next;
--    typedef AUX_WRAPPER_INST( BOOST_MPL_AUX_STATIC_CAST(AUX_WRAPPER_VALUE_TYPE, (value - 1)) ) prior;
-+    typedef AUX_WRAPPER_INST( (AUX_WRAPPER_VALUE_TYPE)((int)value + 1) ) next;
-+    typedef AUX_WRAPPER_INST( (AUX_WRAPPER_VALUE_TYPE)((int)value - 1) ) prior;
- #endif
+--- upstream.original/boost/mpl/aux_/integral_wrapper.hpp	2025-09-16 18:08:03
++++ upstream.patched/boost/mpl/aux_/integral_wrapper.hpp	2025-09-16 18:06:39
+@@ -21,15 +21,6 @@
  
-     // enables uniform function call syntax for families of overloaded 
+ #include <boost/preprocessor/cat.hpp>
+ 
+-/* Suppress Clang's -Wenum-constexpr-conversion for this old Boost MPL header:
+-   Clang now rejects compile-time conversions of out-of-range integer
+-   values into enum types used as template non-type parameters.
+-   We limit the suppression to Clang only and to this header. */
+-#if defined(__clang__)
+-# pragma clang diagnostic push
+-# pragma clang diagnostic ignored "-Wenum-constexpr-conversion"
+-#endif
+-
+ #if !defined(AUX_WRAPPER_NAME)
+ #   define AUX_WRAPPER_NAME BOOST_PP_CAT(AUX_WRAPPER_VALUE_TYPE,_)
+ #endif
+@@ -100,7 +91,3 @@ BOOST_MPL_AUX_ADL_BARRIER_NAMESPACE_CLOSE
+ #undef AUX_WRAPPER_PARAMS
+ #undef AUX_WRAPPER_INST
+ #undef AUX_WRAPPER_VALUE_TYPE
+-
+-#if defined(__clang__)
+-# pragma clang diagnostic pop
+-#endif
+\ No newline at end of file
