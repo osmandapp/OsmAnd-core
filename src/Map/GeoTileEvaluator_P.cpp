@@ -197,7 +197,10 @@ bool OsmAnd::GeoTileEvaluator_P::evaluate(
             int ok = false;
             double noDataValue = GDALGetRasterNoDataValue(hBand, &ok);
             if (ok && value == noDataValue)
+            {
+                outData.append(0);
                 continue;
+            }
 
             double minValue = GDALGetRasterMinimum(hBand, &ok);
             if (ok && value < minValue)
