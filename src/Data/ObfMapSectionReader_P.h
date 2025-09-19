@@ -9,6 +9,7 @@
 #include <QHash>
 #include <QMap>
 #include <QSet>
+#include <QReadWriteLock>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
@@ -83,6 +84,9 @@ namespace OsmAnd
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
+            QHash<ObfMapSectionDataBlockId, std::shared_ptr<const ObfMapSectionLevelTreeNode>>& nodeCache,
+            QReadWriteLock& nodeCacheAccessMutex,
+            int treeDepth,
             MapSurfaceType& outChildrenSurfaceType,
             QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >* nodesWithData,
             const AreaI* bbox31,
