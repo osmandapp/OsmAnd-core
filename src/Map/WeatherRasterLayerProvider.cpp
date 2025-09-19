@@ -2,6 +2,8 @@
 
 #include "MapDataProviderHelpers.h"
 
+#include <OsmAndCore/Map/WeatherCommonTypes.h>
+
 OsmAnd::WeatherRasterLayerProvider::WeatherRasterLayerProvider(
     const std::shared_ptr<WeatherTileResourcesManager> resourcesManager,
     const WeatherLayer weatherLayer_,
@@ -9,13 +11,11 @@ OsmAnd::WeatherRasterLayerProvider::WeatherRasterLayerProvider(
     const int64_t dateTimeLast,
     const int64_t dateTimeStep,
     const QList<BandIndex> bands,
-    const bool localData,
-    const WeatherSource weatherSource)
+    const bool localData)
     : _resourcesManager(resourcesManager)
     , _bands(bands)
     , _localData(localData)
     , weatherLayer(weatherLayer_)
-    , _weatherSource(weatherSource)
 {
     setDateTime(dateTimeFirst, dateTimeLast, dateTimeStep);
 }
@@ -48,8 +48,13 @@ const int64_t OsmAnd::WeatherRasterLayerProvider::getDateTimeStep() const
 void OsmAnd::WeatherRasterLayerProvider::setDateTime(int64_t dateTimeFirst, int64_t dateTimeLast, int64_t dateTimeStep)
 {
     QWriteLocker scopedLocker(&_lock);
-    
-    _dateTimeStep = Utilities::roundMillisecondsToHours(dateTimeStep);
+
+    WeatherSource source = _resourcesManager->getWeatherSource();
+    const int64_t hoursAlignment = source != WeatherSource::Undefined ? WeatherSourceHoursAlignment[(int)source] : 1;
+
+    dateTimeStep = Utilities::roundMillisecondsToHours(dateTimeStep);
+    _dateTimeStep = dateTimeStep * hoursAlignment;
+
     if (_dateTimeStep < 1)
         _dateTimeStep = 1;
     _dateTimeFirst = dateTimeFirst / _dateTimeStep * _dateTimeStep;
@@ -84,20 +89,6 @@ void OsmAnd::WeatherRasterLayerProvider::setLocalData(const bool localData)
     QWriteLocker scopedLocker(&_lock);
 
     _localData = localData;
-}
-
-OsmAnd::WeatherSource OsmAnd::WeatherRasterLayerProvider::getWeatherSource() const
-{
-    QReadLocker scopedLocker(&_lock);
-    
-    return _weatherSource;
-}
-
-void OsmAnd::WeatherRasterLayerProvider::setWeatherSource(const WeatherSource weatherSource)
-{
-    QWriteLocker scopedLocker(&_lock);
-    
-    _weatherSource = weatherSource;
 }
 
 OsmAnd::MapStubStyle OsmAnd::WeatherRasterLayerProvider::getDesiredStubsStyle() const
