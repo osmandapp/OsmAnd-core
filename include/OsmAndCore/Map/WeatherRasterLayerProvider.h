@@ -35,7 +35,6 @@ namespace OsmAnd
         int64_t _dateTimeStep;
         QList<BandIndex> _bands;
         bool _localData;
-        WeatherSource _weatherSource;
 
     protected:
     public:
@@ -45,8 +44,7 @@ namespace OsmAnd
                                    const int64_t dateTimeLast,
                                    const int64_t dateTimeStep,
                                    const QList<BandIndex> bands,
-                                   const bool localData,
-                                   const WeatherSource weatherSource = WeatherSource::GFS);
+                                   const bool localData);
         virtual ~WeatherRasterLayerProvider();
         
         const WeatherLayer weatherLayer;
@@ -59,9 +57,6 @@ namespace OsmAnd
         void setBands(const QList<BandIndex>& bands);
         const bool getLocalData() const;
         void setLocalData(const bool localData);
-        
-        WeatherSource getWeatherSource() const;
-        void setWeatherSource(const WeatherSource weatherSource);
 
         virtual MapStubStyle getDesiredStubsStyle() const Q_DECL_OVERRIDE;
 

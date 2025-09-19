@@ -1410,7 +1410,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
     if (!provider)
         return;
 
-    const auto dateTime = request->dateTimeFirst;
+    const auto dateTime = AlignDateTime(request->dateTimeFirst, provider->getWeatherSource());
     TileId tileId = request->tileId;
     ZoomLevel zoom = request->zoom;
     auto bands = request->bands;

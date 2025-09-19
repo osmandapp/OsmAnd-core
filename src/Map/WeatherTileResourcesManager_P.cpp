@@ -1,6 +1,8 @@
 #include "WeatherTileResourcesManager_P.h"
 #include "WeatherTileResourcesManager.h"
 
+#include <OsmAndCore/Map/WeatherCommonTypes.h>
+
 #include "Utilities.h"
 #include "Logging.h"
 #include "WeatherDataConverter.h"
@@ -278,7 +280,7 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValue(
     if (resourceProvider)
     {
         WeatherTileResourceProvider::ValueRequest rr;
-        rr.dateTime = request.dateTime;
+        rr.dateTime = AlignDateTime(request.dateTime, _weatherSource);
         rr.point31 = request.point31;
         rr.zoom = request.zoom;
         rr.band = request.band;
@@ -315,7 +317,7 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValueAsync(
     {
         WeatherTileResourceProvider::ValueRequest rr;
         rr.clientId = request.clientId;
-        rr.dateTime = request.dateTime;
+        rr.dateTime = AlignDateTime(request.dateTime, _weatherSource);
         rr.point31 = request.point31;
         rr.zoom = request.zoom;
         rr.band = request.band;
