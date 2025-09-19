@@ -41,7 +41,7 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererSta
 
             return gpuResource;
         }
-        else if (isNotReady)
+        else if (isNotReady && resource->getState() != MapRendererResourceState::Unavailable)
             *isNotReady = true;
     }
 
