@@ -194,8 +194,6 @@ namespace OsmAnd
             const PointI& location31, const float height, PointI& outLocation31) const = 0;
         virtual bool getLastProjectablePoint(const MapRendererInternalState& internalState,
             const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const = 0;
-        virtual bool getLastVisiblePoint(const MapRendererInternalState& internalState,
-            const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const = 0;
         virtual bool isPointProjectable(const MapRendererInternalState& internalState, const glm::vec3& point) const = 0;
         virtual bool isPointVisible(const MapRendererInternalState& internalState, const glm::vec3& point, bool skipTop = false,
             bool skipLeft = false, bool skipBottom = false, bool skipRight = false, bool skipFront = false, bool skipBack = false, float tolerance = 0.0) const = 0;
