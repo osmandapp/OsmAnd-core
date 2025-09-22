@@ -140,11 +140,12 @@ namespace OsmAnd
         QWaitCondition _waitUntilAnyGeoTileIsProcessed;
         
         mutable QReadWriteLock _geoDbLock;
-        std::shared_ptr<TileSqliteDatabase> _geoTilesDb;
+        QHash<WeatherSource, std::shared_ptr<TileSqliteDatabase>> _geoTilesDbMap;
 
         mutable QReadWriteLock _rasterDbLock;
-        QHash<BandIndex, std::shared_ptr<TileSqliteDatabase>> _rasterTilesDbMap;
-        std::shared_ptr<OsmAnd::TileSqliteDatabase> createRasterTilesDatabase(BandIndex band);
+        QHash<QPair<WeatherSource, BandIndex>, std::shared_ptr<TileSqliteDatabase>> _rasterTilesDbMap;
+        std::shared_ptr<OsmAnd::TileSqliteDatabase> createRasterTilesDatabase(BandIndex band, WeatherSource weatherSource);
+        std::shared_ptr<OsmAnd::TileSqliteDatabase> createGeoTilesDatabase(WeatherSource weatherSource);
 
         mutable QMutex _contourTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _contourTilesInProcess;
@@ -229,6 +230,7 @@ namespace OsmAnd
         void setWeatherSource(const WeatherSource weatherSource);
         
         QString getWeatherTilesUrlPrefix() const;
+        QString getWeatherSourcePrefix(WeatherSource weatherSource) const;
 
         int getCurrentRequestVersion() const;
         int getAndUpdateRequestVersion(

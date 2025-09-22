@@ -562,28 +562,16 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(
             resourceProvider->closeProvider();
             _resourceProvider.reset();
 
-            auto geoDbCachePath = localCachePath
-            + QDir::separator()
-            + QStringLiteral("weather_tiffs.db");
-
-            if (!QFile(geoDbCachePath).remove())
+            QFileInfoList weatherFileInfos;
+            Utilities::findFiles(QDir(localCachePath),
+                QStringList() << (QStringLiteral("*weather_cache*.db")) << (QStringLiteral("*weather_tiffs.db")), weatherFileInfos, false);
+            for (const auto &weatherFileInfo: constOf(weatherFileInfos))
             {
-                LogPrintf(LogSeverityLevel::Error,
-                        "Failed to delete weather geo cache db file: %s", qPrintable(geoDbCachePath));
-            }
-            else
-            {
-                QFileInfoList rasterFileInfos;
-                Utilities::findFiles(QDir(localCachePath),
-                    QStringList() << (QStringLiteral("weather_cache*.db")), rasterFileInfos, false);
-                for (const auto &rasterFileInfo: constOf(rasterFileInfos))
+                auto weatherDbCachePath = weatherFileInfo.absoluteFilePath();
+                if (!QFile(weatherDbCachePath).remove())
                 {
-                    auto rasterDbCachePath = rasterFileInfo.absoluteFilePath();
-                    if (!QFile(rasterDbCachePath).remove())
-                    {
-                        LogPrintf(LogSeverityLevel::Error,
-                                "Failed to delete weather raster cache db file: %s", qPrintable(rasterDbCachePath));
-                    }
+                    LogPrintf(LogSeverityLevel::Error,
+                            "Failed to delete weather cache db file: %s", qPrintable(weatherDbCachePath));
                 }
             }
         }
@@ -618,30 +606,16 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(int64_t beforeDateTime 
             resourceProvider->closeProvider();
             _resourceProvider.reset();
 
-            auto geoDbCachePath = localCachePath
-            + QDir::separator()
-            + QStringLiteral("weather_tiffs.db");
-
-            if (!QFile(geoDbCachePath).remove())
+            QFileInfoList weatherFileInfos;
+            Utilities::findFiles(QDir(localCachePath),
+                QStringList() << (QStringLiteral("*weather_cache*.db")) << (QStringLiteral("*weather_tiffs.db")), weatherFileInfos, false);
+            for (const auto &weatherFileInfo: constOf(weatherFileInfos))
             {
-                res = false;
-                LogPrintf(LogSeverityLevel::Error,
-                        "Failed to delete weather geo cache db file: %s", qPrintable(geoDbCachePath));
-            }
-            else
-            {
-                QFileInfoList rasterFileInfos;
-                Utilities::findFiles(QDir(localCachePath),
-                    QStringList() << (QStringLiteral("weather_cache*.db")), rasterFileInfos, false);
-                for (const auto &rasterFileInfo: constOf(rasterFileInfos))
+                auto weatherDbCachePath = weatherFileInfo.absoluteFilePath();
+                if (!QFile(weatherDbCachePath).remove())
                 {
-                    auto rasterDbCachePath = rasterFileInfo.absoluteFilePath();
-                    if (!QFile(rasterDbCachePath).remove())
-                    {
-                        res = false;
-                        LogPrintf(LogSeverityLevel::Error,
-                                "Failed to delete weather raster cache db file: %s", qPrintable(rasterDbCachePath));
-                    }
+                    LogPrintf(LogSeverityLevel::Error,
+                            "Failed to delete weather cache db file: %s", qPrintable(weatherDbCachePath));
                 }
             }
         }
