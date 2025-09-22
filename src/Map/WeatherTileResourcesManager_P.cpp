@@ -575,7 +575,7 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(
             {
                 QFileInfoList rasterFileInfos;
                 Utilities::findFiles(QDir(localCachePath),
-                    QStringList() << (QStringLiteral("weather_cache*.db")), rasterFileInfos, false);
+                    QStringList() << (QStringLiteral("*weather_cache*.db")), rasterFileInfos, false);
                 for (const auto &rasterFileInfo: constOf(rasterFileInfos))
                 {
                     auto rasterDbCachePath = rasterFileInfo.absoluteFilePath();
@@ -632,7 +632,7 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(int64_t beforeDateTime 
             {
                 QFileInfoList rasterFileInfos;
                 Utilities::findFiles(QDir(localCachePath),
-                    QStringList() << (QStringLiteral("weather_cache*.db")), rasterFileInfos, false);
+                    QStringList() << (QStringLiteral("*weather_cache*.db")), rasterFileInfos, false);
                 for (const auto &rasterFileInfo: constOf(rasterFileInfos))
                 {
                     auto rasterDbCachePath = rasterFileInfo.absoluteFilePath();

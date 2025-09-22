@@ -238,10 +238,11 @@ QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider_P::getCurrentEvaluatin
 }
 
 std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::createRasterTilesDatabase(
-    BandIndex band)
+    BandIndex band, WeatherSource weatherSource)
 {
     auto rasterDbCachePath = localCachePath
         + QDir::separator()
+        + getWeatherSourcePrefix(weatherSource)
         + QStringLiteral("weather_cache_")
         + QString::number(band)
         + QStringLiteral(".db");
@@ -559,23 +560,26 @@ std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_
 std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::getRasterTilesDatabase(
     BandIndex band)
 {
+    auto currentWeatherSource = getWeatherSource();
+    auto key = QPair<WeatherSource, BandIndex>(currentWeatherSource, band);
+    
     {
         QReadLocker scopedLocker(&_rasterDbLock);
         
-        const auto citRasterDb = _rasterTilesDbMap.constFind(band);
+        const auto citRasterDb = _rasterTilesDbMap.constFind(key);
         if (citRasterDb != _rasterTilesDbMap.cend())
             return *citRasterDb;
     }
     {
         QWriteLocker scopedLocker(&_rasterDbLock);
         
-        const auto citRasterDb = _rasterTilesDbMap.constFind(band);
+        const auto citRasterDb = _rasterTilesDbMap.constFind(key);
         if (citRasterDb != _rasterTilesDbMap.cend())
             return *citRasterDb;
 
-        auto db = createRasterTilesDatabase(band);
+        auto db = createRasterTilesDatabase(band, currentWeatherSource);
         if (db)
-            _rasterTilesDbMap.insert(band, db);
+            _rasterTilesDbMap.insert(key, db);
         
         return db;
     }
@@ -672,6 +676,7 @@ uint64_t OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
     {
         auto rasterDbCachePath = localCachePath
             + QDir::separator()
+            + getWeatherSourcePrefix(getWeatherSource())
             + QStringLiteral("weather_cache_")
             + QString::number(band)
             + QStringLiteral(".db");
@@ -742,6 +747,7 @@ bool OsmAnd::WeatherTileResourceProvider_P::removeTileDataBefore(
     {
         auto rasterDbCachePath = localCachePath
             + QDir::separator()
+            + getWeatherSourcePrefix(getWeatherSource())
             + QStringLiteral("weather_cache_")
             + QString::number(band)
             + QStringLiteral(".db");
@@ -782,6 +788,7 @@ bool OsmAnd::WeatherTileResourceProvider_P::removeTileData(
     {
         auto rasterDbCachePath = localCachePath
             + QDir::separator()
+            + getWeatherSourcePrefix(getWeatherSource())
             + QStringLiteral("weather_cache_")
             + QString::number(band)
             + QStringLiteral(".db");
@@ -1626,3 +1633,17 @@ QString OsmAnd::WeatherTileResourceProvider_P::getWeatherTilesUrlPrefix() const
             return GFS_WEATHER_TILES_URL_PREFIX;
     }
 }
+
+QString OsmAnd::WeatherTileResourceProvider_P::getWeatherSourcePrefix(WeatherSource weatherSource) const
+{
+    switch (weatherSource)
+    {
+        case WeatherSource::GFS:
+            return QStringLiteral("gfs_");
+        case WeatherSource::ECMWF:
+            return QStringLiteral("ecmwf_");
+        default:
+            return QStringLiteral("gfs_");
+    }
+}
+

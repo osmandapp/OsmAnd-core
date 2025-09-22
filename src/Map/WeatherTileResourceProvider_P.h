@@ -143,8 +143,8 @@ namespace OsmAnd
         std::shared_ptr<TileSqliteDatabase> _geoTilesDb;
 
         mutable QReadWriteLock _rasterDbLock;
-        QHash<BandIndex, std::shared_ptr<TileSqliteDatabase>> _rasterTilesDbMap;
-        std::shared_ptr<OsmAnd::TileSqliteDatabase> createRasterTilesDatabase(BandIndex band);
+        QHash<QPair<WeatherSource, BandIndex>, std::shared_ptr<TileSqliteDatabase>> _rasterTilesDbMap;
+        std::shared_ptr<OsmAnd::TileSqliteDatabase> createRasterTilesDatabase(BandIndex band, WeatherSource weatherSource);
 
         mutable QMutex _contourTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _contourTilesInProcess;
@@ -229,6 +229,7 @@ namespace OsmAnd
         void setWeatherSource(const WeatherSource weatherSource);
         
         QString getWeatherTilesUrlPrefix() const;
+        QString getWeatherSourcePrefix(WeatherSource weatherSource) const;
 
         int getCurrentRequestVersion() const;
         int getAndUpdateRequestVersion(
