@@ -106,25 +106,14 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     _obtainCacheDataThreadPool->setMaxThreadCount(4);
     _obtainOnlineDataThreadPool->setMaxThreadCount(4);
     
-    auto geoDbCachePath = localCachePath
-    + QDir::separator()
-    + QStringLiteral("weather_tiffs.db");
-
-    _geoTilesDb = std::make_shared<TileSqliteDatabase>(geoDbCachePath);
-    if (_geoTilesDb->open(true))
-    {
-        TileSqliteDatabase::Meta meta;
-        if (!_geoTilesDb->obtainMeta(meta))
-        {
-            meta.setMinZoom(WeatherTileResourceProvider::getGeoTileZoom());
-            meta.setMaxZoom(WeatherTileResourceProvider::getGeoTileZoom());
-            meta.setTileNumbering(QStringLiteral(""));
-            meta.setSpecificated(QStringLiteral("yes"));
-            _geoTilesDb->storeMeta(meta);
-            _geoTilesDb->enableTileTimeSupport();
-            _geoTilesDb->enableTileTimestampSupport();
-        }
-    }
+    
+    auto gfsDb = createGeoTilesDatabase(WeatherSource::GFS);
+    if (gfsDb)
+        _geoTilesDbMap.insert(WeatherSource::GFS, gfsDb);
+        
+    auto ecmwfDb = createGeoTilesDatabase(WeatherSource::ECMWF);
+    if (ecmwfDb)
+        _geoTilesDbMap.insert(WeatherSource::ECMWF, ecmwfDb);
 }
 
 OsmAnd::WeatherTileResourceProvider_P::~WeatherTileResourceProvider_P()
@@ -235,6 +224,33 @@ QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider_P::getCurrentEvaluatin
     QReadLocker scopedLocker(&_lock);
 
     return _currentEvaluatingTileIds;
+}
+
+std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::createGeoTilesDatabase(
+    WeatherSource weatherSource)
+{
+    auto geoDbCachePath = localCachePath
+        + QDir::separator()
+        + getWeatherSourcePrefix(weatherSource)
+        + QStringLiteral("weather_tiffs.db");
+
+    auto db = std::make_shared<TileSqliteDatabase>(geoDbCachePath);
+    if (db->open(true))
+    {
+        TileSqliteDatabase::Meta meta;
+        if (!db->obtainMeta(meta))
+        {
+            meta.setMinZoom(WeatherTileResourceProvider::getGeoTileZoom());
+            meta.setMaxZoom(WeatherTileResourceProvider::getGeoTileZoom());
+            meta.setTileNumbering(QStringLiteral(""));
+            meta.setSpecificated(QStringLiteral("yes"));
+            db->storeMeta(meta);
+            db->enableTileTimeSupport();
+            db->enableTileTimestampSupport();
+        }
+        return db;
+    }
+    return nullptr;
 }
 
 std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::createRasterTilesDatabase(
@@ -554,7 +570,12 @@ std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_
 {
     QReadLocker geoScopedLocker(&_geoDbLock);
     
-    return _geoTilesDb;
+    auto currentWeatherSource = getWeatherSource();
+    const auto citGeoDb = _geoTilesDbMap.constFind(currentWeatherSource);
+    if (citGeoDb != _geoTilesDbMap.cend())
+        return *citGeoDb;
+    
+    return nullptr;
 }
 
 std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::getRasterTilesDatabase(
@@ -589,7 +610,12 @@ bool OsmAnd::WeatherTileResourceProvider_P::isEmpty()
 {
     QWriteLocker geoScopedLocker(&_geoDbLock);
     
-    return _geoTilesDb->isEmpty();
+    auto currentWeatherSource = getWeatherSource();
+    const auto citGeoDb = _geoTilesDbMap.constFind(currentWeatherSource);
+    if (citGeoDb != _geoTilesDbMap.cend())
+        return (*citGeoDb)->isEmpty();
+    
+    return true;
 }
 
 bool OsmAnd::WeatherTileResourceProvider_P::importTileData(const QString& dbFilePath)
@@ -653,6 +679,7 @@ uint64_t OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
             {
                 auto geoDbCachePath = localCachePath
                         + QDir::separator()
+                        + getWeatherSourcePrefix(getWeatherSource())
                         + QStringLiteral("weather_tiffs.db");
                 LogPrintf(LogSeverityLevel::Error,
                         "Failed to get tile ids from weather geo cache db file: %s", qPrintable(geoDbCachePath));
@@ -869,7 +896,11 @@ bool OsmAnd::WeatherTileResourceProvider_P::closeProvider()
     QWriteLocker geoScopedLocker(&_geoDbLock);
     QWriteLocker rasterScopedLocker(&_rasterDbLock);
 
-    _geoTilesDb->close();
+    for (auto& db : _geoTilesDbMap.values())
+    {
+        if (db)
+            db->close();
+    }
     
     for (auto& db : _rasterTilesDbMap.values())
         db->close();
