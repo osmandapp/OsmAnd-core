@@ -237,12 +237,22 @@ tasks.register('packOsmAndResources', Exec) {
     }
 }
 
+// Define proper ordering between the resource tasks
+tasks.named("indexOsmAndResources") {
+    mustRunAfter("copyOsmAndResources")
+}
+tasks.named("packOsmAndResources") {
+    mustRunAfter("indexOsmAndResources")
+}
+
+// Aggregate task that groups resource prep
+tasks.register("prepareOsmAndResources") {
+    dependsOn("copyOsmAndResources", "indexOsmAndResources", "packOsmAndResources")
+}
 
 android.libraryVariants.all { variant ->
     tasks.named("package${variant.name.capitalize()}Assets").configure {
-        dependsOn tasks.named('copyOsmAndResources')
-        dependsOn tasks.named('indexOsmAndResources')
-        dependsOn tasks.named('packOsmAndResources')
+        dependsOn tasks.named("prepareOsmAndResources")
     }
     tasks.named("merge${variant.name.capitalize()}JniLibFolders").configure {
         dependsOn copyNdkSharedLibs, copyQtSharedLibs
