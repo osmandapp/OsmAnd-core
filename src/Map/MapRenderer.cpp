@@ -2029,6 +2029,23 @@ bool OsmAnd::MapRenderer::setFlip(bool flip, bool forcedUpdate /*= false*/)
     return true;
 }
 
+bool OsmAnd::MapRenderer::setFlatEarth(bool flatEarth, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update = forcedUpdate || (_requestedState.flatEarth != flatEarth);
+    if (!update)
+        return false;
+
+    _requestedState.flatEarth = flatEarth;
+
+    setMapTarget(_requestedState, forcedUpdate);
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::FlatEarth);
+
+    return true;
+}
+
 bool OsmAnd::MapRenderer::setFieldOfView(const float fieldOfView, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);

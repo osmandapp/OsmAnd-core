@@ -940,6 +940,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setSymbolSubsectionConfiguration(subsectionIndex, symbolSubsectionConfiguration);
     }
 
+    public final boolean setFlatEarth(boolean flatEarth) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setFlatEarth(flatEarth);
+    }
+
     public final boolean setFieldOfView(float fieldOfView) {
         NativeCore.checkIfLoaded();
 

@@ -19,6 +19,16 @@
 
 namespace OsmAnd
 {
+    enum TileVisibility : int32_t
+    {
+        NotTestedYet = 0,
+        Invisible,
+        AlmostVisible,
+        VisibleFlat,
+        Visible,
+        ExtraDetail
+    };
+
     class AtlasMapRenderer_OpenGL : public AtlasMapRenderer
     {
         Q_DISABLE_COPY_AND_MOVE(AtlasMapRenderer_OpenGL);
@@ -29,10 +39,6 @@ namespace OsmAnd
     protected:
         const static float _zNear;
         const static double _radius;
-        const static double _minimumAngleForAdvancedHorizon;
-        const static double _distancePerAngleFactor;
-        const static double _maximumAbsoluteLatitudeForRealHorizon;
-        const static double _minimumSkyHeightInKilometers;
         const static double _maximumHeightFromSeaLevelInMeters;
         const static double _maximumDepthFromSeaLevelInMeters;
         const static double _detailDistanceFactor;
@@ -40,14 +46,34 @@ namespace OsmAnd
         const static float _minimumVisualZoom;
         const static float _maximumVisualZoom;
         const static double _minimumElevationAngle;
+        const static ZoomLevel _zoomForFlattening;
 
-        void updateFrustum(InternalState* internalState, const MapRendererState& state) const;
-        void computeTileset(const TileId targetTileId, const PointF targetInTileOffsetN,
-            const PointF* points, QSet<TileId>* frustumTiles) const;
-        void computeVisibleTileset(InternalState* internalState, const MapRendererState& state, const float highDetail,
-            const float visibleDistance, const double elevationCosine, const bool sortTiles) const;
-        void computeUniqueTileset(InternalState* internalState, const MapRendererState& state,
-            const ZoomLevel zoomLevel, const TileId targetTileId, const bool sortTiles) const;
+        void computeVisibleArea(InternalState* internalState, const MapRendererState& state,
+            const float lowerDetail, const bool sortTiles) const;
+        double detailDistanceFactor(const int zoomShift) const;
+        void insertTileId(QHash<TileId, TileVisibility>& nextTiles,
+            const TileId& tileId, const double zDetail, const int32_t zoomShift,
+            const glm::dvec3& camPos, const glm::dvec3& camDir, const bool almostVisible) const;
+        bool isPointVisible(const glm::dvec3& point,
+            const glm::dvec3& topN, const glm::dvec3& leftN, const glm::dvec3& bottomN, const glm::dvec3& rightN,
+            const double& topD, const double& leftD, const double& bottomD, const double& rightD,
+            bool skipTop, bool skipLeft, bool skipBottom, bool skipRight) const;
+        bool rayIntersectsTileSurface(const glm::dvec3& rayStart, const glm::dvec3& rayVector,
+            const double& left, const double& right, const double& top, const double& bottom,
+            const double& radius) const;
+        bool rayIntersectsTileSide(const glm::dvec3& rayStart, const glm::dvec3& rayVector,
+            const glm::dvec3& planeO, const glm::dvec3& planeN,
+            const double& top, const double& bottom, const double& minRadius, const double& maxRadius) const;
+        bool rayIntersectsTileCut(const glm::dvec3& rayStart, const glm::dvec3& rayVector, const double& nSqrTanLat,
+            const double& left, const double& right, const double& minRadius, const double& maxRadius) const;
+        bool isEdgeVisible(const glm::dvec3& cameraPosition,
+            const glm::dvec3& topN, const glm::dvec3& leftN, const glm::dvec3& bottomN, const glm::dvec3& rightN,
+            const double& topD, const double& leftD, const double& bottomD, const double& rightD,
+            const glm::dvec3& startPoint, const glm::dvec3& endPoint) const;
+        bool isArcVisible(const glm::dvec3& cp,
+            const glm::dvec3& topN, const glm::dvec3& leftN, const glm::dvec3& bottomN, const glm::dvec3& rightN,
+            const double& topD, const double& leftD, const double& bottomD, const double& rightD,
+            const double& startAngle, const double& endAngle, const double& arcZ, const double& sqrRadius) const;
         bool isPointVisible(const InternalState& internalState, const glm::vec3& point, bool skipTop,
             bool skipLeft, bool skipBottom, bool skipRight, bool skipFront, bool skipBack, float tolerance = 0.0f) const;
         bool isPointInsideTileBox(const glm::vec3& point, const glm::vec3& minPoint, const glm::vec3& maxPoint,
@@ -64,8 +90,6 @@ namespace OsmAnd
             const TileId& tileId, const ZoomLevel zoomLevel, float& minHeight, float& maxHeight) const;
         bool getHeightLimits(const MapRendererState& state,
             const TileId& tileId, const ZoomLevel zoomLevel, float& minHeight, float& maxHeight) const;
-        double getRealDistanceToHorizon(const InternalState& internalState, const MapRendererState& state,
-            const PointD& groundPosition, const double inglobeAngle, const double referenceDistance) const;
         bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
             const PointI& screenPoint, PointD& position,
             const float height = 0.0f, float* distance = nullptr, float* sinAngle = nullptr) const;
@@ -133,8 +157,6 @@ namespace OsmAnd
         bool getProjectedLocation(const MapRendererInternalState& internalState, const MapRendererState& state,
             const PointI& location31, const float height, PointI& outLocation31) const override;
         bool getLastProjectablePoint(const MapRendererInternalState& internalState,
-            const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const override;
-        bool getLastVisiblePoint(const MapRendererInternalState& internalState,
             const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const override;
         bool isPointProjectable(const MapRendererInternalState& internalState, const glm::vec3& point) const override;
         bool isPointVisible(const MapRendererInternalState& internalState, const glm::vec3& point, bool skipTop = false,
