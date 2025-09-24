@@ -159,6 +159,7 @@ namespace OsmAnd
         
         bool getCachedValues(const PointI point31, const ZoomLevel zoom, const QString& dateTimeStr, QList<double>& values);
         void setCachedValues(const PointI point31, const ZoomLevel zoom, const QString& dateTimeStr, const QList<double>& values);
+        void clearCachedValues();
 
         bool isEmpty();
 

@@ -488,6 +488,16 @@ void OsmAnd::WeatherTileResourceProvider_P::setCachedValues(
     _cachedValues = values;
 }
 
+void OsmAnd::WeatherTileResourceProvider_P::clearCachedValues()
+{
+    QWriteLocker scopedLocker(&_cachedValuesLock);
+    
+    _cachedValuesPoint31 = PointI();
+    _cachedValuesZoom = InvalidZoomLevel;
+    _cachedValuesDateTimeStr.clear();
+    _cachedValues.clear();
+}
+
 void OsmAnd::WeatherTileResourceProvider_P::obtainValue(
     const WeatherTileResourceProvider::ValueRequest& request,
     const WeatherTileResourceProvider::ObtainValueAsyncCallback callback,
@@ -1650,6 +1660,7 @@ OsmAnd::WeatherSource OsmAnd::WeatherTileResourceProvider_P::getWeatherSource() 
 void OsmAnd::WeatherTileResourceProvider_P::setWeatherSource(const WeatherSource weatherSource)
 {
     _weatherSource = weatherSource;
+    clearCachedValues();
 }
 
 QString OsmAnd::WeatherTileResourceProvider_P::getWeatherTilesUrlPrefix() const
