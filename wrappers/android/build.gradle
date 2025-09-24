@@ -301,6 +301,9 @@ afterEvaluate {
             releaseAar(IvyPublication) {
                 artifact tasks.named('bundleReleaseAar')
             }
+            releaseJar(IvyPublication) {
+                artifact(tasks.named("jar"))
+            }
         }
     }
 }
