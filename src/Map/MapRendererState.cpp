@@ -2,9 +2,8 @@
 
 OsmAnd::MapRendererState::MapRendererState()
     : flip(false)
-    , flatEarth(true)
     , fieldOfView(16.5f)
-    , visibleDistance(3500.0f)
+    , visibleDistance(3500)
     , detailedDistance(0.5f)
     , skyColor(ColorRGB(255, 255, 255))
     , azimuth(0.0f)
@@ -51,7 +50,6 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     mapState.windowSize = windowSize;
     mapState.viewport = viewport;
     mapState.flip = flip;
-    mapState.flatEarth = flatEarth;
     mapState.fieldOfView = fieldOfView;
     mapState.visibleDistance = visibleDistance;
     mapState.detailedDistance = detailedDistance;
@@ -96,7 +94,7 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
 
 OsmAnd::MapState::MapState()
     : fieldOfView(16.5f)
-    , visibleDistance(3500.0f)
+    , visibleDistance(3500)
     , detailedDistance(0.5f)
     , skyColor(ColorRGB(255, 255, 255))
     , azimuth(0.0f)

@@ -152,9 +152,8 @@ namespace OsmAnd
                     // Common data
                     GLlocation mPerspectiveProjectionView;
                     GLlocation resultScale;
-                    GLlocation mGlobeRotation;
                     GLlocation targetInTilePosN;
-                    GLlocation objectSizes;
+                    GLlocation tileSize;
                     GLlocation distanceFromCameraToTarget;
                     GLlocation cameraElevationAngleN;
                     GLlocation groundCameraPosition;
@@ -170,14 +169,6 @@ namespace OsmAnd
 
                     // Per-tile data
                     GLlocation tileCoords31;
-                    GLlocation globeTileTL;
-                    GLlocation globeTileTR;
-                    GLlocation globeTileBL;
-                    GLlocation globeTileBR;
-                    GLlocation globeTileTLnv;
-                    GLlocation globeTileTRnv;
-                    GLlocation globeTileBLnv;
-                    GLlocation globeTileBRnv;
                     GLlocation primaryGridTileTop;
                     GLlocation primaryGridTileBot;
                     GLlocation secondaryGridTileTop;

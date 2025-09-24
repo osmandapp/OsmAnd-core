@@ -683,23 +683,32 @@ OsmAnd::TileId OsmAnd::Utilities::normalizeTileId(const TileId input, const Zoom
 {
     TileId output = input;
 
-    if (zoom > ZoomLevel0 && zoom < ZoomLevel31)
+    const auto tilesCount = static_cast<int32_t>(1u << zoom);
+
+    while (output.x < 0)
     {
-        const auto posMask = static_cast<int32_t>((1u << zoom) - 1);
-        const auto negMask = -1 ^ posMask;
-        output = TileId::fromXY(
-            input.x < 0 ? (input.x | negMask) + posMask + 1 : input.x & posMask,
-            input.y < 0 ? (input.y | negMask) + posMask + 1 : input.y & posMask);
+        output.x += tilesCount;
     }
-    else if (zoom == ZoomLevel0)
-        output = TileId::zero();
-    else if (zoom == ZoomLevel31)
+    while (output.y < 0)
     {
-        const auto posMask = static_cast<int32_t>((1u << zoom) - 1);
-        output = TileId::fromXY(
-            input.x < 0 ? input.x + posMask + 1 : input.x,
-            input.y < 0 ? input.y + posMask + 1 : input.y);
+        output.y += tilesCount;
     }
+
+    // Max zoom level (31) is skipped, since value stored in int31 can not be more than tilesCount(31)
+    if (zoom < ZoomLevel31)
+    {
+        while (output.x >= tilesCount)
+        {
+            output.x -= tilesCount;
+        }
+        while (output.y >= tilesCount)
+        {
+            output.y -= tilesCount;
+        }
+    }
+
+    assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.x < tilesCount) || (zoom == ZoomLevel31)));
+    assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.y < tilesCount) || (zoom == ZoomLevel31)));
 
     return output;
 }
@@ -708,21 +717,46 @@ OsmAnd::PointI OsmAnd::Utilities::normalizeCoordinates(const PointI& input, cons
 {
     PointI output = input;
 
-    if (zoom > ZoomLevel0 && zoom < ZoomLevel31)
+    if (zoom >= ZoomLevel0 && zoom < ZoomLevel31)
     {
-        const auto posMask = static_cast<int32_t>((1u << zoom) - 1);
-        const auto negMask = -1 ^ posMask;
-        output.x = input.x < 0 ? (input.x | negMask) + posMask + 1 : input.x & posMask;
-        output.y = input.y < 0 ? (input.y | negMask) + posMask + 1 : input.y & posMask;
+        const auto tilesCount = static_cast<int32_t>(1u << zoom);
+
+        while (output.x < 0)
+        {
+            output.x += tilesCount;
+        }
+        while (output.y < 0)
+        {
+            output.y += tilesCount;
+        }
+
+        while (output.x >= tilesCount)
+        {
+            output.x -= tilesCount;
+        }
+        while (output.y >= tilesCount)
+        {
+            output.y -= tilesCount;
+        }
+
+        assert(output.x < tilesCount);
+        assert(output.y < tilesCount);
     }
-    else if (zoom == ZoomLevel0)
-        output = PointI();
     else if (zoom == ZoomLevel31)
     {
-        const auto posMask = static_cast<int32_t>((1u << zoom) - 1);
-        output.x = input.x < 0 ? input.x + posMask + 1 : input.x;
-        output.y = input.y < 0 ? input.y + posMask + 1 : input.y;
+        if (output.x < 0)
+            output.x = output.x + INT32_MAX + 1;
+        if (output.y < 0)
+            output.y = output.y + INT32_MAX + 1;
     }
+    else
+    {
+        output.x = 0;
+        output.y = 0;
+    }
+
+    assert(output.x >= 0);
+    assert(output.x >= 0);
 
     return output;
 }
@@ -732,15 +766,20 @@ OsmAnd::PointI OsmAnd::Utilities::normalizeCoordinates(const PointI64& input, co
 {
     PointI64 output = input;
 
-    if (zoom > ZoomLevel0 && zoom <= ZoomLevel31)
-    {
-        const auto posMask = static_cast<int64_t>((1u << zoom) - 1);
-        const auto negMask = -1ll ^ posMask;
-        output.x = input.x < 0 ? (input.x | negMask) + posMask + 1 : input.x & posMask;
-        output.y = input.y < 0 ? (input.y | negMask) + posMask + 1 : input.y & posMask;
-    }
-    else if (zoom == ZoomLevel0)
-        output = PointI();
+    const auto tilesCount = static_cast<int64_t>(1ull << zoom);
+
+    while (output.x < 0)
+        output.x += tilesCount;
+    while (output.y < 0)
+        output.y += tilesCount;
+
+    while (output.x >= tilesCount)
+        output.x -= tilesCount;
+    while (output.y >= tilesCount)
+        output.y -= tilesCount;
+
+    assert(output.x >= 0 && output.x < tilesCount);
+    assert(output.y >= 0 && output.y < tilesCount);
 
     return PointI(static_cast<int32_t>(output.x), static_cast<int32_t>(output.y));
 }
@@ -1002,7 +1041,7 @@ double OsmAnd::Utilities::calculateShortestPath(const PointI64& start64, const P
         midX = tempX;
         midY = tempY;
         midZ = tempZ;
-        angles = PointD(qAtan2(midX, midY), qAsin(qBound(-1.0, midZ, 1.0)));
+        angles = PointD(qAtan2(midX, midY), qAsin(midZ));
         next31 = get31FromAngles(angles);
         middlePoint += next31 - previous31;
         if (next31.x - previous31.x >= intHalf)
