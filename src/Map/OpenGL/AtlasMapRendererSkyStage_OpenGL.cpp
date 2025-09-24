@@ -54,9 +54,11 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
             "    v.xy = in_vs_vertexPosition * param_vs_planeSize.xy;                                                           ""\n"
             "    v.z = param_vs_planeSize.z;                                                                                    ""\n"
             "    v.w = 1.0;                                                                                                     ""\n"
+            "    v.y += param_vs_planeSize.w;                                                                                   ""\n"
             "                                                                                                                   ""\n"
             "    v2f_position = in_vs_vertexPosition;                                                                           ""\n"
             "    v = param_vs_mProjection * v;                                                                                  ""\n"
+            "    v.y--;                                                                                                         ""\n"
             "    gl_Position = v * param_vs_resultScale;                                                                        ""\n"
             "}                                                                                                                  ""\n");
         auto preprocessedVertexShader = vertexShader;
@@ -75,16 +77,15 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
             "void main()                                                                                                        ""\n"
             "{                                                                                                                  ""\n"
             "    lowp vec4 color;                                                                                               ""\n"
-            "    vec2 position = vec2(v2f_position.x * param_fs_skySize.x, v2f_position.y + param_fs_skySize.w);                ""\n"
-            "    float radius = param_fs_skySize.z + param_fs_skySize.w;                                                        ""\n"
-            "    float altitude = length(position) - radius;                                                                    ""\n"
-            "    bool sky = altitude > 0.0;                                                                                     ""\n"
-            "    altitude = (sky ? altitude : 0.0) * param_fs_skySize.y / 10.0;                                                 ""\n"
-            "    float low = 1.0 / pow(1.1 + altitude, 4.0);                                                                    ""\n"
+            "    float position;                                                                                                ""\n"
+            "    float skyHeight = param_fs_skySize.y / (1.0 - param_fs_skySize.z);                                             ""\n"
+            "    bool sky = v2f_position.y > param_fs_skySize.z;                                                                ""\n"
+            "    position = (v2f_position.y - (sky ? param_fs_skySize.z : 0.0)) * skyHeight;                                    ""\n"
+            "    float low = 1.0 / pow(1.1 + position, 4.0);                                                                    ""\n"
             "    float high = 1.0 - low;                                                                                        ""\n"
-            "    color.r = (0.7647059 * low + high * exp(1.0 - altitude / 3.0) * 0.3101728) * param_fs_skyColor.r;              ""\n"
-            "    color.g = (0.8039216 * low + high * exp(1.0 - altitude / 5.0) * 0.3390262) * param_fs_skyColor.g;              ""\n"
-            "    color.b = (0.9019608 * low + high * exp(1.0 - altitude / 12.0) * 0.3678794) * param_fs_skyColor.b;             ""\n"
+            "    color.r = (0.7647059 * low + high * exp(1.0 - position / 3.0) * 0.3101728) * param_fs_skyColor.r;              ""\n"
+            "    color.g = (0.8039216 * low + high * exp(1.0 - position / 5.0) * 0.3390262) * param_fs_skyColor.g;              ""\n"
+            "    color.b = (0.9019608 * low + high * exp(1.0 - position / 12.0) * 0.3678794) * param_fs_skyColor.b;             ""\n"
             "    color.a = 1.0;                                                                                                 ""\n"
             "    FRAGMENT_COLOR_OUTPUT = sky ? color : param_fs_fogColor;                                                       ""\n"
             "}                                                                                                                  ""\n");
@@ -172,10 +173,10 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     // Vertex data (x,y)
     float vertices[4][2] =
     {
-        {  1.0f, -1.0f },
+        {  1.0f, 0.0f },
         {  1.0f, 1.0f },
         { -1.0f, 1.0f },
-        { -1.0f, -1.0f }
+        { -1.0f, 0.0f }
     };
     const auto verticesCount = 4;
 
@@ -258,7 +259,7 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::render(IMapRenderer_Metrics::Metri
         internalState.skyplaneSize.x,
         internalState.skyplaneSize.y,
         -internalState.zFar,
-        0.0f);
+        internalState.skyShift);
     GL_CHECK_RESULT;
 
     // Scale the result
@@ -270,12 +271,11 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::render(IMapRenderer_Metrics::Metri
     GL_CHECK_RESULT;
 
     // Set parameters of the sky
-    const auto skyHeight = internalState.skyHeightInKilometers / (1.0f - internalState.skyLine);
     glUniform4f(_program.fs.param.skySize,
-        internalState.aspectRatio,
-        skyHeight,
+        0.0f, // TODO: put sky width (in kilometers) here for the spherified horizon
+        internalState.skyHeightInKilometers,
         internalState.skyLine,
-        internalState.skyTargetToCenter);
+        0.0f);
     GL_CHECK_RESULT;
 
     // Apply sky color as a filter (when camera is near to surface)

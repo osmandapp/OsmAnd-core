@@ -43,7 +43,6 @@ namespace OsmAnd
         WindowSize,
         Viewport,
         Flip,
-        FlatEarth,
         FieldOfView,
         VisibleDistance,
         DetailedDistance,
@@ -79,7 +78,6 @@ namespace OsmAnd
         PointI windowSize;
         AreaI viewport;
         bool flip;
-        bool flatEarth;
         float fieldOfView;
         float visibleDistance;
         float detailedDistance;
@@ -145,7 +143,6 @@ namespace OsmAnd
         PointI windowSize;
         AreaI viewport;
         bool flip;
-        bool flatEarth;
         float fieldOfView;
         float visibleDistance;
         float detailedDistance;

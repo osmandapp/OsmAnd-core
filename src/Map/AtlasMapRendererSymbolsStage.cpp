@@ -1543,7 +1543,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
             auto coordinate = rasterMapSymbol->getAdditionalPosition();
             int64_t intFull = INT32_MAX;
             intFull++;
-            if (isMiddle || internalState.elevatedFrustum2D31.p0.x == std::numeric_limits<int64_t>::min())
+            if (isMiddle)
             {
                 PointD point(isAxisY ? 0.0 : coordinate, isAxisY ? coordinate : 0.0);
                 auto pos31 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation31(point)
@@ -2113,7 +2113,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
                     }
                 }
             }
-            if (!internalState.globalFrustum2D31.test(symbolRect))
+            if (!internalState.globalFrustum2D31.test(symbolRect) && !internalState.extraFrustum2D31.test(symbolRect))
             {
                 if (metric)
                     metric->onSurfaceSymbolsRejectedByFrustum++;
@@ -2126,7 +2126,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
             testPoint = Utilities::normalizeCoordinates(position31, ZoomLevel31);
             if (height != 0.0f)
                 getRenderer()->getProjectedLocation(internalState, currentState, position31, height, testPoint);
-            if (!internalState.globalFrustum2D31.test(testPoint))
+            if (!internalState.globalFrustum2D31.test(testPoint) && !internalState.extraFrustum2D31.test(testPoint))
             {
                 if (metric)
                     metric->onSurfaceSymbolsRejectedByFrustum++;
@@ -4049,7 +4049,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointsIn3D(
         approximatedBBoxPlaneN = glm::vec3(0.0f, -1.0f, -1.0f);
 
     // Calculate rotation angle from approximated bbox plane
-    const auto angle = static_cast<float>(qAcos(qBound(-1.0f, -approximatedBBoxPlaneN.y, 1.0f)));
+    const auto angle = static_cast<float>(qAcos(-approximatedBBoxPlaneN.y));
     const auto rotationN = angle > 0.0f ? glm::normalize(
         glm::vec3(-approximatedBBoxPlaneN.z, 0.0f, approximatedBBoxPlaneN.x)) : glm::vec3(-1.0f, 0.0f, 0.0f);
     const auto mRotate = glm::rotate(angle, rotationN);

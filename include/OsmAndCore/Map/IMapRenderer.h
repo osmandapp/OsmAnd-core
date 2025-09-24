@@ -143,7 +143,6 @@ namespace OsmAnd
         virtual glm::vec2 getViewportShift() const = 0;
         virtual double getMaxViewportScale() const = 0;
         virtual bool setFlip(bool flip, bool forcedUpdate = false) = 0;
-        virtual bool setFlatEarth(bool flatEarth, bool forcedUpdate = false) = 0;
         virtual bool setFieldOfView(const float fieldOfView, bool forcedUpdate = false) = 0;
         virtual bool setVisibleDistance(const float visibleDistance, bool forcedUpdate = false) = 0;
         virtual bool setDetailedDistance(const float detailedDistance, bool forcedUpdate = false) = 0;

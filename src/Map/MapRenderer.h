@@ -194,6 +194,8 @@ namespace OsmAnd
             const PointI& location31, const float height, PointI& outLocation31) const = 0;
         virtual bool getLastProjectablePoint(const MapRendererInternalState& internalState,
             const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const = 0;
+        virtual bool getLastVisiblePoint(const MapRendererInternalState& internalState,
+            const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const = 0;
         virtual bool isPointProjectable(const MapRendererInternalState& internalState, const glm::vec3& point) const = 0;
         virtual bool isPointVisible(const MapRendererInternalState& internalState, const glm::vec3& point, bool skipTop = false,
             bool skipLeft = false, bool skipBottom = false, bool skipRight = false, bool skipFront = false, bool skipBack = false, float tolerance = 0.0) const = 0;
@@ -389,7 +391,6 @@ namespace OsmAnd
         virtual double getViewportScale() const Q_DECL_OVERRIDE;
         virtual glm::vec2 getViewportShift() const Q_DECL_OVERRIDE;
         virtual bool setFlip(bool flip, bool forcedUpdate = false) Q_DECL_OVERRIDE;
-        virtual bool setFlatEarth(bool flatEarth, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFieldOfView(const float fieldOfView, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setVisibleDistance(const float visibleDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setDetailedDistance(const float detailedDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;

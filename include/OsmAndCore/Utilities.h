@@ -1265,20 +1265,6 @@ namespace OsmAnd
             return offset31;
         }
 
-        inline static glm::dvec3 getGlobeRadialVector(const PointD& angles)
-        {
-            const auto csy = qCos(angles.y);
-            const glm::dvec3 result(csy * qSin(angles.x), csy * qCos(angles.x), -qSin(angles.y));
-            return result;
-        }
-
-        inline static glm::dvec3 getGlobeRadialVector(const PointI& location31)
-        {
-            const auto angles = getAnglesFrom31(location31);
-            const auto result = getGlobeRadialVector(angles);
-            return result;
-        }
-
         inline static double snapToGridDecimal(const double value)
         {
             // Snap value to the closest number from range [1, 2, 5, 10] * (10 ^ n)
