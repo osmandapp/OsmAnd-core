@@ -281,6 +281,15 @@ dependencies {
     implementation project(":OsmAndCore_androidNative")
 }
 
+configurations {
+    OsmAndCore_android
+}
+def srcFile = layout.buildDirectory.file('intermediates/runtime_library_classes_jar/release/bundleLibRuntimeToJarRelease/classes.jar')
+def srcArtifact = artifacts.add('OsmAndCore_android', srcFile.get().asFile) {
+    name "OsmAndCore_android"
+	type "jar"
+}
+
 afterEvaluate {
     group = "net.osmand"
     version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "master-snapshot"
@@ -302,7 +311,7 @@ afterEvaluate {
                 artifact tasks.named('bundleReleaseAar')
             }
             releaseJar(IvyPublication) {
-                artifact(tasks.named("jar"))
+              artifact(srcArtifact)
             }
         }
     }
