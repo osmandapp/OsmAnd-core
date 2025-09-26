@@ -976,6 +976,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.getState().getAzimuth();
     }
 
+    public final boolean setAzimuth(float azimuth, boolean forcedUpdate, boolean disableUpdate) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setAzimuth(azimuth, forcedUpdate, disableUpdate);
+    }
+
     public final boolean setAzimuth(float azimuth) {
         NativeCore.checkIfLoaded();
 
@@ -1169,6 +1175,12 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.setZoom(zoom);
+    }
+
+    public final boolean setFlatZoom(ZoomLevel zoomLevel, float visualZoom, boolean forcedUpdate, boolean disableUpdate) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setFlatZoom(zoomLevel, visualZoom, forcedUpdate, disableUpdate);
     }
 
     public final boolean setFlatZoom(ZoomLevel zoomLevel, float visualZoom) {

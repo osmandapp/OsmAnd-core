@@ -394,9 +394,11 @@ namespace OsmAnd
         virtual bool setVisibleDistance(const float visibleDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setDetailedDistance(const float detailedDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setSkyColor(const FColorRGB& color, bool forcedUpdate = false) Q_DECL_OVERRIDE;
-        virtual bool setAzimuth(const float azimuth, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setAzimuth(const float azimuth,
+            bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false) Q_DECL_OVERRIDE;
-        virtual bool setTarget(const PointI& target31, bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setTarget(const PointI& target31,
+            bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool resetMapTarget() Q_DECL_OVERRIDE;
@@ -414,8 +416,8 @@ namespace OsmAnd
         virtual int getAimingActions() Q_DECL_OVERRIDE;
         virtual bool setAimingActions(const int actionBits, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFlatZoom(const float zoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
-        virtual bool setFlatZoom(
-            const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setFlatZoom(const ZoomLevel zoomLevel, const float visualZoom,
+            bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFlatZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFlatVisualZoom(const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;

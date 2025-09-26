@@ -148,9 +148,11 @@ namespace OsmAnd
         virtual bool setVisibleDistance(const float visibleDistance, bool forcedUpdate = false) = 0;
         virtual bool setDetailedDistance(const float detailedDistance, bool forcedUpdate = false) = 0;
         virtual bool setSkyColor(const FColorRGB& color, bool forcedUpdate = false) = 0;
-        virtual bool setAzimuth(const float azimuth, bool forcedUpdate = false) = 0;
+        virtual bool setAzimuth(const float azimuth,
+            bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false) = 0;
-        virtual bool setTarget(const PointI& target31, bool forcedUpdate = false, bool disableUpdate = false) = 0;
+        virtual bool setTarget(const PointI& target31,
+            bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool resetMapTarget() = 0;
@@ -168,7 +170,8 @@ namespace OsmAnd
         virtual int getAimingActions() = 0;
         virtual bool setAimingActions(const int actionBits, bool forcedUpdate = false) = 0;
         virtual bool setFlatZoom(const float zoom, bool forcedUpdate = false) = 0;
-        virtual bool setFlatZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) = 0;
+        virtual bool setFlatZoom(const ZoomLevel zoomLevel, const float visualZoom,
+            bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setFlatZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
         virtual bool setFlatVisualZoom(const float visualZoom, bool forcedUpdate = false) = 0;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) = 0;

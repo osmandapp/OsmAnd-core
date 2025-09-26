@@ -63,7 +63,6 @@ namespace OsmAnd
         float fovInRadians;
         float referenceTileSizeOnScreenInPixels;
         float distanceFromCameraToTarget;
-        float groundDistanceFromCameraToTarget;
         float distanceFromCameraToGround;
         float distanceFromCameraToFog;
         float distanceFromTargetToFog;

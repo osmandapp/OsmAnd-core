@@ -1862,19 +1862,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     // Configure elevation data
     haveElevation = false;
     const auto elevationResources = batch->elevationResourcesInGPU;
-    const auto upperMetersPerUnit = internalState.metersPerUnit;
-    const auto lowerMetersPerUnit = internalState.metersPerUnit;
-    // TODO: Use next calculations for flat map mode
-    //auto tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
-    //    static_cast<double>(1ull << currentState.zoomLevel - zoomLevel);
-    //const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
-    //    zoomLevel,
-    //    tileIdN.y,
-    //    tileSize);
-    //const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
-    //    zoomLevel,
-    //    tileIdN.y + 1,
-    //    tileSize);
+    auto tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
+    static_cast<double>(1ull << (currentState.zoomLevel - zoomLevel));
+    const auto upperMetersPerUnit = currentState.flatEarth ?
+        Utilities::getMetersPerTileUnit(zoomLevel, tileIdN.y, tileSize) : internalState.metersPerUnit;
+    const auto lowerMetersPerUnit = currentState.flatEarth ?
+        Utilities::getMetersPerTileUnit(zoomLevel, tileIdN.y + 1, tileSize) : internalState.metersPerUnit;
     float zScaleFactor = 0.0f;
     float dataScaleFactor = 0.0f;
     if (withElevation && currentState.elevationDataProvider && elevationResources && !elevationResources->empty())

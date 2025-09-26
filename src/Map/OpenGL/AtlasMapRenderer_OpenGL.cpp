@@ -347,9 +347,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
 
     // Calculate current global scale factor (meters per unit)
     internalState->synthTileId = internalState->targetTileId;
-    Utilities::getTileId(state.target31, internalState->synthZoomLevel);
     auto synthTarget31 = state.target31;
-    if (state.flatEarth)
+    if (state.flatEarth && shiftToFlatten > 0)
     {
         if (internalState->synthZoomLevel > state.zoomLevel)
         {
@@ -367,21 +366,22 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     auto targetY = static_cast<double>(internalState->targetTileId.y) + internalState->targetInTileOffsetN.y;
     auto metersPerUnit =
         Utilities::getMetersPerTileUnit(state.zoomLevel, targetY, TileSize3D);
-    const auto realMetersPerUnit = metersPerUnit;
+    internalState->metersPerUnit = metersPerUnit;
     double synthScaleFactor31 = 1.0;
-    if (state.flatEarth)
+    if (state.flatEarth && shiftToFlatten > 0)
     {
-        targetY = static_cast<double>(internalState->synthTileId.y) + internalState->targetInTileOffsetN.y;
+        PointF targetInTileOffsetN;
+        internalState->synthTileId =
+            Utilities::getTileId(synthTarget31, internalState->synthZoomLevel, &targetInTileOffsetN);
+        targetY = static_cast<double>(internalState->synthTileId.y) + targetInTileOffsetN.y;
         const auto synthMetersPerUnit =
             Utilities::getMetersPerTileUnit(internalState->synthZoomLevel, targetY, TileSize3D);
         synthScaleFactor31 = metersPerUnit / synthMetersPerUnit;
-        metersPerUnit = synthMetersPerUnit;
     }
-    internalState->metersPerUnit = metersPerUnit;
     internalState->synthScaleFactor31 = synthScaleFactor31;
 
     // Calculate globe rotation matrix
-    const auto radiusInWorld = _radius / metersPerUnit;
+    const auto radiusInWorld = _radius * synthScaleFactor31 / metersPerUnit;
     internalState->globeRadius = radiusInWorld;
     const auto angles = Utilities::getAnglesFrom31(synthTarget31);
     const auto sx = qSin(angles.x);
@@ -405,22 +405,41 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     //const auto distanceFromCameraToGround = distanceToCamera - radiusInWorld;
 
     internalState->distanceFromCameraToGround = static_cast<float>(distanceFromCameraToGround);
-    internalState->distanceFromCameraToGroundInMeters = distanceFromCameraToGround * metersPerUnit;
 
     const auto vectorToCameraN = vectorToCamera / distanceToCamera;
     const auto groundDistanceFromCameraToTarget =
         qAcos(qBound(0.0, vectorToCameraN.y, 1.0)) * radiusInWorld;
-    internalState->groundDistanceFromCameraToTarget = static_cast<float>(groundDistanceFromCameraToTarget);
     internalState->cameraRotatedPosition = internalState->mGlobeRotationPreciseInv * (vectorToCamera / radiusInWorld);
     internalState->cameraRotatedDirection = internalState->mGlobeRotationPreciseInv * vectorFromTargetToCameraN;
     const auto camPosition = internalState->mGlobeRotationPreciseInv * vectorToCameraN;
     auto camAngles = PointD(qAtan2(camPosition.x, camPosition.y), -qAsin(qBound(-1.0, camPosition.z, 1.0)));
     internalState->cameraAngles = camAngles;
-    camAngles *= 180.0 / M_PI;
-    internalState->cameraCoordinates = LatLon(camAngles.y, camAngles.x);
 
     //TODO: Certain methods need to be refactored to avoid using this old flat-earth value
     internalState->groundCameraPosition = internalState->worldCameraPosition.xz();
+
+    if (state.flatEarth)
+    {
+        PointD groundPos(
+            internalState->worldCameraPosition.x / TileSize3D + internalState->targetInTileOffsetN.x,
+            internalState->worldCameraPosition.z / TileSize3D + internalState->targetInTileOffsetN.y);
+        PointD offsetInTileN(groundPos.x - floor(groundPos.x), groundPos.y - floor(groundPos.y));
+        PointI64 tileId(floor(groundPos.x) + internalState->targetTileId.x,
+            floor(groundPos.y) + internalState->targetTileId.y);
+        const auto tileIdN = Utilities::normalizeCoordinates(tileId, state.zoomLevel);
+        groundPos.x = static_cast<double>(tileIdN.x) + offsetInTileN.x;
+        groundPos.y = static_cast<double>(tileIdN.y) + offsetInTileN.y;
+        internalState->distanceFromCameraToGroundInMeters = qMax(0.0,
+            distanceFromCameraToGround * Utilities::getMetersPerTileUnit(state.zoomLevel, groundPos.y, TileSize3D));
+        internalState->cameraCoordinates = LatLon(Utilities::getLatitudeFromTile(state.zoomLevel, groundPos.y),
+            Utilities::getLongitudeFromTile(state.zoomLevel, groundPos.x));
+    }
+    else
+    {
+        camAngles *= 180.0 / M_PI;
+        internalState->cameraCoordinates = LatLon(camAngles.y, camAngles.x);
+        internalState->distanceFromCameraToGroundInMeters = distanceFromCameraToGround * metersPerUnit;
+    }
 
     // Calculate maximum visible distance
     const auto inglobeAngle = qAcos(qBound(0.0, radiusInWorld / distanceToCamera, 1.0));
@@ -459,7 +478,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     const auto highDetail = state.detailedDistance * internalState->distanceFromCameraToTarget /
         internalState->scaleToRetainProjectedSize * static_cast<float>(fovTangent)
         + static_cast<float>(_detailDistanceFactor / 3.0);
-    const auto zFactor = state.zoomLevel < ZoomLevel4 && state.flatEarth ? 0.0f : 1.0f;
+    const auto zFactor = state.zoomLevel < ZoomLevel4 && !state.flatEarth ? 0.0f : 1.0f;
     const auto zLowerDetail = highDetail < visibleDistance
         ? qMin(internalState->zFar, internalState->distanceFromCameraToTarget + static_cast<float>(qMax(0.01,
             static_cast<double>(highDetail) * elevationCosine))) * zFactor + (1.0f - zFactor) * internalState->zFar
@@ -503,7 +522,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
 
     // Calculate height of the visible sky
     internalState->skyHeightInKilometers =
-        static_cast<float>((zFar * fovTangent - skyLine) * realMetersPerUnit / 1000.0);
+        static_cast<float>((zFar * fovTangent - skyLine) * metersPerUnit / 1000.0);
 
     // Compute visible area
     computeVisibleArea(internalState, state, zLowerDetail, sortTiles);
@@ -1247,10 +1266,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     internalState->targetOffset = PointI64(0, 0);
     for (const auto& setEntry : rangeOf(constOf(tiles)))
     {
-        const auto delta = setEntry.key() - zoomDelta;
-        if (delta < 0)
+        const auto realZoom = setEntry.key() - zoomDelta;
+        if (realZoom < 0)
             continue;
-        zoomLevel = static_cast<ZoomLevel>(delta);
+        zoomLevel = static_cast<ZoomLevel>(realZoom);
         QSet<TileId> uniqueTiles;
         for (const auto& tileEntry : rangeOf(constOf(setEntry.value())))
         {
@@ -1301,8 +1320,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     if (sortTiles && internalState->visibleTilesCount > 0)
     {
         // Use underscaled resources carefully in accordance to total number of visible tiles
-        int zoomLevelOffset = qMin(state.surfaceZoomLevel - state.zoomLevel,
-            static_cast<int>(MaxMissingDataUnderZoomShift));
+        const auto zoomDelta = qFloor(log2(qMax(1.0,
+            static_cast<double>(1u << state.surfaceZoomLevel) * static_cast<double>(state.surfaceVisualZoom)
+            / (static_cast<double>(1u << state.zoomLevel) * static_cast<double>(state.visualZoom)))));
+        int zoomLevelOffset = qMin(zoomDelta, static_cast<int>(MaxMissingDataUnderZoomShift));
         if (zoomLevelOffset > 2 && internalState->visibleTilesCount > 1)
             zoomLevelOffset = 2;
         if (zoomLevelOffset > 1 && internalState->visibleTilesCount > MaxNumberOfTilesToUseUnderscaledTwice)
@@ -1335,8 +1356,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
             const auto fBR = camPos + camBR * cameraFarDistance;
             auto bottomPointsCounter = 0;
             auto topPointsCounter = 0;
-            PointI bottomIntersectionPoint[2];
-            PointI topIntersectionPoint[2];
+            PointI64 bottomIntersectionPoint[2];
+            PointI64 topIntersectionPoint[2];
             PointD iAngles;
             if (Utilities_OpenGL_Common::lineSegmentIntersectsSphere(nBL, fBL, maxDistance, iAngles.x, iAngles.y))
                 bottomIntersectionPoint[bottomPointsCounter++] = Utilities::get31FromAngles(iAngles);
@@ -1363,21 +1384,21 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 if (state.flatEarth)
                 {
                     auto deltaTarget31 = bottomIntersectionPoint[0] - internalState->synthTarget31;
-                    bottomIntersectionPoint[0] = state.target31 + PointI(
-                        static_cast<int>(qRound(static_cast<double>(deltaTarget31.x) * factor)),
-                        static_cast<int>(qRound(static_cast<double>(deltaTarget31.y) * factor)));
+                    bottomIntersectionPoint[0] = PointI64(
+                        static_cast<int64_t>(qRound(static_cast<double>(deltaTarget31.x) * factor)),
+                        static_cast<int64_t>(qRound(static_cast<double>(deltaTarget31.y) * factor))) + state.target31;
                     deltaTarget31 = bottomIntersectionPoint[1] - internalState->synthTarget31;
-                    bottomIntersectionPoint[1] = state.target31 + PointI(
-                        static_cast<int>(qRound(static_cast<double>(deltaTarget31.x) * factor)),
-                        static_cast<int>(qRound(static_cast<double>(deltaTarget31.y) * factor)));
+                    bottomIntersectionPoint[1] = PointI64(
+                        static_cast<int64_t>(qRound(static_cast<double>(deltaTarget31.x) * factor)),
+                        static_cast<int64_t>(qRound(static_cast<double>(deltaTarget31.y) * factor))) + state.target31;
                     deltaTarget31 = topIntersectionPoint[0] - internalState->synthTarget31;
-                    topIntersectionPoint[0] = state.target31 + PointI(
-                        static_cast<int>(qRound(static_cast<double>(deltaTarget31.x) * factor)),
-                        static_cast<int>(qRound(static_cast<double>(deltaTarget31.y) * factor)));
+                    topIntersectionPoint[0] = PointI64(
+                        static_cast<int64_t>(qRound(static_cast<double>(deltaTarget31.x) * factor)),
+                        static_cast<int64_t>(qRound(static_cast<double>(deltaTarget31.y) * factor))) + state.target31;
                     deltaTarget31 = topIntersectionPoint[1] - internalState->synthTarget31;
-                    topIntersectionPoint[1] = state.target31 + PointI(
-                        static_cast<int>(qRound(static_cast<double>(deltaTarget31.x) * factor)),
-                        static_cast<int>(qRound(static_cast<double>(deltaTarget31.y) * factor)));
+                    topIntersectionPoint[1] = PointI64(
+                        static_cast<int64_t>(qRound(static_cast<double>(deltaTarget31.x) * factor)),
+                        static_cast<int64_t>(qRound(static_cast<double>(deltaTarget31.y) * factor))) + state.target31;
                 }
                 const auto intHalf = INT32_MAX / 2 + 1;
                 if (bottomIntersectionPoint[0].x > bottomIntersectionPoint[1].x
@@ -1412,8 +1433,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 internalState->elevatedFrustum2D31.p1 = bottomIntersectionPoint[1];
                 internalState->elevatedFrustum2D31.p2 = topIntersectionPoint[0];
                 internalState->elevatedFrustum2D31.p3 = topIntersectionPoint[1];
-                const auto centerX = bottomIntersectionPoint[0].x / 4 + bottomIntersectionPoint[1].x / 4
-                    + topIntersectionPoint[0].x / 4 + topIntersectionPoint[1].x / 4;
+                const auto centerX = static_cast<int>((bottomIntersectionPoint[0].x + bottomIntersectionPoint[1].x
+                    + topIntersectionPoint[0].x + topIntersectionPoint[1].x) / 4);
                 const auto targetX = state.target31.x - INT32_MAX - 1;
                 internalState->targetOffset =
                     PointI64(qMax(centerX, state.target31.x) - qMin(centerX, state.target31.x)
@@ -2721,7 +2742,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
     PointD& zoomAndRotate) const
 {
     const auto state = getState();
-
+   
     auto result = getExtraZoomAndRotationForAiming(state,
         firstLocation31, firstHeightInMeters, firstPoint,
         secondLocation31, secondHeightInMeters, secondPoint, zoomAndRotate);
