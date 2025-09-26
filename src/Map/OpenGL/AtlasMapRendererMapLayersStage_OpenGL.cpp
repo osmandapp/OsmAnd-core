@@ -1689,9 +1689,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
 
     // Set tile coordinates
     const auto tileIdN = Utilities::normalizeTileId(batch->tileId, zoomLevel);
+    
     const auto zoomShift = MaxZoomLevel - zoomLevel;
-    PointI tile31(tileIdN.x << zoomShift, tileIdN.y << zoomShift);
-
+    const PointI tile31(tileIdN.x << zoomShift, tileIdN.y << zoomShift);
     auto tileSize31 = 1u << zoomShift;
     bool isOverX = tileSize31 + static_cast<uint32_t>(tile31.x) > INT32_MAX;
     bool isOverY = tileSize31 + static_cast<uint32_t>(tile31.y) > INT32_MAX;
@@ -1757,12 +1757,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
 
     if (withGrids)
     {
-        auto tileSize31 = 1u << zoomShift;
-        if (tileSize31 + static_cast<uint32_t>(tile31.x) > 2147483647u)
-            tileSize31--;
-        if (tileSize31 + static_cast<uint32_t>(tile31.y) > 2147483647u)
-            tileSize31--;
-        PointI nextTile31(tile31.x + tileSize31, tile31.y + tileSize31);
         const auto zoom = static_cast<int32_t>(zoomLevel);
         PointI minZoom(
             currentState.gridConfiguration.gridParameters[0].minZoom,
