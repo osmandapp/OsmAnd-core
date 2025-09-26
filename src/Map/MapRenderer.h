@@ -194,8 +194,6 @@ namespace OsmAnd
             const PointI& location31, const float height, PointI& outLocation31) const = 0;
         virtual bool getLastProjectablePoint(const MapRendererInternalState& internalState,
             const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const = 0;
-        virtual bool getLastVisiblePoint(const MapRendererInternalState& internalState,
-            const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const = 0;
         virtual bool isPointProjectable(const MapRendererInternalState& internalState, const glm::vec3& point) const = 0;
         virtual bool isPointVisible(const MapRendererInternalState& internalState, const glm::vec3& point, bool skipTop = false,
             bool skipLeft = false, bool skipBottom = false, bool skipRight = false, bool skipFront = false, bool skipBack = false, float tolerance = 0.0) const = 0;
@@ -391,13 +389,16 @@ namespace OsmAnd
         virtual double getViewportScale() const Q_DECL_OVERRIDE;
         virtual glm::vec2 getViewportShift() const Q_DECL_OVERRIDE;
         virtual bool setFlip(bool flip, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setFlatEarth(bool flatEarth, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFieldOfView(const float fieldOfView, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setVisibleDistance(const float visibleDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setDetailedDistance(const float detailedDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setSkyColor(const FColorRGB& color, bool forcedUpdate = false) Q_DECL_OVERRIDE;
-        virtual bool setAzimuth(const float azimuth, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setAzimuth(const float azimuth,
+            bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false) Q_DECL_OVERRIDE;
-        virtual bool setTarget(const PointI& target31, bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setTarget(const PointI& target31,
+            bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool resetMapTarget() Q_DECL_OVERRIDE;
@@ -415,8 +416,8 @@ namespace OsmAnd
         virtual int getAimingActions() Q_DECL_OVERRIDE;
         virtual bool setAimingActions(const int actionBits, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFlatZoom(const float zoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
-        virtual bool setFlatZoom(
-            const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setFlatZoom(const ZoomLevel zoomLevel, const float visualZoom,
+            bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFlatZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFlatVisualZoom(const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;

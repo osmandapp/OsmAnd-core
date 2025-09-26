@@ -2029,6 +2029,23 @@ bool OsmAnd::MapRenderer::setFlip(bool flip, bool forcedUpdate /*= false*/)
     return true;
 }
 
+bool OsmAnd::MapRenderer::setFlatEarth(bool flatEarth, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update = forcedUpdate || (_requestedState.flatEarth != flatEarth);
+    if (!update)
+        return false;
+
+    _requestedState.flatEarth = flatEarth;
+
+    setMapTarget(_requestedState, forcedUpdate);
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::FlatEarth);
+
+    return true;
+}
+
 bool OsmAnd::MapRenderer::setFieldOfView(const float fieldOfView, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
@@ -2100,11 +2117,12 @@ bool OsmAnd::MapRenderer::setSkyColor(const FColorRGB& color, bool forcedUpdate 
     return true;
 }
 
-bool OsmAnd::MapRenderer::setAzimuth(const float azimuth, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::setAzimuth(const float azimuth,
+    bool forcedUpdate /*= false*/, const bool disableUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    return setAzimuthToState(_requestedState, azimuth, forcedUpdate);
+    return setAzimuthToState(_requestedState, azimuth, forcedUpdate, disableUpdate);
 }
 
 bool OsmAnd::MapRenderer::setElevationAngle(const float elevationAngle, bool forcedUpdate /*= false*/)
@@ -2374,8 +2392,8 @@ bool OsmAnd::MapRenderer::setFlatZoomToState(MapRendererState& state,
     return setFlatZoomToState(state, zoomLevel, visualZoom, forcedUpdate, disableUpdate);
 }
 
-bool OsmAnd::MapRenderer::setFlatZoomToState(MapRendererState& state,
-    const ZoomLevel zoomLevel, const float visualZoom, const bool forcedUpdate /*= false*/, const bool disableUpdate /*= false*/)
+bool OsmAnd::MapRenderer::setFlatZoomToState(MapRendererState& state, const ZoomLevel zoomLevel,
+    const float visualZoom, const bool forcedUpdate /*= false*/, const bool disableUpdate /*= false*/)
 {
     if (zoomLevel < state.minZoomLimit || zoomLevel > state.maxZoomLimit)
         return false;
@@ -2778,11 +2796,12 @@ bool OsmAnd::MapRenderer::setFlatZoom(const float zoom, bool forcedUpdate /*= fa
     return setFlatZoomToState(_requestedState, zoom, forcedUpdate);
 }
 
-bool OsmAnd::MapRenderer::setFlatZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::setFlatZoom(const ZoomLevel zoomLevel, const float visualZoom,
+    bool forcedUpdate /*= false*/, const bool disableUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    return setFlatZoomToState(_requestedState, zoomLevel, visualZoom, forcedUpdate);
+    return setFlatZoomToState(_requestedState, zoomLevel, visualZoom, forcedUpdate, disableUpdate);
 }
 
 bool OsmAnd::MapRenderer::setFlatZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate /*= false*/)
