@@ -945,14 +945,11 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 // Preallocate space
                 attributeIds.reserve(cis->BytesUntilLimit());
 
-                bool isPresent = true;
                 const auto& decRules = mapObject->attributeMapping->decodeMap;
                 while (cis->BytesUntilLimit() > 0)
                 {
                     gpb::uint32 attributeId;
                     cis->ReadVarint32(&attributeId);
-
-                    attributeIds.push_back(attributeId);
 
                     if (!isPresent || !environment || tgn == OBF::MapData::kAdditionalTypesFieldNumber)
                         continue;
@@ -968,11 +965,11 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                         if (evaluationResult.getIntegerValue(
                             environment->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder) && zOrder < 0)
                         {
-                            isPresent = false;
-                            cis->Skip(cis->BytesUntilLimit());
-                            break;
+                            continue;
                         }
                     }
+
+                    attributeIds.push_back(attributeId);
                 }
 
                 cis->PopLimit(oldLimit);
