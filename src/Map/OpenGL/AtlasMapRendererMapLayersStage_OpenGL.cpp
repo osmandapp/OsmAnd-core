@@ -2033,7 +2033,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
 
             float latitudeOffset = static_cast<float>(tile31.y) - 1073741824.0f;
             float latitudeRad = latitudeOffset / 1073741824.0f * M_PI;
-            float normalizedLatitude = pow(abs(latitudeRad) / M_PI, 2.0f);
+            float normalizedLatitude = abs(latitudeRad) / M_PI;
 
             glUniform1f(perTile_fs.normalizedLatitude, normalizedLatitude);
             GL_CHECK_RESULT;
