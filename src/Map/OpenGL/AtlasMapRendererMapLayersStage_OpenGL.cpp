@@ -884,6 +884,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    highp vec4 texCoordsOffsetAndScale;                                                                            ""\n"
             "    highp vec4 transitionPhase;                                                                                    ""\n"
             "    highp float texelSize;                                                                                         ""\n"
+            "    highp float normalizedLatitude;                                                                                ""\n"
             "    lowp sampler2D sampler;                                                                                        ""\n"
             "};                                                                                                                 ""\n"
             "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
@@ -951,7 +952,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "}                                                                                                                  ""\n"
             "                                                                                                                   ""\n"
             "void getTextureColor(in vec4 texCoordsOffsetAndScale, in vec4 transitionPhase, in float texelSize,                 ""\n"
-            "        in sampler2D sampler, in vec2 texCoords, out lowp vec4 resultColor)                                        ""\n"
+            "        in sampler2D sampler, in vec2 texCoords, in float normalizedLatitude, out lowp vec4 resultColor)           ""\n"
             "{                                                                                                                  ""\n"));
         const auto& dynamicsInFragmentShader = QStringLiteral(
             "    if (transitionPhase.x >= 0.0)                                                                                  ""\n"
@@ -969,7 +970,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "        vec2 rightWind;                                                                                            ""\n"
             "        getWind(sampler, rightCoords, rightWind);                                                                  ""\n"
             //       Scale two times (* 0.8 and * 0.5) and then divide to TileSize3D (/ 100)
-            "        float factor = transitionPhase.y / (v2f_metersPerUnit * 250.0);                                            ""\n"
+            "        float baseFactor = transitionPhase.y / (v2f_metersPerUnit * 250.0);                                        ""\n"
+            //       Reduce wind effect near tile edges
+            "        float edgeDistance = min(min(texCoords.x, 1.0 - texCoords.x), min(texCoords.y, 1.0 - texCoords.y));        ""\n"
+            "        float maxTransitionZone = mix(0.0, 0.3, normalizedLatitude);                                               ""\n"
+            "        float edgeFactor = smoothstep(0.0, maxTransitionZone, edgeDistance);                                       ""\n"
+            "        float factor = baseFactor * edgeFactor;                                                                    ""\n"
             "        vec2 texShift = rightWind * texCoordsOffsetAndScale.zw * factor;                                           ""\n"
             "        if (transitionPhase.z >= 0.0)                                                                              ""\n"
             "        {                                                                                                          ""\n"
@@ -1092,7 +1098,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             //   First layer is processed unconditionally, as well as its color is converted to premultiplied alpha.
             "    getTextureColor(param_fs_rasterTileLayer_0.texCoordsOffsetAndScale, param_fs_rasterTileLayer_0.transitionPhase,""\n"
             "        param_fs_rasterTileLayer_0.texelSize, param_fs_rasterTileLayer_0.sampler,                                  ""\n"
-            "        v2f_texCoordsPerLayer_0, finalColor);                                                                      ""\n"
+            "        v2f_texCoordsPerLayer_0, param_fs_rasterTileLayer_0.normalizedLatitude, finalColor);                       ""\n"
             "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacityFactor,                                            ""\n"
             "        param_fs_rasterTileLayer_0.isPremultipliedAlpha);                                                          ""\n"
             "    lowp float firstLayerColorFactor = param_fs_rasterTileLayer_0.isPremultipliedAlpha +                           ""\n"
@@ -1138,7 +1144,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "        getTextureColor(param_fs_rasterTileLayer_%rasterLayerIndex%.texCoordsOffsetAndScale,                       ""\n"
             "            param_fs_rasterTileLayer_%rasterLayerIndex%.transitionPhase,                                           ""\n"
             "            param_fs_rasterTileLayer_%rasterLayerIndex%.texelSize,                                                 ""\n"
-            "            param_fs_rasterTileLayer_%rasterLayerIndex%.sampler, v2f_texCoordsPerLayer_%rasterLayerIndex%, tc);    ""\n"
+            "            param_fs_rasterTileLayer_%rasterLayerIndex%.sampler, v2f_texCoordsPerLayer_%rasterLayerIndex%,         ""\n"
+            "            param_fs_rasterTileLayer_%rasterLayerIndex%.normalizedLatitude, tc);                                   ""\n"
             "        addExtraAlpha(tc, param_fs_rasterTileLayer_%rasterLayerIndex%.opacityFactor,                               ""\n"
             "            param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);                                     ""\n"
             "        mixColors(finalColor, tc, param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);               ""\n"
@@ -1548,6 +1555,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
                 layerStructName + ".texelSize",
                 GlslVariableType::Uniform);
             ok = ok && lookup->lookupLocation(
+                layerStruct.normalizedLatitude,
+                layerStructName + ".normalizedLatitude",
+                GlslVariableType::Uniform);
+            ok = ok && lookup->lookupLocation(
                 layerStruct.isPremultipliedAlpha,
                 layerStructName + ".isPremultipliedAlpha",
                 GlslVariableType::Uniform);
@@ -1605,11 +1616,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
 
     // Set tile coordinates
     const auto tileIdN = Utilities::normalizeTileId(batch->tileId, zoomLevel);
+    const auto zoomShift = MaxZoomLevel - zoomLevel;
+    PointI tile31(tileIdN.x << zoomShift, tileIdN.y << zoomShift);
 
     if (withGrids)
     {
-        const auto zoomShift = MaxZoomLevel - zoomLevel;
-        PointI tile31(tileIdN.x << zoomShift, tileIdN.y << zoomShift);
         auto tileSize31 = 1u << zoomShift;
         if (tileSize31 + static_cast<uint32_t>(tile31.x) > 2147483647u)
             tileSize31--;
@@ -1896,6 +1907,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
 
             auto texelSize = gpuAPI->getGpuResourceTexelSize(batchedResourceInGPU->resourceInGPU);
             glUniform1f(perTile_fs.texelSize, texelSize);
+            GL_CHECK_RESULT;
+
+            float latitudeOffset = static_cast<float>(tile31.y) - 1073741824.0f;
+            float latitudeRad = latitudeOffset / 1073741824.0f * M_PI;
+            float normalizedLatitude = pow(abs(latitudeRad) / M_PI, 2.0f);
+
+            glUniform1f(perTile_fs.normalizedLatitude, normalizedLatitude);
             GL_CHECK_RESULT;
 
             glBindTexture(GL_TEXTURE_2D,

@@ -214,6 +214,7 @@ namespace OsmAnd
                         GLlocation texCoordsOffsetAndScale;
                         GLlocation transitionPhase;
                         GLlocation texelSize;
+                        GLlocation normalizedLatitude;
                     };
                     QVector<FsPerTilePerLayerParameters> rasterTileLayers;
                 } param;
