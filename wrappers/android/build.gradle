@@ -13,8 +13,12 @@ apply plugin: 'ivy-publish'
 
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.internal.os.OperatingSystem
+import java.nio.file.Files
+import java.util.zip.Deflater
+import java.nio.ByteBuffer
 
 def generatedOsmAndAssetsDir = layout.buildDirectory.dir("generated/osmand_assets").get().asFile
+def rawOsmAndAssetsDir    = layout.buildDirectory.dir("generated/raw_osmand_assets").get().asFile
 
 allprojects {
     repositories {
@@ -185,14 +189,17 @@ tasks.register('copyQtJarLibs', Copy) {
 }
 
 tasks.register('cleanupOsmAndResources', Delete) {
-    description "Clean-up OsmAnd resources"
+    description = "Clean-up OsmAnd resources"
+    delete rawOsmAndAssetsDir
     delete generatedOsmAndAssetsDir
 }
 
 tasks.register('copyOsmAndResources', Copy) {
-    description "Copy OsmAnd resources"
-    dependsOn cleanupOsmAndResources
-    outputs.dir("$generatedOsmAndAssetsDir/OsmAndCore_ResourcesBundle")
+    description = "Copy OsmAnd resources"
+    group = "build"
+    mustRunAfter(cleanupOsmAndResources)
+
+    outputs.dir(rawOsmAndAssetsDir)
     from("../../../resources/rendering_styles") { include "default.render.xml", "default.map_styles_presets.xml"; eachFile { it.path = "map/styles/" + it.path } }
     from("../../../resources/rendering_styles/style-icons/map-icons-svg") { include "mx_*.svg", "c_mx_*.svg"; eachFile { it.path = "map/icons/" + it.path.replaceAll(/(c_)?mx_(.*)\.svg/, '$1$2.svg') } }
     from("../../../resources/rendering_styles/style-icons/map-shaders-svg") { include "h_*.svg", "c_h_*.svg"; eachFile { it.path = "map/shaders_and_shields/" + it.path.replaceAll(/(c_)?h_(.*)\.svg/, '$1$2.svg') } }
@@ -204,19 +211,21 @@ tasks.register('copyOsmAndResources', Copy) {
     from("../../../resources/routing") { include "routing.xml"; eachFile { it.path = "routing/" + it.path } }
     from("../../../resources/rendering_styles/fonts") { include "**/*.ttf"; eachFile { it.path = "map/fonts/" + it.path } }
     from("../../../resources/misc/icu4c") { include "*.dat"; eachFile { it.path = "misc/icu4c/" + it.path.replaceAll(/icudt\d+([lb])\.dat/, 'icu-data-$1.dat') } }
-    into "$generatedOsmAndAssetsDir/OsmAndCore_ResourcesBundle"
+    into(rawOsmAndAssetsDir)
     includeEmptyDirs = false
 }
 
 tasks.register('indexOsmAndResources') {
-    dependsOn copyOsmAndResources
     description = "Index OsmAnd resources"
+    group = "build"
+    mustRunAfter(copyOsmAndResources)
+
     def outputIndexFile = file("$generatedOsmAndAssetsDir/OsmAndCore_ResourcesBundle.index")
-    inputs.dir("$generatedOsmAndAssetsDir/OsmAndCore_ResourcesBundle")
+    inputs.dir(rawOsmAndAssetsDir)
     outputs.file(outputIndexFile)
 
     doLast {
-        def resourcesDir = file("$generatedOsmAndAssetsDir/OsmAndCore_ResourcesBundle")
+        def resourcesDir = rawOsmAndAssetsDir
         def resources = fileTree(resourcesDir) {
             include "**/*.*"
         }.collect {
@@ -226,33 +235,63 @@ tasks.register('indexOsmAndResources') {
     }
 }
 
-tasks.register('packOsmAndResources', Exec) {
+tasks.register('packOsmAndResources', DefaultTask) {
     description = "Pack OsmAnd resources"
-    dependsOn copyOsmAndResources
+    group = "build"
+    mustRunAfter(copyOsmAndResources)
 
-    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine "cmd", "/c", "bash --login " + file("./pack-resources.sh").getAbsolutePath() + " " + "$generatedOsmAndAssetsDir/OsmAndCore_ResourcesBundle"
-    } else {
-        commandLine "sh", file("./pack-resources.sh").getAbsolutePath(), "$generatedOsmAndAssetsDir/OsmAndCore_ResourcesBundle"
+    def sourceFiles = project.fileTree(rawOsmAndAssetsDir)
+    def outputDir = "$generatedOsmAndAssetsDir/OsmAndCore_ResourcesBundle"
+    inputs.dir(rawOsmAndAssetsDir)
+    outputs.dir(outputDir)
+
+    doLast {
+        project.delete(outputDir)
+        project.mkdir(outputDir)
+
+        def excludeExts = ['.png', '.qz']
+
+        sourceFiles.each { inFile ->
+            def relativePath = rawOsmAndAssetsDir.toURI().relativize(inFile.toURI()).getPath()
+            def outFile = new File(outputDir, relativePath)
+            outFile.getParentFile().mkdirs()
+
+            def extension = inFile.name.substring(inFile.name.lastIndexOf('.'))
+            if (excludeExts.contains(extension)) {
+                Files.copy(inFile.toPath(), outFile.toPath())
+                println "Copied '$relativePath'"
+            } else {
+                def outFileQz = new File(outFile.path + ".qz")
+                byte[] inputBytes = inFile.bytes
+                int originalSize = inputBytes.length
+
+                Deflater compressor = new Deflater(Deflater.BEST_COMPRESSION)
+                compressor.setInput(inputBytes)
+                compressor.finish()
+
+                ByteArrayOutputStream bos = new ByteArrayOutputStream(originalSize)
+                byte[] buffer = new byte[1024]
+                while (!compressor.finished()) {
+                    int count = compressor.deflate(buffer)
+                    bos.write(buffer, 0, count)
+                }
+                compressor.end()
+                byte[] compressedBytes = bos.toByteArray()
+
+                FileOutputStream fos = new FileOutputStream(outFileQz)
+                fos.write(ByteBuffer.allocate(4).putInt(originalSize).array())
+                fos.write(compressedBytes)
+                fos.close()
+
+                println "Packed '$relativePath' from $originalSize to ${compressedBytes.length + 4}"
+            }
+        }
     }
-}
-
-// Define proper ordering between the resource tasks
-tasks.named("indexOsmAndResources") {
-    mustRunAfter("copyOsmAndResources")
-}
-tasks.named("packOsmAndResources") {
-    mustRunAfter("indexOsmAndResources")
-}
-
-// Aggregate task that groups resource prep
-tasks.register("prepareOsmAndResources") {
-    dependsOn("copyOsmAndResources", "indexOsmAndResources", "packOsmAndResources")
 }
 
 android.libraryVariants.all { variant ->
     tasks.named("package${variant.name.capitalize()}Assets").configure {
-        dependsOn tasks.named("prepareOsmAndResources")
+        dependsOn copyOsmAndResources, indexOsmAndResources, packOsmAndResources
     }
     tasks.named("merge${variant.name.capitalize()}JniLibFolders").configure {
         dependsOn copyNdkSharedLibs, copyQtSharedLibs
