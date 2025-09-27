@@ -69,17 +69,21 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
             "                                                                                                                   ""\n"
             // Parameters: common data
             "uniform vec4 param_fs_skySize;                                                                                     ""\n"
-            "uniform lowp vec4 param_fs_skyColor;                                                                               ""\n"
+            "uniform vec4 param_fs_skyColor;                                                                                    ""\n"
             "uniform lowp vec4 param_fs_fogColor;                                                                               ""\n"
             "                                                                                                                   ""\n"
             "void main()                                                                                                        ""\n"
             "{                                                                                                                  ""\n"
             "    lowp vec4 color;                                                                                               ""\n"
-            "    vec2 position = vec2(v2f_position.x * param_fs_skySize.x, v2f_position.y + param_fs_skySize.w);                ""\n"
-            "    float radius = param_fs_skySize.z + param_fs_skySize.w;                                                        ""\n"
+            "    float minR = param_fs_skySize.y + param_fs_skySize.z;                                                          ""\n"
+            "    float midR = param_fs_skySize.y + param_fs_skySize.w;                                                          ""\n"
+            "    float maxR = midR * midR / minR;                                                                               ""\n"
+            "    float shift = v2f_position.y + param_fs_skySize.z;                                                             ""\n"
+            "    float radius = shift > 0.0 ? mix(midR, minR, shift / minR) : mix(midR, maxR, -shift / maxR) ;                  ""\n"
+            "    vec2 position = vec2(v2f_position.x * param_fs_skySize.x, v2f_position.y + radius - param_fs_skySize.y);       ""\n"
             "    float altitude = length(position) - radius;                                                                    ""\n"
             "    bool sky = altitude > 0.0;                                                                                     ""\n"
-            "    altitude = (sky ? altitude : 0.0) * param_fs_skySize.y / 10.0;                                                 ""\n"
+            "    altitude = (sky ? altitude : 0.0) * param_fs_skyColor.w / 10.0;                                                ""\n"
             "    float low = 1.0 / pow(1.1 + altitude, 4.0);                                                                    ""\n"
             "    float high = 1.0 - low;                                                                                        ""\n"
             "    color.r = (0.7647059 * low + high * exp(1.0 - altitude / 3.0) * 0.3101728) * param_fs_skyColor.r;              ""\n"
@@ -270,23 +274,23 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::render(IMapRenderer_Metrics::Metri
     GL_CHECK_RESULT;
 
     // Set parameters of the sky
-    const auto skyHeight = internalState.skyHeightInKilometers / (1.0f - internalState.skyLine);
     glUniform4f(_program.fs.param.skySize,
         internalState.aspectRatio,
-        skyHeight,
         internalState.skyLine,
-        internalState.skyTargetToCenter);
+        internalState.skyTargetToCenter,
+        internalState.skyBackToCenter);
     GL_CHECK_RESULT;
 
     // Apply sky color as a filter (when camera is near to surface)
     const static double spaceColorBarrier = 200000.0;
     const auto skyTintFactor = 1.0f - qBound(0.0f,
         static_cast<float>(internalState.distanceFromCameraToGroundInMeters / spaceColorBarrier), 1.0f);
+    const auto skyHeight = internalState.skyHeightInKilometers / (1.0f - internalState.skyLine);
     glUniform4f(_program.fs.param.skyColor,
         1.0f - skyTintFactor * (1.0f - currentState.skyColor.r),
         1.0f - skyTintFactor * (1.0f - currentState.skyColor.g),
         1.0f - skyTintFactor * (1.0f - currentState.skyColor.b),
-        1.0f);
+        skyHeight);
     GL_CHECK_RESULT;
 
     // Set the color of fog

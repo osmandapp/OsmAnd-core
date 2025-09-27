@@ -234,7 +234,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         (setupOptions.elevationVisualizationEnabled ? 4 : 0) /*v2f_elevationColor*/ +
         4 /*v2f_primaryLocation*/ +
         4 /*v2f_secondaryLocation*/ +
-        4 /*v2f_position*/;
+        4 /*v2f_position*/ +
+        4 /*v2f_normal*/;
     const auto maxBatchSizeByVaryingFloats =
         (gpuAPI->maxVaryingFloats - otherVaryingFloats) / varyingFloatsPerLayer;
 
@@ -247,7 +248,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         (setupOptions.elevationVisualizationEnabled ? 1 : 0) /*v2f_elevationColor*/ +
         1 /*v2f_primaryLocation*/ +
         1 /*v2f_secondaryLocation*/ +
-        1 /*v2f_position*/;
+        1 /*v2f_position*/ +
+        1 /*v2f_normal*/;
     const auto maxBatchSizeByVaryingVectors =
         (gpuAPI->maxVaryingVectors - otherVaryingVectors) / varyingVectorsPerLayer;
 
@@ -392,6 +394,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         vertexShader.append(QStringLiteral(
             "%GridsInVertexShader_1%                                                                                            ""\n"
             "PARAM_OUTPUT vec4 v2f_position;                                                                                    ""\n"
+            "PARAM_OUTPUT vec4 v2f_normal;                                                                                      ""\n"
             "                                                                                                                   ""\n"
             // Parameters: common data
             "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
@@ -490,24 +493,22 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    loc31.y = overY ? 0 : loc31.y + param_vs_tileCoords31.y;                                                       ""\n"
             "    vec2 angles = (vec2(loc31) / 65536.0 / 32768.0 - 0.5) * M_2PI;                                                 ""\n"
             "    angles.y = M_PI_2 - atan(exp(angles.y)) * 2.0;                                                                 ""\n"
-            "    vec2 mercMeters = vec2(overX ? 2147483647 : loc31.x, overY ? 2147483647 : loc31.y) / 65536.0 / 32768.0 - 0.5;  ""\n"
-            "    vec2 lonlat = mercMeters * M_2PI;                                                                              ""\n"
-            "    lonlat.y = M_PI_2 - atan(exp(lonlat.y)) * 2.0;                                                                 ""\n"
-            "    mercMeters.y = -mercMeters.y;                                                                                  ""\n"
-            "    mercMeters *= M_2PI * 63.78137;                                                                                ""\n"
             "                                                                                                                   ""\n"
-            //   Calculate vertex position
+            //   Pre-compute mercator meters for further (possible) grid calculations
+            "    vec2 mercMeters = vec2(overX ? 2147483647 : loc31.x, overY ? 2147483647 : loc31.y) / 65536.0 / 32768.0 - 0.5;  ""\n"
+            "                                                                                                                   ""\n"
+            //   Calculate vertex position on the globe surface
             "    float csy = cos(angles.y);                                                                                     ""\n"
             "    vec3 nv = param_vs_mGlobeRotation * vec3(csy * sin(angles.x), csy * cos(angles.x), -sin(angles.y));            ""\n"
-            "    vec3 cv = nv - vec3(0.0, param_vs_objectSizes.y, 0.0);                                                         ""\n"
-            "    vec3 leftVertex = mix(param_vs_globeTileTL, param_vs_globeTileBL, in_vs_vertexPosition.y);                     ""\n"
-            "    vec3 rightVertex = mix(param_vs_globeTileTR, param_vs_globeTileBR, in_vs_vertexPosition.y);                    ""\n"
+            "    vec3 cv = vec3(nv.x, nv.y - param_vs_objectSizes.y, nv.z);                                                     ""\n"
             "                                                                                                                   ""\n"
-            //   Scale and shift vertex to it's proper position
+            //   Scale and shift vertex to it's proper position on the plane / on the tile
             "    vec2 pv = in_vs_vertexPosition;                                                                                ""\n"
             "    pv = (pv + param_vs_tileCoordsOffset - param_vs_targetInTilePosN) * param_vs_objectSizes.x;                    ""\n"
             "    cv = param_vs_objectSizes.y < 0.0 ? vec3(pv.x, 0.0, pv.y) : cv;                                                ""\n"
             "    nv = param_vs_objectSizes.y < 0.0 ? vec3(0.0, 1.0, 0.0) : nv;                                                  ""\n"
+            "    vec3 leftVertex = mix(param_vs_globeTileTL, param_vs_globeTileBL, in_vs_vertexPosition.y);                     ""\n"
+            "    vec3 rightVertex = mix(param_vs_globeTileTR, param_vs_globeTileBR, in_vs_vertexPosition.y);                    ""\n"
             "    vec4 v = vec4(param_vs_objectSizes.y != 0.0 ? cv : mix(leftVertex, rightVertex, in_vs_vertexPosition.x), 1.0); ""\n"
             "    vec3 leftN = normalize(mix(param_vs_globeTileTLnv, param_vs_globeTileBLnv, in_vs_vertexPosition.y));           ""\n"
             "    vec3 rightN = normalize(mix(param_vs_globeTileTRnv, param_vs_globeTileBRnv, in_vs_vertexPosition.y));          ""\n"
@@ -754,6 +755,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "                                                                                                                   ""\n"));
         const auto& gridsInVertexShader_3 = QStringLiteral(            
             //   Calculate location using selected grid projection
+            "    vec2 lonlat = mercMeters * M_2PI;                                                                              ""\n"
+            "    lonlat.y = M_PI_2 - atan(exp(lonlat.y)) * 2.0;                                                                 ""\n"
+            "    mercMeters.y = -mercMeters.y;                                                                                  ""\n"
+            "    mercMeters *= M_2PI * 63.78137;                                                                                ""\n"
             "    vec4 primary;                                                                                                  ""\n"
             "    vec4 secondary;                                                                                                ""\n"
             "    vec2 zUTM = lonlat * 180.0 / M_PI;                                                                             ""\n"
@@ -850,6 +855,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         vertexShader.append(QStringLiteral(
             "%GridsInVertexShader_3%                                                                                            ""\n"
             "    v2f_position = v;                                                                                              ""\n"
+            "    v2f_normal = vec4(n.xyz, 1.0);                                                                                 ""\n"
             "    v = param_vs_mPerspectiveProjectionView * v;                                                                   ""\n"
             "    gl_Position = v * param_vs_resultScale;                                                                        ""\n"
             "}                                                                                                                  ""\n"));
@@ -895,6 +901,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         fragmentShader.append(QStringLiteral(
             "%GridsInFragmentShader_1%                                                                                          ""\n"
             "PARAM_INPUT vec4 v2f_position;                                                                                     ""\n"
+            "PARAM_INPUT vec4 v2f_normal;                                                                                       ""\n"
             "                                                                                                                   ""\n"
             // Parameters: common data
             "uniform lowp float param_fs_lastBatch;                                                                             ""\n"
@@ -1119,10 +1126,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    vec4 infrontPosition = v2f_position;                                                                           ""\n"
             "    infrontPosition.xz = v2f_position.xz * param_fs_mistConfiguration.xy;                                          ""\n"
             "    infrontPosition.xz = v2f_position.xz - (infrontPosition.x + infrontPosition.z) * param_fs_mistConfiguration.xy;""\n"
-            "    float toFog = param_fs_mistConfiguration.z - distance(infrontPosition, param_fs_worldCameraPosition);          ""\n"
+            "    vec4 worldCameraPosition = vec4(param_fs_worldCameraPosition.xyz, 1.0);                                        ""\n"
+            "    float toFog = param_fs_mistConfiguration.z - distance(infrontPosition, worldCameraPosition);                   ""\n"
             "    float expScale = (3.0 - param_fs_mistColor.w ) / param_fs_mistConfiguration.w;                                 ""\n"
             "    float expOffset = 2.354 - param_fs_mistColor.w * 0.5;                                                          ""\n"
-            "    mistColor.a = clamp(1.0 - 1.0 / exp(pow(max(0.0, expOffset - toFog * expScale), 2.0)), 0.0, 1.0);              ""\n"
+            "    float farMist = max(0.0, expOffset - toFog * expScale);                                                        ""\n"
+            "    farMist = clamp(1.0 - 1.0 / exp(farMist * farMist), 0.0, 1.0);                                                 ""\n"
+            "    float globeMist = 1.0 - dot(v2f_normal, normalize(worldCameraPosition));                                       ""\n"
+            "    float mistFactor = min(param_fs_worldCameraPosition.w * 1.5, 1.0);                                             ""\n"
+            "    mistColor.a = mix(globeMist * globeMist * globeMist, farMist, mistFactor * mistFactor * mistFactor);           ""\n"
             "                                                                                                                   ""\n"
             //   Mix colors of all layers.
             //   First layer is processed unconditionally, as well as its color is converted to premultiplied alpha.
@@ -2308,7 +2320,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         internalState.worldCameraPosition.x,
         internalState.worldCameraPosition.y,
         internalState.worldCameraPosition.z,
-        1.0f);
+        internalState.factorOfDistance);
     GL_CHECK_RESULT;
 
     // Set mist parameters
@@ -2323,7 +2335,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         currentState.fogColor.r,
         currentState.fogColor.g,
         currentState.fogColor.b,
-        internalState.fogShiftFactor);
+        currentState.flatEarth ? 1.0f : internalState.fogShiftFactor);
     GL_CHECK_RESULT;
 
     // Configure samplers

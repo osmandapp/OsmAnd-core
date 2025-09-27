@@ -442,7 +442,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     }
 
     // Calculate maximum visible distance
-    const auto inglobeAngle = qAcos(qBound(0.0, radiusInWorld / distanceToCamera, 1.0));
+    const auto factorOfDistance = radiusInWorld / distanceToCamera;
+    internalState->factorOfDistance = static_cast<float>(factorOfDistance);
+    const auto inglobeAngle = qAcos(qBound(0.0, factorOfDistance, 1.0));
     const auto cameraAngle = M_PI_2 - inglobeAngle;
     const auto targetAngle = qAcos(qBound(0.0, glm::dot(vectorFromTargetToCameraN, vectorToCameraN), 1.0));
     const auto distanceFromCameraToHorizon = distanceToCamera * qCos(cameraAngle);
@@ -509,16 +511,21 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     // Determine skyline position and fog parameters    
     const auto skyplaneHeight = static_cast<double>(internalState->skyplaneSize.y);
     const auto skyLine = zFar * qTan(qMax(0.0, targetHorizonAngle));
-    internalState->skyLine =
-        static_cast<float>(qMax(0.0, skyLine) / skyplaneHeight);
+    internalState->skyLine = static_cast<float>(qMax(0.0, skyLine) / skyplaneHeight);
     const auto skyTargetToCenter = radiusInWorld * elevationCosine;
-    internalState->skyTargetToCenter =
-        static_cast<float>(skyTargetToCenter / skyplaneHeight);
+    internalState->skyTargetToCenter = static_cast<float>(skyTargetToCenter / skyplaneHeight);
     const auto extraGap = radiusInWorld * elevationSine - additionalDistanceToZFar;
     const auto skyShift = qSqrt(radiusInWorld * radiusInWorld - extraGap * extraGap) - skyTargetToCenter;
-    internalState->distanceFromCameraToFog = static_cast<float>(qSqrt(skyShift * skyShift + zFar * zFar));
+    const auto distanceFromCameraToFog = qSqrt(skyShift * skyShift + zFar * zFar);
+    internalState->distanceFromCameraToFog = static_cast<float>(distanceFromCameraToFog);
     internalState->distanceFromTargetToFog = static_cast<float>(additionalDistanceToZFar);
-    internalState->fogShiftFactor = static_cast<float>(qBound(0.0, (skyShift - skyLine) / TileSize3D, 1.0));
+    internalState->fogShiftFactor = static_cast<float>(qBound(0.0, (skyLine - skyShift) / TileSize3D, 1.0));
+    const auto fogAngle = targetAngle + qAcos(qBound(0.0, zFar / distanceFromCameraToFog, 1.0));
+    const auto distanceFromCameraToCenter = distanceFromCameraToFog * qCos(fogAngle);
+    const auto distanceFromFogToCenter = distanceFromCameraToFog * qSin(fogAngle);
+    const auto skyBackToCenter =
+        distanceFromFogToCenter * zFar / qCos(targetAngle) / distanceFromCameraToCenter - qMax(0.0, skyShift);
+    internalState->skyBackToCenter = static_cast<float>(skyBackToCenter / skyplaneHeight);
 
     // Calculate height of the visible sky
     internalState->skyHeightInKilometers =

@@ -64,11 +64,13 @@ namespace OsmAnd
         float referenceTileSizeOnScreenInPixels;
         float distanceFromCameraToTarget;
         float distanceFromCameraToGround;
+        float factorOfDistance;
         float distanceFromCameraToFog;
         float distanceFromTargetToFog;
         float fogShiftFactor;
         float skyHeightInKilometers;
         float skyTargetToCenter;
+        float skyBackToCenter;
         float skyLine;
         double globeRadius;
         double distanceFromCameraToGroundInMeters;        
