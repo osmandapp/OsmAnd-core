@@ -652,7 +652,7 @@ QList<OsmAnd::BandIndex> OsmAnd::WeatherTileResourceProvider_P::getAllBandCombin
         WeatherBand::WindSouthToNorth}; // Should always be in the end of this array
     const auto bandsCount = sizeof(bandNumbers) / sizeof(WeatherBand) - 2;
     const auto combinationsCount = (1u << bandsCount);
-    std::bitset<sizeof(BandIndex)> bits;
+    std::bitset<combinationsCount> bits;
     QList<BandIndex> values;
     for (BandIndex i = 0; i < combinationsCount; i++)
     {
@@ -1688,4 +1688,3 @@ QString OsmAnd::WeatherTileResourceProvider_P::getWeatherSourcePrefix(WeatherSou
             return QStringLiteral("gfs_");
     }
 }
-
