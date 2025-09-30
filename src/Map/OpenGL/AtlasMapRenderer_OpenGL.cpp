@@ -561,7 +561,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     const float lowerDetail, const bool sortTiles) const
 {
     // 4 points of frustum near clipping box in camera coordinate space
-    const auto planeHalfWidth = internalState->projectionPlaneHalfWidth * 1.15f;
+    const auto planeHalfWidth = internalState->projectionPlaneHalfWidth * (state.flatEarth ? 1.0f : 1.15f);
     const auto planeHalfHeight = internalState->projectionPlaneHalfHeight;
     const auto planeLowHalfHeight = internalState->projectionPlaneLowHalfHeight;
     const glm::vec4 nTL_c(-planeHalfWidth, +planeHalfHeight, -_zNear, 1.0f);
