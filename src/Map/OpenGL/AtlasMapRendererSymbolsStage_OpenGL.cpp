@@ -310,44 +310,19 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
             // Parameters: common data
             "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
             "uniform mat4 param_vs_mOrthographicProjection;                                                                     ""\n"
-            "uniform mat2 param_vs_mRotate;                                                                          ""\n"
+            "uniform mat2 param_vs_mRotate;                                                                                     ""\n"
             "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
             "uniform vec4 param_vs_viewport; // x, y, width, height                                                             ""\n"
-            "uniform highp ivec4 param_vs_target31; // x, y, zoom, tileSize31                                                   ""\n"
             "                                                                                                                   ""\n"
             // Parameters: per-symbol data
-            "uniform highp ivec2 param_vs_position31;                                                                           ""\n"
+            "uniform vec4 param_vs_positionInWorld;                                                                             ""\n"
             "uniform ivec2 param_vs_symbolSize;                                                                                 ""\n"
-            "uniform float param_vs_distanceFromCamera;                                                                         ""\n"
             "uniform ivec2 param_vs_onScreenOffset;                                                                             ""\n"
-            "uniform float param_vs_elevationInWorld;                                                                           ""\n"
             "                                                                                                                   ""\n"
             "void main()                                                                                                        ""\n"
             "{                                                                                                                  ""\n"
-            // Calculate position of symbol in world coordinate system.
-            "    highp ivec2 offsetFromTarget31 = param_vs_position31 - param_vs_target31.xy;                                   ""\n"
-            "    highp ivec2 correctOverlap;                                                                                    ""\n"
-            "    correctOverlap.x = offsetFromTarget31.x >= 1073741824 ? -1 : (offsetFromTarget31.x < -1073741824 ? 1 : 0);     ""\n"
-            "    correctOverlap.y = offsetFromTarget31.y >= 1073741824 ? -1 : (offsetFromTarget31.y < -1073741824 ? 1 : 0);     ""\n"
-            "    offsetFromTarget31 += correctOverlap * 2147483647 + correctOverlap;                                            ""\n"
-            "    highp vec2 offsetFromTarget = vec2(0.0);                                                                       ""\n"
-            "#if INTEGER_OPERATIONS_SUPPORTED                                                                                   ""\n"
-            "    {                                                                                                              ""\n"
-            "        highp ivec2 offsetFromTargetT = offsetFromTarget31 / param_vs_target31.w;                                  ""\n"
-            "        highp vec2 offsetFromTargetF = vec2(offsetFromTarget31 - offsetFromTargetT * param_vs_target31.w);         ""\n"
-            "        offsetFromTarget = vec2(offsetFromTargetT) + offsetFromTargetF / float(param_vs_target31.w);               ""\n"
-            "    }                                                                                                              ""\n"
-            "#else // !INTEGER_OPERATIONS_SUPPORTED                                                                             ""\n"
-            "    offsetFromTarget = vec2(offsetFromTarget31);                                                                   ""\n"
-            "    offsetFromTarget /= float(param_vs_target31.w);                                                                ""\n"
-            "#endif // INTEGER_OPERATIONS_SUPPORTED                                                                             ""\n"
-            "    vec4 symbolInWorld;                                                                                            ""\n"
-            "    symbolInWorld.xz = offsetFromTarget * %TileSize3D%.0;                                                          ""\n"
-            "    symbolInWorld.y = param_vs_elevationInWorld;                                                                   ""\n"
-            "    symbolInWorld.w = 1.0;                                                                                         ""\n"
-            "                                                                                                                   ""\n"
             // Project position of symbol from world coordinate system to clipping space and to normalized device coordinates ([-1 .. 1])
-            "    vec4 symbolInClipping = param_vs_mPerspectiveProjectionView * symbolInWorld;                                   ""\n"
+            "    vec4 symbolInClipping = param_vs_mPerspectiveProjectionView * param_vs_positionInWorld;                        ""\n"
             "    vec3 symbolInNDC = symbolInClipping.xyz / symbolInClipping.w;                                                  ""\n"
             "                                                                                                                   ""\n"
             // Using viewport size, get real screen coordinates and correct depth to be [0 .. 1]
@@ -367,12 +342,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
             // symbolOnScreen.(x|y) has to be rounded and +0.5 in case param_vs_symbolSize.(x|y) is even
             // symbolOnScreen.(x|y) has to be rounded in case param_vs_symbolSize.(x|y) is odd
             "    symbolOnScreen = floor(symbolOnScreen);                                                                        ""\n"
-            "#if INTEGER_OPERATIONS_SUPPORTED                                                                                   ""\n"
             "    symbolOnScreen.x += float(1 - param_vs_symbolSize.x & 1) * 0.5;                                                ""\n"
             "    symbolOnScreen.y += float(1 - param_vs_symbolSize.y & 1) * 0.5;                                                ""\n"
-            "#else // !INTEGER_OPERATIONS_SUPPORTED                                                                             ""\n"
-            "    symbolOnScreen.xy += (vec2(1.0) - mod(vec2(param_vs_symbolSize), vec2(2.0))) * 0.5;                            ""\n"
-            "#endif // INTEGER_OPERATIONS_SUPPORTED                                                                             ""\n"
             "                                                                                                                   ""\n"
             // So it's possible to calculate current vertex location:
             // Initially, get location of current vertex in screen coordinates
@@ -482,11 +453,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.mRotate, "param_vs_mRotate", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.viewport, "param_vs_viewport", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.position31, "param_vs_position31", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.positionInWorld, "param_vs_positionInWorld", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.symbolSize, "param_vs_symbolSize", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.onScreenOffset, "param_vs_onScreenOffset", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.elevationInWorld, "param_vs_elevationInWorld", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
     if (!ok)
@@ -607,16 +576,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
         glUniform4fv(_billboardRasterProgram.vs.param.viewport, 1, glm::value_ptr(internalState.glmViewport));
         GL_CHECK_RESULT;
 
-        // Set target31
-        glUniform4i(
-            _billboardRasterProgram.vs.param.target31,
-            currentState.target31.x,
-            currentState.target31.y,
-            currentState.zoomLevel,
-            static_cast<GLint>(1u << (ZoomLevel::MaxZoomLevel - currentState.zoomLevel))
-        );
-        GL_CHECK_RESULT;
-
         // Activate texture block for symbol textures
         glActiveTexture(GL_TEXTURE0 + 0);
         GL_CHECK_RESULT;
@@ -652,14 +611,24 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     //}
     //////////////////////////////////////////////////////////////////////////
 
+    // Calculate position of symbol in world coordinates
+    const auto positionInWorld = currentState.flatEarth
+        ? Utilities::planeWorldCoordinates(renderable->position31,
+            currentState.target31, currentState.zoomLevel, AtlasMapRenderer::TileSize3D, renderable->elevationInWorld)
+        : Utilities::sphericalWorldCoordinates(renderable->position31,
+            internalState.mGlobeRotationPrecise, internalState.globeRadius, renderable->elevationInWorld);
+
     // Per-symbol data
-    glUniform2i(_billboardRasterProgram.vs.param.position31, renderable->position31.x, renderable->position31.y);
+    glUniform4f(_billboardRasterProgram.vs.param.positionInWorld,
+        positionInWorld.x,
+        positionInWorld.y,
+        positionInWorld.z,
+        1.0f);
     GL_CHECK_RESULT;
 
     glUniformMatrix2fv(_billboardRasterProgram.vs.param.mRotate,
         1, GL_FALSE, glm::value_ptr(renderable->mRotate));
     GL_CHECK_RESULT;
-
 
     // Set symbol size
     glUniform2i(_billboardRasterProgram.vs.param.symbolSize, gpuResource->width, gpuResource->height);
@@ -671,10 +640,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
         ? renderable->instanceParameters->offset
         : renderable->offsetOnScreen;
     glUniform2i(_billboardRasterProgram.vs.param.onScreenOffset, offsetOnScreen.x, -offsetOnScreen.y);
-    GL_CHECK_RESULT;
-
-    // Set elevation
-    glUniform1f(_billboardRasterProgram.vs.param.elevationInWorld, renderable->positionInWorld.y);
     GL_CHECK_RESULT;
 
     if (currentAlphaChannelType != gpuResource->alphaChannelType)
@@ -3632,7 +3597,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::drawDebugMetricSymbol(IMapRend
             renderable->mapSymbolGroup = symbolGroup;
             renderable->mapSymbol = symbol;
             renderable->position31 = symbol->position31;
-            renderable->positionInWorld = glm::vec3(0.0f, 10.0f, 0.0f);
+            renderable->elevationInWorld = 10.0f;
             renderable->mRotate = glm::mat2(1.0f);
             renderable->opacityFactor = 1.0f;
             renderable->gpuResource = gpuResource;

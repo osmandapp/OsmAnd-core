@@ -199,7 +199,7 @@ bool OsmAnd::GPUAPI_OpenGLES2plus::initialize()
     glVersionRegExp.indexIn(QString(QLatin1String(reinterpret_cast<const char*>(glVersionString))));
     _glVersion = glVersionRegExp.cap(1).toUInt() * 10 + glVersionRegExp.cap(2).toUInt();
     LogPrintf(LogSeverityLevel::Info, "OpenGLES version %d [%s]", glVersion, glVersionString);
-    if (glVersion < 20)
+    if (glVersion < 30)
     {
         LogPrintf(LogSeverityLevel::Info, "This OpenGLES version is not supported");
         return false;
@@ -426,7 +426,6 @@ bool OsmAnd::GPUAPI_OpenGLES2plus::initialize()
     _isSupported_textureLod = (glslVersion >= 130) || _isSupported_EXT_shader_texture_lod;
     _isSupported_texture_rg = (glVersion >= 30) || _isSupported_EXT_texture_rg;
     _isSupported_texture_storage = (glVersion >= 30) || _isSupported_EXT_texture_storage;
-    _isSupported_integerOperations = (glslVersion >= 130);
 
     if (glVersion >= 30 || _isSupported_OES_get_program_binary)
     {
@@ -933,7 +932,6 @@ void OsmAnd::GPUAPI_OpenGLES2plus::preprocessShader(QString& code)
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D texture                                                                                  ""\n"
             "#define SAMPLE_TEXTURE_2D_LOD textureLod                                                                           ""\n"
-            "#define INTEGER_OPERATIONS_SUPPORTED %IntegerOperationsSupported%                                                  ""\n"
             "                                                                                                                   ""\n");
     }
     else if (glslVersion >= 100)
@@ -951,7 +949,6 @@ void OsmAnd::GPUAPI_OpenGLES2plus::preprocessShader(QString& code)
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D texture2D                                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D_LOD texture2DLodEXT                                                                      ""\n"
-            "#define INTEGER_OPERATIONS_SUPPORTED %IntegerOperationsSupported%                                                  ""\n"
             "                                                                                                                   ""\n");
     }
     else
@@ -961,7 +958,6 @@ void OsmAnd::GPUAPI_OpenGLES2plus::preprocessShader(QString& code)
 
     auto shaderHeaderPreprocessed = shaderHeader;
     shaderHeaderPreprocessed.replace("%TextureLodSupported%", QString::number(isSupported_textureLod ? 1 : 0));
-    shaderHeaderPreprocessed.replace("%IntegerOperationsSupported%", QString::number(isSupported_integerOperations ? 1 : 0));
 
     code.prepend(shaderHeaderPreprocessed);
 }

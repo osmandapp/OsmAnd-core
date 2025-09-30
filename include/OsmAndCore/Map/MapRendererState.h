@@ -69,7 +69,7 @@ namespace OsmAnd
         Zoom,
         Elevation,
     };
-    typedef std::bitset<sizeof(int)> AimingActions;
+    typedef std::bitset<8 * sizeof(int)> AimingActions;
 
     struct OSMAND_CORE_API MapState Q_DECL_FINAL
     {

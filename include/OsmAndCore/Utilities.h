@@ -1279,6 +1279,29 @@ namespace OsmAnd
             return result;
         }
 
+        inline static glm::vec3 planeWorldCoordinates(
+            const PointI& location31,
+            const PointI& target31,
+            const ZoomLevel zoomLevel,
+            const float tileSizeInWorld,
+            const double elevation)
+        {
+            const auto offset31 = shortestVector31(target31, location31);
+            const auto offsetFromTarget = convert31toFloat(offset31, zoomLevel) * tileSizeInWorld;
+            return glm::vec3(offsetFromTarget.x, static_cast<float>(elevation), offsetFromTarget.y);
+        }
+
+        inline static glm::vec3 sphericalWorldCoordinates(
+            const PointI& location31,
+            const glm::dmat3& mGlobeRotation,
+            const double globeRadius,
+            const double elevation)
+        {
+            const auto n = mGlobeRotation * getGlobeRadialVector(location31);
+            const auto v = n * (globeRadius + elevation);
+            return glm::vec3(v.x, v.y - globeRadius, v.z);
+        }
+
         inline static double snapToGridDecimal(const double value)
         {
             // Snap value to the closest number from range [1, 2, 5, 10] * (10 ^ n)

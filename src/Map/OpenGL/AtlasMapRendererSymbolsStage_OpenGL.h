@@ -50,14 +50,11 @@ namespace OsmAnd
                     GLlocation mRotate;
                     GLlocation resultScale;
                     GLlocation viewport;
-                    GLlocation target31;
 
                     // Per-symbol data
-                    GLlocation position31;
+                    GLlocation positionInWorld;
                     GLlocation symbolSize;
-                    GLlocation distanceFromCamera;
                     GLlocation onScreenOffset;
-                    GLlocation elevationInWorld;
                 } param;
             } vs;
 

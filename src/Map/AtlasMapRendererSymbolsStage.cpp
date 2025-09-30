@@ -1816,13 +1816,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     const auto tileId = Utilities::normalizeTileId(
         Utilities::getTileId(position31, currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
 
-    // Calculate location of symbol in world coordinates.
-    auto offset31 = Utilities::shortestVector31(currentState.target31, position31);
-
-    const auto offsetFromTarget =
-        Utilities::convert31toFloat(offset31, currentState.zoomLevel) * AtlasMapRenderer::TileSize3D;
-    auto positionInWorld = glm::vec3(offsetFromTarget.x, 0.0f, offsetFromTarget.y);
-
     // Get elevation scale factor (affects distance from the surface)
     float elevationFactor = 1.0f;
     if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const BillboardRasterMapSymbol>(mapSymbol))
@@ -1851,7 +1844,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         elevationInMeters = rasterMapSymbol->getElevation();
     if (!qIsNaN(elevationInMeters))
         elevationInWorld += elevationFactor * (elevationInMeters - surfaceInMeters) / metersPerUnit;
-    positionInWorld.y = elevationInWorld;
+
+    // Calculate position of symbol in world coordinates
+    const auto positionInWorld = currentState.flatEarth
+        ? Utilities::planeWorldCoordinates(position31,
+            currentState.target31, currentState.zoomLevel, AtlasMapRenderer::TileSize3D, elevationInWorld)
+        : Utilities::sphericalWorldCoordinates(position31,
+            internalState.mGlobeRotationPrecise, internalState.globeRadius, elevationInWorld);
 
     // Test against visible frustum area (if allowed)
     const bool isntMarker = !std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolGroup);
@@ -1919,10 +1918,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         renderable->instanceParameters = instanceParameters;
         renderable->referenceOrigins = const_cast<MapRenderer::MapSymbolReferenceOrigins*>(&referenceOrigins);
         renderable->gpuResource = gpuResource;
-        renderable->positionInWorld = positionInWorld;
         renderable->position31 = position31;
         renderable->mRotate = mRotate;
-        renderable->elevationInMeters = elevationInMeters;
+        renderable->elevationInWorld = elevationInWorld;
         renderable->tileId = tileId;
         renderable->offsetInTileN = offsetInTileN;
         renderable->opacityFactor = opacityFactor;

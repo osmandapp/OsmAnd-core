@@ -307,7 +307,6 @@ namespace OsmAnd
         bool _isSupported_texture_half_float;
         bool _isSupported_texture_rg;
         bool _isSupported_vertex_array_object;
-        bool _isSupported_integerOperations;
         bool _isSupported_program_binary;
         GLint _maxVertexUniformVectors;
         GLint _maxFragmentUniformVectors;
@@ -354,7 +353,6 @@ namespace OsmAnd
         const bool& isSupported_texture_half_float;
         const bool& isSupported_texture_rg;
         const bool& isSupported_vertex_array_object;
-        const bool& isSupported_integerOperations;
         const GLint& maxVertexUniformVectors;
         const GLint& maxFragmentUniformVectors;
         const GLint& maxVaryingFloats;

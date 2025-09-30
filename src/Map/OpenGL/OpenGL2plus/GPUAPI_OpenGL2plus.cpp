@@ -107,7 +107,7 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     glVersionRegExp.indexIn(QString(QLatin1String(reinterpret_cast<const char*>(glVersionString))));
     _glVersion = glVersionRegExp.cap(1).toUInt() * 10 + glVersionRegExp.cap(2).toUInt();
     LogPrintf(LogSeverityLevel::Info, "OpenGL version %d [%s]", _glVersion, glVersionString);
-    if (_glVersion < 20)
+    if (_glVersion < 30)
     {
         LogPrintf(LogSeverityLevel::Info, "This OpenGL version is not supported");
         return false;
@@ -260,7 +260,6 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
         (glVersion >= 30) || extensions.contains(QLatin1String("GL_ARB_texture_rg"));
 
     _isSupported_EXT_gpu_shader4 = extensions.contains(QStringLiteral("GL_EXT_gpu_shader4"));
-    _isSupported_integerOperations = (glslVersion >= 130) || _isSupported_EXT_gpu_shader4;
 
     if (glVersion >= 41 || _isSupported_ARB_get_program_binary)
     {
@@ -695,7 +694,6 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D texture                                                                                  ""\n"
             "#define SAMPLE_TEXTURE_2D_LOD textureLod                                                                           ""\n"
-            "#define INTEGER_OPERATIONS_SUPPORTED %IntegerOperationsSupported%                                                  ""\n"
             "                                                                                                                   ""\n");
     }
     else if (glslVersion >= 130)
@@ -713,7 +711,6 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D texture2D                                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D_LOD texture2DLod                                                                         ""\n"
-            "#define INTEGER_OPERATIONS_SUPPORTED %IntegerOperationsSupported%                                                  ""\n"
             "                                                                                                                   ""\n");
     }
     else if (glslVersion >= 110)
@@ -736,7 +733,6 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D texture2D                                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D_LOD texture2DLod                                                                         ""\n"
-            "#define INTEGER_OPERATIONS_SUPPORTED %IntegerOperationsSupported%                                                  ""\n"
             "                                                                                                                   ""\n");
     }
     else
@@ -746,7 +742,6 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
 
     auto shaderHeaderPreprocessed = shaderHeader;
     shaderHeaderPreprocessed.replace("%TextureLodSupported%", QString::number(isSupported_textureLod ? 1 : 0));
-    shaderHeaderPreprocessed.replace("%IntegerOperationsSupported%", QString::number(isSupported_integerOperations ? 1 : 0));
 
     code.prepend(shaderHeaderPreprocessed);
 }

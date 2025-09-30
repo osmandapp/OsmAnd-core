@@ -401,7 +401,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
             "uniform mat3 param_vs_mGlobeRotation;                                                                              ""\n"
             "uniform vec2 param_vs_targetInTilePosN;                                                                            ""\n"
-            "uniform vec2 param_vs_objectSizes;                                                                                 ""\n"
+            "uniform vec3 param_vs_objectSizes;                                                                                 ""\n"
             "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
             "    uniform float param_vs_distanceFromCameraToTarget;                                                             ""\n"
             "    uniform float param_vs_cameraElevationAngleN;                                                                  ""\n"
@@ -498,21 +498,28 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    vec2 mercMeters = vec2(overX ? 2147483647 : loc31.x, overY ? 2147483647 : loc31.y) / 65536.0 / 32768.0 - 0.5;  ""\n"
             "                                                                                                                   ""\n"
             //   Calculate vertex position on the globe surface
+            "    angles.y = overY ? -M_PI_2 : (loc31.y == 0 ? M_PI_2 : angles.y);                                               ""\n"
             "    float csy = cos(angles.y);                                                                                     ""\n"
             "    vec3 nv = param_vs_mGlobeRotation * vec3(csy * sin(angles.x), csy * cos(angles.x), -sin(angles.y));            ""\n"
             "    vec3 cv = vec3(nv.x, nv.y - param_vs_objectSizes.y, nv.z);                                                     ""\n"
             "                                                                                                                   ""\n"
-            //   Scale and shift vertex to it's proper position on the plane / on the tile
+            //   Scale and shift vertex to it's proper position on the plane
             "    vec2 pv = in_vs_vertexPosition;                                                                                ""\n"
             "    pv = (pv + param_vs_tileCoordsOffset - param_vs_targetInTilePosN) * param_vs_objectSizes.x;                    ""\n"
-            "    cv = param_vs_objectSizes.y < 0.0 ? vec3(pv.x, 0.0, pv.y) : cv;                                                ""\n"
-            "    nv = param_vs_objectSizes.y < 0.0 ? vec3(0.0, 1.0, 0.0) : nv;                                                  ""\n"
+            "    cv = param_vs_objectSizes.z < 0.0 ? vec3(pv.x, 0.0, pv.y) : cv;                                                ""\n"
+            "    nv = param_vs_objectSizes.z < 0.0 ? vec3(0.0, 1.0, 0.0) : nv;                                                  ""\n"
+            "                                                                                                                   ""\n"
+            //   Find proper position of vertex on the tile
             "    vec3 leftVertex = mix(param_vs_globeTileTL, param_vs_globeTileBL, in_vs_vertexPosition.y);                     ""\n"
             "    vec3 rightVertex = mix(param_vs_globeTileTR, param_vs_globeTileBR, in_vs_vertexPosition.y);                    ""\n"
-            "    vec4 v = vec4(param_vs_objectSizes.y != 0.0 ? cv : mix(leftVertex, rightVertex, in_vs_vertexPosition.x), 1.0); ""\n"
+            "    vec3 midVertex = mix(leftVertex, rightVertex, in_vs_vertexPosition.x);                                         ""\n"
+            "    midVertex = overY || loc31.y == 0 ? cv : midVertex;                                                            ""\n"
+            "    vec4 v = vec4(param_vs_objectSizes.z != 0.0 ? cv : midVertex, 1.0);                                            ""\n"
             "    vec3 leftN = normalize(mix(param_vs_globeTileTLnv, param_vs_globeTileBLnv, in_vs_vertexPosition.y));           ""\n"
             "    vec3 rightN = normalize(mix(param_vs_globeTileTRnv, param_vs_globeTileBRnv, in_vs_vertexPosition.y));          ""\n"
-            "    vec3 n = normalize(param_vs_objectSizes.y != 0.0 ? nv : mix(leftN, rightN, in_vs_vertexPosition.x));           ""\n"
+            "    vec3 midN = mix(leftN, rightN, in_vs_vertexPosition.x);                                                        ""\n"
+            "    midN = overY || loc31.y == 0 ? nv : midN;                                                                      ""\n"
+            "    vec3 n = normalize(param_vs_objectSizes.z != 0.0 ? nv : midN);                                                 ""\n"
             "                                                                                                                   ""\n"
             //   Get meters per unit, which is needed at both shader stages
             "    v2f_metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, in_vs_vertexTexCoords.t);      ""\n"
@@ -2180,9 +2187,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     GL_CHECK_RESULT;
 
     // Set tile and globe sizes
-    glUniform2f(program.vs.param.objectSizes,
-        AtlasMapRenderer::TileSize3D * (1 << currentState.zoomLevel - zoomLevel), currentState.flatEarth ? -1.0f
-            : (currentState.zoomLevel < ZoomLevel9 ? static_cast<float>(internalState.globeRadius) : 0.0f));
+    glUniform3f(program.vs.param.objectSizes,
+        AtlasMapRenderer::TileSize3D * (1 << currentState.zoomLevel - zoomLevel),
+        static_cast<float>(internalState.globeRadius),
+        currentState.flatEarth ? -1.0f : (currentState.zoomLevel < ZoomLevel9 ? 1.0f : 0.0f));
     GL_CHECK_RESULT;
 
     if (gpuAPI->isSupported_textureLod)

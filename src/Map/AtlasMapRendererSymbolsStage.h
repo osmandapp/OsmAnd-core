@@ -56,10 +56,9 @@ namespace OsmAnd
 
             std::shared_ptr<const MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters> instanceParameters;
 
-            glm::vec3 positionInWorld;
             glm::mat2 mRotate;
             PointI position31;
-            float elevationInMeters;
+            float elevationInWorld;
             TileId tileId;
             PointF offsetInTileN;
             PointI offsetOnScreen;
