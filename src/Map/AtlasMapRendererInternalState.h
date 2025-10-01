@@ -54,11 +54,11 @@ namespace OsmAnd
         glm::mat3 mGlobeRotationWithRadius;
         glm::dmat3 mGlobeRotationPrecise;
         glm::dmat3 mGlobeRotationPreciseInv;
+        bool isNotTopDownProjection;
         float zNear;
         float zFar;
         float projectionPlaneHalfHeight;
         float projectionPlaneHalfWidth;
-        float projectionPlaneLowHalfHeight;
         float aspectRatio;
         float fovInRadians;
         float referenceTileSizeOnScreenInPixels;

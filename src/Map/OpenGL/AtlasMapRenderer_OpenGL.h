@@ -56,24 +56,27 @@ namespace OsmAnd
             const glm::dvec3& camPos, const glm::dvec3& camDir, const bool almostVisible) const;
         bool isPointVisible(const glm::dvec3& point,
             const glm::dvec3& topN, const glm::dvec3& leftN, const glm::dvec3& bottomN, const glm::dvec3& rightN,
-            const double& topD, const double& leftD, const double& bottomD, const double& rightD,
-            bool skipTop, bool skipLeft, bool skipBottom, bool skipRight) const;
+            const double topD, const double leftD, const double bottomD, const double rightD,
+            bool skipTop, bool skipLeft, bool skipBottom, bool skipRight,
+            const glm::dvec3* botRightN = nullptr, const double* botRightD = nullptr) const;
         bool rayIntersectsTileSurface(const glm::dvec3& rayStart, const glm::dvec3& rayVector,
-            const double& left, const double& right, const double& top, const double& bottom,
-            const double& radius) const;
+            const double left, const double right, const double top, const double bottom,
+            const double radius) const;
         bool rayIntersectsTileSide(const glm::dvec3& rayStart, const glm::dvec3& rayVector,
             const glm::dvec3& planeO, const glm::dvec3& planeN,
-            const double& top, const double& bottom, const double& minRadius, const double& maxRadius) const;
-        bool rayIntersectsTileCut(const glm::dvec3& rayStart, const glm::dvec3& rayVector, const double& nSqrTanLat,
-            const double& left, const double& right, const double& minRadius, const double& maxRadius) const;
+            const double top, const double bottom, const double minRadius, const double maxRadius) const;
+        bool rayIntersectsTileCut(const glm::dvec3& rayStart, const glm::dvec3& rayVector, const double nSqrTanLat,
+            const double left, const double right, const double minRadius, const double maxRadius) const;
         bool isEdgeVisible(const glm::dvec3& cameraPosition,
             const glm::dvec3& topN, const glm::dvec3& leftN, const glm::dvec3& bottomN, const glm::dvec3& rightN,
-            const double& topD, const double& leftD, const double& bottomD, const double& rightD,
-            const glm::dvec3& startPoint, const glm::dvec3& endPoint) const;
+            const double topD, const double leftD, const double bottomD, const double rightD,
+            const glm::dvec3& startPoint, const glm::dvec3& endPoint,
+            const glm::dvec3* botRightN = nullptr, const double* botRightD = nullptr) const;
         bool isArcVisible(const glm::dvec3& cp,
             const glm::dvec3& topN, const glm::dvec3& leftN, const glm::dvec3& bottomN, const glm::dvec3& rightN,
-            const double& topD, const double& leftD, const double& bottomD, const double& rightD,
-            const double& startAngle, const double& endAngle, const double& arcZ, const double& sqrRadius) const;
+            const double topD, const double leftD, const double bottomD, const double rightD,
+            const double startAngle, const double endAngle, const double arcZ, const double sqrRadius,
+            const glm::dvec3* botRightN = nullptr, const double* botRightD = nullptr) const;
         bool isPointVisible(const InternalState& internalState, const glm::vec3& point, bool skipTop,
             bool skipLeft, bool skipBottom, bool skipRight, bool skipFront, bool skipBack, float tolerance = 0.0f) const;
         bool isPointInsideTileBox(const glm::vec3& point, const glm::vec3& minPoint, const glm::vec3& maxPoint,
@@ -174,7 +177,7 @@ namespace OsmAnd
             double& baseUnits, float& sinAngleToPlane) const override;
         OsmAnd::ZoomLevel getSurfaceZoom(const MapRendererState& state, float& surfaceVisualZoom) const override;
         OsmAnd::ZoomLevel getFlatZoom(const MapRendererState& state, const ZoomLevel surfaceZoomLevel,
-            const float surfaceVisualZoom, const double& pointElevation, float& flatVisualZoom) const override;
+            const float surfaceVisualZoom, const double pointElevation, float& flatVisualZoom) const override;
 
     public:
         AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* gpuAPI);

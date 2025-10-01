@@ -207,7 +207,7 @@ namespace OsmAnd
             double& baseUnits, float& sinAngleToPlane) const = 0;
         virtual OsmAnd::ZoomLevel getSurfaceZoom(const MapRendererState& state, float& surfaceVisualZoom) const = 0;
         virtual OsmAnd::ZoomLevel getFlatZoom(const MapRendererState& state, const ZoomLevel surfaceZoomLevel,
-            const float surfaceVisualZoom, const double& pointElevation, float& flatVisualZoom) const = 0;
+            const float surfaceVisualZoom, const double pointElevation, float& flatVisualZoom) const = 0;
 
     protected:
         MapRenderer(

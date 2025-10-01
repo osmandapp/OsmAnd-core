@@ -57,32 +57,32 @@ namespace OsmAnd
 
         bool arcIntersectsPlane(
             const glm::dvec3& planeN,
-            const double& planeD,
-            const double& minAngleX,
-            const double& maxAngleX,
-            const double& arcZ,
-            const double& sqrRadius,
+            const double planeD,
+            const double minAngleX,
+            const double maxAngleX,
+            const double arcZ,
+            const double sqrRadius,
             glm::dvec3& point1,
             glm::dvec3& point2);
 
         bool rayIntersectsSphere(
             const glm::dvec3& p0,
             const glm::dvec3& v,
-            const double& radius,
+            const double radius,
             double& angleX,
             double& angleY);
 
         bool lineSegmentIntersectsSphere(
             const glm::dvec3& p0,
             const glm::dvec3& p1,
-            const double& radius,
+            const double radius,
             double& angleX,
             double& angleY);
 
         bool rayIntersectsCone(
             const glm::dvec3& p0,
             const glm::dvec3& v,
-            const double& nSqrTanLat,
+            const double nSqrTanLat,
             double& angleX,
             double& distance);
     }

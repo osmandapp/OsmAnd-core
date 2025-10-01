@@ -206,7 +206,7 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 
 	// Put triangle to the tile list
 	inline static void putTriangle(std::map<TileId, std::vector<VectorMapSymbol::Vertex>>& meshes, const VertexAdv& A,
-								   const VertexAdv& B, const VertexAdv& C, const double& tileSize,
+								   const VertexAdv& B, const VertexAdv& C, const double tileSize,
 								   const PointD& tilePosN)
 	{
 		auto x = static_cast<int32_t>(

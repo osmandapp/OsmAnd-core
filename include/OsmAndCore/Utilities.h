@@ -441,7 +441,7 @@ namespace OsmAnd
             return zone.y << 6 | zone.x;
         }
 
-        inline static PointD getCoordinatesUTM(const PointD& lonlat, const double& refLon)
+        inline static PointD getCoordinatesUTM(const PointD& lonlat, const double refLon)
         {
             auto sinlat = sin(lonlat.y);
             //double f = 1.0 / 298.257223563;

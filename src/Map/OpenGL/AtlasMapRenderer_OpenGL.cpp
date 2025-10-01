@@ -467,9 +467,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     auto zFar = distanceToTarget + additionalDistanceToZFar;
     internalState->zFar = static_cast<float>(zFar);
     internalState->zNear = _zNear;
-    internalState->projectionPlaneLowHalfHeight = targetAngle > internalState->fovInRadians
-        ? static_cast<float>(static_cast<double>(_zNear) * qTan(targetAngle))
-        : internalState->projectionPlaneHalfHeight;
+    internalState->isNotTopDownProjection = targetAngle > internalState->fovInRadians;
     
     // Calculate distance for tiles of high detail
     const auto distanceToScreenTop = internalState->distanceFromCameraToTarget *
@@ -563,11 +561,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     // 4 points of frustum near clipping box in camera coordinate space
     const auto planeHalfWidth = internalState->projectionPlaneHalfWidth * (state.flatEarth ? 1.0f : 1.15f);
     const auto planeHalfHeight = internalState->projectionPlaneHalfHeight;
-    const auto planeLowHalfHeight = internalState->projectionPlaneLowHalfHeight;
     const glm::vec4 nTL_c(-planeHalfWidth, +planeHalfHeight, -_zNear, 1.0f);
     const glm::vec4 nTR_c(+planeHalfWidth, +planeHalfHeight, -_zNear, 1.0f);
-    const glm::vec4 nBL_c(-planeHalfWidth, -planeLowHalfHeight, -_zNear, 1.0f);
-    const glm::vec4 nBR_c(+planeHalfWidth, -planeLowHalfHeight, -_zNear, 1.0f);
+    const glm::vec4 nBL_c(-planeHalfWidth, -planeHalfHeight, -_zNear, 1.0f);
+    const glm::vec4 nBR_c(+planeHalfWidth, -planeHalfHeight, -_zNear, 1.0f);
 
     // 4 points of frustum lower detail plane in camera coordinate space
     const auto zMid = lowerDetail;
@@ -618,11 +615,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     internalState->backVisibleEdgeD = glm::dot(backVisibleEdgeN, mTR_g.xyz());
     internalState->extraElevation = 0.0f;
     internalState->maxElevation = 0.0f;
+    const auto checkVert = internalState->isNotTopDownProjection;
     const auto cameraDistance = glm::length(internalState->cameraRotatedPosition);
     const auto cameraHeight = cameraDistance - 1.0;
     const auto ca = internalState->cameraAngles;
     const auto camPos = internalState->cameraRotatedPosition;
     const auto camDir = -internalState->cameraRotatedDirection;
+    const auto camDown = -glm::normalize(camPos);
     const auto camTL = internalState->mGlobeRotationPreciseInv * glm::dvec3(glm::normalize(rayTL));
     const auto camTR = internalState->mGlobeRotationPreciseInv * glm::dvec3(glm::normalize(rayTR));
     const auto camBL = internalState->mGlobeRotationPreciseInv * glm::dvec3(glm::normalize(rayBL));
@@ -631,10 +630,14 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     const auto leftN = internalState->mGlobeRotationPreciseInv * glm::dvec3(leftVisibleEdgeN);
     const auto bottomN = internalState->mGlobeRotationPreciseInv * glm::dvec3(bottomVisibleEdgeN);
     const auto rightN = internalState->mGlobeRotationPreciseInv * glm::dvec3(rightVisibleEdgeN);
+    const auto botLeftN = glm::normalize(glm::cross(camBL, camDown));
+    const auto botRightN = glm::normalize(glm::cross(camDown, camBR));
     const auto topD = glm::dot(topN, camPos);
     const auto leftD = glm::dot(leftN, camPos);
     const auto bottomD = glm::dot(bottomN, camPos);
     const auto rightD = glm::dot(rightN, camPos);
+    const auto botLeftD = glm::dot(botLeftN, camPos);
+    const auto botRightD = glm::dot(botRightN, camPos);
     const auto zLower = static_cast<double>(lowerDetail) / internalState->globeRadius;
     const auto zFar = static_cast<double>(internalState->zFar) / internalState->globeRadius;
     const auto detailThickness = _detailDistanceFactor / internalState->globeRadius;
@@ -758,8 +761,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
 
                     // Check visibility of base corners of the tile:
                     // a tile should be considered flat visible if any of these corners is visible
-                    if (isPointVisible(normalTL,
-                        topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false))
+                    if (isPointVisible(normalTL, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
+                        checkVert ? botLeftD : bottomD, rightD, false, false, false, false,
+                        checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
                     {
                         if (minHeight == 0.0)
                         {
@@ -772,8 +776,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         else
                             isFlatVisible = true;
                     }
-                    if (isPointVisible(normalTR,
-                        topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false))
+                    if (isPointVisible(normalTR, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
+                        checkVert ? botLeftD : bottomD, rightD, false, false, false, false,
+                        checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
                     {
                         if (minHeight == 0.0)
                         {
@@ -786,8 +791,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         else
                             isFlatVisible = true;
                     }
-                    if (isPointVisible(normalBL,
-                        topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false))
+                    if (isPointVisible(normalBL, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
+                        checkVert ? botLeftD : bottomD, rightD, false, false, false, false,
+                        checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
                     {
                         if (minHeight == 0.0)
                         {
@@ -800,8 +806,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         else
                             isFlatVisible = true;
                     }
-                    if (isPointVisible(normalBR,
-                        topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false))
+                    if (isPointVisible(normalBR, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
+                        checkVert ? botLeftD : bottomD, rightD, false, false, false, false,
+                        checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
                     {
                         if (minHeight == 0.0)
                         {
@@ -870,7 +877,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     }
 
                     // Tile should be considered visible if any corner ray of frustum intersects surface of the tile
-                    if (rayIntersectsTileSurface(camPos, camTL, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
+                    if (checkVert && rayIntersectsTileSurface(camPos, camDown, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
+                        || rayIntersectsTileSurface(camPos, camTL, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
                         || rayIntersectsTileSurface(camPos, camTR, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
                         || rayIntersectsTileSurface(camPos, camBL, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
                         || rayIntersectsTileSurface(camPos, camBR, angTL.x, angBR.x, angTL.y, angBR.y, 1.0))
@@ -963,8 +971,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
 
                     // Check visibility of side edges of the tile:
                     // a tile should be considered visible if any of its side edge intersects any side of frustum
-                    if (isEdgeVisible(
-                        camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, normalTL, normalBL))
+                    if (isEdgeVisible(camPos, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
+                        checkVert ? botLeftD : bottomD, rightD, normalTL, normalBL,
+                        checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
                     {
                         if (minHeight == 0.0)
                         {
@@ -975,8 +984,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         else
                             isFlatVisible = true;
                     }
-                    if (isEdgeVisible(
-                        camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, normalBR, normalTR))
+                    if (isEdgeVisible(camPos, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
+                        checkVert ? botLeftD : bottomD, rightD, normalBR, normalTR,
+                        checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
                     {
                         if (minHeight == 0.0)
                         {
@@ -1022,8 +1032,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     const auto cosTL = qCos(angTL.y);
                     auto sqrR = cosTL;
                     sqrR *= sqrR;
-                    if (isArcVisible(camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD,
-                        angTL.x, angBR.x, normalTL.z, sqrR))
+                    if (isArcVisible(camPos, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
+                        checkVert ? botLeftD : bottomD, rightD, angTL.x, angBR.x, normalTL.z, sqrR,
+                        checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
                     {
                         if (minHeight == 0.0)
                         {
@@ -1040,8 +1051,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     const auto cosBR = qCos(angBR.y);
                     sqrR = cosBR;
                     sqrR *= sqrR;
-                    if (isArcVisible(camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD,
-                        angTL.x, angBR.x, normalBR.z, sqrR))
+                    if (isArcVisible(camPos, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
+                        checkVert ? botLeftD : bottomD, rightD, angTL.x, angBR.x, normalBR.z, sqrR,
+                        checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
                     {
                         if (minHeight == 0.0)
                         {
@@ -1479,19 +1491,21 @@ inline void OsmAnd::AtlasMapRenderer_OpenGL::insertTileId(QHash<TileId, TileVisi
 
 inline bool OsmAnd::AtlasMapRenderer_OpenGL::isPointVisible(const glm::dvec3& point,
     const glm::dvec3& topN, const glm::dvec3& leftN, const glm::dvec3& bottomN, const glm::dvec3& rightN,
-    const double& topD, const double& leftD, const double& bottomD, const double& rightD,
-    bool skipTop, bool skipLeft, bool skipBottom, bool skipRight) const
+    const double topD, const double leftD, const double bottomD, const double rightD,
+    bool skipTop, bool skipLeft, bool skipBottom, bool skipRight,
+    const glm::dvec3* botRightN /* = nullptr */, const double* botRightD /* = nullptr */) const
 {
     const auto top = skipTop || glm::dot(point, topN) <= topD;
     const auto left = skipLeft || glm::dot(point, leftN) <= leftD;
     const auto bottom = skipBottom || glm::dot(point, bottomN) <= bottomD;
     const auto right = skipRight || glm::dot(point, rightN) <= rightD;
-    return top && left && bottom && right;
+    const auto botRight = botRightN == nullptr || botRightD == nullptr || glm::dot(point, *botRightN) <= *botRightD;
+    return top && left && bottom && right && botRight;
 }
 
 inline bool OsmAnd::AtlasMapRenderer_OpenGL::rayIntersectsTileSurface(
     const glm::dvec3& rayStart, const glm::dvec3& rayVector,
-    const double& left, const double& right, const double& top, const double& bottom, const double& radius) const
+    const double left, const double right, const double top, const double bottom, const double radius) const
 {
     double angleX, angleY;
     bool result = Utilities_OpenGL_Common::rayIntersectsSphere(rayStart, rayVector, radius, angleX, angleY)
@@ -1501,7 +1515,7 @@ inline bool OsmAnd::AtlasMapRenderer_OpenGL::rayIntersectsTileSurface(
 
 inline bool OsmAnd::AtlasMapRenderer_OpenGL::rayIntersectsTileSide(
     const glm::dvec3& rayStart, const glm::dvec3& rayVector, const glm::dvec3& planeO, const glm::dvec3& planeN,
-    const double& top, const double& bottom, const double& minRadius, const double& maxRadius) const
+    const double top, const double bottom, const double minRadius, const double maxRadius) const
 {
     double d;
     if (Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayVector, rayStart, d) && d > 0.0)
@@ -1519,8 +1533,8 @@ inline bool OsmAnd::AtlasMapRenderer_OpenGL::rayIntersectsTileSide(
 }
 
 inline bool OsmAnd::AtlasMapRenderer_OpenGL::rayIntersectsTileCut(
-    const glm::dvec3& rayStart, const glm::dvec3& rayVector, const double& nSqrTanLat,
-    const double& left, const double& right, const double& minRadius, const double& maxRadius) const
+    const glm::dvec3& rayStart, const glm::dvec3& rayVector, const double nSqrTanLat,
+    const double left, const double right, const double minRadius, const double maxRadius) const
 {
     double angleX, dist;
     if (Utilities_OpenGL_Common::rayIntersectsCone(rayStart, rayVector, nSqrTanLat, angleX, dist))
@@ -1536,44 +1550,64 @@ inline bool OsmAnd::AtlasMapRenderer_OpenGL::rayIntersectsTileCut(
 
 inline bool OsmAnd::AtlasMapRenderer_OpenGL::isEdgeVisible(const glm::dvec3& cp,
     const glm::dvec3& topN, const glm::dvec3& leftN, const glm::dvec3& bottomN, const glm::dvec3& rightN,
-    const double& topD, const double& leftD, const double& bottomD, const double& rightD,
-    const glm::dvec3& start, const glm::dvec3& end) const
+    const double topD, const double leftD, const double bottomD, const double rightD,
+    const glm::dvec3& start, const glm::dvec3& end,
+    const glm::dvec3* botRightN /* = nullptr */, const double* botRightD /* = nullptr */) const
 {
     glm::dvec3 ip;
     if ((Utilities_OpenGL_Common::lineSegmentIntersectsPlane(topN, cp, start, end, ip)
-        && isPointVisible(ip, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, true, false, false, false))
+        && isPointVisible(ip, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD,
+            true, false, false, false, botRightN, botRightD))
         || (Utilities_OpenGL_Common::lineSegmentIntersectsPlane(leftN, cp, start, end, ip)
-        && isPointVisible(ip, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, true, false, false))
+        && isPointVisible(ip, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD,
+            false, true, false, false, botRightN, botRightD))
         || (Utilities_OpenGL_Common::lineSegmentIntersectsPlane(bottomN, cp, start, end, ip)
-        && isPointVisible(ip, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, true, false))
+        && isPointVisible(ip, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD,
+            false, false, true, false, botRightN, botRightD))
         || (Utilities_OpenGL_Common::lineSegmentIntersectsPlane(rightN, cp, start, end, ip)
-        && isPointVisible(ip, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, true)))
+        && isPointVisible(ip, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD,
+            false, false, false, true, botRightN, botRightD))
+        || (botRightN != nullptr && botRightD != nullptr
+        && Utilities_OpenGL_Common::lineSegmentIntersectsPlane(*botRightN, cp, start, end, ip)
+        && isPointVisible(ip, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD,
+            true, true, true, true, botRightN, botRightD)))
         return true;
     return false;
 }
 
 inline bool OsmAnd::AtlasMapRenderer_OpenGL::isArcVisible(const glm::dvec3& cp,
     const glm::dvec3& topN, const glm::dvec3& leftN, const glm::dvec3& bottomN, const glm::dvec3& rightN,
-    const double& topD, const double& leftD, const double& bottomD, const double& rightD,
-    const double& minAngleX, const double& maxAngleX, const double& arcZ, const double& sqrRadius) const
+    const double topD, const double leftD, const double bottomD, const double rightD,
+    const double minAngleX, const double maxAngleX, const double arcZ, const double sqrRadius,
+    const glm::dvec3* botRightN /* = nullptr */, const double* botRightD /* = nullptr */) const
 {
     glm::dvec3 ip1, ip2;
     if ((Utilities_OpenGL_Common::arcIntersectsPlane(topN, topD, minAngleX, maxAngleX, arcZ, sqrRadius, ip1, ip2)
-    && (isPointVisible(ip1, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, true, false, false, false)
-    || (ip1 != ip2
-    && isPointVisible(ip2, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, true, false, false, false))))
+    && (isPointVisible(ip1, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, true, false, false, false,
+        botRightN, botRightD) || (ip1 != ip2
+    && isPointVisible(ip2, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, true, false, false, false,
+        botRightN, botRightD))))
     || (Utilities_OpenGL_Common::arcIntersectsPlane(leftN, leftD, minAngleX, maxAngleX, arcZ, sqrRadius, ip1, ip2)
-    && (isPointVisible(ip1, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, true, false, false)
-    || (ip1 != ip2
-    && isPointVisible(ip2, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, true, false, false))))
+    && (isPointVisible(ip1, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, true, false, false,
+        botRightN, botRightD) || (ip1 != ip2
+    && isPointVisible(ip2, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, true, false, false,
+        botRightN, botRightD))))
     || (Utilities_OpenGL_Common::arcIntersectsPlane(bottomN, bottomD, minAngleX, maxAngleX, arcZ, sqrRadius, ip1, ip2)
-    && (isPointVisible(ip1, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, true, false)
-    || (ip1 != ip2
-    && isPointVisible(ip2, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, true, false))))
+    && (isPointVisible(ip1, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, true, false,
+        botRightN, botRightD) || (ip1 != ip2
+    && isPointVisible(ip2, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, true, false,
+        botRightN, botRightD))))
     || (Utilities_OpenGL_Common::arcIntersectsPlane(rightN, rightD, minAngleX, maxAngleX, arcZ, sqrRadius, ip1, ip2)
-    && (isPointVisible(ip1, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, true)
-    || (ip1 != ip2
-    && isPointVisible(ip2, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, true)))))
+    && (isPointVisible(ip1, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, true,
+        botRightN, botRightD) || (ip1 != ip2
+    && isPointVisible(ip2, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, true,
+        botRightN, botRightD))))
+    || (botRightN != nullptr && botRightD != nullptr && Utilities_OpenGL_Common::arcIntersectsPlane(
+        *botRightN, *botRightD, minAngleX, maxAngleX, arcZ, sqrRadius, ip1, ip2)
+    && (isPointVisible(ip1, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, true, true, true, true,
+        botRightN, botRightD) || (ip1 != ip2
+    && isPointVisible(ip2, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, true, true, true, true,
+        botRightN, botRightD)))))
         return true;
     return false;
 }
@@ -2151,7 +2185,7 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getSurfaceZoom(
 
 OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getFlatZoom(const MapRendererState& state,
     const ZoomLevel surfaceZoomLevel, const float surfaceVisualZoom,
-    const double& pointElevation, float& flatVisualZoom) const
+    const double pointElevation, float& flatVisualZoom) const
 {
     if (state.fixedPixel.x < 0 || state.fixedPixel.y < 0)
     {

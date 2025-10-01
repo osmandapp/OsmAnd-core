@@ -107,8 +107,8 @@ bool OsmAnd::Utilities_OpenGL_Common::lineSegmentIntersectsPlane(
     return true;
 }
 
-bool OsmAnd::Utilities_OpenGL_Common::arcIntersectsPlane(const glm::dvec3& planeN, const double& planeD,
-    const double& minAngleX, const double& maxAngleX, const double& arcZ, const double& sqrRadius,
+bool OsmAnd::Utilities_OpenGL_Common::arcIntersectsPlane(const glm::dvec3& planeN, const double planeD,
+    const double minAngleX, const double maxAngleX, const double arcZ, const double sqrRadius,
     glm::dvec3& point1, glm::dvec3& point2)
 {
     const auto k = planeD - planeN.z * arcZ;
@@ -122,8 +122,8 @@ bool OsmAnd::Utilities_OpenGL_Common::arcIntersectsPlane(const glm::dvec3& plane
     const auto a2 = 2.0 * a;
     const auto y1 = (b + srd) / a2;
     const auto y2 = (b - srd) / a2;
-    const auto r1 = glm::dvec3((k + planeN.y * y1) / planeN.x, y1, arcZ);
-    const auto r2 = glm::dvec3((k + planeN.y * y2) / planeN.x, y2, arcZ);
+    const auto r1 = glm::dvec3((k - planeN.y * y1) / planeN.x, y1, arcZ);
+    const auto r2 = glm::dvec3((k - planeN.y * y2) / planeN.x, y2, arcZ);
     const auto angleR1 = qAtan2(r1.x, r1.y);
     const auto angleR2 = qAtan2(r2.x, r2.y);
     const bool withR1 = angleR1 >= minAngleX && angleR1 <= maxAngleX;
@@ -136,7 +136,7 @@ bool OsmAnd::Utilities_OpenGL_Common::arcIntersectsPlane(const glm::dvec3& plane
 }
 
 bool OsmAnd::Utilities_OpenGL_Common::rayIntersectsSphere(
-    const glm::dvec3& p0, const glm::dvec3& v, const double& radius, double& angleX, double& angleY)
+    const glm::dvec3& p0, const glm::dvec3& v, const double radius, double& angleX, double& angleY)
 {
     const auto a = v.x * v.x + v.y * v.y + v.z * v.z;
     const auto b = 2.0 * (v.x * p0.x + v.y * p0.y + v.z * p0.z);
@@ -161,7 +161,7 @@ bool OsmAnd::Utilities_OpenGL_Common::rayIntersectsSphere(
 }
 
 bool OsmAnd::Utilities_OpenGL_Common::lineSegmentIntersectsSphere(
-    const glm::dvec3& p0, const glm::dvec3& p1, const double& radius, double& angleX, double& angleY)
+    const glm::dvec3& p0, const glm::dvec3& p1, const double radius, double& angleX, double& angleY)
 {
     const auto v = p1 - p0;
     const auto a = v.x * v.x + v.y * v.y + v.z * v.z;
@@ -190,7 +190,7 @@ bool OsmAnd::Utilities_OpenGL_Common::lineSegmentIntersectsSphere(
 }
 
 bool OsmAnd::Utilities_OpenGL_Common::rayIntersectsCone(
-    const glm::dvec3& p0, const glm::dvec3& v, const double& nSqrTanLat, double& angleX, double& distance)
+    const glm::dvec3& p0, const glm::dvec3& v, const double nSqrTanLat, double& angleX, double& distance)
 {
     glm::dvec3 resultPoint;
     double pointDistance;
