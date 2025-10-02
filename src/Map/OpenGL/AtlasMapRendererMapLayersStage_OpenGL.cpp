@@ -1879,7 +1879,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     int subtileElevationFactor = 1;
 
     // Configure elevation data
-    haveElevation = false;
+    bool useElevation = false;
     const auto elevationResources = batch->elevationResourcesInGPU;
     auto tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
     static_cast<double>(1ull << (currentState.zoomLevel - zoomLevel));
@@ -1901,6 +1901,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             subtileElevationFactor = subtilesPerTile / subtilesCount;
         zScaleFactor = currentState.elevationConfiguration.zScaleFactor;
         dataScaleFactor = currentState.elevationConfiguration.dataScaleFactor;
+        useElevation = true;
         haveElevation = true;
     }
 
@@ -1934,7 +1935,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     const auto indicesPerSubtile = _rasterTileIndicesCount / subtilesPerTile;
     for (auto subtileIndex = 0; subtileIndex < subtilesPerTile; subtileIndex++)
     {
-        if (haveElevation)
+        if (useElevation)
         {
             const auto& elevationResource = (*elevationResources)[subtileIndex / subtileElevationFactor];
             if (elevationResource->resourceInGPU)
@@ -2850,7 +2851,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
                     tileSize));                
             }
             else
-            {            
+            {
                 const auto maxMissingDataZoomShift = currentState.elevationDataProvider->getMaxMissingDataZoomShift();
                 const auto maxUnderZoomShift = currentState.elevationDataProvider->getMaxMissingDataUnderZoomShift();
                 const auto minZoom = currentState.elevationDataProvider->getMinZoom();
