@@ -747,7 +747,7 @@ namespace OsmAnd
 
     };
     
-    const static QStringList COMMON_WORDS
+    static QStringList COMMON_WORDS
     {
         QStringLiteral("la"),
         QStringLiteral("via"),
@@ -1231,7 +1231,21 @@ namespace OsmAnd
         QStringLiteral("χωριό"),
         QStringLiteral("ταξίδια"),
         QStringLiteral("ø"),
-        QStringLiteral("bane")
+        QStringLiteral("bane"),
+        QStringLiteral("villages"),
+        QStringLiteral("stravenue"),
+        QStringLiteral("forge"),
+        QStringLiteral("loops"),
+        QStringLiteral("crossroad"),
+        QStringLiteral("ridges"),
+        QStringLiteral("motorway"),
+        QStringLiteral("squares"),
+        QStringLiteral("ways"),
+        QStringLiteral("junctions"),
+        QStringLiteral("drives"),
+        QStringLiteral("throughway"),
+        QStringLiteral("trafficway"),
+        QStringLiteral("plaine")
     };
     
     union CommonWords
@@ -1280,6 +1294,14 @@ namespace OsmAnd
         static inline int getCommonGeocoding(const QString name)
         {
             return COMMON_WORDS.indexOf(name);
+        }
+        
+        static inline void addRegionName(const QString & regionName) {
+            int i = COMMON_WORDS.indexOf(regionName);
+            if (i == -1)
+            {
+                COMMON_WORDS.append(regionName);
+            }
         }
     };
 }

@@ -206,6 +206,7 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                 }
                 worldRegion->nativeName = mapObject->getCaptionInNativeLanguage();
                 worldRegion->localizedNames = mapObject->getCaptionsInAllLanguages();
+                worldRegion->regionSearchText = getSearchIndex(mapObject);
                 double cx = 0, cy = 0;
                 const auto& points31 = mapObject->points31;
                 for (int i = 0; i < points31.size(); i++)
@@ -274,4 +275,20 @@ void OsmAnd::WorldRegions_P::addPolygonToRegion(const std::shared_ptr<const OsmA
 {
     worldRegion->additionalPolygons << mapObject->points31;
     worldRegion->additionalMapObjects.push_back(mapObject);
+}
+
+QString OsmAnd::WorldRegions_P::getSearchIndex(const std::shared_ptr<const OsmAnd::BinaryMapObject>& mapObject) const
+{
+    QString result;
+    for (const auto& entry : OsmAnd::rangeOf(OsmAnd::constOf(mapObject->captions)))
+    {
+        const auto& rule = *mapObject->attributeMapping->decodeMap.getRef(entry.key());
+        if (rule.tag.startsWith(QString("name")) || rule.tag == QString("key_name")
+            || rule.tag.startsWith("alt_nane") || rule.tag.startsWith("short_name")
+            || rule.tag == QString("name:abbreviation") || rule.tag == QString("ref"))
+        {
+            result.append(" ").append(entry.value().toLower());
+        }
+    }
+    return result;
 }
