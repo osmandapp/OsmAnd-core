@@ -69,6 +69,13 @@ namespace OsmAnd
             const glm::dvec3& p0,
             const glm::dvec3& v,
             const double radius,
+            glm::dvec3& result,
+            bool withBackward = false);
+
+        bool rayIntersectsSphere(
+            const glm::dvec3& p0,
+            const glm::dvec3& v,
+            const double radius,
             double& angleX,
             double& angleY);
 
@@ -85,6 +92,16 @@ namespace OsmAnd
             const double nSqrTanLat,
             double& angleX,
             double& distance);
+
+        bool planeIntersectsSphere(
+            const glm::dvec3& planeN,
+            const double planeD,
+            double& minAngleX,
+            double& maxAngleX,
+            double& minAngleY,
+            double& maxAngleY,
+            const glm::dvec3* point1 = nullptr,
+            const glm::dvec3* point2 = nullptr);
     }
 }
 

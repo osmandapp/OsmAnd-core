@@ -75,9 +75,7 @@ namespace OsmAnd
         double globeRadius;
         double distanceFromCameraToGroundInMeters;        
         double metersPerUnit;
-        double synthScaleFactor31;
         ZoomLevel synthZoomLevel;
-        PointI synthTarget31;
         TileId synthTileId;
         glm::dvec3 cameraRotatedPosition;
         glm::dvec3 cameraRotatedDirection;
