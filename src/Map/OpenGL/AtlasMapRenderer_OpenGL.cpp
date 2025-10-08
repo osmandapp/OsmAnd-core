@@ -737,10 +737,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
 
         bool isPart = true;
         bool isOut = false;
-        if (!skipTiles && sortTiles)
-        {
-            int qwe = 123;
-        }
         if (!withFTR || !withFTL
             || !planeIntersectsSphere(topN, topD, minAngleX, maxAngleX, minAngleY, maxAngleY, &FTR, &FTL))
         {
@@ -908,8 +904,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         auto offset = max31.x > INT32_MAX ? max31.x - (max31.x & INT32_MAX) : 0;
         min31.x -= offset;
         max31.x -= offset;
-        LogPrintf(OsmAnd::LogSeverityLevel::Debug, "OSMTEST: %f > LON < %f", minAngleX / M_PI * 180.0, maxAngleX / M_PI * 180.0);
-        LogPrintf(OsmAnd::LogSeverityLevel::Debug, "OSMTEST: %f > LAT < %f", minAngleY / M_PI * 180.0, maxAngleY / M_PI * 180.0);
         internalState->globalFrustum2D31.p0 = PointI64(min31.x, max31.y);
         internalState->globalFrustum2D31.p1 = PointI64(max31.x, max31.y);
         internalState->globalFrustum2D31.p2 = PointI64(max31.x, min31.y);
