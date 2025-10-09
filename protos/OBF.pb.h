@@ -2263,12 +2263,17 @@ class CityIndex : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 shifttocityblockindex() const;
   inline void set_shifttocityblockindex(::google::protobuf::uint32 value);
 
-  // required uint32 boundary = 12;
-  inline bool has_boundary() const;
+  // repeated uint32 boundary = 12;
+  inline int boundary_size() const;
   inline void clear_boundary();
   static const int kBoundaryFieldNumber = 12;
-  inline ::google::protobuf::uint32 boundary() const;
-  inline void set_boundary(::google::protobuf::uint32 value);
+  inline ::google::protobuf::uint32 boundary(int index) const;
+  inline void set_boundary(int index, ::google::protobuf::uint32 value);
+  inline void add_boundary(::google::protobuf::uint32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      boundary() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_boundary();
 
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.CityIndex)
  private:
@@ -2286,8 +2291,6 @@ class CityIndex : public ::google::protobuf::Message {
   inline void clear_has_y();
   inline void set_has_shifttocityblockindex();
   inline void clear_has_shifttocityblockindex();
-  inline void set_has_boundary();
-  inline void clear_has_boundary();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -2300,7 +2303,7 @@ class CityIndex : public ::google::protobuf::Message {
   ::google::protobuf::uint32 y_;
   ::google::protobuf::uint32 shifttocityblockindex_;
   ::google::protobuf::RepeatedPtrField< ::std::string> attributevalues_;
-  ::google::protobuf::uint32 boundary_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > boundary_;
 
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(10 + 31) / 32];
@@ -10827,26 +10830,29 @@ inline void CityIndex::set_shifttocityblockindex(::google::protobuf::uint32 valu
   shifttocityblockindex_ = value;
 }
 
-// required uint32 boundary = 12;
-inline bool CityIndex::has_boundary() const {
-  return (_has_bits_[0] & 0x00000200u) != 0;
-}
-inline void CityIndex::set_has_boundary() {
-  _has_bits_[0] |= 0x00000200u;
-}
-inline void CityIndex::clear_has_boundary() {
-  _has_bits_[0] &= ~0x00000200u;
+// repeated uint32 boundary = 12;
+inline int CityIndex::boundary_size() const {
+  return boundary_.size();
 }
 inline void CityIndex::clear_boundary() {
-  boundary_ = 0u;
-  clear_has_boundary();
+  boundary_.Clear();
 }
-inline ::google::protobuf::uint32 CityIndex::boundary() const {
+inline ::google::protobuf::uint32 CityIndex::boundary(int index) const {
+  return boundary_.Get(index);
+}
+inline void CityIndex::set_boundary(int index, ::google::protobuf::uint32 value) {
+  boundary_.Set(index, value);
+}
+inline void CityIndex::add_boundary(::google::protobuf::uint32 value) {
+  boundary_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+CityIndex::boundary() const {
   return boundary_;
 }
-inline void CityIndex::set_boundary(::google::protobuf::uint32 value) {
-  set_has_boundary();
-  boundary_ = value;
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+CityIndex::mutable_boundary() {
+  return &boundary_;
 }
 
 // -------------------------------------------------------------------
