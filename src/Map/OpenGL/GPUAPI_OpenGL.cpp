@@ -2003,10 +2003,19 @@ bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(
         }
 
         LogPrintf(LogSeverityLevel::Error,
-            "Variable '%s' (%s) was not found in GLSL program %d",
+            "Variable '%s' (%s) was not found in GLSL program %d. All available variables are:",
             qPrintable(name),
             type == GlslVariableType::In ? "In" : "Uniform",
             program);
+
+        for (const auto& variable : constOf(variablesMap))
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "    %s %s",
+                variable.type == GlslVariableType::In ? "In" : "Uniform",
+                qPrintable(variable.name));
+        }
+
         return false;
     }
 
