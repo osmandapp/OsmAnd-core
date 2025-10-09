@@ -2263,6 +2263,13 @@ class CityIndex : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 shifttocityblockindex() const;
   inline void set_shifttocityblockindex(::google::protobuf::uint32 value);
 
+  // required uint32 boundary = 12;
+  inline bool has_boundary() const;
+  inline void clear_boundary();
+  static const int kBoundaryFieldNumber = 12;
+  inline ::google::protobuf::uint32 boundary() const;
+  inline void set_boundary(::google::protobuf::uint32 value);
+
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.CityIndex)
  private:
   inline void set_has_city_type();
@@ -2279,6 +2286,8 @@ class CityIndex : public ::google::protobuf::Message {
   inline void clear_has_y();
   inline void set_has_shifttocityblockindex();
   inline void clear_has_shifttocityblockindex();
+  inline void set_has_boundary();
+  inline void clear_has_boundary();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -2291,9 +2300,10 @@ class CityIndex : public ::google::protobuf::Message {
   ::google::protobuf::uint32 y_;
   ::google::protobuf::uint32 shifttocityblockindex_;
   ::google::protobuf::RepeatedPtrField< ::std::string> attributevalues_;
+  ::google::protobuf::uint32 boundary_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(9 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(10 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -10815,6 +10825,28 @@ inline ::google::protobuf::uint32 CityIndex::shifttocityblockindex() const {
 inline void CityIndex::set_shifttocityblockindex(::google::protobuf::uint32 value) {
   set_has_shifttocityblockindex();
   shifttocityblockindex_ = value;
+}
+
+// required uint32 boundary = 12;
+inline bool CityIndex::has_boundary() const {
+  return (_has_bits_[0] & 0x00000200u) != 0;
+}
+inline void CityIndex::set_has_boundary() {
+  _has_bits_[0] |= 0x00000200u;
+}
+inline void CityIndex::clear_has_boundary() {
+  _has_bits_[0] &= ~0x00000200u;
+}
+inline void CityIndex::clear_boundary() {
+  boundary_ = 0u;
+  clear_has_boundary();
+}
+inline ::google::protobuf::uint32 CityIndex::boundary() const {
+  return boundary_;
+}
+inline void CityIndex::set_boundary(::google::protobuf::uint32 value) {
+  set_has_boundary();
+  boundary_ = value;
 }
 
 // -------------------------------------------------------------------
