@@ -189,7 +189,7 @@ namespace OsmAnd
                     // Per-tile-per-layer data
                     struct VsPerTilePerLayerParameters
                     {
-                        GLlocation texOffsetAndScale;
+                        GLlocation txOffsetAndScale;
                     };
                     QVector<VsPerTilePerLayerParameters> rasterTileLayers;
                     VsPerTilePerLayerParameters elevationLayer;
@@ -217,12 +217,12 @@ namespace OsmAnd
                     // Per-tile-per-layer data
                     struct FsPerTilePerLayerParameters
                     {
-                        GLlocation sampler;
+                        GLlocation transitionPhase;
+                        GLlocation texOffsetAndScale;
+                        GLlocation texelSize;
                         GLlocation isPremultipliedAlpha;
                         GLlocation opacityFactor;
-                        GLlocation texOffsetAndScale;
-                        GLlocation transitionPhase;
-                        GLlocation texelSize;
+                        GLlocation sampler;
                     };
                     QVector<FsPerTilePerLayerParameters> rasterTileLayers;
                 } param;
