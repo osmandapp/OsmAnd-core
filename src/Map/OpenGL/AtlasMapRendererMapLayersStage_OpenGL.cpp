@@ -295,7 +295,19 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
                 success = initializeRasterLayersProgram(
                     numberOfLayersInBatch, static_cast<RenderingFeatures>(programFeatures), rasterLayerTilePrograms);
                 if (!success)
+                {
+                    for (int linked = RenderingFeatures::All; linked > programFeatures; linked--)
+                    {
+                        if (rasterLayerTilePrograms[linked].id.isValid())
+                        {
+                            glDeleteProgram(rasterLayerTilePrograms[linked].id);
+                            GL_CHECK_RESULT;
+
+                            rasterLayerTilePrograms[linked].id = 0;
+                        }
+                    }
                     break;
+                }
             }
             if (!success)
             {
@@ -316,7 +328,19 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
                 success = initializeRasterLayersProgram(
                     numberOfLayersInBatch, static_cast<RenderingFeatures>(programFeatures), rasterLayerTilePrograms);
                 if (!success)
+                {
+                    for (int linked = RenderingFeatures::All; linked > programFeatures; linked--)
+                    {
+                        if (rasterLayerTilePrograms[linked].id.isValid())
+                        {
+                            glDeleteProgram(rasterLayerTilePrograms[linked].id);
+                            GL_CHECK_RESULT;
+
+                            rasterLayerTilePrograms[linked].id = 0;
+                        }
+                    }
                     break;
+                }
             }
 
             if (!success)
@@ -1643,6 +1667,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
                 layerStructName + ".isPremultipliedAlpha",
                 GlslVariableType::Uniform);
         }
+    }
+
+    if (!ok)
+    {
+        glDeleteProgram(outRasterLayerTileProgram.id);
+        GL_CHECK_RESULT;
+
+        outRasterLayerTileProgram.id = 0;
     }
 
     return ok;
