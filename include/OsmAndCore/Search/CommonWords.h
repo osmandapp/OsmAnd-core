@@ -1000,13 +1000,13 @@ namespace OsmAnd
         QStringLiteral("pré"),
         QStringLiteral("plac"),
         QStringLiteral("fairway"),
-            
+        
         //      QStringLiteral("farm-to-market"),
-            
+        
         QStringLiteral("набережная"),
-            
+        
         QStringLiteral("chaussée"),
-            
+        
         QStringLiteral("náměstí"),
         QStringLiteral("tér"),
         QStringLiteral("roundabout"),
