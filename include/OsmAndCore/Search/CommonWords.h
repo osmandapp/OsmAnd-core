@@ -820,10 +820,10 @@ namespace OsmAnd
         QStringLiteral("dr"),
         QStringLiteral("y"),
         QStringLiteral("un"),
-            
+        
         // Push higher than roads to avoid problem with "Drive A 21"
         NUMBER_WITH_LESS_THAN_2_LETTERS,
-            
+        
         QStringLiteral("van"),
         QStringLiteral("road"),
         QStringLiteral("street"),
@@ -837,12 +837,12 @@ namespace OsmAnd
         QStringLiteral("straße"),
         QStringLiteral("chemin"),
         QStringLiteral("way"),
-            
+        
         QStringLiteral("court"),
         QStringLiteral("calle"),
-            
+        
         QStringLiteral("place"),
-            
+        
         QStringLiteral("avenida"),
         QStringLiteral("boulevard"),
         QStringLiteral("county"),
@@ -851,7 +851,7 @@ namespace OsmAnd
         QStringLiteral("circle"),
         QStringLiteral("close"),
         QStringLiteral("highway"),
-            
+        
         QStringLiteral("strada"),
         QStringLiteral("impasse"),
         QStringLiteral("utca"),
@@ -862,20 +862,20 @@ namespace OsmAnd
         QStringLiteral("weg"),
         QStringLiteral("площадь"),
         QStringLiteral("тупик"),
-            
+        
         QStringLiteral("terrace"),
         QStringLiteral("jalan"),
-            
+        
         QStringLiteral("parkway"),
         QStringLiteral("переулок"),
-            
+        
         QStringLiteral("carretera"),
         QStringLiteral("valley"),
-            
+        
         QStringLiteral("camino"),
         QStringLiteral("viale"),
         QStringLiteral("loop"),
-            
+        
         QStringLiteral("bridge"),
         QStringLiteral("embankment"),
         QStringLiteral("township"),
@@ -883,7 +883,7 @@ namespace OsmAnd
         QStringLiteral("village"),
         QStringLiteral("piazza"),
         QStringLiteral("della"),
-            
+        
         QStringLiteral("plaza"),
         QStringLiteral("pasaje"),
         QStringLiteral("expressway"),
@@ -891,20 +891,20 @@ namespace OsmAnd
         QStringLiteral("square"),
         QStringLiteral("freeway"),
         QStringLiteral("line"),
-            
+        
         QStringLiteral("track"),
-            
+        
         QStringLiteral("zum"),
         QStringLiteral("rodovia"),
         QStringLiteral("sokak"),
         QStringLiteral("sur"),
         QStringLiteral("path"),
         QStringLiteral("das"),
-            
+        
         QStringLiteral("yolu"),
-            
+        
         QStringLiteral("проспект"),
-            
+        
         QStringLiteral("auf"),
         QStringLiteral("alley"),
         QStringLiteral("são"),
@@ -917,7 +917,7 @@ namespace OsmAnd
         QStringLiteral("autovía"),
         QStringLiteral("d"),
         QStringLiteral("ulica"),
-            
+        
         QStringLiteral("na"),
         QStringLiteral("проезд"),
         QStringLiteral("n"),
@@ -940,23 +940,23 @@ namespace OsmAnd
         QStringLiteral("dem"),
         QStringLiteral("valle"),
         QStringLiteral("cruz"),
-            
+        
         QStringLiteral("bypass"),
         QStringLiteral("rúa"),
         QStringLiteral("crest"),
         QStringLiteral("ave"),
-            
+        
         QStringLiteral("expressway)"),
-            
+        
         QStringLiteral("autoroute"),
         QStringLiteral("crossing"),
         QStringLiteral("camí"),
         QStringLiteral("bend"),
-            
+        
         QStringLiteral("end"),
         QStringLiteral("caddesi"),
         QStringLiteral("bis"),
-            
+        
         QStringLiteral("ქუჩა"),
         QStringLiteral("kalea"),
         QStringLiteral("pass"),
@@ -964,7 +964,7 @@ namespace OsmAnd
         QStringLiteral("cruce"),
         QStringLiteral("se"),
         QStringLiteral("au"),
-            
+        
         QStringLiteral("allee"),
         QStringLiteral("autobahn"),
         QStringLiteral("väg"),
@@ -980,7 +980,7 @@ namespace OsmAnd
         QStringLiteral("chaussee"),
         QStringLiteral("row"),
         QStringLiteral("link"),
-            
+        
         QStringLiteral("travesía"),
         QStringLiteral("degli"),
         QStringLiteral("piazzale"),
@@ -996,12 +996,12 @@ namespace OsmAnd
         QStringLiteral("οδός"),
         QStringLiteral("dels"),
         QStringLiteral("and"),
-            
+        
         QStringLiteral("pré"),
         QStringLiteral("plac"),
         QStringLiteral("fairway"),
             
-            //      QStringLiteral("farm-to-market"),
+        //      QStringLiteral("farm-to-market"),
             
         QStringLiteral("набережная"),
             
@@ -1015,16 +1015,16 @@ namespace OsmAnd
         QStringLiteral("alle"),
         QStringLiteral("gasse"),
         QStringLiteral("str."),
-            //      QStringLiteral("p."),
+        //      QStringLiteral("p."),
         QStringLiteral("ville"),
         QStringLiteral("beco"),
         QStringLiteral("platz"),
-            
-            //      QStringLiteral("porto"),
-            
+        
+        //      QStringLiteral("porto"),
+        
         QStringLiteral("sideroad"),
         QStringLiteral("pista"),
-            
+        
         QStringLiteral("аллея"),
         QStringLiteral("бульвар"),
         QStringLiteral("город"),
