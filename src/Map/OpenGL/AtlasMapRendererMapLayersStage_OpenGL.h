@@ -220,7 +220,7 @@ namespace OsmAnd
                         GLlocation sampler;
                         GLlocation isPremultipliedAlpha;
                         GLlocation opacityFactor;
-                        GLlocation texCoordsOffsetAndScale;
+                        GLlocation texOffsetAndScale;
                         GLlocation transitionPhase;
                         GLlocation texelSize;
                     };

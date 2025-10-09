@@ -165,7 +165,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*texOffsetAndScale*/;
     const auto fsUniformsPerLayer =
         1 /*opacityFactor*/ +
-        1 /*texCoordsOffsetAndScale*/;
+        1 /*texOffsetAndScale*/;
         1 /*transitionPhase*/ +
         1 /*texelSize*/ +
         1 /*isPremultipliedAlpha*/ +
@@ -955,7 +955,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "{                                                                                                                  ""\n"
             "    lowp float isPremultipliedAlpha;                                                                               ""\n"
             "    lowp float opacityFactor;                                                                                      ""\n"
-            "    highp vec4 texCoordsOffsetAndScale;                                                                            ""\n"
+            "    highp vec4 texOffsetAndScale;                                                                                  ""\n"
             "    highp vec4 transitionPhase;                                                                                    ""\n"
             "    highp float texelSize;                                                                                         ""\n"
             "    lowp sampler2D sampler;                                                                                        ""\n"
@@ -1169,7 +1169,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "                                                                                                                   ""\n"
             //   Mix colors of all layers.
             //   First layer is processed unconditionally, as well as its color is converted to premultiplied alpha.
-            "    getTextureColor(param_fs_rasterTileLayer_0.texCoordsOffsetAndScale, param_fs_rasterTileLayer_0.transitionPhase,""\n"
+            "    getTextureColor(param_fs_rasterTileLayer_0.texOffsetAndScale, param_fs_rasterTileLayer_0.transitionPhase,      ""\n"
             "        param_fs_rasterTileLayer_0.texelSize, param_fs_rasterTileLayer_0.sampler,                                  ""\n"
             "        v2f_texCoordsPerLayer_0, finalColor);                                                                      ""\n"
             "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacityFactor,                                            ""\n"
@@ -1214,7 +1214,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
             "    {                                                                                                              ""\n"
             "        lowp vec4 tc;                                                                                              ""\n"
-            "        getTextureColor(param_fs_rasterTileLayer_%rasterLayerIndex%.texCoordsOffsetAndScale,                       ""\n"
+            "        getTextureColor(param_fs_rasterTileLayer_%rasterLayerIndex%.texOffsetAndScale,                             ""\n"
             "            param_fs_rasterTileLayer_%rasterLayerIndex%.transitionPhase,                                           ""\n"
             "            param_fs_rasterTileLayer_%rasterLayerIndex%.texelSize,                                                 ""\n"
             "            param_fs_rasterTileLayer_%rasterLayerIndex%.sampler, v2f_texCoordsPerLayer_%rasterLayerIndex%, tc);    ""\n"
@@ -1651,8 +1651,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
                 layerStructName + ".opacityFactor",
                 GlslVariableType::Uniform);
             ok = ok && lookup->lookupLocation(
-                layerStruct.texCoordsOffsetAndScale,
-                layerStructName + ".texCoordsOffsetAndScale",
+                layerStruct.texOffsetAndScale,
+                layerStructName + ".texOffsetAndScale",
                 GlslVariableType::Uniform);
             ok = ok && lookup->lookupLocation(
                 layerStruct.transitionPhase,
@@ -2101,7 +2101,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                     texCoordsScale.y);
                 GL_CHECK_RESULT;
 
-                glUniform4f(perTile_fs.texCoordsOffsetAndScale,
+                glUniform4f(perTile_fs.texOffsetAndScale,
                     texCoordsOffset.x,
                     texCoordsOffset.y,
                     texCoordsScale.x,
@@ -2119,7 +2119,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                     batchedResourceInGPU->texCoordsScale.y);
                 GL_CHECK_RESULT;
 
-                glUniform4f(perTile_fs.texCoordsOffsetAndScale,
+                glUniform4f(perTile_fs.texOffsetAndScale,
                     batchedResourceInGPU->texCoordsOffset.x,
                     batchedResourceInGPU->texCoordsOffset.y,
                     batchedResourceInGPU->texCoordsScale.x,
