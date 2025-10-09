@@ -279,15 +279,21 @@ void OsmAnd::WorldRegions_P::addPolygonToRegion(const std::shared_ptr<const OsmA
 
 QString OsmAnd::WorldRegions_P::getSearchIndex(const std::shared_ptr<const OsmAnd::BinaryMapObject>& mapObject) const
 {
-    QString result;
+    QString result = "";
     for (const auto& entry : OsmAnd::rangeOf(OsmAnd::constOf(mapObject->captions)))
     {
+        if (entry.value().isEmpty())
+        {
+            continue;
+        }
         const auto& rule = *mapObject->attributeMapping->decodeMap.getRef(entry.key());
         if (rule.tag.startsWith(QString("name")) || rule.tag == QString("key_name")
             || rule.tag.startsWith("alt_nane") || rule.tag.startsWith("short_name")
             || rule.tag == QString("name:abbreviation") || rule.tag == QString("ref"))
         {
-            result.append(" ").append(entry.value().toLower());
+            if (result.length() > 0)
+                result.append(" ");
+            result.append(entry.value().toLower());
         }
     }
     return result;
