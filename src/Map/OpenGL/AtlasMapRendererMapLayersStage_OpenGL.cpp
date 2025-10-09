@@ -162,7 +162,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
 
     // ... by uniforms
     const auto vsUniformsPerLayer =
-        1 /*texCoordsOffsetAndScale*/;
+        1 /*texOffsetAndScale*/;
     const auto fsUniformsPerLayer =
         1 /*opacityFactor*/ +
         1 /*texCoordsOffsetAndScale*/;
@@ -467,7 +467,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             // Parameters: per-layer-in-tile data
             "struct VsRasterLayerTile                                                                                           ""\n"
             "{                                                                                                                  ""\n"
-            "    highp vec4 texCoordsOffsetAndScale;                                                                            ""\n"
+            "    highp vec4 texOffsetAndScale;                                                                                  ""\n"
             "};                                                                                                                 ""\n"
             "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
             "uniform VsRasterLayerTile param_vs_elevationLayer;                                                                 ""\n"
@@ -497,7 +497,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "void calculateTextureCoordinates(in VsRasterLayerTile tileLayer, out vec2 outTexCoords)                            ""\n"
             "{                                                                                                                  ""\n"
             "    vec2 texCoords = in_vs_vertexTexCoords;                                                                        ""\n"
-            "    texCoords = texCoords * tileLayer.texCoordsOffsetAndScale.zw + tileLayer.texCoordsOffsetAndScale.xy;           ""\n"
+            "    texCoords = texCoords * tileLayer.texOffsetAndScale.zw + tileLayer.texOffsetAndScale.xy;                       ""\n"
             "    outTexCoords = texCoords;                                                                                      ""\n"
             "}                                                                                                                  ""\n"
             "                                                                                                                   ""\n"
@@ -1523,8 +1523,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "param_vs_elevation_dataSampler",
         GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.elevationLayer.texCoordsOffsetAndScale,
-        "param_vs_elevationLayer.texCoordsOffsetAndScale",
+        outRasterLayerTileProgram.vs.param.elevationLayer.texOffsetAndScale,
+        "param_vs_elevationLayer.texOffsetAndScale",
         GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.vs.param.elevationLayerTexelSize,
@@ -1631,8 +1631,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             auto& layerStruct = outRasterLayerTileProgram.vs.param.rasterTileLayers[layerIndex];
 
             ok = ok && lookup->lookupLocation(
-                layerStruct.texCoordsOffsetAndScale,
-                layerStructName + ".texCoordsOffsetAndScale",
+                layerStruct.texOffsetAndScale,
+                layerStructName + ".texOffsetAndScale",
                 GlslVariableType::Uniform);
         }
 
@@ -2094,7 +2094,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                 texCoordsOffset += batchedResourceInGPU->texCoordsOffset * nSizeInAtlas;
                 const auto texCoordsScale = batchedResourceInGPU->texCoordsScale * nSizeInAtlas;
 
-                glUniform4f(perTile_vs.texCoordsOffsetAndScale,
+                glUniform4f(perTile_vs.texOffsetAndScale,
                     texCoordsOffset.x,
                     texCoordsOffset.y,
                     texCoordsScale.x,
@@ -2112,7 +2112,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             {
                 const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(batchedResourceInGPU->resourceInGPU);
 
-                glUniform4f(perTile_vs.texCoordsOffsetAndScale,
+                glUniform4f(perTile_vs.texOffsetAndScale,
                     batchedResourceInGPU->texCoordsOffset.x,
                     batchedResourceInGPU->texCoordsOffset.y,
                     batchedResourceInGPU->texCoordsScale.x,
@@ -2727,7 +2727,7 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
         const PointF texCoordsOffset(texPlace.x + innerSize.x * texCoordsOffsetN.x,
             texPlace.y + innerSize.y * texCoordsOffsetN.y);
 
-        glUniform4f(perTile_vs.texCoordsOffsetAndScale,
+        glUniform4f(perTile_vs.texOffsetAndScale,
             texCoordsOffset.x,
             texCoordsOffset.y,
             texCoordsScale.x,
@@ -2760,7 +2760,7 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
         const PointF texCoordsOffset(texPlace.x + innerSize.x * texCoordsOffsetN.x,
             texPlace.y + innerSize.y * texCoordsOffsetN.y);
 
-        glUniform4f(perTile_vs.texCoordsOffsetAndScale,
+        glUniform4f(perTile_vs.texOffsetAndScale,
             texCoordsOffset.x,
             texCoordsOffset.y,
             texCoordsScale.x,
