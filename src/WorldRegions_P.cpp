@@ -287,8 +287,8 @@ QString OsmAnd::WorldRegions_P::getSearchIndex(const std::shared_ptr<const OsmAn
             continue;
         }
         const auto& rule = *mapObject->attributeMapping->decodeMap.getRef(entry.key());
-        if (rule.tag.startsWith("name") || rule.tag == QStringLiteral("key_name")
-            || rule.tag.startsWith("alt_nane") || rule.tag.startsWith("short_name")
+        if (rule.tag.startsWith(QStringLiteral("name")) || rule.tag == QStringLiteral("key_name")
+            || rule.tag.startsWith(QStringLiteral("alt_name")) || rule.tag.startsWith(QStringLiteral("short_name"))
             || rule.tag == QStringLiteral("name:abbreviation") || rule.tag == QStringLiteral("ref"))
         {
             if (result.length() > 0)
