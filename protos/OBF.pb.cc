@@ -1619,8 +1619,8 @@ void protobuf_AddDesc_OBF_2eproto() {
     "\n\004name\030\002 \002(\t\022\017\n\007name_en\030\003 \001(\t\022\n\n\002id\030\004 \001("
     "\004\022\t\n\001x\030\005 \002(\r\022\t\n\001y\030\006 \002(\r\022\027\n\017attributeTagI"
     "ds\030\007 \003(\r\022\027\n\017attributeValues\030\010 \003(\t\022\035\n\025shi"
-    "ftToCityBlockIndex\030\n \001(\007\022\020\n\010boundary\030\014 \003"
-    "(\r\"\202\001\n\016CityBlockIndex\022\030\n\020shiftToCityInde"
+    "ftToCityBlockIndex\030\n \001(\007\022\020\n\010boundary\030\014 \001"
+    "(\014\"\202\001\n\016CityBlockIndex\022\030\n\020shiftToCityInde"
     "x\030\004 \001(\007\022,\n\tbuildings\030\n \003(\0132\031.OsmAnd.OBF."
     "BuildingIndex\022(\n\007streets\030\014 \003(\0132\027.OsmAnd."
     "OBF.StreetIndex\"\345\001\n\013StreetIndex\022\014\n\004name\030"
@@ -7709,6 +7709,7 @@ void CityIndex::SharedCtor() {
   x_ = 0u;
   y_ = 0u;
   shifttocityblockindex_ = 0u;
+  boundary_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -7722,6 +7723,9 @@ void CityIndex::SharedDtor() {
   }
   if (name_en_ != &::google::protobuf::internal::kEmptyString) {
     delete name_en_;
+  }
+  if (boundary_ != &::google::protobuf::internal::kEmptyString) {
+    delete boundary_;
   }
   if (this != default_instance_) {
   }
@@ -7767,10 +7771,14 @@ void CityIndex::Clear() {
   }
   if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
     shifttocityblockindex_ = 0u;
+    if (has_boundary()) {
+      if (boundary_ != &::google::protobuf::internal::kEmptyString) {
+        boundary_->clear();
+      }
+    }
   }
   attributetagids_.Clear();
   attributevalues_.Clear();
-  boundary_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -7931,28 +7939,20 @@ bool CityIndex::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(96)) goto parse_boundary;
+        if (input->ExpectTag(98)) goto parse_boundary;
         break;
       }
 
-      // repeated uint32 boundary = 12;
+      // optional bytes boundary = 12;
       case 12: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_boundary:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 1, 96, input, this->mutable_boundary())));
-        } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
-                   == ::google::protobuf::internal::WireFormatLite::
-                      WIRETYPE_LENGTH_DELIMITED) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, this->mutable_boundary())));
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_boundary()));
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(96)) goto parse_boundary;
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -8033,10 +8033,10 @@ void CityIndex::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteFixed32(10, this->shifttocityblockindex(), output);
   }
 
-  // repeated uint32 boundary = 12;
-  for (int i = 0; i < this->boundary_size(); i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(
-      12, this->boundary(i), output);
+  // optional bytes boundary = 12;
+  if (has_boundary()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytes(
+      12, this->boundary(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -8107,10 +8107,11 @@ void CityIndex::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteFixed32ToArray(10, this->shifttocityblockindex(), target);
   }
 
-  // repeated uint32 boundary = 12;
-  for (int i = 0; i < this->boundary_size(); i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      WriteUInt32ToArray(12, this->boundary(i), target);
+  // optional bytes boundary = 12;
+  if (has_boundary()) {
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
+        12, this->boundary(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -8173,6 +8174,13 @@ int CityIndex::ByteSize() const {
       total_size += 1 + 4;
     }
 
+    // optional bytes boundary = 12;
+    if (has_boundary()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::BytesSize(
+          this->boundary());
+    }
+
   }
   // repeated uint32 attributeTagIds = 7;
   {
@@ -8189,16 +8197,6 @@ int CityIndex::ByteSize() const {
   for (int i = 0; i < this->attributevalues_size(); i++) {
     total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
       this->attributevalues(i));
-  }
-
-  // repeated uint32 boundary = 12;
-  {
-    int data_size = 0;
-    for (int i = 0; i < this->boundary_size(); i++) {
-      data_size += ::google::protobuf::internal::WireFormatLite::
-        UInt32Size(this->boundary(i));
-    }
-    total_size += 1 * this->boundary_size() + data_size;
   }
 
   if (!unknown_fields().empty()) {
@@ -8228,7 +8226,6 @@ void CityIndex::MergeFrom(const CityIndex& from) {
   GOOGLE_CHECK_NE(&from, this);
   attributetagids_.MergeFrom(from.attributetagids_);
   attributevalues_.MergeFrom(from.attributevalues_);
-  boundary_.MergeFrom(from.boundary_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_city_type()) {
       set_city_type(from.city_type());
@@ -8252,6 +8249,9 @@ void CityIndex::MergeFrom(const CityIndex& from) {
   if (from._has_bits_[8 / 32] & (0xffu << (8 % 32))) {
     if (from.has_shifttocityblockindex()) {
       set_shifttocityblockindex(from.shifttocityblockindex());
+    }
+    if (from.has_boundary()) {
+      set_boundary(from.boundary());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -8286,7 +8286,7 @@ void CityIndex::Swap(CityIndex* other) {
     attributetagids_.Swap(&other->attributetagids_);
     attributevalues_.Swap(&other->attributevalues_);
     std::swap(shifttocityblockindex_, other->shifttocityblockindex_);
-    boundary_.Swap(&other->boundary_);
+    std::swap(boundary_, other->boundary_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
