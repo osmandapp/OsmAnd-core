@@ -747,8 +747,10 @@ namespace OsmAnd
 
     };
     
-    const static QStringList COMMON_WORDS
-    {
+    inline QStringList& COMMON_WORDS() {
+    
+        static QStringList words =
+        {
         QStringLiteral("la"),
         QStringLiteral("via"),
         QStringLiteral("rua"),
@@ -819,7 +821,8 @@ namespace OsmAnd
         QStringLiteral("y"),
         QStringLiteral("un"),
         
-        
+        // Push higher than roads to avoid problem with "Drive A 21"
+        NUMBER_WITH_LESS_THAN_2_LETTERS,
         
         QStringLiteral("van"),
         QStringLiteral("road"),
@@ -872,8 +875,6 @@ namespace OsmAnd
         QStringLiteral("camino"),
         QStringLiteral("viale"),
         QStringLiteral("loop"),
-        
-        NUMBER_WITH_LESS_THAN_2_LETTERS,
         
         QStringLiteral("bridge"),
         QStringLiteral("embankment"),
@@ -1231,14 +1232,30 @@ namespace OsmAnd
         QStringLiteral("χωριό"),
         QStringLiteral("ταξίδια"),
         QStringLiteral("ø"),
-        QStringLiteral("bane")
-    };
+        QStringLiteral("bane"),
+        QStringLiteral("villages"),
+        QStringLiteral("stravenue"),
+        QStringLiteral("forge"),
+        QStringLiteral("loops"),
+        QStringLiteral("crossroad"),
+        QStringLiteral("ridges"),
+        QStringLiteral("motorway"),
+        QStringLiteral("squares"),
+        QStringLiteral("ways"),
+        QStringLiteral("junctions"),
+        QStringLiteral("drives"),
+        QStringLiteral("throughway"),
+        QStringLiteral("trafficway"),
+        QStringLiteral("plaine")
+        };
+        return words;
+    }
     
     union CommonWords
     {
         static inline int getCommon(const QString name)
         {
-            return COMMON_WORDS.indexOf(name);
+            return COMMON_WORDS().indexOf(name);
         }
 
         static inline int getFrequentlyUsed(const QString name)
@@ -1252,12 +1269,12 @@ namespace OsmAnd
                 name = NUMBER_WITH_LESS_THAN_2_LETTERS;
             }
             
-            int i = COMMON_WORDS.indexOf(name);
+            int i = COMMON_WORDS().indexOf(name);
             // higher means better for search
             if (i == -1) {
                 int fq = getFrequentlyUsed(name);
                 if (fq != -1) {
-                    return COMMON_WORDS.size() + fq;
+                    return COMMON_WORDS().size() + fq;
                 }
                 return -1;
             }
@@ -1279,7 +1296,15 @@ namespace OsmAnd
 
         static inline int getCommonGeocoding(const QString name)
         {
-            return COMMON_WORDS.indexOf(name);
+            return COMMON_WORDS().indexOf(name);
+        }
+        
+        static inline void addRegionName(const QString & regionName) {
+            int i = COMMON_WORDS().indexOf(regionName.toLower());
+            if (i == -1)
+            {
+                COMMON_WORDS().append(regionName.toLower());
+            }
         }
     };
 }

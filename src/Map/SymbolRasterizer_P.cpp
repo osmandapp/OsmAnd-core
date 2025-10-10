@@ -239,9 +239,6 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                             {
                                 additionalOffset = PointI();
                                 additionalOffset->y += topOffset;
-                                additionalOffset->y -= verticalOffset;
-                                additionalOffset->y -= symbolExtraBottomSpace;
-                                additionalOffset->y -= halfHeight;
                                 if (iconOnTop)
                                     additionalOffset->y += qFloor(fontAscent / 2.0f);
                                 iconOnTop = false;
@@ -292,12 +289,12 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
 
                     // Next symbol should also take into account:
-                    //  - height
+                    //  - height / 2
                     //  - extra top/bottom space (which should be in texture, but not rendered, since transparent)
                     //  - spacing between lines
                     if (!textSymbol->drawAlongPath)
                     {
-                        const auto textHeight = rasterizedText->height();
+                        const auto halfHeight = rasterizedText->height() / 2;
 
                         auto currentTopOffset = offset.y;
                         auto currentBottomOffset = offset.y;
@@ -307,10 +304,10 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                             currentBottomOffset = std::max(currentBottomOffset, additionalOffset->y);
                         }
 
-                        const auto topAdvance = -qCeil(textHeight + symbolExtraTopSpace + lineSpacing);
+                        const auto topAdvance = -qCeil(halfHeight + symbolExtraTopSpace + lineSpacing + verticalOffset);
                         topOffset = std::min(topOffset, currentTopOffset + topAdvance);
 
-                        const auto bottomAdvance = qCeil(textHeight + symbolExtraBottomSpace + lineSpacing);
+                        const auto bottomAdvance = qCeil(halfHeight + symbolExtraBottomSpace + lineSpacing - verticalOffset);
                         bottomOffset = std::max(bottomOffset, currentBottomOffset + bottomAdvance);
                     }
                 }

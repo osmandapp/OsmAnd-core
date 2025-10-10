@@ -26,6 +26,7 @@ namespace OsmAnd
 
     private:
         void addPolygonToRegion(const std::shared_ptr<const OsmAnd::BinaryMapObject>& mapObject, const std::shared_ptr<WorldRegion> &worldRegion) const;
+        QString getSearchIndex(const std::shared_ptr<const OsmAnd::BinaryMapObject>& mapObject) const;
     protected:
         WorldRegions_P(WorldRegions* const owner);
     public:

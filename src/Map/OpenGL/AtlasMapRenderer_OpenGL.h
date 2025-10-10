@@ -51,7 +51,7 @@ namespace OsmAnd
         const static ZoomLevel _zoomForFlattening;
 
         void computeVisibleArea(InternalState* internalState, const MapRendererState& state,
-            const float lowerDetail, const bool sortTiles) const;
+            const float lowerDetail, const bool skipTiles, const bool sortTiles) const;
         double detailDistanceFactor(const int zoomShift) const;
         void insertTileId(QHash<TileId, TileVisibility>& nextTiles,
             const TileId& tileId, const double zDetail, const int32_t zoomShift,

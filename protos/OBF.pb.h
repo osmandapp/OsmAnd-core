@@ -2263,6 +2263,18 @@ class CityIndex : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 shifttocityblockindex() const;
   inline void set_shifttocityblockindex(::google::protobuf::uint32 value);
 
+  // optional bytes boundary = 12;
+  inline bool has_boundary() const;
+  inline void clear_boundary();
+  static const int kBoundaryFieldNumber = 12;
+  inline const ::std::string& boundary() const;
+  inline void set_boundary(const ::std::string& value);
+  inline void set_boundary(const char* value);
+  inline void set_boundary(const void* value, size_t size);
+  inline ::std::string* mutable_boundary();
+  inline ::std::string* release_boundary();
+  inline void set_allocated_boundary(::std::string* boundary);
+
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.CityIndex)
  private:
   inline void set_has_city_type();
@@ -2279,6 +2291,8 @@ class CityIndex : public ::google::protobuf::Message {
   inline void clear_has_y();
   inline void set_has_shifttocityblockindex();
   inline void clear_has_shifttocityblockindex();
+  inline void set_has_boundary();
+  inline void clear_has_boundary();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -2291,9 +2305,10 @@ class CityIndex : public ::google::protobuf::Message {
   ::google::protobuf::uint32 y_;
   ::google::protobuf::uint32 shifttocityblockindex_;
   ::google::protobuf::RepeatedPtrField< ::std::string> attributevalues_;
+  ::std::string* boundary_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(9 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(10 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -10815,6 +10830,76 @@ inline ::google::protobuf::uint32 CityIndex::shifttocityblockindex() const {
 inline void CityIndex::set_shifttocityblockindex(::google::protobuf::uint32 value) {
   set_has_shifttocityblockindex();
   shifttocityblockindex_ = value;
+}
+
+// optional bytes boundary = 12;
+inline bool CityIndex::has_boundary() const {
+  return (_has_bits_[0] & 0x00000200u) != 0;
+}
+inline void CityIndex::set_has_boundary() {
+  _has_bits_[0] |= 0x00000200u;
+}
+inline void CityIndex::clear_has_boundary() {
+  _has_bits_[0] &= ~0x00000200u;
+}
+inline void CityIndex::clear_boundary() {
+  if (boundary_ != &::google::protobuf::internal::kEmptyString) {
+    boundary_->clear();
+  }
+  clear_has_boundary();
+}
+inline const ::std::string& CityIndex::boundary() const {
+  return *boundary_;
+}
+inline void CityIndex::set_boundary(const ::std::string& value) {
+  set_has_boundary();
+  if (boundary_ == &::google::protobuf::internal::kEmptyString) {
+    boundary_ = new ::std::string;
+  }
+  boundary_->assign(value);
+}
+inline void CityIndex::set_boundary(const char* value) {
+  set_has_boundary();
+  if (boundary_ == &::google::protobuf::internal::kEmptyString) {
+    boundary_ = new ::std::string;
+  }
+  boundary_->assign(value);
+}
+inline void CityIndex::set_boundary(const void* value, size_t size) {
+  set_has_boundary();
+  if (boundary_ == &::google::protobuf::internal::kEmptyString) {
+    boundary_ = new ::std::string;
+  }
+  boundary_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* CityIndex::mutable_boundary() {
+  set_has_boundary();
+  if (boundary_ == &::google::protobuf::internal::kEmptyString) {
+    boundary_ = new ::std::string;
+  }
+  return boundary_;
+}
+inline ::std::string* CityIndex::release_boundary() {
+  clear_has_boundary();
+  if (boundary_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = boundary_;
+    boundary_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void CityIndex::set_allocated_boundary(::std::string* boundary) {
+  if (boundary_ != &::google::protobuf::internal::kEmptyString) {
+    delete boundary_;
+  }
+  if (boundary) {
+    set_has_boundary();
+    boundary_ = boundary;
+  } else {
+    clear_has_boundary();
+    boundary_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
 }
 
 // -------------------------------------------------------------------
