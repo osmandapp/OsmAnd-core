@@ -1836,7 +1836,7 @@ inline bool OsmAnd::AtlasMapRenderer_OpenGL::isEdgeVisible(const glm::dvec3& cp,
         || (botRightN != nullptr && botRightD != nullptr
         && Utilities_OpenGL_Common::lineSegmentIntersectsPlane(*botRightN, cp, start, end, ip)
         && isPointVisible(ip, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD,
-            true, true, true, true, botRightN, botRightD)))
+            false, false, false, false, nullptr, nullptr)))
         return true;
     return false;
 }
@@ -1870,10 +1870,10 @@ inline bool OsmAnd::AtlasMapRenderer_OpenGL::isArcVisible(const glm::dvec3& cp,
         botRightN, botRightD))))
     || (botRightN != nullptr && botRightD != nullptr && Utilities_OpenGL_Common::arcIntersectsPlane(
         *botRightN, *botRightD, minAngleX, maxAngleX, arcZ, sqrRadius, ip1, ip2)
-    && (isPointVisible(ip1, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, true, true, true, true,
-        botRightN, botRightD) || (ip1 != ip2
-    && isPointVisible(ip2, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, true, true, true, true,
-        botRightN, botRightD)))))
+    && (isPointVisible(ip1, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false,
+        nullptr, nullptr) || (ip1 != ip2
+    && isPointVisible(ip2, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false,
+        nullptr, nullptr)))))
         return true;
     return false;
 }
