@@ -465,7 +465,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
 
         if (outVariablesMap)
         {
-            const QString name = QLatin1String(attributeName);
+            const QString name = QLatin1String(uniformName);
             outVariablesMap->insert(name, { GlslVariableType::Uniform, name, uniformType, uniformSize });
         }
     }
