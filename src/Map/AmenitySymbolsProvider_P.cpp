@@ -56,6 +56,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::intersects(SymbolsQuadTree& boundIntersec
 bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
     const IMapDataProvider::Request& request_,
     std::shared_ptr<IMapDataProvider::Data>& outData,
+    QList< std::shared_ptr<const OsmAnd::Amenity> >& outAmenities,
     std::shared_ptr<Metric>* const pOutMetric)
 {
     const auto& request = MapDataProviderHelpers::castRequest<AmenitySymbolsProvider::Request>(request_);
@@ -171,7 +172,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
             return true;
         };
     dataInterface->loadAmenities(
-        nullptr,
+        &outAmenities,
         &extendedTileBBox31,
         nullptr,
         request.zoom,

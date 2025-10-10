@@ -53,7 +53,17 @@ bool OsmAnd::AmenitySymbolsProvider::obtainData(
     std::shared_ptr<IMapDataProvider::Data>& outData,
     std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
-    return _p->obtainData(request, outData, pOutMetric);
+    QList<std::shared_ptr<const OsmAnd::Amenity>> sink;
+    return _p->obtainData(request, outData, sink, pOutMetric);
+}
+
+bool OsmAnd::AmenitySymbolsProvider::obtainData(
+    const IMapDataProvider::Request& request,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    QList< std::shared_ptr<const OsmAnd::Amenity> >& outAmenities,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
+{
+    return _p->obtainData(request, outData, outAmenities, pOutMetric);
 }
 
 bool OsmAnd::AmenitySymbolsProvider::supportsNaturalObtainDataAsync() const

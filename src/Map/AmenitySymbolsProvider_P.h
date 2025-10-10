@@ -51,6 +51,7 @@ namespace OsmAnd
         bool obtainData(
             const IMapDataProvider::Request& request,
             std::shared_ptr<IMapDataProvider::Data>& outData,
+            QList< std::shared_ptr<const OsmAnd::Amenity> >& outAmenities,
             std::shared_ptr<Metric>* const pOutMetric);
 
     friend class OsmAnd::AmenitySymbolsProvider;

@@ -97,6 +97,12 @@ namespace OsmAnd
             const IMapDataProvider::Request& request,
             std::shared_ptr<IMapDataProvider::Data>& outData,
             std::shared_ptr<Metric>* const pOutMetric = nullptr) Q_DECL_OVERRIDE;
+        
+        virtual bool obtainData(
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            QList< std::shared_ptr<const OsmAnd::Amenity> >& outAmenities,
+            std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/);
 
         virtual bool supportsNaturalObtainDataAsync() const Q_DECL_OVERRIDE;
         virtual void obtainDataAsync(
