@@ -67,6 +67,10 @@ namespace OsmAnd
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr,
             const bool strictMatch = false);
+        
+        static void dataCacheClear();
+        static QList< std::shared_ptr<const OsmAnd::Amenity> >* dataCacheGetResults();
+        static void dataCacheAppend(std::shared_ptr<const Amenity> amenity);
     };
 }
 

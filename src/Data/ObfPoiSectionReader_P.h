@@ -31,6 +31,8 @@ namespace OsmAnd
     private:
         ObfPoiSectionReader_P();
         ~ObfPoiSectionReader_P();
+        inline static QList< std::shared_ptr<const OsmAnd::Amenity> >* dataCache;
+        
     protected:
         enum {
             ZoomToSkipFilterRead = 6,
@@ -197,6 +199,10 @@ namespace OsmAnd
             const ObfPoiSectionReader::VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController,
             const bool strictMatch);
+        
+        static void dataCacheClear();
+        static QList< std::shared_ptr<const OsmAnd::Amenity> >* dataCacheGetResults();
+        static void dataCacheAppend(std::shared_ptr<const Amenity> amenity);
 
     friend class OsmAnd::ObfReader_P;
     friend class OsmAnd::ObfPoiSectionReader;

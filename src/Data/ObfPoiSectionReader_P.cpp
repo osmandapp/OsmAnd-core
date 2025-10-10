@@ -936,6 +936,8 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
 
                 if (!visitor || visitor(amenity))
                 {
+                    dataCacheAppend(amenity);
+                    
                     if (outAmenities)
                         outAmenities->push_back(qMove(amenity));
 
@@ -951,6 +953,27 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
                 break;
         }
     }
+}
+
+void OsmAnd::ObfPoiSectionReader_P::dataCacheClear()
+{
+    if (!dataCache)
+        dataCache = new QList<std::shared_ptr<const Amenity>>();
+    dataCache->clear();
+}
+
+QList< std::shared_ptr<const OsmAnd::Amenity> >* OsmAnd::ObfPoiSectionReader_P::dataCacheGetResults()
+{
+    if (!dataCache)
+        dataCache = new QList<std::shared_ptr<const Amenity>>();
+    return dataCache;
+}
+
+void OsmAnd::ObfPoiSectionReader_P::dataCacheAppend(std::shared_ptr<const Amenity> amenity)
+{
+    if (!dataCache)
+        dataCache = new QList<std::shared_ptr<const Amenity>>();
+    dataCache->push_back(qMove(amenity));
 }
 
 void OsmAnd::ObfPoiSectionReader_P::readAmenity(

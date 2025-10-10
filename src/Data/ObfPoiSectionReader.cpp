@@ -81,3 +81,18 @@ void OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
         queryController,
         strictMatch);
 }
+
+void OsmAnd::ObfPoiSectionReader::dataCacheClear()
+{
+    ObfPoiSectionReader_P::dataCacheClear();
+}
+
+QList< std::shared_ptr<const OsmAnd::Amenity> >* OsmAnd::ObfPoiSectionReader::dataCacheGetResults()
+{
+    return ObfPoiSectionReader_P::dataCacheGetResults();
+}
+
+void OsmAnd::ObfPoiSectionReader::dataCacheAppend(std::shared_ptr<const Amenity> amenity)
+{
+    ObfPoiSectionReader_P::dataCacheAppend(amenity);
+}
