@@ -272,18 +272,20 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
     else
     {
         const auto pN = planeD < 0.0 ? -planeN : planeN;
-        const auto a = qSqrt(1.0 - pD * pD);
+        const auto spD = pD * pD;
+        const auto a = qSqrt(1.0 - spD);
         const auto xyL = qSqrt(1.0 - pN.z * pN.z);
         const auto c = pD * xyL;
         const auto b = a * pN.z;
         sectX = c > fabs(b);
         if (sectX)
         {
+            const auto sc = c * c;
             const auto angleXY = qAtan2(pN.x, pN.y);
-            const auto deltaAngle = qAtan(a / qSqrt(c * c - b * b));
+            const auto deltaAngle = qAtan(a / qSqrt(sc - b * b));
             const auto a1 = angleXY - deltaAngle;
             const auto a2 = angleXY + deltaAngle;
-            const auto absZ = qSqrt(1.0 - c * c);
+            const auto absZ = qSqrt(spD - sc);
             const auto z = pN.z > 0 ? absZ : -absZ;
             const auto csy = qCos(-qAsin(qBound(-1.0, z, 1.0)));
             minX = glm::dvec3(csy * qSin(a1), csy * qCos(a1), z);
