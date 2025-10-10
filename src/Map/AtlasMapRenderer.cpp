@@ -6,6 +6,7 @@
 #include "AtlasMapRendererMapLayersStage.h"
 #include "AtlasMapRendererSymbolsStage.h"
 #include "AtlasMapRendererDebugStage.h"
+#include "AtlasMapRendererMap3DObjectsStage.h"
 #include "Utilities.h"
 
 OsmAnd::AtlasMapRenderer::AtlasMapRenderer(
@@ -16,6 +17,7 @@ OsmAnd::AtlasMapRenderer::AtlasMapRenderer(
     , skyStage(_skyStage)
     , mapLayersStage(_mapLayersStage)
     , symbolsStage(_symbolsStage)
+    , map3DObjectsStage(_map3DObjectsStage)
     , debugStage(_debugStage)
 {
 }
@@ -159,6 +161,10 @@ bool OsmAnd::AtlasMapRenderer::preInitializeRendering()
     if (!_mapLayersStage)
         return false;
 
+    _map3DObjectsStage.reset(createMap3DObjectsStage());
+    if (!_map3DObjectsStage)
+        return false;
+
     _symbolsStage.reset(createSymbolsStage());
     if (!_symbolsStage)
         return false;
@@ -185,6 +191,9 @@ bool OsmAnd::AtlasMapRenderer::doInitializeRendering(bool reinitialize)
     if (!_symbolsStage->initialize())
         ok = false;
 
+    if (!_map3DObjectsStage->initialize())
+        ok = false;
+
     if (!_debugStage->initialize())
         ok = false;
 
@@ -204,6 +213,12 @@ bool OsmAnd::AtlasMapRenderer::doReleaseRendering(bool gpuContextLost)
     if (_mapLayersStage)
     {
         if (!_mapLayersStage->release(gpuContextLost))
+            ok = false;
+    }
+
+    if (_map3DObjectsStage)
+    {
+        if (!_map3DObjectsStage->release(gpuContextLost))
             ok = false;
     }
 
@@ -234,6 +249,9 @@ bool OsmAnd::AtlasMapRenderer::postReleaseRendering(bool gpuContextLost)
 
     if (_mapLayersStage)
         _mapLayersStage.reset();
+
+    if (_map3DObjectsStage)
+        _map3DObjectsStage.reset();
 
     if (_symbolsStage)
         _symbolsStage.reset();

@@ -24,6 +24,7 @@
 #include "AtlasMapRendererMapLayersStage_OpenGL.h"
 #include "AtlasMapRendererSymbolsStage_OpenGL.h"
 #include "AtlasMapRendererDebugStage_OpenGL.h"
+#include "AtlasMapRendererMap3DObjectsStage_OpenGL.h"
 #include "IMapRenderer.h"
 #include "IMapTiledDataProvider.h"
 #include "IRasterMapLayerProvider.h"
@@ -191,6 +192,15 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         glDisable(GL_CULL_FACE);
         GL_CHECK_RESULT;
 
+    }
+
+    if (_map3DObjectsStage && !currentDebugSettings->disableSymbolsStage)
+    {
+        Stopwatch map3DStageStopwatch(metric != nullptr);
+        if (!_map3DObjectsStage->render(metric))
+            ok = false;
+        if (metric)
+            metric->elapsedTimeForSymbolsStage += map3DStageStopwatch.elapsed();
     }
     // Turn on blending since now objects with transparency are going to be rendered
     glEnable(GL_BLEND);
@@ -3299,4 +3309,9 @@ OsmAnd::AtlasMapRendererSymbolsStage* OsmAnd::AtlasMapRenderer_OpenGL::createSym
 OsmAnd::AtlasMapRendererDebugStage* OsmAnd::AtlasMapRenderer_OpenGL::createDebugStage()
 {
     return new AtlasMapRendererDebugStage_OpenGL(this);
+}
+
+OsmAnd::AtlasMapRendererMap3DObjectsStage* OsmAnd::AtlasMapRenderer_OpenGL::createMap3DObjectsStage()
+{
+    return new AtlasMapRendererMap3DObjectsStage_OpenGL(this);
 }
