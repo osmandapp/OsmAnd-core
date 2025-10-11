@@ -72,6 +72,7 @@ namespace OsmAnd
         float skyTargetToCenter;
         float skyBackToCenter;
         float skyLine;
+        int tilesToHorizon;
         double globeRadius;
         double distanceFromCameraToGroundInMeters;        
         double metersPerUnit;

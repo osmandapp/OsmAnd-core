@@ -421,9 +421,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         PointD groundPos(
             internalState->worldCameraPosition.x / TileSize3D + internalState->targetInTileOffsetN.x,
             internalState->worldCameraPosition.z / TileSize3D + internalState->targetInTileOffsetN.y);
-        PointD offsetInTileN(groundPos.x - floor(groundPos.x), groundPos.y - floor(groundPos.y));
-        PointI64 tileId(floor(groundPos.x) + internalState->targetTileId.x,
-            floor(groundPos.y) + internalState->targetTileId.y);
+        PointD offsetInTileN(groundPos.x - qFloor(groundPos.x), groundPos.y - qFloor(groundPos.y));
+        PointI64 tileId(qFloor(groundPos.x) + internalState->targetTileId.x,
+            qFloor(groundPos.y) + internalState->targetTileId.y);
         const auto tileIdN = Utilities::normalizeCoordinates(tileId, state.zoomLevel);
         groundPos.x = static_cast<double>(tileIdN.x) + offsetInTileN.x;
         groundPos.y = static_cast<double>(tileIdN.y) + offsetInTileN.y;
@@ -447,15 +447,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     const auto targetAngle = qAcos(qBound(0.0, glm::dot(vectorFromTargetToCameraN, vectorToCameraN), 1.0));
     const auto distanceFromCameraToHorizon = distanceToCamera * qCos(cameraAngle);
     const auto groundDistanceToHorizon = inglobeAngle * radiusInWorld;
+    internalState->tilesToHorizon =
+        static_cast<int>(qCeil(qMin(static_cast<float>(groundDistanceToHorizon), state.visibleDistance) / TileSize3D));
     const auto groundDistanceFromTargetToSkyplane = groundDistanceToHorizon - groundDistanceFromCameraToTarget;
-    const auto visibleAngle = groundDistanceToHorizon / radiusInWorld;
-    const auto deltaAngle = inglobeAngle - visibleAngle;
-    const auto visibleY = distanceFromCameraToHorizon / radiusInWorld - qSin(deltaAngle);
-    const auto visibleX = 1.0 - qCos(deltaAngle);
-    const auto distanceFromTargetToSky = qSqrt(visibleX * visibleX + visibleY * visibleY) * radiusInWorld;
     const auto targetHorizonAngle = cameraAngle - targetAngle;
     const auto distanceFromTargetToHorizonZ =
-        distanceFromTargetToSky * qCos(targetHorizonAngle - qAtan(visibleX / visibleY)) - distanceToTarget;
+        distanceFromCameraToHorizon * qCos(targetHorizonAngle) - distanceToTarget;
     const auto farEnd = qMin(distanceFromTargetToHorizonZ,
         static_cast<double>(state.visibleDistance * internalState->scaleToRetainProjectedSize) * elevationCosine)
         * elevationCosine + distanceFromTargetToHorizonZ * (1.0 - elevationCosine);
@@ -899,7 +896,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         auto min31 = PointI64(Utilities::get31FromAngles(PointD(minAngleX, maxAngleY)));
         auto max31 = PointI64(Utilities::get31FromAngles(PointD(maxAngleX, minAngleY)));
         if (minAngleX > maxAngleX || (minAngleX < maxAngleX && min31.x > max31.x))
-                max31.x += intFull;
+            max31.x += intFull;
 
         auto offset = max31.x > INT32_MAX ? max31.x - (max31.x & INT32_MAX) : 0;
         min31.x -= offset;
@@ -2546,7 +2543,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(const MapRend
     const PointI& screenPoint, PointI& location31, float* heightInMeters /*=nullptr*/) const
 {
     InternalState internalState;
-    bool ok = updateInternalState(internalState, state, *getConfiguration(), !state.elevationDataProvider);
+    bool ok = updateInternalState(internalState, state, *getConfiguration(), true);
     if (!ok)
         return false;
     
@@ -2618,10 +2615,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(const MapRend
     auto midPointZ = startPointZ;
     auto tmpPoint = midPoint;
     auto tmpPointZ = midPointZ;
-    int tilesCount = 0;
+    auto tilesCount = 1 + internalState.tilesToHorizon;
     const auto tiles = internalState.uniqueTiles.cend();
-    if (tiles != internalState.uniqueTiles.cbegin())
-        tilesCount = (tiles - 1)->size();
     do
     {
         auto startTileId = PointD(std::floor(startPoint.x), std::floor(startPoint.y));
