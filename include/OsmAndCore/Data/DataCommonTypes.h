@@ -271,12 +271,14 @@ namespace OsmAnd
     static_assert(sizeof(ObfPoiCategoryId) == 4, "ObfPoiCategoryId must be 4 bytes in size");
 #endif // !defined(SWIG)
 
-    enum class ObfAddressStreetGroupType : int32_t
+    enum class ObfAddressStreetGroupType : int32_t // CityBlock
     {
-        Unknown = 0,
+        Unknown = -1,
+        Boundary = 0,
         CityOrTown = 1,
         Village = 3,
         Postcode = 2,
+        Street = 4
     };
 
     typedef Bitmask<ObfAddressStreetGroupType> ObfAddressStreetGroupTypesMask;
@@ -284,22 +286,34 @@ namespace OsmAnd
     inline ObfAddressStreetGroupTypesMask fullObfAddressStreetGroupTypesMask()
     {
         return ObfAddressStreetGroupTypesMask()
+            .set(ObfAddressStreetGroupType::Boundary)
             .set(ObfAddressStreetGroupType::CityOrTown)
             .set(ObfAddressStreetGroupType::Village)
-            .set(ObfAddressStreetGroupType::Postcode);
+            .set(ObfAddressStreetGroupType::Postcode)
+            .set(ObfAddressStreetGroupType::Street);
     }
 
-    enum class ObfAddressStreetGroupSubtype : int32_t
+    enum class ObfAddressStreetGroupSubtype : int32_t // CityType
     {
         Unknown = -1,
-
-        City = 0,
-        Town,
-        Village,
-        Hamlet,
-        Suburb,
+        
+        City = 0, // 0. City
+        Town,     // 1. Town
+        Village,  // 2. Village
+        Hamlet,   // 3. Hamlet - Small village
+        Suburb,   // 4. Mostly district of the city (introduced to avoid duplicate streets in city) -
+                  //    however BOROUGH, DISTRICT, NEIGHBOURHOOD could be used as well for that purpose
+                  //    Main difference stores own streets to search and list by it
+        // 5.2 stored in city / villages sections written as city type
+        Boundary, // 5. boundary no streets
+        // 5.3 stored in city / villages sections written as city type
+        Postcode, // 6. write this could be activated after 5.2 release
+        
+        // not stored entities but registered to uniquely identify streets as SUBURB
+        Borough,
         District,
-        Neighbourhood
+        Neighbourhood,
+        Census
     };
 }
 

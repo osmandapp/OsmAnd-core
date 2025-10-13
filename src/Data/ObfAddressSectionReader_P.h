@@ -28,12 +28,14 @@ namespace OsmAnd
         typedef ObfAddressSectionReader::BuildingVisitorFunction BuildingVisitorFunction;
         typedef ObfAddressSectionReader::IntersectionVisitorFunction IntersectionVisitorFunction;
 
-        enum class AddressNameIndexDataAtomType : uint32_t
+        enum class AddressNameIndexDataAtomType : uint32_t // CityBlock
         {
+            Boundary = static_cast<int>(ObfAddressStreetGroupType::Boundary),
             CityOrTown = static_cast<int>(ObfAddressStreetGroupType::CityOrTown),
             Village = static_cast<int>(ObfAddressStreetGroupType::Village),
             Postcode = static_cast<int>(ObfAddressStreetGroupType::Postcode),
-            Street = 4
+            Street = static_cast<int>(ObfAddressStreetGroupType::Street),
+            Count = 5
         };
         
 
@@ -47,8 +49,8 @@ namespace OsmAnd
             }
 
             AddressNameIndexDataAtomType addressType;
-            uint32_t dataIndexOffset;
-            uint32_t containerIndexOffset;
+            uint32_t dataIndexOffset; // refsToCities
+            uint32_t containerIndexOffset; // refs
         };
 
         static bool dereferencedLessThan(AddressReference& o1, AddressReference& o2)
@@ -75,7 +77,7 @@ namespace OsmAnd
         static void readStreetGroup(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfAddressSectionInfo>& section,
-            const ObfAddressStreetGroupType streetGroupType,
+            /*const ObfAddressStreetGroupType streetGroupType,*/
             const uint32_t groupOffset,
             std::shared_ptr<StreetGroup>& outStreetGroup,
             const AreaI* const bbox31,

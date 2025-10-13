@@ -18,6 +18,7 @@ namespace OsmAnd
     class ObfAddressSectionInfo;
     class Street;
 
+    // class City in Java
     class OSMAND_CORE_API StreetGroup Q_DECL_FINAL : public Address
     {
         Q_DISABLE_COPY_AND_MOVE(StreetGroup);
@@ -29,12 +30,12 @@ namespace OsmAnd
         virtual ~StreetGroup();
         virtual QString toString() const;
 
-        ObfAddressStreetGroupType type;
-        ObfAddressStreetGroupSubtype subtype;
+        ObfAddressStreetGroupSubtype type; // CityType
 
         uint32_t dataOffset;
 
         QList<std::shared_ptr<const Street>> streets;
+        std::vector<int32_t> bbox31; // unused
     };
 }
 
