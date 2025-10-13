@@ -32,6 +32,7 @@
 #include "MapRendererKeyedResourcesCollection.h"
 #include "MapRendererRasterMapLayerResource.h"
 #include "MapRendererElevationDataResource.h"
+#include "MapRenderer3DObjectsResource.h"
 #include "MapRendererTiledSymbolsResourcesCollection.h"
 #include "MapRendererTiledSymbolsResource.h"
 #include "MapRendererKeyedSymbolsResource.h"
@@ -50,6 +51,7 @@ namespace OsmAnd
     class AtlasMapRenderer;
     class MapRenderer;
     class IMapDataProvider;
+    class MapRenderer3DObjectsResource;
     class TiledMapSymbolsData;
     class MapSymbolsGroup;
     class MapSymbol;
@@ -262,6 +264,12 @@ namespace OsmAnd
         bool uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol,
             std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU,
             bool waitForGPU = true);
+        bool uploadVerticesToGPU(
+                const void* data,
+                const size_t dataSize,
+                const unsigned int vertexCount,
+                std::shared_ptr<const GPUAPI::ArrayBufferInGPU>& outVertexBuffer,
+                const bool waitForGPU = false) const;
         void finishSymbolsUploadToGPU();
         bool adjustImageToConfiguration(
             const sk_sp<const SkImage>& input,
@@ -276,6 +284,7 @@ namespace OsmAnd
         void updateElevationDataProviderBindings(const MapRendererState& state);
         void updateMapLayerProviderBindings(const MapRendererState& state);
         void updateSymbolProviderBindings(const MapRendererState& state);
+        void update3DObjectsProviderBindings(const MapRendererState& state);
 
         void updateActiveZone(
             QMap<ZoomLevel, QVector<TileId>>& activeTiles, QMap<ZoomLevel, TileId>& activeTilesTargets,
@@ -322,6 +331,7 @@ namespace OsmAnd
     friend class OsmAnd::MapRendererTiledSymbolsResourcesCollection;
     friend class OsmAnd::MapRendererTiledSymbolsResource;
     friend class OsmAnd::MapRendererKeyedSymbolsResource;
+    friend class OsmAnd::MapRenderer3DObjectsResource;
 
     //TODO: MapRendererResourcesManager needs to be splitted into Altas and etc.
     friend class OsmAnd::AtlasMapRenderer;

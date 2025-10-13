@@ -16,6 +16,7 @@ namespace OsmAnd
         ElevationData,
         MapLayer,
         Symbols,
+        Map3DObjects,
 
         __LAST
     };
