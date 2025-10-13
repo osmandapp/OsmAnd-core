@@ -1089,7 +1089,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    else                                                                                                           ""\n");
         fragmentShader.append(QStringLiteral(
             "%DynamicsInFragmentShader%                                                                                         ""\n"
-            "        fromTexture(sampler, texCoords, resultColor);                                                              ""\n"
+            "    {                                                                                                              ""\n"
+            "        float fakeValue = max(texCoordsOffsetAndScale.x, 0.0) * max(transitionPhase.x, 0.0) * texelSize;           ""\n"
+            "        if (min(fakeValue, 0.0) <= 0.0)                                                                            ""\n"
+            "            fromTexture(sampler, texCoords, resultColor);                                                          ""\n"
+            "    }                                                                                                              ""\n"
             "}                                                                                                                  ""\n"
             "                                                                                                                   ""\n"
             "void main()                                                                                                        ""\n"
