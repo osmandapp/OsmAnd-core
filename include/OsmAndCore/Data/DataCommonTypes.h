@@ -271,7 +271,7 @@ namespace OsmAnd
     static_assert(sizeof(ObfPoiCategoryId) == 4, "ObfPoiCategoryId must be 4 bytes in size");
 #endif // !defined(SWIG)
 
-    enum class ObfAddressStreetGroupType : int32_t // CityBlock
+    enum class ObfAddressStreetGroupType : int32_t // CityBlocks
     {
         Unknown = -1,
         Boundary = 0,

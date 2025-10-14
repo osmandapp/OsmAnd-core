@@ -43,19 +43,25 @@ namespace OsmAnd
         struct AddressReference
         {
             AddressReference()
-                : dataIndexOffset(0)
-                , containerIndexOffset(0)
+                : addressType(AddressNameIndexDataAtomType::Count)
+                , dataIndexOffset(0)
+                , cityIndexOffset(0)
             {
             }
 
             AddressNameIndexDataAtomType addressType;
-            uint32_t dataIndexOffset; // refsToCities
-            uint32_t containerIndexOffset; // refs
+            uint32_t dataIndexOffset; // refs
+            uint32_t cityIndexOffset; // refsToCities
         };
 
-        static bool dereferencedLessThan(AddressReference& o1, AddressReference& o2)
+        static bool dataDereferencedLessThan(AddressReference& o1, AddressReference& o2)
         {
             return o1.dataIndexOffset < o2.dataIndexOffset;
+        }
+        
+        static bool cityDereferencedLessThan(AddressReference& o1, AddressReference& o2)
+        {
+            return o1.cityIndexOffset < o2.cityIndexOffset;
         }
 
     private:
@@ -74,7 +80,7 @@ namespace OsmAnd
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
             const StreetGroupVisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController);
-        static void readStreetGroup(
+        static void readCityHeader(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfAddressSectionInfo>& section,
             /*const ObfAddressStreetGroupType streetGroupType,*/
@@ -143,7 +149,7 @@ namespace OsmAnd
         static void scanNameIndex(
             const ObfReader_P& reader,
             const QString& query,
-            QVector<AddressReference>& outAddressReferences,
+            QHash<AddressNameIndexDataAtomType, QVector<AddressReference>>& outAddressReferences,
             const AreaI* const bbox31,
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
             const bool includeStreets,
@@ -152,7 +158,7 @@ namespace OsmAnd
         static void readNameIndexData(
             const ObfReader_P& reader,
             const uint32_t baseOffset,
-            QVector<AddressReference>& outAddressReferences,
+            QHash<AddressNameIndexDataAtomType, QVector<AddressReference>>& outAddressReferences,
             const AreaI* const bbox31,
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
             const bool includeStreets,
@@ -160,7 +166,7 @@ namespace OsmAnd
         static void readNameIndexDataAtom(
             const ObfReader_P& reader,
             const uint32_t baseOffset,
-            QVector<AddressReference>& outAddressReferences,
+            QHash<AddressNameIndexDataAtomType, QVector<AddressReference>>& outAddressReferences,
             const AreaI* const bbox31,
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
             const bool includeStreets,
