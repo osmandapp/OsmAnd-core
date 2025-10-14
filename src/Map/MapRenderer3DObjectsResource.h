@@ -16,18 +16,26 @@ namespace OsmAnd
 {
     class MapRendererResourcesManager;
 
-    struct TestBuildingResource
-    {
-        std::shared_ptr<const GPUAPI::ArrayBufferInGPU> vertexBuffer;
-        int vertexCount;
-        
-        TestBuildingResource() : vertexCount(0) {}
-        TestBuildingResource(const std::shared_ptr<const GPUAPI::ArrayBufferInGPU>& vb, int count)
-            : vertexBuffer(vb), vertexCount(count) {}
-    };
-
     class MapRenderer3DObjectsResource : public MapRendererBaseTiledResource
     {
+    public:
+        struct Vertex
+        {
+            glm::vec3 position;
+        };
+
+        struct TestBuildingResource
+        {
+            std::shared_ptr<const GPUAPI::ArrayBufferInGPU> vertexBuffer;
+            int vertexCount;
+
+            QVector<PointI> debugPoints31;
+
+            TestBuildingResource() : vertexCount(0) {}
+            TestBuildingResource(const std::shared_ptr<const GPUAPI::ArrayBufferInGPU>& vb, int count)
+                : vertexBuffer(vb), vertexCount(count) {}
+        };
+        
     private:
     protected:
         MapRenderer3DObjectsResource(

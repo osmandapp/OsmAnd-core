@@ -73,10 +73,8 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
     if (!sourceData || !sourceData->primitivisedObjects)
         return true;
 
-    // Clear previous test buildings
     _testBuildings.clear();
 
-    
     for (const auto& primitive : constOf(sourceData->primitivisedObjects->polygons))
     {
         if (primitive->type != MapPrimitiviser::PrimitiveType::Polygon)
@@ -86,24 +84,16 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
         if (!sourceObject || sourceObject->points31.isEmpty())
             continue;
 
-        // Convert points31 to vertex data (position only for now)
         const int vertexCount = sourceObject->points31.size();
-        const int vertexStride = 3 * sizeof(float); // x, y, z
-        const size_t vertexBufferSize = static_cast<size_t>(vertexCount * vertexStride);
-        
-        // Create vertex data array
-        QVector<float> vertexData(vertexCount * 3);
+        const size_t vertexBufferSize = static_cast<size_t>(vertexCount * sizeof(Vertex));
+
+        QVector<Vertex> vertexData(vertexCount);
         for (int i = 0; i < vertexCount; ++i)
         {
             const auto& point31 = sourceObject->points31[i];
-            // Convert from 31-bit coordinates to world coordinates
-            // For now, use simple conversion - this should be improved with proper coordinate transformation
-            vertexData[i * 3 + 0] = static_cast<float>(point31.x) / (1 << 31);
-            vertexData[i * 3 + 1] = static_cast<float>(point31.y) / (1 << 31);
-            vertexData[i * 3 + 2] = 0.0f; // Height = 0 for now
+            vertexData[i].position = glm::vec3(point31.x, 10.0f, point31.y);
         }
 
-        // Upload vertex data via resources manager wrapper
         std::shared_ptr<const GPUAPI::ArrayBufferInGPU> vertexBufferInGPU;
         const bool uploadSuccess = resourcesManager->uploadVerticesToGPU(
             vertexData.constData(),
@@ -115,12 +105,11 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
         if (!uploadSuccess)
             continue;
 
-        // Create TestBuildingResource and add to array
         TestBuildingResource building(vertexBufferInGPU, vertexCount);
+        building.debugPoints31 = sourceObject->points31;
         _testBuildings.append(building);
     }
 
-    // Drop CPU data
     _sourceData.reset();
     return true;
 }

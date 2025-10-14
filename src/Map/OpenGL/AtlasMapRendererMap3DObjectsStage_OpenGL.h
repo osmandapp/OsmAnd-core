@@ -12,17 +12,6 @@
 
 namespace OsmAnd
 {
-        struct Renderable3D
-        {
-            virtual ~Renderable3D() = default;
-
-            GLname vertexBuffer;
-            GLname indexBuffer;
-            GLname vao;
-            int vertexCount;
-            int indexCount;
-        };
-
     class AtlasMapRendererMap3DObjectsStage_OpenGL
         : public AtlasMapRendererMap3DObjectsStage
         , private AtlasMapRendererStageHelper_OpenGL
@@ -45,7 +34,6 @@ namespace OsmAnd
                 struct
                 {
                     GLlocation vertexPosition;
-                    GLlocation vertexColor;
                 } in;
 
                 // Params
@@ -55,8 +43,6 @@ namespace OsmAnd
                 } param;
             } vs;
         } _program;
-
-        //QVector<std::shared_ptr<Renderable3D>> _renderable3DObjects;
 
         bool initializeProgram();
 
