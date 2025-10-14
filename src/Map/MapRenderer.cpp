@@ -18,6 +18,7 @@
 #include "MapSymbol.h"
 #include "GPUAPI.h"
 #include "Utilities.h"
+#include "Map3DObjectsKeyedProvider.h"
 #include "Logging.h"
 #include "Stopwatch.h"
 #include "MapRendererPerformanceMetrics.h"
@@ -1571,7 +1572,7 @@ bool OsmAnd::MapRenderer::resetElevationDataProvider(bool forcedUpdate /*= false
 }
 
 bool OsmAnd::MapRenderer::setMap3DObjectsProvider(
-    const std::shared_ptr<IMapTiledDataProvider>& provider,
+    const std::shared_ptr<IMapKeyedDataProvider>& provider,
     bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);

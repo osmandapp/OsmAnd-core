@@ -7,6 +7,9 @@
 #include "OpenGL/GPUAPI_OpenGL.h"
 #include "AtlasMapRenderer_OpenGL.h"
 #include "Utilities.h"
+#include "MapRendererKeyedResourcesCollection.h"
+#include <QSet>
+#include <mapbox/earcut.hpp>
 
 using namespace OsmAnd;
 
@@ -51,7 +54,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
             
             void main()
             {
-                fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+                fragColor = vec4(0.0, 0.0, 1.0, 0.3);
             }
         )";
         auto preprocessedFragmentShader = fragmentShader;
@@ -133,12 +136,17 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
     GL_CHECK_PRESENT(glUniform4fv);
     GL_CHECK_PRESENT(glUniform3fv);
     GL_CHECK_PRESENT(glDrawArrays);
+    GL_CHECK_PRESENT(glDrawElements);
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDeleteBuffers);
+    GL_CHECK_PRESENT(glEnable);
+    GL_CHECK_PRESENT(glDisable);
+    GL_CHECK_PRESENT(glBlendFunc);
+    //GL_CHECK_PRESENT(glDrawElements);
 
     glUseProgram(_program.id);
     GL_CHECK_RESULT;
@@ -153,19 +161,21 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
 
     if (resourcesCollection_)
     {
-        const auto resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
+        const auto resourcesCollection = const_cast<MapRendererKeyedResourcesCollection::Snapshot*>(
+            std::static_pointer_cast<const MapRendererKeyedResourcesCollection::Snapshot>(resourcesCollection_).get());
 
-        const auto visibleTiles = static_cast<AtlasMapRenderer*>(getRenderer())->getVisibleTiles();
         const auto zoomLevel = currentState.zoomLevel;
+        const PointI target31 = currentState.target31;
+        const float tileSizeInWorld = static_cast<float>(AtlasMapRenderer::TileSize3D);
 
-        for (const auto& tileId : constOf(visibleTiles))
+        QSet<QString> processedPolygons;
+        float altitude = 0.1f;
+
+        QList<std::shared_ptr<MapRendererBaseResource>> resources;
+        resourcesCollection->obtainResources(&resources, nullptr);
+
+        for (const auto& resource_ : constOf(resources))
         {
-            const auto tileIdN = Utilities::normalizeTileId(tileId, zoomLevel);
-
-            std::shared_ptr<MapRendererBaseTiledResource> resource_;
-            if (!resourcesCollection->obtainResource(tileIdN, zoomLevel, resource_))
-                continue;
-
             const auto r = std::static_pointer_cast<MapRenderer3DObjectsResource>(resource_);
             if (!r)
                 continue;
@@ -179,40 +189,114 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
                 if (!b.vertexBuffer || b.vertexCount <= 0)
                     continue;
 
-                const int vertexCount = b.debugPoints31.size();
-                const size_t vertexBufferSize = static_cast<size_t>(vertexCount * sizeof(MapRenderer3DObjectsResource::Vertex));
+                const int edgePointsCount = b.debugPoints31.size();
+                if (edgePointsCount < 3)
+                    continue;
 
-                QVector<MapRenderer3DObjectsResource::Vertex> vertexData(vertexCount);
-                for (int i = 0; i < vertexCount; ++i)
+                QVector<MapRenderer3DObjectsResource::Vertex> edgeVertices(edgePointsCount);
+                for (int i = 0; i < edgePointsCount; ++i)
                 {
                     const auto& point31 = b.debugPoints31[i];
-
-                    vertexData[i].position = Utilities::planeWorldCoordinates(point31, target31, zoomLevel, tileSizeInWorld, 1.0);
+                    edgeVertices[i].position = Utilities::planeWorldCoordinates(point31, target31, zoomLevel, tileSizeInWorld, altitude);
                 }
+                altitude += 3.0f;
 
-                gpuAPI->useVAO(_vao);
-                GLuint vbo = 0;
-                glGenBuffers(1, &vbo);
-                GL_CHECK_RESULT;
-                glBindBuffer(GL_ARRAY_BUFFER, vbo);
-                GL_CHECK_RESULT;
-                glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertexBufferSize), vertexData.constData(), GL_DYNAMIC_DRAW);
-                GL_CHECK_RESULT;
+                if (true)
+                {
+                    std::vector<std::array<double, 2>> outer;
+                    outer.reserve(static_cast<size_t>(edgePointsCount));
+                    for (int i = 0; i < edgePointsCount; ++i)
+                    {
+                        const auto& p = edgeVertices[i].position;
+                        outer.push_back({ static_cast<double>(p.x), static_cast<double>(p.z) });
+                    }
+                    std::vector< std::vector<std::array<double, 2>> > polygon;
+                    polygon.push_back(std::move(outer));
 
-                glEnableVertexAttribArray(*_program.vs.in.vertexPosition);
-                GL_CHECK_RESULT;
-                glVertexAttribPointer(*_program.vs.in.vertexPosition,
-                    3, GL_FLOAT, GL_FALSE,
-                    sizeof(MapRenderer3DObjectsResource::Vertex),
-                    reinterpret_cast<const GLvoid*>(offsetof(MapRenderer3DObjectsResource::Vertex, position)));
-                GL_CHECK_RESULT;
+                    std::vector<uint32_t> earcutIndices32 = mapbox::earcut<uint32_t>(polygon);
+                    if (earcutIndices32.empty())
+                        continue;
 
-                glDrawArrays(GL_LINE_LOOP, 0, vertexCount);
-                GL_CHECK_RESULT;
+                    const size_t vertexBufferSize = static_cast<size_t>(edgeVertices.size() * sizeof(MapRenderer3DObjectsResource::Vertex));
+                    QVector<GLushort> indices16;
+                    indices16.reserve(static_cast<int>(earcutIndices32.size()));
+                    for (uint32_t idx : earcutIndices32)
+                        indices16.append(static_cast<GLushort>(idx));
+                    const size_t indexBufferSize = static_cast<size_t>(indices16.size() * sizeof(GLushort));
 
-                glDeleteBuffers(1, &vbo);
-                GL_CHECK_RESULT;
-                gpuAPI->unuseVAO();
+                    gpuAPI->useVAO(_vao);
+                    GLuint vbo = 0;
+                    GLuint ebo = 0;
+                    glGenBuffers(1, &vbo);
+                    GL_CHECK_RESULT;
+                    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+                    GL_CHECK_RESULT;
+                    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertexBufferSize), edgeVertices.constData(), GL_DYNAMIC_DRAW);
+                    GL_CHECK_RESULT;
+                    glGenBuffers(1, &ebo);
+                    GL_CHECK_RESULT;
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+                    GL_CHECK_RESULT;
+                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(indexBufferSize), indices16.constData(), GL_DYNAMIC_DRAW);
+                    GL_CHECK_RESULT;
+
+                    glEnableVertexAttribArray(*_program.vs.in.vertexPosition);
+                    GL_CHECK_RESULT;
+                    glVertexAttribPointer(*_program.vs.in.vertexPosition,
+                        3, GL_FLOAT, GL_FALSE,
+                        sizeof(MapRenderer3DObjectsResource::Vertex),
+                        reinterpret_cast<const GLvoid*>(offsetof(MapRenderer3DObjectsResource::Vertex, position)));
+                    GL_CHECK_RESULT;
+
+                    // Transperency
+                    glEnable(GL_BLEND);
+                    GL_CHECK_RESULT;
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                    GL_CHECK_RESULT;
+                    // Transperency
+
+                    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices16.size()), GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid*>(0));
+                    GL_CHECK_RESULT;
+
+                    // Transperency
+                    glDisable(GL_BLEND);
+                    GL_CHECK_RESULT;
+                    // Transperency
+
+                    glDeleteBuffers(1, &vbo);
+                    GL_CHECK_RESULT;
+                    glDeleteBuffers(1, &ebo);
+                    GL_CHECK_RESULT;
+                    gpuAPI->unuseVAO();
+                }
+                else
+                {
+                    const size_t vertexBufferSize = static_cast<size_t>(edgeVertices.size() * sizeof(MapRenderer3DObjectsResource::Vertex));
+
+                    gpuAPI->useVAO(_vao);
+                    GLuint vbo = 0;
+                    glGenBuffers(1, &vbo);
+                    GL_CHECK_RESULT;
+                    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+                    GL_CHECK_RESULT;
+                    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertexBufferSize), edgeVertices.constData(), GL_DYNAMIC_DRAW);
+                    GL_CHECK_RESULT;
+
+                    glEnableVertexAttribArray(*_program.vs.in.vertexPosition);
+                    GL_CHECK_RESULT;
+                    glVertexAttribPointer(*_program.vs.in.vertexPosition,
+                        3, GL_FLOAT, GL_FALSE,
+                        sizeof(MapRenderer3DObjectsResource::Vertex),
+                        reinterpret_cast<const GLvoid*>(offsetof(MapRenderer3DObjectsResource::Vertex, position)));
+                    GL_CHECK_RESULT;
+
+                    glDrawArrays(GL_LINE_LOOP, 0, edgePointsCount);
+                    GL_CHECK_RESULT;
+
+                    glDeleteBuffers(1, &vbo);
+                    GL_CHECK_RESULT;
+                    gpuAPI->unuseVAO();
+                }
             }
             r->setState(MapRendererResourceState::Uploaded);
         }

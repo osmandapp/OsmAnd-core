@@ -29,6 +29,7 @@ namespace OsmAnd
     class IMapTiledSymbolsProvider;
     class IMapKeyedSymbolsProvider;
     class IMapTiledDataProvider;
+    class IMapKeyedDataProvider;
     class IMapRenderer;
     class MapRenderer;
 
@@ -144,7 +145,7 @@ namespace OsmAnd
         QHash<std::shared_ptr<IMapKeyedSymbolsProvider>, int> keyedSymbolsSubsections;
         QMap<int, SymbolSubsectionConfiguration > symbolSubsectionConfigurations;
 
-        std::shared_ptr<IMapTiledDataProvider> map3DObjectsProvider;
+        std::shared_ptr<IMapKeyedDataProvider> map3DObjectsProvider;
 
         PointI windowSize;
         AreaI viewport;
