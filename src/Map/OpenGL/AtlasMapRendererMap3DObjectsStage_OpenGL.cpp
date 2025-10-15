@@ -7,7 +7,7 @@
 #include "OpenGL/GPUAPI_OpenGL.h"
 #include "AtlasMapRenderer_OpenGL.h"
 #include "Utilities.h"
-#include "MapRendererKeyedResourcesCollection.h"
+#include "MapRendererTiledResourcesCollection.h"
 #include <QSet>
 #include <mapbox/earcut.hpp>
 
@@ -154,32 +154,34 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
     glUniformMatrix4fv(*_program.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
     GL_CHECK_RESULT;
 
+    glUniformMatrix4fv(*_program.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
+        GL_CHECK_RESULT;
+
     const auto& currentState = getRenderer()->getState();
     const auto resourcesCollection_ = getResources().getCollectionSnapshot(
         MapRendererResourceType::Map3DObjects,
         std::static_pointer_cast<IMapDataProvider>(currentState.map3DObjectsProvider));
 
+    float altitude = 0.1f;
+
     if (resourcesCollection_)
     {
-        const auto resourcesCollection = const_cast<MapRendererKeyedResourcesCollection::Snapshot*>(
-            std::static_pointer_cast<const MapRendererKeyedResourcesCollection::Snapshot>(resourcesCollection_).get());
+        const auto resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
 
+        const auto visibleTiles = static_cast<AtlasMapRenderer*>(getRenderer())->getVisibleTiles();
         const auto zoomLevel = currentState.zoomLevel;
         const PointI target31 = currentState.target31;
         const float tileSizeInWorld = static_cast<float>(AtlasMapRenderer::TileSize3D);
 
-        QSet<QString> processedPolygons;
-        float altitude = 0.1f;
-
-        QList<std::shared_ptr<MapRendererBaseResource>> resources;
-        resourcesCollection->obtainResources(&resources, nullptr);
-
-        for (const auto& resource_ : constOf(resources))
+        for (const auto& tileId : constOf(visibleTiles))
         {
+            const auto tileIdN = Utilities::normalizeTileId(tileId, zoomLevel);
+            std::shared_ptr<MapRendererBaseTiledResource> resource_;
+            if (!resourcesCollection->obtainResource(tileIdN, zoomLevel, resource_))
+                continue;
             const auto r = std::static_pointer_cast<MapRenderer3DObjectsResource>(resource_);
             if (!r)
                 continue;
-
             if (!r->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                 continue;
 
@@ -199,7 +201,6 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
                     const auto& point31 = b.debugPoints31[i];
                     edgeVertices[i].position = Utilities::planeWorldCoordinates(point31, target31, zoomLevel, tileSizeInWorld, altitude);
                 }
-                altitude += 3.0f;
 
                 if (true)
                 {
@@ -243,9 +244,9 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
                     glEnableVertexAttribArray(*_program.vs.in.vertexPosition);
                     GL_CHECK_RESULT;
                     glVertexAttribPointer(*_program.vs.in.vertexPosition,
-                        3, GL_FLOAT, GL_FALSE,
-                        sizeof(MapRenderer3DObjectsResource::Vertex),
-                        reinterpret_cast<const GLvoid*>(offsetof(MapRenderer3DObjectsResource::Vertex, position)));
+                                          3, GL_FLOAT, GL_FALSE,
+                                          sizeof(MapRenderer3DObjectsResource::Vertex),
+                                          reinterpret_cast<const GLvoid*>(offsetof(MapRenderer3DObjectsResource::Vertex, position)));
                     GL_CHECK_RESULT;
 
                     // Transperency
@@ -285,9 +286,9 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
                     glEnableVertexAttribArray(*_program.vs.in.vertexPosition);
                     GL_CHECK_RESULT;
                     glVertexAttribPointer(*_program.vs.in.vertexPosition,
-                        3, GL_FLOAT, GL_FALSE,
-                        sizeof(MapRenderer3DObjectsResource::Vertex),
-                        reinterpret_cast<const GLvoid*>(offsetof(MapRenderer3DObjectsResource::Vertex, position)));
+                                          3, GL_FLOAT, GL_FALSE,
+                                          sizeof(MapRenderer3DObjectsResource::Vertex),
+                                          reinterpret_cast<const GLvoid*>(offsetof(MapRenderer3DObjectsResource::Vertex, position)));
                     GL_CHECK_RESULT;
 
                     glDrawArrays(GL_LINE_LOOP, 0, edgePointsCount);

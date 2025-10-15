@@ -9,7 +9,7 @@
 #include "MapRendererResourceType.h"
 #include "MapRendererResourceState.h"
 #include "GPUAPI.h"
-#include "MapRendererBaseKeyedResource.h"
+#include "MapRendererBaseTiledResource.h"
 #include <OsmAndCore/Map/MapPrimitivesProvider.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
 
@@ -17,7 +17,7 @@ namespace OsmAnd
 {
     class MapRendererResourcesManager;
 
-    class MapRenderer3DObjectsResource : public MapRendererBaseKeyedResource
+    class MapRenderer3DObjectsResource : public MapRendererBaseTiledResource
     {
     public:
         struct Vertex
@@ -41,8 +41,9 @@ namespace OsmAnd
     protected:
         MapRenderer3DObjectsResource(
             MapRendererResourcesManager* owner,
-            const KeyedEntriesCollection<Key, MapRendererBaseKeyedResource>& collection,
-            const Key key);
+            const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
+            const TileId tileId,
+            const ZoomLevel zoom);
 
         QList<std::shared_ptr<const MapPrimitiviser::Primitive>> _sourceData;
 

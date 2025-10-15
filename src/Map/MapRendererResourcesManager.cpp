@@ -641,10 +641,9 @@ void OsmAnd::MapRendererResourcesManager::update3DObjectsProviderBindings(const 
         // If binding already exists, skip creation
         if (bindings.providersToCollections.contains(provider))
             return;
-
         // Create new resources collection
-        const std::shared_ptr<MapRendererKeyedResourcesCollection> newResourcesCollection(
-            new MapRendererKeyedResourcesCollection(MapRendererResourceType::Map3DObjects));
+        const std::shared_ptr<MapRendererTiledResourcesCollection> newResourcesCollection(
+            new MapRendererTiledResourcesCollection(MapRendererResourceType::Map3DObjects));
 
         // Add binding
         bindings.providersToCollections.insert(provider, newResourcesCollection);
@@ -1022,6 +1021,8 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
                 return new MapRendererElevationDataResource(this, collection, tileId, zoom);
             else if (resourceType == MapRendererResourceType::Symbols)
                 return new MapRendererTiledSymbolsResource(this, collection, tileId, zoom);
+            else if (resourceType == MapRendererResourceType::Map3DObjects)
+                return new MapRenderer3DObjectsResource(this, collection, tileId, zoom);
             else
                 return nullptr;
         };
@@ -1209,8 +1210,6 @@ void OsmAnd::MapRendererResourcesManager::requestNeededKeyedResources(
             {
                 if (resourceType == MapRendererResourceType::Symbols)
                     return new MapRendererKeyedSymbolsResource(this, collection, key, priority);
-                else if (resourceType == MapRendererResourceType::Map3DObjects)
-                    return new MapRenderer3DObjectsResource(this, collection, key);
                 else
                     return nullptr;
             });
@@ -1786,6 +1785,8 @@ bool OsmAnd::MapRendererResourcesManager::checkForUpdatesAndApply(const MapState
                         && mapState.zoomLevel >=  provider->getMinZoom()
                         && mapState.zoomLevel <= provider->getMaxZoom())
                         updatesPresent = true;
+
+                    updatesPresent = false;
                 }
             }
 

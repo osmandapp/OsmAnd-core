@@ -1,11 +1,11 @@
 #include "MapRenderer3DObjectsResource.h"
 
 #include "MapRendererResourcesManager.h"
-#include "MapRendererKeyedResourcesCollection.h"
-#include "IMapKeyedDataProvider.h"
-#include "Map3DObjectsKeyedProvider.h"
+#include "MapRendererTiledResourcesCollection.h"
+#include "IMapTiledDataProvider.h"
 #include <OsmAndCore/Map/MapPrimitivesProvider.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
+#include "Map3DObjectsProvider.h"
 #include "Utilities.h"
 #include "MapRenderer.h"
 //#include "AtlasMapRenderer_OpenGL.h"
@@ -14,9 +14,10 @@ using namespace OsmAnd;
 
 MapRenderer3DObjectsResource::MapRenderer3DObjectsResource(
     MapRendererResourcesManager* const owner,
-    const KeyedEntriesCollection<MapRendererBaseKeyedResource::Key, MapRendererBaseKeyedResource>& collection,
-    const MapRendererBaseKeyedResource::Key key)
-    : MapRendererBaseKeyedResource(owner, MapRendererResourceType::Map3DObjects, collection, key)
+    const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
+    const TileId tileId,
+    const ZoomLevel zoom)
+    : MapRendererBaseTiledResource(owner, MapRendererResourceType::Map3DObjects, collection, tileId, zoom)
 {
 }
 
@@ -26,49 +27,61 @@ MapRenderer3DObjectsResource::~MapRenderer3DObjectsResource()
 
 bool MapRenderer3DObjectsResource::supportsObtainDataAsync() const
 {
-    return false;
+    bool ok = false;
+
+    std::shared_ptr<IMapDataProvider> provider;
+    if (const auto link_ = link.lock())
+    {
+        const auto collection = static_cast<MapRendererTiledResourcesCollection*>(&link_->collection);
+        ok = resourcesManager->obtainProviderFor(
+            static_cast<MapRendererBaseResourcesCollection*>(collection),
+            provider);
+    }
+    if (!ok)
+        return false;
+
+    return provider->supportsNaturalObtainDataAsync();
 }
 
 bool MapRenderer3DObjectsResource::obtainData(bool& dataAvailable, const std::shared_ptr<const IQueryController>& queryController)
 {
     bool ok = false;
 
+    // Get source of tile
     std::shared_ptr<IMapDataProvider> provider_;
     if (const auto link_ = link.lock())
     {
         ok = resourcesManager->obtainProviderFor(
-            static_cast<MapRendererBaseResourcesCollection*>(static_cast<MapRendererKeyedResourcesCollection*>(&link_->collection)),
+            static_cast<MapRendererBaseResourcesCollection*>(static_cast<MapRendererTiledResourcesCollection*>(&link_->collection)),
             provider_);
     }
     if (!ok)
         return false;
-    
-    const auto provider = std::dynamic_pointer_cast<IMapKeyedDataProvider>(provider_);
-    if (!provider)
-        return false;
+    const auto provider = std::static_pointer_cast<IMapTiledDataProvider>(provider_);
 
-
-    const auto& mapState = resourcesManager->renderer->getMapState();
-
-    IMapKeyedDataProvider::Request request;
-    request.key = key;
-    request.mapState = mapState;
+    // Obtain tile from provider
+    std::shared_ptr<IMapTiledDataProvider::Data> tiledData;
+    IMapTiledDataProvider::Request request;
+    request.tileId = tileId;
+    request.zoom = zoom;
+    const auto mapState = resourcesManager->renderer->getMapState();
+    const auto visibleArea = Utilities::roundBoundingBox31(mapState.visibleBBox31, mapState.zoomLevel);
+    request.visibleArea31 = Utilities::getEnlargedVisibleArea(visibleArea);
+    const auto currentTime = QDateTime::currentMSecsSinceEpoch();
+    request.areaTime = currentTime;
     request.queryController = queryController;
 
-    std::shared_ptr<IMapKeyedDataProvider::Data> keyedData;
-    const bool requestSucceeded = provider->obtainKeyedData(request, keyedData);
-    
-    if (queryController->isAborted())
+    const bool requestSucceeded = provider->obtainTiledData(request, tiledData);
+    if (!requestSucceeded)
         return false;
-        
-    dataAvailable = requestSucceeded && keyedData;
+    dataAvailable = static_cast<bool>(tiledData);
+
+
     if (dataAvailable)
     {
-        const auto map3DData = std::dynamic_pointer_cast<Map3DObjectsKeyedProvider::Data>(keyedData);
-        if (map3DData)
-        {
-            _sourceData = map3DData->polygons;
-        }
+        const auto map3DTileData = std::dynamic_pointer_cast<Map3DObjectsTiledProvider::Data>(tiledData);
+        if (map3DTileData)
+            _sourceData = map3DTileData->polygons;
     }
 
     return true;
