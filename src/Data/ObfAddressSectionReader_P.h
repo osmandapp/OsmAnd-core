@@ -28,7 +28,7 @@ namespace OsmAnd
         typedef ObfAddressSectionReader::BuildingVisitorFunction BuildingVisitorFunction;
         typedef ObfAddressSectionReader::IntersectionVisitorFunction IntersectionVisitorFunction;
 
-        enum class AddressNameIndexDataAtomType : uint32_t // CityBlock
+        enum class AddressNameIndexDataAtomType : uint32_t // CityBlocks
         {
             Boundary = static_cast<int>(ObfAddressStreetGroupType::Boundary),
             CityOrTown = static_cast<int>(ObfAddressStreetGroupType::CityOrTown),

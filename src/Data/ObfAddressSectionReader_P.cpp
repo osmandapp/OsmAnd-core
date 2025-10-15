@@ -239,18 +239,6 @@ void OsmAnd::ObfAddressSectionReader_P::readCityHeader(
                 else
                     outStreetGroup->id = id;
                 
-                /*if(streetGroupType == ObfAddressStreetGroupType::Unknown) {
-                    // make assumption based on the data
-                    if(subtype == ObfAddressStreetGroupSubtype::City || subtype == ObfAddressStreetGroupSubtype::Town) {
-                        outStreetGroup->type = ObfAddressStreetGroupType::CityOrTown;
-                    } else if(subtype == ObfAddressStreetGroupSubtype::Unknown) {
-                        outStreetGroup->type = ObfAddressStreetGroupType::Postcode;
-                    } else {
-                        outStreetGroup->type = ObfAddressStreetGroupType::Village;
-                    }
-                } else {
-                    outStreetGroup->type = streetGroupType;
-                }*/
                 outStreetGroup->type = type;
                 outStreetGroup->nativeName = nativeName;
                 outStreetGroup->localizedNames = localizedNames;
