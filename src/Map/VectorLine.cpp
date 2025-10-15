@@ -335,7 +335,8 @@ OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::VectorLine::SymbolsGroup
             result = UpdateResult::Primitive;
         }
         
-        vectorLineP->applyChanges();
+        if (!vectorLineP->applyChanges())
+            result = UpdateResult::None;
     }
 
     return result;

@@ -100,6 +100,8 @@ namespace OsmAnd
         float _surfaceVisualZoom;
         float _mapVisualZoomShift;
         bool _hasElevationDataProvider;
+        bool _hasElevationDataResources;
+        AreaI64 _bboxShifted;
 
         float zoom() const;
 
@@ -118,7 +120,7 @@ namespace OsmAnd
 
         sk_sp<const SkImage> getPointImage() const;
         
-        std::shared_ptr<OnSurfaceVectorMapSymbol> generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine);
+        bool generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine);
         
         void clearArrowsOnPath();
         const QList<OsmAnd::VectorLine::OnPathSymbolData> getArrowsOnPath() const;
@@ -138,6 +140,7 @@ namespace OsmAnd
         bool isBigDiff(const ColorARGB& firstColor, const ColorARGB& secondColor) const;
         inline FColorARGB middleColor(const FColorARGB& first, const FColorARGB& last, const float factor) const;
         void calculateVisibleSegments(
+            const AreaI64& visibleArea64,
             std::vector<std::vector<PointI>>& segments,
             QList<QList<float>>& segmentDistances,
             QList<QList<FColorARGB>>& segmentColors,

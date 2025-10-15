@@ -186,6 +186,7 @@ void OsmAnd::VectorLine_P::setPoints(const QVector<PointI>& points)
 
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
+        _bboxShifted = AreaI64();
     }
 }
 
@@ -206,6 +207,7 @@ void OsmAnd::VectorLine_P::setHeights(const QList<float>& heights)
 
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
+        _bboxShifted = AreaI64();
     }
 }
 
@@ -226,6 +228,7 @@ void OsmAnd::VectorLine_P::setColorizationMapping(const QList<FColorARGB> &color
 
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
+        _bboxShifted = AreaI64();
     }
 }
 
@@ -246,6 +249,7 @@ void OsmAnd::VectorLine_P::setOutlineColorizationMapping(const QList<FColorARGB>
 
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
+        _bboxShifted = AreaI64();
     }
 }
 
@@ -423,6 +427,7 @@ void OsmAnd::VectorLine_P::setColorizationScheme(const int colorizationScheme)
 
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
+        _bboxShifted = AreaI64();
     }
 }
 
@@ -547,6 +552,7 @@ bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
     changed |= qAbs(_mapVisualZoom - mapState.visualZoom) > 0.25;
     changed |= qAbs(_surfaceVisualZoom - mapState.surfaceVisualZoom) > 0.25;
     changed |= _hasElevationDataProvider != mapState.hasElevationDataProvider;
+    changed |= _hasElevationDataResources != mapState.hasElevationDataResources;
     if (!changed && _visibleBBoxShifted != mapState.visibleBBoxShifted)
     {
         const AreaI64 visibleBBoxShifted(_visibleBBoxShifted);
@@ -569,6 +575,7 @@ void OsmAnd::VectorLine_P::applyMapState(const MapState& mapState)
     _surfaceVisualZoom = mapState.surfaceVisualZoom;
     _mapVisualZoomShift = mapState.visualZoomShift;
     _hasElevationDataProvider = mapState.hasElevationDataProvider;
+    _hasElevationDataResources = mapState.hasElevationDataResources;
 }
 
 bool OsmAnd::VectorLine_P::update(const MapState& mapState)
@@ -590,6 +597,7 @@ bool OsmAnd::VectorLine_P::applyChanges()
     if (!_hasUnappliedChanges && !_hasUnappliedPrimitiveChanges)
         return false;
 
+    bool result = true;
     QReadLocker scopedLocker2(&_symbolsGroupsRegistryLock);
     for (const auto& symbolGroup_ : constOf(_symbolsGroupsRegistry))
     {
@@ -597,7 +605,7 @@ bool OsmAnd::VectorLine_P::applyChanges()
         if (!symbolGroup)
             continue;
 
-        bool needUpdatePrimitive = _hasUnappliedPrimitiveChanges && _points.size() > 1;
+        bool needUpdatePrimitive = _hasUnappliedPrimitiveChanges;
         for (const auto& symbol_ : constOf(symbolGroup->symbols))
         {
             symbol_->isHidden = _isHidden;
@@ -605,8 +613,11 @@ bool OsmAnd::VectorLine_P::applyChanges()
             if (const auto symbol = std::dynamic_pointer_cast<OnSurfaceVectorMapSymbol>(symbol_))
             {
                 symbol->startingDistance = _startingDistance;
-                if (needUpdatePrimitive)
-                    generatePrimitive(symbol);
+                if (needUpdatePrimitive && (_points.size() < 2 || !generatePrimitive(symbol)))
+                {
+                        symbol->isHidden = true;
+                        result = false;
+                }
             }
         }
     }
@@ -614,7 +625,7 @@ bool OsmAnd::VectorLine_P::applyChanges()
     _hasUnappliedChanges = false;
     _hasUnappliedPrimitiveChanges = false;
 
-    return true;
+    return result;
 }
 
 std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateSymbolsGroup()
@@ -625,14 +636,25 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
     const std::shared_ptr<VectorLine::SymbolsGroup> symbolsGroup(new VectorLine::SymbolsGroup(std::const_pointer_cast<VectorLine_P>(shared_from_this())));
     symbolsGroup->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing;
 
-    if (_points.size() > 1)
+    const auto& vectorLine = std::make_shared<OnSurfaceVectorMapSymbol>(symbolsGroup);
+    if (_points.size() < 2 || !generatePrimitive(vectorLine))
     {
-        const auto& vectorLine = std::make_shared<OnSurfaceVectorMapSymbol>(symbolsGroup);
-        generatePrimitive(vectorLine);
-        vectorLine->allowFastCheckByFrustum = false;
-        symbolsGroup->symbols.push_back(vectorLine);
-        owner->updatedObservable.postNotify(owner);
+        vectorLine->isHidden = true;
+        vectorLine->order = owner->baseOrder + 1;
+        vectorLine->primitiveType = VectorMapSymbol::PrimitiveType::Triangles;
+        const auto verticesAndIndices = std::make_shared<VectorMapSymbol::VerticesAndIndices>();
+        verticesAndIndices->position31 = new PointI(0, 0);
+        verticesAndIndices->verticesCount = 1;
+        verticesAndIndices->vertices = new VectorMapSymbol::Vertex[1];
+        verticesAndIndices->vertices[0].positionXYZD[0] = 0;
+        verticesAndIndices->vertices[0].positionXYZD[1] = VectorMapSymbol::_absentElevation;
+        verticesAndIndices->vertices[0].positionXYZD[2] = 0;
+        verticesAndIndices->vertices[0].positionXYZD[3] = NAN;
+        vectorLine->setVerticesAndIndices(verticesAndIndices);
     }
+    vectorLine->allowFastCheckByFrustum = false;
+    symbolsGroup->symbols.push_back(vectorLine);
+    owner->updatedObservable.postNotify(owner);
 
     return symbolsGroup;
 }
@@ -773,19 +795,13 @@ OsmAnd::FColorARGB OsmAnd::VectorLine_P::middleColor(
 }
 
 void OsmAnd::VectorLine_P::calculateVisibleSegments(
+    const AreaI64& visibleArea64,
     std::vector<std::vector<PointI>>& segments,
     QList<QList<float>>& segmentDistances,
     QList<QList<FColorARGB>>& segmentColors,
     QList<QList<FColorARGB>>& segmentOutlineColors,
     QList<QList<float>>& segmentHeights)
 {
-    // Use enlarged visible area
-    const AreaI64 visibleBBox64(_visibleBBoxShifted);
-    auto visibleArea64 = visibleBBox64.getEnlargedBy(PointI64(visibleBBox64.width(), visibleBBox64.height()));
-    visibleArea64.topLeft.x = visibleArea64.topLeft.x < INT32_MIN ? INT32_MIN : visibleArea64.topLeft.x;
-    visibleArea64.topLeft.y = visibleArea64.topLeft.y < INT32_MIN ? INT32_MIN : visibleArea64.topLeft.y;
-    visibleArea64.bottomRight.x = visibleArea64.bottomRight.x > INT32_MAX ? INT32_MAX : visibleArea64.bottomRight.x;
-    visibleArea64.bottomRight.y = visibleArea64.bottomRight.y > INT32_MAX ? INT32_MAX : visibleArea64.bottomRight.y;
     const AreaI visibleArea(visibleArea64);
 
     // Calculate points unwrapped
@@ -794,7 +810,7 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
     intFull++;
     const auto intHalf = static_cast<int32_t>(intFull >> 1);
     const PointI shiftToCenter(intHalf, intHalf);
-    auto point31 = _points[0];
+    auto point31 = _points.at(0);
     PointI64 point64(point31 - shiftToCenter);
     QVector<PointI64> points64;
     points64.reserve(pointsCount);
@@ -810,7 +826,7 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
     double distance = 0.0;
     for (int i = 1; i < pointsCount; i++)
     {
-        auto offset = _points[i] - point31;
+        auto offset = _points.at(i) - point31;
         if (offset.x >= intHalf)
             offset.x = offset.x - INT32_MAX - 1;
         else if (offset.x < -intHalf)
@@ -828,7 +844,9 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
         pointsTotal = pointsSize;
         point31 = nextPoint31;
     }
-        
+    
+    _bboxShifted = bbox;
+
     auto minShiftX = static_cast<int32_t>(bbox.topLeft.x / intFull - (bbox.topLeft.x % intFull < 0 ? 1 : 0));
     auto minShiftY = static_cast<int32_t>(bbox.topLeft.y / intFull - (bbox.topLeft.y % intFull < 0 ? 1 : 0));
     auto maxShiftX = static_cast<int32_t>(bbox.bottomRight.x / intFull + (bbox.bottomRight.x % intFull < 0 ? 0 : 1));
@@ -856,51 +874,51 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
         {
             const PointI64 shift(shiftX * intFull, shiftY * intFull);
             bool segmentStarted = false;
-            distanceTo = pointDistances[0];
-            distanceSubTo = pointDistances[0];
+            distanceTo = pointDistances.at(0);
+            distanceSubTo = pointDistances.at(0);
             if (withColors)
             {
-                colorTo = _colorizationMapping[0];
+                colorTo = _colorizationMapping.at(0);
                 colorSubTo = colorTo;
             }
             if (withOutlineColors)
             {
-                colorOutTo = _outlineColorizationMapping[0];
+                colorOutTo = _outlineColorizationMapping.at(0);
                 colorOutSubTo = colorOutTo;
             }
             if (withHeights)
             {
-                heightTo = _heights[0];
-                heightSubTo = _heights[0];
+                heightTo = _heights.at(0);
+                heightSubTo = _heights.at(0);
             }
-            auto prev = drawFrom = points64[0] - shift;
+            auto prev = drawFrom = points64.at(0) - shift;
             int prevIndex;
             nextIndex = 0;            
             int j = 0;
             bool prevIn = visibleArea64.contains(prev);
             for (int i = 1; i < pointsCount; i++)
             {
-                curr = drawTo = points64[i] - shift;
+                curr = drawTo = points64.at(i) - shift;
                 if (i > nextIndex)
                 {
                     prevIndex = nextIndex;
-                    nextIndex = pointIndices[++j];
+                    nextIndex = pointIndices.at(++j);
                     distanceFrom = distanceTo;
-                    distanceTo = pointDistances[j];
+                    distanceTo = pointDistances.at(j);
                     if (withColors)
                     {
                         colorFrom = colorTo;
-                        colorTo = _colorizationMapping[j];
+                        colorTo = _colorizationMapping.at(j);
                     }
                     if (withOutlineColors)
                     {
                         colorOutFrom = colorOutTo;
-                        colorOutTo = _outlineColorizationMapping[j];
+                        colorOutTo = _outlineColorizationMapping.at(j);
                     }
                     if (withHeights)
                     {
                         heightFrom = heightTo;
-                        heightTo = _heights[j];
+                        heightTo = _heights.at(j);
                     }
                 }
                 const auto factor = static_cast<float>(i - prevIndex) / static_cast<float>(nextIndex - prevIndex);
@@ -1113,10 +1131,30 @@ float OsmAnd::VectorLine_P::zoom() const
     return _mapZoomLevel + (_mapVisualZoom >= 1.0f ? _mapVisualZoom - 1.0f : (_mapVisualZoom - 1.0f) * 2.0f);
 }
 
-std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generatePrimitive(
+bool OsmAnd::VectorLine_P::generatePrimitive(
     const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine)
 {
-    int order = owner->baseOrder;
+    // Use enlarged visible area
+    const AreaI64 visibleBBox64(_visibleBBoxShifted);
+    auto visibleArea64 = visibleBBox64.getEnlargedBy(PointI64(visibleBBox64.width(), visibleBBox64.height()));
+    visibleArea64.topLeft.x = qMax(visibleArea64.topLeft.x, static_cast<int64_t>(INT32_MIN));
+    visibleArea64.topLeft.y = qMax(visibleArea64.topLeft.y, static_cast<int64_t>(INT32_MIN));
+    visibleArea64.bottomRight.x = qMin(visibleArea64.bottomRight.x, static_cast<int64_t>(INT32_MAX));
+    visibleArea64.bottomRight.y = qMin(visibleArea64.bottomRight.y, static_cast<int64_t>(INT32_MAX));
+    if (_bboxShifted.width() != 0 && _bboxShifted.height() != 0 && !_bboxShifted.intersects(visibleArea64)
+        && !_bboxShifted.intersects(visibleArea64 + PointI64(INT32_MIN, 0))
+        && !_bboxShifted.intersects(visibleArea64 - PointI64(INT32_MIN, 0)))
+        return false;
+
+    std::vector<std::vector<PointI>> segments;
+    QList<QList<float>> distances;
+    QList<QList<FColorARGB>> colors;
+    QList<QList<FColorARGB>> outlineColors;
+    QList<QList<float>> heights;
+    calculateVisibleSegments(visibleArea64, segments, distances, colors, outlineColors, heights);
+    if (segments.size() == 0)
+        return false;
+
     const bool withHeights = _hasElevationDataProvider && hasHeights();
     float zoom = !_hasElevationDataProvider ? this->zoom() : _surfaceZoomLevel +
         (_surfaceVisualZoom >= 1.0f ? _surfaceVisualZoom - 1.0f : (_surfaceVisualZoom - 1.0f) * 2.0f);
@@ -1129,7 +1167,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     bool approximate = _isApproximationEnabled;
     double simplificationRadius = _lineWidth * scale * visualShiftCoef;
 
-    vectorLine->order = order++;
+    vectorLine->order = owner->baseOrder + 1;
     vectorLine->primitiveType = VectorMapSymbol::PrimitiveType::Triangles;
     vectorLine->scaleType = VectorMapSymbol::ScaleType::In31;
     vectorLine->scale = 1.0;
@@ -1145,12 +1183,6 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     std::vector<VectorMapSymbol::Vertex> vertices;
     VectorMapSymbol::Vertex vertex;
 
-    std::vector<std::vector<PointI>> segments;
-    QList<QList<float>> distances;
-    QList<QList<FColorARGB>> colors;
-    QList<QList<FColorARGB>> outlineColors;
-    QList<QList<float>> heights;
-    calculateVisibleSegments(segments, distances, colors, outlineColors, heights);
     const bool withColors = hasColorizationMapping();
     const bool withOutlineColors = hasOutlineColorizationMapping();
 
@@ -1404,7 +1436,8 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     auto partSizes =
         std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>);
     const auto zoomLevel = _mapZoomLevel < MaxZoomLevel ? static_cast<ZoomLevel>(_mapZoomLevel + 1) : _mapZoomLevel;
-	const auto cellsPerTileSize = (AtlasMapRenderer::HeixelsPerTileSide - 1) / (1 << (zoomLevel - _mapZoomLevel));
+	const auto cellsPerTileSize = _hasElevationDataResources ?
+        (AtlasMapRenderer::HeixelsPerTileSide - 1) / (1 << (zoomLevel - _mapZoomLevel)) : 1;
     bool tesselated = _hasElevationDataProvider
         ? GeometryModifiers::cutMeshWithGrid(
             vertices,
@@ -1430,7 +1463,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     vectorLine->startingDistance = _startingDistance;
     vectorLine->elevationScaleFactor = _elevationScaleFactor;
     vectorLine->setVerticesAndIndices(verticesAndIndices);
-    return vectorLine;
+    return true;
 }
 
 void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &vertices,

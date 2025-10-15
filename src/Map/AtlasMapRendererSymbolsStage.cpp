@@ -601,14 +601,15 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 const auto& mapSymbolsGroup = mapSymbolsEntry.first;
                 const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
 
-                const bool isFreshlyPublishedGroup =
-                    std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
-                    || std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup);
-
-                if (preRenderDenseSymbolsDepth && !isFreshlyPublishedGroup)
+                if (preRenderDenseSymbolsDepth
+                    && !std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
+                    && (mapSymbolsGroup->symbols.begin() == mapSymbolsGroup->symbols.end()
+                        || !std::dynamic_pointer_cast<const Model3DMapSymbol>(mapSymbolsGroup->symbols.first())))
                     continue;
 
-                const bool canSkip = !applyFiltering && !isFreshlyPublishedGroup && !preRenderDenseSymbolsDepth
+                const bool canSkip = !applyFiltering && !preRenderDenseSymbolsDepth
+                    && !std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
+                    && !std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
                     && !std::dynamic_pointer_cast<const AmenitySymbolsProvider::AmenitySymbolsGroup>(mapSymbolsGroup);
 
                 // Debug: showTooShortOnPathSymbolsRenderablesPaths
@@ -2226,7 +2227,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
             positionInWorld,
             internalState.mPerspectiveProjectionView,
             internalState.glmViewport).xy();
-        if (allowFastCheckByFrustum)
+        if (allowFastCheckByFrustum && mapSymbol->allowFastCheckByFrustum)
         {
             renderable->queryIndex = startTerrainVisibilityFiltering(PointF(point.x, point.y),
                 positionInWorld, positionInWorld, positionInWorld, positionInWorld);

@@ -954,17 +954,26 @@ double OsmAnd::Utilities::calculateShortestPath(const PointI64& start64, const P
     // divide the distance into 100 km segments along the shortest path on the Earth's surface
     const double leap = 100000.0;
     const double earthRadius = 6371000.0;
+    const auto sAngles = getAnglesFrom31(start31);
+    const auto fAngles = getAnglesFrom31(finish31);
+    double sinHalfLat = qSin((fAngles.y - sAngles.y) / 2.0);
+    double sinHalfLon = qSin((fAngles.x - sAngles.x) / 2.0);
+    double a = sinHalfLat * sinHalfLat + qCos(sAngles.y) * qCos(fAngles.y) * sinHalfLon * sinHalfLon;
+    const auto angle = 2.0 * qAtan2(qSqrt(a), qSqrt(1.0 - a));
+    const auto distance = earthRadius * qAbs(angle);
+    if (distance <= leap)
+        return distance;
     int64_t intFull = INT32_MAX;
     intFull++;
     const auto intHalf = static_cast<int32_t>(intFull >> 1);
-    auto angles = getAnglesFrom31(start31);
-    const auto prevX = qCos(angles.y) * qSin(angles.x);
-    const auto prevY = qCos(angles.y) * qCos(angles.x);
-    const auto prevZ = qSin(angles.y);
-    angles = getAnglesFrom31(finish31);
-    const auto nextX = qCos(angles.y) * qSin(angles.x);
-    const auto nextY = qCos(angles.y) * qCos(angles.x);
-    const auto nextZ = qSin(angles.y);
+    auto ca = qCos(sAngles.y);
+    const auto prevX = ca * qSin(sAngles.x);
+    const auto prevY = ca * qCos(sAngles.x);
+    const auto prevZ = qSin(sAngles.y);
+    ca = qCos(fAngles.y);
+    const auto nextX = ca * qSin(fAngles.x);
+    const auto nextY = ca * qCos(fAngles.x);
+    const auto nextZ = qSin(fAngles.y);
     double nX = prevY * nextZ - prevZ * nextY;
     double nY = prevZ * nextX - prevX * nextZ;
     double nZ = prevX * nextY - prevY * nextX;
@@ -972,8 +981,6 @@ double OsmAnd::Utilities::calculateShortestPath(const PointI64& start64, const P
     nX /= length;
     nY /= length;
     nZ /= length;
-    const auto angle = qAtan2(length, prevX * nextX + prevY * nextY + prevZ * nextZ);
-    const auto distance = earthRadius * qAbs(angle);
     const int count = qFloor(distance / leap) + 1;
     const auto delta = angle / count;
     const auto sn = qSin(delta);
@@ -1002,8 +1009,7 @@ double OsmAnd::Utilities::calculateShortestPath(const PointI64& start64, const P
         midX = tempX;
         midY = tempY;
         midZ = tempZ;
-        angles = PointD(qAtan2(midX, midY), qAsin(qBound(-1.0, midZ, 1.0)));
-        next31 = get31FromAngles(angles);
+        next31 = get31FromAngles(PointD(qAtan2(midX, midY), qAsin(qBound(-1.0, midZ, 1.0))));
         middlePoint += next31 - previous31;
         if (next31.x - previous31.x >= intHalf)
             middlePoint.x -= intFull;

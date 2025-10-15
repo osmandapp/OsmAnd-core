@@ -842,6 +842,11 @@ bool OsmAnd::GeoTiffCollection_P::removeOlderTilesFromCache(
     return false;
 }
 
+bool OsmAnd::GeoTiffCollection_P::hasDataResources() const
+{
+    return _pixelSize31.loadRelaxed() > 0;
+}
+
 void OsmAnd::GeoTiffCollection_P::setMinZoom(ZoomLevel zoomLevel) const
 {
     _minZoom.storeRelease(zoomLevel);
@@ -898,7 +903,10 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
 {
     // Check if sources were invalidated
     if (_collectedSourcesInvalidated.loadAcquire() > 0)
+    {
         collectSources();
+        getMaxZoom(1);
+    }
     
     const auto minZoom = getMinZoom();
     const auto maxZoom = getMaxZoom(tileSize - overlap);

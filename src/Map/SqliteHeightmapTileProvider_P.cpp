@@ -25,6 +25,14 @@ OsmAnd::SqliteHeightmapTileProvider_P::~SqliteHeightmapTileProvider_P()
 {
 }
 
+bool OsmAnd::SqliteHeightmapTileProvider_P::hasDataResources() const
+{
+    bool result = false;
+    if (owner->filesCollection)
+        result = owner->filesCollection->hasDataResources();
+    return result;
+}
+
 OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider_P::getMinZoom() const
 {
     auto minZoomDatabase = InvalidZoomLevel;

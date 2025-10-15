@@ -76,6 +76,11 @@ bool OsmAnd::GeoTiffCollection::removeOlderTilesFromCache(const RasterType cache
     return _p->removeOlderTilesFromCache(cache, time);
 }
 
+bool OsmAnd::GeoTiffCollection::hasDataResources() const
+{
+    return _p->hasDataResources();
+}
+
 OsmAnd::ZoomLevel OsmAnd::GeoTiffCollection::getMinZoom() const
 {
     return _p->getMinZoom();
