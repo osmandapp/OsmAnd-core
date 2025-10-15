@@ -163,6 +163,8 @@ namespace OsmAnd
         bool removeFileTilesFromCache(const GeoTiffCollection::RasterType cache, const QString& filePath);
         bool removeOlderTilesFromCache(const GeoTiffCollection::RasterType cache, int64_t time);
         
+        bool hasDataResources() const;
+
         void setMinZoom(const ZoomLevel zoomLevel) const;
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom(const uint32_t tileSize) const;

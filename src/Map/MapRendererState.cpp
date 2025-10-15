@@ -1,4 +1,5 @@
 #include "MapRendererState.h"
+#include "IMapElevationDataProvider.h"
 
 OsmAnd::MapRendererState::MapRendererState()
     : flip(false)
@@ -90,6 +91,7 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     mapState.visibleBBox31 = visibleBBox31;
     mapState.visibleBBoxShifted = visibleBBoxShifted;
     mapState.hasElevationDataProvider = elevationDataProvider != nullptr;
+    mapState.hasElevationDataResources = elevationDataProvider != nullptr && elevationDataProvider->hasDataResources();
 
     return mapState;
 }
@@ -129,6 +131,7 @@ OsmAnd::MapState::MapState()
     , dateTime(0)
     , metersPerPixel(1.0)
     , hasElevationDataProvider(false)
+    , hasElevationDataResources(false)
 {
 }
 

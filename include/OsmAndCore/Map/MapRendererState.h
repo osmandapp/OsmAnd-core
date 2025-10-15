@@ -118,6 +118,7 @@ namespace OsmAnd
         AreaI visibleBBox31;
         AreaI visibleBBoxShifted;
         bool hasElevationDataProvider;
+        bool hasElevationDataResources;
     };
 
     struct OSMAND_CORE_API MapRendererState Q_DECL_FINAL

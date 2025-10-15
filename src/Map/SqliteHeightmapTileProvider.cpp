@@ -47,6 +47,11 @@ OsmAnd::SqliteHeightmapTileProvider::~SqliteHeightmapTileProvider()
 {
 }
 
+bool OsmAnd::SqliteHeightmapTileProvider::hasDataResources() const
+{
+    return _p->hasDataResources();
+}
+
 OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider::getMinZoom() const
 {
     return _p->getMinZoom();
