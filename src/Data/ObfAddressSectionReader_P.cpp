@@ -935,12 +935,12 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                 for (int i = static_cast<int>(AddressNameIndexDataAtomType::Boundary); i < static_cast<int>(AddressNameIndexDataAtomType::Count); ++i)
                 {
                     AddressNameIndexDataAtomType type = static_cast<AddressNameIndexDataAtomType>(i);
-                    auto it = indexReferences.find(type);
-                    if (it == indexReferences.end())
+                    auto refIterator = indexReferences.find(type);
+                    if (refIterator == indexReferences.end())
                     {
                         continue;
                     }
-                    QVector<AddressReference> & list = *it;
+                    QVector<AddressReference> & list = *refIterator;
                     if (type == AddressNameIndexDataAtomType::Street)
                     {
                         QVector<AddressReference> sortedCities = list; // copy
@@ -978,7 +978,15 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                                 continue;
                             
                             streetGroups.insert(city.cityIndexOffset, streetGroup);
-                            streetGroups.insert(city.dataIndexOffset, streetGroup);
+                        }
+                        
+                        for (const AddressReference & ref : constOf(list))
+                        {
+                            auto it = streetGroups.find(ref.cityIndexOffset);
+                            if (it != streetGroups.end())
+                            {
+                                streetGroups.insert(ref.dataIndexOffset, *it);
+                            }
                         }
                         
                         std::sort(list.begin(), list.end(), ObfAddressSectionReader_P::dataDereferencedLessThan);
