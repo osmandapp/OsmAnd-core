@@ -83,7 +83,6 @@ namespace OsmAnd
         static void readCityHeader(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfAddressSectionInfo>& section,
-            /*const ObfAddressStreetGroupType streetGroupType,*/
             const uint32_t groupOffset,
             std::shared_ptr<StreetGroup>& outStreetGroup,
             const AreaI* const bbox31,

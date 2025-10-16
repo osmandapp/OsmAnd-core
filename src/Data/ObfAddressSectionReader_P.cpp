@@ -148,7 +148,6 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroups(
     const StreetGroupVisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController)
 {
-    //ObfAddressStreetGroupType type = ObfAddressStreetGroupType::Unknown;
     const auto cis = reader.getCodedInputStream().get();
 
     for (;;)
@@ -197,7 +196,6 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroups(
 void OsmAnd::ObfAddressSectionReader_P::readCityHeader(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfAddressSectionInfo>& section,
-    /*const ObfAddressStreetGroupType streetGroupType,*/
     const uint32_t groupOffset,
     std::shared_ptr<StreetGroup>& outStreetGroup,
     const AreaI* const bbox31,
