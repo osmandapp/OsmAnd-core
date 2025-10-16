@@ -58,8 +58,10 @@ namespace OsmAnd
     private:
         std::shared_ptr<MapPrimitivesProvider> _tiledProvider;
         
-        QSet<const std::shared_ptr<const MapObject>> primitiveFilter;
+        QHash<const MapObject*, std::weak_ptr<const MapObject>> primitiveFilter;
         QMutex primitiveFilterMutex;
+        
+        void cleanupExpiredPrimitives();
     };
 }
 

@@ -195,109 +195,127 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
                 if (edgePointsCount < 3)
                     continue;
 
-                QVector<MapRenderer3DObjectsResource::Vertex> edgeVertices(edgePointsCount);
+                // Generate extruded 3D mesh
+                const float bottomAltitude = -10.0f;
+                const float topAltitude = 20.0f;
+                
+                // Create vertices for extruded mesh
+                QVector<MapRenderer3DObjectsResource::Vertex> extrudedVertices;
+                QVector<GLushort> extrudedIndices;
+                
+                // Generate bottom face vertices (for side walls only)
+                QVector<MapRenderer3DObjectsResource::Vertex> bottomVertices(edgePointsCount);
                 for (int i = 0; i < edgePointsCount; ++i)
                 {
                     const auto& point31 = b.debugPoints31[i];
-                    edgeVertices[i].position = Utilities::planeWorldCoordinates(point31, target31, zoomLevel, tileSizeInWorld, altitude);
+                    bottomVertices[i].position = Utilities::planeWorldCoordinates(point31, target31, zoomLevel, tileSizeInWorld, bottomAltitude);
                 }
-
-                if (true)
+                
+                // Generate top face vertices
+                QVector<MapRenderer3DObjectsResource::Vertex> topVertices(edgePointsCount);
+                for (int i = 0; i < edgePointsCount; ++i)
                 {
-                    std::vector<std::array<double, 2>> outer;
-                    outer.reserve(static_cast<size_t>(edgePointsCount));
-                    for (int i = 0; i < edgePointsCount; ++i)
-                    {
-                        const auto& p = edgeVertices[i].position;
-                        outer.push_back({ static_cast<double>(p.x), static_cast<double>(p.z) });
-                    }
-                    std::vector< std::vector<std::array<double, 2>> > polygon;
-                    polygon.push_back(std::move(outer));
-
-                    std::vector<uint32_t> earcutIndices32 = mapbox::earcut<uint32_t>(polygon);
-                    if (earcutIndices32.empty())
-                        continue;
-
-                    const size_t vertexBufferSize = static_cast<size_t>(edgeVertices.size() * sizeof(MapRenderer3DObjectsResource::Vertex));
-                    QVector<GLushort> indices16;
-                    indices16.reserve(static_cast<int>(earcutIndices32.size()));
-                    for (uint32_t idx : earcutIndices32)
-                        indices16.append(static_cast<GLushort>(idx));
-                    const size_t indexBufferSize = static_cast<size_t>(indices16.size() * sizeof(GLushort));
-
-                    gpuAPI->useVAO(_vao);
-                    GLuint vbo = 0;
-                    GLuint ebo = 0;
-                    glGenBuffers(1, &vbo);
-                    GL_CHECK_RESULT;
-                    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-                    GL_CHECK_RESULT;
-                    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertexBufferSize), edgeVertices.constData(), GL_DYNAMIC_DRAW);
-                    GL_CHECK_RESULT;
-                    glGenBuffers(1, &ebo);
-                    GL_CHECK_RESULT;
-                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-                    GL_CHECK_RESULT;
-                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(indexBufferSize), indices16.constData(), GL_DYNAMIC_DRAW);
-                    GL_CHECK_RESULT;
-
-                    glEnableVertexAttribArray(*_program.vs.in.vertexPosition);
-                    GL_CHECK_RESULT;
-                    glVertexAttribPointer(*_program.vs.in.vertexPosition,
-                                          3, GL_FLOAT, GL_FALSE,
-                                          sizeof(MapRenderer3DObjectsResource::Vertex),
-                                          reinterpret_cast<const GLvoid*>(offsetof(MapRenderer3DObjectsResource::Vertex, position)));
-                    GL_CHECK_RESULT;
-
-                    // Transperency
-                    glEnable(GL_BLEND);
-                    GL_CHECK_RESULT;
-                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                    GL_CHECK_RESULT;
-                    // Transperency
-
-                    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices16.size()), GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid*>(0));
-                    GL_CHECK_RESULT;
-
-                    // Transperency
-                    glDisable(GL_BLEND);
-                    GL_CHECK_RESULT;
-                    // Transperency
-
-                    glDeleteBuffers(1, &vbo);
-                    GL_CHECK_RESULT;
-                    glDeleteBuffers(1, &ebo);
-                    GL_CHECK_RESULT;
-                    gpuAPI->unuseVAO();
+                    const auto& point31 = b.debugPoints31[i];
+                    topVertices[i].position = Utilities::planeWorldCoordinates(point31, target31, zoomLevel, tileSizeInWorld, topAltitude);
                 }
-                else
+                
+                // Triangulate top face using earcut
+                std::vector<std::array<double, 2>> topPolygon;
+                topPolygon.reserve(static_cast<size_t>(edgePointsCount));
+                for (int i = 0; i < edgePointsCount; ++i)
                 {
-                    const size_t vertexBufferSize = static_cast<size_t>(edgeVertices.size() * sizeof(MapRenderer3DObjectsResource::Vertex));
-
-                    gpuAPI->useVAO(_vao);
-                    GLuint vbo = 0;
-                    glGenBuffers(1, &vbo);
-                    GL_CHECK_RESULT;
-                    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-                    GL_CHECK_RESULT;
-                    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertexBufferSize), edgeVertices.constData(), GL_DYNAMIC_DRAW);
-                    GL_CHECK_RESULT;
-
-                    glEnableVertexAttribArray(*_program.vs.in.vertexPosition);
-                    GL_CHECK_RESULT;
-                    glVertexAttribPointer(*_program.vs.in.vertexPosition,
-                                          3, GL_FLOAT, GL_FALSE,
-                                          sizeof(MapRenderer3DObjectsResource::Vertex),
-                                          reinterpret_cast<const GLvoid*>(offsetof(MapRenderer3DObjectsResource::Vertex, position)));
-                    GL_CHECK_RESULT;
-
-                    glDrawArrays(GL_LINE_LOOP, 0, edgePointsCount);
-                    GL_CHECK_RESULT;
-
-                    glDeleteBuffers(1, &vbo);
-                    GL_CHECK_RESULT;
-                    gpuAPI->unuseVAO();
+                    const auto& p = topVertices[i].position;
+                    topPolygon.push_back({ static_cast<double>(p.x), static_cast<double>(p.z) });
                 }
+                std::vector< std::vector<std::array<double, 2>> > polygon;
+                polygon.push_back(std::move(topPolygon));
+                
+                std::vector<uint32_t> topIndices32 = mapbox::earcut<uint32_t>(polygon);
+                if (topIndices32.empty())
+                    continue;
+                
+                // Add top face vertices to extruded mesh
+                int vertexOffset = 0;
+                for (const auto& vertex : topVertices)
+                {
+                    extrudedVertices.append(vertex);
+                }
+                
+                // Add top face indices (same winding as original)
+                for (uint32_t idx : topIndices32)
+                {
+                    extrudedIndices.append(static_cast<GLushort>(idx + vertexOffset));
+                }
+                
+                // Generate side wall faces
+                vertexOffset = extrudedVertices.size();
+                for (int i = 0; i < edgePointsCount; ++i)
+                {
+                    int next = (i + 1) % edgePointsCount;
+                    
+                    // Add vertices for this side wall quad
+                    extrudedVertices.append(bottomVertices[i]);     // bottom-left
+                    extrudedVertices.append(topVertices[i]);       // top-left
+                    extrudedVertices.append(topVertices[next]);     // top-right
+                    extrudedVertices.append(bottomVertices[next]);  // bottom-right
+                    
+                    // Add triangle indices for the quad (two triangles)
+                    int baseIdx = vertexOffset + i * 4;
+                    // First triangle
+                    extrudedIndices.append(static_cast<GLushort>(baseIdx));
+                    extrudedIndices.append(static_cast<GLushort>(baseIdx + 1));
+                    extrudedIndices.append(static_cast<GLushort>(baseIdx + 2));
+                    // Second triangle
+                    extrudedIndices.append(static_cast<GLushort>(baseIdx));
+                    extrudedIndices.append(static_cast<GLushort>(baseIdx + 2));
+                    extrudedIndices.append(static_cast<GLushort>(baseIdx + 3));
+                }
+                
+                const size_t vertexBufferSize = static_cast<size_t>(extrudedVertices.size() * sizeof(MapRenderer3DObjectsResource::Vertex));
+                const size_t indexBufferSize = static_cast<size_t>(extrudedIndices.size() * sizeof(GLushort));
+
+                gpuAPI->useVAO(_vao);
+                GLuint vbo = 0;
+                GLuint ebo = 0;
+                glGenBuffers(1, &vbo);
+                GL_CHECK_RESULT;
+                glBindBuffer(GL_ARRAY_BUFFER, vbo);
+                GL_CHECK_RESULT;
+                glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertexBufferSize), extrudedVertices.constData(), GL_DYNAMIC_DRAW);
+                GL_CHECK_RESULT;
+                glGenBuffers(1, &ebo);
+                GL_CHECK_RESULT;
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+                GL_CHECK_RESULT;
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(indexBufferSize), extrudedIndices.constData(), GL_DYNAMIC_DRAW);
+                GL_CHECK_RESULT;
+
+                glEnableVertexAttribArray(*_program.vs.in.vertexPosition);
+                GL_CHECK_RESULT;
+                glVertexAttribPointer(*_program.vs.in.vertexPosition,
+                                      3, GL_FLOAT, GL_FALSE,
+                                      sizeof(MapRenderer3DObjectsResource::Vertex),
+                                      reinterpret_cast<const GLvoid*>(offsetof(MapRenderer3DObjectsResource::Vertex, position)));
+                GL_CHECK_RESULT;
+
+                // Transparency
+                glEnable(GL_BLEND);
+                GL_CHECK_RESULT;
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                GL_CHECK_RESULT;
+
+                glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(extrudedIndices.size()), GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid*>(0));
+                GL_CHECK_RESULT;
+
+                // Transparency
+                glDisable(GL_BLEND);
+                GL_CHECK_RESULT;
+
+                glDeleteBuffers(1, &vbo);
+                GL_CHECK_RESULT;
+                glDeleteBuffers(1, &ebo);
+                GL_CHECK_RESULT;
+                gpuAPI->unuseVAO();
             }
             r->setState(MapRendererResourceState::Uploaded);
         }

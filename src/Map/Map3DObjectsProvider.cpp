@@ -60,15 +60,27 @@ bool Map3DObjectsTiledProvider::obtainTiledData(
     QList<std::shared_ptr<const MapPrimitiviser::Primitive>> allPolygons;
     if (tilePrimitives && tilePrimitives->primitivisedObjects)
     {
+        cleanupExpiredPrimitives();
+        
         for (const auto& polygon : constOf(tilePrimitives->primitivisedObjects->polygons))
         {
             QMutexLocker scopedLocker(&primitiveFilterMutex);
-            if (primitiveFilter.contains(polygon->sourceObject))
+            
+            const MapObject* objectPtr = polygon->sourceObject.get();
+
+            if (primitiveFilter.contains(objectPtr))
             {
-                continue;
+                if (primitiveFilter[objectPtr].lock())
+                {
+                    continue;
+                }
+                else
+                {
+                    primitiveFilter.remove(objectPtr);
+                }
             }
 
-            primitiveFilter.insert(polygon->sourceObject);
+            primitiveFilter.insert(objectPtr, polygon->sourceObject);
             allPolygons.append(polygon);
         }
     }
@@ -111,4 +123,21 @@ void Map3DObjectsTiledProvider::obtainDataAsync(
     MapDataProviderHelpers::nonNaturalObtainDataAsync(shared_from_this(), request, callback, collectMetric);
 }
 
-// No keyed keys and no applyMapChanges needed for tiled provider
+void Map3DObjectsTiledProvider::cleanupExpiredPrimitives()
+{
+    QMutexLocker scopedLocker(&primitiveFilterMutex);
+
+    std::cout << primitiveFilter.size() << '\n';
+
+    for (auto it = primitiveFilter.begin(); it != primitiveFilter.end();)
+    {
+        if (it.value().expired())
+        {
+            it = primitiveFilter.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
