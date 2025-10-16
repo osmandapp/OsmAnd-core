@@ -71,7 +71,7 @@ dependencies {
 
 afterEvaluate {
     group = "net.osmand"
-    version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "master-snapshot"
+    version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "5.2"
 
     publishing {
         repositories {
