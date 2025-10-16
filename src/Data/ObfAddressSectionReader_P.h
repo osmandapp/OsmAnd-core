@@ -28,12 +28,14 @@ namespace OsmAnd
         typedef ObfAddressSectionReader::BuildingVisitorFunction BuildingVisitorFunction;
         typedef ObfAddressSectionReader::IntersectionVisitorFunction IntersectionVisitorFunction;
 
-        enum class AddressNameIndexDataAtomType : uint32_t
+        enum class AddressNameIndexDataAtomType : uint32_t // CityBlocks
         {
+            Boundary = static_cast<int>(ObfAddressStreetGroupType::Boundary),
             CityOrTown = static_cast<int>(ObfAddressStreetGroupType::CityOrTown),
             Village = static_cast<int>(ObfAddressStreetGroupType::Village),
             Postcode = static_cast<int>(ObfAddressStreetGroupType::Postcode),
-            Street = 4
+            Street = static_cast<int>(ObfAddressStreetGroupType::Street),
+            Count = 5
         };
         
 
@@ -41,19 +43,25 @@ namespace OsmAnd
         struct AddressReference
         {
             AddressReference()
-                : dataIndexOffset(0)
-                , containerIndexOffset(0)
+                : addressType(AddressNameIndexDataAtomType::Count)
+                , dataIndexOffset(0)
+                , cityIndexOffset(0)
             {
             }
 
             AddressNameIndexDataAtomType addressType;
-            uint32_t dataIndexOffset;
-            uint32_t containerIndexOffset;
+            uint32_t dataIndexOffset; // refs
+            uint32_t cityIndexOffset; // refsToCities
         };
 
-        static bool dereferencedLessThan(AddressReference& o1, AddressReference& o2)
+        static bool dataDereferencedLessThan(AddressReference& o1, AddressReference& o2)
         {
             return o1.dataIndexOffset < o2.dataIndexOffset;
+        }
+        
+        static bool cityDereferencedLessThan(AddressReference& o1, AddressReference& o2)
+        {
+            return o1.cityIndexOffset < o2.cityIndexOffset;
         }
 
     private:
@@ -72,10 +80,9 @@ namespace OsmAnd
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
             const StreetGroupVisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController);
-        static void readStreetGroup(
+        static void readCityHeader(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfAddressSectionInfo>& section,
-            const ObfAddressStreetGroupType streetGroupType,
             const uint32_t groupOffset,
             std::shared_ptr<StreetGroup>& outStreetGroup,
             const AreaI* const bbox31,
@@ -141,7 +148,7 @@ namespace OsmAnd
         static void scanNameIndex(
             const ObfReader_P& reader,
             const QString& query,
-            QVector<AddressReference>& outAddressReferences,
+            QHash<AddressNameIndexDataAtomType, QVector<AddressReference>>& outAddressReferences,
             const AreaI* const bbox31,
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
             const bool includeStreets,
@@ -150,7 +157,7 @@ namespace OsmAnd
         static void readNameIndexData(
             const ObfReader_P& reader,
             const uint32_t baseOffset,
-            QVector<AddressReference>& outAddressReferences,
+            QHash<AddressNameIndexDataAtomType, QVector<AddressReference>>& outAddressReferences,
             const AreaI* const bbox31,
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
             const bool includeStreets,
@@ -158,7 +165,7 @@ namespace OsmAnd
         static void readNameIndexDataAtom(
             const ObfReader_P& reader,
             const uint32_t baseOffset,
-            QVector<AddressReference>& outAddressReferences,
+            QHash<AddressNameIndexDataAtomType, QVector<AddressReference>>& outAddressReferences,
             const AreaI* const bbox31,
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
             const bool includeStreets,
