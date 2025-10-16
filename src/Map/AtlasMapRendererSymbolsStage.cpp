@@ -2112,7 +2112,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
                     }
                 }
             }
-            if (!internalState.globalFrustum2D31.test(symbolRect))
+            if (!internalState.globalFrustum2D31.test(symbolRect) && !internalState.extraFrustum2D31.test(symbolRect))
             {
                 if (metric)
                     metric->onSurfaceSymbolsRejectedByFrustum++;
@@ -2125,7 +2125,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
             testPoint = Utilities::normalizeCoordinates(position31, ZoomLevel31);
             if (height != 0.0f)
                 getRenderer()->getProjectedLocation(internalState, currentState, position31, height, testPoint);
-            if (!internalState.globalFrustum2D31.test(testPoint))
+            if (!internalState.globalFrustum2D31.test(testPoint) && !internalState.extraFrustum2D31.test(testPoint))
             {
                 if (metric)
                     metric->onSurfaceSymbolsRejectedByFrustum++;

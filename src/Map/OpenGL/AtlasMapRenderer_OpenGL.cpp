@@ -632,28 +632,40 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         glm::vec3 intersectionPoint;
         glm::vec2 intersectionPoints[4];
 
-        if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+        // Get extra tiling field for elevated terrain
+        int extraIntersectionsCounter = state.elevationAngle < 90.0f - state.fieldOfView ? 0 : -1;
+        glm::vec2 extraIntersections[4];
+
+        if (intersectionPointsCounter < 4 && lineSegmentIntersectPlane(
             planeN, planeO, nBL_g.xyz(), mBL_g.xyz(), intersectionPoint))
+        {
             intersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
-        if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+            if (extraIntersectionsCounter == 0)
+                extraIntersections[extraIntersectionsCounter++] = intersectionPoint.xz();
+        }
+        if (intersectionPointsCounter < 4 && lineSegmentIntersectPlane(
             planeN, planeO, nBR_g.xyz(), mBR_g.xyz(), intersectionPoint))
+        {
             intersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
-        if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+            if (extraIntersectionsCounter == 1)
+                extraIntersections[extraIntersectionsCounter++] = intersectionPoint.xz();
+        }
+        if (intersectionPointsCounter < 4 && lineSegmentIntersectPlane(
             planeN, planeO, nTR_g.xyz(), mTR_g.xyz(), intersectionPoint))
             intersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
-        if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+        if (intersectionPointsCounter < 4 && lineSegmentIntersectPlane(
             planeN, planeO, nTL_g.xyz(), mTL_g.xyz(), intersectionPoint))
             intersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
-        if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+        if (intersectionPointsCounter < 4 && lineSegmentIntersectPlane(
             planeN, planeO, mTR_g.xyz(), mBR_g.xyz(), intersectionPoint))
             intersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
-        if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+        if (intersectionPointsCounter < 4 && lineSegmentIntersectPlane(
             planeN, planeO, mTL_g.xyz(), mBL_g.xyz(), intersectionPoint))
             intersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
-        if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+        if (intersectionPointsCounter < 4 && lineSegmentIntersectPlane(
             planeN, planeO, nTL_g.xyz(), nBL_g.xyz(), intersectionPoint))
             intersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
-        if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+        if (intersectionPointsCounter < 4 && lineSegmentIntersectPlane(
             planeN, planeO, nTR_g.xyz(), nBR_g.xyz(), intersectionPoint))
             intersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
 
@@ -671,6 +683,48 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         frustum2D31.p3 = PointI64((frustum2D.p3 / TileSize3D) * static_cast<double>(tileSize31));
 
         internalState->globalFrustum2D31 = frustum2D31 + state.target31;
+
+        // Get maximum height of terrain below camera
+        const auto maxTerrainHeight =
+            static_cast<float>(_maximumHeightFromSeaLevelInMeters / internalState->metersPerUnit);
+        
+        // Get intersection points on elevated plane
+        if (internalState->distanceFromCameraToGround > maxTerrainHeight)
+        {
+            const glm::vec3 planeE(0.0f, maxTerrainHeight, 0.0f);
+            if (extraIntersectionsCounter == 2 && lineSegmentIntersectPlane(
+                planeN, planeE, eye_g, mBR_g.xyz(), intersectionPoint))
+                extraIntersections[extraIntersectionsCounter++] = intersectionPoint.xz();
+            if (extraIntersectionsCounter == 3 && lineSegmentIntersectPlane(
+                planeN, planeE, eye_g, mBL_g.xyz(), intersectionPoint))
+                extraIntersections[extraIntersectionsCounter++] = intersectionPoint.xz();
+        }
+        else if (extraIntersectionsCounter == 2)
+        {
+            extraIntersections[extraIntersectionsCounter++] = eye_g.xz();
+            extraIntersections[extraIntersectionsCounter++] = eye_g.xz();
+        }
+
+        if (extraIntersectionsCounter == 4)
+        {
+            frustum2D.p0 = PointF(extraIntersections[0].x, extraIntersections[0].y);
+            frustum2D.p1 = PointF(extraIntersections[1].x, extraIntersections[1].y);
+            frustum2D.p2 = PointF(extraIntersections[2].x, extraIntersections[2].y);
+            frustum2D.p3 = PointF(extraIntersections[3].x, extraIntersections[3].y);
+            internalState->extraFrustum2D31.p0 =
+                PointI64((frustum2D.p0 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
+            internalState->extraFrustum2D31.p1 =
+                PointI64((frustum2D.p1 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
+            internalState->extraFrustum2D31.p2 =
+                PointI64((frustum2D.p2 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
+            internalState->extraFrustum2D31.p3 =
+                PointI64((frustum2D.p3 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
+        }
+        else
+        {
+            frustum2D.p0 = PointF(NAN, NAN);
+            internalState->extraFrustum2D31 = Frustum2D31();
+        }
 
         if (skipTiles)
             return;
@@ -905,6 +959,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         internalState->globalFrustum2D31.p1 = PointI64(max31.x, max31.y);
         internalState->globalFrustum2D31.p2 = PointI64(max31.x, min31.y);
         internalState->globalFrustum2D31.p3 = PointI64(min31.x, min31.y);
+        internalState->extraFrustum2D31 = Frustum2D31();
     }
 
     if (skipTiles)
@@ -3302,14 +3357,18 @@ OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31() const
     if (!ok)
         return AreaI::largest();
 
-    return internalState.globalFrustum2D31.getBBox31();
+    AreaI mainArea = internalState.globalFrustum2D31.getBBox31();
+    AreaI extraArea = internalState.extraFrustum2D31.getBBox31();
+    return extraArea.isEmpty() ? mainArea : mainArea.enlargeToInclude(extraArea);
 }
 
 OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31(const MapRendererInternalState& internalState_) const
 {
     const auto internalState = static_cast<const InternalState*>(&internalState_);
 
-    return internalState->globalFrustum2D31.getBBox31();
+    AreaI mainArea = internalState->globalFrustum2D31.getBBox31();
+    AreaI extraArea = internalState->extraFrustum2D31.getBBox31();
+    return extraArea.isEmpty() ? mainArea : mainArea.enlargeToInclude(extraArea);
 }
 
 OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBoxShifted() const
@@ -3346,7 +3405,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::isPositionVisible(const PointI& position31
     if (!ok)
         return false;
 
-    return internalState.globalFrustum2D31.test(position31);
+    if (internalState.globalFrustum2D31.test(position31))
+        return true;
+    else
+        return internalState.extraFrustum2D31.test(position31);
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::isPathVisible(const QVector<PointI>& path31) const
@@ -3356,7 +3418,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::isPathVisible(const QVector<PointI>& path3
     if (!ok)
         return false;
 
-    return internalState.globalFrustum2D31.test(path31);
+    if (internalState.globalFrustum2D31.test(path31))
+        return true;
+    else
+        return internalState.extraFrustum2D31.test(path31);
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::isAreaVisible(const AreaI& area31) const
@@ -3366,7 +3431,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::isAreaVisible(const AreaI& area31) const
     if (!ok)
         return false;
 
-    return internalState.globalFrustum2D31.test(area31);
+    if (internalState.globalFrustum2D31.test(area31))
+        return true;
+    else
+        return internalState.extraFrustum2D31.test(area31);
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::isTileVisible(const int tileX, const int tileY, const int zoom) const
