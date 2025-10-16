@@ -167,7 +167,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroups(
                 const auto oldLimit = cis->PushLimit(length);
                 
                 std::shared_ptr<OsmAnd::StreetGroup> streetGroup;
-                readCityHeader(reader, section, /*type,*/ offset, streetGroup, bbox31, queryController);
+                readCityHeader(reader, section, offset, streetGroup, bbox31, queryController);
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 
                 cis->PopLimit(oldLimit);
@@ -247,13 +247,9 @@ void OsmAnd::ObfAddressSectionReader_P::readCityHeader(
                 return;
             case OBF::CityIndex::kCityTypeFieldNumber:
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&type));
-                if (type > ObfAddressStreetGroupSubtype::Postcode)
+                if (type <= ObfAddressStreetGroupSubtype::Postcode)
                 {
                     // Since 5.2 we skip unsupported city types
-                    outStreetGroup = nullptr;
-                }
-                else
-                {
                     outStreetGroup.reset(new StreetGroup(section));
                 }
                 break;
