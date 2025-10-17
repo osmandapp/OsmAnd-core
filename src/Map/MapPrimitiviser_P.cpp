@@ -233,19 +233,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
                 basemapCoastlineObjects.push_back(mapObject);
             else {
                 detailedmapCoastlineObjects.push_back(mapObject);
-                if (mapObject->points31.size() == 2)
-                {
-                    QPair<int32_t, int32_t> start = qMakePair(mapObject->points31[0].x, mapObject->points31[0].y);
-                    QPair<int32_t, int32_t> end = qMakePair(mapObject->points31[1].x, mapObject->points31[1].y);
-                    cycledStraightCoastlines.insert(start, mapObject);
-                    auto it = cycledStraightCoastlines.find(end);
-                    if (it != cycledStraightCoastlines.end())
-                    {
-                        // remove cycled coastlines that was simplified to straight line
-                        detailedmapCoastlineObjects.removeAll(mapObject);
-                        detailedmapCoastlineObjects.removeAll(*it);
-                    }
-                }
             }
         }
         else
