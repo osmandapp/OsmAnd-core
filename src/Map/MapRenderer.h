@@ -367,6 +367,9 @@ namespace OsmAnd
         virtual bool setElevationScaleFactor(const float scaleFactor, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual float getElevationScaleFactor() Q_DECL_OVERRIDE;
 
+        virtual bool setMap3DObjectsProvider(const std::shared_ptr<IMapTiledDataProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool resetMap3DObjectsProvider(bool forcedUpdate = false) Q_DECL_OVERRIDE;
+
         virtual bool setGridConfiguration(const GridConfiguration& configuration, bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
         virtual bool addSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;

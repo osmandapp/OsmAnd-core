@@ -16,6 +16,7 @@ namespace OsmAnd
 {
     class AtlasMapRendererSkyStage;
     class AtlasMapRendererMapLayersStage;
+    class AtlasMapRendererMap3DObjectsStage;
     class AtlasMapRendererSymbolsStage;
     class AtlasMapRendererDebugStage;
 
@@ -77,6 +78,8 @@ namespace OsmAnd
         virtual AtlasMapRendererSkyStage* createSkyStage() = 0;
         std::shared_ptr<AtlasMapRendererMapLayersStage> _mapLayersStage;
         virtual AtlasMapRendererMapLayersStage* createMapLayersStage() = 0;
+        std::shared_ptr<AtlasMapRendererMap3DObjectsStage> _map3DObjectsStage;
+        virtual AtlasMapRendererMap3DObjectsStage* createMap3DObjectsStage() = 0;
         std::shared_ptr<AtlasMapRendererSymbolsStage> _symbolsStage;
         virtual AtlasMapRendererSymbolsStage* createSymbolsStage() = 0;
         std::shared_ptr<AtlasMapRendererDebugStage> _debugStage;
@@ -87,6 +90,7 @@ namespace OsmAnd
         // Stages:
         const std::shared_ptr<AtlasMapRendererSkyStage>& skyStage;
         const std::shared_ptr<AtlasMapRendererMapLayersStage>& mapLayersStage;
+        const std::shared_ptr<AtlasMapRendererMap3DObjectsStage>& map3DObjectsStage;
         const std::shared_ptr<AtlasMapRendererSymbolsStage>& symbolsStage;
         const std::shared_ptr<AtlasMapRendererDebugStage>& debugStage;
 
