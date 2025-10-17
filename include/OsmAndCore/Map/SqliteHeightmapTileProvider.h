@@ -48,6 +48,8 @@ namespace OsmAnd
         const std::shared_ptr<const IGeoTiffCollection> filesCollection;
         const uint32_t outputTileSize;
 
+        virtual bool hasDataResources() const Q_DECL_OVERRIDE;
+
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
         virtual int getMaxMissingDataZoomShift() const Q_DECL_OVERRIDE;

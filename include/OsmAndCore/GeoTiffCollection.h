@@ -43,6 +43,7 @@ namespace OsmAnd
         bool removeFileTilesFromCache(const RasterType cache, const QString& filePath);
         bool removeOlderTilesFromCache(const RasterType cache, int64_t time);
 
+        virtual bool hasDataResources() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom(const uint32_t tileSize) const Q_DECL_OVERRIDE;
 

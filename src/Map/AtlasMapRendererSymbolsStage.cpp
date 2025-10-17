@@ -601,14 +601,15 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 const auto& mapSymbolsGroup = mapSymbolsEntry.first;
                 const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
 
-                const bool isFreshlyPublishedGroup =
-                    std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
-                    || std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup);
-
-                if (preRenderDenseSymbolsDepth && !isFreshlyPublishedGroup)
+                if (preRenderDenseSymbolsDepth
+                    && !std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
+                    && (mapSymbolsGroup->symbols.begin() == mapSymbolsGroup->symbols.end()
+                        || !std::dynamic_pointer_cast<const Model3DMapSymbol>(mapSymbolsGroup->symbols.first())))
                     continue;
 
-                const bool canSkip = !applyFiltering && !isFreshlyPublishedGroup && !preRenderDenseSymbolsDepth
+                const bool canSkip = !applyFiltering && !preRenderDenseSymbolsDepth
+                    && !std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
+                    && !std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
                     && !std::dynamic_pointer_cast<const AmenitySymbolsProvider::AmenitySymbolsGroup>(mapSymbolsGroup);
 
                 // Debug: showTooShortOnPathSymbolsRenderablesPaths
@@ -2111,7 +2112,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
                     }
                 }
             }
-            if (!internalState.globalFrustum2D31.test(symbolRect))
+            if (!internalState.globalFrustum2D31.test(symbolRect) && !internalState.extraFrustum2D31.test(symbolRect))
             {
                 if (metric)
                     metric->onSurfaceSymbolsRejectedByFrustum++;
@@ -2124,7 +2125,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
             testPoint = Utilities::normalizeCoordinates(position31, ZoomLevel31);
             if (height != 0.0f)
                 getRenderer()->getProjectedLocation(internalState, currentState, position31, height, testPoint);
-            if (!internalState.globalFrustum2D31.test(testPoint))
+            if (!internalState.globalFrustum2D31.test(testPoint) && !internalState.extraFrustum2D31.test(testPoint))
             {
                 if (metric)
                     metric->onSurfaceSymbolsRejectedByFrustum++;
@@ -2226,7 +2227,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
             positionInWorld,
             internalState.mPerspectiveProjectionView,
             internalState.glmViewport).xy();
-        if (allowFastCheckByFrustum)
+        if (allowFastCheckByFrustum && mapSymbol->allowFastCheckByFrustum)
         {
             renderable->queryIndex = startTerrainVisibilityFiltering(PointF(point.x, point.y),
                 positionInWorld, positionInWorld, positionInWorld, positionInWorld);

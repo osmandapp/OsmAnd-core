@@ -24,6 +24,7 @@ namespace OsmAnd
 
         ImplementationInterface<SqliteHeightmapTileProvider> owner;
 
+        bool hasDataResources() const;
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;
 

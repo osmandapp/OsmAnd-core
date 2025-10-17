@@ -227,7 +227,7 @@ void OsmAnd::AtlasMapRendererSymbolsStageModel3D::obtainRenderables(
         {
             const auto& p1 = edge31.first;
             const auto& p2 = edge31.second;
-            if (internalState.globalFrustum2D31.test(p1, p2))
+            if (internalState.globalFrustum2D31.test(p1, p2) || internalState.extraFrustum2D31.test(p1, p2))
             {
                 tested = true;
                 break;

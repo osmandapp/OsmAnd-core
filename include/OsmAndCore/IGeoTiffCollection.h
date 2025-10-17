@@ -42,6 +42,7 @@ namespace OsmAnd
     public:
         virtual ~IGeoTiffCollection();
 
+        virtual bool hasDataResources() const = 0;
         virtual ZoomLevel getMinZoom() const = 0;
         virtual ZoomLevel getMaxZoom(const uint32_t tileSize) const = 0;
 

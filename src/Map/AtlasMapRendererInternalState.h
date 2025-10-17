@@ -90,6 +90,7 @@ namespace OsmAnd
         PointI64 targetOffset;
         Frustum2D31 elevatedFrustum2D31;
         Frustum2D31 globalFrustum2D31;
+        Frustum2D31 extraFrustum2D31;
         glm::vec3 topVisibleEdgeN;
         glm::vec3 leftVisibleEdgeN;
         glm::vec3 bottomVisibleEdgeN;
