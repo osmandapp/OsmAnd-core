@@ -40,6 +40,7 @@ namespace OsmAnd
                 struct
                 {
                     GLlocation mPerspectiveProjectionView;
+                    GLlocation metersPerUnit;
                 } param;
             } vs;
         } _program;
