@@ -16,7 +16,6 @@
 #include "StreetGroup.h"
 #include "Street.h"
 #include "Building.h"
-#include "StreetIntersection.h"
 #include "ObfReaderUtilities.h"
 #include "IQueryController.h"
 #include "Utilities.h"
@@ -401,7 +400,10 @@ void OsmAnd::ObfAddressSectionReader_P::readStreet(
                 if (bbox31 && !bbox31->contains(position31))
                     return;
 
-                outStreet.reset(new Street(streetGroup));
+                if (!outStreet)
+                {
+                    outStreet.reset(new Street(streetGroup));
+                }
                 if (autogenerateId)
                     outStreet->id = ObfObjectId::generateUniqueId(streetOffset, streetGroup->obfSection);
                 else
@@ -476,7 +478,28 @@ void OsmAnd::ObfAddressSectionReader_P::readStreet(
             case OBF::StreetIndex::kIntersectionsFieldNumber:
                 if (firstIntersectionInnerOffset == 0)
                     firstIntersectionInnerOffset = tagPos - streetOffset;
-                ObfReaderUtilities::skipBlockWithLength(cis);
+                if (bbox31 && bbox31->contains(position31))
+                {
+                    if (!outStreet)
+                    {
+                        outStreet.reset(new Street(streetGroup));
+                    }
+                    outStreet->position31 = position31;
+                    
+                    gpb::uint32 length;
+                    cis->ReadVarint32(&length);
+                    const auto oldLimit = cis->PushLimit(length);
+
+                    std::shared_ptr<Street> streetIntersection;
+                    readStreetIntersection(reader, outStreet, streetIntersection, bbox31, queryController);
+                    outStreet->intersectedStreets.push_back(streetIntersection);
+                    ObfReaderUtilities::ensureAllDataWasRead(cis);
+                    cis->PopLimit(oldLimit);
+                }
+                else
+                {
+                    ObfReaderUtilities::skipBlockWithLength(cis);
+                }
                 break;
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
@@ -726,7 +749,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
 void OsmAnd::ObfAddressSectionReader_P::readIntersectionsFromStreet(
     const ObfReader_P& reader,
     const std::shared_ptr<const Street>& street,
-    QList< std::shared_ptr<const StreetIntersection> >* resultOut,
+    QList< std::shared_ptr<const Street> >* resultOut,
     const AreaI* const bbox31,
     const IntersectionVisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController)
@@ -750,7 +773,7 @@ void OsmAnd::ObfAddressSectionReader_P::readIntersectionsFromStreet(
                 cis->ReadVarint32(&length);
                 const auto oldLimit = cis->PushLimit(length);
 
-                std::shared_ptr<StreetIntersection> streetIntersection;
+                std::shared_ptr<Street> streetIntersection;
                 readStreetIntersection(reader, street, streetIntersection, bbox31, queryController);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
@@ -773,7 +796,7 @@ void OsmAnd::ObfAddressSectionReader_P::readIntersectionsFromStreet(
 void OsmAnd::ObfAddressSectionReader_P::readStreetIntersection(
     const ObfReader_P& reader,
     const std::shared_ptr<const Street>& street,
-    std::shared_ptr<StreetIntersection>& outIntersection,
+    std::shared_ptr<Street>& outIntersection,
     const AreaI* const bbox31,
     const std::shared_ptr<const IQueryController>& queryController)
 {
@@ -800,7 +823,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetIntersection(
                 if (bbox31 && !bbox31->contains(position31))
                     return;
 
-                outIntersection.reset(new StreetIntersection(street));
+                outIntersection.reset(new Street(street->streetGroup));
                 outIntersection->nativeName = nativeName;
                 outIntersection->localizedNames = localizedNames;
                 outIntersection->position31 = position31;
@@ -1399,7 +1422,7 @@ void OsmAnd::ObfAddressSectionReader_P::loadBuildingsFromStreet(
 void OsmAnd::ObfAddressSectionReader_P::loadIntersectionsFromStreet(
     const ObfReader_P& reader,
     const std::shared_ptr<const Street>& street,
-    QList< std::shared_ptr<const StreetIntersection> >* resultOut,
+    QList< std::shared_ptr<const Street> >* resultOut,
     const AreaI* const bbox31,
     const IntersectionVisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController)
