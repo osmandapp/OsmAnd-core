@@ -244,12 +244,15 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
     if (pD > 1.0)
         return false;
 
+    const auto fullCircle = 2.0 * M_PI;
+
+    double r;
     bool sectX;
     glm::dvec3 minX, maxX, minY, maxY;
     if (qFuzzyIsNull(planeN.x) && qFuzzyIsNull(planeN.y))
     {
-        minAngleX = qMin(minAngleX, -M_PI);
-        maxAngleX = qMax(maxAngleX, M_PI);
+        minAngleX = -M_PI;
+        maxAngleX = M_PI + fullCircle;
         const auto mY = -qAsin(qBound(-1.0, planeN.z > 0.0 ? planeD : -planeD, 1.0));
         minAngleY = qMin(minAngleY, mY);
         maxAngleY = qMax(maxAngleY, mY);
@@ -261,7 +264,7 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
         const auto pN = planeD < 0.0 ? -planeN : planeN;
         const auto cx = pN.x * pD;
         const auto cy = pN.y * pD;
-        const auto r = qSqrt(1.0 - pD * pD);
+        r = qSqrt(1.0 - pD * pD);
         const auto rx = pN.y * r;
         const auto ry = -pN.x * r;
         minX = glm::dvec3(cx - rx, cy - ry, 0.0);
@@ -273,16 +276,16 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
     {
         const auto pN = planeD < 0.0 ? -planeN : planeN;
         const auto spD = pD * pD;
-        const auto a = qSqrt(1.0 - spD);
+        r = qSqrt(1.0 - spD);
         const auto xyL = qSqrt(1.0 - pN.z * pN.z);
         const auto c = pD * xyL;
-        const auto b = a * pN.z;
+        const auto b = r * pN.z;
         sectX = c > fabs(b);
         if (sectX)
         {
             const auto sc = c * c;
             const auto angleXY = qAtan2(pN.x, pN.y);
-            const auto deltaAngle = qAtan(a / qSqrt(sc - b * b));
+            const auto deltaAngle = qAtan(r / qSqrt(sc - b * b));
             const auto a1 = angleXY - deltaAngle;
             const auto a2 = angleXY + deltaAngle;
             const auto absZ = qSqrt(spD - sc);
@@ -292,7 +295,7 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
             maxX = glm::dvec3(csy * qSin(a2), csy * qCos(a2), z);
         }
         const auto cz = pD * pN.z;
-        const auto bz = a * xyL;
+        const auto bz = r * xyL;
         const auto xy1 = c + b;
         const auto xy2 = c - b;
         const auto z1 = cz + bz;
@@ -315,42 +318,60 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
     double minXa, maxXa, minYz, maxYz;
     if (point1 != nullptr && point2 != nullptr)
     {
-        const auto fullA = qAtan2(glm::length(glm::cross(*point1, *point2)), glm::dot(*point1, *point2));
+        const auto center = planeN * planeD;
+        const auto v1 = *point1 - center;
+        const auto v2 = *point2 - center;
+        const auto fullA = qAtan2(glm::length(glm::cross(v1, v2)), glm::dot(v1, v2));
+        bool minInside = true;
+        bool maxInside = true;
+        double minAngle, maxAngle;
         if (sectX)
         {
-            const auto minA = qAtan2(glm::length(glm::cross(*point1, minX)), glm::dot(*point1, minX));
-            const auto maxA = qAtan2(glm::length(glm::cross(*point1, maxX)), glm::dot(*point1, maxX));
-            const bool minInside = fullA * minA > 0.0 && fabs(fullA) > fabs(minA);
-            const bool maxInside = fullA * maxA > 0.0 && fabs(fullA) > fabs(maxA);
-            if (minInside && maxInside)
-            {
-                minXa = qAtan2(minX.x, minX.y);
-                maxXa = qAtan2(maxX.x, maxX.y);
-            }
-            else
-            {
-                const auto angle1 = qAtan2(point1->x, point1->y);
-                const auto angle2 = qAtan2(point2->x, point2->y);
-                minXa = minInside ? qAtan2(minX.x, minX.y) : qMin(angle1, angle2);
-                maxXa = maxInside ? qAtan2(maxX.x, maxX.y) : qMax(angle1, angle2);
-            }
+            const auto cminX = minX - center;
+            const auto cmaxX = maxX - center;
+            const auto minA = qAtan2(glm::length(glm::cross(v1, cminX)), glm::dot(v1, cminX));
+            const auto maxA = qAtan2(glm::length(glm::cross(v1, cmaxX)), glm::dot(v1, cmaxX));
+            minInside = fullA * minA > 0.0 && fabs(fullA) > fabs(minA);
+            maxInside = fullA * maxA > 0.0 && fabs(fullA) > fabs(maxA);
+            minXa = qAtan2(minX.x, minX.y);
+            maxXa = qAtan2(maxX.x, maxX.y) + fullCircle;
         }
-        else
+        if (!minInside || !maxInside || !sectX)
         {
+            const auto vM = glm::normalize((v1 + v2) / 2.0) * r + center;
             const auto angle1 = qAtan2(point1->x, point1->y);
             const auto angle2 = qAtan2(point2->x, point2->y);
-            minXa = qMin(angle1, angle2);
-            maxXa = qMax(angle1, angle2);
+            const auto angleM = qAtan2(vM.x, vM.y);
+            minAngle = qMin(angle1, angle2);
+            maxAngle = qMax(angle1, angle2);
+            if (angleM < minAngle || angleM > maxAngle)
+            {
+                auto pMin = minAngle;
+                minAngle = maxAngle;
+                maxAngle = pMin;
+            }
+            maxAngle += fullCircle;
         }
-        const auto minA = qAtan2(glm::length(glm::cross(*point1, minY)), glm::dot(*point1, minY));
-        const auto maxA = qAtan2(glm::length(glm::cross(*point1, maxY)), glm::dot(*point1, maxY));
+        if (!minInside)
+            minXa = minAngle;
+        if (!maxInside)
+            maxXa = maxAngle;
+        if (!sectX)
+        {
+            minXa = minAngle;
+            maxXa = maxAngle;
+        }
+        const auto cminY = minY - center;
+        const auto cmaxY = maxY - center;
+        const auto minA = qAtan2(glm::length(glm::cross(v1, cminY)), glm::dot(v1, cminY));
+        const auto maxA = qAtan2(glm::length(glm::cross(v1, cmaxY)), glm::dot(v1, cmaxY));
         minYz = (fullA * minA > 0.0 && fabs(fullA) > fabs(minA)) ? minY.z : qMax(point1->z, point2->z);
         maxYz = (fullA * maxA > 0.0 && fabs(fullA) > fabs(maxA)) ? maxY.z : qMin(point1->z, point2->z);
     }
     else
     {
         minXa = sectX ? qAtan2(minX.x, minX.y) : -M_PI;
-        maxXa = sectX ? qAtan2(maxX.x, maxX.y) : M_PI;
+        maxXa = (sectX ? qAtan2(maxX.x, maxX.y) : M_PI) + fullCircle;
         minYz = minY.z;
         maxYz = maxY.z;
     }

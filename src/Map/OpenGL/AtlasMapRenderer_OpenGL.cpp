@@ -721,10 +721,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 PointI64((frustum2D.p3 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
         }
         else
-        {
-            frustum2D.p0 = PointF(NAN, NAN);
             internalState->extraFrustum2D31 = Frustum2D31();
-        }
 
         if (skipTiles)
             return;
@@ -927,43 +924,38 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
 
         const auto npN = glm::dvec3(0.0, 0.0, -1.0);
         const auto spN = glm::dvec3(0.0, 0.0, 1.0);
-        withNorthPole = glm::dot(glm::normalize(npN - camPos), npN) < 0.0
-            && isPointVisible(npN, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false);
-        withSouthPole = !withNorthPole && glm::dot(glm::normalize(spN - camPos), spN) < 0.0
-            && isPointVisible(spN, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false);
+        withNorthPole = glm::dot(glm::normalize(npN - camPos), npN) < 0.0 && isPointVisible(
+            npN, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false);
+        withSouthPole = !withNorthPole && glm::dot(glm::normalize(spN - camPos), spN) < 0.0 && isPointVisible(
+            spN, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false);
 
-        if (withNorthPole)
+        if (withNorthPole || withSouthPole)
         {
-            maxAngleY = 1.520442301138406;
-            minAngleX = -M_PI;
-            maxAngleX = M_PI;
-        }
-        if (withSouthPole)
-        {
-            minAngleY = -1.520442301138406;
+            minAngleY = withSouthPole ? -1.520442301138406 : minAngleY;
+            maxAngleY = withNorthPole ? 1.520442301138406 : maxAngleY;
             minAngleX = -M_PI;
             maxAngleX = M_PI;
         }
 
-        int64_t intFull = INT32_MAX;
-        intFull++;
+        if (maxAngleX > M_PI)
+            maxAngleX -= 2.0 * M_PI;
+
         auto min31 = PointI64(Utilities::get31FromAngles(PointD(minAngleX, maxAngleY)));
         auto max31 = PointI64(Utilities::get31FromAngles(PointD(maxAngleX, minAngleY)));
-        if (minAngleX > maxAngleX || (minAngleX < maxAngleX && min31.x > max31.x))
-            max31.x += intFull;
+        if (min31.x > max31.x)
+            min31.x = min31.x - INT32_MAX - 1;
 
-        auto offset = max31.x > INT32_MAX ? max31.x - (max31.x & INT32_MAX) : 0;
-        min31.x -= offset;
-        max31.x -= offset;
+        LogPrintf(OsmAnd::LogSeverityLevel::Debug, "OSMTEST: %f > LON < %f | %f > LAT < %f", minAngleX / M_PI * 180.0, maxAngleX / M_PI * 180.0, minAngleY / M_PI * 180.0, maxAngleY / M_PI * 180.0);
+
         internalState->globalFrustum2D31.p0 = PointI64(min31.x, max31.y);
         internalState->globalFrustum2D31.p1 = PointI64(max31.x, max31.y);
         internalState->globalFrustum2D31.p2 = PointI64(max31.x, min31.y);
         internalState->globalFrustum2D31.p3 = PointI64(min31.x, min31.y);
         internalState->extraFrustum2D31 = Frustum2D31();
-    }
 
-    if (skipTiles)
-        return;
+        if (skipTiles)
+            return;
+    }
 
     // Compute visible tileset
     const auto zLower = static_cast<double>(lowerDetail) / globeRadius;
@@ -1933,119 +1925,40 @@ inline bool OsmAnd::AtlasMapRenderer_OpenGL::isArcVisible(const glm::dvec3& cp,
 inline bool OsmAnd::AtlasMapRenderer_OpenGL::isPointVisible(const InternalState& internalState, const glm::vec3& p,
     bool skipTop, bool skipLeft, bool skipBottom, bool skipRight, bool skipFront, bool skipBack, float tolerance) const
 {
-    const auto top = skipTop || glm::dot(p, internalState.topVisibleEdgeN) <= internalState.topVisibleEdgeD + tolerance;
-    const auto left = skipLeft || glm::dot(p, internalState.leftVisibleEdgeN) <= internalState.leftVisibleEdgeD + tolerance;
-    const auto bottm = skipBottom || glm::dot(p, internalState.bottomVisibleEdgeN) <= internalState.bottomVisibleEdgeD + tolerance;
-    const auto right = skipRight || glm::dot(p, internalState.rightVisibleEdgeN) <= internalState.rightVisibleEdgeD + tolerance;
-    const auto front = skipFront || glm::dot(p, internalState.frontVisibleEdgeN) <= internalState.frontVisibleEdgeD + tolerance;
-    const auto back = skipBack || glm::dot(p, internalState.backVisibleEdgeN) <= internalState.backVisibleEdgeD + tolerance;
+    const auto top =
+        skipTop || glm::dot(p, internalState.topVisibleEdgeN) <= internalState.topVisibleEdgeD + tolerance;
+    const auto left =
+        skipLeft || glm::dot(p, internalState.leftVisibleEdgeN) <= internalState.leftVisibleEdgeD + tolerance;
+    const auto bottm =
+        skipBottom || glm::dot(p, internalState.bottomVisibleEdgeN) <= internalState.bottomVisibleEdgeD + tolerance;
+    const auto right =
+        skipRight || glm::dot(p, internalState.rightVisibleEdgeN) <= internalState.rightVisibleEdgeD + tolerance;
+    const auto front =
+        skipFront || glm::dot(p, internalState.frontVisibleEdgeN) <= internalState.frontVisibleEdgeD + tolerance;
+    const auto back =
+        skipBack || glm::dot(p, internalState.backVisibleEdgeN) <= internalState.backVisibleEdgeD + tolerance;
     return top && left && bottm && right && front && back;
 }
 
-inline bool OsmAnd::AtlasMapRenderer_OpenGL::isPointInsideTileBox(
-    const glm::vec3& point, const glm::vec3& minPoint, const glm::vec3& maxPoint,
-    bool skipTop, bool skipLeft, bool skipBottom, bool skipRight, bool skipFront, bool skipBack) const
-{
-    const auto top = skipTop || glm::dot(point, glm::vec3(0.0f, 0.0f, -1.0f)) <= -minPoint.z;
-    const auto left = skipLeft || glm::dot(point, glm::vec3(-1.0f, 0.0f, 0.0f)) <= -minPoint.x;
-    const auto bottom = skipBottom || glm::dot(point, glm::vec3(0.0f, 0.0f, 1.0f)) <= maxPoint.z;
-    const auto right = skipRight || glm::dot(point, glm::vec3(1.0f, 0.0f, 0.0f)) <= maxPoint.x;
-    const auto front = skipFront || glm::dot(point, glm::vec3(0.0f, 1.0f, 0.0f)) <= maxPoint.y;
-    const auto back = skipBack || glm::dot(point, glm::vec3(0.0f, -1.0f, 0.0f)) <= -minPoint.y;
-    return top && left && bottom && right && front && back;
-}
-
-inline bool OsmAnd::AtlasMapRenderer_OpenGL::isRayOnTileBox(const glm::vec3& start, const glm::vec3& end,
-    const glm::vec3& min, const glm::vec3& max) const
-{
-    float d;
-    auto ray = glm::normalize(end - start);
-    if ((Utilities_OpenGL_Common::rayIntersectPlane(glm::vec3(0.0f, 0.0f, -1.0f), min, ray, start, d) && d > 0.0f
-        && isPointInsideTileBox(start + ray * d, min, max, true, false, false, false, false, false))
-        || (Utilities_OpenGL_Common::rayIntersectPlane(glm::vec3(-1.0f, 0.0f, 0.0f), min, ray, start, d) && d > 0.0f
-        && isPointInsideTileBox(start + ray * d, min, max, false, true, false, false, false, false))
-        || (Utilities_OpenGL_Common::rayIntersectPlane(glm::vec3(0.0f, 0.0f, 1.0f), max, ray, start, d) && d > 0.0f
-        && isPointInsideTileBox(start + ray * d, min, max, false, false, true, false, false, false))
-        || (Utilities_OpenGL_Common::rayIntersectPlane(glm::vec3(1.0f, 0.0f, 0.0f), max, ray, start, d) && d > 0.0f
-        && isPointInsideTileBox(start + ray * d, min, max, false, false, false, true, false, false))
-        || (Utilities_OpenGL_Common::rayIntersectPlane(glm::vec3(0.0f, 1.0f, 0.0f), max, ray, start, d) && d > 0.0f
-        && isPointInsideTileBox(start + ray * d, min, max, false, false, false, false, true, false))
-        || (Utilities_OpenGL_Common::rayIntersectPlane(glm::vec3(0.0f, -1.0f, 0.0f), min, ray, start, d) && d > 0.0f
-        && isPointInsideTileBox(start + ray * d, min, max, false, false, false, false, false, true)))
-        return true;
-    return false;
-}
-
-inline bool OsmAnd::AtlasMapRenderer_OpenGL::isEdgeVisible(const InternalState& internalState,
+inline bool OsmAnd::AtlasMapRenderer_OpenGL::isEdgeVisible(const MapRendererInternalState& internalState_,
     const glm::vec3& start, const glm::vec3& end) const
 {
+    const auto internalState = static_cast<const InternalState*>(&internalState_);
+
     glm::vec3 ip;
-    const auto cp = internalState.worldCameraPosition;
-    if ((Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState.topVisibleEdgeN, cp, start, end, ip)
-        && isPointVisible(internalState, ip, true, false, false, false, true, true))
-        || (Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState.leftVisibleEdgeN, cp, start, end, ip)
-        && isPointVisible(internalState, ip, false, true, false, false, true, true))
-        || (Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState.bottomVisibleEdgeN, cp, start, end, ip)
-        && isPointVisible(internalState, ip, false, false, true, false, true, true))
-        || (Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState.rightVisibleEdgeN, cp, start, end, ip)
-        && isPointVisible(internalState, ip, false, false, false, true, true, true)))
+    const auto cp = internalState->worldCameraPosition;
+    if (isPointVisible(*internalState, start, false, false, false, false, true, true)
+        || isPointVisible(*internalState, end, false, false, false, false, true, true))
         return true;
-    return false;
-}
-
-bool OsmAnd::AtlasMapRenderer_OpenGL::isTileVisible(
-    const InternalState& internalState, const glm::vec3& FTL, const glm::vec3& NBR) const
-{
-    // Check position of the camera, which may be put inside the tile's bounding box:
-    // in this case, the tile is considered visible
-    const auto cp = internalState.worldCameraPosition;
-    if (cp.x >= FTL.x && cp.x <= NBR.x && cp.y >= FTL.y && cp.y <= NBR.y && cp.z >= FTL.z && cp.z <= NBR.z)
+    if ((Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->topVisibleEdgeN, cp, start, end, ip)
+        && isPointVisible(*internalState, ip, true, false, false, false, true, true))
+        || (Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->leftVisibleEdgeN, cp, start, end, ip)
+        && isPointVisible(*internalState, ip, false, true, false, false, true, true))
+        || (Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->bottomVisibleEdgeN, cp, start, end, ip)
+        && isPointVisible(*internalState, ip, false, false, true, false, true, true))
+        || (Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->rightVisibleEdgeN, cp, start, end, ip)
+        && isPointVisible(*internalState, ip, false, false, false, true, true, true)))
         return true;
-
-    // Check visibility of all corners of the tile's bounding box:
-    // a tile is considered visible if any of its corners is visible
-    if (isPointVisible(internalState, FTL, false, false, false, false, true, true)
-        || isPointVisible(internalState, NBR, false, false, false, false, true, true))
-        return true;
-    const auto FTR = glm::vec3(NBR.x, FTL.y, FTL.z);
-    const auto FBL = glm::vec3(FTL.x, FTL.y, NBR.z);
-    const auto FBR = glm::vec3(NBR.x, FTL.y, NBR.z);
-    const auto NTL = glm::vec3(FTL.x, NBR.y, FTL.z);
-    const auto NTR = glm::vec3(NBR.x, NBR.y, FTL.z);
-    const auto NBL = glm::vec3(FTL.x, NBR.y, NBR.z);
-    if (isPointVisible(internalState, FTR, false, false, false, false, true, true)
-        || isPointVisible(internalState, FBL, false, false, false, false, true, true)
-        || isPointVisible(internalState, FBR, false, false, false, false, true, true)
-        || isPointVisible(internalState, NTL, false, false, false, false, true, true)
-        || isPointVisible(internalState, NTR, false, false, false, false, true, true)
-        || isPointVisible(internalState, NBL, false, false, false, false, true, true))
-        return true;
-
-    // Check visibility of rays that cover the four main edges of the frustum:
-    // a tile is considered visible if any ray intersects any face of the tile's bounding box
-    if (isRayOnTileBox(cp, internalState.backVisibleEdgeTL, FTL, NBR)
-        || isRayOnTileBox(cp, internalState.backVisibleEdgeTR, FTL, NBR)
-        || isRayOnTileBox(cp, internalState.backVisibleEdgeBL, FTL, NBR)
-        || isRayOnTileBox(cp, internalState.backVisibleEdgeBR, FTL, NBR))
-        return true;
-
-    // Check visibility of all edges of the tile's bounding box:
-    // a tile is considered visible if any of its edge intersects any side
-    // between rays that cover the four main edges of the frustum
-    if (isEdgeVisible(internalState, NTL, NTR)
-        || isEdgeVisible(internalState, NBL, NBR)
-        || isEdgeVisible(internalState, FTL, FTR)
-        || isEdgeVisible(internalState, FBL, FBR)
-        || isEdgeVisible(internalState, NTL, NBL)
-        || isEdgeVisible(internalState, NTR, NBR)
-        || isEdgeVisible(internalState, FTL, FBL)
-        || isEdgeVisible(internalState, FTR, FBR)
-        || isEdgeVisible(internalState, NTL, FTL)
-        || isEdgeVisible(internalState, NTR, FTR)
-        || isEdgeVisible(internalState, NBL, FBL)
-        || isEdgeVisible(internalState, NBR, FBR))
-        return true;
-
     return false;
 }
 

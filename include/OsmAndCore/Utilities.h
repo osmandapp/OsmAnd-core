@@ -1272,10 +1272,12 @@ namespace OsmAnd
             return result;
         }
 
-        inline static glm::dvec3 getGlobeRadialVector(const PointI& location31)
+        inline static glm::dvec3 getGlobeRadialVector(const PointI& location31, PointD* outAngles = nullptr)
         {
             const auto angles = getAnglesFrom31(location31);
             const auto result = getGlobeRadialVector(angles);
+            if (outAngles != nullptr)
+                *outAngles = angles;
             return result;
         }
 
@@ -1295,9 +1297,10 @@ namespace OsmAnd
             const PointI& location31,
             const glm::dmat3& mGlobeRotation,
             const double globeRadius,
-            const double elevation)
+            const double elevation,
+            PointD* outAngles = nullptr)
         {
-            const auto n = mGlobeRotation * getGlobeRadialVector(location31);
+            const auto n = mGlobeRotation * getGlobeRadialVector(location31, outAngles);
             const auto v = n * (globeRadius + elevation);
             return glm::vec3(v.x, v.y - globeRadius, v.z);
         }
