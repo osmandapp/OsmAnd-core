@@ -19,7 +19,6 @@
 #include <OsmAndCore/Data/ObfAddressSectionInfo.h>
 #include <OsmAndCore/Data/ObfAddressSectionReader.h>
 #include <OsmAndCore/Data/Street.h>
-#include <OsmAndCore/Data/StreetIntersection.h>
 #include <OsmAndCore/Data/StreetGroup.h>
 #include <OsmAndCore/Data/Building.h>
 #include <OsmAndCore/Data/ObfTransportSectionInfo.h>
@@ -393,7 +392,7 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAndTools::Inspector
                 //
                 QList< std::shared_ptr<const OsmAnd::Building> > buildings;
                 OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(reader, s, &buildings);
-                QList< std::shared_ptr<const OsmAnd::StreetIntersection> > intersections;
+                QList< std::shared_ptr<const OsmAnd::Street> > intersections;
                 OsmAnd::ObfAddressSectionReader::loadIntersectionsFromStreet(reader, s, &intersections);
                 output << xT("\t\t\t'") << QStringToStlString(s->nativeName) << xT("' [") << s->id << xT("], ") << buildings.size() << xT(" building(s), ") << intersections.size() << xT(" intersection(s)") << std::endl;
                 if (cfg.verboseBuildings && buildings.size() > 0)

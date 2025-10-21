@@ -17,7 +17,6 @@ namespace OsmAnd
 {
     class StreetGroup;
     class Building;
-    class StreetIntersection;
 
     class OSMAND_CORE_API Street Q_DECL_FINAL : public Address
     {
@@ -37,7 +36,7 @@ namespace OsmAnd
         const std::shared_ptr<const StreetGroup> streetGroup;
 
         QList<std::shared_ptr<const Building>> buildings;
-        QList<std::shared_ptr<const StreetIntersection>> intersectedStreets;
+        QList<std::shared_ptr<const Street>> intersectedStreets;
     };
 }
 

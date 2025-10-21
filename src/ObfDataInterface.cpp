@@ -1218,7 +1218,7 @@ bool OsmAnd::ObfDataInterface::loadBuildingsFromStreets(
 
 bool OsmAnd::ObfDataInterface::loadIntersectionsFromStreets(
     const QList< std::shared_ptr<const Street> >& streets,
-    QHash< std::shared_ptr<const Street>, QList< std::shared_ptr<const StreetIntersection> > >* resultOut /*= nullptr*/,
+    QHash< std::shared_ptr<const Street>, QList< std::shared_ptr<const Street> > >* resultOut /*= nullptr*/,
     const AreaI* const bbox31 /*= nullptr*/,
     const ObfAddressSectionReader::IntersectionVisitorFunction visitor /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
@@ -1250,7 +1250,7 @@ bool OsmAnd::ObfDataInterface::loadIntersectionsFromStreets(
                 if (addressSection != street->streetGroup->obfSection)
                     continue;
 
-                QList< std::shared_ptr<const StreetIntersection> > intermediateResult;
+                QList< std::shared_ptr<const Street> > intermediateResult;
                 OsmAnd::ObfAddressSectionReader::loadIntersectionsFromStreet(
                     obfReader,
                     street,
