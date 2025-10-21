@@ -31,10 +31,13 @@ namespace OsmAnd
             int vertexCount;
 
             QVector<PointI> debugPoints31;
+            int height = 3;
+
+            glm::vec3 debugColor;
 
             TestBuildingResource() : vertexCount(0) {}
-            TestBuildingResource(const std::shared_ptr<const GPUAPI::ArrayBufferInGPU>& vb, int count)
-                : vertexBuffer(vb), vertexCount(count) {}
+            TestBuildingResource(const std::shared_ptr<const GPUAPI::ArrayBufferInGPU>& vb, int count, int _height, glm::vec3 _debugColor)
+                : vertexBuffer(vb), vertexCount(count), height(_height), debugColor(_debugColor) {}
         };
         
     private:

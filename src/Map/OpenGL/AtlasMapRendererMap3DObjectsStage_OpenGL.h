@@ -41,6 +41,7 @@ namespace OsmAnd
                 {
                     GLlocation mPerspectiveProjectionView;
                     GLlocation metersPerUnit;
+                    GLlocation color;
                 } param;
             } vs;
         } _program;

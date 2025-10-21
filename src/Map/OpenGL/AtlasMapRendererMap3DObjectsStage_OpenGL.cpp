@@ -10,6 +10,7 @@
 #include "MapRendererTiledResourcesCollection.h"
 #include <QSet>
 #include <mapbox/earcut.hpp>
+#include <cstdlib>
 
 using namespace OsmAnd;
 
@@ -34,11 +35,13 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
     if (!_program.id.isValid())
     {
         const QString vertexShader = R"(
-
             in vec3 in_vs_vertexPosition;
+            
+            out vec4 v2f_color;
             
             uniform mat4 param_vs_mPerspectiveProjectionView;
             uniform float param_vs_metersPerUnit;
+            uniform vec4 param_vs_color;
 
             void main()
             {
@@ -50,6 +53,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
 
                 v = param_vs_mPerspectiveProjectionView * v;
                 gl_Position = v;
+                
+                v2f_color = param_vs_color;
             }
         )";
         auto preprocessedVertexShader = vertexShader;
@@ -57,11 +62,12 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
         gpuAPI->optimizeVertexShader(preprocessedVertexShader);
 
         const QString fragmentShader = R"(
+            in vec4 v2f_color;
             out vec4 fragColor;
             
             void main()
             {
-                fragColor = vec4(0.0, 0.0, 1.0, 0.3);
+                fragColor = v2f_color;
             }
         )";
         auto preprocessedFragmentShader = fragmentShader;
@@ -106,6 +112,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
     ok = ok && lookup->lookupLocation(_program.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.metersPerUnit, "param_vs_metersPerUnit", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.color, "param_vs_color", GlslVariableType::Uniform);
 
     return ok && _program.id.isValid();
 }
@@ -180,11 +187,17 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
         if (!r->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
             continue;
 
-        const auto& buildings = r->getTestBuildings();
-        for (const auto& b : constOf(buildings))
-        {
-            if (!b.vertexBuffer || b.vertexCount <= 0)
-                continue;
+            const auto& buildings = r->getTestBuildings();
+            for (const auto& b : constOf(buildings))
+            {
+                if (!b.vertexBuffer || b.vertexCount <= 0)
+                    continue;
+
+                auto debugColor = b.debugColor;
+
+                // Generate random color for this building
+                glUniform4f(*_program.vs.param.color, debugColor.r, debugColor.g, debugColor.b, 1.0f);
+                GL_CHECK_RESULT;
 
             const int edgePointsCount = b.debugPoints31.size();
             if (edgePointsCount < 3)
@@ -192,8 +205,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
 
 
             // Generate extruded 3D mesh
-            const float bottomAltitude = -10.0f;
-            const float topAltitude = 20.0f;
+            const float bottomAltitude = -1000.0f;
+            const float topAltitude = b.height;
 
             // Create vertices for extruded mesh
             QVector<MapRenderer3DObjectsResource::Vertex> extrudedVertices;

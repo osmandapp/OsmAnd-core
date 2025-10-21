@@ -9,6 +9,7 @@
 #include "Utilities.h"
 #include "MapRenderer.h"
 //#include "AtlasMapRenderer_OpenGL.h"
+#include <iostream>
 
 using namespace OsmAnd;
 
@@ -116,6 +117,8 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
             continue;
         }
 
+        int height = 3;
+
         bool isBuilding = false;
         for (int i = 0; i < sourceObject->attributeIds.size(); ++i)
         {
@@ -140,6 +143,17 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
             continue;
         }
 
+        for (const auto& captionAttributeId : constOf(sourceObject->captionsOrder))
+        {
+            const auto& caption = constOf(sourceObject->captions)[captionAttributeId];
+
+            // TODO: use styles
+            if (sourceObject->attributeMapping->decodeMap[captionAttributeId].tag == QStringLiteral("height"))
+            {
+                height = caption.toInt();
+            }
+        }
+
         const int vertexCount = sourceObject->points31.size();
         const size_t vertexBufferSize = static_cast<size_t>(vertexCount * sizeof(Vertex));
 
@@ -161,7 +175,11 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
         if (!uploadSuccess)
             continue;
 
-        TestBuildingResource building(vertexBufferInGPU, vertexCount);
+        float r = static_cast<float>(rand()) / RAND_MAX;
+        float g = static_cast<float>(rand()) / RAND_MAX;
+        float b = static_cast<float>(rand()) / RAND_MAX;
+
+        TestBuildingResource building(vertexBufferInGPU, vertexCount, height, glm::vec3(r, g, b));
         building.debugPoints31 = sourceObject->points31;
         _testBuildings.append(building);
     }
