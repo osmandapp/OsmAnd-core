@@ -151,10 +151,10 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
 bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const /*metric*/)
 {
     const auto& currentState = getRenderer()->getState();
-    const auto resourcesCollection_ = getResources().getCollectionSnapshot(MapRendererResourceType::Map3DObjects,
+    const auto resourcesCollection = getResources().getCollectionSnapshot(MapRendererResourceType::Map3DObjects,
         std::static_pointer_cast<IMapDataProvider>(currentState.map3DObjectsProvider));
 
-    if (!resourcesCollection_)
+    if (!resourcesCollection)
     {
         return false;
     }
@@ -168,36 +168,45 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
     glUniformMatrix4fv(*_program.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
     GL_CHECK_RESULT;
 
-    const auto resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
+    const auto CollectionStapshot = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection);
 
     const auto visibleTiles = static_cast<AtlasMapRenderer*>(getRenderer())->getVisibleTiles();
-    const auto zoomLevel = currentState.zoomLevel;
-    const PointI target31 = currentState.target31;
-    const float tileSizeInWorld = static_cast<float>(AtlasMapRenderer::TileSize3D);
 
     for (const auto& tileId : constOf(visibleTiles))
     {
-        const auto tileIdN = Utilities::normalizeTileId(tileId, zoomLevel);
-        std::shared_ptr<MapRendererBaseTiledResource> resource_;
-        if (!resourcesCollection->obtainResource(tileIdN, zoomLevel, resource_))
-            continue;
-        const auto r = std::static_pointer_cast<MapRenderer3DObjectsResource>(resource_);
-        if (!r)
-            continue;
-        if (!r->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
-            continue;
+        const auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomLevel);
 
-            const auto& buildings = r->getTestBuildings();
-            for (const auto& b : constOf(buildings))
-            {
-                if (!b.vertexBuffer || b.vertexCount <= 0)
-                    continue;
+        std::shared_ptr<MapRendererBaseTiledResource> tiledResource;
+        if (!CollectionStapshot->obtainResource(tileIdN, currentState.zoomLevel, tiledResource))
+        {
+            continue;
+        }
 
-                auto debugColor = b.debugColor;
+        const auto object3DResource = std::static_pointer_cast<MapRenderer3DObjectsResource>(tiledResource);
+        if (!object3DResource)
+        {
+            continue;
+        }
 
-                // Generate random color for this building
-                glUniform4f(*_program.vs.param.color, debugColor.r, debugColor.g, debugColor.b, 1.0f);
-                GL_CHECK_RESULT;
+        if (!object3DResource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
+        {
+            continue;
+        }
+
+        const double metersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileIdN.y, AtlasMapRenderer::TileSize3D);
+        glUniform1f(*_program.vs.param.metersPerUnit, static_cast<float>(metersPerUnit));
+        GL_CHECK_RESULT;
+
+        const auto& buildings = object3DResource->getTestBuildings();
+        for (const auto& b : constOf(buildings))
+        {
+            if (!b.vertexBuffer || b.vertexCount <= 0)
+                continue;
+
+            auto debugColor = b.debugColor;
+
+            glUniform4f(*_program.vs.param.color, debugColor.r, debugColor.g, debugColor.b, 1.0f);
+            GL_CHECK_RESULT;
 
             const int edgePointsCount = b.debugPoints31.size();
             if (edgePointsCount < 3)
@@ -212,24 +221,12 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
             QVector<MapRenderer3DObjectsResource::Vertex> extrudedVertices;
             QVector<GLushort> extrudedIndices;
 
-            double metersPerUnit;
-
             // Generate bottom face vertices (for side walls only)
             QVector<MapRenderer3DObjectsResource::Vertex> bottomVertices(edgePointsCount);
             for (int i = 0; i < edgePointsCount; ++i)
             {
                 const auto& point31 = b.debugPoints31[i];
-                bottomVertices[i].position = Utilities::planeWorldCoordinates(point31, target31, zoomLevel, tileSizeInWorld, bottomAltitude);
-
-                PointF offsetInTileN;
-                const auto tileId = Utilities::normalizeTileId(
-                    Utilities::getTileId(point31, currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
-
-
-                // Get elevation data
-                metersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
-                glUniform1f(*_program.vs.param.metersPerUnit, static_cast<float>(metersPerUnit));
-                GL_CHECK_RESULT;
+                bottomVertices[i].position = Utilities::planeWorldCoordinates(point31, currentState.target31, currentState.zoomLevel, AtlasMapRenderer::TileSize3D, bottomAltitude);
             }
 
             // Generate top face vertices
@@ -237,7 +234,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
             for (int i = 0; i < edgePointsCount; ++i)
             {
                 const auto& point31 = b.debugPoints31[i];
-                topVertices[i].position = Utilities::planeWorldCoordinates(point31, target31, zoomLevel, tileSizeInWorld, topAltitude);
+                topVertices[i].position = Utilities::planeWorldCoordinates(point31, currentState.target31, currentState.zoomLevel, AtlasMapRenderer::TileSize3D, topAltitude);
             }
 
             // Triangulate top face using earcut
@@ -338,7 +335,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
             GL_CHECK_RESULT;
             gpuAPI->unuseVAO();
         }
-        r->setState(MapRendererResourceState::Uploaded);
+
+        object3DResource->setState(MapRendererResourceState::Uploaded);
     }
 
     return true;

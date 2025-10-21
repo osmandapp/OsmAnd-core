@@ -117,7 +117,7 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
             continue;
         }
 
-        int height = 3;
+        float height = 3.0;
 
         bool isBuilding = false;
         for (int i = 0; i < sourceObject->attributeIds.size(); ++i)
@@ -150,7 +150,7 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
             // TODO: use styles
             if (sourceObject->attributeMapping->decodeMap[captionAttributeId].tag == QStringLiteral("height"))
             {
-                height = caption.toInt();
+                height = caption.toFloat();
             }
         }
 

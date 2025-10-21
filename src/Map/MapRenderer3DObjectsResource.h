@@ -31,7 +31,7 @@ namespace OsmAnd
             int vertexCount;
 
             QVector<PointI> debugPoints31;
-            int height = 3;
+            float height = 3;
 
             glm::vec3 debugColor;
 
