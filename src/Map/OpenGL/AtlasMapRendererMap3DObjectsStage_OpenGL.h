@@ -33,7 +33,8 @@ namespace OsmAnd
                 // Input data
                 struct
                 {
-                    GLlocation vertexPosition;
+                    GLlocation location31;
+                    GLlocation height;
                 } in;
 
                 // Params
@@ -42,6 +43,8 @@ namespace OsmAnd
                     GLlocation mPerspectiveProjectionView;
                     GLlocation metersPerUnit;
                     GLlocation color;
+                    GLlocation target31;
+                    GLlocation zoomLevel;
                 } param;
             } vs;
         } _program;

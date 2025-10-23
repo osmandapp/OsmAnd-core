@@ -133,6 +133,22 @@ bool OsmAnd::MapRendererResourcesManager::uploadVerticesToGPU(
         &(renderer->gpuContextIsLost));
 }
 
+bool OsmAnd::MapRendererResourcesManager::uploadIndicesToGPU(
+    const void* data,
+    const size_t dataSize,
+    const unsigned int indexCount,
+    std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU>& outIndexBuffer,
+    const bool waitForGPU) const
+{
+    return renderer->gpuAPI->uploadDataAsIndices(
+        data,
+        dataSize,
+        indexCount,
+        outIndexBuffer,
+        waitForGPU,
+        &(renderer->gpuContextIsLost));
+}
+
 bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
 {
     bool ok = true;

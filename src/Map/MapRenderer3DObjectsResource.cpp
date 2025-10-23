@@ -8,7 +8,7 @@
 #include "Map3DObjectsProvider.h"
 #include "Utilities.h"
 #include "MapRenderer.h"
-//#include "AtlasMapRenderer_OpenGL.h"
+#include <mapbox/earcut.hpp>
 #include <iostream>
 
 using namespace OsmAnd;
@@ -154,33 +154,119 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
             }
         }
 
-        const int vertexCount = sourceObject->points31.size();
-        const size_t vertexBufferSize = static_cast<size_t>(vertexCount * sizeof(Vertex));
+        const int edgePointsCount = sourceObject->points31.size();
+        const float bottomAltitude = 0.0f;
+        const float topAltitude = height;
 
-        QVector<Vertex> vertexData(vertexCount);
-        for (int i = 0; i < vertexCount; ++i)
+        // Create vertices for extruded mesh
+        QVector<Vertex> extrudedVertices;
+        QVector<uint16_t> extrudedIndices;
+
+        // Generate bottom face vertices (for side walls only)
+        QVector<Vertex> bottomVertices(edgePointsCount);
+        for (int i = 0; i < edgePointsCount; ++i)
         {
             const auto& point31 = sourceObject->points31[i];
-            vertexData[i].position = glm::vec3(point31.x, 10.0f, point31.y);
+            bottomVertices[i].location31 = glm::ivec2(point31.x, point31.y);
+            bottomVertices[i].height = static_cast<float>(bottomAltitude);
         }
 
+        // Generate top face vertices
+        QVector<Vertex> topVertices(edgePointsCount);
+        for (int i = 0; i < edgePointsCount; ++i)
+        {
+            const auto& point31 = sourceObject->points31[i];
+            topVertices[i].location31 = glm::ivec2(point31.x, point31.y);
+            topVertices[i].height = static_cast<float>(topAltitude);
+        }
+
+        // Triangulate top face using earcut
+        std::vector<std::array<int, 2>> topPolygon;
+        topPolygon.reserve(edgePointsCount);
+        for (int i = 0; i < edgePointsCount; ++i)
+        {
+            const auto& point31 = sourceObject->points31[i];
+            topPolygon.push_back({ point31.x, point31.y });
+        }
+        std::vector< std::vector<std::array<int, 2>> > polygon;
+        polygon.push_back(std::move(topPolygon));
+
+        std::vector<uint32_t> topIndices32 = mapbox::earcut<uint32_t>(polygon);
+        if (topIndices32.empty())
+            continue;
+
+        // Add top face vertices to extruded mesh
+        int vertexOffset = 0;
+        for (const auto& vertex : topVertices)
+        {
+            extrudedVertices.append(vertex);
+        }
+
+        // Add top face indices (same winding as original)
+        for (uint32_t idx : topIndices32)
+        {
+            extrudedIndices.append(idx + vertexOffset);
+        }
+
+        // Generate side wall faces
+        vertexOffset = extrudedVertices.size();
+        for (int i = 0; i < edgePointsCount; ++i)
+        {
+            int next = (i + 1) % edgePointsCount;
+
+            // Add vertices for this side wall quad
+            extrudedVertices.append(bottomVertices[i]);     // bottom-left
+            extrudedVertices.append(topVertices[i]);       // top-left
+            extrudedVertices.append(topVertices[next]);     // top-right
+            extrudedVertices.append(bottomVertices[next]);  // bottom-right
+
+            // Add triangle indices for the quad (two triangles)
+            int baseIdx = vertexOffset + i * 4;
+            // First triangle
+            extrudedIndices.append(baseIdx);
+            extrudedIndices.append(baseIdx + 1);
+            extrudedIndices.append(baseIdx + 2);
+            // Second triangle
+            extrudedIndices.append(baseIdx);
+            extrudedIndices.append(baseIdx + 2);
+            extrudedIndices.append(baseIdx + 3);
+        }
+
+        const size_t vertexBufferSize = static_cast<size_t>(extrudedVertices.size() * sizeof(Vertex));
+        const size_t indexBufferSize = static_cast<size_t>(extrudedIndices.size() * sizeof(uint16_t));
+
+        // Upload vertex buffer
         std::shared_ptr<const GPUAPI::ArrayBufferInGPU> vertexBufferInGPU;
-        const bool uploadSuccess = resourcesManager->uploadVerticesToGPU(
-            vertexData.constData(),
+        const bool vertexUploadSuccess = resourcesManager->uploadVerticesToGPU(
+            extrudedVertices.constData(),
             vertexBufferSize,
-            static_cast<unsigned int>(vertexCount),
+            static_cast<unsigned int>(extrudedVertices.size()),
             vertexBufferInGPU,
             false);
 
-        if (!uploadSuccess)
+        if (!vertexUploadSuccess)
+            continue;
+
+        // Upload index buffer using the wrapper
+        std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU> indexBufferInGPU;
+        const bool indexUploadSuccess = resourcesManager->uploadIndicesToGPU(
+            extrudedIndices.constData(),
+            indexBufferSize,
+            static_cast<unsigned int>(extrudedIndices.size()),
+            indexBufferInGPU,
+            false);
+
+        if (!indexUploadSuccess)
             continue;
 
         float r = static_cast<float>(rand()) / RAND_MAX;
         float g = static_cast<float>(rand()) / RAND_MAX;
         float b = static_cast<float>(rand()) / RAND_MAX;
 
-        TestBuildingResource building(vertexBufferInGPU, vertexCount, height, glm::vec3(r, g, b));
-        building.debugPoints31 = sourceObject->points31;
+        TestBuildingResource building(vertexBufferInGPU, indexBufferInGPU, 
+                                   static_cast<int>(extrudedVertices.size()), 
+                                   static_cast<int>(extrudedIndices.size()), 
+                                   glm::vec3(r, g, b));
         _testBuildings.append(building);
     }
 

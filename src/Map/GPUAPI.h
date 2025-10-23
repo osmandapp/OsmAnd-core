@@ -340,6 +340,14 @@ namespace OsmAnd
             bool waitForGPU,
             volatile bool* gpuContextLost) = 0;
 
+        virtual bool uploadDataAsIndices(
+            const void* data,
+            const size_t dataSize,
+            const unsigned int indexCount,
+            std::shared_ptr< const ElementArrayBufferInGPU >& outIndexBuffer,
+            bool waitForGPU,
+            volatile bool* gpuContextLost) = 0;
+
         virtual void waitUntilUploadIsComplete(volatile bool* gpuContextLost) = 0;
 
         virtual AlphaChannelType getGpuResourceAlphaChannelType(const std::shared_ptr<const ResourceInGPU> gpuResource);

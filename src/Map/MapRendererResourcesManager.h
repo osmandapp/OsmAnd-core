@@ -270,6 +270,12 @@ namespace OsmAnd
                 const unsigned int vertexCount,
                 std::shared_ptr<const GPUAPI::ArrayBufferInGPU>& outVertexBuffer,
                 const bool waitForGPU = false) const;
+        bool uploadIndicesToGPU(
+                const void* data,
+                const size_t dataSize,
+                const unsigned int indexCount,
+                std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU>& outIndexBuffer,
+                const bool waitForGPU = false) const;
         void finishSymbolsUploadToGPU();
         bool adjustImageToConfiguration(
             const sk_sp<const SkImage>& input,

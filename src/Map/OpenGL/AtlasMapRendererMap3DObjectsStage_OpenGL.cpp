@@ -35,24 +35,58 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
     if (!_program.id.isValid())
     {
         const QString vertexShader = R"(
-            in vec3 in_vs_vertexPosition;
+            in ivec2 in_vs_location31;
+            in float in_vs_height;
             
             out vec4 v2f_color;
             
             uniform mat4 param_vs_mPerspectiveProjectionView;
             uniform float param_vs_metersPerUnit;
             uniform vec4 param_vs_color;
+            uniform ivec2 param_vs_target31;
+            uniform int param_vs_zoomLevel;
+            
+            const float TILE_SIZE_3D = 100.0;
+            const int MAX_ZOOM_LEVEL = 31;
+            const int MAX_TILE_NUMBER = (1 << MAX_ZOOM_LEVEL) - 1;
+            const int MIDDLE_TILE_NUMBER = MAX_TILE_NUMBER / 2 + 1;
+
+            vec2 convert31toFloat(ivec2 point31, int zoomLevel)
+            {
+                float tileSize31 = float(1 << (MAX_ZOOM_LEVEL - zoomLevel));
+                return vec2(point31) / tileSize31;
+            }
+
+            ivec2 shortestVector31(ivec2 p0, ivec2 p1)
+            {
+                ivec2 offset = p1 - p0;
+                ivec2 signOffset = sign(offset);
+                ivec2 absOffset = abs(offset);
+                
+                ivec2 needsCorrection = ivec2(
+                    absOffset.x >= MIDDLE_TILE_NUMBER ? 1 : 0,
+                    absOffset.y >= MIDDLE_TILE_NUMBER ? 1 : 0
+                );
+                
+                offset.x = offset.x - signOffset.x * needsCorrection.x * (MAX_TILE_NUMBER + 1);
+                offset.y = offset.y - signOffset.y * needsCorrection.y * (MAX_TILE_NUMBER + 1);
+                
+                return offset;
+            }
+
+            vec3 planeWorldCoordinates(ivec2 location31, ivec2 target31, int zoomLevel, float elevation)
+            {
+                ivec2 offset31 = shortestVector31(target31, location31);
+                vec2 offsetFromTarget = convert31toFloat(offset31, zoomLevel) * TILE_SIZE_3D;
+                return vec3(offsetFromTarget.x, elevation, offsetFromTarget.y);
+            }
 
             void main()
             {
-                vec4 v;
-                v.x = in_vs_vertexPosition.x;
-                v.y = in_vs_vertexPosition.y / param_vs_metersPerUnit;  // Normalize Y to world units
-                v.z = in_vs_vertexPosition.z;
-                v.w = 1.0;
-
-                v = param_vs_mPerspectiveProjectionView * v;
-                gl_Position = v;
+                float elevation = in_vs_height / param_vs_metersPerUnit;
+                vec3 worldPos = planeWorldCoordinates(in_vs_location31, param_vs_target31, param_vs_zoomLevel, elevation);
+                
+                gl_Position = param_vs_mPerspectiveProjectionView * vec4(worldPos, 1.0);
                 
                 v2f_color = param_vs_color;
             }
@@ -109,10 +143,13 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
 
     const auto lookup = gpuAPI->obtainVariablesLookupContext(_program.id, variablesMap);
     bool ok = true;
-    ok = ok && lookup->lookupLocation(_program.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_program.vs.in.location31, "in_vs_location31", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_program.vs.in.height, "in_vs_height", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.metersPerUnit, "param_vs_metersPerUnit", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.color, "param_vs_color", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.zoomLevel, "param_vs_zoomLevel", GlslVariableType::Uniform);
 
     return ok && _program.id.isValid();
 }
@@ -130,10 +167,15 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
+    GL_CHECK_PRESENT(glVertexAttribIPointer);
     GL_CHECK_PRESENT(glUseProgram);
     GL_CHECK_PRESENT(glUniformMatrix4fv);
     GL_CHECK_PRESENT(glUniform4fv);
     GL_CHECK_PRESENT(glUniform3fv);
+    GL_CHECK_PRESENT(glUniform2fv);
+    GL_CHECK_PRESENT(glUniform2iv);
+    GL_CHECK_PRESENT(glUniform1f);
+    GL_CHECK_PRESENT(glUniform1i);
     GL_CHECK_PRESENT(glDrawArrays);
     GL_CHECK_PRESENT(glDrawElements);
     GL_CHECK_PRESENT(glDeleteBuffers);
@@ -197,123 +239,52 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
         glUniform1f(*_program.vs.param.metersPerUnit, static_cast<float>(metersPerUnit));
         GL_CHECK_RESULT;
 
+        // Set uniforms for planeWorldCoordinates calculation
+        glUniform2i(*_program.vs.param.target31, currentState.target31.x, currentState.target31.y);
+        GL_CHECK_RESULT;
+        glUniform1i(*_program.vs.param.zoomLevel, currentState.zoomLevel);
+        GL_CHECK_RESULT;
+
         const auto& buildings = object3DResource->getTestBuildings();
         for (const auto& b : constOf(buildings))
         {
-            if (!b.vertexBuffer || b.vertexCount <= 0)
+            if (!b.vertexBuffer || !b.indexBuffer || b.vertexCount <= 0 || b.indexCount <= 0)
+            {
                 continue;
+            }
 
             auto debugColor = b.debugColor;
 
             glUniform4f(*_program.vs.param.color, debugColor.r, debugColor.g, debugColor.b, 1.0f);
             GL_CHECK_RESULT;
 
-            const int edgePointsCount = b.debugPoints31.size();
-            if (edgePointsCount < 3)
-                continue;
-
-
-            // Generate extruded 3D mesh
-            const float bottomAltitude = -1000.0f;
-            const float topAltitude = b.height;
-
-            // Create vertices for extruded mesh
-            QVector<MapRenderer3DObjectsResource::Vertex> extrudedVertices;
-            QVector<GLushort> extrudedIndices;
-
-            // Generate bottom face vertices (for side walls only)
-            QVector<MapRenderer3DObjectsResource::Vertex> bottomVertices(edgePointsCount);
-            for (int i = 0; i < edgePointsCount; ++i)
-            {
-                const auto& point31 = b.debugPoints31[i];
-                bottomVertices[i].position = Utilities::planeWorldCoordinates(point31, currentState.target31, currentState.zoomLevel, AtlasMapRenderer::TileSize3D, bottomAltitude);
-            }
-
-            // Generate top face vertices
-            QVector<MapRenderer3DObjectsResource::Vertex> topVertices(edgePointsCount);
-            for (int i = 0; i < edgePointsCount; ++i)
-            {
-                const auto& point31 = b.debugPoints31[i];
-                topVertices[i].position = Utilities::planeWorldCoordinates(point31, currentState.target31, currentState.zoomLevel, AtlasMapRenderer::TileSize3D, topAltitude);
-            }
-
-            // Triangulate top face using earcut
-            std::vector<std::array<double, 2>> topPolygon;
-            topPolygon.reserve(static_cast<size_t>(edgePointsCount));
-            for (int i = 0; i < edgePointsCount; ++i)
-            {
-                const auto& p = topVertices[i].position;
-                topPolygon.push_back({ static_cast<double>(p.x), static_cast<double>(p.z) });
-            }
-            std::vector< std::vector<std::array<double, 2>> > polygon;
-            polygon.push_back(std::move(topPolygon));
-
-            std::vector<uint32_t> topIndices32 = mapbox::earcut<uint32_t>(polygon);
-            if (topIndices32.empty())
-                continue;
-
-            // Add top face vertices to extruded mesh
-            int vertexOffset = 0;
-            for (const auto& vertex : topVertices)
-            {
-                extrudedVertices.append(vertex);
-            }
-
-            // Add top face indices (same winding as original)
-            for (uint32_t idx : topIndices32)
-            {
-                extrudedIndices.append(static_cast<GLushort>(idx + vertexOffset));
-            }
-
-            // Generate side wall faces
-            vertexOffset = extrudedVertices.size();
-            for (int i = 0; i < edgePointsCount; ++i)
-            {
-                int next = (i + 1) % edgePointsCount;
-
-                // Add vertices for this side wall quad
-                extrudedVertices.append(bottomVertices[i]);     // bottom-left
-                extrudedVertices.append(topVertices[i]);       // top-left
-                extrudedVertices.append(topVertices[next]);     // top-right
-                extrudedVertices.append(bottomVertices[next]);  // bottom-right
-
-                // Add triangle indices for the quad (two triangles)
-                int baseIdx = vertexOffset + i * 4;
-                // First triangle
-                extrudedIndices.append(static_cast<GLushort>(baseIdx));
-                extrudedIndices.append(static_cast<GLushort>(baseIdx + 1));
-                extrudedIndices.append(static_cast<GLushort>(baseIdx + 2));
-                // Second triangle
-                extrudedIndices.append(static_cast<GLushort>(baseIdx));
-                extrudedIndices.append(static_cast<GLushort>(baseIdx + 2));
-                extrudedIndices.append(static_cast<GLushort>(baseIdx + 3));
-            }
-
-            const size_t vertexBufferSize = static_cast<size_t>(extrudedVertices.size() * sizeof(MapRenderer3DObjectsResource::Vertex));
-            const size_t indexBufferSize = static_cast<size_t>(extrudedIndices.size() * sizeof(GLushort));
-
             gpuAPI->useVAO(_vao);
-            GLuint vbo = 0;
-            GLuint ebo = 0;
-            glGenBuffers(1, &vbo);
+            
+            // Bind pre-created vertex buffer
+            glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(b.vertexBuffer->refInGPU)));
             GL_CHECK_RESULT;
-            glBindBuffer(GL_ARRAY_BUFFER, vbo);
-            GL_CHECK_RESULT;
-            glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertexBufferSize), extrudedVertices.constData(), GL_DYNAMIC_DRAW);
-            GL_CHECK_RESULT;
-            glGenBuffers(1, &ebo);
-            GL_CHECK_RESULT;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-            GL_CHECK_RESULT;
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(indexBufferSize), extrudedIndices.constData(), GL_DYNAMIC_DRAW);
+            
+            // Bind pre-created index buffer
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(b.indexBuffer->refInGPU)));
             GL_CHECK_RESULT;
 
-            glEnableVertexAttribArray(*_program.vs.in.vertexPosition);
+            // Location31 attribute
+            glEnableVertexAttribArray(*_program.vs.in.location31);
             GL_CHECK_RESULT;
-            glVertexAttribPointer(*_program.vs.in.vertexPosition,
-                                  3, GL_FLOAT, GL_FALSE,
+            glVertexAttribIPointer(*_program.vs.in.location31,
+                                   2, GL_INT,
+                                   sizeof(MapRenderer3DObjectsResource::Vertex),
+                                   reinterpret_cast<const GLvoid*>(offsetof(MapRenderer3DObjectsResource::Vertex, location31)));
+            GL_CHECK_RESULT;
+            
+            // Height attribute
+            glEnableVertexAttribArray(*_program.vs.in.height);
+            GL_CHECK_RESULT;
+            glVertexAttribPointer(*_program.vs.in.height,
+                                  1, GL_FLOAT,
+                                  GL_FALSE,
                                   sizeof(MapRenderer3DObjectsResource::Vertex),
-                                  reinterpret_cast<const GLvoid*>(offsetof(MapRenderer3DObjectsResource::Vertex, position)));
+                                  reinterpret_cast<const GLvoid*>(offsetof(MapRenderer3DObjectsResource::Vertex, height)));
             GL_CHECK_RESULT;
 
             // Transparency
@@ -322,16 +293,12 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             GL_CHECK_RESULT;
 
-            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(extrudedIndices.size()), GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid*>(0));
+            // Draw the building
+            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(b.indexCount), GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid*>(0));
             GL_CHECK_RESULT;
 
             // Transparency
             glDisable(GL_BLEND);
-            GL_CHECK_RESULT;
-
-            glDeleteBuffers(1, &vbo);
-            GL_CHECK_RESULT;
-            glDeleteBuffers(1, &ebo);
             GL_CHECK_RESULT;
             gpuAPI->unuseVAO();
         }

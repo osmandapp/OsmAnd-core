@@ -22,22 +22,23 @@ namespace OsmAnd
     public:
         struct Vertex
         {
-            glm::vec3 position;
+            glm::ivec2 location31;
+            float height;
         };
 
         struct TestBuildingResource
         {
             std::shared_ptr<const GPUAPI::ArrayBufferInGPU> vertexBuffer;
+            std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU> indexBuffer;
             int vertexCount;
-
-            QVector<PointI> debugPoints31;
-            float height = 3;
-
+            int indexCount;
             glm::vec3 debugColor;
 
-            TestBuildingResource() : vertexCount(0) {}
-            TestBuildingResource(const std::shared_ptr<const GPUAPI::ArrayBufferInGPU>& vb, int count, int _height, glm::vec3 _debugColor)
-                : vertexBuffer(vb), vertexCount(count), height(_height), debugColor(_debugColor) {}
+            TestBuildingResource() : vertexCount(0), indexCount(0) {}
+            TestBuildingResource(const std::shared_ptr<const GPUAPI::ArrayBufferInGPU>& vb, 
+                               const std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU>& ib,
+                               int vCount, int iCount, glm::vec3 _debugColor)
+                : vertexBuffer(vb), indexBuffer(ib), vertexCount(vCount), indexCount(iCount), debugColor(_debugColor) {}
         };
         
     private:
