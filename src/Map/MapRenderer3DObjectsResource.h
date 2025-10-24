@@ -12,6 +12,7 @@
 #include "MapRendererBaseTiledResource.h"
 #include <OsmAndCore/Map/MapPrimitivesProvider.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
+#include "MapRenderer3DObjects.h"
 
 namespace OsmAnd
 {
@@ -20,28 +21,21 @@ namespace OsmAnd
     class MapRenderer3DObjectsResource : public MapRendererBaseTiledResource
     {
     public:
-        struct Vertex
-        {
-            glm::ivec2 location31;
-            float height;
-        };
-
-        struct TestBuildingResource
+        struct RenderableBuilding
         {
             std::shared_ptr<const GPUAPI::ArrayBufferInGPU> vertexBuffer;
             std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU> indexBuffer;
             int vertexCount;
             int indexCount;
             glm::vec3 debugColor;
-
-            TestBuildingResource() : vertexCount(0), indexCount(0) {}
-            TestBuildingResource(const std::shared_ptr<const GPUAPI::ArrayBufferInGPU>& vb, 
-                               const std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU>& ib,
-                               int vCount, int iCount, glm::vec3 _debugColor)
-                : vertexBuffer(vb), indexBuffer(ib), vertexCount(vCount), indexCount(iCount), debugColor(_debugColor) {}
         };
-        
-    private:
+
+        ~MapRenderer3DObjectsResource() override;
+
+        const QVector<RenderableBuilding>& getRenderableBuildings() const { return _renderableBuildings; }
+
+        friend class OsmAnd::MapRendererResourcesManager;
+
     protected:
         MapRenderer3DObjectsResource(
             MapRendererResourcesManager* owner,
@@ -49,9 +43,9 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom);
 
-        QList<std::shared_ptr<const MapPrimitiviser::Primitive>> _sourceData;
+        std::shared_ptr<IMapTiledDataProvider::Data> _sourceData;
 
-        QVector<TestBuildingResource> _testBuildings;
+        QVector<RenderableBuilding> _renderableBuildings;
 
         bool supportsObtainDataAsync() const override;
         bool obtainData(bool& dataAvailable, const std::shared_ptr<const IQueryController>& queryController) override;
@@ -63,15 +57,10 @@ namespace OsmAnd
         void unloadFromGPU() override;
         void lostDataInGPU() override;
         void releaseData() override;
-    public:
-        ~MapRenderer3DObjectsResource() override;
 
-        const QVector<TestBuildingResource>& getTestBuildings() const { return _testBuildings; }
-
-    friend class OsmAnd::MapRendererResourcesManager;
+    private:
+        bool getProvider(std::shared_ptr<IMapDataProvider>& provider) const;
     };
 }
 
 #endif // !defined(_OSMAND_CORE_MAP_RENDERER_3D_OBJECTS_RESOURCE_H_)
-
-

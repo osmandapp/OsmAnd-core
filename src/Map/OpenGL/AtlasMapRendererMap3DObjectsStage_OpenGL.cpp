@@ -8,6 +8,7 @@
 #include "AtlasMapRenderer_OpenGL.h"
 #include "Utilities.h"
 #include "MapRendererTiledResourcesCollection.h"
+#include "MapRenderer3DObjects.h"
 #include <QSet>
 #include <mapbox/earcut.hpp>
 #include <cstdlib>
@@ -28,10 +29,14 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
 {
     const auto gpuAPI = getGPUAPI();
     
-    QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
+    QHash<QString, GPUAPI_OpenGL::GlslProgramVariable> variablesMap;
     _program.id = 0;
+
     if (!_program.binaryCache.isEmpty())
+    {
         _program.id = gpuAPI->linkProgram(0, nullptr, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
+    }
+
     if (!_program.id.isValid())
     {
         const QString vertexShader = R"(
@@ -91,9 +96,6 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
                 v2f_color = param_vs_color;
             }
         )";
-        auto preprocessedVertexShader = vertexShader;
-        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
 
         const QString fragmentShader = R"(
             in vec4 v2f_color;
@@ -104,40 +106,43 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
                 fragColor = v2f_color;
             }
         )";
+
+        auto preprocessedVertexShader = vertexShader;
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+
         auto preprocessedFragmentShader = fragmentShader;
         gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
         gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
 
-        _program.binaryCache = gpuAPI->readProgramBinary(preprocessedVertexShader,
-            preprocessedFragmentShader, "", _program.cacheFormat);
+        _program.binaryCache = gpuAPI->readProgramBinary(preprocessedVertexShader, preprocessedFragmentShader, "", _program.cacheFormat);
 
         if (!_program.binaryCache.isEmpty())
         {
-            _program.id = gpuAPI->linkProgram(
-                0, nullptr, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
+            _program.id = gpuAPI->linkProgram(0, nullptr, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
         }
+
         if (_program.binaryCache.isEmpty() || !_program.id.isValid())
         {
             const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
             if (vsId == 0)
             {
-                LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererMap3DObjectsStage_OpenGL vertex shader");
+                LogPrintf(LogSeverityLevel::Error, "Failed to compile AtlasMapRendererMap3DObjectsStage_OpenGL vertex shader");
                 return false;
             }
+
             const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
             if (fsId == 0)
             {
                 glDeleteShader(vsId);
                 GL_CHECK_RESULT;
 
-                LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererMap3DObjectsStage_OpenGL fragment shader");
+                LogPrintf(LogSeverityLevel::Error, "Failed to compile AtlasMapRendererMap3DObjectsStage_OpenGL fragment shader");
                 return false;
             }
+
             const GLuint shaders[] = { vsId, fsId };
-            _program.id = gpuAPI->linkProgram(
-                2, shaders, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
+            _program.id = gpuAPI->linkProgram(2, shaders, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
         }
     }
 
@@ -158,9 +163,10 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
 {
     const auto gpuAPI = getGPUAPI();
 
-    // Initialize program first
     if (!initializeProgram())
+    {
         return false;
+    }
 
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
@@ -238,14 +244,12 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
         const double metersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileIdN.y, AtlasMapRenderer::TileSize3D);
         glUniform1f(*_program.vs.param.metersPerUnit, static_cast<float>(metersPerUnit));
         GL_CHECK_RESULT;
-
-        // Set uniforms for planeWorldCoordinates calculation
         glUniform2i(*_program.vs.param.target31, currentState.target31.x, currentState.target31.y);
         GL_CHECK_RESULT;
         glUniform1i(*_program.vs.param.zoomLevel, currentState.zoomLevel);
         GL_CHECK_RESULT;
 
-        const auto& buildings = object3DResource->getTestBuildings();
+        const auto& buildings = object3DResource->getRenderableBuildings();
         for (const auto& b : constOf(buildings))
         {
             if (!b.vertexBuffer || !b.indexBuffer || b.vertexCount <= 0 || b.indexCount <= 0)
@@ -259,47 +263,40 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
             GL_CHECK_RESULT;
 
             gpuAPI->useVAO(_vao);
-            
-            // Bind pre-created vertex buffer
+
             glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(b.vertexBuffer->refInGPU)));
             GL_CHECK_RESULT;
-            
-            // Bind pre-created index buffer
+
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(b.indexBuffer->refInGPU)));
             GL_CHECK_RESULT;
 
-            // Location31 attribute
             glEnableVertexAttribArray(*_program.vs.in.location31);
             GL_CHECK_RESULT;
-            glVertexAttribIPointer(*_program.vs.in.location31,
-                                   2, GL_INT,
-                                   sizeof(MapRenderer3DObjectsResource::Vertex),
-                                   reinterpret_cast<const GLvoid*>(offsetof(MapRenderer3DObjectsResource::Vertex, location31)));
+
+            glVertexAttribIPointer(*_program.vs.in.location31, 2, GL_INT, sizeof(BuildingVertex),
+                reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, location31)));
             GL_CHECK_RESULT;
-            
-            // Height attribute
+
             glEnableVertexAttribArray(*_program.vs.in.height);
             GL_CHECK_RESULT;
-            glVertexAttribPointer(*_program.vs.in.height,
-                                  1, GL_FLOAT,
-                                  GL_FALSE,
-                                  sizeof(MapRenderer3DObjectsResource::Vertex),
-                                  reinterpret_cast<const GLvoid*>(offsetof(MapRenderer3DObjectsResource::Vertex, height)));
+            glVertexAttribPointer(*_program.vs.in.height, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+                reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, height)));
             GL_CHECK_RESULT;
 
             // Transparency
-            glEnable(GL_BLEND);
-            GL_CHECK_RESULT;
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            GL_CHECK_RESULT;
+//            glEnable(GL_BLEND);
+//            GL_CHECK_RESULT;
+//            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//            GL_CHECK_RESULT;
 
             // Draw the building
             glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(b.indexCount), GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid*>(0));
             GL_CHECK_RESULT;
 
             // Transparency
-            glDisable(GL_BLEND);
-            GL_CHECK_RESULT;
+//            glDisable(GL_BLEND);
+//            GL_CHECK_RESULT;
+
             gpuAPI->unuseVAO();
         }
 

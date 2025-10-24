@@ -10,6 +10,7 @@
 #include <OsmAndCore/Map/IMapTiledDataProvider.h>
 #include <OsmAndCore/Map/MapPrimitivesProvider.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
+#include <OsmAndCore/Map/MapRenderer3DObjects.h>
 #include <memory>
 
 namespace OsmAnd
@@ -17,20 +18,14 @@ namespace OsmAnd
     class Map3DObjectsTiledProvider : public IMapTiledDataProvider, public std::enable_shared_from_this<Map3DObjectsTiledProvider>
     {
     public:
-        class Data : public IMapTiledDataProvider::Data
+        struct Data : public IMapTiledDataProvider::Data
         {
-        public:
-            Data(const TileId tileId, const ZoomLevel zoom,
-                const QList<std::shared_ptr<const MapPrimitiviser::Primitive>>& polygons);
+            Data(const TileId tileId, const ZoomLevel zoom, QVector<Building3D>&& buildings);
             virtual ~Data();
 
-            QList<std::shared_ptr<const MapPrimitiviser::Primitive>> polygons;
+            QVector<Building3D> buildings3D;
         };
 
-    private:
-    protected:
-        Map3DObjectsTiledProvider();
-    public:
         explicit Map3DObjectsTiledProvider(const std::shared_ptr<MapPrimitivesProvider>& tiledProvider);
         virtual ~Map3DObjectsTiledProvider();
 
@@ -54,6 +49,9 @@ namespace OsmAnd
             const IMapDataProvider::Request& request,
             const ObtainDataAsyncCallback callback,
             const bool collectMetric = false) override;
+
+    protected:
+        Map3DObjectsTiledProvider();
 
     private:
         std::shared_ptr<MapPrimitivesProvider> _tiledProvider;
