@@ -1266,23 +1266,30 @@ namespace OsmAnd
         static inline int getCommonSearch(QString name)
         {
             bool startsWithDigit = false;
-            for (int i = 0; i < name.length(); i++) {
-                if (isdigit(name.toStdString().at(i))) {
+            for (int i = 0; i < name.length(); i++)
+            {
+                if (name.at(i).isDigit())
+                {
                     startsWithDigit = true;
                     break;
-                } else if (isalpha(name.toStdString().at(i))) {
+                }
+                else if (name.at(i).isLetter())
+                {
                     break;
                 }
             }
-            if (startsWithDigit && letters(name) < 2) {
+            if (startsWithDigit && letters(name) < 2)
+            {
                 name = NUMBER_WITH_LESS_THAN_2_LETTERS;
             }
             
             int i = COMMON_WORDS().indexOf(name);
             // higher means better for search
-            if (i == -1) {
+            if (i == -1)
+            {
                 int fq = getFrequentlyUsed(name);
-                if (fq != -1) {
+                if (fq != -1)
+                {
                     return COMMON_WORDS().size() + fq;
                 }
                 return -1;
