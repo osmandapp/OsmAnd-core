@@ -1265,7 +1265,16 @@ namespace OsmAnd
         
         static inline int getCommonSearch(QString name)
         {
-            if (isdigit(name.toStdString().at(0)) && letters(name) < 2) {
+            bool startsWithDigit = false;
+            for (int i = 0; i < name.length(); i++) {
+                if (isdigit(name.toStdString().at(i))) {
+                    startsWithDigit = true;
+                    break;
+                } else if (isalpha(name.toStdString().at(i))) {
+                    break;
+                }
+            }
+            if (startsWithDigit && letters(name) < 2) {
                 name = NUMBER_WITH_LESS_THAN_2_LETTERS;
             }
             
@@ -1286,7 +1295,7 @@ namespace OsmAnd
                 int count = 0;
                 for (int i = 0; i < s.length(); i++)
                 {
-                    if (!s[i].isDigit())
+                    if (!s[i].isDigit() && s[i].isLetter())
                     {
                         count++;
                     }
