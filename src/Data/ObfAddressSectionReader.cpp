@@ -67,7 +67,7 @@ void OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(
 void OsmAnd::ObfAddressSectionReader::loadIntersectionsFromStreet(
     const std::shared_ptr<const ObfReader>& reader,
     const std::shared_ptr<const Street>& street,
-    QList< std::shared_ptr<const StreetIntersection> >* resultOut /*= nullptr*/,
+    QList< std::shared_ptr<const Street> >* resultOut /*= nullptr*/,
     const AreaI* const bbox31 /*= nullptr*/,
     const IntersectionVisitorFunction visitor /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)

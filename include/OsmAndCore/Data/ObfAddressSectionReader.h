@@ -20,7 +20,6 @@ namespace OsmAnd
     class StreetGroup;
     class Street;
     class Building;
-    class StreetIntersection;
     class IQueryController;
 
     class OSMAND_CORE_API ObfAddressSectionReader
@@ -30,9 +29,7 @@ namespace OsmAnd
         typedef std::function<bool(const std::shared_ptr<const OsmAnd::StreetGroup>& streetGroup)> StreetGroupVisitorFunction;
         typedef std::function<bool(const std::shared_ptr<const OsmAnd::Street>& street)> StreetVisitorFunction;
         typedef std::function<bool(const std::shared_ptr<const OsmAnd::Building>& building)> BuildingVisitorFunction;
-        typedef
-            std::function<bool(const std::shared_ptr<const OsmAnd::StreetIntersection>& streetIntersection)>
-            IntersectionVisitorFunction;
+        typedef std::function<bool(const std::shared_ptr<const OsmAnd::Street>& streetIntersection)> IntersectionVisitorFunction;
 
     private:
         ObfAddressSectionReader();
@@ -67,7 +64,7 @@ namespace OsmAnd
         static void loadIntersectionsFromStreet(
             const std::shared_ptr<const ObfReader>& reader,
             const std::shared_ptr<const Street>& street,
-            QList< std::shared_ptr<const StreetIntersection> >* resultOut = nullptr,
+            QList< std::shared_ptr<const Street> >* resultOut = nullptr,
             const AreaI* const bbox31 = nullptr,
             const IntersectionVisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);

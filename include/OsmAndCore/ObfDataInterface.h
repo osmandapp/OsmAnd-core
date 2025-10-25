@@ -184,7 +184,7 @@ namespace OsmAnd
 
         bool loadIntersectionsFromStreets(
             const QList< std::shared_ptr<const Street> >& streets,
-            QHash< std::shared_ptr<const Street>, QList< std::shared_ptr<const StreetIntersection> > >* resultOut = nullptr,
+            QHash< std::shared_ptr<const Street>, QList< std::shared_ptr<const Street> > >* resultOut = nullptr,
             const AreaI* const bbox31 = nullptr,
             const ObfAddressSectionReader::IntersectionVisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
