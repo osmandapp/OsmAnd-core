@@ -329,6 +329,11 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
     return true;
 }
 
+void OsmAnd::MapPrimitivesProvider_P::clearEntriesCache()
+{
+    _tileReferences.removeAllEntries();
+}
+
 OsmAnd::MapPrimitivesProvider_P::RetainableCacheMetadata::RetainableCacheMetadata(
     const std::shared_ptr<TileEntry>& tileEntry,
     const std::shared_ptr<const IMapDataProvider::RetainableCacheMetadata>& binaryMapRetainableCacheMetadata_)
