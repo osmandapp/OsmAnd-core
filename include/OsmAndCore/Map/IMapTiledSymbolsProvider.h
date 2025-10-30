@@ -80,7 +80,7 @@ namespace OsmAnd
             std::shared_ptr<Data>& outTiledSymbols,
             std::shared_ptr<Metric>* const pOutMetric = nullptr);
 
-        virtual void OnRemoved() { };
+        virtual void onRemoved() { };
     };
 }
 

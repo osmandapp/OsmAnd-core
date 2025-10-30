@@ -95,7 +95,7 @@ namespace OsmAnd
             const IMapDataProvider::ObtainDataAsyncCallback callback,
             const bool collectMetric = false) Q_DECL_OVERRIDE;
 
-        void OnRemoved() Q_DECL_OVERRIDE;
+        void onRemoved() Q_DECL_OVERRIDE;
     };
 }
 
