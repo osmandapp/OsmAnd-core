@@ -117,3 +117,8 @@ QString OsmAnd::MapObjectsSymbolsProvider::MapObjectSymbolsGroup::toString() con
 {
     return mapObject->toString();
 }
+
+void OsmAnd::MapObjectsSymbolsProvider::OnRemoved()
+{
+    primitivesProvider->clearEntriesCache();
+}
