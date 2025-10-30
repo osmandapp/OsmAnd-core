@@ -212,95 +212,120 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
 
     glUseProgram(_program.id);
     GL_CHECK_RESULT;
-
     glUniformMatrix4fv(*_program.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
+    GL_CHECK_RESULT;
+    glUniform2i(*_program.vs.param.target31, currentState.target31.x, currentState.target31.y);
+    GL_CHECK_RESULT;
+    glUniform1i(*_program.vs.param.zoomLevel, (int)currentState.zoomLevel);
     GL_CHECK_RESULT;
 
     const auto CollectionStapshot = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection);
 
-    const auto visibleTiles = static_cast<AtlasMapRenderer*>(getRenderer())->getVisibleTiles();
-
-    for (const auto& tileId : constOf(visibleTiles))
+    auto tilesBegin = internalState.visibleTiles.cbegin();
+    for (auto itTiles = internalState.visibleTiles.cend(); itTiles != tilesBegin; itTiles--)
     {
-        const auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomLevel);
+        const auto& tilesEntry = itTiles - 1;
+        const auto& visibleTilesSet = internalState.visibleTilesSet.constFind(tilesEntry.key());
 
-        std::shared_ptr<MapRendererBaseTiledResource> tiledResource;
-        if (!CollectionStapshot->obtainResource(tileIdN, currentState.zoomLevel, tiledResource))
+        if (visibleTilesSet == internalState.visibleTilesSet.cend())
         {
             continue;
         }
 
-        const auto object3DResource = std::static_pointer_cast<MapRenderer3DObjectsResource>(tiledResource);
-        if (!object3DResource)
+        for (const auto& tileId : constOf(tilesEntry.value()))
         {
-            continue;
-        }
+            const auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomLevel);
 
-        if (!object3DResource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
-        {
-            continue;
-        }
-
-        const double metersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileIdN.y, AtlasMapRenderer::TileSize3D);
-        glUniform1f(*_program.vs.param.metersPerUnit, static_cast<float>(metersPerUnit));
-        GL_CHECK_RESULT;
-        glUniform2i(*_program.vs.param.target31, currentState.target31.x, currentState.target31.y);
-        GL_CHECK_RESULT;
-        glUniform1i(*_program.vs.param.zoomLevel, currentState.zoomLevel);
-        GL_CHECK_RESULT;
-
-        const auto& buildings = object3DResource->getRenderableBuildings();
-        for (const auto& b : constOf(buildings))
-        {
-            if (!b.vertexBuffer || !b.indexBuffer || b.vertexCount <= 0 || b.indexCount <= 0)
+            if (!visibleTilesSet->contains(tileIdN))
             {
                 continue;
             }
 
-            auto debugColor = b.debugColor;
+            const int maxMissingDataUnderZoomShift = currentState.map3DObjectsProvider->getMaxMissingDataUnderZoomShift();
 
-            glUniform4f(*_program.vs.param.color, debugColor.r, debugColor.g, debugColor.b, 1.0f);
+            int desiredOffset = internalState.zoomLevelOffset;
+            if (desiredOffset == 0 && !internalState.extraDetailedTiles.empty())
+            {
+                desiredOffset = 1;
+            }
+
+            const int appliedOffset = std::min(desiredOffset, maxMissingDataUnderZoomShift);
+            const int neededZoom = std::min(static_cast<int>(MaxZoomLevel), tilesEntry.key() + appliedOffset);
+
+            std::shared_ptr<MapRendererBaseTiledResource> tiledResource;
+            CollectionStapshot->obtainResource(tileIdN, (ZoomLevel)neededZoom, tiledResource);
+
+            const auto object3DResource = std::static_pointer_cast<MapRenderer3DObjectsResource>(tiledResource);
+            if (!object3DResource)
+            {
+                continue;
+            }
+
+            if (!object3DResource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
+            {
+                continue;
+            }
+
+            const int absZoomShift = currentState.zoomLevel - neededZoom;
+            //const double metersPerUnit = currentState.flatEarth ?
+                //Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileIdN.y << absZoomShift, AtlasMapRenderer::TileSize3D) : internalState.metersPerUnit;
+            const double metersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileIdN.y << absZoomShift, AtlasMapRenderer::TileSize3D);
+
+            glUniform1f(*_program.vs.param.metersPerUnit, static_cast<float>(metersPerUnit));
             GL_CHECK_RESULT;
 
-            gpuAPI->useVAO(_vao);
+            const auto& buildings = object3DResource->getRenderableBuildings();
+            for (const auto& b : constOf(buildings))
+            {
+                if (!b.vertexBuffer || !b.indexBuffer || b.vertexCount <= 0 || b.indexCount <= 0)
+                {
+                    continue;
+                }
 
-            glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(b.vertexBuffer->refInGPU)));
-            GL_CHECK_RESULT;
+                auto debugColor = b.debugColor;
 
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(b.indexBuffer->refInGPU)));
-            GL_CHECK_RESULT;
+                glUniform4f(*_program.vs.param.color, debugColor.r, debugColor.g, debugColor.b, 1.0f);
+                GL_CHECK_RESULT;
 
-            glEnableVertexAttribArray(*_program.vs.in.location31);
-            GL_CHECK_RESULT;
+                gpuAPI->useVAO(_vao);
 
-            glVertexAttribIPointer(*_program.vs.in.location31, 2, GL_INT, sizeof(BuildingVertex),
-                reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, location31)));
-            GL_CHECK_RESULT;
+                glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(b.vertexBuffer->refInGPU)));
+                GL_CHECK_RESULT;
 
-            glEnableVertexAttribArray(*_program.vs.in.height);
-            GL_CHECK_RESULT;
-            glVertexAttribPointer(*_program.vs.in.height, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
-                reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, height)));
-            GL_CHECK_RESULT;
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(b.indexBuffer->refInGPU)));
+                GL_CHECK_RESULT;
 
-            // Transparency
-//            glEnable(GL_BLEND);
-//            GL_CHECK_RESULT;
-//            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//            GL_CHECK_RESULT;
+                glEnableVertexAttribArray(*_program.vs.in.location31);
+                GL_CHECK_RESULT;
 
-            // Draw the building
-            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(b.indexCount), GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid*>(0));
-            GL_CHECK_RESULT;
+                glVertexAttribIPointer(*_program.vs.in.location31, 2, GL_INT, sizeof(BuildingVertex),
+                    reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, location31)));
+                GL_CHECK_RESULT;
 
-            // Transparency
-//            glDisable(GL_BLEND);
-//            GL_CHECK_RESULT;
+                glEnableVertexAttribArray(*_program.vs.in.height);
+                GL_CHECK_RESULT;
+                glVertexAttribPointer(*_program.vs.in.height, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+                    reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, height)));
+                GL_CHECK_RESULT;
 
-            gpuAPI->unuseVAO();
+                // Transparency ON
+                glEnable(GL_BLEND);
+                GL_CHECK_RESULT;
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                GL_CHECK_RESULT;
+
+                glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(b.indexCount), GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid*>(0));
+                GL_CHECK_RESULT;
+
+                // Transparency OF
+                glDisable(GL_BLEND);
+                GL_CHECK_RESULT;
+
+                gpuAPI->unuseVAO();
+            }
+
+            object3DResource->setState(MapRendererResourceState::Uploaded);
         }
-
-        object3DResource->setState(MapRendererResourceState::Uploaded);
     }
 
     return true;

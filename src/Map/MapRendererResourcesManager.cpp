@@ -2568,7 +2568,8 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                         continue;
 
                     if (resourcesType == MapRendererResourceType::MapLayer ||
-                        resourcesType == MapRendererResourceType::ElevationData)
+                        resourcesType == MapRendererResourceType::ElevationData ||
+                        resourcesType == MapRendererResourceType::Map3DObjects)
                     {
                         if (activeZoom < minZoom)
                         {

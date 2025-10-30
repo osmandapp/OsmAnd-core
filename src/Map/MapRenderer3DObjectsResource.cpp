@@ -144,7 +144,7 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
         _renderableBuildings.append(renderableBuilding);
     }
 
-    _sourceData.reset();
+    //_sourceData.reset();
     return true;
 }
 
