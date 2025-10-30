@@ -1265,15 +1265,31 @@ namespace OsmAnd
         
         static inline int getCommonSearch(QString name)
         {
-            if (isdigit(name.toStdString().at(0)) && letters(name) < 2) {
+            bool startsWithDigit = false;
+            for (int i = 0; i < name.length(); i++)
+            {
+                if (name.at(i).isDigit())
+                {
+                    startsWithDigit = true;
+                    break;
+                }
+                else if (name.at(i).isLetter())
+                {
+                    break;
+                }
+            }
+            if (startsWithDigit && letters(name) < 2)
+            {
                 name = NUMBER_WITH_LESS_THAN_2_LETTERS;
             }
             
             int i = COMMON_WORDS().indexOf(name);
             // higher means better for search
-            if (i == -1) {
+            if (i == -1)
+            {
                 int fq = getFrequentlyUsed(name);
-                if (fq != -1) {
+                if (fq != -1)
+                {
                     return COMMON_WORDS().size() + fq;
                 }
                 return -1;
@@ -1286,7 +1302,7 @@ namespace OsmAnd
                 int count = 0;
                 for (int i = 0; i < s.length(); i++)
                 {
-                    if (!s[i].isDigit())
+                    if (!s[i].isDigit() && s[i].isLetter())
                     {
                         count++;
                     }

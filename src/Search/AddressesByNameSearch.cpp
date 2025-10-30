@@ -6,7 +6,6 @@
 #include "Building.h"
 #include "Street.h"
 #include "StreetGroup.h"
-#include "StreetIntersection.h"
 
 OsmAnd::AddressesByNameSearch::AddressesByNameSearch(const std::shared_ptr<const IObfsCollection>& obfsCollection_)
     : BaseSearch(obfsCollection_)
@@ -118,7 +117,7 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                 
                 const ObfAddressSectionReader::IntersectionVisitorFunction intersectionVisitorFunction =
                 [this, newResultEntryCallback, criteria_, criteria, &stringMatcher]
-                (const std::shared_ptr<const OsmAnd::StreetIntersection>& intersection) -> bool
+                (const std::shared_ptr<const OsmAnd::Street>& intersection) -> bool
                 {
                     bool accept = criteria.name.isEmpty();
                     accept = accept || stringMatcher.matches(intersection->nativeName);
