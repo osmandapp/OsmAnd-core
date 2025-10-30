@@ -1801,8 +1801,6 @@ bool OsmAnd::MapRendererResourcesManager::checkForUpdatesAndApply(const MapState
                         && mapState.zoomLevel >=  provider->getMinZoom()
                         && mapState.zoomLevel <= provider->getMaxZoom())
                         updatesPresent = true;
-
-                    updatesPresent = false;
                 }
             }
 
