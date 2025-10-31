@@ -10,7 +10,8 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 		const VectorMapSymbol::PrimitiveType& primitiveType,
 		std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>& partSizes,
 		const ZoomLevel zoomLevel, const PointD& tilePosN, const int32_t cellsPerTileSize,
-		const float minDistance, const float maxBreakTangent, const bool diagonals, const bool simplify)
+		const float minDistance, const float maxBreakTangent, const bool diagonals, const bool simplify,
+        std::vector<VectorMapSymbol::Vertex>& outVertices)
 {
 	if (!partSizes)
         return false;
@@ -657,11 +658,9 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 		for (const auto& frag : fragments)
 			putTriangle(meshes, frag.second.A, frag.second.B, frag.second.C, tileSize, tilePosN);
 	}
-	vertices.clear();
-	partSizes->clear();
 	for (const auto& mesh : meshes)
 	{
-		vertices.insert(vertices.end(), mesh.second.begin(), mesh.second.end());
+		outVertices.insert(outVertices.end(), mesh.second.begin(), mesh.second.end());
 		partSizes->push_back({mesh.first, mesh.second.size()});
 	}
 	return true;

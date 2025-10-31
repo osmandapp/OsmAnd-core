@@ -237,7 +237,7 @@ bool OsmAnd::Utilities_OpenGL_Common::rayIntersectsCone(
 }
 
 bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& planeN, const double planeD,
-    double& minAngleX, double& maxAngleX, double& minAngleY, double& maxAngleY,
+    glm::dvec2& minVectorX, glm::dvec2& maxVectorX, double& minCoordY, double& maxCoordY,
     const glm::dvec3* point1 /* = nullptr */, const glm::dvec3* point2 /* = nullptr */)
 {
     const auto pD = fabs(planeD);
@@ -251,11 +251,10 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
     glm::dvec3 minX, maxX, minY, maxY;
     if (qFuzzyIsNull(planeN.x) && qFuzzyIsNull(planeN.y))
     {
-        minAngleX = -M_PI;
-        maxAngleX = M_PI + fullCircle;
-        const auto mY = -qAsin(qBound(-1.0, planeN.z > 0.0 ? planeD : -planeD, 1.0));
-        minAngleY = qMin(minAngleY, mY);
-        maxAngleY = qMax(maxAngleY, mY);
+        minVectorX = maxVectorX = glm::dvec2(0.0, -1.0);
+        const auto mY = planeN.z > 0.0 ? planeD : -planeD;
+        minCoordY = qMin(minCoordY, mY);
+        maxCoordY = qMax(maxCoordY, mY);
         return true;
     }
     else if (qFuzzyIsNull(planeN.z))
@@ -269,26 +268,29 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
         const auto ry = -pN.x * r;
         minX = glm::dvec3(cx - rx, cy - ry, 0.0);
         maxX = glm::dvec3(cx + rx, cy + ry, 0.0);
-        minY = glm::dvec3(cx, cy, r);
-        maxY = glm::dvec3(cx, cy, -r);
+        minY = glm::dvec3(cx, cy, -r);
+        maxY = glm::dvec3(cx, cy, r);
     }
     else
     {
         const auto pN = planeD < 0.0 ? -planeN : planeN;
         const auto spD = pD * pD;
-        r = qSqrt(1.0 - spD);
+        const auto sr = 1.0 - spD;
+        r = qSqrt(sr);
         const auto xyL = qSqrt(1.0 - pN.z * pN.z);
         const auto c = pD * xyL;
         const auto b = r * pN.z;
         sectX = c > fabs(b);
         if (sectX)
         {
+            const auto sb = b * b;
             const auto sc = c * c;
             const auto angleXY = qAtan2(pN.x, pN.y);
-            const auto deltaAngle = qAtan(r / qSqrt(sc - b * b));
+            const auto scmb = qSqrt(sc - sb);
+            const auto deltaAngle = qAtan(r / scmb);
             const auto a1 = angleXY - deltaAngle;
             const auto a2 = angleXY + deltaAngle;
-            const auto absZ = qSqrt(spD - sc);
+            const auto absZ = qSqrt(1.0 - scmb * qSqrt(sr - sb + sc) / c);
             const auto z = pN.z > 0 ? absZ : -absZ;
             const auto csy = qCos(-qAsin(qBound(-1.0, z, 1.0)));
             minX = glm::dvec3(csy * qSin(a1), csy * qCos(a1), z);
@@ -311,20 +313,20 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
         const auto yYp2 = yN * xy2;
         const auto zYp2 = same ? z2 : z1;
         const bool change = zYp1 < zYp2;
-        minY = change ? glm::dvec3(xYp2, yYp2, zYp2) : glm::dvec3(xYp1, yYp1, zYp1);
-        maxY = change ? glm::dvec3(xYp1, yYp1, zYp1) : glm::dvec3(xYp2, yYp2, zYp2);
+        minY = change ? glm::dvec3(xYp1, yYp1, zYp1) : glm::dvec3(xYp2, yYp2, zYp2);
+        maxY = change ? glm::dvec3(xYp2, yYp2, zYp2) : glm::dvec3(xYp1, yYp1, zYp1);
     }
 
-    double minXa, maxXa, minYz, maxYz;
+    glm::dvec2 minXv, maxXv;
+    double minYz, maxYz;
     if (point1 != nullptr && point2 != nullptr)
     {
         const auto center = planeN * planeD;
         const auto v1 = *point1 - center;
         const auto v2 = *point2 - center;
         const auto fullA = qAtan2(glm::length(glm::cross(v1, v2)), glm::dot(v1, v2));
-        bool minInside = true;
-        bool maxInside = true;
-        double minAngle, maxAngle;
+        bool minInside = false;
+        bool maxInside = false;
         if (sectX)
         {
             const auto cminX = minX - center;
@@ -333,53 +335,78 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
             const auto maxA = qAtan2(glm::length(glm::cross(v1, cmaxX)), glm::dot(v1, cmaxX));
             minInside = fullA * minA > 0.0 && fabs(fullA) > fabs(minA);
             maxInside = fullA * maxA > 0.0 && fabs(fullA) > fabs(maxA);
-            minXa = qAtan2(minX.x, minX.y);
-            maxXa = qAtan2(maxX.x, maxX.y) + fullCircle;
+            minXv = minX.xy();
+            maxXv = maxX.xy();
         }
-        if (!minInside || !maxInside || !sectX)
+        glm::dvec2 minXp, maxXp;
+        if (!minInside || !maxInside)
         {
-            const auto vM = glm::normalize((v1 + v2) / 2.0) * r + center;
             const auto angle1 = qAtan2(point1->x, point1->y);
             const auto angle2 = qAtan2(point2->x, point2->y);
-            const auto angleM = qAtan2(vM.x, vM.y);
-            minAngle = qMin(angle1, angle2);
-            maxAngle = qMax(angle1, angle2);
-            if (angleM < minAngle || angleM > maxAngle)
+            const auto minAngle = qMin(angle1, angle2);
+            const auto maxAngle = qMax(angle1, angle2);
+            minXp = angle2 > angle1 ? point1->xy() : point2->xy();
+            maxXp = angle2 > angle1 ? point2->xy() : point1->xy();
+            if (!sectX)
             {
-                auto pMin = minAngle;
-                minAngle = maxAngle;
-                maxAngle = pMin;
+                const auto vM = glm::normalize(v1 + v2) * r + center;
+                const auto angleM = qAtan2(vM.x, vM.y);
+                if (angleM < minAngle || angleM > maxAngle)
+                {
+                    auto minXpt = minXp;
+                    minXp = maxXp;
+                    maxXp = minXpt;
+                }
             }
-            maxAngle += fullCircle;
+            else if (maxAngle - minAngle > M_PI)
+            {
+                auto minXpt = minXp;
+                minXp = maxXp;
+                maxXp = minXpt;
+            }
         }
         if (!minInside)
-            minXa = minAngle;
+            minXv = minXp;
         if (!maxInside)
-            maxXa = maxAngle;
-        if (!sectX)
-        {
-            minXa = minAngle;
-            maxXa = maxAngle;
-        }
+            maxXv = maxXp;
         const auto cminY = minY - center;
         const auto cmaxY = maxY - center;
         const auto minA = qAtan2(glm::length(glm::cross(v1, cminY)), glm::dot(v1, cminY));
         const auto maxA = qAtan2(glm::length(glm::cross(v1, cmaxY)), glm::dot(v1, cmaxY));
-        minYz = (fullA * minA > 0.0 && fabs(fullA) > fabs(minA)) ? minY.z : qMax(point1->z, point2->z);
-        maxYz = (fullA * maxA > 0.0 && fabs(fullA) > fabs(maxA)) ? maxY.z : qMin(point1->z, point2->z);
+        minYz = (fullA * minA > 0.0 && fabs(fullA) > fabs(minA)) ? minY.z : qMin(point1->z, point2->z);
+        maxYz = (fullA * maxA > 0.0 && fabs(fullA) > fabs(maxA)) ? maxY.z : qMax(point1->z, point2->z);
     }
     else
     {
-        minXa = sectX ? qAtan2(minX.x, minX.y) : -M_PI;
-        maxXa = (sectX ? qAtan2(maxX.x, maxX.y) : M_PI) + fullCircle;
+        minXv = sectX ? minX.xy() : glm::dvec2(0.0, -1.0);
+        maxXv = sectX ? maxX.xy() : glm::dvec2(0.0, -1.0);
         minYz = minY.z;
         maxYz = maxY.z;
     }
 
-    minAngleX = qMin(minAngleX, minXa);
-    maxAngleX = qMax(maxAngleX, maxXa);
-    minAngleY = qMin(minAngleY, -qAsin(qBound(-1.0, minYz, 1.0)));
-    maxAngleY = qMax(maxAngleY, -qAsin(qBound(-1.0, maxYz, 1.0)));
+    minXv = glm::normalize(minXv);
+    maxXv = glm::normalize(maxXv);
+    if (minXv == maxXv && minXv.x == 0.0 && minXv.y == -1.0)
+    {
+        minVectorX = maxVectorX = minXv;
+    }
+    else if (minXv != maxXv)
+    {
+        if (minVectorX.x == 0.0 && minVectorX.y == 0.0)
+        {
+            minVectorX = minXv;
+            maxVectorX = maxXv;
+        }
+        else if (minVectorX != maxVectorX)
+        {
+            const auto avg = glm::normalize(minXv + maxXv + minVectorX + maxVectorX);
+            minVectorX = glm::dot(avg, minXv) < glm::dot(avg, minVectorX) ? minXv : minVectorX;
+            maxVectorX = glm::dot(avg, maxXv) < glm::dot(avg, maxVectorX) ? maxXv : maxVectorX;
+        }
+    }
+
+    minCoordY = qMin(minCoordY, minYz);
+    maxCoordY = qMax(maxCoordY, maxYz);
 
     return true;
 }

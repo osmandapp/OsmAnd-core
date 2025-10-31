@@ -70,6 +70,7 @@ public:
 	 * @param outlineColorizationMapping The outline's color map (inner and outer colors are used as filters).
 	 * @param heights The path's height map (in meters).
 	 * @param jointStyle The path's joint style.
+	 * @param startCapStyle The path's start cap style.
 	 * @param endCapStyle The path's end cap style.
 	 * @param solidColors When set to "true" the path and outline color maps are used as solid colors for segments.
 	 * @return The vertices describing the path.
@@ -94,12 +95,13 @@ public:
                                                                QList<OsmAnd::FColorARGB> &outlineColorizationMapping,
                                                                QList<float> &heights,
                                                                JointStyle jointStyle = JointStyle::MITER,
+                                                               EndCapStyle startCapStyle = EndCapStyle::BUTT,
                                                                EndCapStyle endCapStyle = EndCapStyle::BUTT,
                                                                bool solidColors = false) {
 		std::vector<OsmAnd::VectorMapSymbol::Vertex> vertices;
 		create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex, vertices, points, thickness,
             outline, distances, fillColor, nearOutlineColor, farOutlineColor, colorizationMapping,
-            outlineColorizationMapping, heights, jointStyle, endCapStyle, solidColors);
+            outlineColorizationMapping, heights, jointStyle, startCapStyle, endCapStyle, solidColors);
 		return vertices;
 	}
 
@@ -116,12 +118,13 @@ public:
                                                                QList<OsmAnd::FColorARGB> &outlineColorizationMapping,
                                                                QList<float> &heights,
                                                                JointStyle jointStyle = JointStyle::MITER,
+                                                               EndCapStyle startCapStyle = EndCapStyle::BUTT,
                                                                EndCapStyle endCapStyle = EndCapStyle::BUTT,
                                                                bool solidColors = false) {
         std::vector<OsmAnd::VectorMapSymbol::Vertex> vertices;
 		create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex, vertices, points, thickness,
             outline, distances, fillColor, nearOutlineColor, farOutlineColor, colorizationMapping,
-            outlineColorizationMapping, heights, jointStyle, endCapStyle, solidColors);
+            outlineColorizationMapping, heights, jointStyle, startCapStyle, endCapStyle, solidColors);
 		return vertices;
 	}
 
@@ -139,13 +142,14 @@ public:
                          QList<OsmAnd::FColorARGB> &outlineColorizationMapping,
                          QList<float> &heights,
                          JointStyle jointStyle = JointStyle::MITER,
+                         EndCapStyle startCapStyle = EndCapStyle::BUTT,
                          EndCapStyle endCapStyle = EndCapStyle::BUTT,
                          bool solidColors = false) {
 		auto numVerticesBefore = vertices.size();
 
         create<Vertex, InputCollection>(vertex, std::back_inserter(vertices), points, thickness, outline, distances,
             fillColor, nearOutlineColor, farOutlineColor, colorizationMapping, outlineColorizationMapping, heights,
-            jointStyle, endCapStyle, solidColors);
+            jointStyle, startCapStyle, endCapStyle, solidColors);
 
 		return vertices.size() - numVerticesBefore;
 	}
@@ -164,6 +168,7 @@ public:
                                  QList<OsmAnd::FColorARGB> &outlineColorizationMapping,
                                  QList<float> &heights,
 	                             JointStyle jointStyle = JointStyle::MITER,
+	                             EndCapStyle startCapStyle = EndCapStyle::BUTT,
 	                             EndCapStyle endCapStyle = EndCapStyle::BUTT,
                                  bool solidColors = false) {
         OsmAnd::VectorMapSymbol::Vertex* pVertex = &vertex;
@@ -192,7 +197,7 @@ public:
 			return vertices;
 		}
 
-		if (endCapStyle == EndCapStyle::JOINT) {
+		if (startCapStyle == EndCapStyle::JOINT && endCapStyle == EndCapStyle::JOINT) {
 			// create a connecting segment from the last to the first point
 
 			auto &pointD1 = points[points.size() - 1];
@@ -241,7 +246,7 @@ public:
         auto lastLength = Vec2Maths::magnitude(Vec2Maths::subtract(lastSegment.center.b, lastSegment.center.a));
 
 		// handle different end cap styles
-        if (endCapStyle == EndCapStyle::ROUND || endCapStyle == EndCapStyle::ARROW) {
+        if (startCapStyle == EndCapStyle::ROUND || startCapStyle == EndCapStyle::ARROW) {
 			// draw half circle first end cap
 			auto firstColor = hasColorMapping ? colorizationMapping.first() : fillColor;
 			auto innerColor = nearOutlineColor;
@@ -255,7 +260,7 @@ public:
             createTriangleFan(vertex, vertices, firstColor, firstColor, innerColor, innerColor, outerColor, outerColor,
                 outlineWidth, firstDistance, firstHeight, outline, firstSegment.center.a, firstSegment.center.a,
                 firstSegment.edge1.a, firstSegment.edge2.a, endSide1, nextStartSide1, false);
-            if (endCapStyle == EndCapStyle::ARROW) {
+            if (startCapStyle == EndCapStyle::ARROW) {
                 // Define location for an arrow cap
                 if (!hasHeights && showOutline) {
                     arrowShift += outlineWidth;
@@ -281,7 +286,7 @@ public:
                 lastSegment.center.b = Vec2Maths::subtract(
                      lastSegment.center.b, Vec2Maths::multiply(lastSegment.center.direction(), arrowShift));
             }
-		} else if (endCapStyle == EndCapStyle::JOINT) {
+		} else if (startCapStyle == EndCapStyle::JOINT && endCapStyle == EndCapStyle::JOINT) {
 			// join the last (connecting) segment and the first segment
 			auto endColor = hasColorMapping ? colorizationMapping.last() : fillColor;
 			auto nextColor = hasColorMapping ? colorizationMapping.first() : fillColor;
@@ -315,7 +320,7 @@ public:
             auto pStart1 = pathStart1;
             auto pStart2 = pathStart2;
             auto pCenter = firstSegment.center.a;
-            if (endCapStyle == EndCapStyle::SQUARE) {
+            if (startCapStyle == EndCapStyle::SQUARE) {
                 // extend the start points by half the thickness
                 pStart1 =
                     Vec2Maths::subtract(pathStart1, Vec2Maths::multiply(firstSegment.edge1.direction(), edgeOffset));
@@ -456,7 +461,7 @@ public:
                 pVertex->positionXYZD[2] = outPathStart2.y;
                 *vertices++ = vertex;
 
-                if (endCapStyle == EndCapStyle::SQUARE) {
+                if (startCapStyle == EndCapStyle::SQUARE) {
                     auto outPrevStartSide1 = Vec2Maths::add(
                         pathStart1, Vec2Maths::multiply(firstSegment.edge1.normal(), outlineWidth));
                     auto outPrevStartSide2 = Vec2Maths::subtract(
@@ -559,7 +564,7 @@ public:
 				start1 = pathStart1;
 				start2 = pathStart2;
 
-        		if (showOutline && endCapStyle != EndCapStyle::JOINT) {
+        		if (showOutline && (startCapStyle != EndCapStyle::JOINT || endCapStyle != EndCapStyle::JOINT)) {
                     auto shiftStart = Vec2Maths::normalized(Vec2Maths::subtract(start2, start1));
                     startSide1 = Vec2Maths::subtract(start1, Vec2Maths::multiply(shiftStart, outlineWidth));
                     startSide2 = Vec2Maths::add(start2, Vec2Maths::multiply(shiftStart, outlineWidth));
@@ -581,7 +586,7 @@ public:
                 }
 
         		if (showOutline) {
-                    if (endCapStyle == EndCapStyle::JOINT) {
+                    if (startCapStyle == EndCapStyle::JOINT && endCapStyle == EndCapStyle::JOINT) {
                         endSide1 = lastSide1;
                         endSide2 = lastSide2;
                     } else {
@@ -1074,7 +1079,7 @@ public:
             createTriangleFan(vertex, vertices, lastColor, lastColor, innerColor, innerColor, outerColor, outerColor,
                 outlineWidth, lastDistance, lastHeight, outline, lastSegment.center.b, lastSegment.center.b,
                 lastSegment.edge2.b, lastSegment.edge1.b, endSide1, nextStartSide1, false);
-        } else if (endCapStyle != EndCapStyle::JOINT) {
+        } else if (startCapStyle != EndCapStyle::JOINT || endCapStyle != EndCapStyle::JOINT) {
             auto pEnd1 = pathEnd1;
             auto pEnd2 = pathEnd2;
             auto pCenter = lastSegment.center.b;

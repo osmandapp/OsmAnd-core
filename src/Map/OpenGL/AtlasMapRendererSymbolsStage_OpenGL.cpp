@@ -286,6 +286,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
@@ -446,9 +447,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_billboardRasterProgram.id, variablesMap);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
-    ok = ok
-         && lookup->lookupLocation(
-             _billboardRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.mRotate, "param_vs_mRotate", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
@@ -525,9 +524,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     GL_CHECK_RESULT;
 
     gpuAPI->initializeVAO(_billboardRasterSymbolVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    GL_CHECK_RESULT;
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_billboardRasterProgram.vs.in.vertexTexCoords);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_billboardRasterProgram.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 
     return true;
@@ -760,6 +764,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
 
     const auto alreadyOccupiedUniforms =
@@ -896,9 +901,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     GL_CHECK_RESULT;
 
     gpuAPI->initializeVAO(_onPathSymbol2dVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    GL_CHECK_RESULT;
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_onPath2dProgram.vs.in.vertexTexCoords);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_onPath2dProgram.vs.in.glyphIndex);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_onPath2dProgram.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 
     return true;
@@ -1111,6 +1123,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
 
     const auto alreadyOccupiedUniforms =
@@ -1247,9 +1260,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     GL_CHECK_RESULT;
 
     gpuAPI->initializeVAO(_onPathSymbol3dVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    GL_CHECK_RESULT;
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_onPath3dProgram.vs.in.vertexTexCoords);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_onPath3dProgram.vs.in.glyphIndex);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_onPath3dProgram.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 
     return true;
@@ -1927,6 +1947,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
@@ -2131,9 +2152,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     GL_CHECK_RESULT;
 
     gpuAPI->initializeVAO(_onSurfaceRasterSymbolVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    GL_CHECK_RESULT;
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_onSurfaceRasterProgram.vs.in.vertexTexCoords);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_onSurfaceRasterProgram.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 
     return true;
@@ -2356,14 +2382,24 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
             "uniform vec4 param_vs_elevation_scale;                                                                             ""\n"
             "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
             "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
-            "uniform mat4 param_vs_mModel;                                                                                      ""\n"
+            "uniform mat3 param_vs_mModel;                                                                                      ""\n"
+            "uniform mat3 param_vs_mGlobeRotation;                                                                              ""\n"
+            "uniform vec4 param_vs_offsetsAndMode;                                                                              ""\n"
+            "uniform vec3 param_vs_globeTileTL;                                                                                 ""\n"
+            "uniform vec3 param_vs_globeTileTR;                                                                                 ""\n"
+            "uniform vec3 param_vs_globeTileBL;                                                                                 ""\n"
+            "uniform vec3 param_vs_globeTileBR;                                                                                 ""\n"
+            "uniform vec3 param_vs_globeTileTLnv;                                                                               ""\n"
+            "uniform vec3 param_vs_globeTileTRnv;                                                                               ""\n"
+            "uniform vec3 param_vs_globeTileBLnv;                                                                               ""\n"
+            "uniform vec3 param_vs_globeTileBRnv;                                                                               ""\n"
             "uniform lowp vec4 param_vs_modulationColor;                                                                        ""\n"
             "uniform vec2 param_vs_tileId;                                                                                      ""\n"
             "uniform vec4 param_vs_lookupOffsetAndScale;                                                                        ""\n"
             "uniform vec4 param_vs_cameraPositionAndZfar;                                                                       ""\n"
             "uniform float param_vs_elevationInMeters;                                                                          ""\n"
             "uniform float param_vs_elevationFactor;                                                                            ""\n"
-            "uniform highp vec2 param_vs_offsetInTile;                                                                          ""\n"
+            "uniform highp vec4 param_vs_positionAndOffsetInTile;                                                               ""\n"
             "uniform highp sampler2D param_vs_elevation_dataSampler;                                                            ""\n"
             "uniform highp vec4 param_vs_texCoordsOffsetAndScale;                                                               ""\n"
             "uniform highp vec4 param_vs_elevationLayerDataPlace;                                                               ""\n"
@@ -2392,25 +2428,47 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
             "{                                                                                                                  ""\n"
             // Get vertex coordinates in world
             "    vec4 v;                                                                                                        ""\n"
-            "    v.x = in_vs_vertexPosition.x;                                                                                  ""\n"
-            "    v.y = 0.0;                                                                                                     ""\n"
-            "    v.z = in_vs_vertexPosition.z;                                                                                  ""\n"
-            "    v.w = 1.0;                                                                                                     ""\n"
             "    bool isElevated = param_vs_elevationInMeters > -12000000.0;                                                    ""\n"
             "    bool withHeight = in_vs_vertexPosition.y > -12000000.0;                                                        ""\n"
             "    bool withSurface = abs(param_vs_elevation_scale.w) > 0.0;                                                      ""\n"
-            "    vec2 vertexTexCoords = v.xz * param_vs_lookupOffsetAndScale.z + param_vs_lookupOffsetAndScale.xy;              ""\n"
-            "    v = param_vs_mModel * v;                                                                                       ""\n"
-            "    vertexTexCoords -= param_vs_tileId;                                                                            ""\n"
-            "    vec2 elevationTexCoords = vertexTexCoords * param_vs_texCoordsOffsetAndScale.zw;                               ""\n"
+            "    vec2 texCoords = in_vs_vertexPosition.xz * param_vs_lookupOffsetAndScale.z + param_vs_lookupOffsetAndScale.xy; ""\n"
+            "    texCoords -= param_vs_tileId;                                                                                  ""\n"
+            "    vec2 elevationTexCoords = texCoords * param_vs_texCoordsOffsetAndScale.zw;                                     ""\n"
             "    elevationTexCoords += param_vs_texCoordsOffsetAndScale.xy;                                                     ""\n"
             "    float surfaceInMeters = withSurface ? interpolatedHeight(elevationTexCoords) : 0.0;                            ""\n"
-            "    float tileOffset = withSurface ? vertexTexCoords.t : param_vs_offsetInTile.y;                                  ""\n"
+            "    float tileOffset = param_vs_positionAndOffsetInTile.z < 0.0 ? texCoords.t : param_vs_positionAndOffsetInTile.w;""\n"
             "    float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, tileOffset);                 ""\n"
-            "    v.y = surfaceInMeters * param_vs_elevation_scale.w * param_vs_elevation_scale.z / metersPerUnit;               ""\n"
-            "    float elevation = withHeight ? in_vs_vertexPosition.y : surfaceInMeters;                                       ""\n"
-            "    elevation = ((isElevated ? param_vs_elevationInMeters : elevation) - surfaceInMeters) / metersPerUnit;         ""\n"
-            "    v.y += elevation * param_vs_elevationFactor;                                                                   ""\n"
+            "    float elevation = surfaceInMeters * param_vs_elevation_scale.w * param_vs_elevation_scale.z / metersPerUnit;   ""\n"
+            "    float additional = withHeight ? in_vs_vertexPosition.y : surfaceInMeters;                                      ""\n"
+            "    additional = ((isElevated ? param_vs_elevationInMeters : additional) - surfaceInMeters) / metersPerUnit;       ""\n"
+            "    elevation += additional * param_vs_elevationFactor;                                                            ""\n"
+            "    vec3 pv = param_vs_mModel * vec3(in_vs_vertexPosition.x, 0.0, in_vs_vertexPosition.z);                         ""\n"
+            "    if (param_vs_offsetsAndMode.w < 0.0)                                                                           ""\n"
+            "        v = vec4(param_vs_offsetsAndMode.x + pv.x, elevation, param_vs_offsetsAndMode.y + pv.z, 1.0);              ""\n"
+            "    else                                                                                                           ""\n"
+            "    {                                                                                                              ""\n"
+            //       Define needed constants
+            "        const float M_PI = 3.1415926535897932384626433832795;                                                      ""\n"
+            "        const float M_PI_2 = M_PI / 2.0;                                                                           ""\n"
+            "        const float M_2PI = 2.0 * M_PI;                                                                            ""\n"
+            "                                                                                                                   ""\n"
+            //       Calculate vertex position on the globe surface
+            "        vec2 angles = (param_vs_positionAndOffsetInTile.xy + pv.xz - 0.5) * M_2PI;                                 ""\n"
+            "        angles.y = M_PI_2 - atan(exp(angles.y)) * 2.0;                                                             ""\n"
+            "        float csy = cos(angles.y);                                                                                 ""\n"
+            "        vec3 nv = param_vs_mGlobeRotation * vec3(csy * sin(angles.x), csy * cos(angles.x), -sin(angles.y));        ""\n"
+            "        vec3 cv = vec3(nv.x, nv.y - param_vs_offsetsAndMode.z, nv.z);                                              ""\n"
+            "                                                                                                                   ""\n"
+            //       Find proper position of vertex on the tile
+            "        vec3 leftVertex = mix(param_vs_globeTileTL, param_vs_globeTileBL, texCoords.y);                            ""\n"
+            "        vec3 rightVertex = mix(param_vs_globeTileTR, param_vs_globeTileBR, texCoords.y);                           ""\n"
+            "        vec3 midVertex = mix(leftVertex, rightVertex, texCoords.x);                                                ""\n"
+            "        v = vec4(param_vs_offsetsAndMode.w != 0.0 ? cv : midVertex, 1.0);                                          ""\n"
+            "        vec3 leftN = normalize(mix(param_vs_globeTileTLnv, param_vs_globeTileBLnv, texCoords.y));                  ""\n"
+            "        vec3 rightN = normalize(mix(param_vs_globeTileTRnv, param_vs_globeTileBRnv, texCoords.y));                 ""\n"
+            "        vec3 midN = mix(leftN, rightN, texCoords.x);                                                               ""\n"
+            "        v.xyz += elevation * normalize(param_vs_offsetsAndMode.w != 0.0 ? nv : midN);                              ""\n"
+            "    }                                                                                                              ""\n"
             "    float dist = distance(param_vs_cameraPositionAndZfar.xyz, v.xyz);                                              ""\n"
             "    float extraZfar = 2.0 * dist / param_vs_cameraPositionAndZfar.w;                                               ""\n"
             "    float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                            ""\n"
@@ -2504,9 +2562,19 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mModel, "param_vs_mModel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mGlobeRotation, "param_vs_mGlobeRotation", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.offsetsAndMode, "param_vs_offsetsAndMode", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.globeTileTL, "param_vs_globeTileTL", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.globeTileTR, "param_vs_globeTileTR", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.globeTileBL, "param_vs_globeTileBL", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.globeTileBR, "param_vs_globeTileBR", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.globeTileTLnv, "param_vs_globeTileTLnv", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.globeTileTRnv, "param_vs_globeTileTRnv", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.globeTileBLnv, "param_vs_globeTileBLnv", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.globeTileBRnv, "param_vs_globeTileBRnv", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.modulationColor, "param_vs_modulationColor", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.tileId, "param_vs_tileId", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.offsetInTile, "param_vs_offsetInTile", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.positionAndOffsetInTile, "param_vs_positionAndOffsetInTile", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.lookupOffsetAndScale, "param_vs_lookupOffsetAndScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.cameraPositionAndZfar, "param_vs_cameraPositionAndZfar", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.elevation_scale, "param_vs_elevation_scale", GlslVariableType::Uniform);
@@ -2532,6 +2600,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
     AlphaChannelType &currentAlphaChannelType)
 {
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
 
@@ -2550,6 +2625,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
 
         // Set perspective projection-view matrix
         glUniformMatrix4fv(_onSurfaceVectorProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
+        GL_CHECK_RESULT;
+
+        // Set globe positioning matrix
+        glUniformMatrix3fv(_onSurfaceVectorProgram.vs.param.mGlobeRotation,
+            1, GL_FALSE, glm::value_ptr(internalState.mGlobeRotationWithRadius));
         GL_CHECK_RESULT;
 
         // Scale the result
@@ -2590,7 +2670,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         currentAlphaChannelType = AlphaChannelType::Straight;
     }
 
-    // Get proper scale
+    // Get proper position and scale
     PointI position31;
     if (gpuResource->position31 != nullptr)
     {
@@ -2604,7 +2684,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     }
     position31.x = position31.x < 0 ? position31.x + INT32_MAX + 1 : position31.x;
     position31.y = position31.y < 0 ? position31.y + INT32_MAX + 1 : position31.y;
-    float scaleFactor = 1.0f;
+    const PointF position(PointD(position31) / 2147483648.0);
+
+    double scaleFactor = 1.0;
     switch (symbol->scaleType)
     {
         case VectorMapSymbol::ScaleType::Raw:
@@ -2621,24 +2703,28 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
                 AtlasMapRenderer::TileSize3D);
             break;
     }
-    const auto mScale = glm::scale(glm::vec3(scaleFactor, 1.0f, scaleFactor));
+    const auto scale = static_cast<float>(currentState.flatEarth ? scaleFactor
+        : scaleFactor / AtlasMapRenderer::TileSize3D / static_cast<double>(1u << currentState.zoomLevel));
+    const auto mScale = glm::mat3(glm::scale(glm::vec3(scale, 1.0f, scale)));
 
     // Set current offset
     const auto currentOffset31 = Utilities::shortestVector31(renderable->target31, currentState.target31);
     const auto currentOffset = Utilities::convert31toFloat(currentOffset31, currentState.zoomLevel);
 
-    // Calculate position translate
-    const auto mPosition = glm::translate(glm::vec3(
+    // Set tile and globe sizes
+    glUniform4f(_onSurfaceVectorProgram.vs.param.offsetsAndMode,
         (renderable->offsetFromTarget.x - currentOffset.x) * AtlasMapRenderer::TileSize3D,
-        0.0f,
-        (renderable->offsetFromTarget.y - currentOffset.y) * AtlasMapRenderer::TileSize3D));
+        (renderable->offsetFromTarget.y - currentOffset.y) * AtlasMapRenderer::TileSize3D,
+        static_cast<float>(internalState.globeRadius),
+        currentState.flatEarth ? -1.0f : (currentState.zoomLevel < ZoomLevel9 ? 1.0f : 0.0f));
+    GL_CHECK_RESULT;
 
     // Calculate direction
-    const auto mDirection = glm::rotate(glm::radians(renderable->direction), glm::vec3(0.0f, -1.0f, 0.0f));
+    const auto mDirection = glm::mat3(glm::rotate(glm::radians(renderable->direction), glm::vec3(0.0f, -1.0f, 0.0f)));
 
     // Calculate and set model matrix (scale -> direction -> position)
-    const auto mModel = mPosition * mDirection * mScale;
-    glUniformMatrix4fv(_onSurfaceVectorProgram.vs.param.mModel, 1, GL_FALSE, glm::value_ptr(mModel));
+    const auto mModel = mDirection * mScale;
+    glUniformMatrix3fv(_onSurfaceVectorProgram.vs.param.mModel, 1, GL_FALSE, glm::value_ptr(mModel));
     GL_CHECK_RESULT;
 
     // Set modulation color
@@ -2669,14 +2755,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     if (gpuResource->zoomLevel == InvalidZoomLevel || gpuResource->partSizes == nullptr)
     {
         // Parameters: per-tile data
-        const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
+        const auto upperMetersPerUnit = currentState.flatEarth ? Utilities::getMetersPerTileUnit(
             currentState.zoomLevel,
             renderable->tileId.y,
-            AtlasMapRenderer::TileSize3D);
-        const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
+            AtlasMapRenderer::TileSize3D) : internalState.metersPerUnit;
+        const auto lowerMetersPerUnit = currentState.flatEarth ? Utilities::getMetersPerTileUnit(
             currentState.zoomLevel,
             renderable->tileId.y + 1,
-            AtlasMapRenderer::TileSize3D);
+            AtlasMapRenderer::TileSize3D) : internalState.metersPerUnit;
         glUniform4f(
             _onSurfaceVectorProgram.vs.param.elevation_scale,
             (float)upperMetersPerUnit,
@@ -2685,7 +2771,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
             0.0f);
         GL_CHECK_RESULT;
 
-        glUniform2f(_onSurfaceVectorProgram.vs.param.offsetInTile, renderable->offsetInTileN.x, renderable->offsetInTileN.y);
+        glUniform4f(_onSurfaceVectorProgram.vs.param.positionAndOffsetInTile,
+            position.x,
+            position.y,
+            renderable->offsetInTileN.x,
+            renderable->offsetInTileN.y);
         GL_CHECK_RESULT;
 
         // Set common elevation
@@ -2766,9 +2856,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         }
 
         // Turn off all buffers
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        GL_CHECK_RESULT;
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        GL_CHECK_RESULT;
+        glDisableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexColor);
+        GL_CHECK_RESULT;
+        glDisableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
+        GL_CHECK_RESULT;
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
         GL_CHECK_RESULT;
     }
     else
@@ -2793,8 +2887,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         glUniform4f(_onSurfaceVectorProgram.vs.param.lookupOffsetAndScale,
             startPosition.x,
             startPosition.y,
-            scaleFactor,
-            scaleFactor);
+            static_cast<float>(scaleFactor),
+            static_cast<float>(scaleFactor));
         GL_CHECK_RESULT;
 
         const int elevationDataSamplerIndex = 0;
@@ -2828,6 +2922,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
             maxZoom = currentState.elevationDataProvider->getMaxZoom();
         }
         double tileSize;
+        glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
+        GL_CHECK_RESULT;
+        glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexColor);
+        GL_CHECK_RESULT;
         for (const auto& partSizes : *gpuResource->partSizes)
         {
             auto baseTileId = partSizes.first;
@@ -2921,14 +3019,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
                 }
             }
             // Per-tile elevation data configuration
-            const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
+            const auto upperMetersPerUnit = currentState.flatEarth ? Utilities::getMetersPerTileUnit(
                 currentState.zoomLevel,
                 baseTileIdN.y,
-                AtlasMapRenderer::TileSize3D);
-            const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
+                AtlasMapRenderer::TileSize3D) : internalState.metersPerUnit;
+            const auto lowerMetersPerUnit = currentState.flatEarth ? Utilities::getMetersPerTileUnit(
                 currentState.zoomLevel,
                 baseTileIdN.y + 1,
-                AtlasMapRenderer::TileSize3D);
+                AtlasMapRenderer::TileSize3D) : internalState.metersPerUnit;
             glUniform4f(_onSurfaceVectorProgram.vs.param.elevation_scale,
                 static_cast<float>(upperMetersPerUnit),
                 static_cast<float>(lowerMetersPerUnit),
@@ -2936,16 +3034,79 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
                 useElevationData ? currentState.elevationConfiguration.dataScaleFactor : 0.0f);
             GL_CHECK_RESULT;
 
-            glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
+            glUniform4f(_onSurfaceVectorProgram.vs.param.positionAndOffsetInTile,
+                position.x,
+                position.y,
+                -1.0f,
+                -1.0f);
             GL_CHECK_RESULT;
+
+            // Calculate world coordinates and normal vectors of tile on globe
+            const auto zShift = MaxZoomLevel - currentState.zoomLevel;
+            const PointI tile31(baseTileIdN.x << zShift, baseTileIdN.y << zShift);
+            auto tileSize31 = 1u << zShift;
+            bool isOverX = tileSize31 + static_cast<uint32_t>(tile31.x) > INT32_MAX;
+            bool isOverY = tileSize31 + static_cast<uint32_t>(tile31.y) > INT32_MAX;
+            PointI nextTile31(isOverX ? INT32_MAX : tile31.x + tileSize31, isOverY ? INT32_MAX : tile31.y + tileSize31);
+            PointI nextTile31N(isOverX ? 0 : nextTile31.x, isOverY ? 0 : nextTile31.y);
+            const auto globeTileTLnv = internalState.mGlobeRotationPrecise * Utilities::getGlobeRadialVector(tile31);
+            const auto globeTileTL = globeTileTLnv * internalState.globeRadius;
+            const auto globeTileTRnv =
+                internalState.mGlobeRotationPrecise * Utilities::getGlobeRadialVector(PointI(nextTile31N.x, tile31.y));
+            const auto globeTileTR = globeTileTRnv * internalState.globeRadius;
+            const auto globeTileBLnv =
+                internalState.mGlobeRotationPrecise * Utilities::getGlobeRadialVector(PointI(tile31.x, nextTile31N.y));
+            const auto globeTileBL = globeTileBLnv * internalState.globeRadius;
+            const auto globeTileBRnv =
+                internalState.mGlobeRotationPrecise * Utilities::getGlobeRadialVector(nextTile31N);
+            const auto globeTileBR = globeTileBRnv * internalState.globeRadius;
+            glUniform3f(_onSurfaceVectorProgram.vs.param.globeTileTL,
+                static_cast<float>(globeTileTL.x),
+                static_cast<float>(globeTileTL.y - internalState.globeRadius),
+                static_cast<float>(globeTileTL.z));
+            GL_CHECK_RESULT;
+            glUniform3f(_onSurfaceVectorProgram.vs.param.globeTileTR,
+                static_cast<float>(globeTileTR.x),
+                static_cast<float>(globeTileTR.y - internalState.globeRadius),
+                static_cast<float>(globeTileTR.z));
+            GL_CHECK_RESULT;
+            glUniform3f(_onSurfaceVectorProgram.vs.param.globeTileBL,
+                static_cast<float>(globeTileBL.x),
+                static_cast<float>(globeTileBL.y - internalState.globeRadius),
+                static_cast<float>(globeTileBL.z));
+            GL_CHECK_RESULT;
+            glUniform3f(_onSurfaceVectorProgram.vs.param.globeTileBR,
+                static_cast<float>(globeTileBR.x),
+                static_cast<float>(globeTileBR.y - internalState.globeRadius),
+                static_cast<float>(globeTileBR.z));
+            GL_CHECK_RESULT;
+            glUniform3f(_onSurfaceVectorProgram.vs.param.globeTileTLnv,
+                static_cast<float>(globeTileTLnv.x),
+                static_cast<float>(globeTileTLnv.y),
+                static_cast<float>(globeTileTLnv.z));
+            GL_CHECK_RESULT;
+            glUniform3f(_onSurfaceVectorProgram.vs.param.globeTileTRnv,
+                static_cast<float>(globeTileTRnv.x),
+                static_cast<float>(globeTileTRnv.y),
+                static_cast<float>(globeTileTRnv.z));
+            GL_CHECK_RESULT;
+            glUniform3f(_onSurfaceVectorProgram.vs.param.globeTileBLnv,
+                static_cast<float>(globeTileBLnv.x),
+                static_cast<float>(globeTileBLnv.y),
+                static_cast<float>(globeTileBLnv.z));
+            GL_CHECK_RESULT;
+            glUniform3f(_onSurfaceVectorProgram.vs.param.globeTileBRnv,
+                static_cast<float>(globeTileBRnv.x),
+                static_cast<float>(globeTileBRnv.y),
+                static_cast<float>(globeTileBRnv.z));
+            GL_CHECK_RESULT;
+
             glVertexAttribPointer(*_onSurfaceVectorProgram.vs.in.vertexPosition,
                 4, GL_FLOAT, GL_FALSE,
                 sizeof(VectorMapSymbol::Vertex),
                 reinterpret_cast<GLvoid*>(partOffset + offsetof(VectorMapSymbol::Vertex, positionXYZD)));
             GL_CHECK_RESULT;
 
-            glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexColor);
-            GL_CHECK_RESULT;
             glVertexAttribPointer(*_onSurfaceVectorProgram.vs.in.vertexColor,
                 4, GL_FLOAT, GL_FALSE,
                 sizeof(VectorMapSymbol::Vertex),
@@ -2966,6 +3127,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         glBindTexture(GL_TEXTURE_2D, 0);
         GL_CHECK_RESULT;
 
+        glDisableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexColor);
+        GL_CHECK_RESULT;
+        glDisableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
+        GL_CHECK_RESULT;
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         GL_CHECK_RESULT;
 
@@ -3011,6 +3176,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeVisibilityCheck()
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
@@ -3157,6 +3323,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeVisibilityCheck()
 
     gpuAPI->initializeVAO(_visibilityCheckVAO);
 
+    glDisableVertexAttribArray(*_visibilityCheckProgram.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 
@@ -3419,9 +3587,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::configureElevationData(
     GL_CHECK_PRESENT(glUniform4f);
     GL_CHECK_PRESENT(glActiveTexture);
     GL_CHECK_PRESENT(glBindTexture);
-    GL_CHECK_PRESENT(glBindBuffer);
-    GL_CHECK_PRESENT(glEnableVertexAttribArray);
-    GL_CHECK_PRESENT(glVertexAttribPointer);
 
     glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
     GL_CHECK_RESULT;
