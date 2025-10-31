@@ -26,6 +26,7 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
@@ -213,11 +214,14 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
-    // Unbind buffers
     gpuAPI->initializeVAO(_skyplaneVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    GL_CHECK_RESULT;
+
+    // Unbind buffers
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_program.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 
     return true;
