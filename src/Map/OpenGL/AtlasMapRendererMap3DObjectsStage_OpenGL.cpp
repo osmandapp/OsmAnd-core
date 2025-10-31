@@ -351,7 +351,7 @@ void OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId
 
     const int absZoomShift = currentState.zoomLevel - z;
     const double metersPerUnit = Utilities::getMetersPerTileUnit(
-        currentState.zoomLevel, id.y << absZoomShift, AtlasMapRenderer::TileSize3D);
+        currentState.zoomLevel, yAtCurrentZoom, AtlasMapRenderer::TileSize3D);
 
     glUniform1f(*_program.vs.param.metersPerUnit, static_cast<float>(metersPerUnit));
     GL_CHECK_RESULT;
