@@ -38,6 +38,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
@@ -246,12 +247,31 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::render(
         currentAlphaChannelType = AlphaChannelType::Straight;
     }
 
+    // Calculate position of model in world coordinates
+    const auto elevationInWorld = renderable->elevationInMeters
+        / (currentState.flatEarth ? renderable->metersPerUnit : internalState.metersPerUnit);
+    PointD angles;
+    const auto positionInWorld = currentState.flatEarth
+        ? Utilities::planeWorldCoordinates(renderable->position31,
+            currentState.target31, currentState.zoomLevel, AtlasMapRenderer::TileSize3D, elevationInWorld)
+        : Utilities::sphericalWorldCoordinates(renderable->position31,
+            internalState.mGlobeRotationPrecise, internalState.globeRadius, elevationInWorld, &angles);
+    auto rotateModel = glm::mat4(1.0f);
+    if (!currentState.flatEarth)
+    {
+        const auto mRotationX = glm::rotate(static_cast<float>(angles.y), glm::vec3(-1.0f, 0.0f, 0.0f));
+        const auto mRotationZ = glm::rotate(static_cast<float>(angles.x), glm::vec3(0.0f, 0.0f, -1.0f));
+        rotateModel = glm::mat4(internalState.mGlobeRotationPrecise) * mRotationZ * mRotationX;
+    }
+    const auto placeModel = glm::translate(positionInWorld);
+    const auto mModel = placeModel * rotateModel * renderable->mModel;
+
     // Model matrix
     glUniformMatrix4fv(
         _program.vs.param.mModel,
         1,
         GL_FALSE,
-        glm::value_ptr(renderable->mModel));
+        glm::value_ptr(mModel));
     GL_CHECK_RESULT;
 
     // Set main color
@@ -341,6 +361,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::render(
         glDrawArrays(primitivesType, 0, count);
         GL_CHECK_RESULT;
     }
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_program.vs.in.vertexColor);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_program.vs.in.vertexNormal);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_program.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
 
     // Disable depth buffer offset for other symbols
     glDisable(GL_POLYGON_OFFSET_FILL);

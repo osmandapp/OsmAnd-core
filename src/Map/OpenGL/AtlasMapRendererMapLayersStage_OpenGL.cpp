@@ -68,17 +68,41 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     GL_CHECK_RESULT;
 
     // Calculate my location parameters
-    const auto offset31 = Utilities::shortestVector31(currentState.target31, currentState.myLocation31);
-    const auto offset = Utilities::convert31toFloat(offset31, currentState.zoomLevel) * AtlasMapRenderer::TileSize3D;
-    myLocation = glm::vec3(offset.x, renderer->getHeightOfLocation(currentState, currentState.myLocation31), offset.y);
-    auto metersPerTile = Utilities::getMetersPerTileUnit(currentState.zoomLevel,
-        currentState.myLocation31.y >> (ZoomLevel31 - currentState.zoomLevel), AtlasMapRenderer::TileSize3D);
-    myLocationRadius = currentState.myLocationRadiusInMeters / metersPerTile;
+    PointF offsetInTileN;
+    const auto tileId = Utilities::normalizeTileId(Utilities::getTileId(
+        currentState.myLocation31, currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
+    double metersPerUnit;
+    if (currentState.flatEarth)
+    {
+        const auto upperMetersPerUnit =
+                Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
+        const auto lowerMetersPerUnit =
+                Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y + 1, AtlasMapRenderer::TileSize3D);
+        metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+    }
+    else
+        metersPerUnit = internalState.metersPerUnit;
+    float myLocationHeight = 0.0;
+    const auto myLocationHeightInMeters = renderer->getLocationHeightInMeters(currentState, currentState.myLocation31);
+    if (myLocationHeightInMeters > -20000.0f)
+    {
+        float scaleFactor =
+            currentState.elevationConfiguration.dataScaleFactor * currentState.elevationConfiguration.zScaleFactor;
+        myLocationHeight = scaleFactor * myLocationHeightInMeters / metersPerUnit;
+    }
+
+    // Calculate position of symbol in world coordinates
+    myLocation = currentState.flatEarth
+        ? Utilities::planeWorldCoordinates(currentState.myLocation31,
+            currentState.target31, currentState.zoomLevel, AtlasMapRenderer::TileSize3D, myLocationHeight)
+        : Utilities::sphericalWorldCoordinates(currentState.myLocation31,
+            internalState.mGlobeRotationPrecise, internalState.globeRadius, myLocationHeight);
+    myLocationRadius = currentState.myLocationRadiusInMeters / metersPerUnit;
     headingDirection = qDegreesToRadians(qIsNaN(currentState.myDirection)
         ? Utilities::normalizedAngleDegrees(currentState.azimuth + 180.0f) : currentState.myDirection);
     const float cameraHeight = internalState.distanceFromCameraToGround;
-    const float sizeScale = cameraHeight > myLocation.y && !qFuzzyIsNull(cameraHeight)
-        ? 1.0f - myLocation.y / cameraHeight : 1.0f;
+    const float sizeScale = cameraHeight > myLocationHeight && !qFuzzyIsNull(cameraHeight)
+        ? 1.0f - myLocationHeight / cameraHeight : 1.0f;
     headingRadius = currentState.myDirectionRadius * internalState.pixelInWorldProjectionScale * sizeScale;
 
     GLname lastUsedProgram;
@@ -2512,6 +2536,7 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterTile()
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
 
 #pragma pack(push, 1)
@@ -2632,6 +2657,11 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterTile()
             GL_CHECK_RESULT;
 
             gpuAPI->initializeVAO(rasterTileVAO);
+
+            glDisableVertexAttribArray(*rasterLayerTileProgram.vs.in.vertexTexCoords);
+            GL_CHECK_RESULT;
+            glDisableVertexAttribArray(*rasterLayerTileProgram.vs.in.vertexPosition);
+            GL_CHECK_RESULT;
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             GL_CHECK_RESULT;
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -2699,9 +2729,6 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
     GL_CHECK_PRESENT(glUniform4f);
     GL_CHECK_PRESENT(glActiveTexture);
     GL_CHECK_PRESENT(glBindTexture);
-    GL_CHECK_PRESENT(glBindBuffer);
-    GL_CHECK_PRESENT(glEnableVertexAttribArray);
-    GL_CHECK_PRESENT(glVertexAttribPointer);
 
     const auto& perTile_vs = program.vs.param.elevationLayer;
 
