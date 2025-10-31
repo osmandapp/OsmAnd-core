@@ -19,6 +19,7 @@ namespace OsmAnd
     {
         QVector<BuildingVertex> vertices;
         QVector<uint16_t> indices;
+        uint64_t bboxHash;
     };
 }
 

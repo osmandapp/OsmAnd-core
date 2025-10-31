@@ -28,6 +28,7 @@ namespace OsmAnd
             int vertexCount;
             int indexCount;
             glm::vec3 debugColor;
+            uint64_t bboxHash;
         };
 
         ~MapRenderer3DObjectsResource() override;

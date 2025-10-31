@@ -140,6 +140,7 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
         renderableBuilding.vertexCount = building.vertices.size();
         renderableBuilding.indexCount = building.indices.size();
         renderableBuilding.debugColor = glm::vec3(r, g, b);
+        renderableBuilding.bboxHash = building.bboxHash;
 
         _renderableBuildings.append(renderableBuilding);
     }

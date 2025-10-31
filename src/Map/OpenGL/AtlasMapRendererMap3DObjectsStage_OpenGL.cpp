@@ -209,6 +209,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
 
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
+    
+    QSet<uint64_t> drawnBboxHashes;
 
     glUseProgram(_program.id);
     GL_CHECK_RESULT;
@@ -264,7 +266,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
                 const auto object3DResource = std::static_pointer_cast<MapRenderer3DObjectsResource>(tiledResource);
                 if (object3DResource && object3DResource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                 {
-                    drawResource(tileIdN, static_cast<ZoomLevel>(neededZoom), object3DResource);
+                    drawResource(tileIdN, static_cast<ZoomLevel>(neededZoom), object3DResource, drawnBboxHashes);
                     object3DResource->setState(MapRendererResourceState::Uploaded);
                     rendered = true;
                 }
@@ -293,7 +295,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
                         const auto subRes = std::static_pointer_cast<MapRenderer3DObjectsResource>(subResBase);
                         if (subRes && subRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                         {
-                            drawResource(subId, static_cast<ZoomLevel>(underscaledZoom), subRes);
+                            drawResource(subId, static_cast<ZoomLevel>(underscaledZoom), subRes, drawnBboxHashes);
                             subRes->setState(MapRendererResourceState::Uploaded);
                             atLeastOne = true;
                         }
@@ -327,7 +329,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
 
                     if (parentRes && parentRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                     {
-                        drawResource(parentId, static_cast<ZoomLevel>(overscaledZoom), parentRes);
+                        drawResource(parentId, static_cast<ZoomLevel>(overscaledZoom), parentRes, drawnBboxHashes);
                         parentRes->setState(MapRendererResourceState::Uploaded);
                         rendered = true;
                         break;
@@ -344,7 +346,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
 }
 
 void OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId& id,
-    ZoomLevel z, const std::shared_ptr<MapRenderer3DObjectsResource>& res)
+    ZoomLevel z, const std::shared_ptr<MapRenderer3DObjectsResource>& res, QSet<uint64_t>& drawnBboxHashes)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& currentState = getRenderer()->getState();
@@ -373,6 +375,13 @@ void OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId
         {
             continue;
         }
+
+        if (drawnBboxHashes.contains(b.bboxHash))
+        {
+            continue;
+        }
+        
+        drawnBboxHashes.insert(b.bboxHash);
 
         auto debugColor = b.debugColor;
         glUniform4f(*_program.vs.param.color, debugColor.r, debugColor.g, debugColor.b, 1.0f);
