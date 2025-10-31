@@ -349,7 +349,17 @@ void OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId
     const auto gpuAPI = getGPUAPI();
     const auto& currentState = getRenderer()->getState();
 
-    const int absZoomShift = currentState.zoomLevel - z;
+    const int deltaZoom = static_cast<int>(z) - static_cast<int>(currentState.zoomLevel);
+    int yAtCurrentZoom;
+    if (deltaZoom >= 0)
+    {
+        yAtCurrentZoom = static_cast<int>(id.y) >> deltaZoom;
+    }
+    else
+    {
+        yAtCurrentZoom = static_cast<int>(id.y) << (-deltaZoom);
+    }
+
     const double metersPerUnit = Utilities::getMetersPerTileUnit(
         currentState.zoomLevel, yAtCurrentZoom, AtlasMapRenderer::TileSize3D);
 
