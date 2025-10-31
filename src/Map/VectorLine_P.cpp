@@ -848,9 +848,7 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
     _bboxShifted = bbox;
 
     auto minShiftX = static_cast<int32_t>(bbox.topLeft.x / intFull - (bbox.topLeft.x % intFull < 0 ? 1 : 0));
-    auto minShiftY = static_cast<int32_t>(bbox.topLeft.y / intFull - (bbox.topLeft.y % intFull < 0 ? 1 : 0));
     auto maxShiftX = static_cast<int32_t>(bbox.bottomRight.x / intFull + (bbox.bottomRight.x % intFull < 0 ? 0 : 1));
-    auto maxShiftY = static_cast<int32_t>(bbox.bottomRight.y / intFull + (bbox.bottomRight.y % intFull < 0 ? 0 : 1));
 
     // Use full map shifts to collect all visible segments
     const bool solidColors = _colorizationScheme == COLORIZATION_SOLID;
@@ -870,254 +868,252 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
     QList<float> distances;
     for (int shiftX = minShiftX; shiftX <= maxShiftX; shiftX++)
     {
-        for (int shiftY = minShiftY; shiftY <= maxShiftY; shiftY++)
+        const auto shift = intFull * shiftX;
+        bool segmentStarted = false;
+        distanceTo = pointDistances.at(0);
+        distanceSubTo = pointDistances.at(0);
+        if (withColors)
         {
-            const PointI64 shift(shiftX * intFull, shiftY * intFull);
-            bool segmentStarted = false;
-            distanceTo = pointDistances.at(0);
-            distanceSubTo = pointDistances.at(0);
-            if (withColors)
+            colorTo = _colorizationMapping.at(0);
+            colorSubTo = colorTo;
+        }
+        if (withOutlineColors)
+        {
+            colorOutTo = _outlineColorizationMapping.at(0);
+            colorOutSubTo = colorOutTo;
+        }
+        if (withHeights)
+        {
+            heightTo = _heights.at(0);
+            heightSubTo = _heights.at(0);
+        }
+        drawFrom = points64.at(0);
+        drawFrom.x -= shift;
+        auto prev = drawFrom;
+        int prevIndex;
+        nextIndex = 0;            
+        int j = 0;
+        bool prevIn = visibleArea64.contains(prev);
+        for (int i = 1; i < pointsCount; i++)
+        {
+            drawTo = points64.at(i);
+            drawTo.x -= shift;
+            curr = drawTo;
+            if (i > nextIndex)
             {
-                colorTo = _colorizationMapping.at(0);
-                colorSubTo = colorTo;
-            }
-            if (withOutlineColors)
-            {
-                colorOutTo = _outlineColorizationMapping.at(0);
-                colorOutSubTo = colorOutTo;
-            }
-            if (withHeights)
-            {
-                heightTo = _heights.at(0);
-                heightSubTo = _heights.at(0);
-            }
-            auto prev = drawFrom = points64.at(0) - shift;
-            int prevIndex;
-            nextIndex = 0;            
-            int j = 0;
-            bool prevIn = visibleArea64.contains(prev);
-            for (int i = 1; i < pointsCount; i++)
-            {
-                curr = drawTo = points64.at(i) - shift;
-                if (i > nextIndex)
-                {
-                    prevIndex = nextIndex;
-                    nextIndex = pointIndices.at(++j);
-                    distanceFrom = distanceTo;
-                    distanceTo = pointDistances.at(j);
-                    if (withColors)
-                    {
-                        colorFrom = colorTo;
-                        colorTo = _colorizationMapping.at(j);
-                    }
-                    if (withOutlineColors)
-                    {
-                        colorOutFrom = colorOutTo;
-                        colorOutTo = _outlineColorizationMapping.at(j);
-                    }
-                    if (withHeights)
-                    {
-                        heightFrom = heightTo;
-                        heightTo = _heights.at(j);
-                    }
-                }
-                const auto factor = static_cast<float>(i - prevIndex) / static_cast<float>(nextIndex - prevIndex);
-                distanceSubFrom = distanceSubTo;
-                distanceSubTo = distanceFrom + (distanceTo - distanceFrom) * factor;
+                prevIndex = nextIndex;
+                nextIndex = pointIndices.at(++j);
+                distanceFrom = distanceTo;
+                distanceTo = pointDistances.at(j);
                 if (withColors)
                 {
-                    colorSubFrom = solidColors ? colorFrom : colorSubTo;
-                    colorSubTo = solidColors ? colorTo : middleColor(colorFrom, colorTo, factor);
+                    colorFrom = colorTo;
+                    colorTo = _colorizationMapping.at(j);
                 }
                 if (withOutlineColors)
                 {
-                    colorOutSubFrom = solidColors ? colorOutFrom : colorOutSubTo;
-                    colorOutSubTo = solidColors ? colorOutTo : middleColor(colorOutFrom, colorOutTo, factor);
+                    colorOutFrom = colorOutTo;
+                    colorOutTo = _outlineColorizationMapping.at(j);
                 }
                 if (withHeights)
                 {
-                    heightSubFrom = heightSubTo;
-                    heightSubTo = heightFrom + (heightTo - heightFrom) * factor;
+                    heightFrom = heightTo;
+                    heightTo = _heights.at(j);
                 }
-                bool currIn = visibleArea64.contains(curr);
-                bool draw = false;
-                if (prevIn && currIn)
+            }
+            const auto quotient = static_cast<float>(i - prevIndex) / static_cast<float>(nextIndex - prevIndex);
+            distanceSubFrom = distanceSubTo;
+            distanceSubTo = distanceFrom + (distanceTo - distanceFrom) * quotient;
+            if (withColors)
+            {
+                colorSubFrom = solidColors ? colorFrom : colorSubTo;
+                colorSubTo = solidColors ? colorTo : middleColor(colorFrom, colorTo, quotient);
+            }
+            if (withOutlineColors)
+            {
+                colorOutSubFrom = solidColors ? colorOutFrom : colorOutSubTo;
+                colorOutSubTo = solidColors ? colorOutTo : middleColor(colorOutFrom, colorOutTo, quotient);
+            }
+            if (withHeights)
+            {
+                heightSubFrom = heightSubTo;
+                heightSubTo = heightFrom + (heightTo - heightFrom) * quotient;
+            }
+            bool currIn = visibleArea64.contains(curr);
+            bool draw = false;
+            if (prevIn && currIn)
+            {
+                draw = true;
+                distanceInterFrom = distanceSubFrom;
+                distanceInterTo = distanceSubTo;
+                if (withColors)
                 {
-                    draw = true;
+                    colorInterFrom = colorSubFrom;
+                    colorInterTo = colorSubTo;
+                }
+                if (withOutlineColors)
+                {
+                    colorOutInterFrom = colorOutSubFrom;
+                    colorOutInterTo = colorOutSubTo;
+                }
+                if (withHeights)
+                {
+                    heightInterFrom = heightSubFrom;
+                    heightInterTo = heightSubTo;
+                }
+            }
+            else if (Utilities::calculateIntersection(curr, prev, visibleArea, inter1))
+            {
+                draw = true;
+                if (prevIn)
+                {
+                    drawTo = inter1;
+                    const auto factor = static_cast<float>(
+                        static_cast<double>((drawTo - prev).norm()) /
+                        static_cast<double>((curr - prev).norm()));
                     distanceInterFrom = distanceSubFrom;
-                    distanceInterTo = distanceSubTo;
+                    distanceInterTo = distanceSubFrom + (distanceSubTo - distanceSubFrom) * factor;
                     if (withColors)
                     {
                         colorInterFrom = colorSubFrom;
-                        colorInterTo = colorSubTo;
+                        colorInterTo = solidColors ? colorSubFrom
+                            : middleColor(colorSubFrom, colorSubTo, factor);
                     }
                     if (withOutlineColors)
                     {
                         colorOutInterFrom = colorOutSubFrom;
-                        colorOutInterTo = colorOutSubTo;
+                        colorOutInterTo = solidColors ? colorOutSubFrom
+                            : middleColor(colorOutSubFrom, colorOutSubTo, factor);
                     }
                     if (withHeights)
                     {
                         heightInterFrom = heightSubFrom;
+                        heightInterTo = heightSubFrom + (heightSubTo - heightSubFrom) * factor;
+                    }
+                }
+                else if (currIn)
+                {
+                    drawFrom = inter1;
+                    segmentStarted = false;
+                    const auto factor = static_cast<float>(
+                        static_cast<double>((drawFrom - prev).norm()) /
+                        static_cast<double>((curr - prev).norm()));
+                    distanceInterFrom = distanceSubFrom + (distanceSubTo - distanceSubFrom) * factor;
+                    distanceInterTo = distanceSubTo;
+                    if (withColors)
+                    {
+                        colorInterFrom = solidColors ? colorSubFrom
+                            : middleColor(colorSubFrom, colorSubTo, factor);
+                        colorInterTo = colorSubTo;
+                    }
+                    if (withOutlineColors)
+                    {
+                        colorOutInterFrom = solidColors ? colorOutSubFrom
+                            : middleColor(colorOutSubFrom, colorOutSubTo, factor);
+                        colorOutInterTo = colorOutSubTo;
+                    }
+                    if (withHeights)
+                    {
+                        heightInterFrom = heightSubFrom + (heightSubTo - heightSubFrom) * factor;
                         heightInterTo = heightSubTo;
                     }
                 }
-                else
+                else if (Utilities::calculateIntersection(prev, curr, visibleArea, inter2))
                 {
-                    if (Utilities::calculateIntersection(curr, prev, visibleArea, inter1))
-                    {
-                        draw = true;
-                        if (prevIn)
-                        {
-                            drawTo = inter1;
-                            const auto factor = static_cast<float>(
-                                static_cast<double>((drawTo - prev).norm()) /
-                                static_cast<double>((curr - prev).norm()));
-                            distanceInterFrom = distanceSubFrom;
-                            distanceInterTo = distanceSubFrom + (distanceSubTo - distanceSubFrom) * factor;
-                            if (withColors)
-                            {
-                                colorInterFrom = colorSubFrom;
-                                colorInterTo = solidColors ? colorSubFrom
-                                    : middleColor(colorSubFrom, colorSubTo, factor);
-                            }
-                            if (withOutlineColors)
-                            {
-                                colorOutInterFrom = colorOutSubFrom;
-                                colorOutInterTo = solidColors ? colorOutSubFrom
-                                    : middleColor(colorOutSubFrom, colorOutSubTo, factor);
-                            }
-                            if (withHeights)
-                            {
-                                heightInterFrom = heightSubFrom;
-                                heightInterTo = heightSubFrom + (heightSubTo - heightSubFrom) * factor;
-                            }
-                        }
-                        else if (currIn)
-                        {
-                            drawFrom = inter1;
-                            segmentStarted = false;
-                            const auto factor = static_cast<float>(
-                                static_cast<double>((drawFrom - prev).norm()) /
-                                static_cast<double>((curr - prev).norm()));
-                            distanceInterFrom = distanceSubFrom + (distanceSubTo - distanceSubFrom) * factor;
-                            distanceInterTo = distanceSubTo;
-                            if (withColors)
-                            {
-                                colorInterFrom = solidColors ? colorSubFrom
-                                    : middleColor(colorSubFrom, colorSubTo, factor);
-                                colorInterTo = colorSubTo;
-                            }
-                            if (withOutlineColors)
-                            {
-                                colorOutInterFrom = solidColors ? colorOutSubFrom
-                                    : middleColor(colorOutSubFrom, colorOutSubTo, factor);
-                                colorOutInterTo = colorOutSubTo;
-                            }
-                            if (withHeights)
-                            {
-                                heightInterFrom = heightSubFrom + (heightSubTo - heightSubFrom) * factor;
-                                heightInterTo = heightSubTo;
-                            }
-                        }
-                        else if (Utilities::calculateIntersection(prev, curr, visibleArea, inter2))
-                        {
-                            drawFrom = inter1;
-                            drawTo = inter2;
-                            segmentStarted = false;
-                            const auto firstFactor = static_cast<float>(
-                                static_cast<double>((drawFrom - prev).norm()) /
-                                static_cast<double>((curr - prev).norm()));
-                            const auto secondFactor = static_cast<float>(
-                                static_cast<double>((drawTo - prev).norm()) /
-                                static_cast<double>((curr - prev).norm()));
-                            distanceInterFrom = distanceSubFrom + (distanceSubTo - distanceSubFrom) * firstFactor;
-                            distanceInterTo = distanceSubFrom + (distanceSubTo - distanceSubFrom) * secondFactor;
-                            if (withColors)
-                            {
-                                colorInterFrom = solidColors ? colorSubFrom
-                                    : middleColor(colorSubFrom, colorSubTo, firstFactor);
-                                colorInterTo = solidColors ? colorSubFrom
-                                    : middleColor(colorSubFrom, colorSubTo, secondFactor);
-                            }
-                            if (withOutlineColors)
-                            {
-                                colorOutInterFrom = solidColors ? colorOutSubFrom
-                                    : middleColor(colorOutSubFrom, colorOutSubTo, firstFactor);
-                                colorOutInterTo = solidColors ? colorOutSubFrom
-                                    : middleColor(colorOutSubFrom, colorOutSubTo, secondFactor);
-                            }
-                            if (withHeights)
-                            {
-                                heightInterFrom = heightSubFrom + (heightSubTo - heightSubFrom) * firstFactor;
-                                heightInterTo = heightSubFrom + (heightSubTo - heightSubFrom) * secondFactor;
-                            }
-                        }
-                        else
-                            draw = false;
-                    }
-                }
-                if (draw)
-                {
-                    if (!segmentStarted)
-                    {
-                        if (!segment.empty())
-                        {
-                            segments.push_back(segment);
-                            segment = std::vector<PointI>();
-                            segmentDistances.push_back(distances);
-                            distances.clear();
-                            segmentColors.push_back(colors);
-                            colors.clear();
-                            segmentOutlineColors.push_back(outlineColors);
-                            outlineColors.clear();
-                            segmentHeights.push_back(heights);
-                            heights.clear();
-                        }
-                        segment.push_back(PointI(drawFrom));
-                        distances.push_back(distanceInterFrom);
-                        if (withColors)
-                            colors.push_back(colorInterFrom);
-                        if (withOutlineColors)
-                            outlineColors.push_back(colorOutInterFrom);
-                        if (withHeights)
-                            heights.push_back(heightInterFrom);
-                        segmentStarted = currIn;
-                    }
-                    PointI drawTo31(drawTo);
-                    if (segment.empty() || segment.back() != drawTo31)
-                    {
-                        segment.push_back(drawTo31);
-                        distances.push_back(distanceInterTo);
-                        if (withColors)
-                            colors.push_back(colorInterTo);
-                        if (withOutlineColors)
-                            outlineColors.push_back(colorOutInterTo);
-                        if (withHeights)
-                            heights.push_back(heightInterTo);
-                    }
-                }
-                else
+                    drawFrom = inter1;
+                    drawTo = inter2;
                     segmentStarted = false;
-                prevIn = currIn;
-                prev = drawFrom = curr;
+                    const auto firstFactor = static_cast<float>(
+                        static_cast<double>((drawFrom - prev).norm()) /
+                        static_cast<double>((curr - prev).norm()));
+                    const auto secondFactor = static_cast<float>(
+                        static_cast<double>((drawTo - prev).norm()) /
+                        static_cast<double>((curr - prev).norm()));
+                    distanceInterFrom = distanceSubFrom + (distanceSubTo - distanceSubFrom) * firstFactor;
+                    distanceInterTo = distanceSubFrom + (distanceSubTo - distanceSubFrom) * secondFactor;
+                    if (withColors)
+                    {
+                        colorInterFrom = solidColors ? colorSubFrom
+                            : middleColor(colorSubFrom, colorSubTo, firstFactor);
+                        colorInterTo = solidColors ? colorSubFrom
+                            : middleColor(colorSubFrom, colorSubTo, secondFactor);
+                    }
+                    if (withOutlineColors)
+                    {
+                        colorOutInterFrom = solidColors ? colorOutSubFrom
+                            : middleColor(colorOutSubFrom, colorOutSubTo, firstFactor);
+                        colorOutInterTo = solidColors ? colorOutSubFrom
+                            : middleColor(colorOutSubFrom, colorOutSubTo, secondFactor);
+                    }
+                    if (withHeights)
+                    {
+                        heightInterFrom = heightSubFrom + (heightSubTo - heightSubFrom) * firstFactor;
+                        heightInterTo = heightSubFrom + (heightSubTo - heightSubFrom) * secondFactor;
+                    }
+                }
+                else
+                    draw = false;
             }
-            if (!segment.empty())
-                segments.push_back(segment);
-            if (!distances.empty())
-                segmentDistances.push_back(distances);
-            if (!colors.empty())
-                segmentColors.push_back(colors);
-            if (!outlineColors.empty())
-                segmentOutlineColors.push_back(outlineColors);
-            if (!heights.empty())
-                segmentHeights.push_back(heights);
-            segment.clear();
-            distances.clear();
-            colors.clear();
-            outlineColors.clear();
-            heights.clear();
+            if (draw)
+            {
+                if (!segmentStarted)
+                {
+                    if (!segment.empty())
+                    {
+                        segments.push_back(segment);
+                        segment = std::vector<PointI>();
+                        segmentDistances.push_back(distances);
+                        distances.clear();
+                        segmentColors.push_back(colors);
+                        colors.clear();
+                        segmentOutlineColors.push_back(outlineColors);
+                        outlineColors.clear();
+                        segmentHeights.push_back(heights);
+                        heights.clear();
+                    }
+                    segment.push_back(PointI(drawFrom));
+                    distances.push_back(distanceInterFrom);
+                    if (withColors)
+                        colors.push_back(colorInterFrom);
+                    if (withOutlineColors)
+                        outlineColors.push_back(colorOutInterFrom);
+                    if (withHeights)
+                        heights.push_back(heightInterFrom);
+                    segmentStarted = currIn;
+                }
+                PointI drawTo31(drawTo);
+                if (segment.empty() || segment.back() != drawTo31)
+                {
+                    segment.push_back(drawTo31);
+                    distances.push_back(distanceInterTo);
+                    if (withColors)
+                        colors.push_back(colorInterTo);
+                    if (withOutlineColors)
+                        outlineColors.push_back(colorOutInterTo);
+                    if (withHeights)
+                        heights.push_back(heightInterTo);
+                }
+            }
+            else
+                segmentStarted = false;
+            prevIn = currIn;
+            prev = drawFrom = curr;
         }
+        if (!segment.empty())
+            segments.push_back(segment);
+        if (!distances.empty())
+            segmentDistances.push_back(distances);
+        if (!colors.empty())
+            segmentColors.push_back(colors);
+        if (!outlineColors.empty())
+            segmentOutlineColors.push_back(outlineColors);
+        if (!heights.empty())
+            segmentHeights.push_back(heights);
+        segment.clear();
+        distances.clear();
+        colors.clear();
+        outlineColors.clear();
+        heights.clear();
     }
     
     for (auto& attachedMarker : _attachedMarkers)
