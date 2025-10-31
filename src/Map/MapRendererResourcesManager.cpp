@@ -117,6 +117,38 @@ OsmAnd::MapRendererResourcesManager::~MapRendererResourcesManager()
     renderer->resourcesAreInUse.unlock();
 }
 
+bool OsmAnd::MapRendererResourcesManager::uploadVerticesToGPU(
+    const void* data,
+    const size_t dataSize,
+    const unsigned int vertexCount,
+    std::shared_ptr<const GPUAPI::ArrayBufferInGPU>& outVertexBuffer,
+    const bool waitForGPU) const
+{
+    return renderer->gpuAPI->uploadDataAsVertices(
+        data,
+        dataSize,
+        vertexCount,
+        outVertexBuffer,
+        waitForGPU,
+        &(renderer->gpuContextIsLost));
+}
+
+bool OsmAnd::MapRendererResourcesManager::uploadIndicesToGPU(
+    const void* data,
+    const size_t dataSize,
+    const unsigned int indexCount,
+    std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU>& outIndexBuffer,
+    const bool waitForGPU) const
+{
+    return renderer->gpuAPI->uploadDataAsIndices(
+        data,
+        dataSize,
+        indexCount,
+        outIndexBuffer,
+        waitForGPU,
+        &(renderer->gpuContextIsLost));
+}
+
 bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
 {
     bool ok = true;
@@ -310,6 +342,18 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
         }
 
         updateSymbolProviderBindings(state);
+    }
+
+    if (updatedMask.isSet(MapRendererStateChange::Map3DObjects_Provider))
+    {
+        if (!wasLocked)
+        {
+            if (!_resourcesStoragesLock.tryLockForWrite())
+                return false;
+            wasLocked = true;
+        }
+
+        update3DObjectsProviderBindings(state);
     }
 
     if (wasLocked)
@@ -569,6 +613,60 @@ void OsmAnd::MapRendererResourcesManager::updateSymbolProviderBindings(const Map
             // Add resources collection
             resources.push_back(qMove(newResourcesCollection));
         }
+    }
+}
+
+void OsmAnd::MapRendererResourcesManager::update3DObjectsProviderBindings(const MapRendererState& state)
+{
+    auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::Map3DObjects)];
+    auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::Map3DObjects)];
+    
+    // Clean-up and unbind gone providers and their resources
+    auto itBindedProvider = mutableIteratorOf(bindings.providersToCollections);
+    while (itBindedProvider.hasNext())
+    {
+        itBindedProvider.next();
+
+        const auto provider = itBindedProvider.key();
+
+        // Skip binding if it's still active
+        bool skip = false;
+        if (provider == state.map3DObjectsProvider)
+        {
+            skip = true;
+        }
+        if (skip)
+            continue;
+
+        // Clean-up resources (deferred)
+        _pendingRemovalResourcesCollections.push_back(itBindedProvider.value());
+
+        // Remove resources collection
+        resources.removeOne(itBindedProvider.value());
+
+        // Remove binding
+        bindings.collectionsToProviders.remove(itBindedProvider.value());
+        itBindedProvider.remove();
+    }
+
+    // Create new binding and storage if provider exists
+    if (state.map3DObjectsProvider)
+    {
+        const auto provider = std::static_pointer_cast<IMapDataProvider>(state.map3DObjectsProvider);
+
+        // If binding already exists, skip creation
+        if (bindings.providersToCollections.contains(provider))
+            return;
+        // Create new resources collection
+        const std::shared_ptr<MapRendererTiledResourcesCollection> newResourcesCollection(
+            new MapRendererTiledResourcesCollection(MapRendererResourceType::Map3DObjects));
+
+        // Add binding
+        bindings.providersToCollections.insert(provider, newResourcesCollection);
+        bindings.collectionsToProviders.insert(newResourcesCollection, provider);
+
+        // Add resources collection
+        resources.push_back(qMove(newResourcesCollection));
     }
 }
 
@@ -939,6 +1037,8 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
                 return new MapRendererElevationDataResource(this, collection, tileId, zoom);
             else if (resourceType == MapRendererResourceType::Symbols)
                 return new MapRendererTiledSymbolsResource(this, collection, tileId, zoom);
+            else if (resourceType == MapRendererResourceType::Map3DObjects)
+                return new MapRenderer3DObjectsResource(this, collection, tileId, zoom);
             else
                 return nullptr;
         };
@@ -2466,7 +2566,8 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                         continue;
 
                     if (resourcesType == MapRendererResourceType::MapLayer ||
-                        resourcesType == MapRendererResourceType::ElevationData)
+                        resourcesType == MapRendererResourceType::ElevationData ||
+                        resourcesType == MapRendererResourceType::Map3DObjects)
                     {
                         if (activeZoom < minZoom)
                         {
