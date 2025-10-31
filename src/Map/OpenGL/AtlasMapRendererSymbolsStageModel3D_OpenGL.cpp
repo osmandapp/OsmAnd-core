@@ -38,6 +38,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
@@ -341,6 +342,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::render(
         glDrawArrays(primitivesType, 0, count);
         GL_CHECK_RESULT;
     }
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_program.vs.in.vertexColor);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_program.vs.in.vertexNormal);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_program.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
 
     // Disable depth buffer offset for other symbols
     glDisable(GL_POLYGON_OFFSET_FILL);

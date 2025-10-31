@@ -286,6 +286,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
@@ -525,9 +526,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     GL_CHECK_RESULT;
 
     gpuAPI->initializeVAO(_billboardRasterSymbolVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    GL_CHECK_RESULT;
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_billboardRasterProgram.vs.in.vertexTexCoords);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_billboardRasterProgram.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 
     return true;
@@ -760,6 +766,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
 
     const auto alreadyOccupiedUniforms =
@@ -896,9 +903,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     GL_CHECK_RESULT;
 
     gpuAPI->initializeVAO(_onPathSymbol2dVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    GL_CHECK_RESULT;
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_onPath2dProgram.vs.in.vertexTexCoords);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_onPath2dProgram.vs.in.glyphIndex);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_onPath2dProgram.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 
     return true;
@@ -1111,6 +1125,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
 
     const auto alreadyOccupiedUniforms =
@@ -1247,9 +1262,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     GL_CHECK_RESULT;
 
     gpuAPI->initializeVAO(_onPathSymbol3dVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    GL_CHECK_RESULT;
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_onPath3dProgram.vs.in.vertexTexCoords);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_onPath3dProgram.vs.in.glyphIndex);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_onPath3dProgram.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 
     return true;
@@ -1927,6 +1949,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
@@ -2131,9 +2154,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     GL_CHECK_RESULT;
 
     gpuAPI->initializeVAO(_onSurfaceRasterSymbolVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    GL_CHECK_RESULT;
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_onSurfaceRasterProgram.vs.in.vertexTexCoords);
+    GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_onSurfaceRasterProgram.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 
     return true;
@@ -2532,6 +2560,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
     AlphaChannelType &currentAlphaChannelType)
 {
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
 
@@ -2766,9 +2801,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         }
 
         // Turn off all buffers
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        GL_CHECK_RESULT;
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        GL_CHECK_RESULT;
+        glDisableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexColor);
+        GL_CHECK_RESULT;
+        glDisableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
+        GL_CHECK_RESULT;
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
         GL_CHECK_RESULT;
     }
     else
@@ -2828,6 +2867,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
             maxZoom = currentState.elevationDataProvider->getMaxZoom();
         }
         double tileSize;
+        glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
+        GL_CHECK_RESULT;
+        glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexColor);
+        GL_CHECK_RESULT;
         for (const auto& partSizes : *gpuResource->partSizes)
         {
             auto baseTileId = partSizes.first;
@@ -2936,16 +2979,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
                 useElevationData ? currentState.elevationConfiguration.dataScaleFactor : 0.0f);
             GL_CHECK_RESULT;
 
-            glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
-            GL_CHECK_RESULT;
             glVertexAttribPointer(*_onSurfaceVectorProgram.vs.in.vertexPosition,
                 4, GL_FLOAT, GL_FALSE,
                 sizeof(VectorMapSymbol::Vertex),
                 reinterpret_cast<GLvoid*>(partOffset + offsetof(VectorMapSymbol::Vertex, positionXYZD)));
             GL_CHECK_RESULT;
 
-            glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexColor);
-            GL_CHECK_RESULT;
             glVertexAttribPointer(*_onSurfaceVectorProgram.vs.in.vertexColor,
                 4, GL_FLOAT, GL_FALSE,
                 sizeof(VectorMapSymbol::Vertex),
@@ -2966,6 +3005,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         glBindTexture(GL_TEXTURE_2D, 0);
         GL_CHECK_RESULT;
 
+        glDisableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexColor);
+        GL_CHECK_RESULT;
+        glDisableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
+        GL_CHECK_RESULT;
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         GL_CHECK_RESULT;
 
@@ -3011,6 +3054,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeVisibilityCheck()
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
@@ -3157,6 +3201,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeVisibilityCheck()
 
     gpuAPI->initializeVAO(_visibilityCheckVAO);
 
+    glDisableVertexAttribArray(*_visibilityCheckProgram.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 
@@ -3419,9 +3465,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::configureElevationData(
     GL_CHECK_PRESENT(glUniform4f);
     GL_CHECK_PRESENT(glActiveTexture);
     GL_CHECK_PRESENT(glBindTexture);
-    GL_CHECK_PRESENT(glBindBuffer);
-    GL_CHECK_PRESENT(glEnableVertexAttribArray);
-    GL_CHECK_PRESENT(glVertexAttribPointer);
 
     glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
     GL_CHECK_RESULT;
