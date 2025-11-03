@@ -385,11 +385,26 @@ namespace OsmAnd
             const auto intFull = intMax + 1;
             auto y = std::min(std::max(a.y, -M_PI_2), M_PI_2);
             auto eval = log(tan(y) + 1.0 / cos(y));
-            auto res = eval >= -M_PI && eval <= M_PI ? eval : (eval < -M_PI ? -M_PI : M_PI);
+            auto res = eval >= -M_PI && eval <= M_PI ? eval : (y < 0.0 ? -M_PI : M_PI);
             return PointI(
                 static_cast<int32_t>(static_cast<int64_t>((a.x + M_PI) / (M_PI * 2.0) * intFull) % intFull),
                 static_cast<int32_t>(std::min(static_cast<int64_t>((1.0 - res / M_PI) / 2.0 * intFull), intMax)));
         }
+
+#if !defined(SWIG)
+        inline static PointI64 get64FromAngles(const PointD& a)
+        {
+            const int64_t intMax = INT32_MAX;
+            const auto intFull = intMax + 1;
+            auto y = std::min(std::max(a.y, -M_PI_2), M_PI_2);
+            auto eval = log(tan(y) + 1.0 / cos(y));
+            const auto angFull = 2.0 * M_PI;
+            auto res = eval >= -angFull && eval <= angFull ? eval : (y < 0.0 ? -angFull : angFull);
+            return PointI64(
+                static_cast<int64_t>((a.x + M_PI) / (M_PI * 2.0) * intFull) % intFull,
+                static_cast<int64_t>((1.0 - res / M_PI) / 2.0 * intFull));
+        }
+#endif // !defined(SWIG)
 
         inline static PointD getZoneUTM(const PointD& location, double* refLonDeg)
         {
@@ -1272,10 +1287,12 @@ namespace OsmAnd
             return result;
         }
 
-        inline static glm::dvec3 getGlobeRadialVector(const PointI& location31)
+        inline static glm::dvec3 getGlobeRadialVector(const PointI& location31, PointD* outAngles = nullptr)
         {
             const auto angles = getAnglesFrom31(location31);
             const auto result = getGlobeRadialVector(angles);
+            if (outAngles != nullptr)
+                *outAngles = angles;
             return result;
         }
 
@@ -1295,9 +1312,10 @@ namespace OsmAnd
             const PointI& location31,
             const glm::dmat3& mGlobeRotation,
             const double globeRadius,
-            const double elevation)
+            const double elevation,
+            PointD* outAngles = nullptr)
         {
-            const auto n = mGlobeRotation * getGlobeRadialVector(location31);
+            const auto n = mGlobeRotation * getGlobeRadialVector(location31, outAngles);
             const auto v = n * (globeRadius + elevation);
             return glm::vec3(v.x, v.y - globeRadius, v.z);
         }

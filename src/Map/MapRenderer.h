@@ -172,13 +172,14 @@ namespace OsmAnd
         double glViewportScale = 1;
         glm::vec2 glViewportShift = glm::vec2(0);
 
+        virtual bool isEdgeVisible(const MapRendererInternalState& internalState,
+            const glm::vec3& startPoint, const glm::vec3& endPoint) const = 0;
         virtual AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const = 0;
         virtual AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const = 0;
         virtual double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const = 0;
         virtual bool getNewTargetByScreenPoint(const MapRendererState& state, const PointI& screenPoint,
             const PointI& location31, PointI& target31, const float height = 0.0f) const = 0;
         virtual bool isLocationHeightAvailable(const MapRendererState& state, const PointI& location31) const = 0;
-        virtual float getLocationHeightInMeters(const MapRendererState& state, const PointI& location31) const = 0;
         virtual bool getLocationFromElevatedPoint(const MapRendererState& state,
             const PointI& screenPoint, PointI& location31, float* heightInMeters = nullptr) const = 0;
         virtual bool getExtraZoomAndTiltForRelief(const MapRendererState& state, PointF& zoomAndTilt) const = 0;
@@ -322,6 +323,7 @@ namespace OsmAnd
 
         // General:
         virtual bool isRenderingInitialized() const Q_DECL_OVERRIDE;
+        virtual float getLocationHeightInMeters(const MapRendererState& state, const PointI& location31) const = 0;
 
         // Configuration-related:
         virtual std::shared_ptr<MapRendererConfiguration> getConfiguration() const Q_DECL_OVERRIDE;

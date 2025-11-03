@@ -247,12 +247,31 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::render(
         currentAlphaChannelType = AlphaChannelType::Straight;
     }
 
+    // Calculate position of model in world coordinates
+    const auto elevationInWorld = renderable->elevationInMeters
+        / (currentState.flatEarth ? renderable->metersPerUnit : internalState.metersPerUnit);
+    PointD angles;
+    const auto positionInWorld = currentState.flatEarth
+        ? Utilities::planeWorldCoordinates(renderable->position31,
+            currentState.target31, currentState.zoomLevel, AtlasMapRenderer::TileSize3D, elevationInWorld)
+        : Utilities::sphericalWorldCoordinates(renderable->position31,
+            internalState.mGlobeRotationPrecise, internalState.globeRadius, elevationInWorld, &angles);
+    auto rotateModel = glm::mat4(1.0f);
+    if (!currentState.flatEarth)
+    {
+        const auto mRotationX = glm::rotate(static_cast<float>(angles.y), glm::vec3(-1.0f, 0.0f, 0.0f));
+        const auto mRotationZ = glm::rotate(static_cast<float>(angles.x), glm::vec3(0.0f, 0.0f, -1.0f));
+        rotateModel = glm::mat4(internalState.mGlobeRotationPrecise) * mRotationZ * mRotationX;
+    }
+    const auto placeModel = glm::translate(positionInWorld);
+    const auto mModel = placeModel * rotateModel * renderable->mModel;
+
     // Model matrix
     glUniformMatrix4fv(
         _program.vs.param.mModel,
         1,
         GL_FALSE,
-        glm::value_ptr(renderable->mModel));
+        glm::value_ptr(mModel));
     GL_CHECK_RESULT;
 
     // Set main color
