@@ -99,11 +99,10 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
 
         const QString fragmentShader = R"(
             in vec4 v2f_color;
-            out vec4 fragColor;
             
             void main()
             {
-                fragColor = v2f_color;
+                FRAGMENT_COLOR_OUTPUT = v2f_color;
             }
         )";
 
