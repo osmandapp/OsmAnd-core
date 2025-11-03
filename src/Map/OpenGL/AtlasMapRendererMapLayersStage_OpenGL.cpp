@@ -2512,6 +2512,7 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterTile()
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
 
 #pragma pack(push, 1)
@@ -2632,6 +2633,11 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterTile()
             GL_CHECK_RESULT;
 
             gpuAPI->initializeVAO(rasterTileVAO);
+
+            glDisableVertexAttribArray(*rasterLayerTileProgram.vs.in.vertexTexCoords);
+            GL_CHECK_RESULT;
+            glDisableVertexAttribArray(*rasterLayerTileProgram.vs.in.vertexPosition);
+            GL_CHECK_RESULT;
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             GL_CHECK_RESULT;
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -2699,9 +2705,6 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
     GL_CHECK_PRESENT(glUniform4f);
     GL_CHECK_PRESENT(glActiveTexture);
     GL_CHECK_PRESENT(glBindTexture);
-    GL_CHECK_PRESENT(glBindBuffer);
-    GL_CHECK_PRESENT(glEnableVertexAttribArray);
-    GL_CHECK_PRESENT(glVertexAttribPointer);
 
     const auto& perTile_vs = program.vs.param.elevationLayer;
 
