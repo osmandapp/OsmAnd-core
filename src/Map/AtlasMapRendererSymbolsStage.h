@@ -69,6 +69,9 @@ namespace OsmAnd
             ~RenderableModel3DSymbol() override;
 
             glm::mat4 mModel;
+            float elevationInMeters;
+            double metersPerUnit;
+            PointI position31;
         };
 
         struct RenderableOnSurfaceSymbol : RenderableSymbol

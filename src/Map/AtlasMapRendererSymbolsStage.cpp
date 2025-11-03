@@ -1823,11 +1823,17 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         elevationFactor = rasterMapSymbol->getElevationScaleFactor();
 
     // Get elevation data
-    const auto upperMetersPerUnit =
-            Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
-    const auto lowerMetersPerUnit =
-            Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y + 1, AtlasMapRenderer::TileSize3D);
-    const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+    double metersPerUnit;
+    if (currentState.flatEarth)
+    {
+        const auto upperMetersPerUnit =
+                Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
+        const auto lowerMetersPerUnit =
+                Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y + 1, AtlasMapRenderer::TileSize3D);
+        metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+    }
+    else
+        metersPerUnit = internalState.metersPerUnit;
     float surfaceInMeters = 0.0f;
     float surfaceInWorld = 0.0f;
     std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
