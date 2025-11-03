@@ -1010,7 +1010,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
 
                     // Check position of the camera, which may be put inside the tile:
                     // in this case, the tile should be considered visible
-                    if (cameraHeight >= minHeight && cameraHeight <= maxHeight
+                    if (cameraHeight <= maxHeight
                         && ca.x >= angTL.x && ca.x <= angBR.x && ca.y >= angTL.y && ca.y <= angBR.y)
                     {
                         isVisible = true;
