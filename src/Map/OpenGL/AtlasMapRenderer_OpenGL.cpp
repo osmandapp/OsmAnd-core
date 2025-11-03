@@ -870,8 +870,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         if (min31.x >= max31.x)
             min31.x = min31.x - INT32_MAX - 1;
 
-        LogPrintf(OsmAnd::LogSeverityLevel::Debug, "OSMTEST: %f > LON < %f | %f > LAT < %f", minAngleX / M_PI * 180.0, maxAngleX / M_PI * 180.0, minAngleY / M_PI * 180.0, maxAngleY / M_PI * 180.0);
-
         internalState->globalFrustum2D31.p0 = PointI64(min31.x, max31.y);
         internalState->globalFrustum2D31.p1 = PointI64(max31.x, max31.y);
         internalState->globalFrustum2D31.p2 = PointI64(max31.x, min31.y);
