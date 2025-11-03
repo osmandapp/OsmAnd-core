@@ -11,10 +11,12 @@
 #include <OsmAndCore/Map/MapPrimitivesProvider.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
 #include <OsmAndCore/Map/MapRenderer3DObjects.h>
+#include <OsmAndCore/PrivateImplementation.h>
 #include <memory>
 
 namespace OsmAnd
 {
+    class Map3DObjectsTiledProvider_P;
     class Map3DObjectsTiledProvider : public IMapTiledDataProvider, public std::enable_shared_from_this<Map3DObjectsTiledProvider>
     {
     public:
@@ -54,7 +56,9 @@ namespace OsmAnd
         Map3DObjectsTiledProvider();
 
     private:
-        std::shared_ptr<MapPrimitivesProvider> _tiledProvider;
+        PrivateImplementation<Map3DObjectsTiledProvider_P> _p;
+
+        friend class OsmAnd::Map3DObjectsTiledProvider_P;
     };
 }
 

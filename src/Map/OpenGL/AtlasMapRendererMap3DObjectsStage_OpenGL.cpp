@@ -204,7 +204,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
 
     if (!resourcesCollection)
     {
-        return false;
+        return true;
     }
 
     const auto gpuAPI = getGPUAPI();
