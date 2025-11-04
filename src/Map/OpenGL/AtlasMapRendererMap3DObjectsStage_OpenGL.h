@@ -21,7 +21,7 @@ namespace OsmAnd
     private:
         GLname _vao;
 
-        void drawResource(const TileId& id, ZoomLevel z, const std::shared_ptr<MapRenderer3DObjectsResource>& res, QSet<uint64_t>& drawnBboxHashes);
+        int drawResource(const TileId& id, ZoomLevel z, const std::shared_ptr<MapRenderer3DObjectsResource>& res, QSet<uint64_t>& drawnBboxHashes);
 
         struct Model3DProgram
         {

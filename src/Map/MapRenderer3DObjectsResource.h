@@ -31,9 +31,17 @@ namespace OsmAnd
             uint64_t bboxHash;
         };
 
+        struct PerformanceDebugInfo
+        {
+            size_t totalGpuMemoryBytes;
+            float obtainDataTimeMilliseconds;
+            float uploadToGpuTimeMilliseconds;
+        };
+
         ~MapRenderer3DObjectsResource() override;
 
         const QVector<RenderableBuilding>& getRenderableBuildings() const { return _renderableBuildings; }
+        const PerformanceDebugInfo& getPerformanceDebugInfo() const { return _performanceDebugInfo; }
 
         friend class OsmAnd::MapRendererResourcesManager;
 
@@ -47,6 +55,7 @@ namespace OsmAnd
         std::shared_ptr<IMapTiledDataProvider::Data> _sourceData;
 
         QVector<RenderableBuilding> _renderableBuildings;
+        PerformanceDebugInfo _performanceDebugInfo;
 
         bool supportsObtainDataAsync() const override;
         bool obtainData(bool& dataAvailable, const std::shared_ptr<const IQueryController>& queryController) override;

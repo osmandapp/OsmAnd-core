@@ -8,6 +8,7 @@
 #include "Map3DObjectsProvider.h"
 #include "Utilities.h"
 #include "MapRenderer.h"
+#include "Stopwatch.h"
 #include <iostream>
 
 using namespace OsmAnd;
@@ -18,7 +19,11 @@ MapRenderer3DObjectsResource::MapRenderer3DObjectsResource(
     const TileId tileId,
     const ZoomLevel zoom)
     : MapRendererBaseTiledResource(owner, MapRendererResourceType::Map3DObjects, collection, tileId, zoom)
+    , _performanceDebugInfo()
 {
+    _performanceDebugInfo.totalGpuMemoryBytes = 0;
+    _performanceDebugInfo.obtainDataTimeMilliseconds = 0.0f;
+    _performanceDebugInfo.uploadToGpuTimeMilliseconds = 0.0f;
 }
 
 MapRenderer3DObjectsResource::~MapRenderer3DObjectsResource()
@@ -55,6 +60,8 @@ bool MapRenderer3DObjectsResource::supportsObtainDataAsync() const
 
 bool MapRenderer3DObjectsResource::obtainData(bool& dataAvailable, const std::shared_ptr<const IQueryController>& queryController)
 {
+    Stopwatch stopwatch(true);
+    
     std::shared_ptr<IMapDataProvider> iProvider;
     if (!getProvider(iProvider))
     {
@@ -81,6 +88,9 @@ bool MapRenderer3DObjectsResource::obtainData(bool& dataAvailable, const std::sh
 
     const auto map3DTileData = std::dynamic_pointer_cast<Map3DObjectsTiledProvider::Data>(_sourceData);
     dataAvailable = static_cast<bool>(map3DTileData);
+    
+    _performanceDebugInfo.obtainDataTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
+    
     return true;
 }
 
@@ -94,8 +104,12 @@ void MapRenderer3DObjectsResource::obtainDataAsync(ObtainDataAsyncCallback callb
 
 bool MapRenderer3DObjectsResource::uploadToGPU()
 {
+    Stopwatch stopwatch(true);
+    
     if (!_sourceData)
     {
+        _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
+        _performanceDebugInfo.totalGpuMemoryBytes = 0;
         return true;
     }
 
@@ -104,8 +118,12 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
     const auto map3DTileData = std::dynamic_pointer_cast<Map3DObjectsTiledProvider::Data>(_sourceData);
     if (!map3DTileData)
     {
+        _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
+        _performanceDebugInfo.totalGpuMemoryBytes = 0;
         return true;
     }
+
+    size_t totalGpuMemoryBytes = 0;
 
     for (const auto& building : map3DTileData->buildings3D)
     {
@@ -130,6 +148,8 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
             continue;
         }
 
+        totalGpuMemoryBytes += vertexBufferSize + indexBufferSize;
+
         const float r = static_cast<float>(rand()) / RAND_MAX;
         const float g = static_cast<float>(rand()) / RAND_MAX;
         const float b = static_cast<float>(rand()) / RAND_MAX;
@@ -144,6 +164,9 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
 
         _renderableBuildings.append(renderableBuilding);
     }
+
+    _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
+    _performanceDebugInfo.totalGpuMemoryBytes = totalGpuMemoryBytes;
 
     //_sourceData.reset();
     return true;
