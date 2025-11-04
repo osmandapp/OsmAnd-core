@@ -193,7 +193,6 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
 
 bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const /*metric*/)
 {
-    const auto& currentState = getRenderer()->getState();
     const auto resourcesCollection = getResources().getCollectionSnapshot(MapRendererResourceType::Map3DObjects,
         std::static_pointer_cast<IMapDataProvider>(currentState.map3DObjectsProvider));
 
@@ -426,7 +425,6 @@ int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId&
 {
     int drawnCount = 0;
     const auto gpuAPI = getGPUAPI();
-    const auto& currentState = getRenderer()->getState();
 
     const int deltaZoom = static_cast<int>(z) - static_cast<int>(currentState.zoomLevel);
     int yAtCurrentZoom;
