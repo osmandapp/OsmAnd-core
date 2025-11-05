@@ -123,13 +123,13 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
         gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
         gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
 
-        _program.binaryCache = gpuAPI->readProgramBinary(preprocessedVertexShader, preprocessedFragmentShader, "", _program.cacheFormat);
+        _program.binaryCache = gpuAPI->readProgramBinary(preprocessedVertexShader,
+            preprocessedFragmentShader, setupOptions.pathToOpenGLShadersCache, _program.cacheFormat);
 
         if (!_program.binaryCache.isEmpty())
         {
             _program.id = gpuAPI->linkProgram(0, nullptr, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
         }
-
         if (_program.binaryCache.isEmpty() || !_program.id.isValid())
         {
             const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
@@ -151,6 +151,15 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
 
             const GLuint shaders[] = { vsId, fsId };
             _program.id = gpuAPI->linkProgram(2, shaders, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
+            if (_program.id.isValid() && !_program.binaryCache.isEmpty())
+            {
+                gpuAPI->writeProgramBinary(
+                    preprocessedVertexShader,
+                    preprocessedFragmentShader,
+                    setupOptions.pathToOpenGLShadersCache,
+                    _program.binaryCache,
+                    _program.cacheFormat);
+            }
         }
     }
 
@@ -175,11 +184,6 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
 {
     const auto gpuAPI = getGPUAPI();
 
-    if (!initializeProgram())
-    {
-        return false;
-    }
-
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
@@ -201,14 +205,27 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
     return true;
 }
 
-bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const /*metric*/)
+MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const /*metric*/)
 {
     const auto resourcesCollection = getResources().getCollectionSnapshot(MapRendererResourceType::Map3DObjects,
         std::static_pointer_cast<IMapDataProvider>(currentState.map3DObjectsProvider));
 
     if (!resourcesCollection)
     {
-        return true;
+        return StageResult::Success;
+    }
+
+    if (!_program.id.isValid())
+    {
+        if (!initializeProgram())
+        {
+            return StageResult::Fail;
+        }
+        
+        if (!_program.id.isValid())
+        {
+            return StageResult::Wait;
+        }
     }
 
     const bool debugEnabled = debugSettings && debugSettings->debugStageEnabled;
@@ -237,9 +254,9 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
     GL_CHECK_RESULT;
     glUniform1f(*_program.vs.param.ambient, 0.2f);
     GL_CHECK_RESULT;
-    glEnable(GL_BLEND);
+    glUniform3f(*_program.vs.param.color, 0.4f, 0.4f, 0.4f);
     GL_CHECK_RESULT;
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glUniform1f(*_program.vs.param.alpha, 1.0f);
     GL_CHECK_RESULT;
 
     const auto CollectionStapshot = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection);
@@ -377,9 +394,6 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
         }
     }
 
-    glDisable(GL_BLEND);
-    GL_CHECK_RESULT;
-
     if (debugEnabled)
     {
         const float renderTime = renderStopwatch.elapsed() * 1000.0f;
@@ -432,7 +446,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
         LogPrintf(LogSeverityLevel::Info, "%s", qPrintable(debugString));
     }
 
-    return true;
+    return StageResult::Success;
 }
 
 int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId& id,
@@ -473,11 +487,6 @@ int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId&
         
         drawnBboxHashes.insert(b.bboxHash);
         drawnCount++;
-
-        glUniform3f(*_program.vs.param.color, 0.4f, 0.4f, 0.4f);
-        GL_CHECK_RESULT;
-        glUniform1f(*_program.vs.param.alpha, 1.0f);
-        GL_CHECK_RESULT;
 
         gpuAPI->useVAO(_vao);
 

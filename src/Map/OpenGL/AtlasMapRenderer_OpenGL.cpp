@@ -198,20 +198,24 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
             skip = true;
     }
 
-    if (_map3DObjectsStage && !currentDebugSettings->disable3DMapObjectsStage)
-    {
-        Stopwatch map3DStageStopwatch(metric != nullptr);
-        if (!_map3DObjectsStage->render(metric))
-            ok = false;
-        if (metric)
-            metric->elapsedTimeForSymbolsStage += map3DStageStopwatch.elapsed();
-    }
     // Turn on blending since now objects with transparency are going to be rendered
     glEnable(GL_BLEND);
     GL_CHECK_RESULT;
 
     // Set premultiplied alpha color blending
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+    if (_map3DObjectsStage && !currentDebugSettings->disable3DMapObjectsStage)
+    {
+        Stopwatch map3DStageStopwatch(metric != nullptr);
+
+        const auto stageResult = _map3DObjectsStage->render(metric);
+
+        if (stageResult == MapRendererStage::StageResult::Fail)
+            ok = false;
+        if (metric)
+            metric->elapsedTimeForSymbolsStage += map3DStageStopwatch.elapsed();
+    }
 
     // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
     if (!skip && !currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))

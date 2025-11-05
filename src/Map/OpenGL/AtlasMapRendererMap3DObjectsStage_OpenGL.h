@@ -62,7 +62,7 @@ namespace OsmAnd
         ~AtlasMapRendererMap3DObjectsStage_OpenGL() override;
 
         bool initialize() override;
-        bool render(IMapRenderer_Metrics::Metric_renderFrame* const metric) override;
+        StageResult render(IMapRenderer_Metrics::Metric_renderFrame* const metric) override;
         bool release(bool gpuContextLost) override;
     };
 }
