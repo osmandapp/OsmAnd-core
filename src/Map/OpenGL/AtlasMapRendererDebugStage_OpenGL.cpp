@@ -29,20 +29,32 @@ OsmAnd::AtlasMapRendererDebugStage_OpenGL::~AtlasMapRendererDebugStage_OpenGL()
 
 bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initialize()
 {
-    bool ok = true;
-    ok = ok && initializePoints2D();
-    ok = ok && initializeRects2D();
-    ok = ok && initializeLines2D();
-    ok = ok && initializeLines3D();
-    ok = ok && initializeQuads3D();
-    return ok;
+    _initDebugSymbolType = InitDebugSymbolType::Points2D;
+
+    return true;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const metric_)
+OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererDebugStage_OpenGL::render(
+    IMapRenderer_Metrics::Metric_renderFrame* const metric_)
 {
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 
     bool ok = true;
+
+    if (_initDebugSymbolType != InitDebugSymbolType::Complete)
+    {
+        const auto initDebugSymbolType = _initDebugSymbolType;
+        ok = ok && (initDebugSymbolType != InitDebugSymbolType::Points2D || initializePoints2D());
+        ok = ok && (initDebugSymbolType != InitDebugSymbolType::Rects2D || initializeRects2D());
+        ok = ok && (initDebugSymbolType != InitDebugSymbolType::Lines2D || initializeLines2D());
+        ok = ok && (initDebugSymbolType != InitDebugSymbolType::Lines3D || initializeLines3D());
+        ok = ok && (initDebugSymbolType != InitDebugSymbolType::Quads3D || initializeQuads3D());
+
+        if (!ok || _initDebugSymbolType == InitDebugSymbolType::Incomplete)
+            return StageResult::Fail;
+
+        return StageResult::Wait;
+    }
 
     GL_PUSH_GROUP_MARKER(QLatin1String("debug"));
 
@@ -73,7 +85,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::render(IMapRenderer_Metrics::Met
 
     GL_POP_GROUP_MARKER;
 
-    return ok;
+    return ok ? StageResult::Success : StageResult::Fail;
 }
 
 bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::release(bool gpuContextLost)
@@ -89,12 +101,16 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::release(bool gpuContextLost)
 
 bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializePoints2D()
 {
+    const auto nextInitDebugSymbolType = static_cast<InitDebugSymbolType>(static_cast<int>(_initDebugSymbolType) + 1);
+    _initDebugSymbolType = InitDebugSymbolType::Incomplete;
+
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
@@ -155,7 +171,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializePoints2D()
             if (vsId == 0)
             {
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
+                    "Failed to compile Point2D vertex shader");
                 return false;
             }
             const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -165,7 +181,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializePoints2D()
                 GL_CHECK_RESULT;
 
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
+                    "Failed to compile Point2D fragment shader");
                 return false;
             }
             GLuint shaders[] = { vsId, fsId };
@@ -185,7 +201,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializePoints2D()
     if (!_programPoint2D.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to link AtlasMapRendererDebugStage_OpenGL program");
+            "Failed to link Point2D shader program");
         return false;
     }
 
@@ -199,8 +215,11 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializePoints2D()
     {
         glDeleteProgram(_programPoint2D.id);
         GL_CHECK_RESULT;
+
         _programPoint2D.id.reset();
 
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find variable in Point2D shader program");
         return false;
     }
 
@@ -256,10 +275,16 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializePoints2D()
     GL_CHECK_RESULT;
 
     gpuAPI->initializeVAO(_vaoPoint2D);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    GL_CHECK_RESULT;
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_programPoint2D.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+
+    _initDebugSymbolType = nextInitDebugSymbolType;
+
     return true;
 }
 
@@ -376,12 +401,16 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releasePoints2D(bool gpuContextL
 
 bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
 {
+    const auto nextInitDebugSymbolType = static_cast<InitDebugSymbolType>(static_cast<int>(_initDebugSymbolType) + 1);
+    _initDebugSymbolType = InitDebugSymbolType::Incomplete;
+
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
@@ -453,7 +482,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
             if (vsId == 0)
             {
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
+                    "Failed to compile Rect2D vertex shader");
                 return false;
             }
             const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -463,7 +492,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
                 GL_CHECK_RESULT;
 
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
+                    "Failed to compile Rect2D fragment shader");
                 return false;
             }
             GLuint shaders[] = { vsId, fsId };
@@ -483,7 +512,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     if (!_programRect2D.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to link AtlasMapRendererDebugStage_OpenGL program");
+            "Failed to link Rect2D shader program");
         return false;
     }
 
@@ -499,8 +528,11 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     {
         glDeleteProgram(_programRect2D.id);
         GL_CHECK_RESULT;
+
         _programRect2D.id.reset();
 
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find variable in Rect2D shader program");
         return false;
     }
 
@@ -545,10 +577,15 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     GL_CHECK_RESULT;
 
     gpuAPI->initializeVAO(_vaoRect2D);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    GL_CHECK_RESULT;
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_programRect2D.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+
+    _initDebugSymbolType = nextInitDebugSymbolType;
 
     return true;
 }
@@ -664,12 +701,16 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D(bool gpuContextLo
 
 bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
 {
+    const auto nextInitDebugSymbolType = static_cast<InitDebugSymbolType>(static_cast<int>(_initDebugSymbolType) + 1);
+    _initDebugSymbolType = InitDebugSymbolType::Incomplete;
+
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
@@ -735,7 +776,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
             if (vsId == 0)
             {
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
+                    "Failed to compile Line2D vertex shader");
                 return false;
             }
             const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -745,7 +786,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
                 GL_CHECK_RESULT;
 
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
+                    "Failed to compile Line2D fragment shader");
                 return false;
             }
             GLuint shaders[] = { vsId, fsId };
@@ -765,7 +806,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     if (!_programLine2D.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to link AtlasMapRendererDebugStage_OpenGL program");
+            "Failed to link Line2D shader program");
         return false;
     }
 
@@ -781,8 +822,11 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     {
         glDeleteProgram(_programLine2D.id);
         GL_CHECK_RESULT;
+
         _programLine2D.id.reset();
 
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find variable in Line2D shader program");
         return false;
     }
 
@@ -824,10 +868,15 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     GL_CHECK_RESULT;
 
     gpuAPI->initializeVAO(_vaoLine2D);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    GL_CHECK_RESULT;
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_programLine2D.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+
+    _initDebugSymbolType = nextInitDebugSymbolType;
 
     return true;
 }
@@ -948,12 +997,16 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D(bool gpuContextLo
 
 bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
 {
+    const auto nextInitDebugSymbolType = static_cast<InitDebugSymbolType>(static_cast<int>(_initDebugSymbolType) + 1);
+    _initDebugSymbolType = InitDebugSymbolType::Incomplete;
+
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
@@ -1017,7 +1070,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
             if (vsId == 0)
             {
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
+                    "Failed to compile Line3D vertex shader");
                 return false;
             }
             const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -1027,7 +1080,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
                 GL_CHECK_RESULT;
 
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
+                    "Failed to compile Line3D fragment shader");
                 return false;
             }
             GLuint shaders[] = { vsId, fsId };
@@ -1047,7 +1100,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     if (!_programLine3D.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to link AtlasMapRendererDebugStage_OpenGL program");
+            "Failed to link Line3D shader program");
         return false;
     }
 
@@ -1063,8 +1116,11 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     {
         glDeleteProgram(_programLine3D.id);
         GL_CHECK_RESULT;
+
         _programLine3D.id.reset();
 
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find variable in Line3D shader program");
         return false;
     }
 
@@ -1106,10 +1162,15 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     GL_CHECK_RESULT;
 
     gpuAPI->initializeVAO(_vaoLine3D);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    GL_CHECK_RESULT;
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_programLine3D.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+
+    _initDebugSymbolType = nextInitDebugSymbolType;
 
     return true;
 }
@@ -1230,12 +1291,16 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D(bool gpuContextLo
 
 bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
 {
+    const auto nextInitDebugSymbolType = static_cast<InitDebugSymbolType>(static_cast<int>(_initDebugSymbolType) + 1);
+    _initDebugSymbolType = InitDebugSymbolType::Incomplete;
+
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDeleteShader);
     GL_CHECK_PRESENT(glDeleteProgram);
@@ -1308,7 +1373,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
             if (vsId == 0)
             {
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
+                    "Failed to compile Quad3D vertex shader");
                 return false;
             }
             const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -1318,7 +1383,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
                 GL_CHECK_RESULT;
 
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
+                    "Failed to compile Quad3D fragment shader");
                 return false;
             }
             GLuint shaders[] = { vsId, fsId };
@@ -1338,7 +1403,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     if (!_programQuad3D.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to link AtlasMapRendererDebugStage_OpenGL program");
+            "Failed to link Quad3D shader program");
         return false;
     }
 
@@ -1356,8 +1421,11 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     {
         glDeleteProgram(_programQuad3D.id);
         GL_CHECK_RESULT;
+
         _programQuad3D.id.reset();
 
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find variable in Quad3D shader program");
         return false;
     }
 
@@ -1402,10 +1470,15 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     GL_CHECK_RESULT;
 
     gpuAPI->initializeVAO(_vaoQuad3D);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    GL_CHECK_RESULT;
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+    glDisableVertexAttribArray(*_programQuad3D.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+
+    _initDebugSymbolType = nextInitDebugSymbolType;
 
     return true;
 }

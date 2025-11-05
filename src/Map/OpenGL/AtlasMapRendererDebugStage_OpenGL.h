@@ -19,6 +19,8 @@ namespace OsmAnd
     {
     private:
     protected:
+        InitDebugSymbolType _initDebugSymbolType;
+
         GLname _vaoPoint2D;
         GLname _vboPoint2D;
         GLname _iboPoint2D;
@@ -203,7 +205,7 @@ namespace OsmAnd
         virtual ~AtlasMapRendererDebugStage_OpenGL();
 
         virtual bool initialize();
-        virtual bool render(IMapRenderer_Metrics::Metric_renderFrame* const metric);
+        virtual MapRendererStage::StageResult render(IMapRenderer_Metrics::Metric_renderFrame* const metric);
         virtual bool release(bool gpuContextLost);
     };
 }
