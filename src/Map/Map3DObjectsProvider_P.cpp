@@ -73,16 +73,14 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
                 continue;
             }
 
-            float height = 3.0;
-
+            float height = 3.0f;
             bool isBuilding = false;
+
             for (int i = 0; i < sourceObject->attributeIds.size(); ++i)
             {
                 const auto pPrimitiveAttribute = sourceObject->resolveAttributeByIndex(i);
                 if (!pPrimitiveAttribute)
-                {
                     continue;
-                }
 
                 if (pPrimitiveAttribute->tag == QLatin1String("addr:housenumber") ||
                     pPrimitiveAttribute->tag == QLatin1String("building"))
@@ -107,7 +105,17 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
                 }
             }
 
-            const int edgePointsCount = sourceObject->points31.size();
+            QVector<PointI> points31 = sourceObject->points31;
+
+            double area = Utilities::computeSignedArea(points31);
+            bool isClockwise = (area < 0.0);
+
+            if (isClockwise)
+            {
+                std::reverse(points31.begin(), points31.end());
+            }
+
+            const int edgePointsCount = points31.size();
             const float bottomAltitude = -1000.0f;
             const float topAltitude = height;
 
@@ -133,22 +141,27 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             for (int i = 0; i < edgePointsCount; ++i)
             {
                 const int next = (i + 1) % edgePointsCount;
-                const auto& p0 = sourceObject->points31[i];
-                const auto& p1 = sourceObject->points31[next];
+                const auto& p0 = points31[i];
+                const auto& p1 = points31[next];
                 const float dx = static_cast<float>(p1.x - p0.x);
                 const float dz = static_cast<float>(p1.y - p0.y);
                 glm::vec3 n(-dz, 0.0f, dx);
                 const float len = glm::length(n);
                 if (len > 0.0f)
+                {
                     n /= len;
+                }
                 else
+                {
                     n = glm::vec3(0.0f, 0.0f, 1.0f);
+                }
+
                 sideNormals[i] = n;
             }
 
             for (int i = 0; i < edgePointsCount; ++i)
             {
-                const auto& point31 = sourceObject->points31[i];
+                const auto& point31 = points31[i];
                 building.vertices.append({glm::ivec2(point31.x, point31.y), topAltitude, glm::vec3(0.0f, 1.0f, 0.0f)});
             }
 
@@ -157,12 +170,12 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             {
                 const int next = (i + 1) % edgePointsCount;
                 const glm::vec3& edgeNormal = sideNormals[i];
-                
-                const auto& point31_i = sourceObject->points31[i];
+
+                const auto& point31_i = points31[i];
                 building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), topAltitude, edgeNormal});
                 building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), bottomAltitude, edgeNormal});
-                
-                const auto& point31_next = sourceObject->points31[next];
+
+                const auto& point31_next = points31[next];
                 building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), topAltitude, edgeNormal});
                 building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), bottomAltitude, edgeNormal});
             }
@@ -173,8 +186,8 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
 
             for (int i = 0; i < edgePointsCount; ++i)
             {
-                const auto& point31 = sourceObject->points31[i];
-                ring.push_back({point31.x, point31.y});
+                const auto& p = points31[i];
+                ring.push_back({p.x, p.y});
             }
 
             polygon.push_back(std::move(ring));
@@ -193,11 +206,11 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             for (int i = 0; i < edgePointsCount; ++i)
             {
                 const int baseIdx = wallVertexStart + 4 * i;
-                
+
                 building.indices.append(baseIdx + 0);
                 building.indices.append(baseIdx + 1);
                 building.indices.append(baseIdx + 2);
-                
+
                 building.indices.append(baseIdx + 1);
                 building.indices.append(baseIdx + 3);
                 building.indices.append(baseIdx + 2);
@@ -210,6 +223,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
     outTiledData = std::make_shared<Map3DObjectsTiledProvider::Data>(request.tileId, request.zoom, qMove(buildings3D));
     return true;
 }
+
 
 bool Map3DObjectsTiledProvider_P::obtainData(
     const IMapDataProvider::Request& request,

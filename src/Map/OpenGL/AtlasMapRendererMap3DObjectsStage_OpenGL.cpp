@@ -249,7 +249,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
     GL_CHECK_RESULT;
     glUniform1i(*_program.vs.param.zoomLevel, (int)currentState.zoomLevel);
     GL_CHECK_RESULT;
-    glm::vec3 lightDir = glm::normalize(glm::vec3(0.5f, 1.0f, 0.5f));
+    glm::vec3 lightDir = glm::normalize(glm::vec3(-0.5f, 1.0f, -0.5f));
     glUniform3f(*_program.vs.param.lightDirection, lightDir.x, lightDir.y, lightDir.z);
     GL_CHECK_RESULT;
     glUniform1f(*_program.vs.param.ambient, 0.2f);
