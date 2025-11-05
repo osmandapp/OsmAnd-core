@@ -22,6 +22,8 @@ namespace OsmAnd
     protected:
         void createSubstages() override;
 
+        InitSymbolType _initSymbolType;
+
         GLname _lastUsedProgram;
         bool renderBillboardSymbol(
             const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
@@ -75,7 +77,6 @@ namespace OsmAnd
             AlphaChannelType &currentAlphaChannelType);
         bool releaseBillboardRaster(bool gpuContextLost);
 
-        bool initializeOnPath();
         bool renderOnPathSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType);
@@ -360,7 +361,7 @@ namespace OsmAnd
         bool initialize() override;
         bool preRender(QList< std::shared_ptr<const RenderableSymbol> >& preRenderableSymbols,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) override;
-        bool render(IMapRenderer_Metrics::Metric_renderFrame* metric) override;
+        MapRendererStage::StageResult render(IMapRenderer_Metrics::Metric_renderFrame* metric) override;
         bool release(bool gpuContextLost) override;
 
         void drawDebugMetricSymbol(IMapRenderer_Metrics::Metric_renderFrame* metric_) override;

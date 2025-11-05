@@ -41,14 +41,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initialize()
 {
     createSubstages();
 
-    bool ok = true;
-    ok = ok && initializeBillboardRaster();
-    ok = ok && initializeOnPath();
-    ok = ok && initializeOnSurfaceRaster();
-    ok = ok && initializeOnSurfaceVector();
-    ok = ok && _model3DSubstage->initialize();
-    ok = ok && initializeVisibilityCheck();
-    return ok;
+    _initSymbolType = InitSymbolType::BillboardRaster;
+
+    return true;
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::createSubstages()
@@ -60,6 +55,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
     QList< std::shared_ptr<const RenderableSymbol> >& preRenderableSymbols,
     AtlasMapRenderer_Metrics::Metric_renderFrame* metric)
 {
+    if (_initSymbolType != InitSymbolType::Complete)
+        return false;
+
     bool ok = true;
 
     auto currentAlphaChannelType = AlphaChannelType::Straight;
@@ -92,7 +90,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
                 if (gpuResource->isDenseObject)
                 {
                     Stopwatch renderableModel3DSymbolStopwatch(metric != nullptr);
-                    ok = ok && _model3DSubstage->render(renderableModel3DSymbol, currentAlphaChannelType);
+                    ok = ok && _model3DSubstage->render(
+                        renderableModel3DSymbol, currentAlphaChannelType) == MapRendererStage::StageResult::Success;
                     if (metric)
                         metric->elapsedTimeForModel3DSymbolsRendering += renderableModel3DSymbolStopwatch.elapsed();
                 }
@@ -107,11 +106,29 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* metric_)
+OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(
+    IMapRenderer_Metrics::Metric_renderFrame* metric_)
 {
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 
     bool ok = true;
+
+    if (_initSymbolType != InitSymbolType::Complete)
+    {
+        const auto initSymbolType = _initSymbolType;
+        ok = ok && (initSymbolType != InitSymbolType::BillboardRaster || initializeBillboardRaster());
+        ok = ok && (initSymbolType != InitSymbolType::OnPath2D || initializeOnPath2D());
+        ok = ok && (initSymbolType != InitSymbolType::OnPath3D || initializeOnPath3D());
+        ok = ok && (initSymbolType != InitSymbolType::OnSurfaceRaster || initializeOnSurfaceRaster());
+        ok = ok && (initSymbolType != InitSymbolType::OnSurfaceVector || initializeOnSurfaceVector());
+        ok = ok && (initSymbolType != InitSymbolType::Model3D || _model3DSubstage->initialize());
+        ok = ok && (initSymbolType != InitSymbolType::VisibilityCheck || initializeVisibilityCheck());
+
+        if (!ok || _initSymbolType == InitSymbolType::Incomplete)
+            return StageResult::Fail;
+
+        return StageResult::Wait;
+    }
 
     const auto gpuAPI = getGPUAPI();
     auto currentAlphaChannelType = AlphaChannelType::Straight;
@@ -181,7 +198,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
         else if (const auto& renderableModel3DSymbol = std::dynamic_pointer_cast<const RenderableModel3DSymbol>(renderableSymbol))
         {
             Stopwatch renderableModel3DSymbolStopwatch(metric != nullptr);
-            ok = ok && _model3DSubstage->render(renderableModel3DSymbol, currentAlphaChannelType);
+            ok = ok && _model3DSubstage->render(
+                renderableModel3DSymbol, currentAlphaChannelType) == MapRendererStage::StageResult::Success;
             if (metric)
             {
                 metric->elapsedTimeForModel3DSymbolsRendering += renderableModel3DSymbolStopwatch.elapsed();
@@ -209,7 +227,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
 
     endSymbolsDrawing(gpuAPI);
 
-    return ok;
+    return ok ? StageResult::Success : StageResult::Fail;
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardSymbol(
@@ -280,6 +298,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release(bool gpuContextLost)
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
 {
+    const auto nextInitSymbolType = static_cast<InitSymbolType>(static_cast<int>(_initSymbolType) + 1);
+    _initSymbolType = InitSymbolType::Incomplete;
+
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glGenBuffers);
@@ -409,7 +430,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
             if (vsId == 0)
             {
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+                    "Failed to compile BillboardRaster vertex shader");
                 return false;
             }
             const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -419,7 +440,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
                 GL_CHECK_RESULT;
 
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+                    "Failed to compile BillboardRaster fragment shader");
                 return false;
             }
             GLuint shaders[] = { vsId, fsId };
@@ -439,7 +460,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     if (!_billboardRasterProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to link AtlasMapRendererSymbolsStage_OpenGL program");
+            "Failed to link BillboardRaster shader program");
         return false;
     }
 
@@ -447,9 +468,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_billboardRasterProgram.id, variablesMap);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
-    ok = ok
-         && lookup->lookupLocation(
-             _billboardRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.mRotate, "param_vs_mRotate", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
@@ -463,8 +482,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     {
         glDeleteProgram(_billboardRasterProgram.id);
         GL_CHECK_RESULT;
+
         _billboardRasterProgram.id.reset();
 
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find variable in BillboardRaster shader program");
         return false;
     }
 
@@ -535,6 +557,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     GL_CHECK_RESULT;
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+
+    _initSymbolType = nextInitSymbolType;
 
     return true;
 }
@@ -750,16 +774,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster(bool gp
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath()
-{
-    bool ok = true;
-    ok = ok && initializeOnPath2D();
-    ok = ok && initializeOnPath3D();
-    return ok;
-}
-
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
 {
+    const auto nextInitSymbolType = static_cast<InitSymbolType>(static_cast<int>(_initSymbolType) + 1);
+    _initSymbolType = InitSymbolType::Incomplete;
+
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glGenBuffers);
@@ -774,7 +793,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
         1 /*param_vs_resultScale*/ +
         1 /*param_vs_glyphHeight*/ +
         1 /*param_vs_zDistanceFromCamera*/ +
-        1 /*param_vs_currentOffset*/;
+        1 /*param_vs_currentOffset*/ +
+        1 /*param_fs_sampler*/ +
+        1 /*param_fs_modulationColor*/;
     _onPathSymbol2dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms) / 5;
     if (initializeOnPath2DProgram(_onPathSymbol2dMaxGlyphsPerDrawCall))
     {
@@ -915,6 +936,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 
+    _initSymbolType = nextInitSymbolType;
+
     return true;
 }
 
@@ -1045,7 +1068,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
             if (vsId == 0)
             {
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+                    "Failed to compile OnPath2D vertex shader");
                 return false;
             }
             const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -1055,7 +1078,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
                 GL_CHECK_RESULT;
 
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+                    "Failed to compile OnPath2D fragment shader");
                 return false;
             }
             GLuint shaders[] = { vsId, fsId };
@@ -1075,7 +1098,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
     if (!_onPath2dProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to link AtlasMapRendererSymbolsStage_OpenGL program");
+            "Failed to link OnPath2D shader program");
         return false;
     }
 
@@ -1109,8 +1132,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
     {
         glDeleteProgram(_onPath2dProgram.id);
         GL_CHECK_RESULT;
+
         _onPath2dProgram.id.reset();
 
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find variable in OnPath2D shader program");
         return false;
     }
 
@@ -1119,6 +1145,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
 {
+    const auto nextInitSymbolType = static_cast<InitSymbolType>(static_cast<int>(_initSymbolType) + 1);
+    _initSymbolType = InitSymbolType::Incomplete;
+
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glGenBuffers);
@@ -1274,6 +1303,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 
+    _initSymbolType = nextInitSymbolType;
+
     return true;
 }
 
@@ -1405,7 +1436,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
             if (vsId == 0)
             {
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+                    "Failed to compile OnPath3D vertex shader");
                 return false;
             }
             const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -1415,7 +1446,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
                 GL_CHECK_RESULT;
 
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+                    "Failed to compile OnPath3D fragment shader");
                 return false;
             }
             GLuint shaders[] = { vsId, fsId };
@@ -1435,7 +1466,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
     if (!_onPath3dProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to link AtlasMapRendererSymbolsStage_OpenGL program");
+            "Failed to link OnPath3D shader program");
         return false;
     }
 
@@ -1469,8 +1500,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
     {
         glDeleteProgram(_onPath3dProgram.id);
         GL_CHECK_RESULT;
+
         _onPath3dProgram.id.reset();
 
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find variable in OnPath3D shader program");
         return false;
     }
 
@@ -1943,6 +1977,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D(bool gpuContex
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
 {
+    const auto nextInitSymbolType = static_cast<InitSymbolType>(static_cast<int>(_initSymbolType) + 1);
+    _initSymbolType = InitSymbolType::Incomplete;
+
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glGenBuffers);
@@ -2039,7 +2076,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
             if (vsId == 0)
             {
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+                    "Failed to compile OnSurfaceRaster vertex shader");
                 return false;
             }
             const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -2049,7 +2086,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
                 GL_CHECK_RESULT;
 
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+                    "Failed to compile OnSurfaceRaster fragment shader");
                 return false;
             }
             GLuint shaders[] = { vsId, fsId };
@@ -2069,7 +2106,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     if (!_onSurfaceRasterProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to link AtlasMapRendererSymbolsStage_OpenGL program");
+            "Failed to link OnSurfaceRaster shader program");
         return false;
     }
 
@@ -2089,8 +2126,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     {
         glDeleteProgram(_onSurfaceRasterProgram.id);
         GL_CHECK_RESULT;
+
         _onSurfaceRasterProgram.id.reset();
 
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find variable in OnSurfaceRaster shader program");
         return false;
     }
 
@@ -2163,6 +2203,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     GL_CHECK_RESULT;
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+
+    _initSymbolType = nextInitSymbolType;
 
     return true;
 }
@@ -2357,6 +2399,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster(bool gp
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
 {
+    const auto nextInitSymbolType = static_cast<InitSymbolType>(static_cast<int>(_initSymbolType) + 1);
+    _initSymbolType = InitSymbolType::Incomplete;
+
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glDeleteShader);
@@ -2491,7 +2536,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
             if (vsId == 0)
             {
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+                    "Failed to compile OnSurfaceVector vertex shader");
                 return false;
             }
             const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -2501,7 +2546,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
                 GL_CHECK_RESULT;
 
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+                    "Failed to compile OnSurfaceVector fragment shader");
                 return false;
             }
             GLuint shaders[] = { vsId, fsId };
@@ -2521,7 +2566,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     if (!_onSurfaceVectorProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to link AtlasMapRendererSymbolsStage_OpenGL program");
+            "Failed to link  OnSurfaceVector shader program");
         return false;
     }
 
@@ -2548,10 +2593,15 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     {
         glDeleteProgram(_onSurfaceVectorProgram.id);
         GL_CHECK_RESULT;
+
         _onSurfaceVectorProgram.id.reset();
 
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find variable in OnSurfaceVector shader program");
         return false;
     }
+
+    _initSymbolType = nextInitSymbolType;
 
     return true;
 }
@@ -3047,6 +3097,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector(bool gp
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeVisibilityCheck()
 {
+    const auto nextInitSymbolType = static_cast<InitSymbolType>(static_cast<int>(_initSymbolType) + 1);
+    _initSymbolType = InitSymbolType::Incomplete;
+
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glBindTexture);
@@ -3120,7 +3173,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeVisibilityCheck()
             if (vsId == 0)
             {
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+                    "Failed to compile VisibilityCheck vertex shader");
                 return false;
             }
             const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -3130,7 +3183,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeVisibilityCheck()
                 GL_CHECK_RESULT;
 
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+                    "Failed to compile VisibilityCheck fragment shader");
                 return false;
             }
             GLuint shaders[] = { vsId, fsId };
@@ -3150,7 +3203,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeVisibilityCheck()
     if (!_visibilityCheckProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to link AtlasMapRendererSymbolsStage_OpenGL program");
+            "Failed to link VisibilityCheck shader program");
         return false;
     }
 
@@ -3168,8 +3221,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeVisibilityCheck()
     {
         glDeleteProgram(_visibilityCheckProgram.id);
         GL_CHECK_RESULT;
+
         _visibilityCheckProgram.id.reset();
 
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find variable in VisibilityCheck shader program");
         return false;
     }
 
@@ -3209,6 +3265,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeVisibilityCheck()
     _queryMaxCount = INT32_MAX;
     _queryResults.reserve(4096);
     _querySizeFactor = 0.0f;
+
+    _initSymbolType = nextInitSymbolType;
 
     return true;
 }

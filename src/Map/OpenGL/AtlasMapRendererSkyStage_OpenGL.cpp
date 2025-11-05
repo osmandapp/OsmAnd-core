@@ -227,7 +227,8 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const metric_)
+OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSkyStage_OpenGL::render(
+    IMapRenderer_Metrics::Metric_renderFrame* const metric_)
 {
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 
@@ -317,7 +318,7 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::render(IMapRenderer_Metrics::Metri
 
     GL_POP_GROUP_MARKER;
 
-    return true;
+    return StageResult::Success;
 }
 
 bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::release(bool gpuContextLost)

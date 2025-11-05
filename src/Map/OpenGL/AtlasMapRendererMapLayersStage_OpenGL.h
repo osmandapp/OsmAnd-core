@@ -118,6 +118,8 @@ namespace OsmAnd
 
         // Raster layers support:
         unsigned int _maxNumberOfRasterMapLayersInBatch;
+        unsigned int _supportedMaxNumberOfRasterMapLayersInBatch;
+        int _numberOfProgramsToLink;
         GLsizei _rasterTileIndicesCount;
         GLname _rasterTileVBO;
         GLname _rasterTileIBO;
@@ -273,7 +275,7 @@ namespace OsmAnd
         virtual ~AtlasMapRendererMapLayersStage_OpenGL();
 
         virtual bool initialize();
-        virtual bool render(IMapRenderer_Metrics::Metric_renderFrame* const metric);
+        virtual MapRendererStage::StageResult render(IMapRenderer_Metrics::Metric_renderFrame* const metric);
         virtual bool release(bool gpuContextLost);
     };
 }
