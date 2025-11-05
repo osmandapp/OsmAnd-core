@@ -1422,7 +1422,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                             const auto distanceDelta =
                                 sqrMaxDistance > 0.0 ? qMax(qSqrt(sqrMaxDistance) - maxRadius, 0.0) : 0.0;
                             const auto extraElevation = static_cast<float>(
-                                globeRadius * heightDelta + extraGap - distanceDelta * 4.0);
+                                globeRadius * (heightDelta + extraGap - distanceDelta * 4.0));
                             if (extraElevation > 0.0f)
                                 internalState->extraElevation = qMax(internalState->extraElevation, extraElevation);
                         }
