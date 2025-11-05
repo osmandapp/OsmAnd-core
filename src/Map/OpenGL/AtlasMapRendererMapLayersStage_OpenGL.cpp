@@ -33,6 +33,8 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::AtlasMapRendererMapLayersStage_Op
     : AtlasMapRendererMapLayersStage(renderer_)
     , AtlasMapRendererStageHelper_OpenGL(this)
     , _maxNumberOfRasterMapLayersInBatch(0)
+    , _supportedMaxNumberOfRasterMapLayersInBatch(0)
+    , _numberOfProgramsToLink(0)
     , _rasterTileIndicesCount(-1)
 {
 }
@@ -43,13 +45,92 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initialize()
 {
     bool ok = true;
     ok = ok && initializeRasterLayers();
+    _supportedMaxNumberOfRasterMapLayersInBatch = _maxNumberOfRasterMapLayersInBatch;
+    _numberOfProgramsToLink = _maxNumberOfRasterMapLayersInBatch * (RenderingFeatures::All + 1);
+    if (_rasterLayerTilePrograms.size() != _maxNumberOfRasterMapLayersInBatch)
+        _rasterLayerTilePrograms.clear();
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* metric_)
+OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(
+    IMapRenderer_Metrics::Metric_renderFrame* metric_)
 {
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
-    bool ok = true;
+
+    if (_maxNumberOfRasterMapLayersInBatch < 1)
+        return StageResult::Fail;
+
+    // Initialize programs that support [1 ... _maxNumberOfRasterMapLayersInBatch] as number of layers
+    if (_numberOfProgramsToLink > 0)
+    {
+        int leftToLink = _maxNumberOfRasterMapLayersInBatch * (RenderingFeatures::All + 1);
+        for (auto layersInBatch = _maxNumberOfRasterMapLayersInBatch; layersInBatch >= 1; layersInBatch--)
+        {
+            auto& rasterLayerTilePrograms = _rasterLayerTilePrograms[layersInBatch];
+            if (rasterLayerTilePrograms.isEmpty())
+                rasterLayerTilePrograms.resize(RenderingFeatures::All + 1);
+            bool success = true;
+            for (int programFeatures = RenderingFeatures::All; programFeatures >= 0; programFeatures--)
+            {
+                leftToLink--;
+                if (leftToLink >= _numberOfProgramsToLink)
+                    continue;
+                success = initializeRasterLayersProgram(
+                    layersInBatch, static_cast<RenderingFeatures>(programFeatures), rasterLayerTilePrograms);
+                if (success)
+                {
+                    _numberOfProgramsToLink = leftToLink;
+                    return StageResult::Wait;
+                }
+                else
+                {
+                    for (int linked = RenderingFeatures::All; linked > programFeatures; linked--)
+                    {
+                        leftToLink++;
+                        if (rasterLayerTilePrograms[linked].id.isValid())
+                        {
+                            glDeleteProgram(rasterLayerTilePrograms[linked].id);
+                            GL_CHECK_RESULT;
+
+                            rasterLayerTilePrograms[linked].id = 0;
+                        }
+                    }
+                    break;
+                }
+            }
+            if (!success)
+            {
+                _numberOfProgramsToLink = leftToLink - RenderingFeatures::All;
+                _rasterLayerTilePrograms.remove(layersInBatch);
+                _supportedMaxNumberOfRasterMapLayersInBatch--;
+                return StageResult::Wait;
+            }
+        }
+    }
+
+    if (_numberOfProgramsToLink == 0)
+    {
+        _numberOfProgramsToLink--;
+        if (_supportedMaxNumberOfRasterMapLayersInBatch != _maxNumberOfRasterMapLayersInBatch)
+        {
+            LogPrintf(LogSeverityLevel::Warning,
+                "Seems like buggy driver. "
+                "This device should be capable of rendering %d raster map layers in batch, but only %d compile",
+                _maxNumberOfRasterMapLayersInBatch,
+                _supportedMaxNumberOfRasterMapLayersInBatch);
+
+            _maxNumberOfRasterMapLayersInBatch = _supportedMaxNumberOfRasterMapLayersInBatch;
+
+            if (_maxNumberOfRasterMapLayersInBatch < 1)
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                    "Maximal number of raster map layers in a batch can't be 0");
+                return StageResult::Fail;
+            }
+        }
+
+        initializeRasterTile();
+    }
 
     const auto& internalState = getInternalState();
     const auto gpuAPI = getGPUAPI();
@@ -168,7 +249,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
 
     GL_POP_GROUP_MARKER;
 
-    return ok;
+    return StageResult::Success;
 }
 
 bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::release(bool gpuContextLost)
@@ -304,93 +385,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         maxBatchSizeByVaryingVectors,
         maxBatchSizeByTextureUnits
     );
-
-    // Initialize programs that support [1 ... _maxNumberOfRasterMapLayersInBatch] as number of layers
-    auto supportedMaxNumberOfRasterMapLayersInBatch = _maxNumberOfRasterMapLayersInBatch;
-    if (_rasterLayerTilePrograms.size() != _maxNumberOfRasterMapLayersInBatch)
-    {
-        _rasterLayerTilePrograms.clear();
-        for (auto numberOfLayersInBatch = _maxNumberOfRasterMapLayersInBatch; numberOfLayersInBatch >= 1; numberOfLayersInBatch--)
-        {
-            QVector<RasterLayerTileProgram> rasterLayerTilePrograms(RenderingFeatures::All + 1);
-            bool success = true;
-            for (int programFeatures = RenderingFeatures::All; programFeatures >= 0; programFeatures--)
-            {
-                success = initializeRasterLayersProgram(
-                    numberOfLayersInBatch, static_cast<RenderingFeatures>(programFeatures), rasterLayerTilePrograms);
-                if (!success)
-                {
-                    for (int linked = RenderingFeatures::All; linked > programFeatures; linked--)
-                    {
-                        if (rasterLayerTilePrograms[linked].id.isValid())
-                        {
-                            glDeleteProgram(rasterLayerTilePrograms[linked].id);
-                            GL_CHECK_RESULT;
-
-                            rasterLayerTilePrograms[linked].id = 0;
-                        }
-                    }
-                    break;
-                }
-            }
-            if (!success)
-            {
-                supportedMaxNumberOfRasterMapLayersInBatch -= 1;
-                continue;
-            }
-            _rasterLayerTilePrograms.insert(numberOfLayersInBatch, qMove(rasterLayerTilePrograms));
-        }
-    }
-    else
-    {
-        for (auto numberOfLayersInBatch = _maxNumberOfRasterMapLayersInBatch; numberOfLayersInBatch >= 1; numberOfLayersInBatch--)
-        {
-            auto& rasterLayerTilePrograms = _rasterLayerTilePrograms[numberOfLayersInBatch];
-            bool success = true;
-            for (int programFeatures = RenderingFeatures::All; programFeatures >= 0; programFeatures--)
-            {
-                success = initializeRasterLayersProgram(
-                    numberOfLayersInBatch, static_cast<RenderingFeatures>(programFeatures), rasterLayerTilePrograms);
-                if (!success)
-                {
-                    for (int linked = RenderingFeatures::All; linked > programFeatures; linked--)
-                    {
-                        if (rasterLayerTilePrograms[linked].id.isValid())
-                        {
-                            glDeleteProgram(rasterLayerTilePrograms[linked].id);
-                            GL_CHECK_RESULT;
-
-                            rasterLayerTilePrograms[linked].id = 0;
-                        }
-                    }
-                    break;
-                }
-            }
-
-            if (!success)
-            {
-                supportedMaxNumberOfRasterMapLayersInBatch -= 1;
-                continue;
-            }
-        }
-    }
-    if (supportedMaxNumberOfRasterMapLayersInBatch != _maxNumberOfRasterMapLayersInBatch)
-    {
-        LogPrintf(LogSeverityLevel::Warning,
-            "Seems like buggy driver. "
-            "This device should be capable of rendering %d raster map layers in batch, but only %d variant compiles",
-            _maxNumberOfRasterMapLayersInBatch,
-            supportedMaxNumberOfRasterMapLayersInBatch);
-        _maxNumberOfRasterMapLayersInBatch = supportedMaxNumberOfRasterMapLayersInBatch;
-    }
-    if (_maxNumberOfRasterMapLayersInBatch < 1)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Maximal number of raster map layers in a batch must be not less than 1");
-        return false;
-    }
-
-    initializeRasterTile();
 
     return true;
 }

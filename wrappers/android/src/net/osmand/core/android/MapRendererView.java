@@ -96,6 +96,7 @@ public abstract class MapRendererView extends FrameLayout {
     private volatile boolean _frameReadingMode;
     private volatile int _maxFrameRate;
     private volatile long _maxFrameTime;
+    private volatile boolean _isRenderingActive;
 
     /**
      * Rendering time metrics
@@ -1605,6 +1606,10 @@ public abstract class MapRendererView extends FrameLayout {
         }
     }
 
+    public final boolean isRenderingActive() {
+        return _isRenderingActive;
+    }
+
     public final int getMaximumFrameRate() {
         return _maxFrameRate;
     }
@@ -2615,9 +2620,7 @@ public abstract class MapRendererView extends FrameLayout {
                         case RENDER_FRAME:
                         mapRenderer.update();
                         boolean isReady = mapRenderer.prepareFrame();
-                        if (isReady) {
-                            mapRenderer.renderFrame();
-                        }
+                        _isRenderingActive = isReady ? mapRenderer.renderFrame() : false;
                         preFlushTime = SystemClock.uptimeMillis();
                         if (isReady) {
                             gl.glFlush();
@@ -2642,6 +2645,7 @@ public abstract class MapRendererView extends FrameLayout {
                         _mapAnimationFinished = true;
                         _mapMarkersAnimationFinished = true;
                         mapRenderer.releaseRendering(true);
+                        _isRenderingActive = false;
                         break;
 
                         case DESTROY_SURFACE:

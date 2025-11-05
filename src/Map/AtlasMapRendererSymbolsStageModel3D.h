@@ -38,7 +38,7 @@ namespace OsmAnd
         const MapRendererState& currentState;
 
         virtual bool initialize() = 0;
-        virtual bool render(
+        virtual MapRendererStage::StageResult render(
             const std::shared_ptr<const RenderableModel3DSymbol>& renderable,
             AlphaChannelType& currentAlphaChannelType) = 0 ;
         virtual bool release(const bool gpuContextLost) = 0;

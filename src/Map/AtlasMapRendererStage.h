@@ -43,6 +43,30 @@ namespace OsmAnd
         explicit AtlasMapRendererStage(AtlasMapRenderer* renderer);
         ~AtlasMapRendererStage() override;
 
+        enum class InitSymbolType : int
+        {
+            BillboardRaster,
+            OnPath2D,
+            OnPath3D,
+            OnSurfaceRaster,
+            OnSurfaceVector,
+            Model3D,
+            VisibilityCheck,
+            Complete,
+            Incomplete
+        };
+
+        enum class InitDebugSymbolType : int
+        {
+            Points2D,
+            Rects2D,
+            Lines2D,
+            Lines3D,
+            Quads3D,
+            Complete,
+            Incomplete
+        };
+
         SWIG_OMIT(Q_REQUIRED_RESULT) const AtlasMapRendererConfiguration& getCurrentConfiguration() const;
     };
 }

@@ -91,6 +91,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     const auto gpuAPI = getGPUAPI();
 
     bool ok = true;
+    bool skip = false;
 
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 
@@ -152,7 +153,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     if (!currentDebugSettings->disableSkyStage)
     {
         Stopwatch skyStageStopwatch(metric != nullptr);
-        if (!_skyStage->render(metric))
+        if (_skyStage->render(metric) != MapRendererStage::StageResult::Success)
             ok = false;
         if (metric)
             metric->elapsedTimeForSkyStage = skyStageStopwatch.elapsed();
@@ -182,7 +183,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         GL_CHECK_RESULT;
 
         Stopwatch mapLayersStageStopwatch(metric != nullptr);
-        if (!_mapLayersStage->render(metric))
+        const auto stageResult = _mapLayersStage->render(metric);
+        if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
         if (metric)
             metric->elapsedTimeForMapLayersStage = mapLayersStageStopwatch.elapsed();
@@ -191,6 +193,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         glDisable(GL_CULL_FACE);
         GL_CHECK_RESULT;
 
+        if (!ok || stageResult == MapRendererStage::StageResult::Wait)
+            skip = true;
     }
     // Turn on blending since now objects with transparency are going to be rendered
     glEnable(GL_BLEND);
@@ -200,13 +204,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
-    if (!currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
+    if (!skip && !currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
     {
         Stopwatch symbolsStageStopwatch(metric != nullptr);
-
-        if (!_symbolsStage->render(metric))
+        const auto stageResult = _symbolsStage->render(metric);
+        if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
-
         if (metric)
         {
             metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
@@ -216,6 +219,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
 
         glDepthMask(GL_TRUE);
         GL_CHECK_RESULT;
+
+        if (!ok || stageResult == MapRendererStage::StageResult::Wait)
+            skip = true;
     }
 
     // Restore straight color blending
@@ -225,20 +231,21 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     //TODO: render special fog object some day
 
     // Render debug stage
-    Stopwatch debugStageStopwatch(metric != nullptr);
-    if (currentDebugSettings->debugStageEnabled)
+    if (!skip && currentDebugSettings->debugStageEnabled)
     {
         glDisable(GL_DEPTH_TEST);
         GL_CHECK_RESULT;
 
-        if (!_debugStage->render(metric))
+        Stopwatch debugStageStopwatch(metric != nullptr);
+        const auto stageResult = _debugStage->render(metric);
+        if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
+        if (metric)
+            metric->elapsedTimeForDebugStage = debugStageStopwatch.elapsed();
 
         glEnable(GL_DEPTH_TEST);
         GL_CHECK_RESULT;
     }
-    if (metric)
-        metric->elapsedTimeForDebugStage = debugStageStopwatch.elapsed();
 
     // Turn off blending
     glDisable(GL_BLEND);
@@ -246,7 +253,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
 
     GL_POP_GROUP_MARKER;
 
-    return ok;
+    return ok && !skip;
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::doReleaseRendering(bool gpuContextLost)
