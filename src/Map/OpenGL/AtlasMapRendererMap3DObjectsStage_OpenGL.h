@@ -37,6 +37,7 @@ namespace OsmAnd
                 {
                     GLlocation location31;
                     GLlocation height;
+                    GLlocation normal;
                 } in;
 
                 // Params
@@ -45,8 +46,11 @@ namespace OsmAnd
                     GLlocation mPerspectiveProjectionView;
                     GLlocation metersPerUnit;
                     GLlocation color;
+                    GLlocation alpha;
                     GLlocation target31;
                     GLlocation zoomLevel;
+                    GLlocation lightDirection;
+                    GLlocation ambient;
                 } param;
             } vs;
         } _program;

@@ -31,6 +31,7 @@ OsmAnd::MapRendererDebugSettings::MapRendererDebugSettings()
     , disableSkyStage(false)
     , disableMapLayersStage(false)
     , disableSymbolsStage(false)
+    , disable3DMapObjectsStage(false)
     , enableMap3dObjectsDebugInfo(false)
 {
 }
@@ -72,6 +73,7 @@ void OsmAnd::MapRendererDebugSettings::copyTo(MapRendererDebugSettings& other) c
     other.disableMapLayersStage = disableMapLayersStage;
     other.disableSymbolsStage = disableSymbolsStage;
     other.enableMap3dObjectsDebugInfo = enableMap3dObjectsDebugInfo;
+    other.disable3DMapObjectsStage = disable3DMapObjectsStage;
 }
 
 std::shared_ptr<OsmAnd::MapRendererDebugSettings> OsmAnd::MapRendererDebugSettings::createCopy() const

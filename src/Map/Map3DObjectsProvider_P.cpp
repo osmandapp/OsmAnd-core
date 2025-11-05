@@ -111,7 +111,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             const float bottomAltitude = -1000.0f;
             const float topAltitude = height;
 
-            const int totalVertices = edgePointsCount * 2;
+            const int totalVertices = edgePointsCount + edgePointsCount * 4;
             const int topTriangles = edgePointsCount - 2;
             const int sideTriangles = edgePointsCount * 2;
             const int totalIndices = (topTriangles + sideTriangles) * 3;
@@ -128,16 +128,43 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             building.indices.reserve(totalIndices);
             building.bboxHash = bboxHash;
 
+            QVector<glm::vec3> sideNormals;
+            sideNormals.resize(edgePointsCount);
             for (int i = 0; i < edgePointsCount; ++i)
             {
-                const auto& point31 = sourceObject->points31[i];
-                building.vertices.append({glm::ivec2(point31.x, point31.y), topAltitude});
+                const int next = (i + 1) % edgePointsCount;
+                const auto& p0 = sourceObject->points31[i];
+                const auto& p1 = sourceObject->points31[next];
+                const float dx = static_cast<float>(p1.x - p0.x);
+                const float dz = static_cast<float>(p1.y - p0.y);
+                glm::vec3 n(-dz, 0.0f, dx);
+                const float len = glm::length(n);
+                if (len > 0.0f)
+                    n /= len;
+                else
+                    n = glm::vec3(0.0f, 0.0f, 1.0f);
+                sideNormals[i] = n;
             }
 
             for (int i = 0; i < edgePointsCount; ++i)
             {
                 const auto& point31 = sourceObject->points31[i];
-                building.vertices.append({glm::ivec2(point31.x, point31.y), bottomAltitude});
+                building.vertices.append({glm::ivec2(point31.x, point31.y), topAltitude, glm::vec3(0.0f, 1.0f, 0.0f)});
+            }
+
+            const int wallVertexStart = edgePointsCount;
+            for (int i = 0; i < edgePointsCount; ++i)
+            {
+                const int next = (i + 1) % edgePointsCount;
+                const glm::vec3& edgeNormal = sideNormals[i];
+                
+                const auto& point31_i = sourceObject->points31[i];
+                building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), topAltitude, edgeNormal});
+                building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), bottomAltitude, edgeNormal});
+                
+                const auto& point31_next = sourceObject->points31[next];
+                building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), topAltitude, edgeNormal});
+                building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), bottomAltitude, edgeNormal});
             }
 
             std::vector<std::vector<std::array<int32_t, 2>>> polygon;
@@ -163,18 +190,17 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
                 building.indices.append(idx);
             }
 
-            int bottomStart = edgePointsCount;
             for (int i = 0; i < edgePointsCount; ++i)
             {
-                int next = (i + 1) % edgePointsCount;
-
-                building.indices.append(i);
-                building.indices.append(bottomStart + i);
-                building.indices.append(next);
-
-                building.indices.append(bottomStart + i);
-                building.indices.append(bottomStart + next);
-                building.indices.append(next);
+                const int baseIdx = wallVertexStart + 4 * i;
+                
+                building.indices.append(baseIdx + 0);
+                building.indices.append(baseIdx + 1);
+                building.indices.append(baseIdx + 2);
+                
+                building.indices.append(baseIdx + 1);
+                building.indices.append(baseIdx + 3);
+                building.indices.append(baseIdx + 2);
             }
 
             buildings3D.push_back(qMove(building));

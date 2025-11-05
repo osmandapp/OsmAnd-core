@@ -45,14 +45,18 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
         const QString vertexShader = R"(
             in ivec2 in_vs_location31;
             in float in_vs_height;
+            in vec3 in_vs_normal;
             
             out vec4 v2f_color;
             
             uniform mat4 param_vs_mPerspectiveProjectionView;
             uniform float param_vs_metersPerUnit;
-            uniform vec4 param_vs_color;
+            uniform vec3 param_vs_color;
+            uniform float param_vs_alpha;
             uniform ivec2 param_vs_target31;
             uniform int param_vs_zoomLevel;
+            uniform vec3 param_vs_lightDirection;
+            uniform float param_vs_ambient;
             
             const float TILE_SIZE_3D = 100.0;
             const int MAX_ZOOM_LEVEL = 31;
@@ -96,7 +100,9 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
                 
                 gl_Position = param_vs_mPerspectiveProjectionView * vec4(worldPos, 1.0);
                 
-                v2f_color = param_vs_color;
+                float ndotl = max(dot(in_vs_normal, param_vs_lightDirection), 0.0);
+                float diffuse = param_vs_ambient + (1.0 - param_vs_ambient) * ndotl;
+                v2f_color = vec4(param_vs_color * diffuse, param_vs_alpha);
             }
         )";
 
@@ -152,11 +158,15 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
     bool ok = true;
     ok = ok && lookup->lookupLocation(_program.vs.in.location31, "in_vs_location31", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.in.height, "in_vs_height", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_program.vs.in.normal, "in_vs_normal", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.metersPerUnit, "param_vs_metersPerUnit", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.color, "param_vs_color", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.alpha, "param_vs_alpha", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.zoomLevel, "param_vs_zoomLevel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.lightDirection, "param_vs_lightDirection", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.ambient, "param_vs_ambient", GlslVariableType::Uniform);
 
     return ok && _program.id.isValid();
 }
@@ -221,6 +231,11 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metr
     glUniform2i(*_program.vs.param.target31, currentState.target31.x, currentState.target31.y);
     GL_CHECK_RESULT;
     glUniform1i(*_program.vs.param.zoomLevel, (int)currentState.zoomLevel);
+    GL_CHECK_RESULT;
+    glm::vec3 lightDir = glm::normalize(glm::vec3(0.5f, 1.0f, 0.5f));
+    glUniform3f(*_program.vs.param.lightDirection, lightDir.x, lightDir.y, lightDir.z);
+    GL_CHECK_RESULT;
+    glUniform1f(*_program.vs.param.ambient, 0.2f);
     GL_CHECK_RESULT;
     glEnable(GL_BLEND);
     GL_CHECK_RESULT;
@@ -459,8 +474,9 @@ int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId&
         drawnBboxHashes.insert(b.bboxHash);
         drawnCount++;
 
-        auto debugColor = b.debugColor;
-        glUniform4f(*_program.vs.param.color, debugColor.r, debugColor.g, debugColor.b, 1.0f);
+        glUniform3f(*_program.vs.param.color, 0.4f, 0.4f, 0.4f);
+        GL_CHECK_RESULT;
+        glUniform1f(*_program.vs.param.alpha, 1.0f);
         GL_CHECK_RESULT;
 
         gpuAPI->useVAO(_vao);
@@ -480,6 +496,12 @@ int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId&
         GL_CHECK_RESULT;
         glVertexAttribPointer(*_program.vs.in.height, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
             reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, height)));
+        GL_CHECK_RESULT;
+
+        glEnableVertexAttribArray(*_program.vs.in.normal);
+        GL_CHECK_RESULT;
+        glVertexAttribPointer(*_program.vs.in.normal, 3, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+            reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, normal)));
         GL_CHECK_RESULT;
 
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(b.indexCount), GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid*>(0));

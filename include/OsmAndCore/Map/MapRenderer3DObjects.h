@@ -13,6 +13,7 @@ namespace OsmAnd
     {
         glm::ivec2 location31;
         float height;
+        glm::vec3 normal;
     };
 
     struct Building3D

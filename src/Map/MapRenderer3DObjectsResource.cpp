@@ -150,16 +150,11 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
 
         totalGpuMemoryBytes += vertexBufferSize + indexBufferSize;
 
-        const float r = static_cast<float>(rand()) / RAND_MAX;
-        const float g = static_cast<float>(rand()) / RAND_MAX;
-        const float b = static_cast<float>(rand()) / RAND_MAX;
-
         RenderableBuilding renderableBuilding;
         renderableBuilding.vertexBuffer = vertexBufferInGPU;
         renderableBuilding.indexBuffer = indexBufferInGPU;
         renderableBuilding.vertexCount = building.vertices.size();
         renderableBuilding.indexCount = building.indices.size();
-        renderableBuilding.debugColor = glm::vec3(r, g, b);
         renderableBuilding.bboxHash = building.bboxHash;
 
         _renderableBuildings.append(renderableBuilding);

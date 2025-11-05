@@ -45,6 +45,7 @@ namespace OsmAnd
         bool disableSkyStage;
         bool disableMapLayersStage;
         bool disableSymbolsStage;
+        bool disable3DMapObjectsStage;
         bool enableMap3dObjectsDebugInfo;
         
         virtual void copyTo(MapRendererDebugSettings& other) const;

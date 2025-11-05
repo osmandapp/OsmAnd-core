@@ -194,7 +194,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
 
     }
 
-    if (_map3DObjectsStage && !currentDebugSettings->disableSymbolsStage)
+    if (_map3DObjectsStage && !currentDebugSettings->disable3DMapObjectsStage)
     {
         Stopwatch map3DStageStopwatch(metric != nullptr);
         if (!_map3DObjectsStage->render(metric))

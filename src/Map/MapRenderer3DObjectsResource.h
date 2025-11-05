@@ -27,7 +27,6 @@ namespace OsmAnd
             std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU> indexBuffer;
             int vertexCount;
             int indexCount;
-            glm::vec3 debugColor;
             uint64_t bboxHash;
         };
 
