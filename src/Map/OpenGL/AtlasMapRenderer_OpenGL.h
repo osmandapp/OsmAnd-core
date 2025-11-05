@@ -81,14 +81,8 @@ namespace OsmAnd
             const glm::dvec3* botRightN = nullptr, const double* botRightD = nullptr) const;
         bool isPointVisible(const InternalState& internalState, const glm::vec3& point, bool skipTop,
             bool skipLeft, bool skipBottom, bool skipRight, bool skipFront, bool skipBack, float tolerance = 0.0f) const;
-        bool isPointInsideTileBox(const glm::vec3& point, const glm::vec3& minPoint, const glm::vec3& maxPoint,
-            bool skipTop, bool skipLeft, bool skipBottom, bool skipRight, bool skipFront, bool skipBack) const;
-        bool isRayOnTileBox(const glm::vec3& startPoint, const glm::vec3& endPoint,
-            const glm::vec3& minPoint, const glm::vec3& maxPoint) const;
-        bool isEdgeVisible(const InternalState& internalState,
-            const glm::vec3& startPoint, const glm::vec3& endPoint) const;
-        bool isTileVisible(const InternalState& internalState,
-            const glm::vec3& minPoint, const glm::vec3& maxPoint) const;
+        bool isEdgeVisible(const MapRendererInternalState& internalState,
+            const glm::vec3& startPoint, const glm::vec3& endPoint) const override;
         double getZoomOffset(const ZoomLevel zoomLevel, const double visualZoom, const double distanceFactor) const;
         void getElevationDataLimits(const MapRendererState& state,
             std::shared_ptr<const IMapElevationDataProvider::Data>& elevationData,

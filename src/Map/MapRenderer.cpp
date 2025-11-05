@@ -705,6 +705,9 @@ bool OsmAnd::MapRenderer::renderFrame(IMapRenderer_Metrics::Metric_renderFrame* 
     if (metric)
         metric->elapsedTime = totalStopwatch.elapsed();
 
+    if (!ok && _isRenderingInitialized)
+        invalidateFrame();
+
     return ok;
 }
 

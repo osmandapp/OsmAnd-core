@@ -19,12 +19,6 @@ namespace OsmAnd
     private:
         AtlasMapRenderer* getRenderer() const;
 
-        glm::mat4 calculateModelMatrix(
-            const Model3D::BBox& bbox,
-            const glm::vec3& positionInWorld,
-            const float direction,
-            const float scale,
-            bool& outElevated) const;
         QVector<float> getHeightOfPointsOnSegment(
             const glm::vec2& startInWorld,
             const glm::vec2& endInWorld,
@@ -44,7 +38,7 @@ namespace OsmAnd
         const MapRendererState& currentState;
 
         virtual bool initialize() = 0;
-        virtual bool render(
+        virtual MapRendererStage::StageResult render(
             const std::shared_ptr<const RenderableModel3DSymbol>& renderable,
             AlphaChannelType& currentAlphaChannelType) = 0 ;
         virtual bool release(const bool gpuContextLost) = 0;

@@ -96,10 +96,10 @@ namespace OsmAnd
         bool planeIntersectsSphere(
             const glm::dvec3& planeN,
             const double planeD,
-            double& minAngleX,
-            double& maxAngleX,
-            double& minAngleY,
-            double& maxAngleY,
+            glm::dvec2& minVectorX,
+            glm::dvec2& maxVectorX,
+            double& minCoordY,
+            double& maxCoordY,
             const glm::dvec3* point1 = nullptr,
             const glm::dvec3* point2 = nullptr);
     }

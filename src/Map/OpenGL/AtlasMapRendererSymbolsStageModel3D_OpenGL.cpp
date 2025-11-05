@@ -32,6 +32,11 @@ OsmAnd::AtlasMapRendererSymbolsStage_OpenGL* OsmAnd::AtlasMapRendererSymbolsStag
 
 bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
 {
+    const auto symbolsStage = getSymbolsStage();
+    const auto nextInitSymbolType =
+        static_cast<AtlasMapRendererStage::InitSymbolType>(static_cast<int>(symbolsStage->_initSymbolType) + 1);
+    symbolsStage->_initSymbolType = AtlasMapRendererStage::InitSymbolType::Incomplete;
+
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glGenBuffers);
@@ -121,7 +126,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
             if (vsId == 0)
             {
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererSymbolsStageModel3D_OpenGL vertex shader");
+                    "Failed to compile Model3D vertex shader");
                 return false;
             }
             const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -131,7 +136,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
                 GL_CHECK_RESULT;
 
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to compile AtlasMapRendererSymbolsStageModel3D_OpenGL fragment shader");
+                    "Failed to compile Model3D fragment shader");
                 return false;
             }
             const GLuint shaders[] = { vsId, fsId };
@@ -151,7 +156,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
     if (!_program.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to link AtlasMapRendererSymbolsStageModel3D_OpenGL program");
+            "Failed to link Model3D shader program");
         return false;
     }
 
@@ -169,15 +174,20 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
     {
         glDeleteProgram(_program.id);
         GL_CHECK_RESULT;
+
         _program.id.reset();
 
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find variable in Model3D shader program");
         return false;
     }
+
+    symbolsStage->_initSymbolType = nextInitSymbolType;
 
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::render(
+OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::render(
     const std::shared_ptr<const RenderableModel3DSymbol>& renderable,
     AlphaChannelType& currentAlphaChannelType)
 {
@@ -247,12 +257,31 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::render(
         currentAlphaChannelType = AlphaChannelType::Straight;
     }
 
+    // Calculate position of model in world coordinates
+    const auto elevationInWorld = renderable->elevationInMeters
+        / (currentState.flatEarth ? renderable->metersPerUnit : internalState.metersPerUnit);
+    PointD angles;
+    const auto positionInWorld = currentState.flatEarth
+        ? Utilities::planeWorldCoordinates(renderable->position31,
+            currentState.target31, currentState.zoomLevel, AtlasMapRenderer::TileSize3D, elevationInWorld)
+        : Utilities::sphericalWorldCoordinates(renderable->position31,
+            internalState.mGlobeRotationPrecise, internalState.globeRadius, elevationInWorld, &angles);
+    auto rotateModel = glm::mat4(1.0f);
+    if (!currentState.flatEarth)
+    {
+        const auto mRotationX = glm::rotate(static_cast<float>(angles.y), glm::vec3(-1.0f, 0.0f, 0.0f));
+        const auto mRotationZ = glm::rotate(static_cast<float>(angles.x), glm::vec3(0.0f, 0.0f, -1.0f));
+        rotateModel = glm::mat4(internalState.mGlobeRotationPrecise) * mRotationZ * mRotationX;
+    }
+    const auto placeModel = glm::translate(positionInWorld);
+    const auto mModel = placeModel * rotateModel * renderable->mModel;
+
     // Model matrix
     glUniformMatrix4fv(
         _program.vs.param.mModel,
         1,
         GL_FALSE,
-        glm::value_ptr(renderable->mModel));
+        glm::value_ptr(mModel));
     GL_CHECK_RESULT;
 
     // Set main color
@@ -360,7 +389,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::render(
 
     GL_POP_GROUP_MARKER;
 
-    return true;
+    return MapRendererStage::StageResult::Success;
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::release(const bool gpuContextLost)

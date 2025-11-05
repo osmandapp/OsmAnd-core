@@ -28,6 +28,13 @@ namespace OsmAnd
         MapRendererStage(MapRenderer* const renderer);
         virtual ~MapRendererStage();
 
+        enum class StageResult : int
+        {
+            Fail,
+            Wait,
+            Success
+        };
+
         MapRenderer* const renderer;
 
         const MapRendererResourcesManager& getResources() const;
@@ -42,7 +49,7 @@ namespace OsmAnd
         const MapRenderer::PublishedMapSymbolsByOrder& publishedMapSymbolsByOrder;
 
         virtual bool initialize() = 0;
-        virtual bool render(IMapRenderer_Metrics::Metric_renderFrame* const metric) = 0;
+        virtual StageResult render(IMapRenderer_Metrics::Metric_renderFrame* const metric) = 0;
         virtual bool release(bool gpuContextLost) = 0;
     };
 }
