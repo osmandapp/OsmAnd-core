@@ -224,6 +224,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
 
         glDisable(GL_CULL_FACE);
         GL_CHECK_RESULT;
+
+        if (!ok || stageResult == MapRendererStage::StageResult::Wait)
+            skip = true;
     }
 
     // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking

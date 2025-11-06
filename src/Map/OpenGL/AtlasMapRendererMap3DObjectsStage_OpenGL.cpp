@@ -30,6 +30,9 @@ AtlasMapRendererMap3DObjectsStage_OpenGL::~AtlasMapRendererMap3DObjectsStage_Ope
 
 bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
 {
+    const auto nextInit3DobjectsType = static_cast<Init3DObjectsType>(static_cast<int>(_init3DObjectsType) + 1);
+    _init3DObjectsType = Init3DObjectsType::Incomplete;
+
     const auto gpuAPI = getGPUAPI();
     
     QHash<QString, GPUAPI_OpenGL::GlslProgramVariable> variablesMap;
@@ -135,7 +138,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
             const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
             if (vsId == 0)
             {
-                LogPrintf(LogSeverityLevel::Error, "Failed to compile AtlasMapRendererMap3DObjectsStage_OpenGL vertex shader");
+                LogPrintf(LogSeverityLevel::Error, "Failed to compile Map3DObjects vertex shader");
                 return false;
             }
 
@@ -145,7 +148,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
                 glDeleteShader(vsId);
                 GL_CHECK_RESULT;
 
-                LogPrintf(LogSeverityLevel::Error, "Failed to compile AtlasMapRendererMap3DObjectsStage_OpenGL fragment shader");
+                LogPrintf(LogSeverityLevel::Error, "Failed to compile Map3DObjects fragment shader");
                 return false;
             }
 
@@ -163,6 +166,13 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
         }
     }
 
+    if (!_program.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link Map3DObjects shader program");
+        return false;
+    }
+
     const auto lookup = gpuAPI->obtainVariablesLookupContext(_program.id, variablesMap);
     bool ok = true;
     ok = ok && lookup->lookupLocation(_program.vs.in.location31, "in_vs_location31", GlslVariableType::In);
@@ -177,7 +187,20 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
     ok = ok && lookup->lookupLocation(_program.vs.param.lightDirection, "param_vs_lightDirection", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.ambient, "param_vs_ambient", GlslVariableType::Uniform);
 
-    return ok && _program.id.isValid();
+    if (!ok)
+    {
+        glDeleteProgram(_program.id);
+        GL_CHECK_RESULT;
+
+        _program.id.reset();
+
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find variable in Map3DObjects shader program");
+        return false;
+    }
+
+    _init3DObjectsType = nextInit3DobjectsType;
+    return true;
 }
 
 bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
@@ -207,25 +230,25 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
 
 MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const /*metric*/)
 {
+    bool ok = true;
+
+    if (_init3DObjectsType != Init3DObjectsType::Complete)
+    {
+        const auto init3DObjectsType = _init3DObjectsType;
+        ok = ok && (init3DObjectsType != Init3DObjectsType::Objects3D || initializeProgram());
+
+        if (!ok || _init3DObjectsType == Init3DObjectsType::Incomplete)
+            return StageResult::Fail;
+
+        return StageResult::Wait;
+    }
+
     const auto resourcesCollection = getResources().getCollectionSnapshot(MapRendererResourceType::Map3DObjects,
         std::static_pointer_cast<IMapDataProvider>(currentState.map3DObjectsProvider));
 
     if (!resourcesCollection)
     {
         return StageResult::Success;
-    }
-
-    if (!_program.id.isValid())
-    {
-        if (!initializeProgram())
-        {
-            return StageResult::Fail;
-        }
-        
-        if (!_program.id.isValid())
-        {
-            return StageResult::Wait;
-        }
     }
 
     const bool debugEnabled = debugSettings && debugSettings->debugStageEnabled;
