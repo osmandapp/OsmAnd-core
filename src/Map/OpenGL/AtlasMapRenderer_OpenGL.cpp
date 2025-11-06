@@ -205,7 +205,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     // Set premultiplied alpha color blending
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-    if (_map3DObjectsStage && !currentDebugSettings->disable3DMapObjectsStage)
+    if (!skip && _map3DObjectsStage && !currentDebugSettings->disable3DMapObjectsStage)
     {
         glEnable(GL_CULL_FACE);
         GL_CHECK_RESULT;
