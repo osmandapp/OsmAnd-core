@@ -1,6 +1,6 @@
 --- upstream.original/src/3rdparty/freetype/src/gzip/zutil.h	2025-06-05 20:59:16.385692963 +0200
 +++ upstream.patched/src/3rdparty/freetype/src/gzip/zutil.h	2025-06-05 22:36:16.933318339 +0200
-@@ -105,15 +105,8 @@
+@@ -105,16 +105,8 @@
  #  define OS_CODE  0x05
  #endif
  
