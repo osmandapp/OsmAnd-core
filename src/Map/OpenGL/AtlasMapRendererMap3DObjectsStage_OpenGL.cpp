@@ -225,6 +225,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
     _vao = gpuAPI->allocateUninitializedVAO();
     gpuAPI->initializeVAO(_vao);
 
+    _init3DObjectsType = Init3DObjectsType::Objects3D;
+
     return true;
 }
 

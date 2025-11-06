@@ -21,7 +21,7 @@ namespace OsmAnd
     private:
         GLname _vao;
 
-        Init3DObjectsType _init3DObjectsType = Init3DObjectsType::Objects3D;
+        Init3DObjectsType _init3DObjectsType;
 
         int drawResource(const TileId& id, ZoomLevel z, const std::shared_ptr<MapRenderer3DObjectsResource>& res, QSet<uint64_t>& drawnBboxHashes);
 
