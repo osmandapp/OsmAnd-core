@@ -13,6 +13,8 @@
 #include "AtlasMapRendererInternalState_OpenGL.h"
 #include "AtlasMapRendererSkyStage_OpenGL.h"
 #include "AtlasMapRendererMapLayersStage_OpenGL.h"
+#include "AtlasMapRendererMap3DObjectsStage_OpenGL.h"
+#include "AtlasMapRendererStageHelper_OpenGL.h"
 #include "AtlasMapRendererSymbolsStage_OpenGL.h"
 #include "AtlasMapRendererDebugStage_OpenGL.h"
 #include "OpenGL/GPUAPI_OpenGL.h"
@@ -129,6 +131,7 @@ namespace OsmAnd
         // Stages:
         AtlasMapRendererSkyStage* createSkyStage() override;
         AtlasMapRendererMapLayersStage* createMapLayersStage() override;
+        AtlasMapRendererMap3DObjectsStage* createMap3DObjectsStage() override;
         AtlasMapRendererSymbolsStage* createSymbolsStage() override;
         AtlasMapRendererDebugStage* createDebugStage() override;
 

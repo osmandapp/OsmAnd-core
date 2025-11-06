@@ -919,6 +919,72 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolToGPU(
     return false;
 }
 
+bool OsmAnd::GPUAPI_OpenGL::uploadDataAsVertices(
+    const void* data,
+    const size_t dataSize,
+    const unsigned int vertexCount,
+    std::shared_ptr< const ArrayBufferInGPU >& outVertexBuffer,
+    bool waitForGPU,
+    volatile bool* gpuContextLost)
+{
+    if (*gpuContextLost)
+        return false;
+
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+
+    GLuint vbo = 0;
+    glGenBuffers(1, &vbo);
+    GL_CHECK_RESULT;
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    GL_CHECK_RESULT;
+
+    glBufferData(GL_ARRAY_BUFFER, dataSize, data, GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+
+    outVertexBuffer = std::shared_ptr<const ArrayBufferInGPU>(new ArrayBufferInGPU(
+        this,
+        reinterpret_cast<RefInGPU>(static_cast<uintptr_t>(vbo)),
+        vertexCount));
+
+    return true;
+}
+
+bool OsmAnd::GPUAPI_OpenGL::uploadDataAsIndices(
+    const void* data,
+    const size_t dataSize,
+    const unsigned int indexCount,
+    std::shared_ptr< const ElementArrayBufferInGPU >& outIndexBuffer,
+    bool waitForGPU,
+    volatile bool* gpuContextLost)
+{
+    if (*gpuContextLost)
+        return false;
+
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+
+    GLuint ebo = 0;
+    glGenBuffers(1, &ebo);
+    GL_CHECK_RESULT;
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    GL_CHECK_RESULT;
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, dataSize, data, GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+
+    outIndexBuffer = std::shared_ptr<const ElementArrayBufferInGPU>(new ElementArrayBufferInGPU(
+        this,
+        reinterpret_cast<RefInGPU>(static_cast<uintptr_t>(ebo)),
+        indexCount));
+
+    return true;
+}
+
 bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU)
 {
     switch (type)

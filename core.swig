@@ -90,6 +90,7 @@
 #include <OsmAndCore/Map/MapObjectsProvider.h>
 #include <OsmAndCore/Map/ObfMapObjectsProvider.h>
 #include <OsmAndCore/Map/MapPrimitivesProvider.h>
+#include <OsmAndCore/Map/Map3DObjectsProvider.h>
 #include <OsmAndCore/Map/MapObjectsSymbolsProvider.h>
 #include <OsmAndCore/Map/MapRasterLayerProvider.h>
 #include <OsmAndCore/Map/MapRasterLayerProvider_Software.h>
@@ -284,6 +285,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::IMapLayerProvider)
 	%shared_ptr(OsmAnd::IRasterMapLayerProvider)
 	%shared_ptr(OsmAnd::ImageMapLayerProvider)
+	%shared_ptr(OsmAnd::Map3DObjectsTiledProvider)
 	%shared_ptr(OsmAnd::IMapTiledSymbolsProvider)
 	%shared_ptr(OsmAnd::IMapKeyedSymbolsProvider)
     %shared_ptr(OsmAnd::AmenitySymbolsProvider)
@@ -302,7 +304,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::IMapObjectsProvider)
 	%shared_ptr(OsmAnd::ObfMapObjectsProvider)
 	%shared_ptr(OsmAnd::MapObjectsProvider)
-	%shared_ptr(OsmAnd::MapPrimitivesProvider)
+    %shared_ptr(OsmAnd::MapPrimitivesProvider)
+	%shared_ptr(OsmAnd::Map3DObjectsProvider)
 	%shared_ptr(OsmAnd::MapObjectsSymbolsProvider)
 	%shared_ptr(OsmAnd::MapObjectsSymbolsProvider::MapObjectSymbolsGroup)
 	%shared_ptr(OsmAnd::MapRasterLayerProvider)
@@ -533,6 +536,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/IMapObjectsProvider.h>
 %include <OsmAndCore/Map/ObfMapObjectsProvider.h>
 %include <OsmAndCore/Map/MapPrimitivesProvider.h>
+%include <OsmAndCore/Map/Map3DObjectsProvider.h>
 %include <OsmAndCore/Map/MapObjectsSymbolsProvider.h>
 %include <OsmAndCore/Map/MapRasterLayerProvider.h>
 %include <OsmAndCore/Map/MapRasterLayerProvider_Software.h>

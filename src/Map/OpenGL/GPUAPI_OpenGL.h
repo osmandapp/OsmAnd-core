@@ -456,6 +456,22 @@ namespace OsmAnd
             bool waitForGPU,
             volatile bool* gpuContextLost) override;
 
+        bool uploadDataAsVertices(
+            const void* data,
+            const size_t dataSize,
+            const unsigned int vertexCount,
+            std::shared_ptr< const ArrayBufferInGPU >& outVertexBuffer,
+            bool waitForGPU,
+            volatile bool* gpuContextLost) override;
+
+        bool uploadDataAsIndices(
+            const void* data,
+            const size_t dataSize,
+            const unsigned int indexCount,
+            std::shared_ptr< const ElementArrayBufferInGPU >& outIndexBuffer,
+            bool waitForGPU,
+            volatile bool* gpuContextLost) override;
+
         void waitUntilUploadIsComplete(volatile bool* gpuContextLost) override;
 
         virtual void pushDebugGroupMarker(const QString& title) = 0;

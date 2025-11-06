@@ -18,6 +18,7 @@
 #include "MapSymbol.h"
 #include "GPUAPI.h"
 #include "Utilities.h"
+#include "Map3DObjectsProvider.h"
 #include "Logging.h"
 #include "Stopwatch.h"
 #include "MapRendererPerformanceMetrics.h"
@@ -1569,6 +1570,41 @@ bool OsmAnd::MapRenderer::resetElevationDataProvider(bool forcedUpdate /*= false
     setMapTarget(_requestedState, forcedUpdate);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_DataProvider);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setMap3DObjectsProvider(
+    const std::shared_ptr<IMapTiledDataProvider>& provider,
+    bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (!provider)
+        return false;
+
+    bool update = forcedUpdate || (_requestedState.map3DObjectsProvider != provider);
+    if (!update)
+        return false;
+
+    _requestedState.map3DObjectsProvider = provider;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Map3DObjects_Provider);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::resetMap3DObjectsProvider(bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update = forcedUpdate || static_cast<bool>(_requestedState.map3DObjectsProvider);
+    if (!update)
+        return false;
+
+    _requestedState.map3DObjectsProvider.reset();
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Map3DObjects_Provider);
 
     return true;
 }

@@ -27,6 +27,7 @@ namespace OsmAnd
 {
     class IMapLayerProvider;
     class IMapElevationDataProvider;
+    class IMapTiledDataProvider;
     class IMapTiledSymbolsProvider;
     class IMapKeyedSymbolsProvider;
     class MapSymbol;
@@ -119,6 +120,9 @@ namespace OsmAnd
         virtual bool setElevationConfiguration(const ElevationConfiguration& configuration, bool forcedUpdate = false) = 0;
         virtual bool setElevationScaleFactor(const float scaleFactor, bool forcedUpdate = false) = 0;
         virtual float getElevationScaleFactor() = 0;
+
+        virtual bool setMap3DObjectsProvider(const std::shared_ptr<IMapTiledDataProvider>& provider, bool forcedUpdate = false) = 0;
+        virtual bool resetMap3DObjectsProvider(bool forcedUpdate = false) = 0;
 
         virtual bool setGridConfiguration(const GridConfiguration& configuration, bool forcedUpdate = false) = 0;
 

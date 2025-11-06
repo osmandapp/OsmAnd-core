@@ -67,6 +67,13 @@ namespace OsmAnd
             Incomplete
         };
 
+        enum class Init3DObjectsType : int
+        {
+            Objects3D,
+            Complete,
+            Incomplete
+        };
+
         SWIG_OMIT(Q_REQUIRED_RESULT) const AtlasMapRendererConfiguration& getCurrentConfiguration() const;
     };
 }

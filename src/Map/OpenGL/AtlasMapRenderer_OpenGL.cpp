@@ -24,6 +24,7 @@
 #include "AtlasMapRendererMapLayersStage_OpenGL.h"
 #include "AtlasMapRendererSymbolsStage_OpenGL.h"
 #include "AtlasMapRendererDebugStage_OpenGL.h"
+#include "AtlasMapRendererMap3DObjectsStage_OpenGL.h"
 #include "IMapRenderer.h"
 #include "IMapTiledDataProvider.h"
 #include "IRasterMapLayerProvider.h"
@@ -196,12 +197,37 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         if (!ok || stageResult == MapRendererStage::StageResult::Wait)
             skip = true;
     }
+
     // Turn on blending since now objects with transparency are going to be rendered
     glEnable(GL_BLEND);
     GL_CHECK_RESULT;
 
     // Set premultiplied alpha color blending
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+    if (!skip && _map3DObjectsStage && !currentDebugSettings->disable3DMapObjectsStage)
+    {
+        glEnable(GL_CULL_FACE);
+        GL_CHECK_RESULT;
+
+        glCullFace(currentState.flip ? GL_BACK : GL_FRONT);
+        GL_CHECK_RESULT;
+
+        Stopwatch map3DStageStopwatch(metric != nullptr);
+
+        const auto stageResult = _map3DObjectsStage->render(metric);
+
+        if (stageResult == MapRendererStage::StageResult::Fail)
+            ok = false;
+        if (metric)
+            metric->elapsedTimeForSymbolsStage += map3DStageStopwatch.elapsed();
+
+        glDisable(GL_CULL_FACE);
+        GL_CHECK_RESULT;
+
+        if (!ok || stageResult == MapRendererStage::StageResult::Wait)
+            skip = true;
+    }
 
     // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
     if (!skip && !currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
@@ -3495,4 +3521,9 @@ OsmAnd::AtlasMapRendererSymbolsStage* OsmAnd::AtlasMapRenderer_OpenGL::createSym
 OsmAnd::AtlasMapRendererDebugStage* OsmAnd::AtlasMapRenderer_OpenGL::createDebugStage()
 {
     return new AtlasMapRendererDebugStage_OpenGL(this);
+}
+
+OsmAnd::AtlasMapRendererMap3DObjectsStage* OsmAnd::AtlasMapRenderer_OpenGL::createMap3DObjectsStage()
+{
+    return new AtlasMapRendererMap3DObjectsStage_OpenGL(this);
 }

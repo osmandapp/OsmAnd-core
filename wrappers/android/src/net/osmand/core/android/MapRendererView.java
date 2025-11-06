@@ -19,6 +19,7 @@ import net.osmand.core.jni.IMapElevationDataProvider;
 import net.osmand.core.jni.IMapKeyedSymbolsProvider;
 import net.osmand.core.jni.IMapLayerProvider;
 import net.osmand.core.jni.IMapRenderer;
+import net.osmand.core.jni.IMapTiledDataProvider;
 import net.osmand.core.jni.IMapTiledSymbolsProvider;
 import net.osmand.core.jni.MapLayerConfiguration;
 import net.osmand.core.jni.SymbolSubsectionConfiguration;
@@ -859,6 +860,18 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.resetElevationDataProvider();
+    }
+
+    public final boolean setMap3DObjectsProvider(IMapTiledDataProvider provider) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setMap3DObjectsProvider(provider);
+    }
+
+    public final boolean resetMap3DObjectsProvider() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.resetMap3DObjectsProvider();
     }
 
     public final boolean setElevationScaleFactor(float scaleFactor) {
