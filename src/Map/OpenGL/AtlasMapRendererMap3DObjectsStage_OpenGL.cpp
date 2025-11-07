@@ -61,7 +61,15 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
             uniform vec3 param_vs_lightDirection;
             uniform float param_vs_ambient;
             
+            uniform highp sampler2D param_vs_elevation_dataSampler;
+            uniform highp vec4 param_vs_elevationLayerDataPlace;
+            uniform highp vec4 param_vs_elevationLayer_txOffsetAndScale;
+            uniform vec4 param_vs_elevation_scale;
+            uniform ivec2 param_vs_elevationTileCoords31;
+            uniform int param_vs_elevationTileZoomLevel;
+            
             const float TILE_SIZE_3D = 100.0;
+            const int HEIXELS_PER_TILE_SIDE = 32;
             const int MAX_ZOOM_LEVEL = 31;
             const int MAX_TILE_NUMBER = (1 << MAX_ZOOM_LEVEL) - 1;
             const int MIDDLE_TILE_NUMBER = MAX_TILE_NUMBER / 2 + 1;
@@ -96,9 +104,41 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
                 return vec3(offsetFromTarget.x, elevation, offsetFromTarget.y);
             }
 
+            float interpolatedHeight(in vec2 inTexCoords)
+            {
+                vec2 heixelSize = param_vs_elevationLayerDataPlace.zw * 2.0;
+                vec2 texCoords = (inTexCoords - param_vs_elevationLayerDataPlace.zw) / heixelSize;
+                vec2 pixOffset = fract(texCoords);
+                texCoords = floor(texCoords) * heixelSize + param_vs_elevationLayerDataPlace.zw;
+                vec2 minCoords = param_vs_elevationLayerDataPlace.xy - heixelSize;
+                vec2 maxCoords = minCoords + heixelSize * (float(HEIXELS_PER_TILE_SIDE) + 2.0);
+                float blHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;
+                texCoords.x += heixelSize.x;
+                float brHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;
+                texCoords.y += heixelSize.y;
+                float trHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;
+                texCoords.x -= heixelSize.x;
+                float tlHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;
+                float avbPixel = mix(blHeixel, brHeixel, pixOffset.x);
+                float avtPixel = mix(tlHeixel, trHeixel, pixOffset.x);
+                return mix(avbPixel, avtPixel, pixOffset.y);
+            }
+
             void main()
             {
-                float elevation = in_vs_height / param_vs_metersPerUnit;
+                float baseElevation = in_vs_height / param_vs_metersPerUnit;
+                float elevation = baseElevation;
+                
+                if (abs(param_vs_elevation_scale.w) > 0.0)
+                {
+                    ivec2 offset31 = shortestVector31(param_vs_elevationTileCoords31, in_vs_location31);
+                    vec2 locationFloat = convert31toFloat(offset31, param_vs_elevationTileZoomLevel);
+                    vec2 elevationTexCoords = locationFloat * param_vs_elevationLayer_txOffsetAndScale.zw + param_vs_elevationLayer_txOffsetAndScale.xy;
+                    float elevationHeight = interpolatedHeight(elevationTexCoords);
+                    float terrainElevation = (elevationHeight * param_vs_elevation_scale.w * param_vs_elevation_scale.z) / param_vs_metersPerUnit;
+                    elevation = baseElevation + terrainElevation;
+                }
+                
                 vec3 worldPos = planeWorldCoordinates(in_vs_location31, param_vs_target31, param_vs_zoomLevel, elevation);
                 
                 gl_Position = param_vs_mPerspectiveProjectionView * vec4(worldPos, 1.0);
@@ -186,6 +226,12 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
     ok = ok && lookup->lookupLocation(_program.vs.param.zoomLevel, "param_vs_zoomLevel", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.lightDirection, "param_vs_lightDirection", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.ambient, "param_vs_ambient", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.elevation_dataSampler, "param_vs_elevation_dataSampler", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.elevationLayer.txOffsetAndScale, "param_vs_elevationLayer_txOffsetAndScale", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.elevationLayerDataPlace, "param_vs_elevationLayerDataPlace", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.elevation_scale, "param_vs_elevation_scale", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.elevationTileCoords31, "param_vs_elevationTileCoords31", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.elevationTileZoomLevel, "param_vs_elevationTileZoomLevel", GlslVariableType::Uniform);
 
     if (!ok)
     {
@@ -221,6 +267,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
     GL_CHECK_PRESENT(glEnable);
     GL_CHECK_PRESENT(glDisable);
     GL_CHECK_PRESENT(glBlendFunc);
+    GL_CHECK_PRESENT(glActiveTexture);
+    GL_CHECK_PRESENT(glBindTexture);
 
     _vao = gpuAPI->allocateUninitializedVAO();
     gpuAPI->initializeVAO(_vao);
@@ -326,7 +374,8 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                 if (object3DResource && object3DResource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                 {
                     totalObjectsCount += object3DResource->getRenderableBuildings().size();
-                    const int drawnCount = drawResource(tileIdN, static_cast<ZoomLevel>(neededZoom), object3DResource, drawnBboxHashes);
+                    const auto elevationData = findElevationData(tileIdN, static_cast<ZoomLevel>(neededZoom));
+                    const int drawnCount = drawResource(tileIdN, static_cast<ZoomLevel>(neededZoom), object3DResource, drawnBboxHashes, elevationData);
                     objectsDrawnCount += drawnCount;
                     object3DResource->setState(MapRendererResourceState::Uploaded);
                     rendered = true;
@@ -362,7 +411,8 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                         if (subRes && subRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                         {
                             totalObjectsCount += subRes->getRenderableBuildings().size();
-                            const int drawnCount = drawResource(subId, static_cast<ZoomLevel>(underscaledZoom), subRes, drawnBboxHashes);
+                            const auto elevationData = findElevationData(subId, static_cast<ZoomLevel>(underscaledZoom));
+                            const int drawnCount = drawResource(subId, static_cast<ZoomLevel>(underscaledZoom), subRes, drawnBboxHashes, elevationData);
                             objectsDrawnCount += drawnCount;
                             subRes->setState(MapRendererResourceState::Uploaded);
                             atLeastOne = true;
@@ -403,7 +453,8 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                     if (parentRes && parentRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                     {
                         totalObjectsCount += parentRes->getRenderableBuildings().size();
-                        const int drawnCount = drawResource(parentId, static_cast<ZoomLevel>(overscaledZoom), parentRes, drawnBboxHashes);
+                        const auto elevationData = findElevationData(parentId, static_cast<ZoomLevel>(overscaledZoom));
+                        const int drawnCount = drawResource(parentId, static_cast<ZoomLevel>(overscaledZoom), parentRes, drawnBboxHashes, elevationData);
                         objectsDrawnCount += drawnCount;
                         parentRes->setState(MapRendererResourceState::Uploaded);
                         rendered = true;
@@ -474,8 +525,83 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
     return StageResult::Success;
 }
 
-int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId& id,
-    ZoomLevel z, const std::shared_ptr<MapRenderer3DObjectsResource>& res, QSet<uint64_t>& drawnBboxHashes)
+AtlasMapRendererMap3DObjectsStage_OpenGL::ElevationData AtlasMapRendererMap3DObjectsStage_OpenGL::findElevationData(const TileId& tileIdN, ZoomLevel buildingZoom)
+{
+    ElevationData result;
+    result.hasData = false;
+    result.zoom = buildingZoom;
+    result.tileIdN = tileIdN;
+    result.texCoordsOffset = PointF(0.0f, 0.0f);
+    result.texCoordsScale = PointF(1.0f, 1.0f);
+
+    if (!currentState.elevationDataProvider)
+    {
+        return result;
+    }
+
+    result.resource = captureElevationDataResource(tileIdN, buildingZoom);
+    if (result.resource)
+    {
+        result.hasData = true;
+        return result;
+    }
+
+    const auto maxMissingDataZoomShift = currentState.elevationDataProvider->getMaxMissingDataZoomShift();
+    const auto maxUnderZoomShift = currentState.elevationDataProvider->getMaxMissingDataUnderZoomShift();
+    const auto minZoom = currentState.elevationDataProvider->getMinZoom();
+    const auto maxZoom = currentState.elevationDataProvider->getMaxZoom();
+
+    for (int absZoomShift = 1; absZoomShift <= maxMissingDataZoomShift; absZoomShift++)
+    {
+        // Try underscaled first
+        const auto underscaledZoom = static_cast<int>(buildingZoom) + absZoomShift;
+        if (underscaledZoom >= minZoom && underscaledZoom <= maxZoom && 
+            absZoomShift <= maxUnderZoomShift && buildingZoom >= minZoom)
+        {
+            result.zoom = static_cast<ZoomLevel>(underscaledZoom);
+            const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(tileIdN, absZoomShift);
+
+            if (!underscaledTileIdsN.isEmpty())
+            {
+                result.tileIdN = underscaledTileIdsN[0];
+                result.resource = captureElevationDataResource(result.tileIdN, result.zoom);
+
+                if (result.resource)
+                {
+                    result.hasData = true;
+                    const auto subtilesPerSide = (1u << absZoomShift);
+                    result.texCoordsScale = PointF(static_cast<float>(subtilesPerSide), static_cast<float>(subtilesPerSide));
+
+                    uint16_t xSubtile, ySubtile;
+                    Utilities::decodeMortonCode(0, xSubtile, ySubtile);
+                    result.texCoordsOffset = PointF(-static_cast<float>(xSubtile), -static_cast<float>(ySubtile));
+
+                    return result;
+                }
+            }
+        }
+
+        // Try overscaled
+        const auto overscaledZoom = static_cast<int>(buildingZoom) - absZoomShift;
+        if (overscaledZoom >= minZoom && overscaledZoom <= maxZoom)
+        {
+            result.zoom = static_cast<ZoomLevel>(overscaledZoom);
+            result.tileIdN = Utilities::getTileIdOverscaledByZoomShift(tileIdN, absZoomShift, &result.texCoordsOffset, &result.texCoordsScale);
+            result.resource = captureElevationDataResource(result.tileIdN, result.zoom);
+
+            if (result.resource)
+            {
+                result.hasData = true;
+                return result;
+            }
+        }
+    }
+
+    return result;
+}
+
+int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId& id, ZoomLevel z,
+    const std::shared_ptr<MapRenderer3DObjectsResource>& res, QSet<uint64_t>& drawnBboxHashes, const ElevationData& elevationData)
 {
     int drawnCount = 0;
     const auto gpuAPI = getGPUAPI();
@@ -495,6 +621,56 @@ int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId&
         currentState.zoomLevel, yAtCurrentZoom, AtlasMapRenderer::TileSize3D);
 
     glUniform1f(*_program.vs.param.metersPerUnit, static_cast<float>(metersPerUnit));
+    GL_CHECK_RESULT;
+
+    const auto tileIdN = Utilities::normalizeTileId(id, z);
+
+    float zScaleFactor = 0.0f;
+    float dataScaleFactor = 0.0f;
+    double upperMetersPerUnit = metersPerUnit;
+    double lowerMetersPerUnit = metersPerUnit;
+    
+    if (elevationData.hasData && elevationData.resource)
+    {
+        zScaleFactor = currentState.elevationConfiguration.zScaleFactor;
+        dataScaleFactor = currentState.elevationConfiguration.dataScaleFactor;
+        
+        if (currentState.flatEarth)
+        {
+            const auto tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
+                static_cast<double>(1ull << (currentState.zoomLevel - elevationData.zoom));
+
+            upperMetersPerUnit = Utilities::getMetersPerTileUnit(elevationData.zoom, tileIdN.y, tileSize);
+            lowerMetersPerUnit = Utilities::getMetersPerTileUnit(elevationData.zoom, tileIdN.y + 1, tileSize);
+        }
+        else
+        {
+            const auto& internalState = getInternalState();
+            upperMetersPerUnit = internalState.metersPerUnit;
+            lowerMetersPerUnit = internalState.metersPerUnit;
+        }
+        
+        configureElevationData(elevationData.resource, elevationData.tileIdN, elevationData.zoom, 
+            elevationData.texCoordsOffset, elevationData.texCoordsScale);
+        
+
+        const auto zoomShift = static_cast<int>(ZoomLevel::MaxZoomLevel) - static_cast<int>(elevationData.zoom);
+        const PointI elevationTile31(elevationData.tileIdN.x << zoomShift, elevationData.tileIdN.y << zoomShift);
+
+        glUniform2i(*_program.vs.param.elevationTileCoords31, elevationTile31.x, elevationTile31.y);
+        GL_CHECK_RESULT;
+        glUniform1i(*_program.vs.param.elevationTileZoomLevel, static_cast<int>(elevationData.zoom));
+        GL_CHECK_RESULT;
+    }
+    else
+    {
+        cancelElevation();
+        zScaleFactor = 0.0f;
+        dataScaleFactor = 0.0f;
+    }
+
+    glUniform4f(*_program.vs.param.elevation_scale, static_cast<float>(upperMetersPerUnit),
+        static_cast<float>(lowerMetersPerUnit), zScaleFactor, dataScaleFactor);
     GL_CHECK_RESULT;
 
     const auto& buildings = res->getRenderableBuildings();
@@ -563,4 +739,91 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::release(bool gpuContextLost)
         _program.id = 0;
     }
     return true;
+}
+
+void AtlasMapRendererMap3DObjectsStage_OpenGL::configureElevationData(
+    const std::shared_ptr<const GPUAPI::ResourceInGPU>& elevationDataResource,
+    const TileId tileIdN,
+    const ZoomLevel zoomLevel,
+    const PointF& texCoordsOffsetN,
+    const PointF& texCoordsScaleN)
+{
+    const auto gpuAPI = getGPUAPI();
+
+    const int elevationDataSamplerIndex = 0;
+
+    glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
+    GL_CHECK_RESULT;
+
+    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(elevationDataResource->refInGPU)));
+    GL_CHECK_RESULT;
+
+    gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + elevationDataSamplerIndex);
+
+    if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
+    {
+        const auto tileOnAtlasTexture = std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(elevationDataResource);
+        const auto& texture = tileOnAtlasTexture->atlasTexture;
+
+        const auto rowIndex = tileOnAtlasTexture->slotIndex / texture->slotsPerSide;
+        const auto colIndex = tileOnAtlasTexture->slotIndex - rowIndex * texture->slotsPerSide;
+
+        // Must be in sync with IMapElevationDataProvider::Data::getValue
+        const PointF innerSize(texture->tileSizeN - 3.0f * texture->uTexelSizeN, texture->tileSizeN - 3.0f * texture->vTexelSizeN);
+        const PointF texCoordsScale(innerSize.x * texCoordsScaleN.x, innerSize.y * texCoordsScaleN.y);
+
+        const PointF texPlace(colIndex * texture->tileSizeN + texture->uHalfTexelSizeN + texture->uTexelSizeN,
+            rowIndex * texture->tileSizeN + texture->vHalfTexelSizeN + texture->vTexelSizeN);
+
+        const PointF texCoordsOffset(texPlace.x + innerSize.x * texCoordsOffsetN.x,
+            texPlace.y + innerSize.y * texCoordsOffsetN.y);
+
+        glUniform4f(_program.vs.param.elevationLayer.txOffsetAndScale,
+            texCoordsOffset.x, texCoordsOffset.y, texCoordsScale.x, texCoordsScale.y);
+        GL_CHECK_RESULT;
+
+        glUniform4f(_program.vs.param.elevationLayerDataPlace,
+            texPlace.x, texPlace.y, texture->uHalfTexelSizeN, texture->vHalfTexelSizeN);
+        GL_CHECK_RESULT;
+    }
+    else // if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::Texture)
+    {
+        const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(elevationDataResource);
+
+        const PointF innerSize(
+            1.0f - 3.0f * texture->uTexelSizeN,
+            1.0f - 3.0f * texture->vTexelSizeN
+        );
+
+        const PointF texCoordsScale(innerSize.x * texCoordsScaleN.x, innerSize.y * texCoordsScaleN.y);
+        const PointF texPlace(texture->uHalfTexelSizeN + texture->uTexelSizeN, texture->vHalfTexelSizeN + texture->vTexelSizeN);
+        const PointF texCoordsOffset(texPlace.x + innerSize.x * texCoordsOffsetN.x, texPlace.y + innerSize.y * texCoordsOffsetN.y);
+
+        glUniform4f(_program.vs.param.elevationLayer.txOffsetAndScale,
+            texCoordsOffset.x, texCoordsOffset.y, texCoordsScale.x, texCoordsScale.y);
+        GL_CHECK_RESULT;
+
+        glUniform4f(_program.vs.param.elevationLayerDataPlace,
+            texPlace.x, texPlace.y, texture->uHalfTexelSizeN, texture->vHalfTexelSizeN);
+        GL_CHECK_RESULT;
+    }
+
+    glUniform1i(_program.vs.param.elevation_dataSampler, elevationDataSamplerIndex);
+    GL_CHECK_RESULT;
+}
+
+void AtlasMapRendererMap3DObjectsStage_OpenGL::cancelElevation()
+{
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glActiveTexture);
+    GL_CHECK_PRESENT(glBindTexture);
+
+    const int elevationDataSamplerIndex = 0;
+
+    glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
+    GL_CHECK_RESULT;
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    GL_CHECK_RESULT;
 }

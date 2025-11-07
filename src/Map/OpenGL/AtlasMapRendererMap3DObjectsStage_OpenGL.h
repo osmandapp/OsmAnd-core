@@ -23,7 +23,26 @@ namespace OsmAnd
 
         Init3DObjectsType _init3DObjectsType;
 
-        int drawResource(const TileId& id, ZoomLevel z, const std::shared_ptr<MapRenderer3DObjectsResource>& res, QSet<uint64_t>& drawnBboxHashes);
+        struct ElevationData
+        {
+            std::shared_ptr<const GPUAPI::ResourceInGPU> resource;
+            ZoomLevel zoom;
+            TileId tileIdN;
+            PointF texCoordsOffset;
+            PointF texCoordsScale;
+            bool hasData;
+        };
+
+        ElevationData findElevationData(const TileId& tileIdN, ZoomLevel buildingZoom);
+        int drawResource(const TileId& id, ZoomLevel z, const std::shared_ptr<MapRenderer3DObjectsResource>& res, QSet<uint64_t>& drawnBboxHashes, const ElevationData& elevationData);
+
+        void configureElevationData(
+            const std::shared_ptr<const GPUAPI::ResourceInGPU>& elevationDataResource,
+            const TileId tileIdN,
+            const ZoomLevel zoomLevel,
+            const PointF& texCoordsOffsetN,
+            const PointF& texCoordsScaleN);
+        void cancelElevation();
 
         struct Model3DProgram
         {
@@ -53,6 +72,16 @@ namespace OsmAnd
                     GLlocation zoomLevel;
                     GLlocation lightDirection;
                     GLlocation ambient;
+                    // Elevation data
+                    GLlocation elevation_dataSampler;
+                    struct
+                    {
+                        GLlocation txOffsetAndScale;
+                    } elevationLayer;
+                    GLlocation elevationLayerDataPlace;
+                    GLlocation elevation_scale;
+                    GLlocation elevationTileCoords31;
+                    GLlocation elevationTileZoomLevel;
                 } param;
             } vs;
         } _program;

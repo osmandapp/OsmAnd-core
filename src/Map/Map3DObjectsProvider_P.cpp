@@ -116,7 +116,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             }
 
             const int edgePointsCount = points31.size();
-            const float bottomAltitude = -1000.0f;
+            const float bottomAltitude = 0.0f;
             const float topAltitude = height;
 
             const int totalVertices = edgePointsCount + edgePointsCount * 4;
