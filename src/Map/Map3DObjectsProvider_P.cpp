@@ -82,8 +82,8 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
                 if (!pPrimitiveAttribute)
                     continue;
 
-                if (pPrimitiveAttribute->tag == QLatin1String("addr:housenumber") ||
-                    pPrimitiveAttribute->tag == QLatin1String("building"))
+                if (pPrimitiveAttribute->tag == QLatin1String("building") ||
+                    pPrimitiveAttribute->tag == QLatin1String("building:part"))
                 {
                     isBuilding = true;
                     break;
