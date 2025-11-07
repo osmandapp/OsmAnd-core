@@ -305,7 +305,9 @@ void OsmAnd::ObfAddressSectionReader_P::readCityHeader(
                 const auto oldLimit = cis->PushLimit(length);
                 while (cis->BytesUntilLimit() > 0)
                 {
-                    boundaryBbox.push_back(ObfReaderUtilities::readSInt32(cis));
+                    gpb::uint32 var;
+                    cis->ReadVarint32(&var);
+                    boundaryBbox.push_back(var);
                 }
                 cis->PopLimit(oldLimit);
                 break;
