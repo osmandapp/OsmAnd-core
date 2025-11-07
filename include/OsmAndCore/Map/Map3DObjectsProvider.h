@@ -17,7 +17,7 @@
 namespace OsmAnd
 {
     class Map3DObjectsTiledProvider_P;
-    class Map3DObjectsTiledProvider : public IMapTiledDataProvider, public std::enable_shared_from_this<Map3DObjectsTiledProvider>
+    class OSMAND_CORE_API Map3DObjectsTiledProvider : public IMapTiledDataProvider, public std::enable_shared_from_this<Map3DObjectsTiledProvider>
     {
     public:
         struct Data : public IMapTiledDataProvider::Data
