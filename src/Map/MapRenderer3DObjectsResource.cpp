@@ -156,6 +156,7 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
         renderableBuilding.vertexCount = building.vertices.size();
         renderableBuilding.indexCount = building.indices.size();
         renderableBuilding.bboxHash = building.bboxHash;
+        renderableBuilding.color = building.color;
 
         _renderableBuildings.append(renderableBuilding);
     }

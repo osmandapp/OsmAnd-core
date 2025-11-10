@@ -54,8 +54,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
             
             uniform mat4 param_vs_mPerspectiveProjectionView;
             uniform float param_vs_metersPerUnit;
-            uniform vec3 param_vs_color;
-            uniform float param_vs_alpha;
+            uniform vec4 param_vs_color;
             uniform ivec2 param_vs_target31;
             uniform int param_vs_zoomLevel;
             uniform vec3 param_vs_lightDirection;
@@ -145,7 +144,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
                 
                 float ndotl = max(dot(in_vs_normal, param_vs_lightDirection), 0.0);
                 float diffuse = param_vs_ambient + (1.0 - param_vs_ambient) * ndotl;
-                v2f_color = vec4(param_vs_color * diffuse, param_vs_alpha);
+                v2f_color = vec4(param_vs_color.rgb * diffuse, param_vs_color.a);
             }
         )";
 
@@ -221,7 +220,6 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
     ok = ok && lookup->lookupLocation(_program.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.metersPerUnit, "param_vs_metersPerUnit", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.color, "param_vs_color", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_program.vs.param.alpha, "param_vs_alpha", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.zoomLevel, "param_vs_zoomLevel", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.lightDirection, "param_vs_lightDirection", GlslVariableType::Uniform);
@@ -326,10 +324,6 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
     glUniform3f(*_program.vs.param.lightDirection, lightDir.x, lightDir.y, lightDir.z);
     GL_CHECK_RESULT;
     glUniform1f(*_program.vs.param.ambient, 0.2f);
-    GL_CHECK_RESULT;
-    glUniform3f(*_program.vs.param.color, 0.4f, 0.4f, 0.4f);
-    GL_CHECK_RESULT;
-    glUniform1f(*_program.vs.param.alpha, 1.0f);
     GL_CHECK_RESULT;
 
     const auto CollectionStapshot = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection);
@@ -690,6 +684,9 @@ int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId&
         drawnCount++;
 
         gpuAPI->useVAO(_vao);
+
+        glUniform4f(*_program.vs.param.color, b.color.r, b.color.g, b.color.b, b.color.a);
+        GL_CHECK_RESULT;
 
         glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(b.vertexBuffer->refInGPU)));
         GL_CHECK_RESULT;

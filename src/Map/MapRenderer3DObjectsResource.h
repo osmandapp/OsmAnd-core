@@ -28,6 +28,7 @@ namespace OsmAnd
             int vertexCount;
             int indexCount;
             uint64_t bboxHash;
+            FColorARGB color;
         };
 
         struct PerformanceDebugInfo

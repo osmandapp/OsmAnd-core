@@ -20,6 +20,7 @@ namespace OsmAnd
     {
         QVector<BuildingVertex> vertices;
         QVector<uint16_t> indices;
+        FColorARGB color;
         uint64_t bboxHash;
     };
 }

@@ -67,7 +67,6 @@ namespace OsmAnd
                     GLlocation mPerspectiveProjectionView;
                     GLlocation metersPerUnit;
                     GLlocation color;
-                    GLlocation alpha;
                     GLlocation target31;
                     GLlocation zoomLevel;
                     GLlocation lightDirection;

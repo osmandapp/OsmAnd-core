@@ -57,6 +57,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
     }
 
     QVector<Building3D> buildings3D;
+    QSet<std::shared_ptr<const MapObject>> filter;
 
     if (tileData && tileData->primitivisedObjects)
     {
@@ -73,14 +74,19 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
                 continue;
             }
 
-            float height = 3.0f;
-            bool isBuilding = false;
+            if (filter.contains(sourceObject))
+            {
+                continue;
+            }
 
+            bool isBuilding = false;
             for (int i = 0; i < sourceObject->attributeIds.size(); ++i)
             {
                 const auto pPrimitiveAttribute = sourceObject->resolveAttributeByIndex(i);
                 if (!pPrimitiveAttribute)
+                {
                     continue;
+                }
 
                 if (pPrimitiveAttribute->tag == QLatin1String("building") ||
                     pPrimitiveAttribute->tag == QLatin1String("building:part"))
@@ -95,14 +101,68 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
                 continue;
             }
 
+            filter.insert(sourceObject);
+
+            float levelHeight = 3.0f;
+
+            float height = 3.0f;
+            float minHeight = 0.0f;
+
+            float levels = 0;
+            float minLevels = 0;
+
+            FColorARGB color(1.0f, 0.4f, 0.4f, 0.4f);
+
+            bool heightFound = false;
+            bool minHeightFound = false;
+            bool levelsFound = false;
+            bool minLevelsFound = false;
+            bool colorFound = false;
+
             for (const auto& captionAttributeId : constOf(sourceObject->captionsOrder))
             {
                 const auto& caption = constOf(sourceObject->captions)[captionAttributeId];
+                const QString& captionTag = sourceObject->attributeMapping->decodeMap[captionAttributeId].tag;
 
-                if (sourceObject->attributeMapping->decodeMap[captionAttributeId].tag == QStringLiteral("height"))
+                if (!heightFound && captionTag == QStringLiteral("height"))
                 {
+                    heightFound = true;
                     height = caption.toFloat();
                 }
+
+                if (!minHeightFound && captionTag == QStringLiteral("min_height"))
+                {
+                    minHeightFound = true;
+                    minHeight = caption.toFloat();
+                }
+
+                if (!heightFound && !levelsFound && captionTag == QStringLiteral("building:levels"))
+                {
+                    levelsFound = true;
+                    levels = caption.toFloat();
+                }
+
+                if (!minHeightFound && !minLevelsFound && captionTag == QStringLiteral("building:min_level"))
+                {
+                    minLevelsFound = true;
+                    minLevels = caption.toFloat();
+                }
+
+                if (!colorFound && captionTag == QStringLiteral("building:colour"))
+                {
+                    colorFound = true;
+                    color = OsmAnd::Utilities::parseColor(caption, color);
+                }
+            }
+
+            if (!heightFound && levelsFound)
+            {
+                height = levels * levelHeight;
+            }
+
+            if (!minHeightFound && minLevelsFound)
+            {
+                minHeight = minLevels * levelHeight;
             }
 
             QVector<PointI> points31 = sourceObject->points31;
@@ -116,8 +176,6 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             }
 
             const int edgePointsCount = points31.size();
-            const float bottomAltitude = 0.0f;
-            const float topAltitude = height;
 
             const int totalVertices = edgePointsCount + edgePointsCount * 4;
             const int topTriangles = edgePointsCount - 2;
@@ -135,6 +193,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             building.vertices.reserve(totalVertices);
             building.indices.reserve(totalIndices);
             building.bboxHash = bboxHash;
+            building.color = color;
 
             QVector<glm::vec3> sideNormals;
             sideNormals.resize(edgePointsCount);
@@ -162,7 +221,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             for (int i = 0; i < edgePointsCount; ++i)
             {
                 const auto& point31 = points31[i];
-                building.vertices.append({glm::ivec2(point31.x, point31.y), topAltitude, glm::vec3(0.0f, 1.0f, 0.0f)});
+                building.vertices.append({glm::ivec2(point31.x, point31.y), height, glm::vec3(0.0f, 1.0f, 0.0f)});
             }
 
             const int wallVertexStart = edgePointsCount;
@@ -172,12 +231,12 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
                 const glm::vec3& edgeNormal = sideNormals[i];
 
                 const auto& point31_i = points31[i];
-                building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), topAltitude, edgeNormal});
-                building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), bottomAltitude, edgeNormal});
+                building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, edgeNormal});
+                building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, edgeNormal});
 
                 const auto& point31_next = points31[next];
-                building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), topAltitude, edgeNormal});
-                building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), bottomAltitude, edgeNormal});
+                building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, edgeNormal});
+                building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, edgeNormal});
             }
 
             std::vector<std::vector<std::array<int32_t, 2>>> polygon;
