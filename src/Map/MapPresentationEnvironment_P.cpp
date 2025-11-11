@@ -66,6 +66,38 @@ void OsmAnd::MapPresentationEnvironment_P::initialize()
 
     _weatherContourLevelsAttribute = owner->mapStyle->getAttribute(QLatin1String("weatherContourLevels"));
 
+    _base3DBuildingsColorAttribute = owner->mapStyle->getAttribute(QStringLiteral("base3DBuildingsColor"));
+    _3DBuildingsAlphaAttribute = owner->mapStyle->getAttribute(QStringLiteral("3DBuildingsAlpha"));
+    _useDefaultBuildingColorAttribute = owner->mapStyle->getAttribute(QStringLiteral("useDefaultBuildingColor"));
+
+    _default3DBuildingHeight = 3.0f;
+    _default3DBuildingLevelHeight = 3.0f;
+    
+    const auto floatValueDef = owner->mapStyle->getValueDefinitionById(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE);
+    if (floatValueDef)
+    {
+        MapStyleConstantValue constantValue;
+        if (owner->mapStyle->parseValue(QStringLiteral("$default3DBuildingHeight"), 
+                                         floatValueDef, 
+                                         constantValue))
+        {
+            if (constantValue.isComplex)
+                _default3DBuildingHeight = constantValue.asComplex.asFloat.pt;
+            else
+                _default3DBuildingHeight = constantValue.asSimple.asFloat;
+        }
+        
+        if (owner->mapStyle->parseValue(QStringLiteral("$default3DBuildingLevelHeight"), 
+                                         floatValueDef, 
+                                         constantValue))
+        {
+            if (constantValue.isComplex)
+                _default3DBuildingLevelHeight = constantValue.asComplex.asFloat.pt;
+            else
+                _default3DBuildingLevelHeight = constantValue.asSimple.asFloat;
+        }
+    }
+
     _desiredStubsStyle = MapStubStyle::Unspecified;
 }
 
@@ -740,5 +772,81 @@ QHash<QString, QList<int>> OsmAnd::MapPresentationEnvironment_P::getGpxWidth() c
                 result.insert(QStringLiteral("%1_%2").arg(widthName).arg(widthNameStep++), QList<int> {minZoomValue, maxZoomValue, strokeWidthValue});
         }
     }
+    return result;
+}
+
+OsmAnd::FColorARGB OsmAnd::MapPresentationEnvironment_P::get3DBuildingsColor() const
+{
+    FColorARGB color(1.0f, 0.4f, 0.4f, 0.4f);
+
+    MapStyleEvaluator evaluator(owner->mapStyle, owner->displayDensityFactor * owner->mapScaleFactor);
+    applyTo(evaluator);
+
+    if (_base3DBuildingsColorAttribute)
+    {
+        MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
+        if (evaluator.evaluate(_base3DBuildingsColorAttribute, &evalResult))
+        {
+            uint32_t colorARGB = 0xFF666666;
+            if (evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_COLOR_VALUE, colorARGB))
+            {
+                color.r = static_cast<float>((colorARGB >> 16) & 0xFF) / 255.0f;
+                color.g = static_cast<float>((colorARGB >> 8) & 0xFF) / 255.0f;
+                color.b = static_cast<float>(colorARGB & 0xFF) / 255.0f;
+            }
+        }
+    }
+
+    if (_3DBuildingsAlphaAttribute)
+    {
+        MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
+        if (evaluator.evaluate(_3DBuildingsAlphaAttribute, &evalResult))
+        {
+            float alpha = 1.0f;
+            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, alpha))
+            {
+                if (alpha > 1.0f)
+                {
+                    alpha = alpha / 255.0f;
+                }
+
+                if (alpha < 0.0f)
+                    alpha = 0.0f;
+                else if (alpha > 1.0f)
+                    alpha = 1.0f;
+                color.a = alpha;
+            }
+        }
+    }
+
+    return color;
+}
+
+float OsmAnd::MapPresentationEnvironment_P::getDefault3DBuildingHeight() const
+{
+    return _default3DBuildingHeight;
+}
+
+float OsmAnd::MapPresentationEnvironment_P::getDefault3DBuildingLevelHeight() const
+{
+    return _default3DBuildingLevelHeight;
+}
+
+bool OsmAnd::MapPresentationEnvironment_P::getUseDefaultBuildingColor() const
+{
+    bool result = false;
+
+    if (_useDefaultBuildingColorAttribute)
+    {
+        MapStyleEvaluator evaluator(owner->mapStyle, owner->displayDensityFactor * owner->mapScaleFactor);
+        applyTo(evaluator);
+
+        MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
+        if (evaluator.evaluate(_useDefaultBuildingColorAttribute, &evalResult))
+        {
+            evalResult.getBooleanValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_BOOL_VALUE, result);
+        }
+    }
+
     return result;
 }

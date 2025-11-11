@@ -5,6 +5,7 @@
 #include "MapDataProviderHelpers.h"
 #include "Utilities.h"
 #include "MapRenderer.h"
+#include "MapPresentationEnvironment.h"
 
 #include "IMapTiledSymbolsProvider.h"
 
@@ -12,8 +13,10 @@ using namespace OsmAnd;
 
 Map3DObjectsTiledProvider_P::Map3DObjectsTiledProvider_P(
     Map3DObjectsTiledProvider* const owner_,
-    const std::shared_ptr<MapPrimitivesProvider>& tiledProvider)
+    const std::shared_ptr<MapPrimitivesProvider>& tiledProvider,
+    const std::shared_ptr<MapPresentationEnvironment>& environment)
     : _tiledProvider(tiledProvider)
+    , _environment(environment)
     , owner(owner_)
 {
 }
@@ -56,8 +59,9 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
         return false;
     }
 
+    bool useDefaultColor = _environment ? _environment->getUseDefaultBuildingColor() : false;
+
     QVector<Building3D> buildings3D;
-    QSet<std::shared_ptr<const MapObject>> filter;
 
     if (tileData && tileData->primitivisedObjects)
     {
@@ -70,11 +74,6 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
 
             const auto& sourceObject = primitive->sourceObject;
             if (!sourceObject || sourceObject->points31.isEmpty())
-            {
-                continue;
-            }
-
-            if (filter.contains(sourceObject))
             {
                 continue;
             }
@@ -101,17 +100,16 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
                 continue;
             }
 
-            filter.insert(sourceObject);
+            float levelHeight = _environment ? _environment->getDefault3DBuildingLevelHeight() : 3.0f;
 
-            float levelHeight = 3.0f;
-
-            float height = 3.0f;
+            float height = _environment ? _environment->getDefault3DBuildingHeight() : 3.0f;
             float minHeight = 0.0f;
 
             float levels = 0;
             float minLevels = 0;
 
-            FColorARGB color(1.0f, 0.4f, 0.4f, 0.4f);
+            FColorARGB color = _environment ? _environment->get3DBuildingsColor() : FColorARGB(1.0f, 0.4f, 0.4f, 0.4f);
+            const float buildingsAlpha = color.a;
 
             bool heightFound = false;
             bool minHeightFound = false;
@@ -148,10 +146,11 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
                     minLevels = caption.toFloat();
                 }
 
-                if (!colorFound && captionTag == QStringLiteral("building:colour"))
+                if (!useDefaultColor && !colorFound && captionTag == QStringLiteral("building:colour"))
                 {
                     colorFound = true;
                     color = OsmAnd::Utilities::parseColor(caption, color);
+                    color.a = buildingsAlpha;
                 }
             }
 

@@ -135,6 +135,10 @@ namespace OsmAnd
         QHash<QString, int> getGpxColors() const;
         QHash<QString, QList<int>> getGpxWidth() const;
         QPair<QString, uint32_t> getRoadRenderingAttributes(const QString& renderAttrName, const QHash<QString, QString>& additionalSettings) const;
+        FColorARGB get3DBuildingsColor() const;
+        float getDefault3DBuildingHeight() const;
+        float getDefault3DBuildingLevelHeight() const;
+        bool getUseDefaultBuildingColor() const;
 
         enum {
             DefaultShadowLevelMin = 0,
