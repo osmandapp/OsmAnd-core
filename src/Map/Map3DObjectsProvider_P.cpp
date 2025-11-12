@@ -59,7 +59,6 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
         return false;
     }
 
-    bool useDefaultColor = _environment ? _environment->getUseDefaultBuildingColor() : false;
 
     QVector<Building3D> buildings3D;
 
@@ -100,16 +99,15 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
                 continue;
             }
 
-            float levelHeight = _environment ? _environment->getDefault3DBuildingLevelHeight() : 3.0f;
+            float levelHeight = getDefaultBuildingsLevelHeight();
 
-            float height = _environment ? _environment->getDefault3DBuildingHeight() : 3.0f;
+            float height = getDefaultBuildingsHeight();
             float minHeight = 0.0f;
 
             float levels = 0;
             float minLevels = 0;
 
-            FColorARGB color = _environment ? _environment->get3DBuildingsColor() : FColorARGB(1.0f, 0.4f, 0.4f, 0.4f);
-            const float buildingsAlpha = color.a;
+            FColorARGB color = getDefaultBuildingsColor();
 
             bool heightFound = false;
             bool minHeightFound = false;
@@ -146,11 +144,11 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
                     minLevels = caption.toFloat();
                 }
 
-                if (!useDefaultColor && !colorFound && captionTag == QStringLiteral("building:colour"))
+                if (!getUseDefaultBuildingsColor() && !colorFound && captionTag == QStringLiteral("building:colour"))
                 {
                     colorFound = true;
                     color = OsmAnd::Utilities::parseColor(caption, color);
-                    color.a = buildingsAlpha;
+                    color.a = getDefaultBuildingsAlpha();
                 }
             }
 
@@ -305,6 +303,35 @@ bool Map3DObjectsTiledProvider_P::supportsNaturalObtainData() const
 bool Map3DObjectsTiledProvider_P::supportsNaturalObtainDataAsync() const
 {
     return false;
+}
+
+bool Map3DObjectsTiledProvider_P::getUseDefaultBuildingsColor() const
+{
+    return _environment ? _environment->getUseDefaultBuildingColor() : false;
+}
+
+float Map3DObjectsTiledProvider_P::getDefaultBuildingsHeight() const
+{
+    return _environment ? _environment->getDefault3DBuildingHeight() : 3.0f;
+}
+
+float Map3DObjectsTiledProvider_P::getDefaultBuildingsLevelHeight() const
+{
+    return _environment ? _environment->getDefault3DBuildingLevelHeight() : 3.0f;
+}
+
+FColorARGB Map3DObjectsTiledProvider_P::getDefaultBuildingsColor() const
+{
+    return _environment ? _environment->get3DBuildingsColor() : FColorARGB(1.0f, 0.4f, 0.4f, 0.4f);
+}
+
+float Map3DObjectsTiledProvider_P::getDefaultBuildingsAlpha() const
+{
+    if (_environment)
+    {
+        return _environment->get3DBuildingsColor().a;
+    }
+    return 1.0f;
 }
 
 

@@ -36,6 +36,12 @@ namespace OsmAnd
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;
 
+        bool getUseDefaultBuildingsColor() const;
+        float getDefaultBuildingsHeight() const;
+        float getDefaultBuildingsLevelHeight() const;
+        FColorARGB getDefaultBuildingsColor() const;
+        float getDefaultBuildingsAlpha() const;
+
         bool obtainTiledData(
             const IMapTiledDataProvider::Request& request,
             std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
