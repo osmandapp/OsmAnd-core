@@ -205,4 +205,24 @@ QPair<QString, uint32_t> OsmAnd::MapPresentationEnvironment::getRoadRenderingAtt
     return _p->getRoadRenderingAttributes(renderAttrName, additionalSettings);
 }
 
+OsmAnd::FColorARGB OsmAnd::MapPresentationEnvironment::get3DBuildingsColor() const
+{
+    return _p->get3DBuildingsColor();
+}
+
+float OsmAnd::MapPresentationEnvironment::getDefault3DBuildingHeight() const
+{
+    return _p->getDefault3DBuildingHeight();
+}
+
+float OsmAnd::MapPresentationEnvironment::getDefault3DBuildingLevelHeight() const
+{
+    return _p->getDefault3DBuildingLevelHeight();
+}
+
+bool OsmAnd::MapPresentationEnvironment::getUseDefaultBuildingColor() const
+{
+    return _p->getUseDefaultBuildingColor();
+}
+
 

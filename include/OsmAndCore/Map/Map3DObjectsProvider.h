@@ -10,6 +10,7 @@
 #include <OsmAndCore/Map/IMapTiledDataProvider.h>
 #include <OsmAndCore/Map/MapPrimitivesProvider.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
+#include <OsmAndCore/Map/MapPresentationEnvironment.h>
 #include <OsmAndCore/Map/MapRenderer3DObjects.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <memory>
@@ -28,7 +29,9 @@ namespace OsmAnd
             QVector<Building3D> buildings3D;
         };
 
-        explicit Map3DObjectsTiledProvider(const std::shared_ptr<MapPrimitivesProvider>& tiledProvider);
+        explicit Map3DObjectsTiledProvider(
+            const std::shared_ptr<MapPrimitivesProvider>& tiledProvider,
+            const std::shared_ptr<MapPresentationEnvironment>& environment);
         virtual ~Map3DObjectsTiledProvider();
 
         virtual ZoomLevel getMinZoom() const override;

@@ -82,6 +82,13 @@ namespace OsmAnd
 
         std::shared_ptr<const IMapStyle::IAttribute> _weatherContourLevelsAttribute;
 
+        std::shared_ptr<const IMapStyle::IAttribute> _base3DBuildingsColorAttribute;
+        std::shared_ptr<const IMapStyle::IAttribute> _3DBuildingsAlphaAttribute;
+        std::shared_ptr<const IMapStyle::IAttribute> _useDefaultBuildingColorAttribute;
+
+        float _default3DBuildingHeight;
+        float _default3DBuildingLevelHeight;
+
         MapStubStyle _desiredStubsStyle;
 
         std::shared_ptr<IconsProvider> _mapIcons;
@@ -144,6 +151,10 @@ namespace OsmAnd
         QHash<QString, int> getGpxColors() const;
         QHash<QString, QList<int>> getGpxWidth() const;
         QPair<QString, uint32_t> getRoadRenderingAttributes(const QString& renderAttrName, const QHash<QString, QString>& additionalSettings) const;
+        FColorARGB get3DBuildingsColor() const;
+        float getDefault3DBuildingHeight() const;
+        float getDefault3DBuildingLevelHeight() const;
+        bool getUseDefaultBuildingColor() const;
 
     friend class OsmAnd::MapPresentationEnvironment;
     };

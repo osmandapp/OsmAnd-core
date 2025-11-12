@@ -21,10 +21,12 @@ namespace OsmAnd
 
     private:
         std::shared_ptr<MapPrimitivesProvider> _tiledProvider;
+        std::shared_ptr<MapPresentationEnvironment> _environment;
 
     protected:
         Map3DObjectsTiledProvider_P(Map3DObjectsTiledProvider* const owner,
-            const std::shared_ptr<MapPrimitivesProvider>& tiledProvider);
+            const std::shared_ptr<MapPrimitivesProvider>& tiledProvider,
+            const std::shared_ptr<MapPresentationEnvironment>& environment);
 
     public:
         ~Map3DObjectsTiledProvider_P();
@@ -33,6 +35,12 @@ namespace OsmAnd
 
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;
+
+        bool getUseDefaultBuildingsColor() const;
+        float getDefaultBuildingsHeight() const;
+        float getDefaultBuildingsLevelHeight() const;
+        FColorARGB getDefaultBuildingsColor() const;
+        float getDefaultBuildingsAlpha() const;
 
         bool obtainTiledData(
             const IMapTiledDataProvider::Request& request,
