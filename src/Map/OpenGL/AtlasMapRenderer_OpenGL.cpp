@@ -1490,24 +1490,46 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         }
         if (!atLeastOneVisibleFound && !shouldRepeat)
         {
+            const auto targetTileId = internalState->synthTileId;
+            const auto azimuth = static_cast<double>(state.azimuth) * M_PI / 180.0;
+            const auto deltaX = qSin(azimuth);
+            const auto deltaY = qCos(azimuth);
             if (!atLeastOneAdded && atLeastOneFlatVisibleFound)
-                tiles.last().begin().value() = Visible;
+            {
+                tiles.last().clear();    
+                tiles.last().insert(targetTileId, Visible);
+                double distance = 1.0;
+                auto prevTileId = targetTileId;
+                TileId nextTileId;
+                for (int i = 0; i < 10; i++)
+                {
+                    nextTileId = TileId::fromXY(
+                        static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distance)),
+                        static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distance)));
+                    if (nextTileId == prevTileId)
+                    {
+                        distance += 1.0;
+                        nextTileId = TileId::fromXY(
+                            static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distance)),
+                            static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distance)));
+                    }
+                    tiles.last().insert(nextTileId, Visible);
+                    distance += 1.0;
+                    prevTileId = nextTileId;
+                }
+            }
             else
             {
-                const auto firstTile = (*procTiles)[zoomLevel].begin().key();
-                const auto targetTile = internalState->synthTileId;
-                const auto azimuth = static_cast<double>(state.azimuth) * M_PI / 180.0;
-                const auto deltaX = qSin(azimuth);
-                const auto deltaY = qCos(azimuth);
+                const auto firstTileId = (*procTiles)[zoomLevel].begin().key();
                 auto nearTileId = TileId::fromXY(
-                    static_cast<int>(qRound(static_cast<double>(targetTile.x) - deltaX * distanceFromTarget)),
-                    static_cast<int>(qRound(static_cast<double>(targetTile.y) + deltaY * distanceFromTarget)));
-                if (nearTileId == firstTile)
+                    static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distanceFromTarget)),
+                    static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distanceFromTarget)));
+                if (nearTileId == firstTileId)
                 {
                     distanceFromTarget += 1.0;
-                    auto nearTileId = TileId::fromXY(
-                        static_cast<int>(qRound(static_cast<double>(targetTile.x) - deltaX * distanceFromTarget)),
-                        static_cast<int>(qRound(static_cast<double>(targetTile.y) + deltaY * distanceFromTarget)));
+                    nearTileId = TileId::fromXY(
+                        static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distanceFromTarget)),
+                        static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distanceFromTarget)));
                 }
                 distanceFromTarget += 1.0;
                 if (nearTileId.y >= 0 && nearTileId.y < static_cast<int32_t>(1u << zoomLevel))
