@@ -1199,6 +1199,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    lowp float firstLayerColorFactor = param_fs_rasterTileLayer_0.isPremultipliedAlpha +                           ""\n"
             "        (1.0 - param_fs_rasterTileLayer_0.isPremultipliedAlpha) * finalColor.a;                                    ""\n"
             "    finalColor *= vec4(firstLayerColorFactor, firstLayerColorFactor, firstLayerColorFactor, 1.0);                  ""\n"
+            "    lowp vec4 firstColor = mix(param_fs_backgroundColor, finalColor, finalColor.a);                                ""\n"
+            "    firstColor.a = 1.0;                                                                                            ""\n"
+            "    finalColor = mix(firstColor, finalColor, param_fs_blendingEnabled);                                            ""\n"
             "                                                                                                                   ""\n"
             "%UnrolledPerRasterLayerProcessingCode%                                                                             ""\n"
             "                                                                                                                   ""\n"
@@ -1230,8 +1233,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    mixColors(finalColor, circle * param_fs_lastBatch);                                                            ""\n"
             "    mixColors(finalColor, sector * param_fs_lastBatch);                                                            ""\n"
             "    mixColors(finalColor, mistColor * param_fs_lastBatch);                                                         ""\n"
-            "    lowp vec4 overColor = mix(param_fs_backgroundColor, finalColor, finalColor.a);                                 ""\n"
-            "    FRAGMENT_COLOR_OUTPUT = mix(overColor, finalColor, param_fs_blendingEnabled);                                  ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
             "}                                                                                                                  ""\n"));
         const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
             "    {                                                                                                              ""\n"
