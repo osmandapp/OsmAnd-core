@@ -125,29 +125,38 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
                     heightFound = true;
                     height = caption.toFloat();
                 }
+            }
 
-                if (!minHeightFound && captionTag == QStringLiteral("min_height"))
+            for (int i = 0; i < sourceObject->additionalAttributeIds.size(); ++i)
+            {
+                const auto pPrimitiveAttribute = sourceObject->resolveAttributeByIndex(i, true);
+                if (!pPrimitiveAttribute)
+                {
+                    continue;
+                }
+
+                if (!minHeightFound && pPrimitiveAttribute->tag == QStringLiteral("min_height"))
                 {
                     minHeightFound = true;
-                    minHeight = caption.toFloat();
+                    minHeight = pPrimitiveAttribute->value.toFloat();
                 }
 
-                if (!heightFound && !levelsFound && captionTag == QStringLiteral("building:levels"))
+                if (!heightFound && !levelsFound && pPrimitiveAttribute->tag == QStringLiteral("building:levels"))
                 {
                     levelsFound = true;
-                    levels = caption.toFloat();
+                    levels = pPrimitiveAttribute->value.toFloat();
                 }
 
-                if (!minHeightFound && !minLevelsFound && captionTag == QStringLiteral("building:min_level"))
+                if (!minHeightFound && !minLevelsFound && pPrimitiveAttribute->tag == QStringLiteral("building:min_level"))
                 {
                     minLevelsFound = true;
-                    minLevels = caption.toFloat();
+                    minLevels = pPrimitiveAttribute->value.toFloat();
                 }
 
-                if (!getUseDefaultBuildingsColor() && !colorFound && captionTag == QStringLiteral("building:colour"))
+                if (!getUseDefaultBuildingsColor() && !colorFound && pPrimitiveAttribute->tag == QStringLiteral("building:colour"))
                 {
                     colorFound = true;
-                    color = OsmAnd::Utilities::parseColor(caption, color);
+                    color = OsmAnd::Utilities::parseColor(pPrimitiveAttribute->value, color);
                     color.a = getDefaultBuildingsAlpha();
                 }
             }
