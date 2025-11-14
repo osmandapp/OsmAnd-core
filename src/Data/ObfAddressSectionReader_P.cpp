@@ -143,7 +143,6 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroups(
     const std::shared_ptr<const ObfAddressSectionInfo>& section,
     QList< std::shared_ptr<const StreetGroup> >* resultOut,
     const AreaI* const bbox31,
-    const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
     const StreetGroupVisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController)
 {
@@ -1357,11 +1356,11 @@ void OsmAnd::ObfAddressSectionReader_P::loadStreetGroups(
     const auto cis = reader.getCodedInputStream().get();
     for (auto block : section->cities)
     {
-        if (block->type == (int)ObfAddressStreetGroupType::CityOrTown)
+        if (streetGroupTypesFilter.isSet(static_cast<ObfAddressStreetGroupType>(block->type)))
         {
             cis->Seek(block->offset);
             const auto oldLimit = cis->PushLimit(block->length);
-            readStreetGroups(reader, section, resultOut, bbox31, streetGroupTypesFilter, visitor, queryController);
+            readStreetGroups(reader, section, resultOut, bbox31, visitor, queryController);
             ObfReaderUtilities::ensureAllDataWasRead(cis);
             cis->PopLimit(oldLimit);
         }
