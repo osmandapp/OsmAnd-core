@@ -348,6 +348,8 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                 continue;
             }
 
+            auto elevationData = findElevationData(tileIdN, static_cast<ZoomLevel>(tilesEntry.key()));
+
             const int maxMissingDataUnderZoomShift = currentState.map3DObjectsProvider->getMaxMissingDataUnderZoomShift();
 
             int desiredOffset = internalState.zoomLevelOffset;
@@ -368,7 +370,6 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                 if (object3DResource && object3DResource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                 {
                     totalObjectsCount += object3DResource->getRenderableBuildings().size();
-                    const auto elevationData = findElevationData(tileIdN, static_cast<ZoomLevel>(neededZoom));
                     const int drawnCount = drawResource(tileIdN, static_cast<ZoomLevel>(neededZoom), object3DResource, drawnBboxHashes, elevationData);
                     objectsDrawnCount += drawnCount;
                     object3DResource->setState(MapRendererResourceState::Uploaded);
@@ -405,7 +406,6 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                         if (subRes && subRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                         {
                             totalObjectsCount += subRes->getRenderableBuildings().size();
-                            const auto elevationData = findElevationData(subId, static_cast<ZoomLevel>(underscaledZoom));
                             const int drawnCount = drawResource(subId, static_cast<ZoomLevel>(underscaledZoom), subRes, drawnBboxHashes, elevationData);
                             objectsDrawnCount += drawnCount;
                             subRes->setState(MapRendererResourceState::Uploaded);
@@ -447,7 +447,6 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                     if (parentRes && parentRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                     {
                         totalObjectsCount += parentRes->getRenderableBuildings().size();
-                        const auto elevationData = findElevationData(parentId, static_cast<ZoomLevel>(overscaledZoom));
                         const int drawnCount = drawResource(parentId, static_cast<ZoomLevel>(overscaledZoom), parentRes, drawnBboxHashes, elevationData);
                         objectsDrawnCount += drawnCount;
                         parentRes->setState(MapRendererResourceState::Uploaded);
@@ -557,17 +556,43 @@ AtlasMapRendererMap3DObjectsStage_OpenGL::ElevationData AtlasMapRendererMap3DObj
 
             if (!underscaledTileIdsN.isEmpty())
             {
-                result.tileIdN = underscaledTileIdsN[0];
-                result.resource = captureElevationDataResource(result.tileIdN, result.zoom);
-
-                if (result.resource)
+                const auto subtilesPerSide = (1u << absZoomShift);
+                const auto subtilesCount = underscaledTileIdsN.size();
+                
+                int selectedSubtileIdx = -1;
+                const auto centerSubtileIdx = (subtilesPerSide / 2) * subtilesPerSide + (subtilesPerSide / 2);
+                
+                if (centerSubtileIdx < subtilesCount)
+                {
+                    result.tileIdN = underscaledTileIdsN[centerSubtileIdx];
+                    result.resource = captureElevationDataResource(result.tileIdN, result.zoom);
+                    if (result.resource)
+                    {
+                        selectedSubtileIdx = centerSubtileIdx;
+                    }
+                }
+                
+                if (selectedSubtileIdx < 0)
+                {
+                    for (int subtileIdx = 0; subtileIdx < subtilesCount; subtileIdx++)
+                    {
+                        result.tileIdN = underscaledTileIdsN[subtileIdx];
+                        result.resource = captureElevationDataResource(result.tileIdN, result.zoom);
+                        if (result.resource)
+                        {
+                            selectedSubtileIdx = subtileIdx;
+                            break;
+                        }
+                    }
+                }
+                
+                if (selectedSubtileIdx >= 0 && result.resource)
                 {
                     result.hasData = true;
-                    const auto subtilesPerSide = (1u << absZoomShift);
                     result.texCoordsScale = PointF(static_cast<float>(subtilesPerSide), static_cast<float>(subtilesPerSide));
 
                     uint16_t xSubtile, ySubtile;
-                    Utilities::decodeMortonCode(0, xSubtile, ySubtile);
+                    Utilities::decodeMortonCode(selectedSubtileIdx, xSubtile, ySubtile);
                     result.texCoordsOffset = PointF(-static_cast<float>(xSubtile), -static_cast<float>(ySubtile));
 
                     return result;
@@ -613,6 +638,8 @@ int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId&
 
     const double metersPerUnit = Utilities::getMetersPerTileUnit(
         currentState.zoomLevel, yAtCurrentZoom, AtlasMapRenderer::TileSize3D);
+
+    std::cout << "metersPerUnit: " << metersPerUnit << '\n';
 
     glUniform1f(*_program.vs.param.metersPerUnit, static_cast<float>(metersPerUnit));
     GL_CHECK_RESULT;
