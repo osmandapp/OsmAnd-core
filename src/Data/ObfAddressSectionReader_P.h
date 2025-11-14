@@ -77,7 +77,6 @@ namespace OsmAnd
             const std::shared_ptr<const ObfAddressSectionInfo>& section,
             QList< std::shared_ptr<const StreetGroup> >* resultOut,
             const AreaI* const bbox31,
-            const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
             const StreetGroupVisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController);
         static void readCityHeader(
