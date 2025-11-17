@@ -34,6 +34,9 @@
 #include "Utilities.h"
 
 #include "OpenGL/Utilities_OpenGL.h"
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
 
 // Set camera's near depth limit
 const float OsmAnd::AtlasMapRenderer_OpenGL::_zNear = 1.0f;
@@ -270,8 +273,14 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::handleStateChange(const MapRendererState& 
 
 void OsmAnd::AtlasMapRenderer_OpenGL::flushRenderCommands()
 {
+#if defined(__APPLE__) && (TARGET_OS_IPHONE)
+    // On iOS, presenting the renderbuffer flushes the pipeline.
+    // Avoid explicit glFlush to prevent driver assertions/crashes in AppleMetalGLRenderer.
+    return;
+#else
     glFlush();
     GL_CHECK_RESULT;
+#endif
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::onValidateResourcesOfType(const MapRendererResourceType type)
