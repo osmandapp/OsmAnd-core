@@ -10,11 +10,12 @@
 #include "MapRendererTiledResourcesCollection.h"
 #include "MapRenderer3DObjects.h"
 #include "MapRendererDebugSettings.h"
+#include <OsmAndCore/Map/Map3DObjectsProvider.h>
 #include "Stopwatch.h"
 #include "Logging.h"
-#include <QSet>
 #include <mapbox/earcut.hpp>
 #include <cstdlib>
+#include <algorithm>
 
 using namespace OsmAnd;
 
@@ -320,7 +321,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
     
-    QSet<uint64_t> drawnBboxHashes;
+    QVector<AreaI> drawnBboxes;
     int tilesDrawnCount = 0;
     int totalObjectsCount = 0;
     int objectsDrawnCount = 0;
@@ -342,18 +343,38 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
 
     const auto CollectionStapshot = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection);
 
-    auto tilesBegin = internalState.visibleTiles.cbegin();
-    for (auto itTiles = internalState.visibleTiles.cend(); itTiles != tilesBegin; itTiles--)
+    float buildingAlpha = 1.0f;
+    const auto map3DProvider = std::static_pointer_cast<Map3DObjectsTiledProvider>(currentState.map3DObjectsProvider);
+    if (map3DProvider)
     {
-        const auto& tilesEntry = itTiles - 1;
-        const auto& visibleTilesSet = internalState.visibleTilesSet.constFind(tilesEntry.key());
-
+        buildingAlpha = map3DProvider->getDefaultBuildingsAlpha();
+    }
+    
+    QVector<ZoomLevel> sortedZoomLevels;
+    for (auto itTiles = internalState.visibleTiles.cbegin(); itTiles != internalState.visibleTiles.cend(); itTiles++)
+    {
+        sortedZoomLevels.append(itTiles.key());
+    }
+    
+    if (buildingAlpha < 1.0f)
+    {
+        std::sort(sortedZoomLevels.begin(), sortedZoomLevels.end(), std::greater<ZoomLevel>());
+    }
+    else
+    {
+        std::sort(sortedZoomLevels.begin(), sortedZoomLevels.end());
+    }
+    
+    for (const auto& zoomLevel : constOf(sortedZoomLevels))
+    {
+        const auto& visibleTilesSet = internalState.visibleTilesSet.constFind(zoomLevel);
         if (visibleTilesSet == internalState.visibleTilesSet.cend())
         {
             continue;
         }
-
-        for (const auto& tileId : constOf(tilesEntry.value()))
+        
+        const auto& tilesForZoom = internalState.visibleTiles.value(zoomLevel);
+        for (const auto& tileId : constOf(tilesForZoom))
         {
             const auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomLevel);
 
@@ -362,7 +383,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                 continue;
             }
 
-            auto elevationData = findElevationData(tileIdN, static_cast<ZoomLevel>(tilesEntry.key()));
+            auto elevationData = findElevationData(tileIdN, zoomLevel);
 
             const int maxMissingDataUnderZoomShift = currentState.map3DObjectsProvider->getMaxMissingDataUnderZoomShift();
 
@@ -373,7 +394,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
             }
 
             const int appliedOffset = std::min(desiredOffset, maxMissingDataUnderZoomShift);
-            const int neededZoom = std::min(static_cast<int>(MaxZoomLevel), tilesEntry.key() + appliedOffset);
+            const int neededZoom = std::min(static_cast<int>(MaxZoomLevel), static_cast<int>(zoomLevel) + appliedOffset);
 
             bool rendered = false;
             {
@@ -384,7 +405,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                 if (object3DResource && object3DResource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                 {
                     totalObjectsCount += object3DResource->getRenderableBuildings().size();
-                    const int drawnCount = drawResource(tileIdN, static_cast<ZoomLevel>(neededZoom), object3DResource, drawnBboxHashes, elevationData);
+                    const int drawnCount = drawResource(tileIdN, static_cast<ZoomLevel>(neededZoom), object3DResource, drawnBboxes, elevationData);
                     objectsDrawnCount += drawnCount;
                     object3DResource->setState(MapRendererResourceState::Uploaded);
                     rendered = true;
@@ -402,7 +423,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                 const int maxZoomShift = currentState.map3DObjectsProvider->getMaxMissingDataZoomShift();
                 for (int absZoomShift = 1; absZoomShift <= maxZoomShift; absZoomShift++)
                 {
-                    const int underscaledZoom = static_cast<int>(tilesEntry.key()) + absZoomShift;
+                    const int underscaledZoom = static_cast<int>(zoomLevel) + absZoomShift;
                     if (underscaledZoom > static_cast<int>(MaxZoomLevel) || absZoomShift > maxMissingDataUnderZoomShift)
                     {
                         break;
@@ -420,7 +441,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                         if (subRes && subRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                         {
                             totalObjectsCount += subRes->getRenderableBuildings().size();
-                            const int drawnCount = drawResource(subId, static_cast<ZoomLevel>(underscaledZoom), subRes, drawnBboxHashes, elevationData);
+                            const int drawnCount = drawResource(subId, static_cast<ZoomLevel>(underscaledZoom), subRes, drawnBboxes, elevationData);
                             objectsDrawnCount += drawnCount;
                             subRes->setState(MapRendererResourceState::Uploaded);
                             atLeastOne = true;
@@ -446,7 +467,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                 const int maxZoomShift = currentState.map3DObjectsProvider->getMaxMissingDataZoomShift();
                 for (int absZoomShift = 1; absZoomShift <= maxZoomShift; absZoomShift++)
                 {
-                    const int overscaledZoom = static_cast<int>(tilesEntry.key()) - absZoomShift;
+                    const int overscaledZoom = static_cast<int>(zoomLevel) - absZoomShift;
                     if (overscaledZoom < static_cast<int>(MinZoomLevel))
                     {
                         break;
@@ -461,7 +482,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                     if (parentRes && parentRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                     {
                         totalObjectsCount += parentRes->getRenderableBuildings().size();
-                        const int drawnCount = drawResource(parentId, static_cast<ZoomLevel>(overscaledZoom), parentRes, drawnBboxHashes, elevationData);
+                        const int drawnCount = drawResource(parentId, static_cast<ZoomLevel>(overscaledZoom), parentRes, drawnBboxes, elevationData);
                         objectsDrawnCount += drawnCount;
                         parentRes->setState(MapRendererResourceState::Uploaded);
                         rendered = true;
@@ -634,7 +655,7 @@ AtlasMapRendererMap3DObjectsStage_OpenGL::ElevationData AtlasMapRendererMap3DObj
 }
 
 int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId& id, ZoomLevel z,
-    const std::shared_ptr<MapRenderer3DObjectsResource>& res, QSet<uint64_t>& drawnBboxHashes, const ElevationData& elevationData)
+    const std::shared_ptr<MapRenderer3DObjectsResource>& res, QVector<AreaI>& drawnBboxes, const ElevationData& elevationData)
 {
     int drawnCount = 0;
     const auto gpuAPI = getGPUAPI();
@@ -716,12 +737,12 @@ int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId&
             continue;
         }
 
-        if (drawnBboxHashes.contains(b.bboxHash))
+        if (drawnBboxes.contains(b.bbox))
         {
             continue;
         }
         
-        drawnBboxHashes.insert(b.bboxHash);
+        drawnBboxes.append(b.bbox);
         drawnCount++;
 
         gpuAPI->useVAO(_vao);

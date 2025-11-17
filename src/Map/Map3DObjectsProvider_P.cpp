@@ -209,16 +209,11 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             const int totalIndices = (topTriangles + sideTriangles) * 3;
 
             const auto& bbox = sourceObject->bbox31;
-            const uint64_t bboxHash =
-                (static_cast<uint64_t>(qHash(bbox.top())) & 0xffffffffULL) ^
-                ((static_cast<uint64_t>(qHash(bbox.left())) & 0xffffffffULL) << 1) ^
-                ((static_cast<uint64_t>(qHash(bbox.bottom())) & 0xffffffffULL) << 2) ^
-                ((static_cast<uint64_t>(qHash(bbox.right())) & 0xffffffffULL) << 3);
 
             Building3D building;
             building.vertices.reserve(totalVertices);
             building.indices.reserve(totalIndices);
-            building.bboxHash = bboxHash;
+            building.bbox = bbox;
             building.color = color;
 
             QVector<glm::vec3> sideNormals;

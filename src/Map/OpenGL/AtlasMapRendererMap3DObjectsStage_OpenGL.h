@@ -7,6 +7,8 @@
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
+#include <OsmAndCore/PointsAndAreas.h>
+#include <QtCore/QVector>
 #include "AtlasMapRendererMap3DObjectsStage.h"
 #include "AtlasMapRendererStageHelper_OpenGL.h"
 
@@ -34,7 +36,7 @@ namespace OsmAnd
         };
 
         ElevationData findElevationData(const TileId& tileIdN, ZoomLevel buildingZoom);
-        int drawResource(const TileId& id, ZoomLevel z, const std::shared_ptr<MapRenderer3DObjectsResource>& res, QSet<uint64_t>& drawnBboxHashes, const ElevationData& elevationData);
+        int drawResource(const TileId& id, ZoomLevel z, const std::shared_ptr<MapRenderer3DObjectsResource>& res, QVector<AreaI>& drawnBboxes, const ElevationData& elevationData);
 
         void configureElevationData(
             const std::shared_ptr<const GPUAPI::ResourceInGPU>& elevationDataResource,

@@ -37,6 +37,8 @@ namespace OsmAnd
         virtual ZoomLevel getMinZoom() const override;
         virtual ZoomLevel getMaxZoom() const override;
 
+        float getDefaultBuildingsAlpha() const;
+
         virtual bool obtainTiledData(
             const IMapTiledDataProvider::Request& request,
             std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,

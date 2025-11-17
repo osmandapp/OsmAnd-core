@@ -12,6 +12,7 @@
 #include "MapRendererBaseTiledResource.h"
 #include <OsmAndCore/Map/MapPrimitivesProvider.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
+#include <OsmAndCore/PointsAndAreas.h>
 #include "MapRenderer3DObjects.h"
 
 namespace OsmAnd
@@ -27,7 +28,7 @@ namespace OsmAnd
             std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU> indexBuffer;
             int vertexCount;
             int indexCount;
-            uint64_t bboxHash;
+            AreaI bbox;
             FColorARGB color;
         };
 
