@@ -53,10 +53,10 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
             out vec4 v2f_color;
             
             uniform mat4 param_vs_mPerspectiveProjectionView;
-            uniform float param_vs_metersPerUnit;
             uniform vec4 param_vs_color;
             uniform ivec2 param_vs_target31;
             uniform int param_vs_zoomLevel;
+            uniform int param_vs_tileZoomLevel;
             uniform vec3 param_vs_lightDirection;
             uniform float param_vs_ambient;
             
@@ -125,17 +125,31 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
 
             void main()
             {
-                float baseElevation = in_vs_height / param_vs_metersPerUnit;
-                float elevation = baseElevation;
+                float metersPerUnit = param_vs_elevation_scale.x;
+                float elevation;
                 
                 if (abs(param_vs_elevation_scale.w) > 0.0)
                 {
-                    ivec2 offset31 = shortestVector31(param_vs_elevationTileCoords31, in_vs_location31);
-                    vec2 locationFloat = convert31toFloat(offset31, param_vs_elevationTileZoomLevel);
-                    vec2 elevationTexCoords = locationFloat * param_vs_elevationLayer_txOffsetAndScale.zw + param_vs_elevationLayer_txOffsetAndScale.xy;
+                    int tileZoomLevelDelta = MAX_ZOOM_LEVEL - param_vs_tileZoomLevel;
+                    ivec2 vertexTileId = ivec2(in_vs_location31.x >> tileZoomLevelDelta, in_vs_location31.y >> tileZoomLevelDelta);
+                    ivec2 tileTopLeft31 = ivec2(vertexTileId.x << tileZoomLevelDelta, vertexTileId.y << tileZoomLevelDelta);
+                    ivec2 offsetInTile31 = in_vs_location31 - tileTopLeft31;
+                    float tileSize31 = float(1 << tileZoomLevelDelta);
+                    float yPositionInTile = float(offsetInTile31.y) / tileSize31;
+                    yPositionInTile = clamp(yPositionInTile, 0.0, 1.0);
+                    metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, yPositionInTile);
+                    
+                    float baseElevation = in_vs_height / metersPerUnit;
+                    ivec2 elevationOffset31 = shortestVector31(param_vs_elevationTileCoords31, in_vs_location31);
+                    vec2 elevationLocationFloat = convert31toFloat(elevationOffset31, param_vs_elevationTileZoomLevel);
+                    vec2 elevationTexCoords = elevationLocationFloat * param_vs_elevationLayer_txOffsetAndScale.zw + param_vs_elevationLayer_txOffsetAndScale.xy;
                     float elevationHeight = interpolatedHeight(elevationTexCoords);
-                    float terrainElevation = (elevationHeight * param_vs_elevation_scale.w * param_vs_elevation_scale.z) / param_vs_metersPerUnit;
+                    float terrainElevation = (elevationHeight * param_vs_elevation_scale.w * param_vs_elevation_scale.z) / metersPerUnit;
                     elevation = baseElevation + terrainElevation;
+                }
+                else
+                {
+                    elevation = in_vs_height / metersPerUnit;
                 }
                 
                 vec3 worldPos = planeWorldCoordinates(in_vs_location31, param_vs_target31, param_vs_zoomLevel, elevation);
@@ -218,10 +232,10 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
     ok = ok && lookup->lookupLocation(_program.vs.in.height, "in_vs_height", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.in.normal, "in_vs_normal", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_program.vs.param.metersPerUnit, "param_vs_metersPerUnit", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.color, "param_vs_color", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.zoomLevel, "param_vs_zoomLevel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.tileZoomLevel, "param_vs_tileZoomLevel", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.lightDirection, "param_vs_lightDirection", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.ambient, "param_vs_ambient", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.elevation_dataSampler, "param_vs_elevation_dataSampler", GlslVariableType::Uniform);
@@ -625,31 +639,34 @@ int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId&
     int drawnCount = 0;
     const auto gpuAPI = getGPUAPI();
 
-    const int deltaZoom = static_cast<int>(z) - static_cast<int>(currentState.zoomLevel);
-    int yAtCurrentZoom;
-    if (deltaZoom >= 0)
+    float zScaleFactor = 0.0f;
+    float dataScaleFactor = 0.0f;
+
+    double upperMetersPerUnit;
+    double lowerMetersPerUnit;
+    
+    if (currentState.flatEarth)
     {
-        yAtCurrentZoom = static_cast<int>(id.y) >> deltaZoom;
+        double tileSize;
+        const int zoomDiff = static_cast<int>(currentState.zoomLevel) - static_cast<int>(z);
+        if (zoomDiff >= 0)
+        {
+            tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) * static_cast<double>(1ull << zoomDiff);
+        }
+        else
+        {
+            tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) / static_cast<double>(1ull << (-zoomDiff));
+        }
+
+        upperMetersPerUnit = Utilities::getMetersPerTileUnit(z, id.y, tileSize);
+        lowerMetersPerUnit = Utilities::getMetersPerTileUnit(z, id.y + 1, tileSize);
     }
     else
     {
-        yAtCurrentZoom = static_cast<int>(id.y) << (-deltaZoom);
+        const auto& internalState = getInternalState();
+        upperMetersPerUnit = internalState.metersPerUnit;
+        lowerMetersPerUnit = internalState.metersPerUnit;
     }
-
-    const double metersPerUnit = Utilities::getMetersPerTileUnit(
-        currentState.zoomLevel, yAtCurrentZoom, AtlasMapRenderer::TileSize3D);
-
-    std::cout << "metersPerUnit: " << metersPerUnit << '\n';
-
-    glUniform1f(*_program.vs.param.metersPerUnit, static_cast<float>(metersPerUnit));
-    GL_CHECK_RESULT;
-
-    const auto tileIdN = Utilities::normalizeTileId(id, z);
-
-    float zScaleFactor = 0.0f;
-    float dataScaleFactor = 0.0f;
-    double upperMetersPerUnit = metersPerUnit;
-    double lowerMetersPerUnit = metersPerUnit;
     
     if (elevationData.hasData && elevationData.resource)
     {
@@ -658,17 +675,11 @@ int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId&
         
         if (currentState.flatEarth)
         {
-            const auto tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
+            const auto elevationTileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
                 static_cast<double>(1ull << (currentState.zoomLevel - elevationData.zoom));
 
-            upperMetersPerUnit = Utilities::getMetersPerTileUnit(elevationData.zoom, tileIdN.y, tileSize);
-            lowerMetersPerUnit = Utilities::getMetersPerTileUnit(elevationData.zoom, tileIdN.y + 1, tileSize);
-        }
-        else
-        {
-            const auto& internalState = getInternalState();
-            upperMetersPerUnit = internalState.metersPerUnit;
-            lowerMetersPerUnit = internalState.metersPerUnit;
+            upperMetersPerUnit = Utilities::getMetersPerTileUnit(elevationData.zoom, elevationData.tileIdN.y, elevationTileSize);
+            lowerMetersPerUnit = Utilities::getMetersPerTileUnit(elevationData.zoom, elevationData.tileIdN.y + 1, elevationTileSize);
         }
         
         configureElevationData(elevationData.resource, elevationData.tileIdN, elevationData.zoom, 
@@ -692,6 +703,9 @@ int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId&
 
     glUniform4f(*_program.vs.param.elevation_scale, static_cast<float>(upperMetersPerUnit),
         static_cast<float>(lowerMetersPerUnit), zScaleFactor, dataScaleFactor);
+    GL_CHECK_RESULT;
+    
+    glUniform1i(*_program.vs.param.tileZoomLevel, static_cast<int>(z));
     GL_CHECK_RESULT;
 
     const auto& buildings = res->getRenderableBuildings();

@@ -86,8 +86,35 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
                     continue;
                 }
 
-                if (pPrimitiveAttribute->tag == QLatin1String("building") ||
-                    pPrimitiveAttribute->tag == QLatin1String("building:part"))
+                if (pPrimitiveAttribute->tag == QLatin1String("building"))
+                {
+                    bool isEdge = false;
+
+                    for (int i = 0; i < sourceObject->additionalAttributeIds.size(); ++i)
+                    {
+                        const auto pPrimitiveAttribute = sourceObject->resolveAttributeByIndex(i, true);
+                        if (!pPrimitiveAttribute)
+                        {
+                            continue;
+                        }
+
+                        if (pPrimitiveAttribute->tag == QLatin1String("role"))
+                        {
+                            if (pPrimitiveAttribute->value == QLatin1String("outline") ||
+                                pPrimitiveAttribute->value == QLatin1String("ridge") ||
+                                pPrimitiveAttribute->value == QLatin1String("edge"))
+                            {
+                                isEdge = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    isBuilding = !isEdge;
+                    break;
+                }
+
+                if (pPrimitiveAttribute->tag == QLatin1String("building:part"))
                 {
                     isBuilding = true;
                     break;
@@ -98,6 +125,8 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             {
                 continue;
             }
+
+
 
             float levelHeight = getDefaultBuildingsLevelHeight();
 
@@ -125,38 +154,29 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
                     heightFound = true;
                     height = caption.toFloat();
                 }
-            }
 
-            for (int i = 0; i < sourceObject->additionalAttributeIds.size(); ++i)
-            {
-                const auto pPrimitiveAttribute = sourceObject->resolveAttributeByIndex(i, true);
-                if (!pPrimitiveAttribute)
-                {
-                    continue;
-                }
-
-                if (!minHeightFound && pPrimitiveAttribute->tag == QStringLiteral("min_height"))
+                if (!minHeightFound && captionTag == QStringLiteral("min_height"))
                 {
                     minHeightFound = true;
-                    minHeight = pPrimitiveAttribute->value.toFloat();
+                    minHeight = caption.toFloat();
                 }
 
-                if (!heightFound && !levelsFound && pPrimitiveAttribute->tag == QStringLiteral("building:levels"))
+                if (!heightFound && !levelsFound && captionTag == QStringLiteral("building:levels"))
                 {
                     levelsFound = true;
-                    levels = pPrimitiveAttribute->value.toFloat();
+                    levels = caption.toFloat();
                 }
 
-                if (!minHeightFound && !minLevelsFound && pPrimitiveAttribute->tag == QStringLiteral("building:min_level"))
+                if (!minHeightFound && !minLevelsFound && captionTag == QStringLiteral("building:min_level"))
                 {
                     minLevelsFound = true;
-                    minLevels = pPrimitiveAttribute->value.toFloat();
+                    minLevels = caption.toFloat();
                 }
 
-                if (!getUseDefaultBuildingsColor() && !colorFound && pPrimitiveAttribute->tag == QStringLiteral("building:colour"))
+                if (!getUseDefaultBuildingsColor() && !colorFound && captionTag == QStringLiteral("building:colour"))
                 {
                     colorFound = true;
-                    color = OsmAnd::Utilities::parseColor(pPrimitiveAttribute->value, color);
+                    color = OsmAnd::Utilities::parseColor(caption, color);
                     color.a = getDefaultBuildingsAlpha();
                 }
             }

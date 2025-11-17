@@ -65,10 +65,10 @@ namespace OsmAnd
                 struct
                 {
                     GLlocation mPerspectiveProjectionView;
-                    GLlocation metersPerUnit;
                     GLlocation color;
                     GLlocation target31;
                     GLlocation zoomLevel;
+                    GLlocation tileZoomLevel;
                     GLlocation lightDirection;
                     GLlocation ambient;
                     // Elevation data
