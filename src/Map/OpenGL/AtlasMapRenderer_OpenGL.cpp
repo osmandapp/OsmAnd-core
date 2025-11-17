@@ -1558,82 +1558,53 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     internalState->visibleTilesSet.clear();
     internalState->uniqueTiles.clear();
     internalState->extraDetailedTiles.clear();
-    
-    // DEBUG: Force only one central tile to be visible
-    const bool DEBUG_SINGLE_TILE = false;
-    
-    if (DEBUG_SINGLE_TILE)
+    for (const auto& setEntry : rangeOf(constOf(tiles)))
     {
-        // Find the highest zoom level with tiles
-        ZoomLevel highestZoom = MinZoomLevel;
-        for (const auto& setEntry : rangeOf(constOf(tiles)))
+        const auto realZoom = setEntry.key() - zoomDelta;
+        if (realZoom < 0)
+            continue;
+        zoomLevel = static_cast<ZoomLevel>(realZoom);
+        QSet<TileId> uniqueTiles;
+        for (const auto& tileEntry : rangeOf(constOf(setEntry.value())))
         {
-            const auto realZoom = setEntry.key() - zoomDelta;
-            if (realZoom >= 0 && realZoom > highestZoom)
-                highestZoom = static_cast<ZoomLevel>(realZoom);
+            const auto visibility = tileEntry.value();
+            auto tileId = tileEntry.key();
+            if (state.flatEarth)
+            {
+                const auto zoomShift = state.zoomLevel - zoomLevel;
+                tileId.x = ((tileId.x << zoomShift) - tileDelta.x) >> zoomShift;
+                tileId.y = ((tileId.y << zoomShift) - tileDelta.y) >> zoomShift;
+            }
+            const auto tileIdN = Utilities::normalizeTileId(tileId, zoomLevel);
+            uniqueTiles.insert(tileIdN);
+            if (visibility != VisibleFlat)
+            {
+                internalState->visibleTiles[zoomLevel].push_back(tileId);
+                internalState->visibleTilesSet[zoomLevel].insert(tileIdN);
+            }
+            if (visibility == ExtraDetail)
+                internalState->extraDetailedTiles.insert(tileIdN);
         }
-        
-        // Only process the highest zoom level and only the center tile
-        const auto zoomShift = MaxZoomLevel - highestZoom;
-        const auto centerTileId = TileId::fromXY(state.target31.x >> zoomShift, state.target31.y >> zoomShift);
-        const auto centerTileIdN = Utilities::normalizeTileId(centerTileId, highestZoom);
-        
-        internalState->visibleTiles[highestZoom].push_back(centerTileId);
-        internalState->visibleTilesSet[highestZoom].insert(centerTileIdN);
-        internalState->visibleTilesCount = 1;
-        internalState->uniqueTiles[highestZoom] = QVector<TileId>({centerTileId});
-        internalState->uniqueTilesTargets[highestZoom] = centerTileId;
-    }
-    else
-    {
-        for (const auto& setEntry : rangeOf(constOf(tiles)))
+        internalState->visibleTilesCount += internalState->visibleTilesSet[zoomLevel].size();
+        internalState->uniqueTiles[zoomLevel] = QVector<TileId>(uniqueTiles.begin(), uniqueTiles.end());
+        const auto zoomShift = MaxZoomLevel - zoomLevel;
+        const auto targetTileId = TileId::fromXY(state.target31.x >> zoomShift, state.target31.y >> zoomShift);
+        internalState->uniqueTilesTargets[zoomLevel] = targetTileId;
+        if (sortTiles)
         {
-            const auto realZoom = setEntry.key() - zoomDelta;
-            if (realZoom < 0)
-                continue;
-            zoomLevel = static_cast<ZoomLevel>(realZoom);
-            QSet<TileId> uniqueTiles;
-            for (const auto& tileEntry : rangeOf(constOf(setEntry.value())))
-            {
-                const auto visibility = tileEntry.value();
-                auto tileId = tileEntry.key();
-                if (state.flatEarth)
+            // Sort visible tiles by distance from target
+            std::sort(internalState->uniqueTiles[zoomLevel],
+                [targetTileId]
+                (const TileId& l, const TileId& r) -> bool
                 {
-                    const auto zoomShift = state.zoomLevel - zoomLevel;
-                    tileId.x = ((tileId.x << zoomShift) - tileDelta.x) >> zoomShift;
-                    tileId.y = ((tileId.y << zoomShift) - tileDelta.y) >> zoomShift;
-                }
-                const auto tileIdN = Utilities::normalizeTileId(tileId, zoomLevel);
-                uniqueTiles.insert(tileIdN);
-                if (visibility != VisibleFlat)
-                {
-                    internalState->visibleTiles[zoomLevel].push_back(tileId);
-                    internalState->visibleTilesSet[zoomLevel].insert(tileIdN);
-                }
-                if (visibility == ExtraDetail)
-                    internalState->extraDetailedTiles.insert(tileIdN);
-            }
-            internalState->visibleTilesCount += internalState->visibleTilesSet[zoomLevel].size();
-            internalState->uniqueTiles[zoomLevel] = QVector<TileId>(uniqueTiles.begin(), uniqueTiles.end());
-            const auto zoomShift = MaxZoomLevel - zoomLevel;
-            const auto targetTileId = TileId::fromXY(state.target31.x >> zoomShift, state.target31.y >> zoomShift);
-            internalState->uniqueTilesTargets[zoomLevel] = targetTileId;
-            if (sortTiles)
-            {
-                // Sort visible tiles by distance from target
-                std::sort(internalState->uniqueTiles[zoomLevel],
-                    [targetTileId]
-                    (const TileId& l, const TileId& r) -> bool
-                    {
-                        const auto lx = l.x - targetTileId.x;
-                        const auto ly = l.y - targetTileId.y;
-    
-                        const auto rx = r.x - targetTileId.x;
-                        const auto ry = r.y - targetTileId.y;
-    
-                        return (lx * lx + ly * ly) < (rx * rx + ry * ry);
-                    });
-            }
+                    const auto lx = l.x - targetTileId.x;
+                    const auto ly = l.y - targetTileId.y;
+
+                    const auto rx = r.x - targetTileId.x;
+                    const auto ry = r.y - targetTileId.y;
+
+                    return (lx * lx + ly * ly) < (rx * rx + ry * ry);
+                });
         }
     }
 
