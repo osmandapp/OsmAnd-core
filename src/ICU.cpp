@@ -575,7 +575,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
     {
         // FUTURE: This is not effective code, it runs on each comparision
         // It would be more efficient to normalize all strings in file and normalize search string before collator
-        UnicodeString searchIn = qStrToUniStr(OsmAnd::CollatorStringMatcher::simplifyStringAndAlignChars(_searchInParam));
+        UnicodeString searchIn = qStrToUniStr(OsmAnd::CollatorStringMatcher::lowercaseAndAlignChars(_searchInParam));
         QString theStartAligned = OsmAnd::CollatorStringMatcher::alignChars(_theStart);
         UnicodeString theStart = qStrToUniStr(theStartAligned);
 
@@ -586,7 +586,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
         {
             result = true;
         }
-        // this is not correct without (simplifyStringAndAlignChars) because of Auhofstrasse != Auhofstraße
+        // this is not correct without (lowercaseAndAlignChars) because of Auhofstrasse != Auhofstraße
         if (startLength > serchInLength)
         {
             result = false;
