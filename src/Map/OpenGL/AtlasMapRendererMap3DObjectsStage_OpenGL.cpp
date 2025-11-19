@@ -321,7 +321,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
     
-    QVector<AreaI> drawnBboxes;
+    QVector<uint64_t> drawnIds;
     int tilesDrawnCount = 0;
     int totalObjectsCount = 0;
     int objectsDrawnCount = 0;
@@ -364,7 +364,9 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
     {
         std::sort(sortedZoomLevels.begin(), sortedZoomLevels.end());
     }
-    
+
+    gpuAPI->useVAO(_vao);
+
     for (const auto& zoomLevel : constOf(sortedZoomLevels))
     {
         const auto& visibleTilesSet = internalState.visibleTilesSet.constFind(zoomLevel);
@@ -405,7 +407,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                 if (object3DResource && object3DResource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                 {
                     totalObjectsCount += object3DResource->getRenderableBuildings().size();
-                    const int drawnCount = drawResource(tileIdN, static_cast<ZoomLevel>(neededZoom), object3DResource, drawnBboxes, elevationData);
+                    const int drawnCount = drawResource(tileIdN, static_cast<ZoomLevel>(neededZoom), object3DResource, drawnIds, elevationData);
                     objectsDrawnCount += drawnCount;
                     object3DResource->setState(MapRendererResourceState::Uploaded);
                     rendered = true;
@@ -441,7 +443,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                         if (subRes && subRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                         {
                             totalObjectsCount += subRes->getRenderableBuildings().size();
-                            const int drawnCount = drawResource(subId, static_cast<ZoomLevel>(underscaledZoom), subRes, drawnBboxes, elevationData);
+                            const int drawnCount = drawResource(subId, static_cast<ZoomLevel>(underscaledZoom), subRes, drawnIds, elevationData);
                             objectsDrawnCount += drawnCount;
                             subRes->setState(MapRendererResourceState::Uploaded);
                             atLeastOne = true;
@@ -482,7 +484,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                     if (parentRes && parentRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                     {
                         totalObjectsCount += parentRes->getRenderableBuildings().size();
-                        const int drawnCount = drawResource(parentId, static_cast<ZoomLevel>(overscaledZoom), parentRes, drawnBboxes, elevationData);
+                        const int drawnCount = drawResource(parentId, static_cast<ZoomLevel>(overscaledZoom), parentRes, drawnIds, elevationData);
                         objectsDrawnCount += drawnCount;
                         parentRes->setState(MapRendererResourceState::Uploaded);
                         rendered = true;
@@ -497,6 +499,8 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
             }
         }
     }
+
+    gpuAPI->unuseVAO();
 
     if (debugEnabled)
     {
@@ -655,7 +659,7 @@ AtlasMapRendererMap3DObjectsStage_OpenGL::ElevationData AtlasMapRendererMap3DObj
 }
 
 int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId& id, ZoomLevel z,
-    const std::shared_ptr<MapRenderer3DObjectsResource>& res, QVector<AreaI>& drawnBboxes, const ElevationData& elevationData)
+    const std::shared_ptr<MapRenderer3DObjectsResource>& res, QVector<uint64_t>& drawnIds, const ElevationData& elevationData)
 {
     int drawnCount = 0;
     const auto gpuAPI = getGPUAPI();
@@ -737,15 +741,13 @@ int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId&
             continue;
         }
 
-        if (drawnBboxes.contains(b.bbox))
+        if (drawnIds.contains(b.id))
         {
             continue;
         }
         
-        drawnBboxes.append(b.bbox);
+        drawnIds.append(b.id);
         drawnCount++;
-
-        gpuAPI->useVAO(_vao);
 
         glUniform4f(*_program.vs.param.color, b.color.r, b.color.g, b.color.b, b.color.a);
         GL_CHECK_RESULT;
@@ -775,8 +777,6 @@ int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId&
 
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(b.indexCount), GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid*>(0));
         GL_CHECK_RESULT;
-
-        gpuAPI->unuseVAO();
     }
     
     return drawnCount;

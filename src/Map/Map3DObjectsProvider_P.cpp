@@ -2,6 +2,8 @@
 
 #include <mapbox/earcut.hpp>
 
+#include <OsmAndCore/Data/ObfMapObject.h>
+
 #include "MapDataProviderHelpers.h"
 #include "Utilities.h"
 #include "MapRenderer.h"
@@ -59,244 +61,18 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
         return false;
     }
 
-
     QVector<Building3D> buildings3D;
 
     if (tileData && tileData->primitivisedObjects)
     {
         for (const auto& primitive : constOf(tileData->primitivisedObjects->polygons))
         {
-            if (primitive->type != MapPrimitiviser::PrimitiveType::Polygon)
-            {
-                continue;
-            }
+            processPrimitive(primitive, buildings3D, tileData->primitivisedObjects->polygons);
+        }
 
-            const auto& sourceObject = primitive->sourceObject;
-            if (!sourceObject || sourceObject->points31.isEmpty())
-            {
-                continue;
-            }
-
-            bool isBuilding = false;
-            for (int i = 0; i < sourceObject->attributeIds.size(); ++i)
-            {
-                const auto pPrimitiveAttribute = sourceObject->resolveAttributeByIndex(i);
-                if (!pPrimitiveAttribute)
-                {
-                    continue;
-                }
-
-                if (pPrimitiveAttribute->tag == QLatin1String("building"))
-                {
-                    bool isEdge = false;
-
-                    for (int i = 0; i < sourceObject->additionalAttributeIds.size(); ++i)
-                    {
-                        const auto pPrimitiveAttribute = sourceObject->resolveAttributeByIndex(i, true);
-                        if (!pPrimitiveAttribute)
-                        {
-                            continue;
-                        }
-
-                        if (pPrimitiveAttribute->tag == QLatin1String("role"))
-                        {
-                            if (pPrimitiveAttribute->value == QLatin1String("outline") ||
-                                pPrimitiveAttribute->value == QLatin1String("ridge") ||
-                                pPrimitiveAttribute->value == QLatin1String("edge"))
-                            {
-                                isEdge = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    isBuilding = !isEdge;
-                    break;
-                }
-
-                if (pPrimitiveAttribute->tag == QLatin1String("building:part"))
-                {
-                    isBuilding = true;
-                    break;
-                }
-            }
-
-            if (!isBuilding)
-            {
-                continue;
-            }
-
-
-
-            float levelHeight = getDefaultBuildingsLevelHeight();
-
-            float height = getDefaultBuildingsHeight();
-            float minHeight = 0.0f;
-
-            float levels = 0;
-            float minLevels = 0;
-
-            FColorARGB color = getDefaultBuildingsColor();
-
-            bool heightFound = false;
-            bool minHeightFound = false;
-            bool levelsFound = false;
-            bool minLevelsFound = false;
-            bool colorFound = false;
-
-            for (const auto& captionAttributeId : constOf(sourceObject->captionsOrder))
-            {
-                const auto& caption = constOf(sourceObject->captions)[captionAttributeId];
-                const QString& captionTag = sourceObject->attributeMapping->decodeMap[captionAttributeId].tag;
-
-                if (!heightFound && captionTag == QStringLiteral("height"))
-                {
-                    heightFound = true;
-                    height = caption.toFloat();
-                }
-
-                if (!minHeightFound && captionTag == QStringLiteral("min_height"))
-                {
-                    minHeightFound = true;
-                    minHeight = caption.toFloat();
-                }
-
-                if (!heightFound && !levelsFound && captionTag == QStringLiteral("building:levels"))
-                {
-                    levelsFound = true;
-                    levels = caption.toFloat();
-                }
-
-                if (!minHeightFound && !minLevelsFound && captionTag == QStringLiteral("building:min_level"))
-                {
-                    minLevelsFound = true;
-                    minLevels = caption.toFloat();
-                }
-
-                if (!getUseDefaultBuildingsColor() && !colorFound && captionTag == QStringLiteral("building:colour"))
-                {
-                    colorFound = true;
-                    color = OsmAnd::Utilities::parseColor(caption, color);
-                    color.a = getDefaultBuildingsAlpha();
-                }
-            }
-
-            if (!heightFound && levelsFound)
-            {
-                height = levels * levelHeight;
-            }
-
-            if (!minHeightFound && minLevelsFound)
-            {
-                minHeight = minLevels * levelHeight;
-            }
-
-            QVector<PointI> points31 = sourceObject->points31;
-
-            double area = Utilities::computeSignedArea(points31);
-            bool isClockwise = (area < 0.0);
-
-            if (isClockwise)
-            {
-                std::reverse(points31.begin(), points31.end());
-            }
-
-            const int edgePointsCount = points31.size();
-
-            const int totalVertices = edgePointsCount + edgePointsCount * 4;
-            const int topTriangles = edgePointsCount - 2;
-            const int sideTriangles = edgePointsCount * 2;
-            const int totalIndices = (topTriangles + sideTriangles) * 3;
-
-            const auto& bbox = sourceObject->bbox31;
-
-            Building3D building;
-            building.vertices.reserve(totalVertices);
-            building.indices.reserve(totalIndices);
-            building.bbox = bbox;
-            building.color = color;
-
-            QVector<glm::vec3> sideNormals;
-            sideNormals.resize(edgePointsCount);
-            for (int i = 0; i < edgePointsCount; ++i)
-            {
-                const int next = (i + 1) % edgePointsCount;
-                const auto& p0 = points31[i];
-                const auto& p1 = points31[next];
-                const float dx = static_cast<float>(p1.x - p0.x);
-                const float dz = static_cast<float>(p1.y - p0.y);
-                glm::vec3 n(-dz, 0.0f, dx);
-                const float len = glm::length(n);
-                if (len > 0.0f)
-                {
-                    n /= len;
-                }
-                else
-                {
-                    n = glm::vec3(0.0f, 0.0f, 1.0f);
-                }
-
-                sideNormals[i] = n;
-            }
-
-            for (int i = 0; i < edgePointsCount; ++i)
-            {
-                const auto& point31 = points31[i];
-                building.vertices.append({glm::ivec2(point31.x, point31.y), height, glm::vec3(0.0f, 1.0f, 0.0f)});
-            }
-
-            const int wallVertexStart = edgePointsCount;
-            for (int i = 0; i < edgePointsCount; ++i)
-            {
-                const int next = (i + 1) % edgePointsCount;
-                const glm::vec3& edgeNormal = sideNormals[i];
-
-                const auto& point31_i = points31[i];
-                building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, edgeNormal});
-                building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, edgeNormal});
-
-                const auto& point31_next = points31[next];
-                building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, edgeNormal});
-                building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, edgeNormal});
-            }
-
-            std::vector<std::vector<std::array<int32_t, 2>>> polygon;
-            std::vector<std::array<int32_t, 2>> ring;
-            ring.reserve(edgePointsCount);
-
-            for (int i = 0; i < edgePointsCount; ++i)
-            {
-                const auto& p = points31[i];
-                ring.push_back({p.x, p.y});
-            }
-
-            polygon.push_back(std::move(ring));
-
-            std::vector<uint16_t> topIndices = mapbox::earcut<uint16_t>(polygon);
-            if (topIndices.empty())
-            {
-                continue;
-            }
-
-            for (uint16_t idx : topIndices)
-            {
-                building.indices.append(idx);
-            }
-
-            for (int i = 0; i < edgePointsCount; ++i)
-            {
-                const int baseIdx = wallVertexStart + 4 * i;
-
-                building.indices.append(baseIdx + 0);
-                building.indices.append(baseIdx + 1);
-                building.indices.append(baseIdx + 2);
-
-                building.indices.append(baseIdx + 1);
-                building.indices.append(baseIdx + 3);
-                building.indices.append(baseIdx + 2);
-            }
-
-            buildings3D.push_back(qMove(building));
+        for (const auto& primitive : constOf(tileData->primitivisedObjects->polylines))
+        {
+            processPrimitive(primitive, buildings3D, tileData->primitivisedObjects->polylines);
         }
     }
 
@@ -358,4 +134,301 @@ float Map3DObjectsTiledProvider_P::getDefaultBuildingsAlpha() const
     return 1.0f;
 }
 
+void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive, QVector<Building3D>& buildings3D,
+    const MapPrimitiviser::PrimitivesCollection& PrimitivesCollection) const
+{
+    if (primitive->type != MapPrimitiviser::PrimitiveType::Polygon)
+    {
+        return;
+    }
 
+    const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(primitive->sourceObject);
+    if (!sourceObject || sourceObject->points31.isEmpty())
+    {
+        return;
+    }
+
+    bool isBuilding = false;
+    bool isBuildingPart = false;
+
+    isBuilding = sourceObject->containsTag(QLatin1String("building"));
+    isBuildingPart = sourceObject->containsTag(QLatin1String("building:part"));
+
+    if (!isBuilding && !isBuildingPart)
+    {
+        return;
+    }
+
+    bool isEdge = false;
+    if (isBuilding && !isBuildingPart)
+    {
+        if (sourceObject->innerPolygonsPoints31.empty())
+        {
+            for (int i = 0; i < sourceObject->additionalAttributeIds.size(); ++i)
+            {
+                const auto pPrimitiveAttribute = sourceObject->resolveAttributeByIndex(i, true);
+                if (!pPrimitiveAttribute)
+                {
+                    continue;
+                }
+
+                if (pPrimitiveAttribute->tag == QLatin1String("role_outline") ||
+                    pPrimitiveAttribute->tag == QLatin1String("role_inner") ||
+                    pPrimitiveAttribute->tag == QLatin1String("role_outer"))
+                {
+                    isEdge = true;
+                    break;
+                }
+            }
+
+            if (!isEdge)
+            {
+                for (const auto& primitiveToCheck : constOf(PrimitivesCollection))
+                {
+                    if (primitiveToCheck->type != MapPrimitiviser::PrimitiveType::Polygon)
+                    {
+                        continue;
+                    }
+
+                    if (primitiveToCheck == primitive)
+                    {
+                        continue;
+                    }
+
+                    if (!primitiveToCheck->sourceObject->containsTag(QLatin1String("building:part")))
+                    {
+                        continue;
+                    }
+
+                    if (sourceObject->bbox31.contains(primitiveToCheck->sourceObject->bbox31))
+                    {
+                        isEdge = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if (isEdge)
+    {
+        return;
+    }
+
+    float levelHeight = getDefaultBuildingsLevelHeight();
+
+    float height = getDefaultBuildingsHeight();
+    float minHeight = 0.0f;
+
+    float levels = 0.0;
+    float minLevels = 0.0;
+
+    FColorARGB color = getDefaultBuildingsColor();
+
+    bool heightFound = false;
+    bool minHeightFound = false;
+    bool levelsFound = false;
+    bool minLevelsFound = false;
+    bool colorFound = false;
+
+    for (const auto& captionAttributeId : constOf(sourceObject->captionsOrder))
+    {
+        const auto& caption = constOf(sourceObject->captions)[captionAttributeId];
+        const QString& captionTag = sourceObject->attributeMapping->decodeMap[captionAttributeId].tag;
+
+        if (!heightFound && captionTag == QStringLiteral("height"))
+        {
+            height = OsmAnd::Utilities::parseLength(caption, height, &heightFound);
+            continue;
+        }
+
+        if (!minHeightFound && captionTag == QStringLiteral("min_height"))
+        {
+            minHeight = OsmAnd::Utilities::parseLength(caption, height, &minHeightFound);
+            continue;
+        }
+
+        if (!heightFound && !levelsFound && captionTag == QStringLiteral("building:levels"))
+        {
+            levelsFound = true;
+            levels = caption.toFloat();
+        }
+
+        if (!minHeightFound && !minLevelsFound && captionTag == QStringLiteral("building:min_level"))
+        {
+            minLevelsFound = true;
+            minLevels = caption.toFloat();
+            continue;
+        }
+
+        if (!getUseDefaultBuildingsColor() && !colorFound && captionTag == QStringLiteral("building:colour"))
+        {
+            colorFound = true;
+            color = OsmAnd::Utilities::parseColor(caption, color);
+            color.a = getDefaultBuildingsAlpha();
+            continue;
+        }
+    }
+
+    if (!heightFound && levelsFound)
+    {
+        height = levels * levelHeight;
+    }
+
+    if (!minHeightFound && minLevelsFound)
+    {
+        minHeight = minLevels * levelHeight;
+    }
+
+    QVector<PointI> points31 = sourceObject->points31;
+
+    double area = Utilities::computeSignedArea(points31);
+    bool isClockwise = (area < 0.0);
+
+    if (isClockwise)
+    {
+        std::reverse(points31.begin(), points31.end());
+    }
+
+    QVector<QVector<PointI>> innerPolygons;
+    if (!sourceObject->innerPolygonsPoints31.isEmpty())
+    {
+        for (const auto& innerPolygon : constOf(sourceObject->innerPolygonsPoints31))
+        {
+            if (innerPolygon.isEmpty())
+            {
+                continue;
+            }
+
+            QVector<PointI> innerPoints = innerPolygon;
+            double innerArea = Utilities::computeSignedArea(innerPoints);
+            bool innerIsClockwise = (innerArea < 0.0);
+
+            if (innerIsClockwise == isClockwise)
+            {
+                std::reverse(innerPoints.begin(), innerPoints.end());
+            }
+
+            innerPolygons.append(innerPoints);
+        }
+    }
+
+    const int edgePointsCount = points31.size();
+
+    int totalTopVertices = edgePointsCount;
+    for (const auto& innerPoly : innerPolygons)
+    {
+        totalTopVertices += innerPoly.size();
+    }
+    
+    const int totalVertices = totalTopVertices + edgePointsCount * 4;
+    const int topTriangles = edgePointsCount - 2;
+    const int sideTriangles = edgePointsCount * 2;
+    const int totalIndices = (topTriangles + sideTriangles) * 3;
+
+    Building3D building;
+    building.vertices.reserve(totalVertices);
+    building.indices.reserve(totalIndices);
+    building.id = sourceObject->id.id;
+    building.color = color;
+
+    QVector<glm::vec3> sideNormals;
+    sideNormals.resize(edgePointsCount);
+    for (int i = 0; i < edgePointsCount; ++i)
+    {
+        const int next = (i + 1) % edgePointsCount;
+        const auto& p0 = points31[i];
+        const auto& p1 = points31[next];
+        const float dx = static_cast<float>(p1.x - p0.x);
+        const float dz = static_cast<float>(p1.y - p0.y);
+        glm::vec3 n(-dz, 0.0f, dx);
+        const float len = glm::length(n);
+        if (len > 0.0f)
+        {
+            n /= len;
+        }
+        else
+        {
+            n = glm::vec3(0.0f, 0.0f, 1.0f);
+        }
+
+        sideNormals[i] = n;
+    }
+
+    for (int i = 0; i < edgePointsCount; ++i)
+    {
+        const auto& point31 = points31[i];
+        building.vertices.append({glm::ivec2(point31.x, point31.y), height, glm::vec3(0.0f, 1.0f, 0.0f)});
+    }
+
+    for (const auto& innerPoly : innerPolygons)
+    {
+        for (const auto& point31 : innerPoly)
+        {
+            building.vertices.append({glm::ivec2(point31.x, point31.y), height, glm::vec3(0.0f, 1.0f, 0.0f)});
+        }
+    }
+
+    const int wallVertexStart = totalTopVertices;
+    for (int i = 0; i < edgePointsCount; ++i)
+    {
+        const int next = (i + 1) % edgePointsCount;
+        const glm::vec3& edgeNormal = sideNormals[i];
+
+        const auto& point31_i = points31[i];
+        building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, edgeNormal});
+        building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, edgeNormal});
+
+        const auto& point31_next = points31[next];
+        building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, edgeNormal});
+        building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, edgeNormal});
+    }
+
+    std::vector<std::vector<std::array<int32_t, 2>>> polygon;
+    
+    std::vector<std::array<int32_t, 2>> outerRing;
+    outerRing.reserve(edgePointsCount);
+    for (int i = 0; i < edgePointsCount; ++i)
+    {
+        const auto& p = points31[i];
+        outerRing.push_back({p.x, p.y});
+    }
+    polygon.push_back(std::move(outerRing));
+
+    for (const auto& innerPoly : innerPolygons)
+    {
+        std::vector<std::array<int32_t, 2>> innerRing;
+        innerRing.reserve(innerPoly.size());
+        for (const auto& p : innerPoly)
+        {
+            innerRing.push_back({p.x, p.y});
+        }
+        polygon.push_back(std::move(innerRing));
+    }
+
+    std::vector<uint16_t> topIndices = mapbox::earcut<uint16_t>(polygon);
+    if (topIndices.empty())
+    {
+        return;
+    }
+
+    for (uint16_t idx : topIndices)
+    {
+        building.indices.append(idx);
+    }
+
+    for (int i = 0; i < edgePointsCount; ++i)
+    {
+        const int baseIdx = wallVertexStart + 4 * i;
+
+        building.indices.append(baseIdx + 0);
+        building.indices.append(baseIdx + 1);
+        building.indices.append(baseIdx + 2);
+
+        building.indices.append(baseIdx + 1);
+        building.indices.append(baseIdx + 3);
+        building.indices.append(baseIdx + 2);
+    }
+
+    buildings3D.push_back(qMove(building));
+}

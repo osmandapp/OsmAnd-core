@@ -155,7 +155,7 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
         renderableBuilding.indexBuffer = indexBufferInGPU;
         renderableBuilding.vertexCount = building.vertices.size();
         renderableBuilding.indexCount = building.indices.size();
-        renderableBuilding.bbox = building.bbox;
+        renderableBuilding.id = building.id;
         renderableBuilding.color = building.color;
 
         _renderableBuildings.append(renderableBuilding);

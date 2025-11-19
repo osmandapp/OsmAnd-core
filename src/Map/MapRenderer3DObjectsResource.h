@@ -28,7 +28,7 @@ namespace OsmAnd
             std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU> indexBuffer;
             int vertexCount;
             int indexCount;
-            AreaI bbox;
+            uint64_t id;
             FColorARGB color;
         };
 
