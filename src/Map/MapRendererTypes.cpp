@@ -443,9 +443,11 @@ QString OsmAnd::GridConfiguration::getMarkX(
                     zoneUTM.y = 13;
                 else if (zoneUTM.y == 13 && coordinates.y < 100.0)
                     zoneUTM.y = 12;
-                QString hemisphere = zoneUTM.y < 13 ? QStringLiteral("S") : QStringLiteral("N");
+                // Display MGRS latitude band letters instead of usual UTM hemisphere indicator
+                //QString hemisphere = zoneUTM.y < 13 ? QStringLiteral("S") : QStringLiteral("N");
+                QString zoneLetter = Utilities::getMGRSLetter(zoneUTM.y - 1);
                 result =
-                    QStringLiteral("%1%2 %3").arg(zoneUTM.x).arg(hemisphere).arg(coordinates.x * 100000.0, 0, 'f', 0);
+                    QStringLiteral("%1%2 %3").arg(zoneUTM.x).arg(zoneLetter).arg(coordinates.x * 100000.0, 0, 'f', 0);
             }
             break;
         case Projection::MGRS: // MGRS easting coordinate (zone, square, meters)
@@ -497,9 +499,11 @@ QString OsmAnd::GridConfiguration::getMarkY(
                     zoneUTM.y = 13;
                 else if (zoneUTM.y == 13 && coordinates.y < 100.0)
                     zoneUTM.y = 12;
-                const QString hemisphere = zoneUTM.y < 13 ? QStringLiteral("S") : QStringLiteral("N");
+                // Display MGRS latitude band letters instead of usual UTM hemisphere indicator
+                //QString hemisphere = zoneUTM.y < 13 ? QStringLiteral("S") : QStringLiteral("N");
+                QString zoneLetter = Utilities::getMGRSLetter(zoneUTM.y - 1);
                 const auto coordinate = std::round(coordinates.y * 100000.0) - (zoneUTM.y < 13 ? 0.0 : 10000000.0);
-                result = QStringLiteral("%1%2 %3").arg(zoneUTM.x).arg(hemisphere).arg(coordinate, 0, 'f', 0);
+                result = QStringLiteral("%1%2 %3").arg(zoneUTM.x).arg(zoneLetter).arg(coordinate, 0, 'f', 0);
             }
             break;
         case Projection::MGRS: // MGRS northing coordinate (zone, square, meters)
