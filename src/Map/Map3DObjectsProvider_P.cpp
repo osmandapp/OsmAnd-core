@@ -302,7 +302,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
 
             QVector<PointI> innerPoints = innerPolygon;
             double innerArea = Utilities::computeSignedArea(innerPoints);
-            bool innerIsClockwise = (innerArea < 0.0);
+            bool innerIsClockwise = (innerArea > 0.0);
 
             if (innerIsClockwise == isClockwise)
             {
@@ -316,15 +316,19 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
     const int edgePointsCount = points31.size();
 
     int totalTopVertices = edgePointsCount;
+    int totalWallVertices = edgePointsCount * 4;
+    int totalSideTriangles = edgePointsCount * 2;
+    
     for (const auto& innerPoly : innerPolygons)
     {
         totalTopVertices += innerPoly.size();
+        totalWallVertices += innerPoly.size() * 4;
+        totalSideTriangles += innerPoly.size() * 2;
     }
     
-    const int totalVertices = totalTopVertices + edgePointsCount * 4;
+    const int totalVertices = totalTopVertices + totalWallVertices;
     const int topTriangles = edgePointsCount - 2;
-    const int sideTriangles = edgePointsCount * 2;
-    const int totalIndices = (topTriangles + sideTriangles) * 3;
+    const int totalIndices = (topTriangles + totalSideTriangles) * 3;
 
     Building3D building;
     building.vertices.reserve(totalVertices);
@@ -355,6 +359,34 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         sideNormals[i] = n;
     }
 
+    QVector<QVector<glm::vec3>> innerSideNormals;
+    for (const auto& innerPoly : innerPolygons)
+    {
+        QVector<glm::vec3> innerNormals;
+        innerNormals.resize(innerPoly.size());
+        for (int i = 0; i < innerPoly.size(); ++i)
+        {
+            const int next = (i + 1) % innerPoly.size();
+            const auto& p0 = innerPoly[i];
+            const auto& p1 = innerPoly[next];
+            const float dx = static_cast<float>(p1.x - p0.x);
+            const float dz = static_cast<float>(p1.y - p0.y);
+            glm::vec3 n(-dz, 0.0f, dx);
+            const float len = glm::length(n);
+            if (len > 0.0f)
+            {
+                n /= len;
+            }
+            else
+            {
+                n = glm::vec3(0.0f, 0.0f, 1.0f);
+            }
+
+            innerNormals[i] = n;
+        }
+        innerSideNormals.append(innerNormals);
+    }
+
     for (int i = 0; i < edgePointsCount; ++i)
     {
         const auto& point31 = points31[i];
@@ -370,6 +402,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
     }
 
     const int wallVertexStart = totalTopVertices;
+    
     for (int i = 0; i < edgePointsCount; ++i)
     {
         const int next = (i + 1) % edgePointsCount;
@@ -382,6 +415,26 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         const auto& point31_next = points31[next];
         building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, edgeNormal});
         building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, edgeNormal});
+    }
+
+    for (int polyIdx = 0; polyIdx < innerPolygons.size(); ++polyIdx)
+    {
+        const auto& innerPoly = innerPolygons[polyIdx];
+        const auto& innerNormals = innerSideNormals[polyIdx];
+        
+        for (int i = 0; i < innerPoly.size(); ++i)
+        {
+            const int next = (i + 1) % innerPoly.size();
+            const glm::vec3& edgeNormal = innerNormals[i];
+
+            const auto& point31_i = innerPoly[i];
+            building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, edgeNormal});
+            building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, edgeNormal});
+
+            const auto& point31_next = innerPoly[next];
+            building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, edgeNormal});
+            building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, edgeNormal});
+        }
     }
 
     std::vector<std::vector<std::array<int32_t, 2>>> polygon;
@@ -417,9 +470,10 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         building.indices.append(idx);
     }
 
+    int currentWallBaseIdx = wallVertexStart;
     for (int i = 0; i < edgePointsCount; ++i)
     {
-        const int baseIdx = wallVertexStart + 4 * i;
+        const int baseIdx = currentWallBaseIdx + 4 * i;
 
         building.indices.append(baseIdx + 0);
         building.indices.append(baseIdx + 1);
@@ -428,6 +482,26 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         building.indices.append(baseIdx + 1);
         building.indices.append(baseIdx + 3);
         building.indices.append(baseIdx + 2);
+    }
+    currentWallBaseIdx += edgePointsCount * 4;
+
+    for (int polyIdx = 0; polyIdx < innerPolygons.size(); ++polyIdx)
+    {
+        const auto& innerPoly = innerPolygons[polyIdx];
+        
+        for (int i = 0; i < innerPoly.size(); ++i)
+        {
+            const int baseIdx = currentWallBaseIdx + 4 * i;
+
+            building.indices.append(baseIdx + 0);
+            building.indices.append(baseIdx + 1);
+            building.indices.append(baseIdx + 2);
+
+            building.indices.append(baseIdx + 1);
+            building.indices.append(baseIdx + 3);
+            building.indices.append(baseIdx + 2);
+        }
+        currentWallBaseIdx += innerPoly.size() * 4;
     }
 
     buildings3D.push_back(qMove(building));

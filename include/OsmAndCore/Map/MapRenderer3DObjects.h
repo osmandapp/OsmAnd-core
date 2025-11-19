@@ -22,7 +22,7 @@ namespace OsmAnd
         QVector<BuildingVertex> vertices;
         QVector<uint16_t> indices;
         FColorARGB color;
-        AreaI bbox;
+        uint64_t id;
     };
 }
 
