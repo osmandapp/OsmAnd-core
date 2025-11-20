@@ -302,9 +302,9 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
 
             QVector<PointI> innerPoints = innerPolygon;
             double innerArea = Utilities::computeSignedArea(innerPoints);
-            bool innerIsClockwise = (innerArea > 0.0);
+            bool innerIsClockwise = (innerArea >= 0.0);
 
-            if (innerIsClockwise == isClockwise)
+            if (innerIsClockwise)
             {
                 std::reverse(innerPoints.begin(), innerPoints.end());
             }
