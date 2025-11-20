@@ -406,7 +406,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                 const auto object3DResource = std::static_pointer_cast<MapRenderer3DObjectsResource>(tiledResource);
                 if (object3DResource && object3DResource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                 {
-                    totalObjectsCount += object3DResource->getRenderableBuildings().size();
+                    totalObjectsCount += object3DResource->getRenderableBuildings().ids.size();
                     const int drawnCount = drawResource(tileIdN, static_cast<ZoomLevel>(neededZoom), object3DResource, drawnIds, elevationData);
                     objectsDrawnCount += drawnCount;
                     object3DResource->setState(MapRendererResourceState::Uploaded);
@@ -442,7 +442,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                         const auto subRes = std::static_pointer_cast<MapRenderer3DObjectsResource>(subResBase);
                         if (subRes && subRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                         {
-                            totalObjectsCount += subRes->getRenderableBuildings().size();
+                            totalObjectsCount += subRes->getRenderableBuildings().ids.size();
                             const int drawnCount = drawResource(subId, static_cast<ZoomLevel>(underscaledZoom), subRes, drawnIds, elevationData);
                             objectsDrawnCount += drawnCount;
                             subRes->setState(MapRendererResourceState::Uploaded);
@@ -483,7 +483,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
 
                     if (parentRes && parentRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                     {
-                        totalObjectsCount += parentRes->getRenderableBuildings().size();
+                        totalObjectsCount += parentRes->getRenderableBuildings().ids.size();
                         const int drawnCount = drawResource(parentId, static_cast<ZoomLevel>(overscaledZoom), parentRes, drawnIds, elevationData);
                         objectsDrawnCount += drawnCount;
                         parentRes->setState(MapRendererResourceState::Uploaded);
@@ -734,48 +734,62 @@ int OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId&
     GL_CHECK_RESULT;
 
     const auto& buildings = res->getRenderableBuildings();
-    for (const auto& b : constOf(buildings))
+    
+    if (!buildings.vertexBuffer || !buildings.indexBuffer || buildings.ids.isEmpty())
     {
-        if (!b.vertexBuffer || !b.indexBuffer || b.vertexCount <= 0 || b.indexCount <= 0)
+        return 0;
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(buildings.vertexBuffer->refInGPU)));
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(buildings.indexBuffer->refInGPU)));
+    GL_CHECK_RESULT;
+
+    glEnableVertexAttribArray(*_program.vs.in.location31);
+    GL_CHECK_RESULT;
+    glVertexAttribIPointer(*_program.vs.in.location31, 2, GL_INT, sizeof(BuildingVertex),
+        reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, location31)));
+    GL_CHECK_RESULT;
+
+    glEnableVertexAttribArray(*_program.vs.in.height);
+    GL_CHECK_RESULT;
+    glVertexAttribPointer(*_program.vs.in.height, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+        reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, height)));
+    GL_CHECK_RESULT;
+
+    glEnableVertexAttribArray(*_program.vs.in.normal);
+    GL_CHECK_RESULT;
+    glVertexAttribPointer(*_program.vs.in.normal, 3, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+        reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, normal)));
+    GL_CHECK_RESULT;
+
+    const int buildingCount = buildings.ids.size();
+    for (int i = 0; i < buildingCount; i++)
+    {
+        const int vertexCount = buildings.vertexCounts[i];
+        const int indexCount = buildings.indexCounts[i];
+        const uint64_t id = buildings.ids[i];
+        const FColorARGB& color = buildings.colors[i];
+        const int indexOffset = buildings.indexOffsets[i];
+
+        if (vertexCount <= 0 || indexCount <= 0)
         {
             continue;
         }
 
-        if (drawnIds.contains(b.id))
+        if (drawnIds.contains(id))
         {
             continue;
         }
         
-        drawnIds.append(b.id);
+        drawnIds.append(id);
         drawnCount++;
 
-        glUniform4f(*_program.vs.param.color, b.color.r, b.color.g, b.color.b, b.color.a);
+        glUniform4f(*_program.vs.param.color, color.r, color.g, color.b, color.a);
         GL_CHECK_RESULT;
 
-        glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(b.vertexBuffer->refInGPU)));
-        GL_CHECK_RESULT;
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(b.indexBuffer->refInGPU)));
-        GL_CHECK_RESULT;
-
-        glEnableVertexAttribArray(*_program.vs.in.location31);
-        GL_CHECK_RESULT;
-        glVertexAttribIPointer(*_program.vs.in.location31, 2, GL_INT, sizeof(BuildingVertex),
-            reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, location31)));
-        GL_CHECK_RESULT;
-
-        glEnableVertexAttribArray(*_program.vs.in.height);
-        GL_CHECK_RESULT;
-        glVertexAttribPointer(*_program.vs.in.height, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
-            reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, height)));
-        GL_CHECK_RESULT;
-
-        glEnableVertexAttribArray(*_program.vs.in.normal);
-        GL_CHECK_RESULT;
-        glVertexAttribPointer(*_program.vs.in.normal, 3, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
-            reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, normal)));
-        GL_CHECK_RESULT;
-
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(b.indexCount), GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid*>(0));
+        const GLvoid* indexOffsetPtr = reinterpret_cast<const GLvoid*>(static_cast<uintptr_t>(indexOffset * sizeof(uint16_t)));
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount), GL_UNSIGNED_SHORT, indexOffsetPtr);
         GL_CHECK_RESULT;
     }
     
