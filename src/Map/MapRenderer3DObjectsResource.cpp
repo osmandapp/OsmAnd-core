@@ -115,12 +115,6 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
 
     _renderableBuildings.vertexBuffer.reset();
     _renderableBuildings.indexBuffer.reset();
-    _renderableBuildings.vertexCounts.clear();
-    _renderableBuildings.indexCounts.clear();
-    _renderableBuildings.ids.clear();
-    _renderableBuildings.colors.clear();
-    _renderableBuildings.vertexOffsets.clear();
-    _renderableBuildings.indexOffsets.clear();
 
     const auto map3DTileData = std::dynamic_pointer_cast<Map3DObjectsTiledProvider::Data>(_sourceData);
     if (!map3DTileData || map3DTileData->buildings3D.vertices.isEmpty() || map3DTileData->buildings3D.indices.isEmpty())
@@ -166,12 +160,7 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
 
     _renderableBuildings.vertexBuffer = vertexBufferInGPU;
     _renderableBuildings.indexBuffer = indexBufferInGPU;
-    _renderableBuildings.vertexCounts = buildings3D.vertexCounts;
-    _renderableBuildings.indexCounts = buildings3D.indexCounts;
-    _renderableBuildings.ids = buildings3D.ids;
-    _renderableBuildings.colors = buildings3D.colors;
-    _renderableBuildings.vertexOffsets = buildings3D.vertexOffsets;
-    _renderableBuildings.indexOffsets = buildings3D.indexOffsets;
+    _renderableBuildings.totalIndexCount = buildings3D.indices.size();
 
     const size_t totalGpuMemoryBytes = vertexBufferSize + indexBufferSize;
     _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
@@ -185,24 +174,14 @@ void MapRenderer3DObjectsResource::unloadFromGPU()
 {
     _renderableBuildings.vertexBuffer.reset();
     _renderableBuildings.indexBuffer.reset();
-    _renderableBuildings.vertexCounts.clear();
-    _renderableBuildings.indexCounts.clear();
-    _renderableBuildings.ids.clear();
-    _renderableBuildings.colors.clear();
-    _renderableBuildings.vertexOffsets.clear();
-    _renderableBuildings.indexOffsets.clear();
+    _renderableBuildings.totalIndexCount = 0;
 }
 
 void MapRenderer3DObjectsResource::lostDataInGPU()
 {
     _renderableBuildings.vertexBuffer.reset();
     _renderableBuildings.indexBuffer.reset();
-    _renderableBuildings.vertexCounts.clear();
-    _renderableBuildings.indexCounts.clear();
-    _renderableBuildings.ids.clear();
-    _renderableBuildings.colors.clear();
-    _renderableBuildings.vertexOffsets.clear();
-    _renderableBuildings.indexOffsets.clear();
+    _renderableBuildings.totalIndexCount = 0;
 }
 
 void MapRenderer3DObjectsResource::releaseData()

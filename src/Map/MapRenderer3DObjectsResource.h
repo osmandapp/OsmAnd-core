@@ -26,12 +26,7 @@ namespace OsmAnd
         {
             std::shared_ptr<const GPUAPI::ArrayBufferInGPU> vertexBuffer;
             std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU> indexBuffer;
-            QVector<int> vertexCounts;
-            QVector<int> indexCounts;
-            QVector<uint64_t> ids;
-            QVector<FColorARGB> colors;
-            QVector<int> vertexOffsets;
-            QVector<int> indexOffsets;
+            int totalIndexCount;
         };
 
         struct PerformanceDebugInfo

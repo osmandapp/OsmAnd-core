@@ -291,6 +291,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         minHeight = minLevels * levelHeight;
     }
 
+    const glm::vec3 colorVec(color.r, color.g, color.b);
+
     QVector<PointI> points31 = sourceObject->points31;
 
     double area = Utilities::computeSignedArea(points31);
@@ -399,14 +401,14 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
     for (int i = 0; i < edgePointsCount; ++i)
     {
         const auto& point31 = points31[i];
-        buildings3D.vertices.append({glm::ivec2(point31.x, point31.y), height, glm::vec3(0.0f, 1.0f, 0.0f)});
+        buildings3D.vertices.append({glm::ivec2(point31.x, point31.y), height, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
     }
 
     for (const auto& innerPoly : innerPolygons)
     {
         for (const auto& point31 : innerPoly)
         {
-            buildings3D.vertices.append({glm::ivec2(point31.x, point31.y), height, glm::vec3(0.0f, 1.0f, 0.0f)});
+            buildings3D.vertices.append({glm::ivec2(point31.x, point31.y), height, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
         }
     }
 
@@ -418,12 +420,12 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         const glm::vec3& edgeNormal = sideNormals[i];
 
         const auto& point31_i = points31[i];
-        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, edgeNormal});
-        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, edgeNormal});
+        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, edgeNormal, colorVec});
+        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, edgeNormal, colorVec});
 
         const auto& point31_next = points31[next];
-        buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, edgeNormal});
-        buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, edgeNormal});
+        buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, edgeNormal, colorVec});
+        buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, edgeNormal, colorVec});
     }
 
     for (int polyIdx = 0; polyIdx < innerPolygons.size(); ++polyIdx)
@@ -437,12 +439,12 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
             const glm::vec3& edgeNormal = innerNormals[i];
 
             const auto& point31_i = innerPoly[i];
-            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, edgeNormal});
-            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, edgeNormal});
+            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, edgeNormal, colorVec});
+            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, edgeNormal, colorVec});
 
             const auto& point31_next = innerPoly[next];
-            buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, edgeNormal});
-            buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, edgeNormal});
+            buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, edgeNormal, colorVec});
+            buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, edgeNormal, colorVec});
         }
     }
 
@@ -513,13 +515,4 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         currentWallBaseIdx += innerPoly.size() * 4;
     }
 
-    const int vertexCount = buildings3D.vertices.size() - currentVertexOffset;
-    const int indexCount = buildings3D.indices.size() - currentIndexOffset;
-
-    buildings3D.vertexOffsets.append(currentVertexOffset);
-    buildings3D.indexOffsets.append(currentIndexOffset);
-    buildings3D.vertexCounts.append(vertexCount);
-    buildings3D.indexCounts.append(indexCount);
-    buildings3D.ids.append(buildingId);
-    buildings3D.colors.append(color);
 }

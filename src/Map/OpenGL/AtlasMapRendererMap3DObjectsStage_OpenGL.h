@@ -61,6 +61,7 @@ namespace OsmAnd
                     GLlocation location31;
                     GLlocation height;
                     GLlocation normal;
+                    GLlocation color;
                 } in;
 
                 // Params
