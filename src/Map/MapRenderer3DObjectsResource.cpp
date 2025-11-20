@@ -123,92 +123,21 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
     _renderableBuildings.indexOffsets.clear();
 
     const auto map3DTileData = std::dynamic_pointer_cast<Map3DObjectsTiledProvider::Data>(_sourceData);
-    if (!map3DTileData || map3DTileData->buildings3D.isEmpty())
+    if (!map3DTileData || map3DTileData->buildings3D.vertices.isEmpty() || map3DTileData->buildings3D.indices.isEmpty())
     {
         _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
         _performanceDebugInfo.totalGpuMemoryBytes = 0;
         return true;
     }
 
-    int totalVertexCount = 0;
-    int totalIndexCount = 0;
-    
-    for (const auto& building : map3DTileData->buildings3D)
-    {
-        if (building.vertices.isEmpty() || building.indices.isEmpty())
-        {
-            continue;
-        }
-        
-        totalVertexCount += building.vertices.size();
-        totalIndexCount += building.indices.size();
-    }
+    const auto& buildings3D = map3DTileData->buildings3D;
 
-    if (totalVertexCount == 0 || totalIndexCount == 0)
-    {
-        _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
-        _performanceDebugInfo.totalGpuMemoryBytes = 0;
-        return true;
-    }
-
-    QVector<BuildingVertex> combinedVertices;
-    combinedVertices.reserve(totalVertexCount);
-    QVector<uint16_t> combinedIndices;
-    combinedIndices.reserve(totalIndexCount);
-
-    const int buildingCount = map3DTileData->buildings3D.size();
-    _renderableBuildings.vertexCounts.reserve(buildingCount);
-    _renderableBuildings.indexCounts.reserve(buildingCount);
-    _renderableBuildings.ids.reserve(buildingCount);
-    _renderableBuildings.colors.reserve(buildingCount);
-    _renderableBuildings.vertexOffsets.reserve(buildingCount);
-    _renderableBuildings.indexOffsets.reserve(buildingCount);
-
-    int currentVertexOffset = 0;
-    int currentIndexOffset = 0;
-
-    for (const auto& building : map3DTileData->buildings3D)
-    {
-        if (building.vertices.isEmpty() || building.indices.isEmpty())
-        {
-            continue;
-        }
-
-        const int vertexCount = building.vertices.size();
-        const int indexCount = building.indices.size();
-
-        _renderableBuildings.vertexOffsets.append(currentVertexOffset);
-        _renderableBuildings.indexOffsets.append(currentIndexOffset);
-
-        combinedVertices.append(building.vertices);
-
-        for (const auto& index : building.indices)
-        {
-            combinedIndices.append(static_cast<uint16_t>(index + currentVertexOffset));
-        }
-
-        _renderableBuildings.vertexCounts.append(vertexCount);
-        _renderableBuildings.indexCounts.append(indexCount);
-        _renderableBuildings.ids.append(building.id);
-        _renderableBuildings.colors.append(building.color);
-
-        currentVertexOffset += vertexCount;
-        currentIndexOffset += indexCount;
-    }
-
-    if (combinedVertices.isEmpty() || combinedIndices.isEmpty())
-    {
-        _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
-        _performanceDebugInfo.totalGpuMemoryBytes = 0;
-        return true;
-    }
-
-    const size_t vertexBufferSize = combinedVertices.size() * sizeof(BuildingVertex);
+    const size_t vertexBufferSize = buildings3D.vertices.size() * sizeof(BuildingVertex);
     std::shared_ptr<const GPUAPI::ArrayBufferInGPU> vertexBufferInGPU;
     const bool vertexUploadSuccess = resourcesManager->uploadVerticesToGPU(
-        combinedVertices.constData(),
+        buildings3D.vertices.constData(),
         vertexBufferSize,
-        combinedVertices.size(),
+        buildings3D.vertices.size(),
         vertexBufferInGPU,
         false);
 
@@ -219,12 +148,12 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
         return false;
     }
 
-    const size_t indexBufferSize = combinedIndices.size() * sizeof(uint16_t);
+    const size_t indexBufferSize = buildings3D.indices.size() * sizeof(uint16_t);
     std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU> indexBufferInGPU;
     const bool indexUploadSuccess = resourcesManager->uploadIndicesToGPU(
-        combinedIndices.constData(),
+        buildings3D.indices.constData(),
         indexBufferSize,
-        combinedIndices.size(),
+        buildings3D.indices.size(),
         indexBufferInGPU,
         false);
 
@@ -235,9 +164,14 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
         return false;
     }
 
-
     _renderableBuildings.vertexBuffer = vertexBufferInGPU;
     _renderableBuildings.indexBuffer = indexBufferInGPU;
+    _renderableBuildings.vertexCounts = buildings3D.vertexCounts;
+    _renderableBuildings.indexCounts = buildings3D.indexCounts;
+    _renderableBuildings.ids = buildings3D.ids;
+    _renderableBuildings.colors = buildings3D.colors;
+    _renderableBuildings.vertexOffsets = buildings3D.vertexOffsets;
+    _renderableBuildings.indexOffsets = buildings3D.indexOffsets;
 
     const size_t totalGpuMemoryBytes = vertexBufferSize + indexBufferSize;
     _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;

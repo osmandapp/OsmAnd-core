@@ -17,12 +17,16 @@ namespace OsmAnd
         glm::vec3 normal;
     };
 
-    struct Building3D
+    struct Buildings3D
     {
         QVector<BuildingVertex> vertices;
         QVector<uint16_t> indices;
-        FColorARGB color;
-        uint64_t id;
+        QVector<FColorARGB> colors;
+        QVector<uint64_t> ids;
+        QVector<int> vertexCounts;
+        QVector<int> indexCounts;
+        QVector<int> vertexOffsets;
+        QVector<int> indexOffsets;
     };
 }
 
