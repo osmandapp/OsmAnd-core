@@ -36,6 +36,11 @@ ZoomLevel Map3DObjectsTiledProvider::getMaxZoom() const
     return _p->getMaxZoom();
 }
 
+float Map3DObjectsTiledProvider::getDefaultBuildingsAlpha() const
+{
+    return _p->getDefaultBuildingsAlpha();
+}
+
 bool Map3DObjectsTiledProvider::obtainTiledData(
     const IMapTiledDataProvider::Request& request,
     std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,

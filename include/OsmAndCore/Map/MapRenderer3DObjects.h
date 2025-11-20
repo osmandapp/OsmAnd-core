@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 
 #include <QVector>
+#include <OsmAndCore/PointsAndAreas.h>
 
 namespace OsmAnd
 {
@@ -21,7 +22,7 @@ namespace OsmAnd
         QVector<BuildingVertex> vertices;
         QVector<uint16_t> indices;
         FColorARGB color;
-        uint64_t bboxHash;
+        uint64_t id;
     };
 }
 
