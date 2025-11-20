@@ -1599,7 +1599,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 {
                     const auto lx = l.x - targetTileId.x;
                     const auto ly = l.y - targetTileId.y;
-
+    
                     const auto rx = r.x - targetTileId.x;
                     const auto ry = r.y - targetTileId.y;
     
