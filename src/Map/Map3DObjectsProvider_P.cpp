@@ -162,49 +162,46 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
     bool isEdge = false;
     if (isBuilding && !isBuildingPart)
     {
-        if (sourceObject->innerPolygonsPoints31.empty())
+        for (int i = 0; i < sourceObject->additionalAttributeIds.size(); ++i)
         {
-            for (int i = 0; i < sourceObject->additionalAttributeIds.size(); ++i)
+            const auto pPrimitiveAttribute = sourceObject->resolveAttributeByIndex(i, true);
+            if (!pPrimitiveAttribute)
             {
-                const auto pPrimitiveAttribute = sourceObject->resolveAttributeByIndex(i, true);
-                if (!pPrimitiveAttribute)
+                continue;
+            }
+
+            if (pPrimitiveAttribute->tag == QLatin1String("role_outline") ||
+                pPrimitiveAttribute->tag == QLatin1String("role_inner") ||
+                pPrimitiveAttribute->tag == QLatin1String("role_outer"))
+            {
+                isEdge = true;
+                break;
+            }
+        }
+
+        if (!isEdge)
+        {
+            for (const auto& primitiveToCheck : constOf(PrimitivesCollection))
+            {
+                if (primitiveToCheck->type != MapPrimitiviser::PrimitiveType::Polygon)
                 {
                     continue;
                 }
 
-                if (pPrimitiveAttribute->tag == QLatin1String("role_outline") ||
-                    pPrimitiveAttribute->tag == QLatin1String("role_inner") ||
-                    pPrimitiveAttribute->tag == QLatin1String("role_outer"))
+                if (primitiveToCheck == primitive)
+                {
+                    continue;
+                }
+
+                if (!primitiveToCheck->sourceObject->containsTag(QLatin1String("building:part")))
+                {
+                    continue;
+                }
+
+                if (sourceObject->bbox31.contains(primitiveToCheck->sourceObject->bbox31))
                 {
                     isEdge = true;
                     break;
-                }
-            }
-
-            if (!isEdge)
-            {
-                for (const auto& primitiveToCheck : constOf(PrimitivesCollection))
-                {
-                    if (primitiveToCheck->type != MapPrimitiviser::PrimitiveType::Polygon)
-                    {
-                        continue;
-                    }
-
-                    if (primitiveToCheck == primitive)
-                    {
-                        continue;
-                    }
-
-                    if (!primitiveToCheck->sourceObject->containsTag(QLatin1String("building:part")))
-                    {
-                        continue;
-                    }
-
-                    if (sourceObject->bbox31.contains(primitiveToCheck->sourceObject->bbox31))
-                    {
-                        isEdge = true;
-                        break;
-                    }
                 }
             }
         }
@@ -225,11 +222,14 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
 
     FColorARGB color = getDefaultBuildingsColor();
 
+    int layer = 0;
+
     bool heightFound = false;
     bool minHeightFound = false;
     bool levelsFound = false;
     bool minLevelsFound = false;
     bool colorFound = false;
+    bool layerFound = false;
 
     for (const auto& captionAttributeId : constOf(sourceObject->captionsOrder))
     {
@@ -268,6 +268,17 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
             color.a = getDefaultBuildingsAlpha();
             continue;
         }
+
+        if (!layerFound && captionTag == QStringLiteral("layer"))
+        {
+            layer = OsmAnd::Utilities::parseLength(caption, layer, &layerFound);
+            continue;
+        }
+    }
+
+    if (layer == -1)
+    {
+        return;
     }
 
     if (!heightFound && levelsFound)
