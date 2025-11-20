@@ -18,11 +18,15 @@
 #include "QKeyValueIterator.h"
 #include "Logging.h"
 #include "AtlasMapRenderer.h"
+#include "GeometryModifiers.h"
 
 OsmAnd::Polygon_P::Polygon_P(Polygon* const owner_)
-: _hasUnappliedChanges(false), _hasUnappliedPrimitiveChanges(false), _isHidden(false),
-  _metersPerPixel(1.0), _mapZoomLevel(InvalidZoomLevel), _mapVisualZoom(0.f), _mapVisualZoomShift(0.f),
-  owner(owner_)
+: _hasUnappliedChanges(false)
+, _hasUnappliedPrimitiveChanges(false)
+, _isHidden(false)
+, _mapZoomLevel(InvalidZoomLevel)
+, _mapVisualZoom(0.f)
+, owner(owner_)
 {
 }
 
@@ -78,15 +82,17 @@ bool OsmAnd::Polygon_P::hasUnappliedPrimitiveChanges() const
 
 bool OsmAnd::Polygon_P::isMapStateChanged(const MapState& mapState) const
 {
-    return qAbs(_mapZoomLevel + _mapVisualZoom - mapState.zoomLevel - mapState.visualZoom) > 0.5;
+    bool changed = _mapZoomLevel != mapState.zoomLevel;
+    changed |= qAbs(_mapVisualZoom - mapState.visualZoom) > 0.25;
+    changed |= _flatEarth != mapState.flatEarth;
+    return changed;
 }
 
 void OsmAnd::Polygon_P::applyMapState(const MapState& mapState)
 {
-    _metersPerPixel = mapState.metersPerPixel;
     _mapZoomLevel = mapState.zoomLevel;
     _mapVisualZoom = mapState.visualZoom;
-    _mapVisualZoomShift = mapState.visualZoomShift;
+    _flatEarth = mapState.flatEarth;
 }
 
 bool OsmAnd::Polygon_P::update(const MapState& mapState)
@@ -309,7 +315,9 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
     // Three subsequent indices form a triangle. Output triangles are clockwise.
     std::vector<N> indices = mapbox::earcut<N>(polygons);
     
-    std::vector<VectorMapSymbol::Vertex> vertices;
+    std::vector<VectorMapSymbol::Vertex> baseVertices;
+    std::vector<VectorMapSymbol::Vertex> tessVertices;
+    auto vertices = &baseVertices;
     VectorMapSymbol::Vertex vertex;
     VectorMapSymbol::Vertex* pVertex = &vertex;
     
@@ -321,22 +329,50 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
         pVertex->positionXYZD[0] = original[indices[pointIdx]][0];
         pVertex->positionXYZD[2] = original[indices[pointIdx]][1];
         pVertex->color = owner->fillColor;
-        vertices.push_back(vertex);
+        vertices->push_back(vertex);
 
         pVertex->positionXYZD[0] = original[indices[pointIdx + 1]][0];
         pVertex->positionXYZD[2] = original[indices[pointIdx + 1]][1];
         pVertex->color = owner->fillColor;
-        vertices.push_back(vertex);
+        vertices->push_back(vertex);
         
         pVertex->positionXYZD[0] = original[indices[pointIdx + 2]][0];
         pVertex->positionXYZD[2] = original[indices[pointIdx + 2]][1];
         pVertex->color = owner->fillColor;
-        vertices.push_back(vertex);
+        vertices->push_back(vertex);
     }
-    
-    verticesAndIndices->verticesCount = vertices.size();
-    verticesAndIndices->vertices = new VectorMapSymbol::Vertex[vertices.size()];
-    std::copy(vertices.begin(), vertices.end(), verticesAndIndices->vertices);
+
+    auto partSizes =
+        std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>);
+    const auto zoomLevel = _mapZoomLevel < MaxZoomLevel ? static_cast<ZoomLevel>(_mapZoomLevel + 1) : _mapZoomLevel;
+
+    bool tesselated = false;
+
+    if (!_flatEarth)
+    {
+        tesselated = GeometryModifiers::cutMeshWithGrid(
+                *vertices,
+                nullptr,
+                polygon->primitiveType,
+                partSizes,
+                zoomLevel,
+                Utilities::convert31toDouble(*(verticesAndIndices->position31), zoomLevel),
+                2,
+                0.5f, 0.01f,
+                false, false,
+                tessVertices);
+    }
+
+    if (tesselated)
+        vertices = &tessVertices;
+
+    verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
+    verticesAndIndices->zoomLevel = tesselated ? zoomLevel : InvalidZoomLevel;
+    verticesAndIndices->isDenseObject = false;
+
+    verticesAndIndices->verticesCount = vertices->size();
+    verticesAndIndices->vertices = new VectorMapSymbol::Vertex[vertices->size()];
+    std::copy(vertices->begin(), vertices->end(), verticesAndIndices->vertices);
 
     polygon->isHidden = _isHidden;
     polygon->setVerticesAndIndices(verticesAndIndices);

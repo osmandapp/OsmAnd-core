@@ -49,6 +49,7 @@ OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
     , _pathIconStep(-1.0f)
     , _specialPathIconStep(-1.0f)
     , _metersPerPixel(1.0)
+    , _target31(PointI(INT32_MIN, INT32_MIN))
     , _mapZoomLevel(InvalidZoomLevel)
     , _surfaceZoomLevel(InvalidZoomLevel)
     , _mapVisualZoom(0.f)
@@ -553,13 +554,42 @@ bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
     changed |= qAbs(_surfaceVisualZoom - mapState.surfaceVisualZoom) > 0.25;
     changed |= _hasElevationDataProvider != mapState.hasElevationDataProvider;
     changed |= _hasElevationDataResources != mapState.hasElevationDataResources;
+    changed |= _flatEarth != mapState.flatEarth;
     if (!changed && _visibleBBoxShifted != mapState.visibleBBoxShifted)
     {
-        const AreaI64 visibleBBoxShifted(_visibleBBoxShifted);
-        auto bboxShiftPoint = visibleBBoxShifted.topLeft - mapState.visibleBBoxShifted.topLeft;
-        bool bboxChanged = abs(bboxShiftPoint.x) > visibleBBoxShifted.width()
-            || abs(bboxShiftPoint.y) > visibleBBoxShifted.height();
-        changed |= bboxChanged;
+        if (_flatEarth)
+        {
+            const AreaI64 visibleBBoxShifted(_visibleBBoxShifted);
+            auto bboxShiftPoint = visibleBBoxShifted.topLeft - mapState.visibleBBoxShifted.topLeft;
+            bool bboxChanged = abs(bboxShiftPoint.x) > visibleBBoxShifted.width()
+                || abs(bboxShiftPoint.y) > visibleBBoxShifted.height();
+            changed |= bboxChanged;
+        }
+        else
+        {
+            const AreaI64 oldVisibleBBoxShifted(_visibleBBoxShifted);
+            const AreaI64 newVisibleBBoxShifted(mapState.visibleBBoxShifted);
+            const auto oldCenter = (oldVisibleBBoxShifted.topLeft + oldVisibleBBoxShifted.bottomRight) / 2;
+            const auto newCenter = (newVisibleBBoxShifted.topLeft + newVisibleBBoxShifted.bottomRight) / 2;
+            const auto intFull = 1ll + INT32_MAX;
+
+            // Limit visible map dimensions to recalculate a primitive near the poles
+            const int64_t maxVisibleSize = intFull / 8;
+
+            bool bboxChanged = abs(newCenter.y - oldCenter.y) > qMin(newVisibleBBoxShifted.height(), maxVisibleSize);
+            const auto visibleWidth = qMin(newVisibleBBoxShifted.width(), maxVisibleSize);
+            if (!bboxChanged)
+            {
+                auto dx = abs(newCenter.x - oldCenter.x);
+                bboxChanged = (dx > intFull / 2 ? intFull - dx : dx) > visibleWidth;
+            }
+            if (!bboxChanged)
+            {
+                auto dx = static_cast<int64_t>(abs(mapState.target31.x - _target31.x));
+                bboxChanged = (dx > intFull / 2 ? intFull - dx : dx) > visibleWidth;
+            }
+            changed |= bboxChanged;
+        }
     }
 
     return changed;
@@ -569,6 +599,7 @@ void OsmAnd::VectorLine_P::applyMapState(const MapState& mapState)
 {
     _metersPerPixel = mapState.metersPerPixel;
     _visibleBBoxShifted = mapState.visibleBBoxShifted;
+    _target31 = mapState.target31;
     _mapZoomLevel = mapState.zoomLevel;
     _mapVisualZoom = mapState.visualZoom;
     _surfaceZoomLevel = mapState.surfaceZoomLevel;
@@ -576,6 +607,7 @@ void OsmAnd::VectorLine_P::applyMapState(const MapState& mapState)
     _mapVisualZoomShift = mapState.visualZoomShift;
     _hasElevationDataProvider = mapState.hasElevationDataProvider;
     _hasElevationDataResources = mapState.hasElevationDataResources;
+    _flatEarth = mapState.flatEarth;
 }
 
 bool OsmAnd::VectorLine_P::update(const MapState& mapState)
@@ -682,27 +714,19 @@ void OsmAnd::VectorLine_P::unregisterSymbolsGroup(MapSymbolsGroup* const symbols
     _symbolsGroupsRegistry.remove(symbolsGroup);
 }
 
-OsmAnd::PointD OsmAnd::VectorLine_P::findLineIntersection(PointD p1, OsmAnd::PointD p2, OsmAnd::PointD p3, OsmAnd::PointD p4) const
+inline double OsmAnd::VectorLine_P::correctDistance(double y, double startY31, double radius) const
 {
-    double d = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
-    //double atn1 = atan2(p1.x - p2.x, p1.y - p2.y);
-    //double atn2 = atan2(p3.x - p4.x, p3.y - p4.y);
-    //double df = qAbs(atn1 - atn2);
-    // printf("\n %f %f d=%f df=%f df-PI=%f df-2PI=%f", atn1, atn2, d, df, df - M_PI, df - 2 * M_PI);
-    //double THRESHOLD = M_PI / 6;
-    if(d == 0 // || df < THRESHOLD  || qAbs(df - M_PI) < THRESHOLD || qAbs(df - 2 * M_PI) < THRESHOLD
-       ) {
-        // in case of lines connecting p2 == p3
-        return p2;
-    }
-    OsmAnd::PointD r;
-    r.x = ((p1.x* p2.y-p1.y*p2.x)*(p3.x - p4.x) - (p3.x* p4.y-p3.y*p4.x)*(p1.x - p2.x)) / d;
-    r.y = ((p1.x* p2.y-p1.y*p2.x)*(p3.y - p4.y) - (p3.x* p4.y-p3.y*p4.x)*(p1.y - p2.y)) / d;
-
-    return r;
+        if (isnan(startY31))
+            return radius;
+        const auto intFull = 1.0 + INT32_MAX;
+        auto s = sinh((2.0 * M_PI * (y + startY31)) / intFull - M_PI);
+        return radius * qSqrt(s * s + 1.0);
 }
 
-OsmAnd::PointD OsmAnd::VectorLine_P::getProjection(PointD point, PointD from, PointD to ) const
+	inline static float correct(double y, double startY31, float thickness) {
+    }
+
+inline OsmAnd::PointD OsmAnd::VectorLine_P::getProjection(PointD point, PointD from, PointD to ) const
 {
     double mDist = (from.x - to.x) * (from.x - to.x) + (from.y - to.y) * (from.y - to.y);
     double projection = scalarMultiplication(from.x, from.y, to.x, to.y, point.x, point.y);
@@ -718,7 +742,8 @@ OsmAnd::PointD OsmAnd::VectorLine_P::getProjection(PointD point, PointD from, Po
                   from.y + (to.y - from.y) * (projection / mDist));
 }
 
-double OsmAnd::VectorLine_P::scalarMultiplication(double xA, double yA, double xB, double yB, double xC, double yC) const
+inline double OsmAnd::VectorLine_P::scalarMultiplication(
+    double xA, double yA, double xB, double yB, double xC, double yC) const
 {
     // Scalar multiplication between (AB, AC)
     return (xB - xA) * (xC - xA) + (yB - yA) * (yC - yA);
@@ -729,15 +754,16 @@ int OsmAnd::VectorLine_P::simplifyDouglasPeucker(
     const uint start,
     const uint end,
     const double epsilon,
+    const double startY31,
     std::vector<bool>& include) const
 {
+    PointD startPoint = static_cast<PointD>(points[start]);
+    PointD endPoint = static_cast<PointD>(points[end]);
     double dmax = -1;
     int index = -1;
     for (int i = start + 1; i <= end - 1; i++)
     {
         PointD pointToProject = static_cast<PointD>(points[i]);
-        PointD startPoint = static_cast<PointD>(points[start]);
-        PointD endPoint = static_cast<PointD>(points[end]);
         PointD proj = getProjection(pointToProject, startPoint, endPoint);
         double d = qSqrt((points[i].x - proj.x) * (points[i].x - proj.x) +
                          (points[i].y - proj.y) * (points[i].y - proj.y));
@@ -748,10 +774,10 @@ int OsmAnd::VectorLine_P::simplifyDouglasPeucker(
             index = i;
         }
     }
-    if (dmax >= epsilon && index > -1)
+    if (index > -1 && dmax >= correctDistance(points[index].y, startY31, epsilon))
     {
-        int enabled1 = simplifyDouglasPeucker(points, start, index, epsilon, include);
-        int enabled2 = simplifyDouglasPeucker(points, index, end, epsilon, include);
+        int enabled1 = simplifyDouglasPeucker(points, start, index, epsilon, startY31, include);
+        int enabled2 = simplifyDouglasPeucker(points, index, end, epsilon, startY31, include);
         return enabled1 + enabled2;
     }
     else
@@ -794,13 +820,14 @@ OsmAnd::FColorARGB OsmAnd::VectorLine_P::middleColor(
         first.b + (last.b - first.b) * factor);
 }
 
-void OsmAnd::VectorLine_P::calculateVisibleSegments(
+OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
     const AreaI64& visibleArea64,
     std::vector<std::vector<PointI>>& segments,
     QList<QList<float>>& segmentDistances,
     QList<QList<FColorARGB>>& segmentColors,
     QList<QList<FColorARGB>>& segmentOutlineColors,
-    QList<QList<float>>& segmentHeights)
+    QList<QList<float>>& segmentHeights,
+    float& totalDistance)
 {
     const AreaI visibleArea(visibleArea64);
 
@@ -866,6 +893,8 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
     QList<FColorARGB> outlineColors;
     QList<float> heights;
     QList<float> distances;
+    PointI position;
+    bool isPositionFound = false;
     for (int shiftX = minShiftX; shiftX <= maxShiftX; shiftX++)
     {
         const auto shift = intFull * shiftX;
@@ -894,53 +923,70 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
         nextIndex = 0;            
         int j = 0;
         bool prevIn = visibleArea64.contains(prev);
+        bool outFrom = false;
+        bool outTo = false;
         for (int i = 1; i < pointsCount; i++)
         {
             drawTo = points64.at(i);
             drawTo.x -= shift;
             curr = drawTo;
-            if (i > nextIndex)
+            if (outFrom == outTo)
             {
-                prevIndex = nextIndex;
-                nextIndex = pointIndices.at(++j);
-                distanceFrom = distanceTo;
-                distanceTo = pointDistances.at(j);
+                if (i > nextIndex)
+                {
+                    prevIndex = nextIndex;
+                    nextIndex = pointIndices.at(++j);
+                    distanceFrom = distanceTo;
+                    distanceTo = pointDistances.at(j);
+                    if (withColors)
+                    {
+                        colorFrom = colorTo;
+                        colorTo = _colorizationMapping.at(j);
+                    }
+                    if (withOutlineColors)
+                    {
+                        colorOutFrom = colorOutTo;
+                        colorOutTo = _outlineColorizationMapping.at(j);
+                    }
+                    if (withHeights)
+                    {
+                        heightFrom = heightTo;
+                        heightTo = _heights.at(j);
+                    }
+                }
+                const auto quotient = static_cast<float>(i - prevIndex) / static_cast<float>(nextIndex - prevIndex);
+                distanceSubFrom = distanceSubTo;
+                distanceSubTo = distanceFrom + (distanceTo - distanceFrom) * quotient;
                 if (withColors)
                 {
-                    colorFrom = colorTo;
-                    colorTo = _colorizationMapping.at(j);
+                    colorSubFrom = solidColors ? colorFrom : colorSubTo;
+                    colorSubTo = solidColors ? colorTo : middleColor(colorFrom, colorTo, quotient);
                 }
                 if (withOutlineColors)
                 {
-                    colorOutFrom = colorOutTo;
-                    colorOutTo = _outlineColorizationMapping.at(j);
+                    colorOutSubFrom = solidColors ? colorOutFrom : colorOutSubTo;
+                    colorOutSubTo = solidColors ? colorOutTo : middleColor(colorOutFrom, colorOutTo, quotient);
                 }
                 if (withHeights)
                 {
-                    heightFrom = heightTo;
-                    heightTo = _heights.at(j);
+                    heightSubFrom = heightSubTo;
+                    heightSubTo = heightFrom + (heightTo - heightFrom) * quotient;
                 }
             }
-            const auto quotient = static_cast<float>(i - prevIndex) / static_cast<float>(nextIndex - prevIndex);
-            distanceSubFrom = distanceSubTo;
-            distanceSubTo = distanceFrom + (distanceTo - distanceFrom) * quotient;
-            if (withColors)
+            else
             {
-                colorSubFrom = solidColors ? colorFrom : colorSubTo;
-                colorSubTo = solidColors ? colorTo : middleColor(colorFrom, colorTo, quotient);
-            }
-            if (withOutlineColors)
-            {
-                colorOutSubFrom = solidColors ? colorOutFrom : colorOutSubTo;
-                colorOutSubTo = solidColors ? colorOutTo : middleColor(colorOutFrom, colorOutTo, quotient);
-            }
-            if (withHeights)
-            {
-                heightSubFrom = heightSubTo;
-                heightSubTo = heightFrom + (heightTo - heightFrom) * quotient;
+                distanceSubFrom = distanceInterTo;
+                if (withColors)
+                    colorSubFrom = colorInterTo;
+                if (withOutlineColors)
+                    colorOutSubFrom = colorOutInterTo;
+                if (withHeights)
+                    heightSubFrom = heightInterTo;
             }
             bool currIn = visibleArea64.contains(curr);
             bool draw = false;
+            outFrom = false;
+            outTo = false;
             if (prevIn && currIn)
             {
                 draw = true;
@@ -1054,8 +1100,43 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
                 else
                     draw = false;
             }
+            else
+                segmentStarted = false;
             if (draw)
             {
+                outFrom = drawFrom.y < -intHalf || drawFrom.y >= intHalf;
+                outTo = drawTo.y < -intHalf || drawTo.y >= intHalf;
+                bool isNorth = drawFrom.y < -intHalf || drawTo.y < -intHalf;
+                if (outFrom != outTo)
+                {
+                    const int64_t border = isNorth ? -intHalf : intHalf - 1;
+                    inter1.x = drawFrom.x + static_cast<int64_t>(
+                        static_cast<double>(drawTo.x - drawFrom.x) * (border - drawFrom.y) / (drawTo.y - drawFrom.y));
+                    inter1.y = isNorth ? (outTo ? -intHalf : -intHalf - 1) : (outTo ? intHalf - 1 : intHalf);
+                    drawTo = inter1;
+                    const auto factor = static_cast<float>(
+                        static_cast<double>((drawTo - prev).norm()) /
+                        static_cast<double>((curr - prev).norm()));
+                    distanceInterFrom = distanceSubFrom;
+                    distanceInterTo = distanceSubFrom + (distanceSubTo - distanceSubFrom) * factor;
+                    if (withColors)
+                    {
+                        colorInterFrom = colorSubFrom;
+                        colorInterTo = solidColors ? colorSubFrom
+                            : middleColor(colorSubFrom, colorSubTo, factor);
+                    }
+                    if (withOutlineColors)
+                    {
+                        colorOutInterFrom = colorOutSubFrom;
+                        colorOutInterTo = solidColors ? colorOutSubFrom
+                            : middleColor(colorOutSubFrom, colorOutSubTo, factor);
+                    }
+                    if (withHeights)
+                    {
+                        heightInterFrom = heightSubFrom;
+                        heightInterTo = heightSubFrom + (heightSubTo - heightSubFrom) * factor;
+                    }
+                }
                 if (!segmentStarted)
                 {
                     if (!segment.empty())
@@ -1071,7 +1152,13 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
                         segmentHeights.push_back(heights);
                         heights.clear();
                     }
-                    segment.push_back(PointI(drawFrom));
+                    PointI drawFrom31(drawFrom);
+                    if (!isPositionFound && drawFrom31.y >= -intHalf && drawFrom31.y < intHalf)
+                    {
+                        position = drawFrom31;
+                        isPositionFound = true;
+                    }
+                    segment.push_back(drawFrom31);
                     distances.push_back(distanceInterFrom);
                     if (withColors)
                         colors.push_back(colorInterFrom);
@@ -1084,6 +1171,11 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
                 PointI drawTo31(drawTo);
                 if (segment.empty() || segment.back() != drawTo31)
                 {
+                    if (!isPositionFound && drawTo31.y >= -intHalf && drawTo31.y < intHalf)
+                    {
+                        position = drawTo31;
+                        isPositionFound = true;
+                    }
                     segment.push_back(drawTo31);
                     distances.push_back(distanceInterTo);
                     if (withColors)
@@ -1096,8 +1188,20 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
             }
             else
                 segmentStarted = false;
-            prevIn = currIn;
-            prev = drawFrom = curr;
+
+            if (outFrom != outTo)
+            {
+                segmentStarted = false;
+                i--;
+                prevIn = true;
+                prev = drawFrom = PointI64(drawTo.x, drawTo.y <= -intHalf
+                    ? (outTo ? -intHalf - 1 : -intHalf) : (outTo ? intHalf : intHalf - 1));
+            }
+            else
+            {
+                prevIn = currIn;
+                prev = drawFrom = curr;
+            }
         }
         if (!segment.empty())
             segments.push_back(segment);
@@ -1120,6 +1224,10 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(
     {
         attachedMarker->attachToVectorLine(qMove(points64));
     }
+
+    totalDistance = static_cast<float>(distance);
+
+    return position;
 }
 
 float OsmAnd::VectorLine_P::zoom() const
@@ -1130,13 +1238,23 @@ float OsmAnd::VectorLine_P::zoom() const
 bool OsmAnd::VectorLine_P::generatePrimitive(
     const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine)
 {
+    const int64_t intFull = 1ll + INT32_MAX;
+    const auto intHalf = intFull >> 1;
+    const auto intTwo = intFull << 1;
+
     // Use enlarged visible area
-    const AreaI64 visibleBBox64(_visibleBBoxShifted);
-    auto visibleArea64 = visibleBBox64.getEnlargedBy(PointI64(visibleBBox64.width(), visibleBBox64.height()));
-    visibleArea64.topLeft.x = qMax(visibleArea64.topLeft.x, static_cast<int64_t>(INT32_MIN));
-    visibleArea64.topLeft.y = qMax(visibleArea64.topLeft.y, static_cast<int64_t>(INT32_MIN));
-    visibleArea64.bottomRight.x = qMin(visibleArea64.bottomRight.x, static_cast<int64_t>(INT32_MAX));
-    visibleArea64.bottomRight.y = qMin(visibleArea64.bottomRight.y, static_cast<int64_t>(INT32_MAX));
+    const int64_t leftLimit = INT32_MIN;
+    const int64_t rightLimit = INT32_MAX;
+    const int64_t topLimit = _flatEarth ? INT32_MIN / 2 : INT32_MIN;
+    const int64_t bottomLimit = _flatEarth ? INT32_MAX / 2 : INT32_MAX;
+    AreaI64 visibleBBox64(_visibleBBoxShifted);
+    const auto visibleWidth = visibleBBox64.width();
+    const auto halfExtraWidth = visibleWidth > INT32_MAX / 3 ? (intFull - visibleWidth) / 2 : visibleWidth;
+    AreaI64 visibleArea64 = visibleBBox64.getEnlargedBy(PointI64(halfExtraWidth, visibleBBox64.height()));
+    visibleArea64.topLeft.x = qMax(visibleArea64.topLeft.x, leftLimit);
+    visibleArea64.topLeft.y = qMax(visibleArea64.topLeft.y, topLimit);
+    visibleArea64.bottomRight.x = qMin(visibleArea64.bottomRight.x, rightLimit);
+    visibleArea64.bottomRight.y = qMin(visibleArea64.bottomRight.y, bottomLimit);
     if (_bboxShifted.width() != 0 && _bboxShifted.height() != 0 && !_bboxShifted.intersects(visibleArea64)
         && !_bboxShifted.intersects(visibleArea64 + PointI64(INT32_MIN, 0))
         && !_bboxShifted.intersects(visibleArea64 - PointI64(INT32_MIN, 0)))
@@ -1147,7 +1265,9 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
     QList<QList<FColorARGB>> colors;
     QList<QList<FColorARGB>> outlineColors;
     QList<QList<float>> heights;
-    calculateVisibleSegments(visibleArea64, segments, distances, colors, outlineColors, heights);
+    float distance;
+    const auto startPoint =
+        calculateVisibleSegments(visibleArea64, segments, distances, colors, outlineColors, heights, distance);
     if (segments.size() == 0)
         return false;
 
@@ -1161,7 +1281,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
     double thickness = _lineWidth * scale * visualShiftCoef * 2.0;
     double outlineThickness = _outlineWidth * scale * visualShiftCoef * 2.0;
     bool approximate = _isApproximationEnabled;
-    double simplificationRadius = _lineWidth * scale * visualShiftCoef;
+    double simplificationRadius = thickness / (_flatEarth ? 6.0 : 32.0);
 
     vectorLine->order = owner->baseOrder + 1;
     vectorLine->primitiveType = VectorMapSymbol::PrimitiveType::Triangles;
@@ -1176,14 +1296,30 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
 
     clearArrowsOnPath();
 
-    std::vector<VectorMapSymbol::Vertex> vertices;
+    std::vector<VectorMapSymbol::Vertex> baseVertices;
+    std::vector<VectorMapSymbol::Vertex> tessVertices;
+    auto vertices = &baseVertices;
     VectorMapSymbol::Vertex vertex;
 
     const bool withColors = hasColorizationMapping();
     const bool withOutlineColors = hasOutlineColorizationMapping();
 
-    PointD startPos;
-    bool startPosDefined = false;
+    auto partSizes =
+        std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>);
+    const auto zoomLevel = _mapZoomLevel < MaxZoomLevel ? static_cast<ZoomLevel>(_mapZoomLevel + 1) : _mapZoomLevel;
+	const auto cellsPerTileSize = _hasElevationDataResources ?
+        (AtlasMapRenderer::HeixelsPerTileSide - 1) / (1 << (zoomLevel - _mapZoomLevel)) : 2;
+    bool tesselated = true;
+
+    const auto startPos = PointD(startPoint);
+    const auto origPos = PointI64(startPoint) + PointI64(intHalf, intHalf);
+    const PointI location31(
+        origPos.x > INT32_MAX ? origPos.x - intTwo : origPos.x,
+        origPos.y > INT32_MAX ? origPos.y - intTwo : origPos.y);
+    vectorLine->position31 = location31;
+    verticesAndIndices->position31 = new PointI(location31);
+    double startY31 = _flatEarth ? NAN : static_cast<double>(location31.y);
+
     for (int segmentIndex = 0; segmentIndex < segments.size(); segmentIndex++)
     {
         auto& points = segments[segmentIndex];
@@ -1194,29 +1330,15 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
         if (points.size() < 2)
             continue;
 
-        if (!startPosDefined)
-        {
-            startPosDefined = true;
-            const auto startPoint = points[0];
-            int64_t intFull = INT32_MAX;
-            intFull++;
-            const auto intHalf = intFull >> 1;
-            const auto intTwo = intFull << 1;
-            const PointI64 origPos = PointI64(intHalf, intHalf) + startPoint;
-            const PointI location31(
-                origPos.x > INT32_MAX ? origPos.x - intTwo : origPos.x,
-                origPos.y > INT32_MAX ? origPos.y - intTwo : origPos.y);
-            vectorLine->position31 = location31;
-            verticesAndIndices->position31 = new PointI(location31);
-            startPos = PointD(startPoint);
-        }
+        bool isOut = points[0].y < -intHalf || points[0].y >= intHalf;
+
         int pointsCount = (int) points.size();
 
         std::vector<bool> include(pointsCount, !approximate);
         if (approximate)
         {
             include[0] = true;
-            simplifyDouglasPeucker(points, 0, (uint) points.size() - 1, simplificationRadius / 3, include);
+            simplifyDouglasPeucker(points, 0, (uint) points.size() - 1, simplificationRadius, startY31, include);
         }
 
         // Generate base points to draw a stripe around
@@ -1252,7 +1374,10 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
         if (_showArrows && owner->pathIcon)
         {
             const auto arrowsOrigin = segments.back().back();
-            addArrowsOnSegmentPath(points, distancesForSegment, heightsForSegment, include, arrowsOrigin);
+            if (_flatEarth)
+                addArrowsOnFlatSegmentPath(points, distancesForSegment, heightsForSegment, include, arrowsOrigin);
+            else
+                addArrowsOnSegmentPath(points, distancesForSegment, heightsForSegment, include, distance);
         }
 
         int patternLength = (int) _dashPattern.size();
@@ -1292,13 +1417,15 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
             for (auto pointIdx = 1u; pointIdx < includedPointsCount; pointIdx++)
             {
                 OsmAnd::PointD pnt = original[pointIdx];
+                const auto locScale = correctDistance(pnt.y, startY31, scale);
                 double segLength = sqrt(pow((prevPnt.x - pnt.x), 2) + pow((prevPnt.y - pnt.y), 2));
                 // create a vector of direction for the segment
                 OsmAnd::PointD v = pnt - prevPnt;
                 // unit length
                 OsmAnd::PointD u(v.x / segLength, v.y / segLength);
 
-                double length = firstDash && threshold > 0 ? threshold * scale : dashPattern[patternIndex] * scale - 0;
+                double length =
+                    firstDash && threshold > 0 ? threshold * locScale : dashPattern[patternIndex] * locScale - 0;
                 bool gap = firstDash && threshold > 0 ? true : patternIndex % 2 == 1;
 
                 OsmAnd::PointD delta;
@@ -1323,7 +1450,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
 
                         if (!gap)
                         {
-                            createVertexes(vertices, vertex, origTar, thickness, filteredDistances,
+                            createVertexes(*vertices, vertex, origTar, thickness, startY31, filteredDistances,
                                 fillColor, filteredColorsMap, filteredOutlineColorsMap, filteredHeights);
                             origTar.clear();
                             firstDash = false;
@@ -1334,7 +1461,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
 
                         patternIndex %= patternLength;
                         gap = patternIndex % 2 == 1;
-                        length = dashPattern[patternIndex] * scale - (gap ? 0 : 0);
+                        length = dashPattern[patternIndex] * locScale - (gap ? 0 : 0);
                         delta += OsmAnd::PointD(u.x * length, u.y * length);
                         deltaLength += length;
                     }
@@ -1357,16 +1484,22 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
                     origTar.push_back(end);
                 
                 origTar.push_back(end);
-                createVertexes(vertices, vertex, origTar, thickness, filteredDistances,
+                createVertexes(*vertices, vertex, origTar, thickness, startY31, filteredDistances,
                     fillColor, filteredColorsMap, filteredOutlineColorsMap, filteredHeights);
             }
         }
         else
         {
+            const auto start = segmentIndex > 0 ? VectorLine::EndCapStyle::BUTT
+                : (owner->endCapStyle == VectorLine::EndCapStyle::ARROW ? VectorLine::EndCapStyle::ROUND
+                    : owner->endCapStyle);
+            const auto end = segmentIndex + 1 < segments.size() ? VectorLine::EndCapStyle::BUTT
+                : (owner->endCapStyle == VectorLine::EndCapStyle::ARROW ? VectorLine::EndCapStyle::ARROW
+                    : owner->endCapStyle);
             if (withHeights)
             {
                 GeometryModifiers::getTesselatedPlane(
-                    vertices,
+                    *vertices,
                     original,
                     filteredDistances,
                     filteredHeights,
@@ -1375,19 +1508,20 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
                     _isElevatedLineVisible ? outlineThickness : 0.0f,
                     _mapZoomLevel,
                     Utilities::convert31toDouble(*(verticesAndIndices->position31), _mapZoomLevel),
-                    AtlasMapRenderer::HeixelsPerTileSide - 1,
+                    isOut ? 0 : AtlasMapRenderer::HeixelsPerTileSide - 1,
                     0.4f, false,
                     _colorizationScheme == COLORIZATION_SOLID);
                 if (_isElevatedLineVisible)
                 {
                     crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(
                         vertex,
-                        vertices,
+                        *vertices,
                         original, thickness, 0.0f, filteredDistances,
                         _fillColor, _nearOutlineColor, _farOutlineColor,
-                        filteredColorsMap, filteredOutlineColorsMap, filteredHeights,
+                        filteredColorsMap, filteredOutlineColorsMap, filteredHeights, startY31,
                         static_cast<crushedpixel::Polyline2D::JointStyle>(static_cast<int>(owner->jointStyle)),
-                        static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(owner->endCapStyle)),
+                        static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(start)),
+                        static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(end)),
                         _colorizationScheme == COLORIZATION_SOLID);
                 }
                 if (_isSurfaceLineVisible)
@@ -1395,12 +1529,13 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
                     filteredHeights.clear();
                     crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(
                         vertex,
-                        vertices,
+                        *vertices,
                         original, thickness, 0.0f, filteredDistances,
                         _fillColor, _nearOutlineColor, _farOutlineColor,
-                        filteredColorsMap, filteredOutlineColorsMap, filteredHeights,
+                        filteredColorsMap, filteredOutlineColorsMap, filteredHeights, startY31,
                         static_cast<crushedpixel::Polyline2D::JointStyle>(static_cast<int>(owner->jointStyle)),
-                        static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(owner->endCapStyle)),
+                        static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(start)),
+                        static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(end)),
                         _colorizationScheme == COLORIZATION_SOLID);
                 }
             }
@@ -1408,52 +1543,55 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
             {
                 crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(
                     vertex,
-                    vertices,
+                    *vertices,
                     original, thickness, (outlineThickness - thickness) / 2.0f, filteredDistances,
                     _fillColor, _nearOutlineColor, _farOutlineColor,
-                    filteredColorsMap, filteredOutlineColorsMap, filteredHeights,
+                    filteredColorsMap, filteredOutlineColorsMap, filteredHeights, startY31,
                     static_cast<crushedpixel::Polyline2D::JointStyle>(static_cast<int>(owner->jointStyle)),
-                    static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(owner->endCapStyle)),
+                    static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(start)),
+                    static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(end)),
                     _colorizationScheme == COLORIZATION_SOLID);
             }
         }
+
+        tesselated = tesselated &&
+            GeometryModifiers::cutMeshWithGrid(
+                *vertices,
+                nullptr,
+                vectorLine->primitiveType,
+                partSizes,
+                zoomLevel,
+                Utilities::convert31toDouble(*(verticesAndIndices->position31), zoomLevel),
+                isOut ? 0 : cellsPerTileSize,
+                0.5f, 0.01f,
+                false, false,
+                tessVertices);
+
+    if (tesselated)
+            vertices->clear();
     }
-    if (vertices.size() == 0)
+
+    if (tesselated)
+        vertices = &tessVertices;
+
+    if (vertices->size() == 0)
     {
         vertex.positionXYZD[0] = 0;
         vertex.positionXYZD[1] = VectorMapSymbol::_absentElevation;
         vertex.positionXYZD[2] = 0;
         vertex.positionXYZD[3] = NAN;
-        vertices.push_back(vertex);
+        vertices->push_back(vertex);
         verticesAndIndices->position31 = new PointI(0, 0);
     }
 
-    // Tesselate the line for the surface
-    auto partSizes =
-        std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>);
-    const auto zoomLevel = _mapZoomLevel < MaxZoomLevel ? static_cast<ZoomLevel>(_mapZoomLevel + 1) : _mapZoomLevel;
-	const auto cellsPerTileSize = _hasElevationDataResources ?
-        (AtlasMapRenderer::HeixelsPerTileSide - 1) / (1 << (zoomLevel - _mapZoomLevel)) : 1;
-    bool tesselated = _hasElevationDataProvider
-        ? GeometryModifiers::cutMeshWithGrid(
-            vertices,
-            nullptr,
-            vectorLine->primitiveType,
-            partSizes,
-            zoomLevel,
-            Utilities::convert31toDouble(*(verticesAndIndices->position31), zoomLevel),
-            cellsPerTileSize,
-            0.5f, 0.01f,
-            false, false)
-        : false;
     verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
     verticesAndIndices->zoomLevel = tesselated ? zoomLevel : InvalidZoomLevel;
     verticesAndIndices->isDenseObject =
         tesselated && withHeights && _nearOutlineColor.a == 1.0f && _farOutlineColor.a == 1.0f;
 
-    verticesAndIndices->verticesCount = (unsigned int) vertices.size();
-    verticesAndIndices->vertices = new VectorMapSymbol::Vertex[vertices.size()];
-    std::copy(vertices.begin(), vertices.end(), verticesAndIndices->vertices);
+    verticesAndIndices->verticesCount = (unsigned int) vertices->size();
+    verticesAndIndices->vertices = new VectorMapSymbol::Vertex[vertices->size()];
+    std::copy(vertices->begin(), vertices->end(), verticesAndIndices->vertices);
 
     vectorLine->isHidden = _isHidden;
     vectorLine->startingDistance = _startingDistance;
@@ -1466,6 +1604,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
                   VectorMapSymbol::Vertex &vertex,
                   std::vector<OsmAnd::PointD> &original,
                   double thickness,
+                  double startY31,
                   QList<float>& distances,
                   FColorARGB &fillColor,
                   QList<FColorARGB>& colorMapping,
@@ -1476,13 +1615,19 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
     if (pointsCount == 0)
         return;
 
+    const auto start = owner->endCapStyle == VectorLine::EndCapStyle::ARROW ? VectorLine::EndCapStyle::ROUND
+        : owner->endCapStyle;
+    const auto end = owner->endCapStyle == VectorLine::EndCapStyle::ARROW ? VectorLine::EndCapStyle::ARROW
+        : owner->endCapStyle;
+
     crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(
         vertex,
         vertices,
         original, thickness, 0.0f, distances,
-        fillColor, fillColor, fillColor, colorMapping, outlineColorMapping, heights,
+        fillColor, fillColor, fillColor, colorMapping, outlineColorMapping, heights, startY31,
         static_cast<crushedpixel::Polyline2D::JointStyle>(static_cast<int>(owner->jointStyle)),
-        static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(owner->endCapStyle)));
+        static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(start)),
+        static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(end)));
 }
 
 void OsmAnd::VectorLine_P::clearArrowsOnPath()
@@ -1499,7 +1644,7 @@ const QList<OsmAnd::VectorLine::OnPathSymbolData> OsmAnd::VectorLine_P::getArrow
     return detachedOf(_arrowsOnPath);
 }
 
-void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
+void OsmAnd::VectorLine_P::addArrowsOnFlatSegmentPath(
     const std::vector<PointI>& segmentPoints,
     const QList<float>& segmentDistances,
     const QList<float>& segmentHeights,
@@ -1568,6 +1713,71 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
         prevPoint = nextPoint;
         prevDistance = nextDistance;
         prevHeight = nextHeight;
+    }
+}
+
+void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
+    const std::vector<PointI>& segmentPoints,
+    const QList<float>& segmentDistances,
+    const QList<float>& segmentHeights,
+    const std::vector<bool>& includedPoints,
+    const float distance)
+{
+    const auto intFull = 1ll + INT32_MAX;
+    const auto intHalf = intFull >> 1;
+    const auto intTwo = intFull << 1;
+    const bool withHeights = !segmentHeights.isEmpty();
+    const auto step = static_cast<float>(getPointStepPx() * _metersPerPixel);
+    const auto halfStep = step / 2.0f;
+    bool ok = halfStep > 0.0f;
+    if (!ok)
+        return;
+
+    PointD prevPoint(segmentPoints.back());
+    PointD nextPoint;
+    float prevDistance = segmentDistances[segmentPoints.size() - 1];
+    float nextDistance;
+    float prevHeight = withHeights ? segmentHeights[segmentPoints.size() - 1] : NAN;
+    float nextHeight;
+    const auto extDistance = distance + halfStep;
+    auto prevCount = static_cast<int>(qFloor((extDistance - prevDistance) / step));
+
+    QWriteLocker scopedLocker(&_arrowsOnPathLock);
+
+    for (int i = (int) segmentPoints.size() - 2; i >= 0; i--)
+    {
+        if (!includedPoints[i])
+            continue;
+
+        nextPoint = PointD(segmentPoints[i]);
+        nextDistance = segmentDistances[i];
+        nextHeight = withHeights ? segmentHeights[i] : NAN;
+        const auto nextCount = static_cast<int>(qFloor((extDistance - nextDistance) / step));
+        const auto lineLength = prevDistance - nextDistance;
+        const auto lineN = (nextPoint - prevPoint) / static_cast<double>(lineLength);
+        const auto startDistance = extDistance - prevDistance;
+        for (int count = prevCount + 1; count <= nextCount; count++)
+        {
+            const auto delta = count * step - startDistance;
+            const auto midPoint = prevPoint + lineN * static_cast<double>(delta);
+            const auto midDistance = prevDistance - delta;
+            const auto midHeight = withHeights ? prevHeight + (nextHeight - prevHeight) * delta / lineLength : NAN;
+            const PointI64 origPos(
+                static_cast<int64_t>(midPoint.x) + intHalf,
+                static_cast<int64_t>(midPoint.y) + intHalf);
+            const PointI position31(
+                origPos.x + (origPos.x >= intFull ? -intTwo : (origPos.x < -intFull ? intFull : 0)),
+                origPos.y + (origPos.y >= intFull ? -intTwo : (origPos.y < -intFull ? intFull : 0)));
+            // Get mirrored direction
+            float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-lineN.x, lineN.y)) - 180);
+            const VectorLine::OnPathSymbolData arrowSymbol(
+                position31, midDistance, direction, midHeight, _elevationScaleFactor);
+            _arrowsOnPath.push_back(arrowSymbol);
+        }
+        prevPoint = nextPoint;
+        prevDistance = nextDistance;
+        prevHeight = nextHeight;
+        prevCount = nextCount;
     }
 }
 

@@ -218,10 +218,9 @@ namespace OsmAnd
                     GLlocation resultScale;
 
                     // Per-symbol data
-                    GLlocation symbolOffsetFromTarget;
                     GLlocation direction;
                     GLlocation symbolSize;
-                    GLlocation elevationInWorld;
+                    GLlocation mPlacement;
                 } param;
             } vs;
 
@@ -260,9 +259,19 @@ namespace OsmAnd
                     GLlocation mPerspectiveProjectionView;
                     GLlocation resultScale;
                     GLlocation mModel;
+                    GLlocation mGlobeRotation;
+                    GLlocation offsetsAndMode;
+                    GLlocation globeTileTL;
+                    GLlocation globeTileTR;
+                    GLlocation globeTileBL;
+                    GLlocation globeTileBR;
+                    GLlocation globeTileTLnv;
+                    GLlocation globeTileTRnv;
+                    GLlocation globeTileBLnv;
+                    GLlocation globeTileBRnv;
                     GLlocation modulationColor;
                     GLlocation tileId;
-                    GLlocation offsetInTile;
+                    GLlocation positionAndOffsetInTile;
                     GLlocation lookupOffsetAndScale;
                     GLlocation cameraPositionAndZfar;
                     GLlocation elevation_scale;

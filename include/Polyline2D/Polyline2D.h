@@ -69,7 +69,9 @@ public:
 	 * @param colorizationMapping The path's color map.
 	 * @param outlineColorizationMapping The outline's color map (inner and outer colors are used as filters).
 	 * @param heights The path's height map (in meters).
+	 * @param startY31 Starting Y-coordinate of the path if thickness adjustment is needed (NaN elsewhere).
 	 * @param jointStyle The path's joint style.
+	 * @param startCapStyle The path's start cap style.
 	 * @param endCapStyle The path's end cap style.
 	 * @param solidColors When set to "true" the path and outline color maps are used as solid colors for segments.
 	 * @return The vertices describing the path.
@@ -93,13 +95,15 @@ public:
                                                                QList<OsmAnd::FColorARGB> &colorizationMapping,
                                                                QList<OsmAnd::FColorARGB> &outlineColorizationMapping,
                                                                QList<float> &heights,
+                                                               double startY31,
                                                                JointStyle jointStyle = JointStyle::MITER,
+                                                               EndCapStyle startCapStyle = EndCapStyle::BUTT,
                                                                EndCapStyle endCapStyle = EndCapStyle::BUTT,
                                                                bool solidColors = false) {
 		std::vector<OsmAnd::VectorMapSymbol::Vertex> vertices;
 		create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex, vertices, points, thickness,
             outline, distances, fillColor, nearOutlineColor, farOutlineColor, colorizationMapping,
-            outlineColorizationMapping, heights, jointStyle, endCapStyle, solidColors);
+            outlineColorizationMapping, heights, startY31, jointStyle, startCapStyle, endCapStyle, solidColors);
 		return vertices;
 	}
 
@@ -115,13 +119,15 @@ public:
                                                                QList<OsmAnd::FColorARGB> &colorizationMapping,
                                                                QList<OsmAnd::FColorARGB> &outlineColorizationMapping,
                                                                QList<float> &heights,
+                                                               double startY31,
                                                                JointStyle jointStyle = JointStyle::MITER,
+                                                               EndCapStyle startCapStyle = EndCapStyle::BUTT,
                                                                EndCapStyle endCapStyle = EndCapStyle::BUTT,
                                                                bool solidColors = false) {
         std::vector<OsmAnd::VectorMapSymbol::Vertex> vertices;
 		create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex, vertices, points, thickness,
             outline, distances, fillColor, nearOutlineColor, farOutlineColor, colorizationMapping,
-            outlineColorizationMapping, heights, jointStyle, endCapStyle, solidColors);
+            outlineColorizationMapping, heights, startY31, jointStyle, startCapStyle, endCapStyle, solidColors);
 		return vertices;
 	}
 
@@ -138,14 +144,16 @@ public:
                          QList<OsmAnd::FColorARGB> &colorizationMapping,
                          QList<OsmAnd::FColorARGB> &outlineColorizationMapping,
                          QList<float> &heights,
+                         double startY31,
                          JointStyle jointStyle = JointStyle::MITER,
+                         EndCapStyle startCapStyle = EndCapStyle::BUTT,
                          EndCapStyle endCapStyle = EndCapStyle::BUTT,
                          bool solidColors = false) {
 		auto numVerticesBefore = vertices.size();
 
         create<Vertex, InputCollection>(vertex, std::back_inserter(vertices), points, thickness, outline, distances,
             fillColor, nearOutlineColor, farOutlineColor, colorizationMapping, outlineColorizationMapping, heights,
-            jointStyle, endCapStyle, solidColors);
+            startY31, jointStyle, startCapStyle, endCapStyle, solidColors);
 
 		return vertices.size() - numVerticesBefore;
 	}
@@ -163,7 +171,9 @@ public:
                                  QList<OsmAnd::FColorARGB> &colorizationMapping,
                                  QList<OsmAnd::FColorARGB> &outlineColorizationMapping,
                                  QList<float> &heights,
+                                 double startY31,
 	                             JointStyle jointStyle = JointStyle::MITER,
+	                             EndCapStyle startCapStyle = EndCapStyle::BUTT,
 	                             EndCapStyle endCapStyle = EndCapStyle::BUTT,
                                  bool solidColors = false) {
         OsmAnd::VectorMapSymbol::Vertex* pVertex = &vertex;
@@ -183,7 +193,9 @@ public:
 			// to avoid division-by-zero errors,
 			// only create a line segment for non-identical points
 			if (!Vec2Maths::equal(point1, point2)) {
-				segments.emplace_back(LineSegment<Vec2>(point1, point2), edgeOffset);
+                auto startEdgeOffset = correct(point1.y, startY31, edgeOffset);
+                auto endEdgeOffset = correct(point2.y, startY31, edgeOffset);
+				segments.emplace_back(LineSegment<Vec2>(point1, point2), startEdgeOffset, endEdgeOffset);
 			}
 		}
 
@@ -192,7 +204,7 @@ public:
 			return vertices;
 		}
 
-		if (endCapStyle == EndCapStyle::JOINT) {
+		if (startCapStyle == EndCapStyle::JOINT && endCapStyle == EndCapStyle::JOINT) {
 			// create a connecting segment from the last to the first point
 
 			auto &pointD1 = points[points.size() - 1];
@@ -204,7 +216,9 @@ public:
 			// to avoid division-by-zero errors,
 			// only create a line segment for non-identical points
 			if (!Vec2Maths::equal(point1, point2)) {
-				segments.emplace_back(LineSegment<Vec2>(point1, point2), edgeOffset);
+                auto startEdgeOffset = correct(point1.y, startY31, edgeOffset);
+                auto endEdgeOffset = correct(point2.y, startY31, edgeOffset);
+				segments.emplace_back(LineSegment<Vec2>(point1, point2), startEdgeOffset, endEdgeOffset);
 			}
 		}
 
@@ -223,7 +237,13 @@ public:
 		auto pathStart2 = firstSegment.edge2.a;
 		auto pathEnd1 = lastSegment.edge1.b;
 		auto pathEnd2 = lastSegment.edge2.b;
-        
+
+        auto pathStartThickness = correct(firstSegment.center.a.y, startY31, thickness);
+        auto pathEndThickness = correct(lastSegment.center.b.y, startY31, thickness);
+
+        auto pathStartEdgeOffset = pathStartThickness / 2;
+        auto pathEndEdgeOffset = pathEndThickness / 2;
+
         bool hasDistances = distances.size() == points.size();
         auto noDistance = NAN;
         bool hasColorMapping = !colorizationMapping.isEmpty();
@@ -234,14 +254,369 @@ public:
         bool showOutline = outlineWidth >= 0.0f;
 		Vec2 startSide1, startSide2, endSide1, endSide2, nextStartSide1, nextStartSide2, lastSide1, lastSide2;
 
-        // Prepare arrow parameters
-        auto midPoint = Vec2((pathEnd1.x + pathEnd2.x) / 2, (pathEnd1.y + pathEnd2.y) / 2);
-        auto arrowLength = thickness * 2;
-        auto arrowShift = arrowLength;
+        // Prepare ending arrow parameters
+        auto lastMidPoint = Vec2((pathEnd1.x + pathEnd2.x) / 2, (pathEnd1.y + pathEnd2.y) / 2);
+        auto endArrowLength = pathEndThickness * 2;
+        auto endArrowShift = endArrowLength;
         auto lastLength = Vec2Maths::magnitude(Vec2Maths::subtract(lastSegment.center.b, lastSegment.center.a));
+        auto lastSegmentD = lastSegment.center.direction();
+        auto lastSegmentN = lastSegment.center.normal();
 
 		// handle different end cap styles
-        if (endCapStyle == EndCapStyle::ROUND || endCapStyle == EndCapStyle::ARROW) {
+        if (endCapStyle == EndCapStyle::ARROW) {
+            // Define location for an arrow cap
+            if (!hasHeights && showOutline) {
+                auto arrowOutline = correct(lastMidPoint.y, startY31, outlineWidth);
+                endArrowShift += arrowOutline;
+            }
+
+            // Reserve minimum length for the last segment to avoid possible artifacts
+            auto length = lastLength;
+            length -= segmentMinLength;
+
+            if (endArrowShift > length) {
+                lastMidPoint = Vec2Maths::add(lastMidPoint, Vec2Maths::multiply(lastSegmentD, endArrowShift - length));
+                endArrowShift = length;
+            }
+
+            pathEnd1 =
+                Vec2Maths::subtract(pathEnd1, Vec2Maths::multiply(lastSegment.edge1.direction(), endArrowShift));
+            pathEnd2 =
+                Vec2Maths::subtract(pathEnd2, Vec2Maths::multiply(lastSegment.edge2.direction(), endArrowShift));
+
+            lastSegment.edge1.b = pathEnd1;
+            lastSegment.edge2.b = pathEnd2;
+            lastSegment.center.b =
+                Vec2Maths::subtract(lastSegment.center.b, Vec2Maths::multiply(lastSegmentD, endArrowShift));
+        }
+
+        if (startCapStyle == EndCapStyle::ARROW) {
+            // Prepare starting arrow parameters
+            auto firstSegmentD = firstSegment.center.direction();
+            auto firstSegmentN = firstSegment.center.normal();
+            auto firstLength =
+                Vec2Maths::magnitude(Vec2Maths::subtract(firstSegment.center.b, firstSegment.center.a));
+            auto firstMidPoint = Vec2((pathStart1.x + pathStart2.x) / 2, (pathStart1.y + pathStart2.y) / 2);
+            auto startArrowLength = pathStartThickness * 2;
+            auto startArrowShift = startArrowLength;
+
+            // Define location for an arrow cap
+            if (!hasHeights && showOutline) {
+                auto arrowOutline = correct(firstMidPoint.y, startY31, outlineWidth);
+                startArrowShift += arrowOutline;
+            }
+
+            // Reserve minimum length for the first segment to avoid possible artifacts
+            auto length = firstLength;
+            length -= segmentMinLength;
+
+            if (startArrowShift > length) {
+                firstMidPoint =
+                    Vec2Maths::subtract(firstMidPoint, Vec2Maths::multiply(firstSegmentD, startArrowShift - length));
+                startArrowShift = length;
+            }
+
+            pathStart1 =
+                Vec2Maths::add(pathStart1, Vec2Maths::multiply(firstSegment.edge1.direction(), startArrowShift));
+            pathStart2 =
+                Vec2Maths::add(pathStart2, Vec2Maths::multiply(firstSegment.edge2.direction(), startArrowShift));
+
+            firstSegment.edge1.a = pathStart1;
+            firstSegment.edge2.a = pathStart2;
+            firstSegment.center.a =
+                Vec2Maths::add(firstSegment.center.a, Vec2Maths::multiply(firstSegmentD, startArrowShift));
+
+            // Generate an arrow cap
+            auto c_pt = Vec2Maths::add(firstMidPoint, Vec2Maths::multiply(firstSegmentD, startArrowLength));
+            auto pt1 = Vec2Maths::add(c_pt, Vec2Maths::multiply(firstSegmentN, pathStartThickness));
+            auto pt2 = Vec2Maths::subtract(c_pt, Vec2Maths::multiply(firstSegmentN, pathStartThickness));
+            auto arrowCenter = Vec2((pt1.x + pt2.x) / 2, (pt1.y + pt2.y) / 2);
+            
+            auto arrowStart1 = pathStart1;
+            auto arrowStart2 = pathStart2;
+            if (showOutline) {
+                auto arrowOutline1 = correct(arrowStart1.y, startY31, outlineWidth);
+                auto arrowOutline2 = correct(arrowStart2.y, startY31, outlineWidth);
+                arrowStart1 = Vec2Maths::subtract(
+                    arrowStart1, Vec2Maths::multiply(firstSegment.edge1.direction(), arrowOutline1));
+                arrowStart2 = Vec2Maths::subtract(
+                    arrowStart2, Vec2Maths::multiply(firstSegment.edge2.direction(), arrowOutline2));
+            }
+
+            auto distance = hasDistances ? distances.first() : noDistance;
+            auto tipDistance = distance;
+            auto top = hasHeights ? heights.first() : noHeight;
+            auto tip = top;
+            if (hasDistances) {
+                auto difDistance = distance - distances[1];
+                distance -= startArrowShift * difDistance / firstLength;
+                tipDistance += (startArrowLength - startArrowShift) * difDistance / firstLength;
+            }
+            if (hasHeights) {
+                auto difHeight = top - heights[1];
+                top -= startArrowShift * difHeight / firstLength;
+                tip += (startArrowLength - startArrowShift) * difHeight / firstLength;
+            }
+
+            pVertex->color = hasColorMapping ? colorizationMapping.first() : fillColor;
+
+            pVertex->positionXYZD[0] = firstMidPoint.x;
+            pVertex->positionXYZD[1] = tip;
+            pVertex->positionXYZD[2] = firstMidPoint.y;
+            pVertex->positionXYZD[3] = tipDistance;
+            *vertices++ = vertex;
+            
+            pVertex->positionXYZD[0] = pt2.x;
+            pVertex->positionXYZD[1] = top;
+            pVertex->positionXYZD[2] = pt2.y;
+            pVertex->positionXYZD[3] = distance;
+            *vertices++ = vertex;
+            
+            pVertex->positionXYZD[0] = arrowStart2.x;
+            pVertex->positionXYZD[2] = arrowStart2.y;
+            *vertices++ = vertex;
+            *vertices++ = vertex;
+            
+            pVertex->positionXYZD[0] = arrowCenter.x;
+            pVertex->positionXYZD[2] = arrowCenter.y;
+            *vertices++ = vertex;
+            
+            pVertex->positionXYZD[0] = firstMidPoint.x;
+            pVertex->positionXYZD[1] = tip;
+            pVertex->positionXYZD[2] = firstMidPoint.y;
+            pVertex->positionXYZD[3] = tipDistance;
+            *vertices++ = vertex;
+            *vertices++ = vertex;
+            
+            pVertex->positionXYZD[0] = arrowCenter.x;
+            pVertex->positionXYZD[1] = top;
+            pVertex->positionXYZD[2] = arrowCenter.y;
+            pVertex->positionXYZD[3] = distance;
+            *vertices++ = vertex;
+
+            pVertex->positionXYZD[0] = arrowStart1.x;
+            pVertex->positionXYZD[2] = arrowStart1.y;
+            *vertices++ = vertex;
+            *vertices++ = vertex;
+           
+            pVertex->positionXYZD[0] = pt1.x;
+            pVertex->positionXYZD[2] = pt1.y;
+            *vertices++ = vertex;
+           
+            pVertex->positionXYZD[0] = firstMidPoint.x;
+            pVertex->positionXYZD[1] = tip;
+            pVertex->positionXYZD[2] = firstMidPoint.y;
+            pVertex->positionXYZD[3] = tipDistance;
+            *vertices++ = vertex;
+
+            if (!hasHeights && showOutline) {
+                pVertex->positionXYZD[0] = arrowStart2.x;
+                pVertex->positionXYZD[2] = arrowStart2.y;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = pathStart2.x;
+                pVertex->positionXYZD[2] = pathStart2.y;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = firstSegment.center.a.x;
+                pVertex->positionXYZD[2] = firstSegment.center.a.y;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = pathStart1.x;
+                pVertex->positionXYZD[2] = pathStart1.y;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = arrowStart1.x;
+                pVertex->positionXYZD[2] = arrowStart1.y;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = arrowCenter.x;
+                pVertex->positionXYZD[2] = arrowCenter.y;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = firstSegment.center.a.x;
+                pVertex->positionXYZD[2] = firstSegment.center.a.y;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = arrowCenter.x;
+                pVertex->positionXYZD[2] = arrowCenter.y;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = arrowStart2.x;
+                pVertex->positionXYZD[2] = arrowStart2.y;
+                *vertices++ = vertex;
+            }
+
+            if (showOutline) {
+                auto outline1 = correct(pathStart1.y, startY31, outlineWidth);
+                auto outline2 = correct(pathStart2.y, startY31, outlineWidth);
+                auto side1 = Vec2Maths::add(pathStart1, Vec2Maths::multiply(firstSegment.edge1.normal(), outline1));
+                auto side2 =
+                    Vec2Maths::subtract(pathStart2, Vec2Maths::multiply(firstSegment.edge2.normal(), outline2));
+                auto edgeSegment = LineSegment<Vec2>(side1, side2);
+                auto sideSegment1 = LineSegment<Vec2>(pt1, firstMidPoint);
+                auto sideSegmentN = sideSegment1.normal();
+                outline1 = correct(sideSegment1.a.y, startY31, outlineWidth);
+                outline2 = correct(sideSegment1.b.y, startY31, outlineWidth);
+                sideSegment1.a = Vec2Maths::subtract(sideSegment1.a, Vec2Maths::multiply(sideSegmentN, outline1));
+                sideSegment1.b = Vec2Maths::subtract(sideSegment1.b, Vec2Maths::multiply(sideSegmentN, outline2));
+                auto secSide1 = LineSegment<Vec2>::intersection(edgeSegment, sideSegment1, true);
+                auto arrowSide1 = secSide1.second ? secSide1.first : pt1;
+                auto sideSegment2 = LineSegment<Vec2>(pt2, firstMidPoint);
+                sideSegmentN = sideSegment2.normal();
+                outline1 = correct(sideSegment2.a.y, startY31, outlineWidth);
+                outline2 = correct(sideSegment2.b.y, startY31, outlineWidth);
+                sideSegment2.a = Vec2Maths::add(sideSegment2.a, Vec2Maths::multiply(sideSegmentN, outline1));
+                sideSegment2.b = Vec2Maths::add(sideSegment2.b, Vec2Maths::multiply(sideSegmentN, outline2));
+                auto secSide2 = LineSegment<Vec2>::intersection(edgeSegment, sideSegment2, true);
+                auto arrowSide2 = secSide2.second ? secSide2.first : pt2;
+                auto secSide3 = LineSegment<Vec2>::intersection(sideSegment1, sideSegment2, true);
+                auto arrowSide3 = secSide3.second ? secSide3.first : firstMidPoint;
+
+                auto bottom = hasHeights ? top - outline : noHeight;
+                auto tipBottom = hasHeights ? tip - outline : noHeight;
+
+                auto innerColor = nearOutlineColor;
+                auto outerColor = farOutlineColor;
+                if (showOutline && hasOutlineColorMapping) {
+                    innerColor *= outlineColorizationMapping.first();
+                    outerColor *= outlineColorizationMapping.first();
+                }
+
+                pVertex->color = outerColor;
+                pVertex->positionXYZD[0] = side2.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = side2.y;
+                pVertex->positionXYZD[3] = distance;
+                *vertices++ = vertex;
+                
+                pVertex->color = innerColor;
+                pVertex->positionXYZD[0] = pathStart2.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pathStart2.y;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = arrowStart2.x;
+                pVertex->positionXYZD[2] = arrowStart2.y;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = pt2.x;
+                pVertex->positionXYZD[2] = pt2.y;
+                *vertices++ = vertex;
+                
+                pVertex->color = outerColor;
+                pVertex->positionXYZD[0] = side2.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = side2.y;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->color = innerColor;
+                pVertex->positionXYZD[0] = pt2.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pt2.y;
+                *vertices++ = vertex;
+                
+                pVertex->color = outerColor;
+                pVertex->positionXYZD[0] = arrowSide2.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = arrowSide2.y;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->color = innerColor;
+                pVertex->positionXYZD[0] = pt2.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pt2.y;
+                *vertices++ = vertex;
+                
+                pVertex->color = outerColor;
+                pVertex->positionXYZD[0] = arrowSide3.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = arrowSide3.y;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->color = innerColor;
+                pVertex->positionXYZD[0] = pt2.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pt2.y;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = firstMidPoint.x;
+                pVertex->positionXYZD[1] = tip;
+                pVertex->positionXYZD[2] = firstMidPoint.y;
+                pVertex->positionXYZD[3] = tipDistance;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = pt1.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pt1.y;
+                pVertex->positionXYZD[3] = distance;
+                *vertices++ = vertex;
+                
+                pVertex->color = outerColor;
+                pVertex->positionXYZD[0] = arrowSide3.x;
+                pVertex->positionXYZD[1] = tipBottom;
+                pVertex->positionXYZD[2] = arrowSide3.y;
+                pVertex->positionXYZD[3] = tipDistance;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->color = innerColor;
+                pVertex->positionXYZD[0] = pt1.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pt1.y;
+                pVertex->positionXYZD[3] = distance;
+                *vertices++ = vertex;
+                
+                pVertex->color = outerColor;
+                pVertex->positionXYZD[0] = arrowSide1.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = arrowSide1.y;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->color = innerColor;
+                pVertex->positionXYZD[0] = pt1.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pt1.y;
+                *vertices++ = vertex;
+                
+                pVertex->color = outerColor;
+                pVertex->positionXYZD[0] = side1.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = side1.y;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->color = innerColor;
+                pVertex->positionXYZD[0] = pt1.x;
+                pVertex->positionXYZD[1] = top;
+                pVertex->positionXYZD[2] = pt1.y;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = arrowStart1.x;
+                pVertex->positionXYZD[2] = arrowStart1.y;
+                *vertices++ = vertex;
+                *vertices++ = vertex;
+                
+                pVertex->positionXYZD[0] = pathStart1.x;
+                pVertex->positionXYZD[2] = pathStart1.y;
+                *vertices++ = vertex;
+                
+                pVertex->color = outerColor;
+                pVertex->positionXYZD[0] = side1.x;
+                pVertex->positionXYZD[1] = bottom;
+                pVertex->positionXYZD[2] = side1.y;
+                *vertices++ = vertex;
+            }
+        } else if (startCapStyle == EndCapStyle::ROUND) {
 			// draw half circle first end cap
 			auto firstColor = hasColorMapping ? colorizationMapping.first() : fillColor;
 			auto innerColor = nearOutlineColor;
@@ -252,36 +627,11 @@ public:
             }
 			auto firstDistance = hasDistances ? distances.first() : noDistance;
 			auto firstHeight = hasHeights ? heights.first() : noHeight;
-            createTriangleFan(vertex, vertices, firstColor, firstColor, innerColor, innerColor, outerColor, outerColor,
-                outlineWidth, firstDistance, firstHeight, outline, firstSegment.center.a, firstSegment.center.a,
-                firstSegment.edge1.a, firstSegment.edge2.a, endSide1, nextStartSide1, false);
-            if (endCapStyle == EndCapStyle::ARROW) {
-                // Define location for an arrow cap
-                if (!hasHeights && showOutline) {
-                    arrowShift += outlineWidth;
-                }
-
-                // Reserve minimum length for last segment to avoid possible artifacts
-                auto length = lastLength;
-                length -= segmentMinLength;
-
-                if (arrowShift > length) {
-                    midPoint = Vec2Maths::add(midPoint, Vec2Maths::multiply(lastSegment.edge1.direction(),
-                        arrowShift - length));
-                    arrowShift = length;
-                }
-
-                pathEnd1 =
-                    Vec2Maths::subtract(pathEnd1, Vec2Maths::multiply(lastSegment.edge1.direction(), arrowShift));
-                pathEnd2 =
-                    Vec2Maths::subtract(pathEnd2, Vec2Maths::multiply(lastSegment.edge2.direction(), arrowShift));
-
-                lastSegment.edge1.b = pathEnd1;
-                lastSegment.edge2.b = pathEnd2;
-                lastSegment.center.b = Vec2Maths::subtract(
-                     lastSegment.center.b, Vec2Maths::multiply(lastSegment.center.direction(), arrowShift));
-            }
-		} else if (endCapStyle == EndCapStyle::JOINT) {
+            createTriangleFan(vertex, vertices, firstColor, firstColor, innerColor, innerColor, outerColor,
+                outerColor, outlineWidth, firstDistance, firstHeight, outline, firstSegment.center.a,
+                firstSegment.center.a, firstSegment.edge1.a, firstSegment.edge2.a, endSide1, nextStartSide1, false,
+                startY31);
+        } else if (startCapStyle == EndCapStyle::JOINT && endCapStyle == EndCapStyle::JOINT) {
 			// join the last (connecting) segment and the first segment
 			auto endColor = hasColorMapping ? colorizationMapping.last() : fillColor;
 			auto nextColor = hasColorMapping ? colorizationMapping.first() : fillColor;
@@ -294,8 +644,10 @@ public:
 			auto endOuterColor = farOutlineColor;
 			auto nextOuterColor = farOutlineColor;
             if (showOutline) {
-                side1 = Vec2Maths::add(side1, Vec2Maths::multiply(lastSegment.edge1.normal(), outlineWidth));
-                side2 = Vec2Maths::subtract(side2, Vec2Maths::multiply(lastSegment.edge2.normal(), outlineWidth));
+                auto outSide1 = correct(side1.y, startY31, outlineWidth);
+                auto outSide2 = correct(side2.y, startY31, outlineWidth);
+                side1 = Vec2Maths::add(side1, Vec2Maths::multiply(lastSegment.edge1.normal(), outSide1));
+                side2 = Vec2Maths::subtract(side2, Vec2Maths::multiply(lastSegment.edge2.normal(), outSide2));
                 if (hasOutlineColorMapping) {
                     endInnerColor *= outlineColorizationMapping.last();
                     nextInnerColor *= outlineColorizationMapping.first();
@@ -306,7 +658,7 @@ public:
             createJoint(vertex, vertices, lastSegment, firstSegment, lastSegment.edge1.a, lastSegment.edge2.a, side1,
                 side2, endColor, nextColor, endInnerColor, nextInnerColor, endOuterColor, nextOuterColor, outlineWidth,
                 distance, height, outline, jointStyle, pathEnd1, pathEnd2, pathStart1, pathStart2,
-                lastSide1, lastSide2, startSide1, startSide2, solidColors);
+                lastSide1, lastSide2, startSide1, startSide2, solidColors, startY31);
             firstSegment.edge1.a = pathStart1;
             firstSegment.edge2.a = pathStart2;
             lastSegment.edge1.b = pathEnd1;
@@ -315,14 +667,14 @@ public:
             auto pStart1 = pathStart1;
             auto pStart2 = pathStart2;
             auto pCenter = firstSegment.center.a;
-            if (endCapStyle == EndCapStyle::SQUARE) {
+            if (startCapStyle == EndCapStyle::SQUARE) {
                 // extend the start points by half the thickness
-                pStart1 =
-                    Vec2Maths::subtract(pathStart1, Vec2Maths::multiply(firstSegment.edge1.direction(), edgeOffset));
-                pStart2 =
-                    Vec2Maths::subtract(pathStart2, Vec2Maths::multiply(firstSegment.edge2.direction(), edgeOffset));
-                pCenter =
-                    Vec2Maths::subtract(pCenter, Vec2Maths::multiply(firstSegment.center.direction(), edgeOffset));
+                pStart1 = Vec2Maths::subtract(
+                    pathStart1, Vec2Maths::multiply(firstSegment.edge1.direction(), pathStartEdgeOffset));
+                pStart2 = Vec2Maths::subtract(
+                    pathStart2, Vec2Maths::multiply(firstSegment.edge2.direction(), pathStartEdgeOffset));
+                pCenter = Vec2Maths::subtract(
+                    pCenter, Vec2Maths::multiply(firstSegment.center.direction(), pathStartEdgeOffset));
 
                 pVertex->positionXYZD[3] = hasDistances ? distances.first() : noDistance;
 
@@ -372,14 +724,18 @@ public:
             }            
     		if (showOutline) {
                 // pull out start points for outline part
+                auto outPathStartSideWidth1 = correct(pStart1.y, startY31, outlineWidth);
+                auto outPathStartSideWidth2 = correct(pStart2.y, startY31, outlineWidth);
                 auto outPathStartSide1 = Vec2Maths::add(
-                    pStart1, Vec2Maths::multiply(firstSegment.edge1.normal(), outlineWidth));
+                    pStart1, Vec2Maths::multiply(firstSegment.edge1.normal(), outPathStartSideWidth1));
                 auto outPathStartSide2 = Vec2Maths::subtract(
-                    pStart2, Vec2Maths::multiply(firstSegment.edge2.normal(), outlineWidth));
+                    pStart2, Vec2Maths::multiply(firstSegment.edge2.normal(), outPathStartSideWidth2));
+                auto outPathStartWidth1 = correct(outPathStartSide1.y, startY31, outlineWidth);
+                auto outPathStartWidth2 = correct(outPathStartSide2.y, startY31, outlineWidth);
                 auto outPathStart1 = Vec2Maths::subtract(
-                    outPathStartSide1, Vec2Maths::multiply(firstSegment.edge1.direction(), outlineWidth));
+                    outPathStartSide1, Vec2Maths::multiply(firstSegment.edge1.direction(), outPathStartWidth1));
                 auto outPathStart2 = Vec2Maths::subtract(
-                    outPathStartSide2, Vec2Maths::multiply(firstSegment.edge2.direction(), outlineWidth));
+                    outPathStartSide2, Vec2Maths::multiply(firstSegment.edge2.direction(), outPathStartWidth2));
 
                 auto innerColor = nearOutlineColor;
                 auto outerColor = farOutlineColor;
@@ -456,11 +812,13 @@ public:
                 pVertex->positionXYZD[2] = outPathStart2.y;
                 *vertices++ = vertex;
 
-                if (endCapStyle == EndCapStyle::SQUARE) {
+                if (startCapStyle == EndCapStyle::SQUARE) {
+                    auto outPrevStartSideWidth1 = correct(pathStart1.y, startY31, outlineWidth);
+                    auto outPrevStartSideWidth2 = correct(pathStart2.y, startY31, outlineWidth);
                     auto outPrevStartSide1 = Vec2Maths::add(
-                        pathStart1, Vec2Maths::multiply(firstSegment.edge1.normal(), outlineWidth));
+                        pathStart1, Vec2Maths::multiply(firstSegment.edge1.normal(), outPrevStartSideWidth1));
                     auto outPrevStartSide2 = Vec2Maths::subtract(
-                        pathStart2, Vec2Maths::multiply(firstSegment.edge2.normal(), outlineWidth));
+                        pathStart2, Vec2Maths::multiply(firstSegment.edge2.normal(), outPrevStartSideWidth2));
 
                     pVertex->color = outerColor;
                     pVertex->positionXYZD[0] = outPrevStartSide1.x;
@@ -559,10 +917,12 @@ public:
 				start1 = pathStart1;
 				start2 = pathStart2;
 
-        		if (showOutline && endCapStyle != EndCapStyle::JOINT) {
+        		if (showOutline && (startCapStyle != EndCapStyle::JOINT || endCapStyle != EndCapStyle::JOINT)) {
                     auto shiftStart = Vec2Maths::normalized(Vec2Maths::subtract(start2, start1));
-                    startSide1 = Vec2Maths::subtract(start1, Vec2Maths::multiply(shiftStart, outlineWidth));
-                    startSide2 = Vec2Maths::add(start2, Vec2Maths::multiply(shiftStart, outlineWidth));
+                    auto startOutline1 = correct(start1.y, startY31, outlineWidth);
+                    auto startOutline2 = correct(start2.y, startY31, outlineWidth);
+                    startSide1 = Vec2Maths::subtract(start1, Vec2Maths::multiply(shiftStart, startOutline1));
+                    startSide2 = Vec2Maths::add(start2, Vec2Maths::multiply(shiftStart, startOutline2));
                 }
 			}
 
@@ -573,44 +933,44 @@ public:
 
                 if (endCapStyle == EndCapStyle::ARROW) {
                     if (hasDistances) {
-                        endDistance -= arrowShift * (endDistance - startDistance) / lastLength;
+                        endDistance -= endArrowShift * (endDistance - startDistance) / lastLength;
                     }
                     if (hasHeights) {
-                        endHeight -= arrowShift * (endHeight - startHeight) / lastLength;
+                        endHeight -= endArrowShift * (endHeight - startHeight) / lastLength;
                     }
                 }
 
         		if (showOutline) {
-                    if (endCapStyle == EndCapStyle::JOINT) {
+                    if (startCapStyle == EndCapStyle::JOINT && endCapStyle == EndCapStyle::JOINT) {
                         endSide1 = lastSide1;
                         endSide2 = lastSide2;
                     } else {
                         auto shiftEnd = Vec2Maths::normalized(Vec2Maths::subtract(end2, end1));
-                        endSide1 = Vec2Maths::subtract(end1, Vec2Maths::multiply(shiftEnd, outlineWidth));
-                        endSide2 = Vec2Maths::add(end2, Vec2Maths::multiply(shiftEnd, outlineWidth));
+                        auto endOutline1 = correct(end1.y, startY31, outlineWidth);
+                        auto endOutline2 = correct(end2.y, startY31, outlineWidth);
+                        endSide1 = Vec2Maths::subtract(end1, Vec2Maths::multiply(shiftEnd, endOutline1));
+                        endSide2 = Vec2Maths::add(end2, Vec2Maths::multiply(shiftEnd, endOutline2));
                     }
                 }
 			} else {
                 createJoint(vertex, vertices, segment, segments[i + 1], start1, start2, startSide1, startSide2,
                     endColor, nextColor, endInnerColor, nextInnerColor, endOuterColor, nextOuterColor, outlineWidth,
                     endDistance, endHeight, outline, jointStyle, end1, end2, nextStart1, nextStart2,
-                    endSide1, endSide2, nextStartSide1, nextStartSide2, solidColors);
+                    endSide1, endSide2, nextStartSide1, nextStartSide2, solidColors, startY31);
 			}
 
             // emit vertices
             auto startTop = startHeight;
             auto endTop = endHeight;
-            auto extraStart2 = start2;
-            auto extraEnd1 = end1;
             if (!Vec2Maths::equal(start2, end2)) {
                 pVertex->color = startColor;
                 pVertex->positionXYZD[1] = startTop;
-                pVertex->positionXYZD[0] = segment.center.a.x,
+                pVertex->positionXYZD[0] = segment.center.a.x;
                 pVertex->positionXYZD[2] = segment.center.a.y;
                 pVertex->positionXYZD[3] = startDistance;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZD[0] = start2.x,
+                pVertex->positionXYZD[0] = start2.x;
                 pVertex->positionXYZD[2] = start2.y;
                 *vertices++ = vertex;
                 
@@ -621,7 +981,6 @@ public:
                 pVertex->positionXYZD[3] = endDistance;
                 *vertices++ = vertex;
             }
-            extraStart2 = segment.center.a;
 
             if (!Vec2Maths::equal(start1, end1)) {
                 pVertex->color = endColor;
@@ -637,29 +996,28 @@ public:
                 
                 pVertex->color = startColor;
                 pVertex->positionXYZD[1] = startTop;
-                pVertex->positionXYZD[0] = start1.x,
+                pVertex->positionXYZD[0] = start1.x;
                 pVertex->positionXYZD[2] = start1.y;
                 pVertex->positionXYZD[3] = startDistance;
                 *vertices++ = vertex;
             }
-            extraEnd1 = segment.center.b;
 
             if (!Vec2Maths::equal(start1, end1)) {
                 pVertex->color = startColor;
                 pVertex->positionXYZD[1] = startTop;
-                pVertex->positionXYZD[0] = start1.x,
+                pVertex->positionXYZD[0] = start1.x;
                 pVertex->positionXYZD[2] = start1.y;
                 pVertex->positionXYZD[3] = startDistance;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZD[0] = extraStart2.x,
-                pVertex->positionXYZD[2] = extraStart2.y;
+                pVertex->positionXYZD[0] = segment.center.a.x;
+                pVertex->positionXYZD[2] = segment.center.a.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = endColor;
                 pVertex->positionXYZD[1] = endTop;
-                pVertex->positionXYZD[0] = extraEnd1.x;
-                pVertex->positionXYZD[2] = extraEnd1.y;
+                pVertex->positionXYZD[0] = segment.center.b.x;
+                pVertex->positionXYZD[2] = segment.center.b.y;
                 pVertex->positionXYZD[3] = endDistance;
                 *vertices++ = vertex;
             }
@@ -672,14 +1030,14 @@ public:
                 pVertex->positionXYZD[3] = endDistance;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZD[0] = extraEnd1.x;
-                pVertex->positionXYZD[2] = extraEnd1.y;
+                pVertex->positionXYZD[0] = segment.center.b.x;
+                pVertex->positionXYZD[2] = segment.center.b.y;
                 *vertices++ = vertex;
                 
                 pVertex->color = startColor;
                 pVertex->positionXYZD[1] = startTop;
-                pVertex->positionXYZD[0] = extraStart2.x,
-                pVertex->positionXYZD[2] = extraStart2.y;
+                pVertex->positionXYZD[0] = segment.center.a.x;
+                pVertex->positionXYZD[2] = segment.center.a.y;
                 pVertex->positionXYZD[3] = startDistance;
                 *vertices++ = vertex;
             }
@@ -692,7 +1050,7 @@ public:
                 if (!Vec2Maths::equal(start1, end1)) {
                     if (!Vec2Maths::equal(startSide1, endSide1)) {
                         pVertex->color = startOuterColor;
-                        pVertex->positionXYZD[0] = startSide1.x,
+                        pVertex->positionXYZD[0] = startSide1.x;
                         pVertex->positionXYZD[1] = startBottom;
                         pVertex->positionXYZD[2] = startSide1.y;
                         pVertex->positionXYZD[3] = startDistance;
@@ -712,7 +1070,7 @@ public:
                         *vertices++ = vertex;
                     }
                     pVertex->color = endInnerColor;
-                    pVertex->positionXYZD[0] = end1.x,
+                    pVertex->positionXYZD[0] = end1.x;
                     pVertex->positionXYZD[1] = endTop;
                     pVertex->positionXYZD[2] = end1.y;
                     pVertex->positionXYZD[3] = endDistance;
@@ -725,7 +1083,7 @@ public:
                     *vertices++ = vertex;
                     
                     pVertex->color = startInnerColor;
-                    pVertex->positionXYZD[0] = start1.x,
+                    pVertex->positionXYZD[0] = start1.x;
                     pVertex->positionXYZD[1] = startTop;
                     pVertex->positionXYZD[2] = start1.y;
                     pVertex->positionXYZD[3] = startDistance;
@@ -748,21 +1106,21 @@ public:
                         *vertices++ = vertex;
                         
                         pVertex->color = startOuterColor;
-                        pVertex->positionXYZD[0] = startSide2.x,
+                        pVertex->positionXYZD[0] = startSide2.x;
                         pVertex->positionXYZD[1] = startBottom;
                         pVertex->positionXYZD[2] = startSide2.y;
                         pVertex->positionXYZD[3] = startDistance;
                         *vertices++ = vertex;
                     }
                     pVertex->color = startInnerColor;
-                    pVertex->positionXYZD[0] = start2.x,
+                    pVertex->positionXYZD[0] = start2.x;
                     pVertex->positionXYZD[1] = startTop;
                     pVertex->positionXYZD[2] = start2.y;
                     pVertex->positionXYZD[3] = startDistance;
                     *vertices++ = vertex;
                     
                     pVertex->color = startOuterColor;
-                    pVertex->positionXYZD[0] = startSide2.x,
+                    pVertex->positionXYZD[0] = startSide2.x;
                     pVertex->positionXYZD[1] = startBottom;
                     pVertex->positionXYZD[2] = startSide2.y;
                     *vertices++ = vertex;
@@ -784,18 +1142,20 @@ public:
 
         if (endCapStyle == EndCapStyle::ARROW) {
             // Generate an arrow cap
-            auto c_pt = Vec2Maths::subtract(midPoint, Vec2Maths::multiply(lastSegment.edge1.direction(), arrowLength));
-            auto pt1 = Vec2Maths::add(c_pt, Vec2Maths::multiply(lastSegment.edge1.normal(), thickness));
-            auto pt2 = Vec2Maths::subtract(c_pt, Vec2Maths::multiply(lastSegment.edge1.normal(), thickness));
+            auto c_pt = Vec2Maths::subtract(lastMidPoint, Vec2Maths::multiply(lastSegmentD, endArrowLength));
+            auto pt1 = Vec2Maths::add(c_pt, Vec2Maths::multiply(lastSegmentN, pathEndThickness));
+            auto pt2 = Vec2Maths::subtract(c_pt, Vec2Maths::multiply(lastSegmentN, pathEndThickness));
             auto arrowCenter = Vec2((pt1.x + pt2.x) / 2, (pt1.y + pt2.y) / 2);
             
             auto arrowStart1 = pathEnd1;
             auto arrowStart2 = pathEnd2;
             if (showOutline) {
+                auto arrowOutline1 = correct(arrowStart1.y, startY31, outlineWidth);
+                auto arrowOutline2 = correct(arrowStart2.y, startY31, outlineWidth);
                 arrowStart1 =
-                    Vec2Maths::add(arrowStart1, Vec2Maths::multiply(lastSegment.edge1.direction(), outlineWidth));
+                    Vec2Maths::add(arrowStart1, Vec2Maths::multiply(lastSegment.edge1.direction(), arrowOutline1));
                 arrowStart2 =
-                    Vec2Maths::add(arrowStart2, Vec2Maths::multiply(lastSegment.edge2.direction(), outlineWidth));
+                    Vec2Maths::add(arrowStart2, Vec2Maths::multiply(lastSegment.edge2.direction(), arrowOutline2));
             }
 
             auto distance = hasDistances ? distances.last() : noDistance;
@@ -804,20 +1164,20 @@ public:
             auto tip = top;
             if (hasDistances) {
                 auto difDistance = distance - distances[distances.size() - 2];
-                distance -= arrowShift * difDistance / lastLength;
-                tipDistance += (arrowLength - arrowShift) * difDistance / lastLength;
+                distance -= endArrowShift * difDistance / lastLength;
+                tipDistance += (endArrowLength - endArrowShift) * difDistance / lastLength;
             }
             if (hasHeights) {
                 auto difHeight = top - heights[heights.size() - 2];
-                top -= arrowShift * difHeight / lastLength;
-                tip += (arrowLength - arrowShift) * difHeight / lastLength;
+                top -= endArrowShift * difHeight / lastLength;
+                tip += (endArrowLength - endArrowShift) * difHeight / lastLength;
             }
 
             pVertex->color = hasColorMapping ? colorizationMapping.last() : fillColor;
 
-            pVertex->positionXYZD[0] = midPoint.x;
+            pVertex->positionXYZD[0] = lastMidPoint.x;
             pVertex->positionXYZD[1] = tip;
-            pVertex->positionXYZD[2] = midPoint.y;
+            pVertex->positionXYZD[2] = lastMidPoint.y;
             pVertex->positionXYZD[3] = tipDistance;
             *vertices++ = vertex;
             
@@ -836,9 +1196,9 @@ public:
             pVertex->positionXYZD[2] = arrowCenter.y;
             *vertices++ = vertex;
             
-            pVertex->positionXYZD[0] = midPoint.x;
+            pVertex->positionXYZD[0] = lastMidPoint.x;
             pVertex->positionXYZD[1] = tip;
-            pVertex->positionXYZD[2] = midPoint.y;
+            pVertex->positionXYZD[2] = lastMidPoint.y;
             pVertex->positionXYZD[3] = tipDistance;
             *vertices++ = vertex;
             *vertices++ = vertex;
@@ -858,9 +1218,9 @@ public:
             pVertex->positionXYZD[2] = pt2.y;
             *vertices++ = vertex;
            
-            pVertex->positionXYZD[0] = midPoint.x;
+            pVertex->positionXYZD[0] = lastMidPoint.x;
             pVertex->positionXYZD[1] = tip;
-            pVertex->positionXYZD[2] = midPoint.y;
+            pVertex->positionXYZD[2] = lastMidPoint.y;
             pVertex->positionXYZD[3] = tipDistance;
             *vertices++ = vertex;
 
@@ -906,19 +1266,29 @@ public:
             }
 
             if (showOutline) {
-                auto side1 = Vec2Maths::add(pathEnd1, Vec2Maths::multiply(lastSegment.edge1.normal(), outlineWidth));
-                auto side2 = Vec2Maths::subtract(pathEnd2, Vec2Maths::multiply(lastSegment.edge2.normal(), outlineWidth));
+                auto outline1 = correct(pathEnd1.y, startY31, outlineWidth);
+                auto outline2 = correct(pathEnd2.y, startY31, outlineWidth);
+                auto side1 = Vec2Maths::add(pathEnd1, Vec2Maths::multiply(lastSegment.edge1.normal(), outline1));
+                auto side2 = Vec2Maths::subtract(pathEnd2, Vec2Maths::multiply(lastSegment.edge2.normal(), outline2));
                 auto edgeSegment = LineSegment<Vec2>(side1, side2);
-                auto sideSegment1 = LineSegment<Vec2>(pt1, midPoint);
-                sideSegment1 = sideSegment1 + Vec2Maths::multiply(sideSegment1.normal(), outlineWidth);
+                auto sideSegment1 = LineSegment<Vec2>(pt1, lastMidPoint);
+                auto sideSegmentN = sideSegment1.normal();
+                outline1 = correct(sideSegment1.a.y, startY31, outlineWidth);
+                outline2 = correct(sideSegment1.b.y, startY31, outlineWidth);
+                sideSegment1.a = Vec2Maths::add(sideSegment1.a, Vec2Maths::multiply(sideSegmentN, outline1));
+                sideSegment1.b = Vec2Maths::add(sideSegment1.b, Vec2Maths::multiply(sideSegmentN, outline2));
                 auto secSide1 = LineSegment<Vec2>::intersection(edgeSegment, sideSegment1, true);
                 auto arrowSide1 = secSide1.second ? secSide1.first : pt1;
-                auto sideSegment2 = LineSegment<Vec2>(pt2, midPoint);
-                sideSegment2 = sideSegment2 - Vec2Maths::multiply(sideSegment2.normal(), outlineWidth);
+                auto sideSegment2 = LineSegment<Vec2>(pt2, lastMidPoint);
+                sideSegmentN = sideSegment2.normal();
+                outline1 = correct(sideSegment2.a.y, startY31, outlineWidth);
+                outline2 = correct(sideSegment2.b.y, startY31, outlineWidth);
+                sideSegment2.a = Vec2Maths::subtract(sideSegment2.a, Vec2Maths::multiply(sideSegmentN, outline1));
+                sideSegment2.b = Vec2Maths::subtract(sideSegment2.b, Vec2Maths::multiply(sideSegmentN, outline2));
                 auto secSide2 = LineSegment<Vec2>::intersection(edgeSegment, sideSegment2, true);
                 auto arrowSide2 = secSide2.second ? secSide2.first : pt2;
                 auto secSide3 = LineSegment<Vec2>::intersection(sideSegment1, sideSegment2, true);
-                auto arrowSide3 = secSide3.second ? secSide3.first : midPoint;
+                auto arrowSide3 = secSide3.second ? secSide3.first : lastMidPoint;
 
                 auto bottom = hasHeights ? top - outline : noHeight;
                 auto tipBottom = hasHeights ? tip - outline : noHeight;
@@ -991,9 +1361,9 @@ public:
                 pVertex->positionXYZD[2] = pt1.y;
                 *vertices++ = vertex;
                 
-                pVertex->positionXYZD[0] = midPoint.x;
+                pVertex->positionXYZD[0] = lastMidPoint.x;
                 pVertex->positionXYZD[1] = tip;
-                pVertex->positionXYZD[2] = midPoint.y;
+                pVertex->positionXYZD[2] = lastMidPoint.y;
                 pVertex->positionXYZD[3] = tipDistance;
                 *vertices++ = vertex;
                 *vertices++ = vertex;
@@ -1073,16 +1443,17 @@ public:
 			auto lastHeight = hasHeights ? heights.last() : noHeight;
             createTriangleFan(vertex, vertices, lastColor, lastColor, innerColor, innerColor, outerColor, outerColor,
                 outlineWidth, lastDistance, lastHeight, outline, lastSegment.center.b, lastSegment.center.b,
-                lastSegment.edge2.b, lastSegment.edge1.b, endSide1, nextStartSide1, false);
-        } else if (endCapStyle != EndCapStyle::JOINT) {
+                lastSegment.edge2.b, lastSegment.edge1.b, endSide1, nextStartSide1, false, startY31);
+        } else if (startCapStyle != EndCapStyle::JOINT || endCapStyle != EndCapStyle::JOINT) {
             auto pEnd1 = pathEnd1;
             auto pEnd2 = pathEnd2;
             auto pCenter = lastSegment.center.b;
             if (endCapStyle == EndCapStyle::SQUARE) {
                 // extend the end points by half the thickness
-                pEnd1 = Vec2Maths::add(pEnd1, Vec2Maths::multiply(lastSegment.edge1.direction(), edgeOffset));
-                pEnd2 = Vec2Maths::add(pEnd2, Vec2Maths::multiply(lastSegment.edge2.direction(), edgeOffset));
-                pCenter = Vec2Maths::add(pCenter, Vec2Maths::multiply(lastSegment.center.direction(), edgeOffset));
+                pEnd1 = Vec2Maths::add(pEnd1, Vec2Maths::multiply(lastSegment.edge1.direction(), pathEndEdgeOffset));
+                pEnd2 = Vec2Maths::add(pEnd2, Vec2Maths::multiply(lastSegment.edge2.direction(), pathEndEdgeOffset));
+                pCenter = Vec2Maths::add(
+                    pCenter, Vec2Maths::multiply(lastSegment.center.direction(), pathEndEdgeOffset));
 
                 auto distance = hasDistances ? distances.last() : noDistance;
                 auto top = hasHeights ? heights.last() : noHeight;
@@ -1134,14 +1505,18 @@ public:
             if (showOutline)
             {
                 // pull out end points for outline part
+                auto outPathEndSideWidth1 = correct(pEnd1.y, startY31, outlineWidth);
+                auto outPathEndSideWidth2 = correct(pEnd2.y, startY31, outlineWidth);
                 auto outPathEndSide1 =
-                    Vec2Maths::add(pEnd1, Vec2Maths::multiply(lastSegment.edge1.normal(), outlineWidth));
+                    Vec2Maths::add(pEnd1, Vec2Maths::multiply(lastSegment.edge1.normal(), outPathEndSideWidth1));
                 auto outPathEndSide2 =
-                    Vec2Maths::subtract(pEnd2, Vec2Maths::multiply(lastSegment.edge2.normal(), outlineWidth));
-                auto outPathEnd1 =
-                    Vec2Maths::add(outPathEndSide1, Vec2Maths::multiply(lastSegment.edge1.direction(), outlineWidth));
-                auto outPathEnd2 =
-                    Vec2Maths::add(outPathEndSide2, Vec2Maths::multiply(lastSegment.edge2.direction(), outlineWidth));
+                    Vec2Maths::subtract(pEnd2, Vec2Maths::multiply(lastSegment.edge2.normal(), outPathEndSideWidth2));
+                auto outPathEndWidth1 = correct(outPathEndSide1.y, startY31, outlineWidth);
+                auto outPathEndWidth2 = correct(outPathEndSide2.y, startY31, outlineWidth);
+                auto outPathEnd1 = Vec2Maths::add(
+                    outPathEndSide1, Vec2Maths::multiply(lastSegment.edge1.direction(), outPathEndWidth1));
+                auto outPathEnd2 = Vec2Maths::add(
+                    outPathEndSide2, Vec2Maths::multiply(lastSegment.edge2.direction(), outPathEndWidth2));
 
                 auto distance = hasDistances ? distances.last() : noDistance;
                 auto top = hasHeights ? heights.last() : noHeight;
@@ -1219,10 +1594,12 @@ public:
                 *vertices++ = vertex;
 
                 if (endCapStyle == EndCapStyle::SQUARE) {
+                    auto outPrevEndSideWidth1 = correct(pathEnd1.y, startY31, outlineWidth);
+                    auto outPrevEndSideWidth2 = correct(pathEnd2.y, startY31, outlineWidth);
                     auto outPrevEndSide1 = Vec2Maths::add(
-                        pathEnd1, Vec2Maths::multiply(lastSegment.edge1.normal(), outlineWidth));
+                        pathEnd1, Vec2Maths::multiply(lastSegment.edge1.normal(), outPrevEndSideWidth1));
                     auto outPrevEndSide2 = Vec2Maths::subtract(
-                        pathEnd2, Vec2Maths::multiply(lastSegment.edge2.normal(), outlineWidth));
+                        pathEnd2, Vec2Maths::multiply(lastSegment.edge2.normal(), outPrevEndSideWidth2));
 
                     pVertex->color = outerColor;
                     pVertex->positionXYZD[0] = outPathEndSide1.x;
@@ -1302,20 +1679,40 @@ private:
 	 */
 	static constexpr float roundMinAngle = 0.174533; // ~10 degrees
 
-	template<typename Vec2>
+	/**
+	 * The full range of map in 31-coordinates.
+	 */
+	static constexpr double intFull = static_cast<double>(INT32_MAX) + 1.0;
+
+    template<typename Vec2>
 	struct PolySegment {
-		PolySegment(const LineSegment<Vec2> &center, float thickness) :
+		PolySegment(const LineSegment<Vec2> &center, float startThickness, float endThickness) :
 				center(center),
+                edge1(center),
+                edge2(center) {
 				// calculate the segment's outer edges by offsetting
 				// the central line by the normal vector
 				// multiplied with the thickness
 
-				// center + center.normal() * thickness
-				edge1(center + Vec2Maths::multiply(center.normal(), thickness)),
-				edge2(center - Vec2Maths::multiply(center.normal(), thickness)) {}
+                auto norm = center.normal();
+                auto startShift = Vec2Maths::multiply(norm, startThickness);
+                auto endShift = Vec2Maths::multiply(norm, endThickness);
+                edge1.a = (center + startShift).a;
+                edge1.b = (center + endShift).b;
+                edge2.a = (center - startShift).a;
+                edge2.b = (center - endShift).b;
+            }
 
 		LineSegment<Vec2> center, edge1, edge2;
 	};
+
+	inline static float correct(double y, double startY31, float thickness) {
+        if (isnan(startY31))
+            return thickness;
+        auto s = sinh((2.0 * M_PI * (y + startY31)) / intFull - M_PI);
+        auto f = static_cast<float>(qSqrt(s * s + 1.0));
+        return thickness * f;
+    }
 
 	template<typename Vec2, typename OutputIterator>
 	inline static OutputIterator createJoint(OsmAnd::VectorMapSymbol::Vertex &vertex,
@@ -1341,7 +1738,8 @@ private:
 	                                  Vec2 &nextStart1, Vec2 &nextStart2,
                                       Vec2 &endSide1, Vec2 &endSide2,
 	                                  Vec2 &nextStartSide1, Vec2 &nextStartSide2,
-                                      bool solidColors) {
+                                      bool solidColors,
+                                      double startY31) {
         OsmAnd::VectorMapSymbol::Vertex* pVertex = &vertex;
         bool showOutline = outlineWidth >= 0.0f;
 
@@ -1369,10 +1767,34 @@ private:
         auto nextSegmentSide2 = segment2.edge2;
 
         if (showOutline) {
-            thisSegmentSide1 = thisSegmentSide1 + Vec2Maths::multiply(thisSegmentSide1.normal(), outlineWidth);
-            thisSegmentSide2 = thisSegmentSide2 - Vec2Maths::multiply(thisSegmentSide2.normal(), outlineWidth);
-            nextSegmentSide1 = nextSegmentSide1 + Vec2Maths::multiply(nextSegmentSide1.normal(), outlineWidth);
-            nextSegmentSide2 = nextSegmentSide2 - Vec2Maths::multiply(nextSegmentSide2.normal(), outlineWidth);
+            auto thisSegmentSideN = thisSegmentSide1.normal();
+            auto thisSegmentOutline = correct(thisSegmentSide1.a.y, startY31, outlineWidth);
+            thisSegmentSide1.a =
+                Vec2Maths::add(thisSegmentSide1.a, Vec2Maths::multiply(thisSegmentSideN, thisSegmentOutline));
+            thisSegmentOutline = correct(thisSegmentSide1.b.y, startY31, outlineWidth);
+            thisSegmentSide1.b =
+                Vec2Maths::add(thisSegmentSide1.b, Vec2Maths::multiply(thisSegmentSideN, thisSegmentOutline));
+            thisSegmentSideN = thisSegmentSide2.normal();
+            thisSegmentOutline = correct(thisSegmentSide2.a.y, startY31, outlineWidth);
+            thisSegmentSide2.a =
+                Vec2Maths::subtract(thisSegmentSide2.a, Vec2Maths::multiply(thisSegmentSideN, thisSegmentOutline));
+            thisSegmentOutline = correct(thisSegmentSide2.b.y, startY31, outlineWidth);
+            thisSegmentSide2.b =
+                Vec2Maths::subtract(thisSegmentSide2.b, Vec2Maths::multiply(thisSegmentSideN, thisSegmentOutline));
+            auto nextSegmentSideN = nextSegmentSide1.normal();
+            auto nextSegmentOutline = correct(nextSegmentSide1.a.y, startY31, outlineWidth);
+            nextSegmentSide1.a =
+                Vec2Maths::add(nextSegmentSide1.a, Vec2Maths::multiply(nextSegmentSideN, nextSegmentOutline));
+            nextSegmentOutline = correct(nextSegmentSide1.b.y, startY31, outlineWidth);
+            nextSegmentSide1.b =
+                Vec2Maths::add(nextSegmentSide1.b, Vec2Maths::multiply(nextSegmentSideN, nextSegmentOutline));
+            nextSegmentSideN = nextSegmentSide2.normal();
+            nextSegmentOutline = correct(nextSegmentSide2.a.y, startY31, outlineWidth);
+            nextSegmentSide2.a =
+                Vec2Maths::subtract(nextSegmentSide2.a, Vec2Maths::multiply(nextSegmentSideN, nextSegmentOutline));
+            nextSegmentOutline = correct(nextSegmentSide2.b.y, startY31, outlineWidth);
+            nextSegmentSide2.b =
+                Vec2Maths::subtract(nextSegmentSide2.b, Vec2Maths::multiply(nextSegmentSideN, nextSegmentOutline));
             thisSegmentSide1.a = startSide1;
             thisSegmentSide2.a = startSide2;
         }
@@ -1488,8 +1910,10 @@ private:
                 auto nextDist = Vec2Maths::dot(secondNorm, inner2->a);
                 auto startDist = Vec2Maths::dot(secondNorm, inner1->a) - nextDist;
                 auto endDist = Vec2Maths::dot(secondNorm, inner1->b) - nextDist;
-                innerSec = !showOutline && ((startDist > 0 && endDist > 0) || (startDist < 0 && endDist < 0))
-                    ? segment1.center.b : inner1->b;
+                innerSec = /* Disabled due to artifacts on the spherical map:
+                    !showOutline && ((startDist > 0 && endDist > 0) || (startDist < 0 && endDist < 0))
+                    ? segment1.center.b : */
+                    inner1->b;
 			}
 
 			if (clockwise) {
@@ -1547,13 +1971,25 @@ private:
                 if (showOutline) {
                     auto sideSegment = LineSegment<Vec2>(outer1->b, outer2->a);
                     if (clockwise) {
-                        sideSegment = sideSegment + Vec2Maths::multiply(sideSegment.normal(), outlineWidth);
+                        auto segmentSideN = sideSegment.normal();
+                        auto sideSegmentOutline = correct(sideSegment.a.y, startY31, outlineWidth);
+                        sideSegment.a =
+                            Vec2Maths::add(sideSegment.a, Vec2Maths::multiply(segmentSideN, sideSegmentOutline));
+                        sideSegmentOutline = correct(sideSegment.b.y, startY31, outlineWidth);
+                        sideSegment.b =
+                            Vec2Maths::add(sideSegment.b, Vec2Maths::multiply(segmentSideN, sideSegmentOutline));
                         auto secEndSide = LineSegment<Vec2>::intersection(thisSegmentSide1, sideSegment, true);
                         endSide = secEndSide.second ? secEndSide.first : thisSegmentSide1.b;
                         auto secNextStartSide = LineSegment<Vec2>::intersection(nextSegmentSide1, sideSegment, true);
     	    			nextStartSide = secNextStartSide.second ? secNextStartSide.first : nextSegmentSide1.a;
                     } else {
-                        sideSegment = sideSegment - Vec2Maths::multiply(sideSegment.normal(), outlineWidth);
+                        auto segmentSideN = sideSegment.normal();
+                        auto sideSegmentOutline = correct(sideSegment.a.y, startY31, outlineWidth);
+                        sideSegment.a =
+                            Vec2Maths::subtract(sideSegment.a, Vec2Maths::multiply(segmentSideN, sideSegmentOutline));
+                        sideSegmentOutline = correct(sideSegment.b.y, startY31, outlineWidth);
+                        sideSegment.b =
+                            Vec2Maths::subtract(sideSegment.b, Vec2Maths::multiply(segmentSideN, sideSegmentOutline));
                         auto secEndSide = LineSegment<Vec2>::intersection(thisSegmentSide2, sideSegment, true);
                         endSide = secEndSide.second ? secEndSide.first : thisSegmentSide2.b;
                         auto secNextStartSide = LineSegment<Vec2>::intersection(nextSegmentSide2, sideSegment, true);
@@ -1631,7 +2067,8 @@ private:
                 auto secondFarColor = withIntersection && solidColors ? nextFarOutlineColor : endFarOutlineColor;
                 createTriangleFan(vertex, vertices, endColor, secondColor, endNearOutlineColor, secondNearColor,
                     endFarOutlineColor, secondFarColor, outlineWidth, distance, height, outlineHeight,
-                    segment1.center.b, segment1.center.b, outer1->b, outer2->a, endSide, nextStartSide, clockwise);
+                    segment1.center.b, segment1.center.b, outer1->b, outer2->a, endSide, nextStartSide, clockwise,
+                    startY31);
 			}
             if (showOutline) {
                 if (clockwise) {
@@ -1682,7 +2119,8 @@ private:
                                             const Vec2 &end,
                                             Vec2 &endSide,
                                             Vec2 &nextStartSide,
-                                            bool clockwise) {
+                                            bool clockwise,
+                                            double startY31) {
 
         OsmAnd::VectorMapSymbol::Vertex* pVertex = &vertex;
 		auto point1 = Vec2Maths::subtract(start, origin);
@@ -1719,7 +2157,8 @@ private:
         float bottom = height == OsmAnd::VectorMapSymbol::_absentElevation ? height : height - outlineHeight;
         bool showOutline = outlineWidth >= 0.0f;
         if (showOutline) {
-            startPointSide = Vec2Maths::add(start, Vec2Maths::multiply(Vec2Maths::normalized(point1), outlineWidth));
+            auto startOutline = correct(start.y, startY31, outlineWidth);
+            startPointSide = Vec2Maths::add(start, Vec2Maths::multiply(Vec2Maths::normalized(point1), startOutline));
             endSide = startPointSide;
         }
 		for (int t = 0; t < numTriangles; t++) {
@@ -1730,7 +2169,8 @@ private:
 
 				// pull out end point for outline
                 if (showOutline) {
-                    endPointSide = Vec2Maths::add(end, Vec2Maths::multiply(Vec2Maths::normalized(point2), outlineWidth));
+                    auto endOutline = correct(end.y, startY31, outlineWidth);
+                    endPointSide = Vec2Maths::add(end, Vec2Maths::multiply(Vec2Maths::normalized(point2), endOutline));
                 }
 			} else {
 				auto rot = (t + 1) * triAngle;
@@ -1741,7 +2181,9 @@ private:
 
 				// pull out end point for outline
                 if (showOutline) {
-                    endPointSide = Vec2Maths::add(endPoint, Vec2Maths::multiply(Vec2Maths::normalized(endPoint), outlineWidth));
+                    auto pointOutline = correct(endPoint.y + origin.y, startY31, outlineWidth);
+                    endPointSide =
+                        Vec2Maths::add(endPoint, Vec2Maths::multiply(Vec2Maths::normalized(endPoint), pointOutline));
                     endPointSide = Vec2Maths::add(endPointSide, origin);
                 }
 
