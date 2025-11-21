@@ -329,17 +329,14 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
     const int edgePointsCount = points31.size();
 
     int totalTopVertices = edgePointsCount;
-    int totalWallVertices = edgePointsCount * 4;
     int totalSideTriangles = edgePointsCount * 2;
     
     for (const auto& innerPoly : innerPolygons)
     {
         totalTopVertices += innerPoly.size();
-        totalWallVertices += innerPoly.size() * 4;
         totalSideTriangles += innerPoly.size() * 2;
     }
-    
-    const int totalVertices = totalTopVertices + totalWallVertices;
+
     const int topTriangles = edgePointsCount - 2;
     const int totalIndices = (topTriangles + totalSideTriangles) * 3;
 
@@ -514,5 +511,4 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         }
         currentWallBaseIdx += innerPoly.size() * 4;
     }
-
 }

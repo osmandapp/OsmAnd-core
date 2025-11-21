@@ -128,12 +128,9 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
 
     const size_t vertexBufferSize = buildings3D.vertices.size() * sizeof(BuildingVertex);
     std::shared_ptr<const GPUAPI::ArrayBufferInGPU> vertexBufferInGPU;
-    const bool vertexUploadSuccess = resourcesManager->uploadVerticesToGPU(
-        buildings3D.vertices.constData(),
-        vertexBufferSize,
-        buildings3D.vertices.size(),
-        vertexBufferInGPU,
-        false);
+
+    const bool vertexUploadSuccess = resourcesManager->uploadVerticesToGPU(buildings3D.vertices.constData(),
+        vertexBufferSize, buildings3D.vertices.size(), vertexBufferInGPU, false);
 
     if (!vertexUploadSuccess)
     {
@@ -144,12 +141,9 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
 
     const size_t indexBufferSize = buildings3D.indices.size() * sizeof(uint16_t);
     std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU> indexBufferInGPU;
-    const bool indexUploadSuccess = resourcesManager->uploadIndicesToGPU(
-        buildings3D.indices.constData(),
-        indexBufferSize,
-        buildings3D.indices.size(),
-        indexBufferInGPU,
-        false);
+
+    const bool indexUploadSuccess = resourcesManager->uploadIndicesToGPU(buildings3D.indices.constData(),
+        indexBufferSize, buildings3D.indices.size(), indexBufferInGPU, false);
 
     if (!indexUploadSuccess)
     {
@@ -166,7 +160,6 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
     _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
     _performanceDebugInfo.totalGpuMemoryBytes = totalGpuMemoryBytes;
 
-    //_sourceData.reset();
     return true;
 }
 
