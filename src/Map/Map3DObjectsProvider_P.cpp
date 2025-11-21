@@ -177,6 +177,15 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
                 isEdge = true;
                 break;
             }
+
+            if (pPrimitiveAttribute->tag == QLatin1String("layer"))
+            {
+                if (pPrimitiveAttribute->value == QLatin1String("-1"))
+                {
+                    isEdge = true;
+                    break;
+                }
+            }
         }
 
         if (!isEdge)
@@ -222,14 +231,11 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
 
     FColorARGB color = getDefaultBuildingsColor();
 
-    int layer = 0;
-
     bool heightFound = false;
     bool minHeightFound = false;
     bool levelsFound = false;
     bool minLevelsFound = false;
     bool colorFound = false;
-    bool layerFound = false;
 
     for (const auto& captionAttributeId : constOf(sourceObject->captionsOrder))
     {
@@ -268,17 +274,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
             color.a = getDefaultBuildingsAlpha();
             continue;
         }
-
-        if (!layerFound && captionTag == QStringLiteral("layer"))
-        {
-            layer = OsmAnd::Utilities::parseLength(caption, layer, &layerFound);
-            continue;
-        }
-    }
-
-    if (layer == -1)
-    {
-        return;
     }
 
     if (!heightFound && levelsFound)
@@ -329,20 +324,14 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
     const int edgePointsCount = points31.size();
 
     int totalTopVertices = edgePointsCount;
-    int totalSideTriangles = edgePointsCount * 2;
-    
+
     for (const auto& innerPoly : innerPolygons)
     {
         totalTopVertices += innerPoly.size();
-        totalSideTriangles += innerPoly.size() * 2;
     }
 
     const int topTriangles = edgePointsCount - 2;
-    const int totalIndices = (topTriangles + totalSideTriangles) * 3;
-
     const int currentVertexOffset = buildings3D.vertices.size();
-    const int currentIndexOffset = buildings3D.indices.size();
-    const uint64_t buildingId = sourceObject->id.id;
 
     QVector<glm::vec3> sideNormals;
     sideNormals.resize(edgePointsCount);
