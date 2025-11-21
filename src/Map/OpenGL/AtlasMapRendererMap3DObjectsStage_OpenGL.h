@@ -36,7 +36,7 @@ namespace OsmAnd
         };
 
         ElevationData findElevationData(const TileId& tileIdN, ZoomLevel buildingZoom);
-        int drawResource(const TileId& id, ZoomLevel z, const std::shared_ptr<MapRenderer3DObjectsResource>& res, QVector<uint64_t>& drawnIds, const ElevationData& elevationData);
+        void drawResource(const TileId& id, ZoomLevel z, const std::shared_ptr<MapRenderer3DObjectsResource>& res, const ElevationData& elevationData);
 
         void configureElevationData(
             const std::shared_ptr<const GPUAPI::ResourceInGPU>& elevationDataResource,
@@ -61,13 +61,14 @@ namespace OsmAnd
                     GLlocation location31;
                     GLlocation height;
                     GLlocation normal;
+                    GLlocation color;
                 } in;
 
                 // Params
                 struct
                 {
                     GLlocation mPerspectiveProjectionView;
-                    GLlocation color;
+                    GLlocation alpha;
                     GLlocation target31;
                     GLlocation zoomLevel;
                     GLlocation tileZoomLevel;

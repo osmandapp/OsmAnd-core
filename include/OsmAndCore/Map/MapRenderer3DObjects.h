@@ -15,14 +15,14 @@ namespace OsmAnd
         glm::ivec2 location31;
         float height;
         glm::vec3 normal;
+        glm::vec3 color;
     };
 
-    struct Building3D
+    struct Buildings3D
     {
         QVector<BuildingVertex> vertices;
         QVector<uint16_t> indices;
-        FColorARGB color;
-        uint64_t id;
+        QVector<FColorARGB> colors;
     };
 }
 

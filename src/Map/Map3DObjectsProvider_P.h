@@ -23,7 +23,7 @@ namespace OsmAnd
         std::shared_ptr<MapPrimitivesProvider> _tiledProvider;
         std::shared_ptr<MapPresentationEnvironment> _environment;
 
-        void processPrimitive(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive, QVector<Building3D>& buildings3D,
+        void processPrimitive(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive, Buildings3D& buildings3D,
                               const MapPrimitiviser::PrimitivesCollection& PrimitivesCollection) const;
 
     protected:
