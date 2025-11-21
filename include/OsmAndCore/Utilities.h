@@ -1295,6 +1295,16 @@ namespace OsmAnd
             return offset31;
         }
 
+        inline static glm::mat3 getModelRotationMatrix(const PointD& angles)
+        {
+            const auto sx = qSin(static_cast<float>(angles.x));
+            const auto cx = qCos(static_cast<float>(angles.x));
+            const auto sy = qSin(static_cast<float>(angles.y));
+            const auto cy = qCos(static_cast<float>(angles.y));
+            return glm::mat3(cx, -sx, 0.0f, sx * cy, cx * cy, -sy, sx * sy, cx * sy, cy);
+        }
+
+
         inline static glm::dvec3 getGlobeRadialVector(const PointD& angles)
         {
             const auto csy = qCos(angles.y);

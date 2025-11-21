@@ -647,8 +647,8 @@ bool OsmAnd::VectorLine_P::applyChanges()
                 symbol->startingDistance = _startingDistance;
                 if (needUpdatePrimitive && (_points.size() < 2 || !generatePrimitive(symbol)))
                 {
-                        symbol->isHidden = true;
-                        result = false;
+                    symbol->isHidden = true;
+                    result = false;
                 }
             }
         }
@@ -898,6 +898,8 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
     for (int shiftX = minShiftX; shiftX <= maxShiftX; shiftX++)
     {
         const auto shift = intFull * shiftX;
+        if (!bbox.intersects(visibleArea64 + PointI64(shift, 0)))
+            continue;
         bool segmentStarted = false;
         distanceTo = pointDistances.at(0);
         distanceSubTo = pointDistances.at(0);
@@ -1281,7 +1283,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
     double thickness = _lineWidth * scale * visualShiftCoef * 2.0;
     double outlineThickness = _outlineWidth * scale * visualShiftCoef * 2.0;
     bool approximate = _isApproximationEnabled;
-    double simplificationRadius = thickness / (_flatEarth ? 6.0 : 32.0);
+    double simplificationRadius = thickness / (_flatEarth ? 6.0 : 12.0);
 
     vectorLine->order = owner->baseOrder + 1;
     vectorLine->primitiveType = VectorMapSymbol::PrimitiveType::Triangles;
@@ -1307,8 +1309,10 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
     auto partSizes =
         std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>);
     const auto zoomLevel = _mapZoomLevel < MaxZoomLevel ? static_cast<ZoomLevel>(_mapZoomLevel + 1) : _mapZoomLevel;
-	const auto cellsPerTileSize = _hasElevationDataResources ?
-        (AtlasMapRenderer::HeixelsPerTileSide - 1) / (1 << (zoomLevel - _mapZoomLevel)) : 2;
+    const auto cellsPerTileSize =
+        _hasElevationDataResources ? (AtlasMapRenderer::HeixelsPerTileSide - 1) / (1 << (zoomLevel - _mapZoomLevel))
+        // Use selective granularity to avoid collisions with the surface
+        : (_flatEarth ? 0 : (_mapZoomLevel < 3 ? 4 : (_mapZoomLevel < 6 ? 2 : 1)));
     bool tesselated = true;
 
     const auto startPos = PointD(startPoint);

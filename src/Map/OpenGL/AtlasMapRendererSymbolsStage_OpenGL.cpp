@@ -2282,23 +2282,18 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
         : Utilities::sphericalWorldCoordinates(position31,
             internalState.mGlobeRotationPrecise, internalState.globeRadius, renderable->elevationInWorld, &angles, &n);
 
-    // Slightly extrude arrows up to vector lines (must exactly match the vector shader code)
+    // Slightly lift arrows up to their vector lines (must exactly match shader code for vector lines)
     if (renderable->adjustElevationToVectorObject)
     {
         const auto c = internalState.worldCameraPosition - positionInWorld;
         const auto dist = glm::length(c);
         const auto  extraZfar = 2.0f * dist / internalState.zFar;
         const auto  extraCam = dist / glm::length(internalState.worldCameraPosition);
-        positionInWorld += (glm::vec3(n) * 0.3f + c / dist * 0.7f) * (fmin(extraZfar, extraCam) + 0.1f);
+        positionInWorld += glm::normalize(glm::vec3(n) * 0.3f + c / dist * 0.7f) * (fmin(extraZfar, extraCam) + 0.1f);
     }
 
-    auto rotateModel = glm::mat4(1.0f);
-    if (!currentState.flatEarth)
-    {
-        const auto mRotationX = glm::rotate(static_cast<float>(angles.y), glm::vec3(-1.0f, 0.0f, 0.0f));
-        const auto mRotationZ = glm::rotate(static_cast<float>(angles.x), glm::vec3(0.0f, 0.0f, -1.0f));
-        rotateModel = glm::mat4(internalState.mGlobeRotationPrecise) * mRotationZ * mRotationX;
-    }
+    const auto rotateModel = currentState.flatEarth ? glm::mat4(1.0f)
+        : glm::mat4(glm::mat3(internalState.mGlobeRotationPrecise) * Utilities::getModelRotationMatrix(angles));
     const auto shiftModel = glm::translate(positionInWorld);
     const auto mPlacement = shiftModel * rotateModel;
 
