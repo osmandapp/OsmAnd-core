@@ -2293,7 +2293,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     }
 
     const auto rotateModel = currentState.flatEarth ? glm::mat4(1.0f)
-        : glm::mat4(glm::mat3(internalState.mGlobeRotationPrecise) * Utilities::getModelRotationMatrix(angles));
+        : glm::mat4(internalState.mGlobeRotation * Utilities::getModelRotationMatrix(angles));
     const auto shiftModel = glm::translate(positionInWorld);
     const auto mPlacement = shiftModel * rotateModel;
 

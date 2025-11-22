@@ -145,7 +145,6 @@ namespace OsmAnd
             const uint begin,
             const uint end,
             const double epsilon,
-            const double startY31,
             std::vector<bool>& include) const;
         bool forceIncludePoint(const QList<FColorARGB>& pointsColors, const uint pointIndex) const;
         bool isBigDiff(const ColorARGB& firstColor, const ColorARGB& secondColor) const;

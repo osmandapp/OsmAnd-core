@@ -754,9 +754,9 @@ int OsmAnd::VectorLine_P::simplifyDouglasPeucker(
     const uint start,
     const uint end,
     const double epsilon,
-    const double startY31,
     std::vector<bool>& include) const
 {
+    const auto startY31 = _flatEarth ? NAN : static_cast<double>(1ll + INT32_MAX) / 2.0;
     PointD startPoint = static_cast<PointD>(points[start]);
     PointD endPoint = static_cast<PointD>(points[end]);
     double dmax = -1;
@@ -776,8 +776,8 @@ int OsmAnd::VectorLine_P::simplifyDouglasPeucker(
     }
     if (index > -1 && dmax >= correctDistance(points[index].y, startY31, epsilon))
     {
-        int enabled1 = simplifyDouglasPeucker(points, start, index, epsilon, startY31, include);
-        int enabled2 = simplifyDouglasPeucker(points, index, end, epsilon, startY31, include);
+        int enabled1 = simplifyDouglasPeucker(points, start, index, epsilon, include);
+        int enabled2 = simplifyDouglasPeucker(points, index, end, epsilon, include);
         return enabled1 + enabled2;
     }
     else
@@ -1283,7 +1283,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
     double thickness = _lineWidth * scale * visualShiftCoef * 2.0;
     double outlineThickness = _outlineWidth * scale * visualShiftCoef * 2.0;
     bool approximate = _isApproximationEnabled;
-    double simplificationRadius = thickness / (_flatEarth ? 6.0 : 12.0);
+    double simplificationRadius = thickness / 6.0;
 
     vectorLine->order = owner->baseOrder + 1;
     vectorLine->primitiveType = VectorMapSymbol::PrimitiveType::Triangles;
@@ -1342,7 +1342,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
         if (approximate)
         {
             include[0] = true;
-            simplifyDouglasPeucker(points, 0, (uint) points.size() - 1, simplificationRadius, startY31, include);
+            simplifyDouglasPeucker(points, 0, (uint) points.size() - 1, simplificationRadius, include);
         }
 
         // Generate base points to draw a stripe around

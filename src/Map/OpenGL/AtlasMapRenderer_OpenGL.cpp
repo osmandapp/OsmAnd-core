@@ -429,6 +429,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     const auto sy = qSin(angles.y);
     const auto cy = qCos(angles.y);
     internalState->mGlobeRotationPrecise = glm::dmat3(cx, sx * cy, sx * sy, -sx, cx * cy, cx * sy, 0.0, -sy, cy);
+    internalState->mGlobeRotation = glm::mat3(internalState->mGlobeRotationPrecise);
     internalState->mGlobeRotationWithRadius = glm::mat3(internalState->mGlobeRotationPrecise * radiusInWorld);
     internalState->mGlobeRotationPreciseInv = glm::transpose(internalState->mGlobeRotationPrecise);
 

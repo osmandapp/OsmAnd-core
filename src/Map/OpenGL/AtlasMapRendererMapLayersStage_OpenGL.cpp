@@ -189,10 +189,7 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererMapLayersStage_Ope
     if (currentState.flatEarth)
         headingDirection = directionVector;
     else
-    {
-        const auto rm = glm::mat3(internalState.mGlobeRotationPrecise) * Utilities::getModelRotationMatrix(angles);
-        headingDirection = rm * directionVector;
-    }
+        headingDirection = internalState.mGlobeRotation * Utilities::getModelRotationMatrix(angles) * directionVector;
 
     GLname lastUsedProgram;
     bool withElevation = true;

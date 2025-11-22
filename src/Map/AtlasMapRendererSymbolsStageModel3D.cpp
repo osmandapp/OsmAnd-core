@@ -244,7 +244,7 @@ void OsmAnd::AtlasMapRendererSymbolsStageModel3D::obtainRenderables(
             const auto positionInWorld = Utilities::sphericalWorldCoordinates(position31,
                 internalState.mGlobeRotationPrecise, internalState.globeRadius, height, &angles);
             const auto rotateModel =
-                glm::mat4(glm::mat3(internalState.mGlobeRotationPrecise) * Utilities::getModelRotationMatrix(angles));
+                glm::mat4(internalState.mGlobeRotation * Utilities::getModelRotationMatrix(angles));
             const auto placeModel = glm::translate(positionInWorld);
             const auto mModel = placeModel * rotateModel * mLocalModel;
 
