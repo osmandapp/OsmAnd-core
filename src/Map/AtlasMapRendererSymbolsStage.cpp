@@ -2156,22 +2156,30 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         position31, ZoomLevel31), currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
 
     // Get elevation scale factor (affects distance from the surface)
-    bool isRasterMapSymbol = false;
     float elevationFactor = 1.0f;
+    bool adjustElevationToVectorObject = false;
+    bool isRasterMapSymbol = false;
     if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const OnSurfaceRasterMapSymbol>(mapSymbol))
     {
         elevationFactor = rasterMapSymbol->getElevationScaleFactor();
+        adjustElevationToVectorObject = rasterMapSymbol->getAdjustElevationToVectorObject();
         isRasterMapSymbol = true;
     }
     else if (const auto& vectorMapSymbol = std::dynamic_pointer_cast<const OnSurfaceVectorMapSymbol>(mapSymbol))
         elevationFactor = vectorMapSymbol->getElevationScaleFactor();
 
     // Get elevation data
-    const auto upperMetersPerUnit =
-            Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
-    const auto lowerMetersPerUnit =
-            Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y + 1, AtlasMapRenderer::TileSize3D);
-    const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+    double metersPerUnit;
+    if (currentState.flatEarth)
+    {
+        const auto upperMetersPerUnit =
+                Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
+        const auto lowerMetersPerUnit =
+                Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y + 1, AtlasMapRenderer::TileSize3D);
+        metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+    }
+    else
+        metersPerUnit = internalState.metersPerUnit;
     float surfaceInMeters = 0.0f;
     float surfaceInWorld = 0.0f;
     std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
@@ -2206,7 +2214,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         renderable->referenceOrigins = const_cast<MapRenderer::MapSymbolReferenceOrigins*>(&referenceOrigins);
         renderable->gpuResource = gpuResource;
         renderable->elevationInMeters = elevationInMeters;
+        renderable->elevationInWorld = elevationInWorld;
         renderable->elevationFactor = elevationFactor;
+        renderable->adjustElevationToVectorObject = adjustElevationToVectorObject;
         renderable->tileId = tileId;
         renderable->offsetInTileN = offsetInTileN;
         renderable->opacityFactor = opacityFactor;
@@ -2214,8 +2224,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         outRenderableSymbol = renderable;
 
         // Calculate location of symbol in world coordinates.
-        int64_t intFull = INT32_MAX;
-        intFull++;
+        const int64_t intFull = 1ll + INT32_MAX;
         const auto intHalf = intFull >> 1;
         const auto intTwo = intFull << 1;
         PointI64 position = position31;
@@ -2224,11 +2233,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         const PointI64 offset = position - currentState.target31;
         renderable->offsetFromTarget31 = Utilities::wrapCoordinates(offset);
         renderable->offsetFromTarget = PointF(Utilities::convert31toDouble(offset, currentState.zoomLevel));
-        const auto positionInWorld = glm::vec3(
-            renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
-            elevationInWorld,
-            renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
-        renderable->positionInWorld = positionInWorld;
+        const auto positionInWorld = currentState.flatEarth
+            ? glm::vec3(renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D, elevationInWorld,
+                renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D)
+            : Utilities::sphericalWorldCoordinates(position31,
+                internalState.mGlobeRotationPrecise, internalState.globeRadius, elevationInWorld);
         const auto point = glm_extensions::project(
             positionInWorld,
             internalState.mPerspectiveProjectionView,
@@ -2248,7 +2257,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
             renderable->direction = direction;
 
         // Get distance from symbol to camera
-        renderable->distanceToCamera = glm::distance(internalState.worldCameraPosition, renderable->positionInWorld);
+        renderable->distanceToCamera = glm::distance(internalState.worldCameraPosition, positionInWorld);
     }
 }
 

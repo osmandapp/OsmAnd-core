@@ -93,6 +93,19 @@ namespace OsmAnd
             double& angleX,
             double& distance);
 
+        inline glm::dvec4 angleN(const glm::dvec3& v0, const glm::dvec3& v1)
+        {
+            const auto c = glm::cross(v0, v1);
+            const auto result = glm::dvec4(c, qAtan2(glm::length(c), glm::dot(v0, v1)));
+            return result;
+        }
+
+        inline bool isAngleInside(const glm::dvec4& angleN, const glm::dvec4& limitAngleN)
+        {
+            bool result = glm::dot(angleN.xyz(), limitAngleN.xyz()) > 0.0 ? angleN.w < limitAngleN.w : false;
+            return result;
+        }
+
         bool planeIntersectsSphere(
             const glm::dvec3& planeN,
             const double planeD,

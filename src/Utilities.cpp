@@ -719,9 +719,8 @@ OsmAnd::PointI OsmAnd::Utilities::normalizeCoordinates(const PointI& input, cons
         output = PointI();
     else if (zoom == ZoomLevel31)
     {
-        const auto posMask = static_cast<int32_t>((1u << zoom) - 1);
-        output.x = input.x < 0 ? input.x + posMask + 1 : input.x;
-        output.y = input.y < 0 ? input.y + posMask + 1 : input.y;
+        output.x = input.x < 0 ? input.x + INT32_MAX + 1 : input.x;
+        output.y = input.y < 0 ? input.y + INT32_MAX + 1 : input.y;
     }
 
     return output;
@@ -995,8 +994,8 @@ double OsmAnd::Utilities::calculateShortestPath(const PointI64& start64, const P
     const auto rot31 = nX * nZ * csr - nY * sn;
     const auto rot32 = nY * nZ * csr + nX * sn;
     const auto rot33 = cs + nZ * nZ * csr;
-    auto previous31 = start31;
-    PointI next31;
+    PointI64 previous64 = start31;
+    PointI64 next64;
     auto middlePoint = start64;
     auto midX = prevX;
     auto midY = prevY;
@@ -1009,19 +1008,22 @@ double OsmAnd::Utilities::calculateShortestPath(const PointI64& start64, const P
         midX = tempX;
         midY = tempY;
         midZ = tempZ;
-        next31 = get31FromAngles(PointD(qAtan2(midX, midY), qAsin(qBound(-1.0, midZ, 1.0))));
-        middlePoint += next31 - previous31;
-        if (next31.x - previous31.x >= intHalf)
+        next64 = get64FromAngles(PointD(qAtan2(midX, midY), qAsin(qBound(-1.0, midZ, 1.0))));
+        middlePoint += next64 - previous64;
+        if (next64.x - previous64.x >= intHalf)
             middlePoint.x -= intFull;
-        else if (previous31.x - next31.x >= intHalf)
-            middlePoint.x += intFull;        
-        minCoordinates.x = std::min(minCoordinates.x, middlePoint.x);
-        minCoordinates.y = std::min(minCoordinates.y, middlePoint.y);
-        maxCoordinates.x = std::max(maxCoordinates.x, middlePoint.x);
-        maxCoordinates.y = std::max(maxCoordinates.y, middlePoint.y);
+        else if (previous64.x - next64.x >= intHalf)
+            middlePoint.x += intFull;
+        if (next64.y >= 0 && next64.y <= INT32_MAX)
+        {
+            minCoordinates.x = std::min(minCoordinates.x, middlePoint.x);
+            minCoordinates.y = std::min(minCoordinates.y, middlePoint.y);
+            maxCoordinates.x = std::max(maxCoordinates.x, middlePoint.x);
+            maxCoordinates.y = std::max(maxCoordinates.y, middlePoint.y);
+        }
         if (path != nullptr)
             path->push_back(middlePoint);
-        previous31 = next31;
+        previous64 = next64;
     }
     return distance;
 }

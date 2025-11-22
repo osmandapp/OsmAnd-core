@@ -131,6 +131,9 @@ namespace OsmAnd
         float getElevationScaleFactor() const;
         void setElevationScaleFactor(const float scaleFactor);
 
+        bool getAdjustElevationToVectorObject() const;
+        void setAdjustElevationToVectorObject(const bool adjust);
+
         float getOnMapSurfaceIconDirection(const OnSurfaceIconKey key) const;
         void setOnMapSurfaceIconDirection(const OnSurfaceIconKey key, const float direction);
 

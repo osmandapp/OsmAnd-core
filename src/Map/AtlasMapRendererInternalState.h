@@ -51,6 +51,7 @@ namespace OsmAnd
         glm::vec2 groundCameraPosition;
         glm::vec3 worldCameraPosition;
         glm::mat4 mPerspectiveProjectionView;
+        glm::mat3 mGlobeRotation;
         glm::mat3 mGlobeRotationWithRadius;
         glm::dmat3 mGlobeRotationPrecise;
         glm::dmat3 mGlobeRotationPreciseInv;

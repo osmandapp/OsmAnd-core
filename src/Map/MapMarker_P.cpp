@@ -18,6 +18,7 @@ OsmAnd::MapMarker_P::MapMarker_P(MapMarker* const owner_)
     , textRasterizer(TextRasterizer::getDefault())
     , _model3DDirection(-90.0f)
     , _positionType(PositionType::Coordinate31)
+    , _adjustElevationToVectorObject(false)
     , _hasUnappliedPrimitiveChanges(false)
 {
 }
@@ -148,6 +149,24 @@ void OsmAnd::MapMarker_P::setElevationScaleFactor(const float scaleFactor)
     if (_elevationScaleFactor != scaleFactor)
     {
         _elevationScaleFactor = scaleFactor;
+        _hasUnappliedChanges = true;
+    }
+}
+
+bool OsmAnd::MapMarker_P::getAdjustElevationToVectorObject() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _adjustElevationToVectorObject;
+}
+
+void OsmAnd::MapMarker_P::setAdjustElevationToVectorObject(const bool adjust)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_adjustElevationToVectorObject != adjust)
+    {
+        _adjustElevationToVectorObject = adjust;
         _hasUnappliedChanges = true;
     }
 }
@@ -373,6 +392,7 @@ bool OsmAnd::MapMarker_P::applyChanges()
 
                 symbol->setElevation(_height);
                 symbol->setElevationScaleFactor(_elevationScaleFactor);
+                symbol->setAdjustElevationToVectorObject(_adjustElevationToVectorObject);
                 symbol->modulationColor = _onSurfaceIconModulationColor;
             }
         }
@@ -549,6 +569,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         onMapSurfaceIconSymbol->direction = direction;
         onMapSurfaceIconSymbol->elevation = _height;
         onMapSurfaceIconSymbol->elevationScaleFactor = _elevationScaleFactor;
+        onMapSurfaceIconSymbol->adjustElevationToVectorObject = _adjustElevationToVectorObject;
         onMapSurfaceIconSymbol->isHidden = _isHidden;
         symbolsGroup->symbols.push_back(onMapSurfaceIconSymbol);
     }

@@ -51,6 +51,8 @@ namespace OsmAnd
 
         float _elevationScaleFactor;
 
+        bool _adjustElevationToVectorObject;
+
         QHash< MapMarker::OnSurfaceIconKey, float > _directions;
 
         int _model3DMaxSizeInPixels;
@@ -114,6 +116,9 @@ namespace OsmAnd
 
         float getElevationScaleFactor() const;
         void setElevationScaleFactor(const float scaleFactor);
+
+        bool getAdjustElevationToVectorObject() const;
+        void setAdjustElevationToVectorObject(const bool adjust);
 
         float getOnMapSurfaceIconDirection(const MapMarker::OnSurfaceIconKey key) const;
         void setOnMapSurfaceIconDirection(const MapMarker::OnSurfaceIconKey key, const float direction);

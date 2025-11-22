@@ -240,7 +240,8 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 						std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>& partSizes,
 						const ZoomLevel zoomLevel,
 						const PointD& tilePosN, const int32_t cellsPerTileSize, const float minDistance,
-						const float maxBreakTangent, const bool diagonals, const bool simplify);
+						const float maxBreakTangent, const bool diagonals, const bool simplify,
+                        std::vector<VectorMapSymbol::Vertex>& outVertices);
 
 	// Create vertical faces for path, cutting it by tiles and grid cells
 	static bool getTesselatedPlane(std::vector<VectorMapSymbol::Vertex>& vertices,

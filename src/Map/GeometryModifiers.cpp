@@ -10,7 +10,8 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 		const VectorMapSymbol::PrimitiveType& primitiveType,
 		std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>& partSizes,
 		const ZoomLevel zoomLevel, const PointD& tilePosN, const int32_t cellsPerTileSize,
-		const float minDistance, const float maxBreakTangent, const bool diagonals, const bool simplify)
+		const float minDistance, const float maxBreakTangent, const bool diagonals, const bool simplify,
+        std::vector<VectorMapSymbol::Vertex>& outVertices)
 {
 	if (!partSizes)
         return false;
@@ -19,6 +20,7 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 	auto verticesCount = vertices.size();
 	if (verticesCount < 3)
         return false;
+    bool tesselate = cellsPerTileSize > 0;
 	auto indicesCount = indices != nullptr ? indices->size() : 0;
 	float minDist = minDistance;
     auto tileSize = Utilities::getPowZoom(MaxZoomLevel - zoomLevel);
@@ -250,6 +252,11 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 			}
 			inObj.pop_front();
 		}
+        if (!tesselate)
+        {
+		    putTriangle(meshes, tgl[0], tgl[1], tgl[2], std::numeric_limits<double>::infinity(), PointD(-1.0, -1.0));
+            continue;
+        }
 		// increase minimal distance in accordance to precision of float:
 		minDist = fmax(fmax(fmax(fabs(xMin), fabs(xMax)), fmax(fabs(yMin), fabs(yMax))) / 1000000.0f, minDist);
 		next = 0;
@@ -593,7 +600,7 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 		if (intoTwo) putTriangle(meshes, tgl[0], tgl[1], tgl[2], tileSize, tilePosN);
 	}
 	// Merge fragments and store triangles
-	if (simplify)
+	if (tesselate && simplify)
 	{
 		auto found = fragments.begin();
 		FragSignature oldFrag;
@@ -657,11 +664,9 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 		for (const auto& frag : fragments)
 			putTriangle(meshes, frag.second.A, frag.second.B, frag.second.C, tileSize, tilePosN);
 	}
-	vertices.clear();
-	partSizes->clear();
 	for (const auto& mesh : meshes)
 	{
-		vertices.insert(vertices.end(), mesh.second.begin(), mesh.second.end());
+		outVertices.insert(outVertices.end(), mesh.second.begin(), mesh.second.end());
 		partSizes->push_back({mesh.first, mesh.second.size()});
 	}
 	return true;
@@ -765,25 +770,29 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
 			}
 			inObj.pop_front();
 		}
-		// increase minimal distance in accordance to precision of float:
-		minDist = fmax(fmax(fmax(fabs(xMin), fabs(xMax)), fmax(fabs(yMin), fabs(yMax))) / 1000000.0f, minDist);
 		next = 0;
-		rate = xMax - xMin;
-		// median vertical line to cut:
-		c = static_cast<int32_t>(round(((xMin + xMax) * 0.5f - gridPosX) / gridStepXY));
-		rod = c * gridStepXY + gridPosX;
-		if (rod >= xMin + minDist && rod <= xMax - minDist)
-			next = 1;
-		// median horizontal line to cut:
-		c = static_cast<int32_t>(round(((yMin + yMax) * 0.5f - gridPosY) / gridStepXY));
-		w = c * gridStepXY + gridPosY;
-		if (w >= yMin + minDist && w <= yMax - minDist && (next == 0 || rate < yMax - yMin))
-		{
-			rate = yMax - yMin;
-			rod = w;
-			next = 2;
-		}
-		if (diagonals)
+        bool tesselate = cellsPerTileSize > 0;
+        if (tesselate)
+        {
+            // increase minimal distance in accordance to precision of float:
+            minDist = fmax(fmax(fmax(fabs(xMin), fabs(xMax)), fmax(fabs(yMin), fabs(yMax))) / 1000000.0f, minDist);
+            rate = xMax - xMin;
+            // median vertical line to cut:
+            c = static_cast<int32_t>(round(((xMin + xMax) * 0.5f - gridPosX) / gridStepXY));
+            rod = c * gridStepXY + gridPosX;
+            if (rod >= xMin + minDist && rod <= xMax - minDist)
+                next = 1;
+            // median horizontal line to cut:
+            c = static_cast<int32_t>(round(((yMin + yMax) * 0.5f - gridPosY) / gridStepXY));
+            w = c * gridStepXY + gridPosY;
+            if (w >= yMin + minDist && w <= yMax - minDist && (next == 0 || rate < yMax - yMin))
+            {
+                rate = yMax - yMin;
+                rod = w;
+                next = 2;
+            }
+        }
+		if (tesselate && diagonals)
 		{
 			// median diagonal line to cut (y=x):
 			c = static_cast<int32_t>(round(((wMin + wMax) * 0.5f - gridPosW) / gridStepWU));

@@ -150,11 +150,15 @@ bool OsmAnd::Utilities_OpenGL_Common::rayIntersectsSphere(const glm::dvec3& p0, 
     auto r2 = p0 + v * ((-b - srd) / a2);
     const auto r1p0 = glm::distance(p0, r1);
     const auto r2p0 = glm::distance(p0, r2);
-    const bool withR1 = withBackward || glm::dot(r1 - p0, v) > 0.0;
-    const bool withR2 = withBackward || glm::dot(r2 - p0, v) > 0.0;
+    const bool inFrontR1 = glm::dot(r1 - p0, v) > 0.0;
+    const bool inFrontR2 = glm::dot(r2 - p0, v) > 0.0;
+    const bool withR1 = withBackward || inFrontR1;
+    const bool withR2 = withBackward || inFrontR2;
     if (!withR1 && !withR2)
         return false;
-    result = glm::normalize((withR1 && withR2 && r2p0 < r1p0) || !withR1 ? r2 : r1);
+    const bool takeR2 = withBackward && (!inFrontR1 || !inFrontR2)
+        ? (!inFrontR1 && !inFrontR2 ? r1p0 < r2p0 : !inFrontR2) : r2p0 < r1p0;
+    result = glm::normalize((withR1 && withR2 && takeR2) || !withR1 ? r2 : r1);
     return true;
 }
 
@@ -324,17 +328,17 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
         const auto center = planeN * planeD;
         const auto v1 = *point1 - center;
         const auto v2 = *point2 - center;
-        const auto fullA = qAtan2(glm::length(glm::cross(v1, v2)), glm::dot(v1, v2));
+        const auto fullA = angleN(v1, v2);
         bool minInside = false;
         bool maxInside = false;
         if (sectX)
         {
             const auto cminX = minX - center;
             const auto cmaxX = maxX - center;
-            const auto minA = qAtan2(glm::length(glm::cross(v1, cminX)), glm::dot(v1, cminX));
-            const auto maxA = qAtan2(glm::length(glm::cross(v1, cmaxX)), glm::dot(v1, cmaxX));
-            minInside = fullA * minA > 0.0 && fabs(fullA) > fabs(minA);
-            maxInside = fullA * maxA > 0.0 && fabs(fullA) > fabs(maxA);
+            const auto minA = angleN(v1, cminX);
+            const auto maxA = angleN(v1, cmaxX);
+            minInside = isAngleInside(minA, fullA);
+            maxInside = isAngleInside(maxA, fullA);
             minXv = minX.xy();
             maxXv = maxX.xy();
         }
@@ -371,10 +375,10 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
             maxXv = maxXp;
         const auto cminY = minY - center;
         const auto cmaxY = maxY - center;
-        const auto minA = qAtan2(glm::length(glm::cross(v1, cminY)), glm::dot(v1, cminY));
-        const auto maxA = qAtan2(glm::length(glm::cross(v1, cmaxY)), glm::dot(v1, cmaxY));
-        minYz = (fullA * minA > 0.0 && fabs(fullA) > fabs(minA)) ? minY.z : qMin(point1->z, point2->z);
-        maxYz = (fullA * maxA > 0.0 && fabs(fullA) > fabs(maxA)) ? maxY.z : qMax(point1->z, point2->z);
+        const auto minA = angleN(v1, cminY);
+        const auto maxA = angleN(v1, cmaxY);
+        minYz = isAngleInside(minA, fullA) ? minY.z : qMin(point1->z, point2->z);
+        maxYz = isAngleInside(maxA, fullA) ? maxY.z : qMax(point1->z, point2->z);
     }
     else
     {

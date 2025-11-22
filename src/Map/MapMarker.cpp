@@ -114,6 +114,16 @@ void OsmAnd::MapMarker::setElevationScaleFactor(const float scaleFactor)
     _p->setElevationScaleFactor(scaleFactor);
 }
 
+bool OsmAnd::MapMarker::getAdjustElevationToVectorObject() const
+{
+    return _p->getAdjustElevationToVectorObject();
+}
+
+void OsmAnd::MapMarker::setAdjustElevationToVectorObject(const bool adjust)
+{
+    _p->setAdjustElevationToVectorObject(adjust);
+}
+
 float OsmAnd::MapMarker::getOnMapSurfaceIconDirection(const OnSurfaceIconKey key) const
 {
     return _p->getOnMapSurfaceIconDirection(key);
