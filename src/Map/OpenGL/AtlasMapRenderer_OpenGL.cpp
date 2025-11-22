@@ -831,55 +831,131 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         const auto BLBR = glm::normalize(MBR - MBL);
         const auto BRTR = glm::normalize(MTR - MBR);
         glm::dvec3 HTL, HTR, HBL, HBR, VTL, VTR, VBL, VBR, FD;
-        bool withHTL = false, withHTR = false, withHBL = false, withHBR = false;
-        bool withVTL = false, withVBL = false, withVTR = false, withVBR = false;
+        bool withHBL = false, withHBR = false;
 
-        bool isOut = false;
-        if (!withFTR || !withFTL
-            || !planeIntersectsSphere(topN, topD, minVectorX, maxVectorX, minCoordY, maxCoordY, &FTR, &FTL))
+        bool checkExtra = false;
+        if (withFBL && withFBR && withFTR && withFTL)
         {
-            withVTR = rayIntersectsSphere(MTR, -BRTR, 1.0, VTR, true);
-            withVTL = rayIntersectsSphere(MTL, TLBL, 1.0, VTL, true);
-            if (!withVTR || !withVTL
-                || !planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &VTR, &VTL))
-                isOut = true;
+            planeIntersectsSphere(bottomN, bottomD, minVectorX, maxVectorX, minCoordY, maxCoordY, &FBL, &FBR);
+            planeIntersectsSphere(rightN, rightD, minVectorX, maxVectorX, minCoordY, maxCoordY, &FBR, &FTR);
+            planeIntersectsSphere(topN, topD, minVectorX, maxVectorX, minCoordY, maxCoordY, &FTR, &FTL);
+            planeIntersectsSphere(leftN, leftD, minVectorX, maxVectorX, minCoordY, maxCoordY, &FTL, &FBL);
+            checkExtra = true;
         }
-        if (!isOut && (!withFTL || !withFBL
-            || !planeIntersectsSphere(leftN, leftD, minVectorX, maxVectorX, minCoordY, maxCoordY, &FTL, &FBL)))
+        else if (withFBL && withFBR)
         {
-            withVTL = withVTL || rayIntersectsSphere(MTL, TLBL, 1.0, VTL, true);
-            if (!withVTL || !withFBL
-                || !planeIntersectsSphere(leftN, leftD, minVectorX, maxVectorX, minCoordY, maxCoordY, &VTL, &FBL))
+            planeIntersectsSphere(bottomN, bottomD, minVectorX, maxVectorX, minCoordY, maxCoordY, &FBL, &FBR);
+            auto& p = FBR;
+            if (rayIntersectsSphere(MTR, -BRTR, 1.0, VTR, true))
             {
-                withVBL = withVBL || rayIntersectsSphere(MBL, -TLBL, 1.0, VBL, true);
-                if (!withVTL || !withVBL
-                    || !planeIntersectsSphere(leftN, leftD, minVectorX, maxVectorX, minCoordY, maxCoordY, &VTL, &VBL))
-                    isOut = true;
+                planeIntersectsSphere(rightN, rightD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTR);
+                p = VTR;
             }
-        }
-        if (!isOut && (!withFBR || !withFTR
-            || !planeIntersectsSphere(rightN, rightD, minVectorX, maxVectorX, minCoordY, maxCoordY, &FBR, &FTR)))
-        {
-            withVTR = withVTR || rayIntersectsSphere(MTR, -BRTR, 1.0, VTR, true);
-            if (!withFBR || !withVTR
-                || !planeIntersectsSphere(rightN, rightD, minVectorX, maxVectorX, minCoordY, maxCoordY, &FBR, &VTR))
+            if (rayIntersectsSphere(MTR, TRTL, 1.0, HTR, true))
             {
-                withVBR = withVBR || rayIntersectsSphere(MBR, BRTR, 1.0, VBR, true);
-                if (!withVBR || !withVTR ||
-                    !planeIntersectsSphere(rightN, rightD, minVectorX, maxVectorX, minCoordY, maxCoordY, &VBR, &VTR))
-                    isOut = true;
+                planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
+                p = HTR;
+                if (rayIntersectsSphere(MTL, -TRTL, 1.0, HTL, true))
+                {
+                    planeIntersectsSphere(topN, topD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTL);
+                    p = HTL;
+                }
             }
+            if (rayIntersectsSphere(MTL, TLBL, 1.0, VTL, true))
+            {
+                planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTL);
+                planeIntersectsSphere(leftN, leftD, minVectorX, maxVectorX, minCoordY, maxCoordY, &VTL, &FBL);
+            }
+            checkExtra = true;
         }
-        if (!isOut && (!withFBL || !withFBR
-            || !planeIntersectsSphere(bottomN, bottomD, minVectorX, maxVectorX, minCoordY, maxCoordY, &FBL, &FBR)))
+        else
         {
-            withVBL = withVBL || rayIntersectsSphere(MBL, -TLBL, 1.0, VBL, true);
-            withVBR = withVBR || rayIntersectsSphere(MBR, BRTR, 1.0, VBR, true);
-            if (!withVBL || !withVBR
-                || !planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &VBL, &VBR))
-                isOut = true;
+            withHBL = rayIntersectsSphere(MBL, BLBR, 1.0, HBL, true);
+            withHBR = rayIntersectsSphere(MBR, -BLBR, 1.0, HBR, true);
+            if (withHBL && withHBR)
+            {
+                planeIntersectsSphere(bottomN, bottomD, minVectorX, maxVectorX, minCoordY, maxCoordY, &HBL, &HBR);
+                if (isPointVisible(glm::dvec3(0.0),
+                    topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, true, true, false, true))
+                {
+                    auto& p = HBR;
+                    if (rayIntersectsSphere(MBR, BRTR, 1.0, VBR, true))
+                    {
+                        planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VBR);
+                        p = VBR;
+                        if (rayIntersectsSphere(MTR, -BRTR, 1.0, VTR, true))
+                        {
+                            planeIntersectsSphere(
+                                rightN, rightD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTR);
+                            p = VTR;
+                        }
+                    }
+                    if (rayIntersectsSphere(MTR, TRTL, 1.0, HTR, true))
+                    {
+                        planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
+                        p = HTR;
+                        if (rayIntersectsSphere(MTL, -TRTL, 1.0, HTL, true))
+                        {
+                            planeIntersectsSphere(topN, topD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTL);
+                            p = HTL;
+                        }
+                    }
+                    if (rayIntersectsSphere(MTL, TLBL, 1.0, VTL, true))
+                    {
+                        planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTL);
+                        p = VTL;
+                        if (rayIntersectsSphere(MBL, -TLBL, 1.0, VBL, true))
+                        {
+                            planeIntersectsSphere(
+                                leftN, leftD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VBL);
+                            p = VBL;
+                        }
+                    }
+                    planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HBL);
+                }
+                else
+                {
+                    planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &HBR, &HBL);
+                    checkExtra = true;
+                }
+            }
+            else if (rayIntersectsSphere(MBR, BRTR, 1.0, VBR, true) && rayIntersectsSphere(MTR, -BRTR, 1.0, VTR, true))
+            {
+                planeIntersectsSphere(rightN, rightD, minVectorX, maxVectorX, minCoordY, maxCoordY, &VBR, &VTR);
+                auto& p = VTR;
+                if (rayIntersectsSphere(MTL, TLBL, 1.0, VTL, true))
+                {
+                    planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTL);
+                    p = VTL;
+                    if (rayIntersectsSphere(MBL, -TLBL, 1.0, VBL, true))
+                    {
+                        planeIntersectsSphere(leftN, leftD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VBL);
+                        p = VBL;
+                    }
+                }
+                planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VBR);
+            }
+            else if (rayIntersectsSphere(MTL, TLBL, 1.0, VTL, true) && rayIntersectsSphere(MBL, -TLBL, 1.0, VBL, true))
+            {
+                planeIntersectsSphere(leftN, leftD, minVectorX, maxVectorX, minCoordY, maxCoordY, &VTL, &VBL);
+                auto& p = VBL;
+                if (rayIntersectsSphere(MBR, BRTR, 1.0, VBR, true))
+                {
+                    planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VBR);
+                    p = VBR;
+                    if (rayIntersectsSphere(MTR, -BRTR, 1.0, VTR, true))
+                    {
+                        planeIntersectsSphere(rightN, rightD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTR);
+                        p = VTR;
+                    }
+                }
+                planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTL);
+            }
+            else
+                planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY);
         }
-        if (!isOut && checkVert && rayIntersectsSphere(camPos, camDown, 1.0, FD))
+
+        if (checkExtra && checkVert && rayIntersectsSphere(camPos, camDown, 1.0, FD))
         {
             if (withFBL && withFBR)
             {
@@ -896,9 +972,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 planeIntersectsSphere(hBotRightN, hBotRightD, minVectorX, maxVectorX, minCoordY, maxCoordY, &FD, &HBR);
             }
         }
-
-        if (isOut)
-            planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY);
 
         const auto npN = glm::dvec3(0.0, 0.0, -1.0);
         const auto spN = glm::dvec3(0.0, 0.0, 1.0);

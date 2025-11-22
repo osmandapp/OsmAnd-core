@@ -29,12 +29,13 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(VectorLine_P);
 
     private:
-        void createVertexes(
+        void createVertices(
             std::vector<VectorMapSymbol::Vertex> &vertices,
             VectorMapSymbol::Vertex &vertex,
             std::vector<OsmAnd::PointD> &original,
             double thickness,
             double startY31,
+            float flatten,
             QList<float>& distances,
             FColorARGB &fillColor,
             QList<FColorARGB>& colorMapping,
@@ -135,7 +136,7 @@ namespace OsmAnd
         void clearArrowsOnPath();
         const QList<OsmAnd::VectorLine::OnPathSymbolData> getArrowsOnPath() const;
 
-        double correctDistance(double y, double startY31, double radius) const;
+        double correctDistance(double y, double startY31, double flatten, double radius) const;
         
         PointD getProjection(PointD point, PointD from, PointD to ) const;
         double scalarMultiplication(double xA, double yA, double xB, double yB, double xC, double yC) const;
@@ -145,6 +146,8 @@ namespace OsmAnd
             const uint begin,
             const uint end,
             const double epsilon,
+            const double startY31,
+            const double flatten,
             std::vector<bool>& include) const;
         bool forceIncludePoint(const QList<FColorARGB>& pointsColors, const uint pointIndex) const;
         bool isBigDiff(const ColorARGB& firstColor, const ColorARGB& secondColor) const;

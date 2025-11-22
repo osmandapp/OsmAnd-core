@@ -574,10 +574,11 @@ bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
             const auto intFull = 1ll + INT32_MAX;
 
             // Limit visible map dimensions to recalculate a primitive near the poles
-            const int64_t maxVisibleSize = intFull / 8;
+            const int64_t maxVisibleSizeX = intFull / 8;
+            const int64_t maxVisibleSizeY = intFull / 4;
 
-            bool bboxChanged = abs(newCenter.y - oldCenter.y) > qMin(newVisibleBBoxShifted.height(), maxVisibleSize);
-            const auto visibleWidth = qMin(newVisibleBBoxShifted.width(), maxVisibleSize);
+            bool bboxChanged = abs(newCenter.y - oldCenter.y) > qMin(newVisibleBBoxShifted.height(), maxVisibleSizeY);
+            const auto visibleWidth = qMin(newVisibleBBoxShifted.width(), maxVisibleSizeX);
             if (!bboxChanged)
             {
                 auto dx = abs(newCenter.x - oldCenter.x);
@@ -714,13 +715,14 @@ void OsmAnd::VectorLine_P::unregisterSymbolsGroup(MapSymbolsGroup* const symbols
     _symbolsGroupsRegistry.remove(symbolsGroup);
 }
 
-inline double OsmAnd::VectorLine_P::correctDistance(double y, double startY31, double radius) const
+inline double OsmAnd::VectorLine_P::correctDistance(double y, double startY31, double flatten, double radius) const
 {
         if (isnan(startY31))
             return radius;
         const auto intFull = 1.0 + INT32_MAX;
         auto s = sinh((2.0 * M_PI * (y + startY31)) / intFull - M_PI);
-        return radius * qSqrt(s * s + 1.0);
+        auto f = qSqrt(s * s + 1.0);
+        return radius * (f + flatten - f * flatten);
 }
 
 	inline static float correct(double y, double startY31, float thickness) {
@@ -754,9 +756,10 @@ int OsmAnd::VectorLine_P::simplifyDouglasPeucker(
     const uint start,
     const uint end,
     const double epsilon,
+    const double startY31,
+    const double flatten,
     std::vector<bool>& include) const
 {
-    const auto startY31 = _flatEarth ? NAN : static_cast<double>(1ll + INT32_MAX) / 2.0;
     PointD startPoint = static_cast<PointD>(points[start]);
     PointD endPoint = static_cast<PointD>(points[end]);
     double dmax = -1;
@@ -774,10 +777,10 @@ int OsmAnd::VectorLine_P::simplifyDouglasPeucker(
             index = i;
         }
     }
-    if (index > -1 && dmax >= correctDistance(points[index].y, startY31, epsilon))
+    if (index > -1 && dmax >= correctDistance(points[index].y, startY31, flatten, epsilon))
     {
-        int enabled1 = simplifyDouglasPeucker(points, start, index, epsilon, include);
-        int enabled2 = simplifyDouglasPeucker(points, index, end, epsilon, include);
+        int enabled1 = simplifyDouglasPeucker(points, start, index, epsilon, startY31, flatten, include);
+        int enabled2 = simplifyDouglasPeucker(points, index, end, epsilon, startY31, flatten, include);
         return enabled1 + enabled2;
     }
     else
@@ -1285,6 +1288,11 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
     bool approximate = _isApproximationEnabled;
     double simplificationRadius = thickness / 6.0;
 
+    // Soften latitude correction for higher zoom levels
+    const auto z = (32.0 - zoom) / 32.0;
+    const auto flattenD = 1.0 - z * z * z * z;
+    const auto flatten = static_cast<float>(flattenD);
+
     vectorLine->order = owner->baseOrder + 1;
     vectorLine->primitiveType = VectorMapSymbol::PrimitiveType::Triangles;
     vectorLine->scaleType = VectorMapSymbol::ScaleType::In31;
@@ -1323,6 +1331,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
     vectorLine->position31 = location31;
     verticesAndIndices->position31 = new PointI(location31);
     double startY31 = _flatEarth ? NAN : static_cast<double>(location31.y);
+    double hY31 = _flatEarth ? NAN : static_cast<double>(intHalf);
 
     for (int segmentIndex = 0; segmentIndex < segments.size(); segmentIndex++)
     {
@@ -1342,7 +1351,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
         if (approximate)
         {
             include[0] = true;
-            simplifyDouglasPeucker(points, 0, (uint) points.size() - 1, simplificationRadius, include);
+            simplifyDouglasPeucker(points, 0, (uint) points.size() - 1, simplificationRadius, hY31, flattenD, include);
         }
 
         // Generate base points to draw a stripe around
@@ -1421,7 +1430,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
             for (auto pointIdx = 1u; pointIdx < includedPointsCount; pointIdx++)
             {
                 OsmAnd::PointD pnt = original[pointIdx];
-                const auto locScale = correctDistance(pnt.y, startY31, scale);
+                const auto locScale = correctDistance(pnt.y, startY31, flatten, scale);
                 double segLength = sqrt(pow((prevPnt.x - pnt.x), 2) + pow((prevPnt.y - pnt.y), 2));
                 // create a vector of direction for the segment
                 OsmAnd::PointD v = pnt - prevPnt;
@@ -1454,7 +1463,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
 
                         if (!gap)
                         {
-                            createVertexes(*vertices, vertex, origTar, thickness, startY31, filteredDistances,
+                            createVertices(*vertices, vertex, origTar, thickness, startY31, flatten, filteredDistances,
                                 fillColor, filteredColorsMap, filteredOutlineColorsMap, filteredHeights);
                             origTar.clear();
                             firstDash = false;
@@ -1488,7 +1497,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
                     origTar.push_back(end);
                 
                 origTar.push_back(end);
-                createVertexes(*vertices, vertex, origTar, thickness, startY31, filteredDistances,
+                createVertices(*vertices, vertex, origTar, thickness, startY31, flatten, filteredDistances,
                     fillColor, filteredColorsMap, filteredOutlineColorsMap, filteredHeights);
             }
         }
@@ -1522,7 +1531,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
                         *vertices,
                         original, thickness, 0.0f, filteredDistances,
                         _fillColor, _nearOutlineColor, _farOutlineColor,
-                        filteredColorsMap, filteredOutlineColorsMap, filteredHeights, startY31,
+                        filteredColorsMap, filteredOutlineColorsMap, filteredHeights, startY31, flatten,
                         static_cast<crushedpixel::Polyline2D::JointStyle>(static_cast<int>(owner->jointStyle)),
                         static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(start)),
                         static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(end)),
@@ -1536,7 +1545,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
                         *vertices,
                         original, thickness, 0.0f, filteredDistances,
                         _fillColor, _nearOutlineColor, _farOutlineColor,
-                        filteredColorsMap, filteredOutlineColorsMap, filteredHeights, startY31,
+                        filteredColorsMap, filteredOutlineColorsMap, filteredHeights, startY31, flatten,
                         static_cast<crushedpixel::Polyline2D::JointStyle>(static_cast<int>(owner->jointStyle)),
                         static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(start)),
                         static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(end)),
@@ -1550,7 +1559,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
                     *vertices,
                     original, thickness, (outlineThickness - thickness) / 2.0f, filteredDistances,
                     _fillColor, _nearOutlineColor, _farOutlineColor,
-                    filteredColorsMap, filteredOutlineColorsMap, filteredHeights, startY31,
+                    filteredColorsMap, filteredOutlineColorsMap, filteredHeights, startY31, flatten,
                     static_cast<crushedpixel::Polyline2D::JointStyle>(static_cast<int>(owner->jointStyle)),
                     static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(start)),
                     static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(end)),
@@ -1604,11 +1613,12 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
     return true;
 }
 
-void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &vertices,
+void OsmAnd::VectorLine_P::createVertices(std::vector<VectorMapSymbol::Vertex> &vertices,
                   VectorMapSymbol::Vertex &vertex,
                   std::vector<OsmAnd::PointD> &original,
                   double thickness,
                   double startY31,
+                  float flatten,
                   QList<float>& distances,
                   FColorARGB &fillColor,
                   QList<FColorARGB>& colorMapping,
@@ -1628,7 +1638,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
         vertex,
         vertices,
         original, thickness, 0.0f, distances,
-        fillColor, fillColor, fillColor, colorMapping, outlineColorMapping, heights, startY31,
+        fillColor, fillColor, fillColor, colorMapping, outlineColorMapping, heights, startY31, flatten,
         static_cast<crushedpixel::Polyline2D::JointStyle>(static_cast<int>(owner->jointStyle)),
         static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(start)),
         static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(end)));
