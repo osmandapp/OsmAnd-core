@@ -112,8 +112,8 @@ namespace OsmAnd
 
         // My location parameters:
         glm::vec3 myLocation;
+        glm::vec3 headingDirection;
         float myLocationRadius;
-        float headingDirection;
         float headingRadius;
 
         // Raster layers support:

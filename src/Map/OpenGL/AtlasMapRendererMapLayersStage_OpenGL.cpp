@@ -171,20 +171,25 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererMapLayersStage_Ope
             currentState.elevationConfiguration.dataScaleFactor * currentState.elevationConfiguration.zScaleFactor;
         myLocationHeight = scaleFactor * myLocationHeightInMeters / metersPerUnit;
     }
-
-    // Calculate position of symbol in world coordinates
-    myLocation = currentState.flatEarth
-        ? Utilities::planeWorldCoordinates(currentState.myLocation31,
-            currentState.target31, currentState.zoomLevel, AtlasMapRenderer::TileSize3D, myLocationHeight)
-        : Utilities::sphericalWorldCoordinates(currentState.myLocation31,
-            internalState.mGlobeRotationPrecise, internalState.globeRadius, myLocationHeight);
     myLocationRadius = currentState.myLocationRadiusInMeters / metersPerUnit;
-    headingDirection = qDegreesToRadians(qIsNaN(currentState.myDirection)
-        ? Utilities::normalizedAngleDegrees(currentState.azimuth + 180.0f) : currentState.myDirection);
     const float cameraHeight = internalState.distanceFromCameraToGround;
     const float sizeScale = cameraHeight > myLocationHeight && !qFuzzyIsNull(cameraHeight)
         ? 1.0f - myLocationHeight / cameraHeight : 1.0f;
     headingRadius = currentState.myDirectionRadius * internalState.pixelInWorldProjectionScale * sizeScale;
+    PointD angles;
+    glm::dvec3 n;
+    myLocation = currentState.flatEarth
+        ? Utilities::planeWorldCoordinates(currentState.myLocation31,
+            currentState.target31, currentState.zoomLevel, AtlasMapRenderer::TileSize3D, myLocationHeight)
+        : Utilities::sphericalWorldCoordinates(currentState.myLocation31,
+            internalState.mGlobeRotationPrecise, internalState.globeRadius, myLocationHeight, &angles, &n);
+    const auto directionAngle = qDegreesToRadians(qIsNaN(currentState.myDirection)
+        ? Utilities::normalizedAngleDegrees(currentState.azimuth + 180.0f) : currentState.myDirection);
+    const auto directionVector = glm::dvec3(qSin(directionAngle), 0.0, -qCos(directionAngle));
+    if (currentState.flatEarth)
+        headingDirection = directionVector;
+    else
+        headingDirection = internalState.mGlobeRotation * Utilities::getModelRotationMatrix(angles) * directionVector;
 
     GLname lastUsedProgram;
     bool withElevation = true;
@@ -958,7 +963,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "uniform lowp vec4 param_fs_backgroundColor;                                                                        ""\n"
             "uniform lowp vec4 param_fs_myLocationColor;                                                                        ""\n"
             "uniform vec4 param_fs_myLocation;                                                                                  ""\n"
-            "uniform vec2 param_fs_myDirection;                                                                                 ""\n"));
+            "uniform vec4 param_fs_myDirection;                                                                                 ""\n"));
         const auto& gridsInFragmentShader_2 = QStringLiteral(
             "uniform vec4 param_fs_gridParameters;                                                                              ""\n"
             "uniform lowp vec4 param_fs_primaryGridColor;                                                                       ""\n"
@@ -1120,16 +1125,16 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "                                                                                                                   ""\n"
             //   Calculate color of accuracy circle
             "    lowp vec4 circle = param_fs_myLocationColor;                                                                   ""\n"
-            "    vec2 vMyToPos = v2f_position.xz - param_fs_myLocation.xy;                                                      ""\n"
+            "    vec3 vMyToPos = v2f_position.xyz - param_fs_myLocation.xyz;                                                    ""\n"
             "    float dist = length(vMyToPos);                                                                                 ""\n"
-            "    float fdist = min(pow(min(dist / param_fs_myLocation.z, 1.0), 100.0), 1.0);                                    ""\n"
+            "    float fdist = min(pow(min(dist / param_fs_myLocation.w, 1.0), 100.0), 1.0);                                    ""\n"
             "    circle.a = (1.0 - fdist) * (1.0 + 2.0 * fdist) * circle.a;                                                     ""\n"
             "                                                                                                                   ""\n"
             //   Calculate color of heading sector
             "    lowp vec4 sector = param_fs_myLocationColor;                                                                   ""\n"
-            "    float fdir = dot(vec2(sin(param_fs_myDirection.x), -cos(param_fs_myDirection.x)), vMyToPos / dist);            ""\n"
+            "    float fdir = dot(vMyToPos / dist, param_fs_myDirection.xyz);                                                   ""\n"
             "    fdir = pow(min(max(fdir / 0.7071, 0.0), 1.0), 10.0);                                                           ""\n"
-            "    sector.a = dist >= param_fs_myDirection.y ? 0.0 : fdir * (1.0 - dist / param_fs_myDirection.y);                ""\n"
+            "    sector.a = dist >= param_fs_myDirection.w ? 0.0 : fdir * (1.0 - dist / param_fs_myDirection.w);                ""\n"
             "                                                                                                                   ""\n"));
         const auto& gridsInFragmentShader_3 = QStringLiteral(
             "    lowp vec4 primaryColor = param_fs_primaryGridColor;                                                            ""\n"
@@ -2319,14 +2324,16 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     GL_CHECK_RESULT;
     glUniform4f(program.fs.param.myLocation,
         myLocation.x,
+        myLocation.y,
         myLocation.z,
-        myLocationRadius,
-        1.0f);
+        myLocationRadius);
     GL_CHECK_RESULT;
 
     // Set direction and radius of heading sector
-    glUniform2f(program.fs.param.myDirection,
-        headingDirection,
+    glUniform4f(program.fs.param.myDirection,
+        headingDirection.x,
+        headingDirection.y,
+        headingDirection.z,
         headingRadius);
     GL_CHECK_RESULT;
 

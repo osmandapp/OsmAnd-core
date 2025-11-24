@@ -39,6 +39,10 @@ namespace OsmAnd
         float elevationScaleFactor;
         float getElevationScaleFactor() const;
         void setElevationScaleFactor(const float scaleFactor);
+
+        bool adjustElevationToVectorObject;
+        bool getAdjustElevationToVectorObject() const;
+        void setAdjustElevationToVectorObject(const bool adjust);
     };
 }
 

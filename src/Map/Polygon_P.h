@@ -38,10 +38,9 @@ namespace OsmAnd
 
         QVector<PointI> _points;
 
-        double _metersPerPixel;
         ZoomLevel _mapZoomLevel;
         float _mapVisualZoom;
-        float _mapVisualZoomShift;
+        bool _flatEarth;
 
         float zoom() const;
 
