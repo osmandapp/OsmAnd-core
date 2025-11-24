@@ -29,24 +29,33 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(VectorLine_P);
 
     private:
-        void createVertexes(
+        void createVertices(
             std::vector<VectorMapSymbol::Vertex> &vertices,
             VectorMapSymbol::Vertex &vertex,
             std::vector<OsmAnd::PointD> &original,
             double thickness,
+            double startY31,
+            float flatten,
             QList<float>& distances,
             FColorARGB &fillColor,
             QList<FColorARGB>& colorMapping,
             QList<FColorARGB>& outlineColorMapping,
             QList<float>& heights) const;
                 
-        void addArrowsOnSegmentPath(
+        void addArrowsOnFlatSegmentPath(
             const std::vector<PointI>& segmentPoints,
             const QList<float>& segmentDistances,
             const QList<float>& segmentHeights,
             const std::vector<bool>& includedPoints,
             const PointI64& arrowsOrigin);
-        
+
+        void addArrowsOnSegmentPath(
+            const std::vector<PointI>& segmentPoints,
+            const QList<float>& segmentDistances,
+            const QList<float>& segmentHeights,
+            const std::vector<bool>& includedPoints,
+            const float distance);
+            
         QList<VectorLine::OnPathSymbolData> _arrowsOnPath;
         sk_sp<const SkImage> _scaledPathIcon;
         
@@ -94,6 +103,7 @@ namespace OsmAnd
 
         double _metersPerPixel;
         AreaI _visibleBBoxShifted;
+        PointI _target31;
         ZoomLevel _mapZoomLevel;
         ZoomLevel _surfaceZoomLevel;
         float _mapVisualZoom;
@@ -101,6 +111,7 @@ namespace OsmAnd
         float _mapVisualZoomShift;
         bool _hasElevationDataProvider;
         bool _hasElevationDataResources;
+        bool _flatEarth;
         AreaI64 _bboxShifted;
 
         float zoom() const;
@@ -125,7 +136,7 @@ namespace OsmAnd
         void clearArrowsOnPath();
         const QList<OsmAnd::VectorLine::OnPathSymbolData> getArrowsOnPath() const;
 
-        PointD findLineIntersection(PointD p1, PointD p2, PointD p3, PointD p4) const;
+        double correctDistance(double y, double startY31, double flatten, double radius) const;
         
         PointD getProjection(PointD point, PointD from, PointD to ) const;
         double scalarMultiplication(double xA, double yA, double xB, double yB, double xC, double yC) const;
@@ -135,17 +146,20 @@ namespace OsmAnd
             const uint begin,
             const uint end,
             const double epsilon,
+            const double startY31,
+            const double flatten,
             std::vector<bool>& include) const;
         bool forceIncludePoint(const QList<FColorARGB>& pointsColors, const uint pointIndex) const;
         bool isBigDiff(const ColorARGB& firstColor, const ColorARGB& secondColor) const;
         inline FColorARGB middleColor(const FColorARGB& first, const FColorARGB& last, const float factor) const;
-        void calculateVisibleSegments(
+        PointI calculateVisibleSegments(
             const AreaI64& visibleArea64,
             std::vector<std::vector<PointI>>& segments,
             QList<QList<float>>& segmentDistances,
             QList<QList<FColorARGB>>& segmentColors,
             QList<QList<FColorARGB>>& segmentOutlineColors,
-            QList<QList<float>>& segmentHeights);
+            QList<QList<float>>& segmentHeights,
+            float& totalDistance);
         static bool calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX);
 
     public:

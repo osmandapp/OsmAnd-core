@@ -45,12 +45,12 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
     if (!_program.id.isValid())
     {
         const QString vertexShader = R"(
-            in ivec2 in_vs_location31;
-            in float in_vs_height;
-            in vec3 in_vs_normal;
-            in vec3 in_vs_color;
+            INPUT ivec2 in_vs_location31;
+            INPUT float in_vs_height;
+            INPUT vec3 in_vs_normal;
+            INPUT vec3 in_vs_color;
             
-            out vec4 v2f_color;
+            PARAM_OUTPUT vec4 v2f_color;
             
             uniform mat4 param_vs_mPerspectiveProjectionView;
             uniform float param_vs_alpha;
@@ -163,7 +163,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeProgram()
         )";
 
         const QString fragmentShader = R"(
-            in vec4 v2f_color;
+            PARAM_INPUT vec4 v2f_color;
             
             void main()
             {

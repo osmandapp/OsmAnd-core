@@ -373,10 +373,11 @@ namespace OsmAnd
         inline static PointD getAnglesFrom31(const PointI& p)
         {
             const auto intFull = static_cast<double>(INT32_MAX) + 1.0;
-            const auto sign = p.y < 0 ? -1.0 : 1.0;
+            int64_t x = p.x < INT32_MIN / 2 ? 2ll + INT32_MAX + INT32_MAX + p.x : p.x;
+            int64_t y = p.y < INT32_MIN / 2 ? 2ll + INT32_MAX + INT32_MAX + p.y : p.y;
             return PointD(
-                static_cast<double>(p.x) / intFull * M_PI * 2.0 - M_PI,
-                atan(sign * sinh(M_PI * (1.0 - 2.0 * static_cast<double>(p.y) / intFull))));
+                static_cast<double>(x) / intFull * M_PI * 2.0 - M_PI,
+                atan(sinh(M_PI * (1.0 - 2.0 * static_cast<double>(y) / intFull))));
         }
 
         inline static PointI get31FromAngles(const PointD& a)
@@ -394,15 +395,15 @@ namespace OsmAnd
 #if !defined(SWIG)
         inline static PointI64 get64FromAngles(const PointD& a)
         {
-            const int64_t intMax = INT32_MAX;
-            const auto intFull = intMax + 1;
+            const int64_t intFull = 1ll + INT32_MAX;
+            const auto maxY = intFull + intFull / 2 - 1;
             auto y = std::min(std::max(a.y, -M_PI_2), M_PI_2);
             auto eval = log(tan(y) + 1.0 / cos(y));
             const auto angFull = 2.0 * M_PI;
             auto res = eval >= -angFull && eval <= angFull ? eval : (y < 0.0 ? -angFull : angFull);
             return PointI64(
                 static_cast<int64_t>((a.x + M_PI) / (M_PI * 2.0) * intFull) % intFull,
-                static_cast<int64_t>((1.0 - res / M_PI) / 2.0 * intFull));
+                std::min(static_cast<int64_t>((1.0 - res / M_PI) / 2.0 * intFull), maxY));
         }
 #endif // !defined(SWIG)
 
@@ -1294,6 +1295,16 @@ namespace OsmAnd
             return offset31;
         }
 
+        inline static glm::mat3 getModelRotationMatrix(const PointD& angles)
+        {
+            const auto sx = qSin(static_cast<float>(angles.x));
+            const auto cx = qCos(static_cast<float>(angles.x));
+            const auto sy = qSin(static_cast<float>(angles.y));
+            const auto cy = qCos(static_cast<float>(angles.y));
+            return glm::mat3(cx, -sx, 0.0f, sx * cy, cx * cy, -sy, sx * sy, cx * sy, cy);
+        }
+
+
         inline static glm::dvec3 getGlobeRadialVector(const PointD& angles)
         {
             const auto csy = qCos(angles.y);
@@ -1327,11 +1338,15 @@ namespace OsmAnd
             const glm::dmat3& mGlobeRotation,
             const double globeRadius,
             const double elevation,
-            PointD* outAngles = nullptr)
+            PointD* outAngles = nullptr,
+            glm::dvec3* outNormal = nullptr)
         {
             const auto n = mGlobeRotation * getGlobeRadialVector(location31, outAngles);
             const auto v = n * (globeRadius + elevation);
-            return glm::vec3(v.x, v.y - globeRadius, v.z);
+            const auto result = glm::vec3(v.x, v.y - globeRadius, v.z);
+            if (outNormal != nullptr)
+                *outNormal = n;
+            return result;
         }
 
         inline static double snapToGridDecimal(const double value)
