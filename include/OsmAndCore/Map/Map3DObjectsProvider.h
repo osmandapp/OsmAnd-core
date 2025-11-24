@@ -23,10 +23,10 @@ namespace OsmAnd
     public:
         struct Data : public IMapTiledDataProvider::Data
         {
-            Data(const TileId tileId, const ZoomLevel zoom, QVector<Building3D>&& buildings);
+            Data(const TileId tileId, const ZoomLevel zoom, Buildings3D&& buildings);
             virtual ~Data();
 
-            QVector<Building3D> buildings3D;
+            Buildings3D buildings3D;
         };
 
         explicit Map3DObjectsTiledProvider(

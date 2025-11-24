@@ -22,14 +22,11 @@ namespace OsmAnd
     class MapRenderer3DObjectsResource : public MapRendererBaseTiledResource
     {
     public:
-        struct RenderableBuilding
+        struct RenderableBuildings
         {
             std::shared_ptr<const GPUAPI::ArrayBufferInGPU> vertexBuffer;
             std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU> indexBuffer;
-            int vertexCount;
-            int indexCount;
-            uint64_t id;
-            FColorARGB color;
+            int totalIndexCount;
         };
 
         struct PerformanceDebugInfo
@@ -41,7 +38,7 @@ namespace OsmAnd
 
         ~MapRenderer3DObjectsResource() override;
 
-        const QVector<RenderableBuilding>& getRenderableBuildings() const { return _renderableBuildings; }
+        const RenderableBuildings& getRenderableBuildings() const { return _renderableBuildings; }
         const PerformanceDebugInfo& getPerformanceDebugInfo() const { return _performanceDebugInfo; }
 
         friend class OsmAnd::MapRendererResourcesManager;
@@ -55,7 +52,7 @@ namespace OsmAnd
 
         std::shared_ptr<IMapTiledDataProvider::Data> _sourceData;
 
-        QVector<RenderableBuilding> _renderableBuildings;
+        RenderableBuildings _renderableBuildings;
         PerformanceDebugInfo _performanceDebugInfo;
 
         bool supportsObtainDataAsync() const override;

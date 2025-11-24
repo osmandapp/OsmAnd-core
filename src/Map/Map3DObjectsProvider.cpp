@@ -5,7 +5,7 @@
 
 using namespace OsmAnd;
 
-Map3DObjectsTiledProvider::Data::Data(const TileId tileId, const ZoomLevel zoom, QVector<Building3D>&& buildings)
+Map3DObjectsTiledProvider::Data::Data(const TileId tileId, const ZoomLevel zoom, Buildings3D&& buildings)
     : IMapTiledDataProvider::Data(tileId, zoom)
     , buildings3D(qMove(buildings))
 {

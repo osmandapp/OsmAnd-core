@@ -61,7 +61,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
         return false;
     }
 
-    QVector<Building3D> buildings3D;
+    Buildings3D buildings3D;
 
     if (tileData && tileData->primitivisedObjects)
     {
@@ -134,7 +134,7 @@ float Map3DObjectsTiledProvider_P::getDefaultBuildingsAlpha() const
     return 1.0f;
 }
 
-void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive, QVector<Building3D>& buildings3D,
+void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive, Buildings3D& buildings3D,
     const MapPrimitiviser::PrimitivesCollection& PrimitivesCollection) const
 {
     if (primitive->type != MapPrimitiviser::PrimitiveType::Polygon)
@@ -176,6 +176,15 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
             {
                 isEdge = true;
                 break;
+            }
+
+            if (pPrimitiveAttribute->tag == QLatin1String("layer"))
+            {
+                if (pPrimitiveAttribute->value == QLatin1String("-1"))
+                {
+                    isEdge = true;
+                    break;
+                }
             }
         }
 
@@ -222,14 +231,11 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
 
     FColorARGB color = getDefaultBuildingsColor();
 
-    int layer = 0;
-
     bool heightFound = false;
     bool minHeightFound = false;
     bool levelsFound = false;
     bool minLevelsFound = false;
     bool colorFound = false;
-    bool layerFound = false;
 
     for (const auto& captionAttributeId : constOf(sourceObject->captionsOrder))
     {
@@ -268,17 +274,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
             color.a = getDefaultBuildingsAlpha();
             continue;
         }
-
-        if (!layerFound && captionTag == QStringLiteral("layer"))
-        {
-            layer = OsmAnd::Utilities::parseLength(caption, layer, &layerFound);
-            continue;
-        }
-    }
-
-    if (layer == -1)
-    {
-        return;
     }
 
     if (!heightFound && levelsFound)
@@ -290,6 +285,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
     {
         minHeight = minLevels * levelHeight;
     }
+
+    const glm::vec3 colorVec(color.r, color.g, color.b);
 
     QVector<PointI> points31 = sourceObject->points31;
 
@@ -327,25 +324,14 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
     const int edgePointsCount = points31.size();
 
     int totalTopVertices = edgePointsCount;
-    int totalWallVertices = edgePointsCount * 4;
-    int totalSideTriangles = edgePointsCount * 2;
-    
+
     for (const auto& innerPoly : innerPolygons)
     {
         totalTopVertices += innerPoly.size();
-        totalWallVertices += innerPoly.size() * 4;
-        totalSideTriangles += innerPoly.size() * 2;
     }
-    
-    const int totalVertices = totalTopVertices + totalWallVertices;
-    const int topTriangles = edgePointsCount - 2;
-    const int totalIndices = (topTriangles + totalSideTriangles) * 3;
 
-    Building3D building;
-    building.vertices.reserve(totalVertices);
-    building.indices.reserve(totalIndices);
-    building.id = sourceObject->id.id;
-    building.color = color;
+    const int topTriangles = edgePointsCount - 2;
+    const int currentVertexOffset = buildings3D.vertices.size();
 
     QVector<glm::vec3> sideNormals;
     sideNormals.resize(edgePointsCount);
@@ -401,14 +387,14 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
     for (int i = 0; i < edgePointsCount; ++i)
     {
         const auto& point31 = points31[i];
-        building.vertices.append({glm::ivec2(point31.x, point31.y), height, glm::vec3(0.0f, 1.0f, 0.0f)});
+        buildings3D.vertices.append({glm::ivec2(point31.x, point31.y), height, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
     }
 
     for (const auto& innerPoly : innerPolygons)
     {
         for (const auto& point31 : innerPoly)
         {
-            building.vertices.append({glm::ivec2(point31.x, point31.y), height, glm::vec3(0.0f, 1.0f, 0.0f)});
+            buildings3D.vertices.append({glm::ivec2(point31.x, point31.y), height, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
         }
     }
 
@@ -420,12 +406,12 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         const glm::vec3& edgeNormal = sideNormals[i];
 
         const auto& point31_i = points31[i];
-        building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, edgeNormal});
-        building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, edgeNormal});
+        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, edgeNormal, colorVec});
+        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, edgeNormal, colorVec});
 
         const auto& point31_next = points31[next];
-        building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, edgeNormal});
-        building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, edgeNormal});
+        buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, edgeNormal, colorVec});
+        buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, edgeNormal, colorVec});
     }
 
     for (int polyIdx = 0; polyIdx < innerPolygons.size(); ++polyIdx)
@@ -439,12 +425,12 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
             const glm::vec3& edgeNormal = innerNormals[i];
 
             const auto& point31_i = innerPoly[i];
-            building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, edgeNormal});
-            building.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, edgeNormal});
+            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, edgeNormal, colorVec});
+            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, edgeNormal, colorVec});
 
             const auto& point31_next = innerPoly[next];
-            building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, edgeNormal});
-            building.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, edgeNormal});
+            buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, edgeNormal, colorVec});
+            buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, edgeNormal, colorVec});
         }
     }
 
@@ -478,7 +464,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
 
     for (uint16_t idx : topIndices)
     {
-        building.indices.append(idx);
+        buildings3D.indices.append(static_cast<uint16_t>(idx + currentVertexOffset));
     }
 
     int currentWallBaseIdx = wallVertexStart;
@@ -486,13 +472,13 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
     {
         const int baseIdx = currentWallBaseIdx + 4 * i;
 
-        building.indices.append(baseIdx + 0);
-        building.indices.append(baseIdx + 1);
-        building.indices.append(baseIdx + 2);
+        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 0 + currentVertexOffset));
+        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 1 + currentVertexOffset));
+        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 2 + currentVertexOffset));
 
-        building.indices.append(baseIdx + 1);
-        building.indices.append(baseIdx + 3);
-        building.indices.append(baseIdx + 2);
+        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 1 + currentVertexOffset));
+        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 3 + currentVertexOffset));
+        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 2 + currentVertexOffset));
     }
     currentWallBaseIdx += edgePointsCount * 4;
 
@@ -504,16 +490,14 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         {
             const int baseIdx = currentWallBaseIdx + 4 * i;
 
-            building.indices.append(baseIdx + 0);
-            building.indices.append(baseIdx + 1);
-            building.indices.append(baseIdx + 2);
+            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 0 + currentVertexOffset));
+            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 1 + currentVertexOffset));
+            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 2 + currentVertexOffset));
 
-            building.indices.append(baseIdx + 1);
-            building.indices.append(baseIdx + 3);
-            building.indices.append(baseIdx + 2);
+            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 1 + currentVertexOffset));
+            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 3 + currentVertexOffset));
+            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 2 + currentVertexOffset));
         }
         currentWallBaseIdx += innerPoly.size() * 4;
     }
-
-    buildings3D.push_back(qMove(building));
 }
