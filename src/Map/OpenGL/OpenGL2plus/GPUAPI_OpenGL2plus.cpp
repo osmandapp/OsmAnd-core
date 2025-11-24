@@ -107,7 +107,7 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     glVersionRegExp.indexIn(QString(QLatin1String(reinterpret_cast<const char*>(glVersionString))));
     _glVersion = glVersionRegExp.cap(1).toUInt() * 10 + glVersionRegExp.cap(2).toUInt();
     LogPrintf(LogSeverityLevel::Info, "OpenGL version %d [%s]", _glVersion, glVersionString);
-    if (_glVersion < 30)
+    if (_glVersion < 20)
     {
         LogPrintf(LogSeverityLevel::Info, "This OpenGL version is not supported");
         return false;
@@ -260,6 +260,53 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
         (glVersion >= 30) || extensions.contains(QLatin1String("GL_ARB_texture_rg"));
 
     _isSupported_EXT_gpu_shader4 = extensions.contains(QStringLiteral("GL_EXT_gpu_shader4"));
+
+    if (_glVersion < 30)
+    {
+        if (_isSupported_EXT_gpu_shader4)
+        {
+            // Support compatibility profile for earlier versions of OpenGL running on modern hardware
+            glBindFragDataLocation = glBindFragDataLocationEXT;
+            glGetFragDataLocation = glGetFragDataLocationEXT;
+            glGetUniformuiv = glGetUniformuivEXT;
+            glGetVertexAttribIiv = glGetVertexAttribIivEXT;
+            glGetVertexAttribIuiv = glGetVertexAttribIuivEXT;
+            glUniform1ui = glUniform1uiEXT;
+            glUniform1uiv = glUniform1uivEXT;
+            glUniform2ui = glUniform2uiEXT;
+            glUniform2uiv = glUniform2uivEXT;
+            glUniform3ui = glUniform3uiEXT;
+            glUniform3uiv = glUniform3uivEXT;
+            glUniform4ui = glUniform4uiEXT;
+            glUniform4uiv = glUniform4uivEXT;
+            glVertexAttribI1i = glVertexAttribI1iEXT;
+            glVertexAttribI1iv = glVertexAttribI1ivEXT;
+            glVertexAttribI1ui = glVertexAttribI1uiEXT;
+            glVertexAttribI1uiv = glVertexAttribI1uivEXT;
+            glVertexAttribI2i = glVertexAttribI2iEXT;
+            glVertexAttribI2iv = glVertexAttribI2ivEXT;
+            glVertexAttribI2ui = glVertexAttribI2uiEXT;
+            glVertexAttribI2uiv = glVertexAttribI2uivEXT;
+            glVertexAttribI3i = glVertexAttribI3iEXT;
+            glVertexAttribI3iv = glVertexAttribI3ivEXT;
+            glVertexAttribI3ui = glVertexAttribI3uiEXT;
+            glVertexAttribI3uiv = glVertexAttribI3uivEXT;
+            glVertexAttribI4bv = glVertexAttribI4bvEXT;
+            glVertexAttribI4i = glVertexAttribI4iEXT;
+            glVertexAttribI4iv = glVertexAttribI4ivEXT;
+            glVertexAttribI4sv = glVertexAttribI4svEXT;
+            glVertexAttribI4ubv = glVertexAttribI4ubvEXT;
+            glVertexAttribI4ui = glVertexAttribI4uiEXT;
+            glVertexAttribI4uiv = glVertexAttribI4uivEXT;
+            glVertexAttribI4usv = glVertexAttribI4usvEXT;
+            glVertexAttribIPointer = glVertexAttribIPointerEXT;
+        }
+        else
+        {
+            LogPrintf(LogSeverityLevel::Info, "This OpenGL version doesn't support Unified Shader Model sufficiently");
+            return false;
+        }
+    }
 
     if (glVersion >= 41 || _isSupported_ARB_get_program_binary)
     {
