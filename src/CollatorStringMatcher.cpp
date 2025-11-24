@@ -83,5 +83,12 @@ QString OsmAnd::CollatorStringMatcher::lowercaseAndAlignChars(const QString& ful
 
 QString OsmAnd::CollatorStringMatcher::alignChars(const QString& fullText)
 {
+    if (OsmAnd::ArabicNormalizer::isSpecialArabic(fullText)) {
+        QString normalized  = OsmAnd::ArabicNormalizer::normalize(fullText);
+        if (!normalized.isEmpty())
+        {
+            return CollatorStringMatcher_P::alignChars(normalized);;
+        }
+    }
     return CollatorStringMatcher_P::alignChars(fullText);
 }
