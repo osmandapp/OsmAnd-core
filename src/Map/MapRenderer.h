@@ -180,8 +180,6 @@ namespace OsmAnd
         virtual bool getNewTargetByScreenPoint(const MapRendererState& state, const PointI& screenPoint,
             const PointI& location31, PointI& target31, const float height = 0.0f) const = 0;
         virtual bool isLocationHeightAvailable(const MapRendererState& state, const PointI& location31) const = 0;
-        virtual bool getLocationFromElevatedPoint(const MapRendererState& state,
-            const PointI& screenPoint, PointI& location31, float* heightInMeters = nullptr) const = 0;
         virtual bool getExtraZoomAndTiltForRelief(const MapRendererState& state, PointF& zoomAndTilt) const = 0;
         virtual bool getExtraZoomAndRotationForAiming(const MapRendererState& state,
             const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstPoint,
@@ -238,6 +236,15 @@ namespace OsmAnd
         enum {
             RegisteredConfigurationChangesCount = static_cast<unsigned int>(ConfigurationChange::__LAST)
         };
+        enum CalculationSteps : int32_t
+        {
+            RequiredToUnproject = 0,
+            RequiredToProject,
+            LocalGeometry,
+            FullGeometry,
+
+            Complete
+        };
         virtual uint32_t getConfigurationChangeMask(
             const std::shared_ptr<const MapRendererConfiguration>& current,
             const std::shared_ptr<const MapRendererConfiguration>& updated) const;
@@ -255,7 +262,7 @@ namespace OsmAnd
             MapRendererInternalState& outInternalState,
             const MapRendererState& state,
             const MapRendererConfiguration& configuration,
-            const bool skipTiles = false, const bool sortTiles = false) const;
+            const CalculationSteps neededSteps = Complete) const;
 
         // Resources-related:
         const MapRendererResourcesManager& getResources() const;
@@ -330,6 +337,8 @@ namespace OsmAnd
         virtual void setConfiguration(
             const std::shared_ptr<const MapRendererConfiguration>& configuration,
             bool forcedUpdate = false) Q_DECL_OVERRIDE;
+
+        MapRendererState getFreshState(bool& isFresh) const;
 
         bool initializeRendering(bool fresh = true) override;
         bool update(IMapRenderer_Metrics::Metric_update* metric = nullptr) final;

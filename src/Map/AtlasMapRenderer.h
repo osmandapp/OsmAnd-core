@@ -59,7 +59,7 @@ namespace OsmAnd
             MapRendererInternalState& outInternalState,
             const MapRendererState& state,
             const MapRendererConfiguration& configuration,
-            const bool skipTiles = false, const bool sortTiles = false) const Q_DECL_OVERRIDE;
+            const CalculationSteps neededSteps = Complete) const Q_DECL_OVERRIDE;
 
         // Debug-related:
 

@@ -30,7 +30,7 @@ bool OsmAnd::AtlasMapRenderer::updateInternalState(
     MapRendererInternalState& outInternalState_,
     const MapRendererState& state,
     const MapRendererConfiguration& configuration,
-    const bool skipTiles /*=false*/, const bool sortTiles /*=false*/) const
+    const CalculationSteps neededSteps /* = Complete */) const
 {
     const auto internalState = static_cast<AtlasMapRendererInternalState*>(&outInternalState_); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 

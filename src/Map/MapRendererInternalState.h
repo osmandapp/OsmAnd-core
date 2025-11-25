@@ -14,9 +14,6 @@ namespace OsmAnd
     {
         MapRendererInternalState();
         virtual ~MapRendererInternalState();
-
-    private:
-        Q_DISABLE_COPY_AND_MOVE(MapRendererInternalState);
     };
 }
 

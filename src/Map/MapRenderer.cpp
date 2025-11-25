@@ -218,7 +218,7 @@ bool OsmAnd::MapRenderer::updateInternalState(
     MapRendererInternalState& outInternalState,
     const MapRendererState& state,
     const MapRendererConfiguration& configuration,
-    const bool skipTiles /*=false*/, const bool sortTiles /*=false*/) const
+    const CalculationSteps neededSteps /* = Complete */) const
 {
     return true;
 }
@@ -330,6 +330,16 @@ void OsmAnd::MapRenderer::processGpuWorker()
 
     // Process GPU dispatcher
     _gpuThreadDispatcher.runAll();
+}
+
+OsmAnd::MapRendererState OsmAnd::MapRenderer::getFreshState(bool& isFresh) const
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (isFresh = _requestedState.isChanged)
+        _requestedState.isChanged = false;
+
+    return _requestedState;
 }
 
 bool OsmAnd::MapRenderer::initializeRendering(bool fresh /* = true */)
@@ -592,12 +602,13 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
         QMutexLocker scopedLocker(&_requestedStateMutex);
 
         // Update internal state, that is derived from requested state and configuration
-        isNew = updateInternalState(*getInternalStateRef(), _requestedState, *currentConfiguration, false, true);
+        isNew = updateInternalState(*getInternalStateRef(), _requestedState, *currentConfiguration);
 
         // Elevate and zoom out if camera is too close to the ground
         PointF zoomAndTilt;
         if (isNew && getExtraZoomAndTiltForRelief(_requestedState, zoomAndTilt))
         {
+            _requestedState.isChanged = true;
             const auto zoom = zoomAndTilt.x + 
                 _requestedState.zoomLevel + Utilities::visualZoomToFraction(_requestedState.visualZoom);
             const auto elevationAngle = zoomAndTilt.y + _requestedState.elevationAngle;
@@ -638,7 +649,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
     if (requestedStateUpdatedMask != 0 || currentConfigurationInvalidatedMask != 0)
     {
         if (!isNew)
-            isNew = updateInternalState(*getInternalStateRef(), _currentState, *currentConfiguration, false, true);
+            isNew = updateInternalState(*getInternalStateRef(), _currentState, *currentConfiguration);
 
         // Anyways, invalidate the frame
         invalidateFrame();
@@ -1990,6 +2001,7 @@ bool OsmAnd::MapRenderer::setWindowSize(const PointI& windowSize, bool forcedUpd
         return false;
 
     _requestedState.windowSize = windowSize;
+    _requestedState.isChanged = true;
 
     setMapTarget(_requestedState, forcedUpdate);
 
@@ -2007,6 +2019,7 @@ bool OsmAnd::MapRenderer::setViewport(const AreaI& viewport, bool forcedUpdate /
         return false;
 
     _requestedState.viewport = viewport;
+    _requestedState.isChanged = true;
 
     setMapTarget(_requestedState, forcedUpdate);
 
@@ -2077,6 +2090,7 @@ bool OsmAnd::MapRenderer::setFlatEarth(bool flatEarth, bool forcedUpdate /*= fal
         return false;
 
     _requestedState.flatEarth = flatEarth;
+    _requestedState.isChanged = true;
 
     setMapTarget(_requestedState, forcedUpdate);
 
@@ -2097,6 +2111,7 @@ bool OsmAnd::MapRenderer::setFieldOfView(const float fieldOfView, bool forcedUpd
         return false;
 
     _requestedState.fieldOfView = fieldOfView;
+    _requestedState.isChanged = true;
 
     setMapTarget(_requestedState, forcedUpdate);
 
@@ -2117,6 +2132,7 @@ bool OsmAnd::MapRenderer::setVisibleDistance(const float visibleDistance, bool f
         return false;
 
     _requestedState.visibleDistance = visibleDistance;
+    _requestedState.isChanged = true;
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::VisibleDistance);
 
@@ -2135,6 +2151,7 @@ bool OsmAnd::MapRenderer::setDetailedDistance(const float detailedDistance, bool
         return false;
 
     _requestedState.detailedDistance = detailedDistance;
+    _requestedState.isChanged = true;
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::DetailedDistance);
 
@@ -2176,6 +2193,7 @@ bool OsmAnd::MapRenderer::setElevationAngle(const float elevationAngle, bool for
         return false;
 
     _requestedState.elevationAngle = elevationAngle;
+    _requestedState.isChanged = true;
 
     setMapTarget(_requestedState, forcedUpdate);
 
@@ -2196,6 +2214,7 @@ bool OsmAnd::MapRenderer::setTarget(
 
     _requestedState.target31 = target31;
     _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
+    _requestedState.isChanged = true;
 
     if (disableUpdate)
         return true;
@@ -2246,6 +2265,7 @@ bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI&
     _requestedState.fixedZoomLevel = _requestedState.zoomLevel;
     _requestedState.target31 = target31;
     _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
+    _requestedState.isChanged = true;
 
     setSecondaryTarget(_requestedState, forcedUpdate, disableUpdate);
 
@@ -2272,6 +2292,7 @@ bool OsmAnd::MapRenderer::setMapTargetLocationToState(MapRendererState& state,
         state.target31 = location31;
         state.surfaceZoomLevel = state.zoomLevel;
         state.surfaceVisualZoom = state.visualZoom;
+        state.isChanged = true;
 
         if (!disableUpdate)
             notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
@@ -2284,6 +2305,7 @@ bool OsmAnd::MapRenderer::setMapTargetLocationToState(MapRendererState& state,
         if (result)
         {
             state.surfaceZoomLevel = getSurfaceZoom(state, state.surfaceVisualZoom);
+            state.isChanged = true;
             setSecondaryTarget(state, forcedUpdate, disableUpdate);
         }
         return result;
@@ -2312,6 +2334,7 @@ bool OsmAnd::MapRenderer::setMapTarget(MapRendererState& state,
     {
         state.zoomLevel = zoomLevel;
         state.visualZoom = visualZoom;
+        state.isChanged = true;
         if (!disableUpdate)
             notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
     }
@@ -2369,6 +2392,7 @@ bool OsmAnd::MapRenderer::setMapTargetOnly(MapRendererState& state,
         return false;
 
     state.target31 = target31;
+    state.isChanged = true;
 
     if (disableUpdate)
         return true;
@@ -2409,6 +2433,7 @@ bool OsmAnd::MapRenderer::setZoomToState(MapRendererState& state,
 
     state.surfaceZoomLevel = zoomLevel;
     state.surfaceVisualZoom = visualZoom;
+    state.isChanged = true;
 
     setMapTarget(state, forcedUpdate, disableUpdate);
 
@@ -2446,6 +2471,7 @@ bool OsmAnd::MapRenderer::setFlatZoomToState(MapRendererState& state, const Zoom
 
     state.zoomLevel = zoomLevel;
     state.visualZoom = visualZoom;
+    state.isChanged = true;
 
     setMapTargetOnly(state, state.fixedLocation31, 0.0f, forcedUpdate, disableUpdate);
 
@@ -2472,6 +2498,7 @@ bool OsmAnd::MapRenderer::setAzimuthToState(MapRendererState& state,
         return false;
 
     state.azimuth = normalizedAzimuth;
+    state.isChanged = true;
 
     setMapTarget(state, forcedUpdate, disableUpdate);
 
@@ -2483,14 +2510,22 @@ bool OsmAnd::MapRenderer::setAzimuthToState(MapRendererState& state,
 
 bool OsmAnd::MapRenderer::resetMapTarget()
 {
+    PointI location31;
+    PointI screenPoint;
+    {
+        QMutexLocker scopedLocker(&_requestedStateMutex);
+
+        if (_requestedState.fixedPixel.x < 0 || _requestedState.fixedPixel.y < 0)
+            return false;
+
+        location31 = _requestedState.fixedLocation31;
+        screenPoint = _requestedState.fixedPixel;
+    }
+    float height = 0.0f;
+    bool found = getLocationFromElevatedPoint(screenPoint, location31, &height);
+
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    if (_requestedState.fixedPixel.x < 0 || _requestedState.fixedPixel.y < 0)
-        return false;
-
-    PointI location31 = _requestedState.fixedLocation31;
-    float height = 0.0f;
-    bool found = getLocationFromElevatedPoint(_requestedState, _requestedState.fixedPixel, location31, &height);
     _requestedState.fixedLocation31 = location31;
     _requestedState.fixedHeight = found ? getWorldElevationOfLocation(_requestedState, height, location31) : 0.0f;
     _requestedState.fixedZoomLevel = _requestedState.zoomLevel;
@@ -2501,22 +2536,28 @@ bool OsmAnd::MapRenderer::resetMapTarget()
 
 bool OsmAnd::MapRenderer::resetMapTargetPixelCoordinates(const PointI& screenPoint_)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
-
+    PointI location31;
     if (screenPoint_.x < 0 || screenPoint_.y < 0)
         return false;
-
-    if (_requestedState.fixedPixel != screenPoint_)
+    else
     {
-        PointI location31 = _requestedState.fixedLocation31;
-        float height = 0.0f;
-        bool found = getLocationFromElevatedPoint(_requestedState, screenPoint_, location31, &height);
-        _requestedState.fixedPixel = screenPoint_;
-        _requestedState.fixedLocation31 = location31;
-        _requestedState.fixedHeight = found ? getWorldElevationOfLocation(_requestedState, height, location31) : 0.0f;
-        _requestedState.fixedZoomLevel = _requestedState.zoomLevel;
-        _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
+        QMutexLocker scopedLocker(&_requestedStateMutex);
+
+        if (_requestedState.fixedPixel == screenPoint_)
+            return true;
+
+        location31 = _requestedState.fixedLocation31;
     }
+    float height = 0.0f;
+    bool found = getLocationFromElevatedPoint(screenPoint_, location31, &height);
+
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    _requestedState.fixedPixel = screenPoint_;
+    _requestedState.fixedLocation31 = location31;
+    _requestedState.fixedHeight = found ? getWorldElevationOfLocation(_requestedState, height, location31) : 0.0f;
+    _requestedState.fixedZoomLevel = _requestedState.zoomLevel;
+    _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
 
     return true;
 }
@@ -2554,6 +2595,7 @@ bool OsmAnd::MapRenderer::setMapTargetPixelCoordinates(const PointI& screenPoint
 
     _requestedState.target31 = target31;
     _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
+    _requestedState.isChanged = true;
 
     setSecondaryTarget(_requestedState, forcedUpdate, disableUpdate);
 
@@ -2633,6 +2675,7 @@ bool OsmAnd::MapRenderer::setSecondaryTarget(MapRendererState& state,
                 Utilities::normalizedAngleDegrees((tiltAndRotation.y - state.azimuth) / 2.0 + state.azimuth);
             state.elevationAngle = static_cast<float>(halfTilt);
             state.azimuth = static_cast<float>(halfRotation);
+            state.isChanged = true;
             setMapTarget(state, forcedUpdate, disableUpdate, true);
             state.surfaceZoomLevel = getSurfaceZoom(state, state.surfaceVisualZoom);
         }
@@ -2692,6 +2735,7 @@ bool OsmAnd::MapRenderer::setSecondaryTarget(MapRendererState& state,
 
     if (result)
     {
+        state.isChanged = true;
         result = setMapTargetOnly(state, state.fixedLocation31, 0.0f, forcedUpdate, disableUpdate);
         state.surfaceZoomLevel = getSurfaceZoom(state, state.surfaceVisualZoom);
         if (state.surfaceVisualZoom == 1.0
@@ -2857,6 +2901,7 @@ bool OsmAnd::MapRenderer::setFlatZoomLevel(const ZoomLevel zoomLevel, bool force
         return false;
 
     _requestedState.zoomLevel = zoomLevel;
+    _requestedState.isChanged = true;
 
     setMapTargetOnly(_requestedState, _requestedState.fixedLocation31, 0.0f, forcedUpdate);
 
@@ -2884,6 +2929,7 @@ bool OsmAnd::MapRenderer::setFlatVisualZoom(const float visualZoom, bool forcedU
         return false;
 
     _requestedState.visualZoom = visualZoom;
+    _requestedState.isChanged = true;
 
     setMapTargetOnly(_requestedState, _requestedState.fixedLocation31, 0.0f, forcedUpdate);
 
@@ -2928,6 +2974,7 @@ bool OsmAnd::MapRenderer::setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpd
         return false;
 
     _requestedState.surfaceZoomLevel = zoomLevel;
+    _requestedState.isChanged = true;
 
     setMapTarget(_requestedState, forcedUpdate);
 
@@ -2945,6 +2992,7 @@ bool OsmAnd::MapRenderer::setVisualZoom(const float visualZoom, bool forcedUpdat
         return false;
 
     _requestedState.surfaceVisualZoom = visualZoom;
+    _requestedState.isChanged = true;
 
     setMapTarget(_requestedState, forcedUpdate);
 
@@ -2962,6 +3010,7 @@ bool OsmAnd::MapRenderer::setVisualZoomShift(const float visualZoomShift, bool f
         return false;
 
     _requestedState.visualZoomShift = visualZoomShift;
+    _requestedState.isChanged = true;
 
     setMapTarget(_requestedState, forcedUpdate);
 
@@ -3282,6 +3331,7 @@ bool OsmAnd::MapRenderer::setMinZoomLevel(const ZoomLevel zoomLevel, bool forced
     if (_requestedState.zoomLevel < zoomLevel)
     {
         _requestedState.zoomLevel = zoomLevel;
+        _requestedState.isChanged = true;
         notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
     }
 
@@ -3310,6 +3360,7 @@ bool OsmAnd::MapRenderer::setMaxZoomLevel(const ZoomLevel zoomLevel, bool forced
     if (_requestedState.zoomLevel > zoomLevel)
     {
         _requestedState.zoomLevel = zoomLevel;
+        _requestedState.isChanged = true;
         notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
     }
 
