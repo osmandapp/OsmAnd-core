@@ -358,7 +358,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
                 zoomLevel,
                 Utilities::convert31toDouble(*(verticesAndIndices->position31), zoomLevel),
                 // Use selective granularity to avoid collisions with the surface
-                _mapZoomLevel < 3 ? 4 : (_mapZoomLevel < 6 ? 2 : 1),
+                _mapZoomLevel < 3 ? 4 : (_mapZoomLevel < 6 ? 2 : (_mapZoomLevel < 8 ? 1 : 0)),
                 0.5f, 0.01f,
                 false, false,
                 tessVertices);
