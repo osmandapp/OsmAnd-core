@@ -446,12 +446,17 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
     std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
-    auto contourMap = evaluateContours(pOutMetric, queryController);
+    QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> contourMap;
+    const auto isEvaluated = evaluateContours(contourMap, pOutMetric, queryController);
     if (contourMap.empty() || (queryController && queryController->isAborted()))
         return QHash<BandIndex, sk_sp<const SkImage>>();
         
     QHash<BandIndex, sk_sp<const SkImage>> bandImages;
-    for (auto band : owner->bands)
+
+    if (!isEvaluated)
+        return bandImages;
+
+        for (auto band : owner->bands)
     {
         if (!contourMap.contains(band) || (queryController && queryController->isAborted()))
             return QHash<BandIndex, sk_sp<const SkImage>>();
@@ -474,7 +479,8 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
     return bandImages;
 }
 
-QHash<OsmAnd::BandIndex, QList<std::shared_ptr<OsmAnd::GeoContour>>> OsmAnd::GeoTileRasterizer_P::evaluateContours(
+bool OsmAnd::GeoTileRasterizer_P::evaluateContours(
+    QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>& bandContours,
     std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
@@ -482,7 +488,7 @@ QHash<OsmAnd::BandIndex, QList<std::shared_ptr<OsmAnd::GeoContour>>> OsmAnd::Geo
         pOutMetric->reset();
     
     if (owner->geoTileData.length() == 0)
-        return QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>();
+        return false;
 
     TileId tileId = owner->tileId;
     ZoomLevel zoom = owner->zoom;
@@ -519,12 +525,12 @@ QHash<OsmAnd::BandIndex, QList<std::shared_ptr<OsmAnd::GeoContour>>> OsmAnd::Geo
                   tileId.x,
                   tileId.y,
                   zoom);
-        return QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>();
+        return false;
     }
     VSIFCloseL(file);
     
     if (queryController && queryController->isAborted())
-        return QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>();
+        return false;
 
     auto projSearchPath = owner->projSearchPath.toUtf8();
     const char* projPaths[] = { projSearchPath.constData(), NULL };
@@ -547,13 +553,12 @@ QHash<OsmAnd::BandIndex, QList<std::shared_ptr<OsmAnd::GeoContour>>> OsmAnd::Geo
                   tileId.x,
                   tileId.y,
                   zoom);
-        return QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>();
+        return false;
     }
         
     if (queryController && queryController->isAborted())
-        return QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>();
+        return false;
 
-    QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> bandContours;
     for (auto band : owner->bands)
     {
         if (!owner->bandSettings.contains(band))
@@ -594,7 +599,7 @@ QHash<OsmAnd::BandIndex, QList<std::shared_ptr<OsmAnd::GeoContour>>> OsmAnd::Geo
                 qPrintable(tlExtLatLon.toQString()),
                 qPrintable(brExtLatLon.toQString()),
                 CPLGetLastErrorMsg());
-            return QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>();
+            return false;
         }
         int bCropError = FALSE;
         std::shared_ptr<void> hCroppedDS(
@@ -621,11 +626,11 @@ QHash<OsmAnd::BandIndex, QList<std::shared_ptr<OsmAnd::GeoContour>>> OsmAnd::Geo
                 qPrintable(tlExtLatLon.toQString()),
                 qPrintable(brExtLatLon.toQString()),
                 bCropError);
-            return QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>();
+            return false;
         }
         
         if (queryController && queryController->isAborted())
-            return QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>();
+            return false;
 
         if (owner->bandSettings.contains(band))
         {
@@ -639,7 +644,7 @@ QHash<OsmAnd::BandIndex, QList<std::shared_ptr<OsmAnd::GeoContour>>> OsmAnd::Geo
         }
     }
 
-    return bandContours;
+    return true;
 }
 
 QList<std::shared_ptr<OsmAnd::GeoContour>> OsmAnd::GeoTileRasterizer_P::evaluateBandContours(

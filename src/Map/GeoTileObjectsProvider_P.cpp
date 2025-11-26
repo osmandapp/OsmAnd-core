@@ -48,6 +48,18 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
     if (pOutMetric)
         pOutMetric->reset();
 
+    const auto& queryController = request.queryController;
+
+    if (queryController->isAborted())
+        return false;
+
+    const auto empty =
+        []
+        (const std::shared_ptr<TileEntry>& entry) -> bool
+        {
+            return !entry->dataWeakRef.lock();
+        };
+
     std::shared_ptr<TileEntry> tileEntry;
 
     for (;;)
@@ -62,18 +74,15 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
 
         // If state is "Undefined", change it to "Loading" and proceed with loading
         if (tileEntry->setStateIf(TileState::Undefined, TileState::Loading))
-        {
-            //LogPrintf(LogSeverityLevel::Debug, "!!! Retrieve weather contour tile %dx%d@%d", request.tileId.x, request.tileId.y, request.zoom);
             break;
-        }
 
         // In case tile entry is being loaded, wait until it will finish loading
         if (tileEntry->getState() == TileState::Loading)
         {
-            QReadLocker scopedLcoker(&tileEntry->loadedConditionLock);
+            QReadLocker scopedLocker(&tileEntry->loadedConditionLock);
 
             // If tile is in 'Loading' state, wait until it will become 'Loaded'
-            while (tileEntry->getState() != TileState::Loaded)
+            while (tileEntry->getState() == TileState::Loading)
                 REPEAT_UNTIL(tileEntry->loadedCondition.wait(&tileEntry->loadedConditionLock));
         }
 
@@ -86,22 +95,34 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
         else
         {
             // Otherwise, try to lock tile reference
-            outData = tileEntry->dataWeakRef.lock();
+            if (tileEntry->getState() == TileState::Loaded)
+                outData = tileEntry->dataWeakRef.lock();
 
             // If successfully locked, just return it
             if (outData)
-            {
-                //LogPrintf(LogSeverityLevel::Debug, "!!! Reuse weather contour tile %dx%d@%d", request.tileId.x, request.tileId.y, request.zoom);
                 return true;
-            }
-
-            //LogPrintf(LogSeverityLevel::Debug, "!!! Drop weather contour tile %dx%d@%d", request.tileId.x, request.tileId.y, request.zoom);
 
             // Otherwise consider this tile entry as expired, remove it from collection (it's safe to do that right now)
             // This will enable creation of new entry on next loop cycle
-            _tileReferences.removeEntry(request.tileId, request.zoom);
+            _tileReferences.removeEntry(request.tileId, request.zoom, empty);
             tileEntry.reset();
+
+            if (queryController->isAborted())
+                return false;
         }
+    }
+
+    if (queryController->isAborted())
+    {
+        tileEntry->setState(TileState::Cancelled);
+        {
+            QWriteLocker scopedLocker(&tileEntry->loadedConditionLock);
+            tileEntry->loadedCondition.wakeAll();
+        }
+        _tileReferences.removeEntry(request.tileId, request.zoom, empty);
+        tileEntry.reset();
+
+        return false;
     }
 
     bool result = false;
@@ -109,11 +130,18 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
     auto settings = owner->_resourcesManager->getBandSettings().value(owner->band, nullptr);
     if (!settings)
     {
+        // No data can be provided
+        outData.reset();
+
         // Store flag that there was no data and mark tile entry as 'Loaded'
         tileEntry->dataIsPresent = false;
         tileEntry->setState(TileState::Loaded);
 
-        outData.reset();
+        // Notify that tile has been loaded
+        QWriteLocker scopedLocker(&tileEntry->loadedConditionLock);
+        tileEntry->loadedCondition.wakeAll();
+
+        return true;
     }
     const auto contourStyleName = settings->contourStyleName;
     auto contourUnit = settings->unit;
@@ -136,13 +164,17 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
     _request.queryController = request.queryController;
     _request.localData = owner->localData;
 
+    std::shared_ptr<IMapObjectsProvider::Data> newTiledData = nullptr;
     WeatherTileResourcesManager::ObtainTileDataAsyncCallback _callback =
-    [this, band, &contourStyleName, &contourUnit, &tileId, &zoom, &outData, &tileEntry, &result]
+    [this, band, &contourStyleName, &contourUnit, &tileId, &zoom, &result, &newTiledData]
         (const bool requestSucceeded,
             const std::shared_ptr<WeatherTileResourcesManager::Data>& data,
             const std::shared_ptr<Metric>& metric)
         {
-            if (data && data->contourMap.contains(band) && !data->contourMap[band].isEmpty())
+            result = requestSucceeded;
+            if (!requestSucceeded)
+                return;
+            else if (data && data->contourMap.contains(band) && !data->contourMap[band].isEmpty())
             {
                 QList<std::shared_ptr<const MapObject>> mapObjects;
                 
@@ -178,20 +210,14 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
                     mapObjects << mapObj;
                 }
 
-                const auto newTiledData = std::make_shared<GeoTileObjectsProvider::Data>(
+                newTiledData = std::make_shared<GeoTileObjectsProvider::Data>(
                     tileId,
                     zoom,
                     MapSurfaceType::Undefined,
                     mapObjects);
 
                 // Publish new tile
-                outData = newTiledData;
                 addDataToCache(newTiledData);
-
-                // Store weak reference to new tile and mark it as 'Loaded'
-                tileEntry->dataIsPresent = true;
-                tileEntry->dataWeakRef = newTiledData;
-                tileEntry->setState(TileState::Loaded);
             }
             else
             {
@@ -208,48 +234,55 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
                 mapObj->attributeMapping = attributeMapping;
                 mapObjects << mapObj;
                 
-                const auto newTiledData = std::make_shared<GeoTileObjectsProvider::Data>(
+                newTiledData = std::make_shared<GeoTileObjectsProvider::Data>(
                     tileId,
                     zoom,
                     MapSurfaceType::Undefined,
                     mapObjects);
 
                 // Publish new empty tile
-                outData = newTiledData;
                 addDataToCache(newTiledData);
-
-                // Store weak reference to new tile and mark it as 'Loaded'
-                tileEntry->dataIsPresent = true;
-                tileEntry->dataWeakRef = newTiledData;
-                tileEntry->setState(TileState::Loaded);
-                
-                /*
-                outData.reset();
-
-                // Store flag that there was no data and mark tile entry as 'Loaded'
-                tileEntry->dataIsPresent = false;
-                tileEntry->setState(TileState::Loaded);
-                 */
             }
-            result = true;
         };
         
     owner->_resourcesManager->obtainData(_request, _callback);
-    
-    if (!result)
+
+    if (!result || queryController->isAborted())
     {
+        tileEntry->setState(TileState::Cancelled);
+        {
+            QWriteLocker scopedLocker(&tileEntry->loadedConditionLock);
+            tileEntry->loadedCondition.wakeAll();
+        }
+        _tileReferences.removeEntry(request.tileId, request.zoom, empty);
+        tileEntry.reset();
+
+        return false;
+    }
+
+    if (!newTiledData)
+    {
+        // No data can be provided
+        outData.reset();
+
         // Store flag that there was no data and mark tile entry as 'Loaded'
         tileEntry->dataIsPresent = false;
         tileEntry->setState(TileState::Loaded);
+    }
+    else
+    {
+        // Publish new tile
+        outData = newTiledData;
 
-        outData.reset();
+        // Store weak reference to new tile and mark it as 'Loaded'
+        tileEntry->dataIsPresent = true;
+        tileEntry->dataWeakRef = newTiledData;
+        tileEntry->setState(TileState::Loaded);
     }
 
     // Notify that tile has been loaded
-    {
-        QWriteLocker scopedLcoker(&tileEntry->loadedConditionLock);
-        tileEntry->loadedCondition.wakeAll();
-    }
+    QWriteLocker scopedLocker(&tileEntry->loadedConditionLock);
+    tileEntry->loadedCondition.wakeAll();
     
     return true;
 }

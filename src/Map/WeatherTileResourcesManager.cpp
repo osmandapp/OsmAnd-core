@@ -209,7 +209,7 @@ void OsmAnd::WeatherTileResourcesManager::obtainData(
     
     if (!accept)
     {
-        callback(false, nullptr, nullptr);
+        callback(true, nullptr, nullptr);
         return;
     }
     _p->obtainData(request, callback, collectMetric);
@@ -238,7 +238,7 @@ void OsmAnd::WeatherTileResourcesManager::obtainDataAsync(
     
     if (!accept)
     {
-        callback(false, nullptr, nullptr);
+        callback(true, nullptr, nullptr);
         return;
     }
     _p->obtainDataAsync(request, callback, collectMetric);

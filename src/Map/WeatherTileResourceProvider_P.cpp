@@ -1494,7 +1494,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
         LogPrintf(LogSeverityLevel::Error,
             "Failed to resolve geoTileId for weather contour tile %dx%dx%d. Geo tile zoom (%d) > tile zoom (%d).",
             tileId.x, tileId.y, zoom, geoTileZoom, zoom);
-        callback(false, nullptr, nullptr);
+        callback(true, nullptr, nullptr);
         return;
     }
     else if (zoom > geoTileZoom)
@@ -1548,35 +1548,35 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
         {
             return request->queryController && request->queryController->isAborted();
         });
-    const auto evaluatedContours = rasterizer->evaluateContours(nullptr, rasterizeQueryController);
+    const auto isEvaluated = rasterizer->evaluateContours(contourMap, nullptr, rasterizeQueryController);
     delete rasterizer;
+
+    if (!localData)
+        provider->unlockContourTile(tileId, zoom);
 
     if (request->queryController && request->queryController->isAborted())
     {
-        if (!localData)
-            provider->unlockContourTile(tileId, zoom);
-
         LogPrintf(LogSeverityLevel::Debug,
             "Stop creating weather contour tile %dx%dx%d.", tileId.x, tileId.y, zoom);
 
         callback(false, nullptr, nullptr);
         return;
     }
-    
-    if (!localData)
-        provider->unlockContourTile(tileId, zoom);
-    
-    if (evaluatedContours.empty())
+
+    if (!isEvaluated)
     {
         LogPrintf(LogSeverityLevel::Debug,
-            "Failed to evaluate weather contour tile %dx%dx%d", tileId.x, tileId.y, zoom);
+            "Failed to evaluate weather contour tile %dx%dx%d.", tileId.x, tileId.y, zoom);
+
+        callback(true, nullptr, nullptr);
+        return;
     }
-    contourMap.insert(evaluatedContours);
+
     if (contourMap.empty())
     {
         LogPrintf(LogSeverityLevel::Debug,
-            "Failed to evaluate weather contour tile %dx%dx%d", tileId.x, tileId.y, zoom);
-        callback(false, nullptr, nullptr);
+            "Failed to create weather contour tile %dx%dx%d", tileId.x, tileId.y, zoom);
+        callback(true, nullptr, nullptr);
         return;
     }
 

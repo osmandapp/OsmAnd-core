@@ -56,11 +56,11 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer::raster
     return _p->rasterizeContours(outEncImgData, pOutMetric, queryController);
 }
 
-QHash<OsmAnd::BandIndex, QList<std::shared_ptr<OsmAnd::GeoContour>>> OsmAnd::GeoTileRasterizer::evaluateContours(
+bool OsmAnd::GeoTileRasterizer::evaluateContours(QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>& bandContours,
     std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
-    return _p->evaluateContours(pOutMetric, queryController);
+    return _p->evaluateContours(bandContours, pOutMetric, queryController);
 }
 
 sk_sp<SkImage> OsmAnd::GeoTileRasterizer::rasterizeBandContours(

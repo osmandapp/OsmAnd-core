@@ -38,7 +38,8 @@ namespace OsmAnd
             Undefined = -1,
 
             Loading,
-            Loaded
+            Loaded,
+            Cancelled
         };
         struct TileEntry : TiledEntriesCollectionEntryWithState < TileEntry, TileState, TileState::Undefined >
         {

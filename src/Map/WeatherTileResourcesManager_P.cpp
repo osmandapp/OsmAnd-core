@@ -387,7 +387,7 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainData(
                 }
                 else
                 {
-                    callback(false, nullptr, nullptr);
+                    callback(requestSucceeded, nullptr, nullptr);
                 }
             };
         
