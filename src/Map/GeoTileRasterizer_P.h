@@ -81,7 +81,7 @@ namespace OsmAnd
             std::shared_ptr<Metric>* const pOutMetric = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
-        QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> evaluateContours(
+        bool evaluateContours(QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>& bandContours,
             std::shared_ptr<Metric>* const pOutMetric = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
         
