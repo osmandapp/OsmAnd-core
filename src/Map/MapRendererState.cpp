@@ -2,7 +2,8 @@
 #include "IMapElevationDataProvider.h"
 
 OsmAnd::MapRendererState::MapRendererState()
-    : flip(false)
+    : isChanged(true)
+    , flip(false)
     , flatEarth(true)
     , fieldOfView(16.5f)
     , visibleDistance(3500.0f)

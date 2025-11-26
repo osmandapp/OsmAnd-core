@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 
 #include "QtExtensions.h"
+#include <QReadWriteLock>
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
@@ -51,7 +52,7 @@ namespace OsmAnd
         const static ZoomLevel _zoomForFlattening;
 
         void computeVisibleArea(InternalState* internalState, const MapRendererState& state,
-            const float lowerDetail, const bool skipTiles, const bool sortTiles) const;
+            const float lowerDetail, const CalculationSteps neededSteps) const;
         double detailDistanceFactor(const int zoomShift) const;
         void insertTileId(QHash<TileId, TileVisibility>& nextTiles,
             const TileId& tileId, const double zDetail, const int32_t zoomShift,
@@ -107,14 +108,18 @@ namespace OsmAnd
 
         // State-related:
         InternalState _internalState;
+        mutable QReadWriteLock _requiredInternalStateLock;
+        mutable InternalState _requiredInternalState;
         const MapRendererInternalState* getInternalStateRef() const override;
         MapRendererInternalState* getInternalStateRef() override;
         const MapRendererInternalState& getInternalState() const override;
         MapRendererInternalState& getInternalState() override;
+        InternalState getRequiredInternalState(
+            bool& result, MapRendererState* ptrState = nullptr) const;
         bool updateInternalState(
             MapRendererInternalState& outInternalState, const MapRendererState& state,
             const MapRendererConfiguration& configuration,
-            const bool skipTiles = false, const bool sortTiles = false) const override;
+            const CalculationSteps neededSteps = Complete) const override;
 
         // Resources:
         void onValidateResourcesOfType(MapRendererResourceType type) override;
@@ -140,8 +145,6 @@ namespace OsmAnd
         double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const override;
         bool getNewTargetByScreenPoint(const MapRendererState& state,
             const PointI& screenPoint, const PointI& location31, PointI& target31, const float height = 0.0f) const override;
-        bool getLocationFromElevatedPoint(const MapRendererState& state, const PointI& screenPoint, PointI& location31,
-            float* heightInMeters = nullptr) const override;
         bool getExtraZoomAndTiltForRelief(const MapRendererState& state, PointF& zoomAndTilt) const override;
         bool getExtraZoomAndRotationForAiming(const MapRendererState& state,
             const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstPoint,

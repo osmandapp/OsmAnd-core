@@ -148,6 +148,8 @@ namespace OsmAnd
 
         std::shared_ptr<IMapTiledDataProvider> map3DObjectsProvider;
 
+        mutable volatile bool isChanged;
+
         PointI windowSize;
         AreaI viewport;
         bool flip;
