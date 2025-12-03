@@ -1575,7 +1575,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     const bool oddX = tileIdN.x & 1 > 0;
                     const bool oddY = tileIdN.y & 1 > 0;
                     const auto centralPoint = oddY ? (oddX ? normalTL : normalTR) : (oddX ? normalBL : normalBR);
-                    const auto distance = glm::dot(camDir, centralPoint - camPos);
+                    const auto distance = state.flatEarth ? glm::dot(centralPoint - camPos, camDir)
+                        : glm::length(centralPoint - camPos);
                     if (currentZoom > MinZoomLevel && zLower != zFar
                         && distance > zLower + detailDistanceFactor(zShift) * detailThickness)
                     {

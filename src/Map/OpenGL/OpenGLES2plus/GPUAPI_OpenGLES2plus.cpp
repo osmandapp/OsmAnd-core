@@ -927,6 +927,8 @@ void OsmAnd::GPUAPI_OpenGLES2plus::preprocessShader(QString& code)
             "#define INPUT in                                                                                                   ""\n"
             "#define PARAM_OUTPUT out                                                                                           ""\n"
             "#define PARAM_INPUT in                                                                                             ""\n"
+            "#define PARAM_FLAT_OUTPUT flat out                                                                                 ""\n"
+            "#define PARAM_FLAT_INPUT flat in                                                                                   ""\n"
             "                                                                                                                   ""\n"
             // Features definitions
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
@@ -944,6 +946,8 @@ void OsmAnd::GPUAPI_OpenGLES2plus::preprocessShader(QString& code)
             "#define INPUT attribute                                                                                            ""\n"
             "#define PARAM_OUTPUT varying                                                                                       ""\n"
             "#define PARAM_INPUT varying                                                                                        ""\n"
+            "#define PARAM_FLAT_OUTPUT varying                                                                                  ""\n"
+            "#define PARAM_FLAT_INPUT varying                                                                                   ""\n"
             "                                                                                                                   ""\n"
             // Features definitions
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
