@@ -1594,7 +1594,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         if (tileDistance < extraDetailDistance)
                             visibility = ExtraDetail;
                         internalState->maxElevation = qMax(internalState->maxElevation, maxHeightInWorld);
-                        const auto extraGap = 1.0 / globeRadius;
+                        const auto extraGap = 0.1 / globeRadius;
                         const auto heightDelta = qMax(0.0, maxD - cameraDistance);
                         if (heightDelta + extraGap > 0.0)
                         {
