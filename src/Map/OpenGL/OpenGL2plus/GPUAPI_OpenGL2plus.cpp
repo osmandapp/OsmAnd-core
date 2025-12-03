@@ -190,26 +190,25 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameters in fragment shader %d", maxFragmentUniformComponents);
     _maxFragmentUniformVectors = maxFragmentUniformComponents / 4; // Workaround for AMD/ATI (see above)
 
-    glGetIntegerv(GL_MAX_VARYING_FLOATS, &_maxVaryingFloats);
-    GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal varying floats %d", _maxVaryingFloats);
-
     if (glVersion >= 40 || extensions.contains(QLatin1String("GL_ARB_ES2_compatibility")))
     {
         glGetIntegerv(GL_MAX_VARYING_VECTORS, &_maxVaryingVectors);
         GL_CHECK_RESULT;
         LogPrintf(LogSeverityLevel::Info, "OpenGL maximal varying vectors %d", _maxVaryingVectors);
+        _maxVaryingFloats = _maxVaryingVectors * 4;
     }
     else if (glVersion >= 30)
     {
-        GLint maxVaryingComponents;
-        glGetIntegerv(GL_MAX_VARYING_COMPONENTS, &maxVaryingComponents);
+        glGetIntegerv(GL_MAX_VARYING_COMPONENTS, &_maxVaryingFloats);
         GL_CHECK_RESULT;
-        LogPrintf(LogSeverityLevel::Info, "OpenGL maximal varying components %d", maxVaryingComponents);
-        _maxVaryingVectors = maxVaryingComponents / 4;
+        LogPrintf(LogSeverityLevel::Info, "OpenGL maximal varying components %d", _maxVaryingFloats);
+        _maxVaryingVectors = _maxVaryingFloats / 4;
     }
     else
     {
+        glGetIntegerv(GL_MAX_VARYING_FLOATS, &_maxVaryingFloats);
+        GL_CHECK_RESULT;
+        LogPrintf(LogSeverityLevel::Info, "OpenGL maximal varying floats %d", _maxVaryingFloats);
         _maxVaryingVectors = _maxVaryingFloats / 4;
     }
 
@@ -736,11 +735,32 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
             "#define INPUT in                                                                                                   ""\n"
             "#define PARAM_OUTPUT out                                                                                           ""\n"
             "#define PARAM_INPUT in                                                                                             ""\n"
+            "#define PARAM_FLAT_OUTPUT flat out                                                                                 ""\n"
+            "#define PARAM_FLAT_INPUT flat in                                                                                   ""\n"
             "                                                                                                                   ""\n"
             // Features definitions
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D texture                                                                                  ""\n"
             "#define SAMPLE_TEXTURE_2D_LOD textureLod                                                                           ""\n"
+            "                                                                                                                   ""\n");
+    }
+    else if (glslVersion >= 140)
+    {
+        shaderHeader = QStringLiteral(
+            // Declare version of GLSL used
+            "#version 140                                                                                                       ""\n"
+            "                                                                                                                   ""\n"
+            // General definitions
+            "#define INPUT in                                                                                                   ""\n"
+            "#define PARAM_OUTPUT out                                                                                           ""\n"
+            "#define PARAM_INPUT in                                                                                             ""\n"
+            "#define PARAM_FLAT_OUTPUT flat out                                                                                 ""\n"
+            "#define PARAM_FLAT_INPUT flat in                                                                                   ""\n"
+            "                                                                                                                   ""\n"
+            // Features definitions
+            "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
+            "#define SAMPLE_TEXTURE_2D texture2D                                                                                ""\n"
+            "#define SAMPLE_TEXTURE_2D_LOD texture2DLod                                                                         ""\n"
             "                                                                                                                   ""\n");
     }
     else if (glslVersion >= 130)
@@ -753,6 +773,8 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
             "#define INPUT in                                                                                                   ""\n"
             "#define PARAM_OUTPUT out                                                                                           ""\n"
             "#define PARAM_INPUT in                                                                                             ""\n"
+            "#define PARAM_FLAT_OUTPUT out                                                                                      ""\n"
+            "#define PARAM_FLAT_INPUT in                                                                                        ""\n"
             "                                                                                                                   ""\n"
             // Features definitions
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
@@ -770,6 +792,8 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
             "#define INPUT attribute                                                                                            ""\n"
             "#define PARAM_OUTPUT varying                                                                                       ""\n"
             "#define PARAM_INPUT varying                                                                                        ""\n"
+            "#define PARAM_FLAT_OUTPUT varying                                                                                  ""\n"
+            "#define PARAM_FLAT_INPUT varying                                                                                   ""\n"
             "                                                                                                                   ""\n"
             // Precision specifying is not supported
             "#define highp                                                                                                      ""\n"

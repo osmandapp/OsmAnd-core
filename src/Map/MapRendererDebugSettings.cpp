@@ -31,7 +31,7 @@ OsmAnd::MapRendererDebugSettings::MapRendererDebugSettings()
     , disableSkyStage(false)
     , disableMapLayersStage(false)
     , disableSymbolsStage(false)
-    , disable3DMapObjectsStage(false)
+    , disable3DMapObjectsStage(true)
     , enableMap3dObjectsDebugInfo(false)
 {
 }

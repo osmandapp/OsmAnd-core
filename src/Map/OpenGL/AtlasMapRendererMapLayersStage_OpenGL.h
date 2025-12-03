@@ -104,7 +104,11 @@ namespace OsmAnd
             Q_DISABLE_COPY(PerTileBatchedLayers);
         };
         QList< Ref<PerTileBatchedLayers> > batchLayersByTiles(
-            const QVector<TileId>& tiles, const QSet<TileId>& visibleTilesSet, ZoomLevel zoomLevel);
+            const QVector<TileId>& tiles,
+            const QSet<TileId>& visibleTilesSet,
+            const ZoomLevel zoomLevel,
+            QSet<TileId>& elevatedTileset,
+            bool& withElevation);
 
         static const float _particleSize;
         static const float _particleSpeedFactor;
@@ -163,8 +167,6 @@ namespace OsmAnd
                     GLlocation scaleToRetainProjectedSize;
                     GLlocation elevation_configuration;
                     GLlocation elevation_hillshadeConfiguration;
-                    GLlocation elevation_colorMapKeys;
-                    GLlocation elevation_colorMapValues;
                     GLlocation primaryGridAxisX;
                     GLlocation secondaryGridAxisX;
                     GLlocation primaryGridAxisY;
@@ -240,7 +242,8 @@ namespace OsmAnd
             const Ref<PerTileBatchedLayers>& batch,
             AlphaChannelType& currentAlphaChannelType,
             GLname& lastUsedProgram,
-            bool& haveElevation,
+            const QMap<ZoomLevel, QSet<TileId>>& elevatedTileset,
+            const bool isHighDetail,
             const bool withElevation,
             const bool blendingEnabled,
             const ZoomLevel zoomLevel);
@@ -258,6 +261,12 @@ namespace OsmAnd
             const int elevationDataSamplerIndex);
         PointD getGridFractions(const double tile, const double nextTile);
         PointD getFloatShift(const double first1, const double second1, const double first2, const double second2);
+        bool isNearElevatedTile(
+            const PointI& offset,
+            const TileId tileIdN,
+            const QMap<ZoomLevel, QSet<TileId>>& elevatedTiles,
+            const bool isHighDetail,
+            const ZoomLevel zoomLevel) const;
         bool activateRasterLayersProgram(
             const unsigned int numberOfLayersInBatch,
             const bool batchWithDynamics,
