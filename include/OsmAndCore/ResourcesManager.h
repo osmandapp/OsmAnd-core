@@ -41,6 +41,7 @@ namespace OsmAnd
         {
             Unknown = -1,
 
+            DeletedMaps,
             MapRegion,
             RoadMapRegion,
             SrtmMapRegion,
@@ -190,7 +191,8 @@ namespace OsmAnd
                 const uint64_t packageSize,
                 const bool free,
                 const bool hidden,
-                const QString& message);
+                const QString& message,
+                const bool isDeleted);
         public:
             virtual ~ResourceInRepository();
 
@@ -201,6 +203,7 @@ namespace OsmAnd
             const bool free;
             const bool hidden;
             const QString message;
+            const bool isDeleted;
 
         friend class OsmAnd::ResourcesManager_P;
         };
@@ -311,6 +314,7 @@ namespace OsmAnd
         // Updates:
         bool isInstalledResourceOutdated(const QString& id) const;
         QHash< QString, std::shared_ptr<const LocalResource> > getOutdatedInstalledResources() const;
+        QHash< QString, std::shared_ptr<const LocalResource> > getUnsupportedResources() const;
         bool updateFromFile(const QString& filePath);
         bool updateFromFile(const QString& id, const QString& filePath);
         bool updateFromRepository(
