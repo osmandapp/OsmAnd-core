@@ -153,6 +153,7 @@ namespace OsmAnd
         FColorRGB skyColor;
         float azimuth;
         float elevationAngle;
+        float elevationAngleToBe;
         PointI target31;
         PointI fixedPixel;
         PointI fixedLocation31;
@@ -167,6 +168,8 @@ namespace OsmAnd
         float visualZoom;
         ZoomLevel surfaceZoomLevel;
         float surfaceVisualZoom;
+        ZoomLevel surfaceZoomLevelToBe;
+        float surfaceVisualZoomToBe;
         float visualZoomShift;
         ZoomLevel minZoomLimit;
         ZoomLevel maxZoomLimit;
