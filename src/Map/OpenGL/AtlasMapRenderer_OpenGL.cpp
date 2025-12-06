@@ -907,14 +907,28 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     const PointI tileDelta(internalState->synthTileId.x - internalState->targetTileId.x,
         internalState->synthTileId.y - internalState->targetTileId.y);
 
+    const auto dirAngle = static_cast<double>(state.azimuth) * M_PI / 180.0;
+    const auto dirX = qSin(dirAngle);
+    const auto dirY = qCos(dirAngle);
+
     auto maxDistance = 0.0;
     auto zoomLevel = internalState->synthZoomLevel;
     QMap<int32_t, QSet<TileId>> tilesN;
     QMap<int32_t, QHash<TileId, TileVisibility>> tiles, testTiles1, testTiles2;
     const auto sZoom = ZoomLevel31 - zoomLevel;
     const auto cameraTile31 = Utilities::get31FromAngles(internalState->cameraAngles);
-    const auto camTileId = TileId::fromXY(cameraTile31.x >> sZoom, cameraTile31.y >> sZoom);
-    const PointD tilesToTarget(internalState->synthTileId.x - camTileId.x, internalState->synthTileId.y - camTileId.y);
+    auto camTileId = TileId::fromXY(cameraTile31.x >> sZoom, cameraTile31.y >> sZoom);
+    PointI toCamera(camTileId.x - internalState->synthTileId.x, camTileId.y - internalState->synthTileId.y);
+    if (toCamera.x > 0 && dirX > 0.0)
+        toCamera.x -= 1 << zoomLevel;
+    else if (toCamera.x < 0 && dirX < 0.0)
+        toCamera.x += 1 << zoomLevel;
+    if (toCamera.y > 0 && dirY < 0.0)
+        toCamera.y -= 1 << zoomLevel;
+    else if (toCamera.y < 0 && dirY > 0.0)
+        toCamera.y += 1 << zoomLevel;
+    camTileId = TileId::fromXY(internalState->synthTileId.x + toCamera.x, internalState->synthTileId.y + toCamera.y);
+    const PointD tilesToTarget(toCamera);
     const auto distanceLimit = tilesToTarget.norm();
     bool lookForStrictlyVisible = distanceLimit > 0.0;
     auto targetTileId = lookForStrictlyVisible ? camTileId : internalState->synthTileId;
@@ -1491,10 +1505,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         }
         if (!atLeastOneVisibleFound && !shouldRepeat)
         {
-            const auto dirAngle =
-                static_cast<double>(state.azimuth) * M_PI / 180.0 - (lookForStrictlyVisible ? M_PI : 0.0);
-            const auto deltaX = qSin(dirAngle);
-            const auto deltaY = qCos(dirAngle);
+            const auto dir = lookForStrictlyVisible ? -1.0 : 1.0;
+            const auto deltaX = dirX * dir;
+            const auto deltaY = dirY * dir;
             if ((!atLeastOneAdded && atLeastOneFlatVisibleFound)
                 || (lookForStrictlyVisible && distanceFromTarget > distanceLimit))
             {
