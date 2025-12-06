@@ -911,14 +911,21 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     auto zoomLevel = internalState->synthZoomLevel;
     QMap<int32_t, QSet<TileId>> tilesN;
     QMap<int32_t, QHash<TileId, TileVisibility>> tiles, testTiles1, testTiles2;
-    testTiles1[zoomLevel].insert(internalState->synthTileId, NotTestedYet);
+    const auto sZoom = ZoomLevel31 - zoomLevel;
+    const auto cameraTile31 = Utilities::get31FromAngles(internalState->cameraAngles);
+    const auto camTileId = TileId::fromXY(cameraTile31.x >> sZoom, cameraTile31.y >> sZoom);
+    const PointD tilesToTarget(internalState->synthTileId.x - camTileId.x, internalState->synthTileId.y - camTileId.y);
+    const auto distanceLimit = tilesToTarget.norm();
+    bool lookForStrictlyVisible = distanceLimit > 0.0;
+    auto targetTileId = lookForStrictlyVisible ? camTileId : internalState->synthTileId;
+    testTiles1[zoomLevel].insert(targetTileId, NotTestedYet);
     glm::dvec3 ITL, ITR, IBL, IBR, OTL, OTR, OBL, OBR;
     bool visTL, visTM, visTR, visML, visMR, visBL, visBM, visBR;
     auto procTiles = &testTiles1;
     auto nextTiles = &testTiles2;
-    double distanceFromTarget = 1.0;
+    double distanceFromTarget = 0.0;
     bool atLeastOneVisibleFound = false;
-    bool atLeastOneFlatVisibleFound = false;    
+    bool atLeastOneFlatVisibleFound = false;
     bool shouldRepeat = true;
     while (shouldRepeat)
     {
@@ -931,6 +938,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
             const auto zoomShift = MaxZoomLevel - currentZoomLevel;
             const auto zShift = zoomLevel - currentZoom;
             const auto tileSize31 = 1u << zoomShift;
+            const auto realZoomLevel = static_cast<ZoomLevel>(currentZoom - zoomDelta);
+            const auto rShift = state.zoomLevel - realZoomLevel;
             for (const auto& tileEntry : rangeOf(constOf(setEntry.value())))
             {
                 const auto tileId = tileEntry.key();
@@ -940,9 +949,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     continue;
                 float minHeightInWorld = 0.0f;
                 float maxHeightInWorld = 0.0f;
-                const auto realZoomLevel = static_cast<ZoomLevel>(currentZoom - zoomDelta);
-                const auto realTileIdN = state.flatEarth ? Utilities::normalizeTileId(
-                    TileId::fromXY(tileIdN.x - tileDelta.x, tileIdN.y - tileDelta.y), realZoomLevel) : tileIdN;
+                const auto realTileIdN = state.flatEarth ? Utilities::normalizeTileId(TileId::fromXY(
+                    ((tileIdN.x << rShift) - tileDelta.x) >> rShift, ((tileIdN.y << rShift) - tileDelta.y) >> rShift),
+                        realZoomLevel) : tileIdN;
                 getHeightLimits(state, realTileIdN, realZoomLevel, minHeightInWorld, maxHeightInWorld);
                 const auto minHeight = static_cast<double>(minHeightInWorld) / globeRadius;
                 const auto maxHeight = static_cast<double>(maxHeightInWorld) / globeRadius;
@@ -1427,11 +1436,20 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         }
                     }
                     maxDistance = qMax(maxDistance, maxD);
-                    tiles[currentZoom].insert(tileId, visibility);
-                    tilesN[currentZoom].insert(tileIdN);
 
                     atLeastOneAdded = true;
                     atLeastOneFlatVisibleFound = true;
+
+                    if (!lookForStrictlyVisible || (isVisible && (minHeight != 0.0 || maxHeight != 0.0)))
+                    {
+                        tiles[currentZoom].insert(tileId, visibility);
+                        tilesN[currentZoom].insert(tileIdN);
+
+                        if (lookForStrictlyVisible)
+                            lookForStrictlyVisible = false;
+                    }
+                    else
+                        continue;
 
                     if (!isVisible)
                         continue;
@@ -1473,37 +1491,52 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         }
         if (!atLeastOneVisibleFound && !shouldRepeat)
         {
-            const auto targetTileId = internalState->synthTileId;
-            const auto azimuth = static_cast<double>(state.azimuth) * M_PI / 180.0;
-            const auto deltaX = qSin(azimuth);
-            const auto deltaY = qCos(azimuth);
-            if (!atLeastOneAdded && atLeastOneFlatVisibleFound)
+            const auto dirAngle =
+                static_cast<double>(state.azimuth) * M_PI / 180.0 - (lookForStrictlyVisible ? M_PI : 0.0);
+            const auto deltaX = qSin(dirAngle);
+            const auto deltaY = qCos(dirAngle);
+            if ((!atLeastOneAdded && atLeastOneFlatVisibleFound)
+                || (lookForStrictlyVisible && distanceFromTarget > distanceLimit))
             {
-                tiles.last().clear();    
-                tiles.last().insert(targetTileId, Visible);
-                double distance = 1.0;
-                auto prevTileId = targetTileId;
-                TileId nextTileId;
-                for (int i = 0; i < 10; i++)
+                if (lookForStrictlyVisible)
                 {
-                    nextTileId = TileId::fromXY(
-                        static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distance)),
-                        static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distance)));
-                    if (nextTileId == prevTileId)
+                    lookForStrictlyVisible = false;
+                    atLeastOneFlatVisibleFound = false;
+                    maxDistance = 0.0;
+                    distanceFromTarget = 0.0;
+                    targetTileId = internalState->synthTileId;
+                    (*nextTiles)[zoomLevel].insert(targetTileId, NotTestedYet);
+                    shouldRepeat = true;
+                }
+                else
+                {
+                    tiles.last().clear();    
+                    tiles.last().insert(targetTileId, Visible);
+                    double distance = 1.0;
+                    auto prevTileId = targetTileId;
+                    TileId nextTileId;
+                    for (int i = 0; i < 10; i++)
                     {
-                        distance += 1.0;
                         nextTileId = TileId::fromXY(
                             static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distance)),
                             static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distance)));
+                        if (nextTileId == prevTileId)
+                        {
+                            distance += 1.0;
+                            nextTileId = TileId::fromXY(
+                                static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distance)),
+                                static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distance)));
+                        }
+                        tiles.last().insert(nextTileId, Visible);
+                        distance += 1.0;
+                        prevTileId = nextTileId;
                     }
-                    tiles.last().insert(nextTileId, Visible);
-                    distance += 1.0;
-                    prevTileId = nextTileId;
                 }
             }
             else
             {
                 const auto firstTileId = (*procTiles)[zoomLevel].begin().key();
+                distanceFromTarget += 1.0;
                 auto nearTileId = TileId::fromXY(
                     static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distanceFromTarget)),
                     static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distanceFromTarget)));
@@ -1514,7 +1547,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distanceFromTarget)),
                         static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distanceFromTarget)));
                 }
-                distanceFromTarget += 1.0;
                 if (nearTileId.y >= 0 && nearTileId.y < static_cast<int32_t>(1u << zoomLevel))
                 {
                     (*nextTiles)[zoomLevel].insert(nearTileId, NotTestedYet);
@@ -1559,7 +1591,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
             if (visibility == ExtraDetail)
                 internalState->extraDetailedTiles.insert(tileIdN);
         }
-        internalState->visibleTilesCount += internalState->visibleTilesSet[zoomLevel].size();
+        internalState->visibleTilesCount += uniqueTiles.size();
         internalState->uniqueTiles[zoomLevel] = QVector<TileId>(uniqueTiles.begin(), uniqueTiles.end());
         const auto zoomShift = MaxZoomLevel - zoomLevel;
         const auto targetTileId = TileId::fromXY(state.target31.x >> zoomShift, state.target31.y >> zoomShift);
