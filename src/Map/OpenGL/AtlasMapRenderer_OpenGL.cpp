@@ -1145,7 +1145,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 const auto realTileIdN = state.flatEarth ? Utilities::normalizeTileId(TileId::fromXY(
                     ((tileIdN.x << rShift) - tileDelta.x) >> rShift, ((tileIdN.y << rShift) - tileDelta.y) >> rShift),
                         realZoomLevel) : tileIdN;
-                getHeightLimits(state, realTileIdN, realZoomLevel, minHeightInWorld, maxHeightInWorld);
+                getHeightLimits(state, realTileIdN, internalState->metersPerUnit,
+                    realZoomLevel, minHeightInWorld, maxHeightInWorld);
                 const auto minHeight = static_cast<double>(minHeightInWorld) / globeRadius;
                 const auto maxHeight = static_cast<double>(maxHeightInWorld) / globeRadius;
                 const auto minD = minHeight + 1.0;
@@ -1611,26 +1612,27 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     TileVisibility visibility = isVisible ? Visible : VisibleFlat;
                     if (isVisible && (minHeight != 0.0 || maxHeight != 0.0))
                     {
-                        const auto midPoint = (OTL + OTR + OBL + OBR) / 4.0;
-                        const auto tileDistance = glm::distance(camPos, midPoint);
-                        if (tileDistance < extraDetailDistance)
-                            visibility = ExtraDetail;
                         internalState->maxElevation = qMax(internalState->maxElevation, maxHeightInWorld);
-                        const auto extraGap = 0.1 / globeRadius;
-                        const auto heightDelta = qMax(0.0, maxD - cameraDistance);
-                        if (heightDelta + extraGap > 0.0)
+                        if (currentZoomLevel == zoomLevel)
                         {
-                            const auto maxRadius = qMax(glm::distance(midPoint, OTL), glm::distance(midPoint, OBR));
-                            const auto sqrMaxDistance = tileDistance * tileDistance - heightDelta * heightDelta;
-                            const auto distanceDelta =
-                                sqrMaxDistance > 0.0 ? qMax(qSqrt(sqrMaxDistance) - maxRadius, 0.0) : 0.0;
-                            const auto extraElevation = static_cast<float>(
-                                globeRadius * (heightDelta + extraGap - distanceDelta * 4.0));
-                            if (extraElevation > 0.0f)
-                                internalState->extraElevation = qMax(internalState->extraElevation, extraElevation);
+                            const auto center = (OTL + OTR + OBL + OBR) / 4.0;
+                            const auto toCenter = glm::distance(camPos, center);
+                            if (toCenter < extraDetailDistance)
+                                visibility = ExtraDetail;
+                            const auto gap = 0.1 / globeRadius;
+                            const auto difference = maxD - cameraDistance;
+                            if (difference + gap > 0.0)
+                            {
+                                const auto under = qMax(0.0, difference);
+                                const auto maxR = qMax(glm::distance(center, OTL), glm::distance(center, OBR));
+                                const auto sqrMax = toCenter * toCenter - under * under;
+                                const auto delta = sqrMax > 0.0 ? qMax(qSqrt(sqrMax) - maxR, 0.0) : 0.0;
+                                const auto extra = (difference + gap - delta * 4.0) * globeRadius;
+                                if (extra > 0.0 && extra > internalState->extraElevation)
+                                    internalState->extraElevation = static_cast<float>(extra);
+                            }
                         }
                     }
-                    maxDistance = qMax(maxDistance, maxD);
 
                     atLeastOneAdded = true;
                     atLeastOneFlatVisibleFound = true;
@@ -1648,6 +1650,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
 
                     if (!isVisible)
                         continue;
+
+                    maxDistance = qMax(maxDistance, maxD);
 
                     const auto zDetail = zShift > 0 && currentZoom < MaxZoomLevel && zLower != zFar
                         ? zLower + detailDistanceFactor(zShift - 1) * detailThickness : 0.0;
@@ -2161,8 +2165,18 @@ void OsmAnd::AtlasMapRenderer_OpenGL::getElevationDataLimits(const MapRendererSt
     maxHeight = static_cast<float>((scaledMaxValue / minMetersPerUnit) * state.elevationConfiguration.zScaleFactor);
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::getHeightLimits(const MapRendererState& state,
-    const TileId& tileId, const ZoomLevel zoomLevel, float& minHeight, float& maxHeight) const
+void OsmAnd::AtlasMapRenderer_OpenGL::getElevationDataLimits(const MapRendererState& state,
+    std::shared_ptr<const IMapElevationDataProvider::Data>& elevationData,
+    const double metersPerUnit, float& minHeight, float& maxHeight) const
+{
+    const auto factor = state.elevationConfiguration.dataScaleFactor / metersPerUnit
+        * state.elevationConfiguration.zScaleFactor;
+    minHeight = static_cast<float>(elevationData->minValue * factor);
+    maxHeight = static_cast<float>(elevationData->maxValue * factor);
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getHeightLimits(const MapRendererState& state, const TileId& tileId,
+    const double metersPerUnit, const ZoomLevel zoomLevel, float& minHeight, float& maxHeight) const
 {
     if (!state.elevationDataProvider)
         return false;
@@ -2174,7 +2188,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getHeightLimits(const MapRendererState& st
     std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
     if (captureElevationDataResource(state, tileId, zoomLevel, &elevationData))
     {
-        getElevationDataLimits(state, elevationData, tileId, zoomLevel, minHeight, maxHeight);
+        if (state.flatEarth)
+            getElevationDataLimits(state, elevationData, tileId, zoomLevel, minHeight, maxHeight);
+        else
+            getElevationDataLimits(state, elevationData, metersPerUnit, minHeight, maxHeight);
         return true;
     }
 
@@ -2203,8 +2220,11 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getHeightLimits(const MapRendererState& st
                 {
                     if (captureElevationDataResource(state, underscaledTileIdN, underscaledZoomLevel, &elevationData))
                     {
-                        getElevationDataLimits(
-                            state, elevationData, underscaledTileIdN, underscaledZoomLevel, minValue, maxValue);
+                        if (state.flatEarth)
+                            getElevationDataLimits(
+                                state, elevationData, underscaledTileIdN, underscaledZoomLevel, minValue, maxValue);
+                        else
+                            getElevationDataLimits(state, elevationData, metersPerUnit, minValue, maxValue);
                         minimum = qMin(minimum, minValue);
                         maximum = qMax(maximum, maxValue);
                     }
@@ -2235,8 +2255,11 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getHeightLimits(const MapRendererState& st
             const auto overscaledZoomLevel = static_cast<ZoomLevel>(overscaledZoom);
             if (captureElevationDataResource(state, overscaledTileIdN, overscaledZoomLevel, &elevationData))
             {
-                getElevationDataLimits(
-                    state, elevationData, overscaledTileIdN, overscaledZoomLevel, minValue, maxValue);
+                if (state.flatEarth)
+                    getElevationDataLimits(
+                        state, elevationData, overscaledTileIdN, overscaledZoomLevel, minValue, maxValue);
+                else
+                    getElevationDataLimits(state, elevationData, metersPerUnit, minValue, maxValue);
                 const auto scaleFactor = static_cast<float>(1 << absZoomShift);
                 minHeight = minValue * scaleFactor;
                 maxHeight = maxValue * scaleFactor;

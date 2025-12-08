@@ -88,8 +88,11 @@ namespace OsmAnd
         void getElevationDataLimits(const MapRendererState& state,
             std::shared_ptr<const IMapElevationDataProvider::Data>& elevationData,
             const TileId& tileId, const ZoomLevel zoomLevel, float& minHeight, float& maxHeight) const;
-        bool getHeightLimits(const MapRendererState& state,
-            const TileId& tileId, const ZoomLevel zoomLevel, float& minHeight, float& maxHeight) const;
+        void getElevationDataLimits(const MapRendererState& state,
+            std::shared_ptr<const IMapElevationDataProvider::Data>& elevationData,
+            const double metersPerUnit, float& minHeight, float& maxHeight) const;
+        bool getHeightLimits(const MapRendererState& state, const TileId& tileId, const double metersPerUnit,
+            const ZoomLevel zoomLevel, float& minHeight, float& maxHeight) const;
         bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
             const PointI& screenPoint, PointD& position,
             const float height = 0.0f, float* distance = nullptr, float* sinAngle = nullptr) const;
