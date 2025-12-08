@@ -289,14 +289,20 @@ void OsmAnd::AtlasMapRendererSymbolsStageModel3D::obtainRenderables(
         assert(gpuMeshResource->position31 == nullptr);
     }
 
-    PointF offsetInTileN;
-    const auto tileId = Utilities::normalizeTileId(
-        Utilities::getTileId(position31, currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
-    const auto upperMetersPerUnit =
-            Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
-    const auto lowerMetersPerUnit =
-            Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y + 1, AtlasMapRenderer::TileSize3D);
-    const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+    double metersPerUnit;
+    if (currentState.flatEarth)
+    {
+        PointF offsetInTileN;
+        const auto tileId = Utilities::normalizeTileId(Utilities::getTileId(
+            position31, currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
+        const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
+            currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
+        const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
+            currentState.zoomLevel, tileId.y + 1, AtlasMapRenderer::TileSize3D);
+        metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+    }
+    else
+        metersPerUnit = internalState.metersPerUnit;
     const auto elevationInMeters = height * metersPerUnit;
 
     // Don't render fully transparent symbols

@@ -1239,6 +1239,15 @@ namespace OsmAnd
             return res;
         }
 
+        inline static double getMetersPerTileUnit(
+            const ZoomLevel zoomLevel, const PointI& target31, const double unitsPerTile)
+        {
+            PointF targetInTileOffsetN;
+            const auto targetTileId = getTileId(target31, zoomLevel, &targetInTileOffsetN);
+            const auto targetY = static_cast<double>(targetTileId.y) + targetInTileOffsetN.y;
+            return getMetersPerTileUnit(zoomLevel, targetY, unitsPerTile);
+        }
+
         static PointD getTileEllipsoidNumberAndOffsetY(int zoom, double latitude, int tileSize);
 
         static TileId getTileId(const PointI& point31, ZoomLevel zoom, PointF* pOutOffsetN = nullptr, PointI* pOutOffset = nullptr);

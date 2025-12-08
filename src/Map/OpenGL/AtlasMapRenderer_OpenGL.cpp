@@ -407,21 +407,11 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         synthTarget31.x = (internalState->synthTileId.x << zShift) + static_cast<int>(qFloor(tileShift.x));
         synthTarget31.y = (internalState->synthTileId.y << zShift) + static_cast<int>(qFloor(tileShift.y));
     }
-    auto targetY = static_cast<double>(internalState->targetTileId.y) + internalState->targetInTileOffsetN.y;
-    auto metersPerUnit =
-        Utilities::getMetersPerTileUnit(state.zoomLevel, targetY, TileSize3D);
+    const auto metersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, state.target31, TileSize3D);
     internalState->metersPerUnit = metersPerUnit;
-    double synthScaleFactor31 = 1.0;
-    if (state.flatEarth && shiftToFlatten > 0)
-    {
-        PointF targetInTileOffsetN;
-        internalState->synthTileId =
-            Utilities::getTileId(synthTarget31, internalState->synthZoomLevel, &targetInTileOffsetN);
-        targetY = static_cast<double>(internalState->synthTileId.y) + targetInTileOffsetN.y;
-        const auto synthMetersPerUnit =
-            Utilities::getMetersPerTileUnit(internalState->synthZoomLevel, targetY, TileSize3D);
-        synthScaleFactor31 = metersPerUnit / synthMetersPerUnit;
-    }
+    const auto synthScaleFactor31 = state.flatEarth && shiftToFlatten > 0
+        ? metersPerUnit / Utilities::getMetersPerTileUnit(internalState->synthZoomLevel, synthTarget31, TileSize3D)
+        : 1.0;
 
     // Calculate globe rotation matrix
     const auto radiusInWorld = _radius * synthScaleFactor31 / metersPerUnit;
@@ -2509,12 +2499,18 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getWorldElevationOfLocation(const MapRend
     if (elevationInMeters != 0.0f && elevationInMeters > _invalidElevationValue)
     {
         const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);   
-        PointF offsetInTileN;
-        TileId tileId = Utilities::getTileId(location31, state.zoomLevel, &offsetInTileN);
         const auto scaledElevationInMeters = elevationInMeters * state.elevationConfiguration.dataScaleFactor;
-        const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y, TileSize3D);
-        const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y + 1, TileSize3D);
-        const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+        double metersPerUnit;
+        if (state.flatEarth)
+        {
+            PointF offsetInTileN;
+            TileId tileId = Utilities::getTileId(location31, state.zoomLevel, &offsetInTileN);
+            const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y, TileSize3D);
+            const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y + 1, TileSize3D);
+            metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+        }
+        else
+            metersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, state.target31, TileSize3D);
         return scaledElevationInMeters / metersPerUnit * state.elevationConfiguration.zScaleFactor;
     }
     else
@@ -2527,12 +2523,18 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getElevationOfLocationInMeters(const MapR
     if (elevation != 0.0f)
     {
         const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);   
-        PointF offsetInTileN;
-        TileId tileId = Utilities::getTileId(location31, zoom, &offsetInTileN);
         const auto scaledElevation = elevation / state.elevationConfiguration.zScaleFactor;
-        const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(zoom, tileId.y, TileSize3D);
-        const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(zoom, tileId.y + 1, TileSize3D);
-        const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+        double metersPerUnit;
+        if (state.flatEarth)
+        {
+            PointF offsetInTileN;
+            TileId tileId = Utilities::getTileId(location31, zoom, &offsetInTileN);
+            const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(zoom, tileId.y, TileSize3D);
+            const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(zoom, tileId.y + 1, TileSize3D);
+            metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+        }
+        else
+            metersPerUnit = Utilities::getMetersPerTileUnit(zoom, state.target31, TileSize3D);
         return scaledElevation * metersPerUnit / state.elevationConfiguration.dataScaleFactor;
     }
     else
@@ -3352,9 +3354,17 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getHeightOfLocation(const MapRendererStat
         {
             const auto scaledElevationInMeters = elevationInMeters * state.elevationConfiguration.dataScaleFactor;
 
-            const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y, TileSize3D);
-            const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y + 1, TileSize3D);
-            const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+            double metersPerUnit;
+            if (state.flatEarth)
+            {
+                const auto upperMetersPerUnit =
+                    Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y, TileSize3D);
+                const auto lowerMetersPerUnit =
+                    Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y + 1, TileSize3D);
+                metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+            }
+            else
+                metersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, state.target31, TileSize3D);
 
             height = static_cast<float>(
                 (scaledElevationInMeters / metersPerUnit) * state.elevationConfiguration.zScaleFactor);
