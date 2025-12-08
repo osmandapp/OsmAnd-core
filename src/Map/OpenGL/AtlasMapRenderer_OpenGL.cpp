@@ -919,6 +919,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     const auto cameraTile31 = Utilities::get31FromAngles(internalState->cameraAngles);
     auto camTileId = TileId::fromXY(cameraTile31.x >> sZoom, cameraTile31.y >> sZoom);
     PointI toCamera(camTileId.x - internalState->synthTileId.x, camTileId.y - internalState->synthTileId.y);
+    if (abs(toCamera.x) == 1)
+        toCamera.x = 0;
+    if (abs(toCamera.y) == 1)
+        toCamera.y = 0;
     if (toCamera.x > 0 && dirX > 0.0)
         toCamera.x -= 1 << zoomLevel;
     else if (toCamera.x < 0 && dirX < 0.0)
