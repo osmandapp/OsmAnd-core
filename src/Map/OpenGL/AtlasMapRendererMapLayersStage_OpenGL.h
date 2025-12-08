@@ -134,10 +134,11 @@ namespace OsmAnd
         enum RenderingFeatures : int
         {
             None = 0,
-            Grids,
-            Dynamics,
+            Hillshade = 1,
+            Grids = 2,
+            Dynamics = 4,
 
-            All
+            All = 7
         };
 
         struct RasterLayerTileProgram
@@ -165,7 +166,6 @@ namespace OsmAnd
                     GLlocation cameraElevationAngleN;
                     GLlocation groundCameraPosition;
                     GLlocation scaleToRetainProjectedSize;
-                    GLlocation elevation_configuration;
                     GLlocation elevation_hillshadeConfiguration;
                     GLlocation primaryGridAxisX;
                     GLlocation secondaryGridAxisX;
@@ -255,7 +255,8 @@ namespace OsmAnd
             const PointF& texCoordsOffsetN,
             const PointF& texCoordsScaleN,
             const double tileSize,
-            const int elevationDataSamplerIndex);
+            const int elevationDataSamplerIndex,
+            const bool withHillshade);
         void cancelElevation(
             const RasterLayerTileProgram& program,
             const int elevationDataSamplerIndex);
@@ -269,7 +270,7 @@ namespace OsmAnd
             const ZoomLevel zoomLevel) const;
         bool activateRasterLayersProgram(
             const unsigned int numberOfLayersInBatch,
-            const bool batchWithDynamics,
+            const int programFeatures,
             const int elevationDataSamplerIndex,
             GLname& lastUsedProgram,
             const ZoomLevel zoomLevel);

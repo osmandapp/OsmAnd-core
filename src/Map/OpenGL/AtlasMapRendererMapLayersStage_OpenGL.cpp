@@ -297,7 +297,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
               1 /*param_vs_cameraElevationAngleN*/ +
               1 /*param_vs_groundCameraPosition*/ +
               1 /*param_vs_scaleToRetainProjectedSize*/) +
-        1 /*param_vs_elevation_configuration*/ +
         1 /*param_vs_elevation_hillshadeConfiguration*/ +
         1 /*param_vs_tileCoords31*/ +
         1 /*param_vs_globeTileTL*/ +
@@ -345,7 +344,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*v2f_metersPerUnit*/ +
         (gpuAPI->isSupported_textureLod ? 1 : 0) /*v2f_mipmapLOD*/ +
         (setupOptions.elevationVisualizationEnabled
-            ? 7 : 0) /*v2f_hsTopLight + v2f_hsBotLight + v2f_hsCoords*/ +
+            ? 11 : 0) /*v2f_hsLights + v2f_hsCoords*/ +
         4 /*v2f_primaryLocation*/ +
         4 /*v2f_secondaryLocation*/ +
         4 /*v2f_position*/ +
@@ -360,7 +359,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*v2f_metersPerUnit*/ +
         (gpuAPI->isSupported_textureLod ? 1 : 0) /*v2f_mipmapLOD*/ +
         (setupOptions.elevationVisualizationEnabled
-            ? 3 : 0) /*v2f_hsTopLight + v2f_hsBotLight + v2f_hsCoords*/ +
+            ? 4 : 0) /*v2f_hsLights + v2f_hsCoords*/ +
         1 /*v2f_primaryLocation*/ +
         1 /*v2f_secondaryLocation*/ +
         1 /*v2f_position*/ +
@@ -424,9 +423,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     if (!outRasterLayerTileProgram.id.isValid())
     {
         auto vertexShader = QStringLiteral(
-            // Definitions
-            "#define ELEVATION_VISUALIZATION_ENABLED %ElevationVisualizationEnabled%                                            ""\n"
-            "                                                                                                                   ""\n"
             // Input data
             "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
             "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
@@ -437,16 +433,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "PARAM_OUTPUT float v2f_colorIntensity;                                                                             ""\n"
             "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
             "    PARAM_OUTPUT float v2f_mipmapLOD;                                                                              ""\n"
-            "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-            "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
-            "    PARAM_FLAT_OUTPUT highp vec2 v2f_hsTopLight;                                                                   ""\n"
-            "    PARAM_FLAT_OUTPUT highp vec3 v2f_hsBotLight;                                                                   ""\n"
-            "    PARAM_OUTPUT highp vec2 v2f_hsCoords;                                                                          ""\n"
-            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n");
+            "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n");
+        const auto& hillshadeInVertexShader_1 = QStringLiteral(
+            "PARAM_FLAT_OUTPUT highp mat3 v2f_hsLights;                                                                         ""\n"
+            "PARAM_OUTPUT highp vec2 v2f_hsCoords;                                                                              ""\n");
         const auto& gridsInVertexShader_1 = QStringLiteral(
             "PARAM_OUTPUT vec4 v2f_primaryLocation;                                                                             ""\n"
             "PARAM_OUTPUT vec4 v2f_secondaryLocation;                                                                           ""\n");
         vertexShader.append(QStringLiteral(
+            "%HillshadeInVertexShader_1%                                                                                        ""\n"
             "%GridsInVertexShader_1%                                                                                            ""\n"
             "PARAM_OUTPUT vec4 v2f_position;                                                                                    ""\n"
             "PARAM_OUTPUT vec4 v2f_normal;                                                                                      ""\n"
@@ -462,23 +457,21 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    uniform float param_vs_cameraElevationAngleN;                                                                  ""\n"
             "    uniform vec2 param_vs_groundCameraPosition;                                                                    ""\n"
             "    uniform float param_vs_scaleToRetainProjectedSize;                                                             ""\n"
-            "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-            "uniform vec4 param_vs_elevation_configuration;                                                                     ""\n"
-            "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
-            "    uniform vec4 param_vs_elevation_hillshadeConfiguration;                                                        ""\n"
-            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"));
+            "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"));
+        const auto& hillshadeInVertexShader_2 = QStringLiteral(
+            "uniform vec4 param_vs_elevation_hillshadeConfiguration;                                                            ""\n"
+            "uniform highp vec4 param_vs_elevationLayerTexelSize;                                                               ""\n");
         const auto& gridsInVertexShader_2 = QStringLiteral(
             "uniform vec4 param_vs_primaryGridAxisX;                                                                            ""\n"
             "uniform vec4 param_vs_secondaryGridAxisX;                                                                          ""\n"
             "uniform vec4 param_vs_primaryGridAxisY;                                                                            ""\n"
             "uniform vec4 param_vs_secondaryGridAxisY;                                                                          ""\n"
-            "                                                                                                                   ""\n"
-            // Parameters: per-tile data
             "uniform vec4 param_vs_primaryGridTileTop;                                                                          ""\n"
             "uniform vec4 param_vs_primaryGridTileBot;                                                                          ""\n"
             "uniform vec4 param_vs_secondaryGridTileTop;                                                                        ""\n"
             "uniform vec4 param_vs_secondaryGridTileBot;                                                                        ""\n");
         vertexShader.append(QStringLiteral(
+            "%HillshadeInVertexShader_2%                                                                                        ""\n"
             "%GridsInVertexShader_2%                                                                                            ""\n"
             "uniform ivec4 param_vs_tileCoords31;                                                                               ""\n"
             "uniform vec3 param_vs_globeTileTL;                                                                                 ""\n"
@@ -500,7 +493,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "};                                                                                                                 ""\n"
             "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
             "uniform VsRasterLayerTile param_vs_elevationLayer;                                                                 ""\n"
-            "uniform highp vec4 param_vs_elevationLayerTexelSize;                                                               ""\n"
             "uniform highp vec4 param_vs_elevationLayerDataPlace;                                                               ""\n"
             "                                                                                                                   ""\n"
             "float interpolatedHeight(in vec2 inTexCoords)                                                                      ""\n"
@@ -605,186 +597,216 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "                                                                                                                   ""\n"
             //   Process each tile layer texture coordinates (except elevation)
             "%UnrolledPerRasterLayerTexCoordsProcessingCode%                                                                    ""\n"
-            "                                                                                                                   ""\n"
-            //   If elevation data is active, use it
-            "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
-            "    v2f_hsTopLight = vec2(0.7);                                                                                    ""\n"
-            "    v2f_hsBotLight = vec3(0.7);                                                                                    ""\n"
-            "    v2f_hsCoords = vec2(0.0);                                                                                      ""\n"
-            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+            "                                                                                                                   ""\n"));
+        const auto& hillshadeInVertexShader_3 = QStringLiteral(
+            "    v2f_hsLights = mat3(0.7);                                                                                      ""\n"
+            "    v2f_hsCoords = vec2(0.0);                                                                                      ""\n");
+        vertexShader.append(QStringLiteral(
+            "%HillshadeInVertexShader_3%                                                                                        ""\n"
             "    if (abs(param_vs_elevation_scale.w) > 0.0)                                                                     ""\n"
             "    {                                                                                                              ""\n"
             // [0][0] - TL (0); [1][0] - T (1); [2][0] - TR (2)
             // [0][1] -  L (3); [1][1] - O (4); [2][1] -  R (5)
             // [0][2] - BL (6); [1][2] - B (7); [2][2] - BR (8)
-            "        mat4 heightInMeters = mat4(0.0);                                                                           ""\n"
+            "        mat4 height = mat4(0.0);                                                                                   ""\n"
             "        vec2 elevationTexCoordsO;                                                                                  ""\n"
             "        calculateTextureCoordinates(                                                                               ""\n"
             "            param_vs_elevationLayer,                                                                               ""\n"
             "            elevationTexCoordsO);                                                                                  ""\n"
-            "        heightInMeters[1][1] = interpolatedHeight(elevationTexCoordsO);                                            ""\n"
-            "                                                                                                                   ""\n"
-            "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+            "        height[1][1] = interpolatedHeight(elevationTexCoordsO);                                                    ""\n"
+            "                                                                                                                   ""\n"));
+        const auto& hillshadeInVertexShader_4 = QStringLiteral(
             "        vec2 elevationTexCoords = elevationTexCoordsO;                                                             ""\n"
             "        elevationTexCoords.t -= param_vs_elevationLayerTexelSize.y;                                                ""\n"
-            "        heightInMeters[1][0] = interpolatedHeight(elevationTexCoords);                                             ""\n"
+            "        height[1][0] = interpolatedHeight(elevationTexCoords);                                                     ""\n"
             "                                                                                                                   ""\n"
             "        elevationTexCoords = elevationTexCoordsO;                                                                  ""\n"
             "        elevationTexCoords.s -= param_vs_elevationLayerTexelSize.x;                                                ""\n"
-            "        heightInMeters[0][1] = interpolatedHeight(elevationTexCoords);                                             ""\n"
+            "        height[0][1] = interpolatedHeight(elevationTexCoords);                                                     ""\n"
             "                                                                                                                   ""\n"
             "        elevationTexCoords = elevationTexCoordsO;                                                                  ""\n"
             "        elevationTexCoords.t += param_vs_elevationLayerTexelSize.y;                                                ""\n"
-            "        heightInMeters[1][2] = interpolatedHeight(elevationTexCoords);                                             ""\n"
+            "        height[1][2] = interpolatedHeight(elevationTexCoords);                                                     ""\n"
             "        elevationTexCoords.t += param_vs_elevationLayerTexelSize.y;                                                ""\n"
-            "        heightInMeters[1][3] = interpolatedHeight(elevationTexCoords);                                             ""\n"
+            "        height[1][3] = interpolatedHeight(elevationTexCoords);                                                     ""\n"
             "                                                                                                                   ""\n"
             "        elevationTexCoords = elevationTexCoordsO;                                                                  ""\n"
             "        elevationTexCoords.s += param_vs_elevationLayerTexelSize.x;                                                ""\n"
-            "        heightInMeters[2][1] = interpolatedHeight(elevationTexCoords);                                             ""\n"
+            "        height[2][1] = interpolatedHeight(elevationTexCoords);                                                     ""\n"
             "        elevationTexCoords.s += param_vs_elevationLayerTexelSize.x;                                                ""\n"
-            "        heightInMeters[3][1] = interpolatedHeight(elevationTexCoords);                                             ""\n"
+            "        height[3][1] = interpolatedHeight(elevationTexCoords);                                                     ""\n"
             "                                                                                                                   ""\n"
             "        elevationTexCoords = elevationTexCoordsO;                                                                  ""\n"
             "        elevationTexCoords -= param_vs_elevationLayerTexelSize.xy;                                                 ""\n"
-            "        heightInMeters[0][0] = interpolatedHeight(elevationTexCoords);                                             ""\n"
+            "        height[0][0] = interpolatedHeight(elevationTexCoords);                                                     ""\n"
             "                                                                                                                   ""\n"
             "        elevationTexCoords = elevationTexCoordsO;                                                                  ""\n"
             "        elevationTexCoords.s += param_vs_elevationLayerTexelSize.x;                                                ""\n"
             "        elevationTexCoords.t -= param_vs_elevationLayerTexelSize.y;                                                ""\n"
-            "        heightInMeters[2][0] = interpolatedHeight(elevationTexCoords);                                             ""\n"
+            "        height[2][0] = interpolatedHeight(elevationTexCoords);                                                     ""\n"
             "        elevationTexCoords.s += param_vs_elevationLayerTexelSize.x;                                                ""\n"
-            "        heightInMeters[3][0] = interpolatedHeight(elevationTexCoords);                                             ""\n"
+            "        height[3][0] = interpolatedHeight(elevationTexCoords);                                                     ""\n"
             "                                                                                                                   ""\n"
             "        elevationTexCoords = elevationTexCoordsO;                                                                  ""\n"
             "        elevationTexCoords.s -= param_vs_elevationLayerTexelSize.x;                                                ""\n"
             "        elevationTexCoords.t += param_vs_elevationLayerTexelSize.y;                                                ""\n"
-            "        heightInMeters[0][2] = interpolatedHeight(elevationTexCoords);                                             ""\n"
+            "        height[0][2] = interpolatedHeight(elevationTexCoords);                                                     ""\n"
             "        elevationTexCoords.t += param_vs_elevationLayerTexelSize.y;                                                ""\n"
-            "        heightInMeters[0][3] = interpolatedHeight(elevationTexCoords);                                             ""\n"
+            "        height[0][3] = interpolatedHeight(elevationTexCoords);                                                     ""\n"
             "                                                                                                                   ""\n"
             "        elevationTexCoords = elevationTexCoordsO;                                                                  ""\n"
             "        elevationTexCoords += param_vs_elevationLayerTexelSize.xy;                                                 ""\n"
-            "        heightInMeters[2][2] = interpolatedHeight(elevationTexCoords);                                             ""\n"
+            "        height[2][2] = interpolatedHeight(elevationTexCoords);                                                     ""\n"
             "        elevationTexCoords += param_vs_elevationLayerTexelSize.xy;                                                 ""\n"
-            "        heightInMeters[3][3] = interpolatedHeight(elevationTexCoords);                                             ""\n"
+            "        height[3][3] = interpolatedHeight(elevationTexCoords);                                                     ""\n"
             "        elevationTexCoords.s -= param_vs_elevationLayerTexelSize.x;                                                ""\n"
-            "        heightInMeters[2][3] = interpolatedHeight(elevationTexCoords);                                             ""\n"
+            "        height[2][3] = interpolatedHeight(elevationTexCoords);                                                     ""\n"
             "        elevationTexCoords.s += param_vs_elevationLayerTexelSize.x;                                                ""\n"
             "        elevationTexCoords.t -= param_vs_elevationLayerTexelSize.y;                                                ""\n"
-            "        heightInMeters[3][2] = interpolatedHeight(elevationTexCoords);                                             ""\n"
-            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
-            "                                                                                                                   ""\n"
+            "        height[3][2] = interpolatedHeight(elevationTexCoords);                                                     ""\n");
+        vertexShader.append(QStringLiteral(
+            "%HillshadeInVertexShader_4%                                                                                        ""\n"
             "        float elevationScale = param_vs_elevation_scale.w * param_vs_elevation_scale.z;                            ""\n"
-            "        heightInMeters *= elevationScale;                                                                          ""\n"
+            "        height *= elevationScale;                                                                                  ""\n"));
+        const auto& hillshadeInVertexShader_5 = QStringLiteral(
+            "        const float M_3PI_2 = 3.0 * M_PI_2;                                                                        ""\n"
+            "        const float M_COS_225_D = -0.70710678118;                                                                  ""\n"
+            "        float heixelInMeters = v2f_metersPerUnit * (param_vs_objectSizes.x / %HeixelsPerTileSide%.0);              ""\n"
             "                                                                                                                   ""\n"
-            "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
-            "        float visualizationStyle = param_vs_elevation_configuration.y;                                             ""\n"
-            "        if (visualizationStyle > %VisualizationStyle_None%.0)                                                      ""\n"
-            "        {                                                                                                          ""\n"
-            "            const float M_3PI_2 = 3.0 * M_PI_2;                                                                    ""\n"
-            "            const float M_COS_225_D = -0.70710678118;                                                              ""\n"
+            "        vec2 slopeInMeters;                                                                                        ""\n"
+            "        vec2 slopeInMetersR;                                                                                       ""\n"
+            "        vec2 slopeInMetersB;                                                                                       ""\n"
+            "        vec2 slopeInMetersBR;                                                                                      ""\n"
+            "        vec2 slopeInMetersC;                                                                                       ""\n"
+            "        vec2 slopeInMetersTM;                                                                                      ""\n"
+            "        vec2 slopeInMetersLM;                                                                                      ""\n"
+            "        vec2 slopeInMetersBM;                                                                                      ""\n"
+            "        vec2 slopeInMetersRM;                                                                                      ""\n"
             "                                                                                                                   ""\n"
-            "            float heixelInMeters = v2f_metersPerUnit * (param_vs_objectSizes.x / %HeixelsPerTileSide%.0);          ""\n"
+            "        slopeInMeters.x = height[0][0] + height[0][1] * 2.0 + height[0][2];                                        ""\n"
+            "        slopeInMeters.x -= height[2][0] + height[2][1] * 2.0 + height[2][2];                                       ""\n"
+            "        slopeInMeters.y = height[0][2] + height[1][2] * 2.0 + height[2][2];                                        ""\n"
+            "        slopeInMeters.y -= height[0][0] + height[1][0] * 2.0 + height[2][0];                                       ""\n"
+            "        slopeInMetersR.x = height[1][0] + height[1][1] * 2.0 + height[1][2];                                       ""\n"
+            "        slopeInMetersR.x -= height[3][0] + height[3][1] * 2.0 + height[3][2];                                      ""\n"
+            "        slopeInMetersR.y = height[1][2] + height[2][2] * 2.0 + height[3][2];                                       ""\n"
+            "        slopeInMetersR.y -= height[1][0] + height[2][0] * 2.0 + height[3][0];                                      ""\n"
+            "        slopeInMetersB.x = height[0][1] + height[0][2] * 2.0 + height[0][3];                                       ""\n"
+            "        slopeInMetersB.x -= height[2][1] + height[2][2] * 2.0 + height[2][3];                                      ""\n"
+            "        slopeInMetersB.y = height[0][3] + height[1][3] * 2.0 + height[2][3];                                       ""\n"
+            "        slopeInMetersB.y -= height[0][1] + height[1][1] * 2.0 + height[2][1];                                      ""\n"
+            "        slopeInMetersBR.x = height[1][1] + height[1][2] * 2.0 + height[1][3];                                      ""\n"
+            "        slopeInMetersBR.x -= height[3][1] + height[3][2] * 2.0 + height[3][3];                                     ""\n"
+            "        slopeInMetersBR.y = height[1][3] + height[2][3] * 2.0 + height[3][3];                                      ""\n"
+            "        slopeInMetersBR.y -= height[1][1] + height[2][1] * 2.0 + height[3][1];                                     ""\n"
             "                                                                                                                   ""\n"
-            "            vec2 slopeInMeters;                                                                                    ""\n"
-            "            vec2 slopeInMetersR;                                                                                   ""\n"
-            "            vec2 slopeInMetersB;                                                                                   ""\n"
-            "            vec2 slopeInMetersBR;                                                                                  ""\n"
-            "            vec2 slopeInMetersC;                                                                                   ""\n"
+            "        mat3 avg;                                                                                                  ""\n"
+            "        avg[0][0] = height[0][0] + height[0][1] + height[1][0] + height[1][1];                                     ""\n"
+            "        avg[0][1] = height[0][1] + height[0][2] + height[1][1] + height[1][2];                                     ""\n"
+            "        avg[0][2] = height[0][2] + height[0][3] + height[1][2] + height[1][3];                                     ""\n"
+            "        avg[1][0] = height[1][0] + height[1][1] + height[2][0] + height[2][1];                                     ""\n"
+            "        avg[1][1] = height[1][1] + height[1][2] + height[2][1] + height[2][2];                                     ""\n"
+            "        avg[1][2] = height[1][2] + height[1][3] + height[2][2] + height[2][3];                                     ""\n"
+            "        avg[2][0] = height[2][0] + height[2][1] + height[3][0] + height[3][1];                                     ""\n"
+            "        avg[2][1] = height[2][1] + height[2][2] + height[3][1] + height[3][2];                                     ""\n"
+            "        avg[2][2] = height[2][2] + height[2][3] + height[3][2] + height[3][3];                                     ""\n"
+            "        avg /= 4.0;                                                                                                ""\n"
             "                                                                                                                   ""\n"
-            "            slopeInMeters.x = (heightInMeters[0][0] + heightInMeters[0][1] * 2.0 + heightInMeters[0][2]);          ""\n"
-            "            slopeInMeters.x -= (heightInMeters[2][0] + heightInMeters[2][1] * 2.0 + heightInMeters[2][2]);         ""\n"
-            "            slopeInMeters.y = (heightInMeters[0][2] + heightInMeters[1][2] * 2.0 + heightInMeters[2][2]);          ""\n"
-            "            slopeInMeters.y -= (heightInMeters[0][0] + heightInMeters[1][0] * 2.0 + heightInMeters[2][0]);         ""\n"
-            "            slopeInMetersR.x = (heightInMeters[1][0] + heightInMeters[1][1] * 2.0 + heightInMeters[1][2]);         ""\n"
-            "            slopeInMetersR.x -= (heightInMeters[3][0] + heightInMeters[3][1] * 2.0 + heightInMeters[3][2]);        ""\n"
-            "            slopeInMetersR.y = (heightInMeters[1][2] + heightInMeters[2][2] * 2.0 + heightInMeters[3][2]);         ""\n"
-            "            slopeInMetersR.y -= (heightInMeters[1][0] + heightInMeters[2][0] * 2.0 + heightInMeters[3][0]);        ""\n"
-            "            slopeInMetersB.x = (heightInMeters[0][1] + heightInMeters[0][2] * 2.0 + heightInMeters[0][3]);         ""\n"
-            "            slopeInMetersB.x -= (heightInMeters[2][1] + heightInMeters[2][2] * 2.0 + heightInMeters[2][3]);        ""\n"
-            "            slopeInMetersB.y = (heightInMeters[0][3] + heightInMeters[1][3] * 2.0 + heightInMeters[2][3]);         ""\n"
-            "            slopeInMetersB.y -= (heightInMeters[0][1] + heightInMeters[1][1] * 2.0 + heightInMeters[2][1]);        ""\n"
-            "            slopeInMetersBR.x = (heightInMeters[1][1] + heightInMeters[1][2] * 2.0 + heightInMeters[1][3]);        ""\n"
-            "            slopeInMetersBR.x -= (heightInMeters[3][1] + heightInMeters[3][2] * 2.0 + heightInMeters[3][3]);       ""\n"
-            "            slopeInMetersBR.y = (heightInMeters[1][3] + heightInMeters[2][3] * 2.0 + heightInMeters[3][3]);        ""\n"
-            "            slopeInMetersBR.y -= (heightInMeters[1][1] + heightInMeters[2][1] * 2.0 + heightInMeters[3][1]);       ""\n"
+            "        slopeInMetersC.x = avg[0][0] + avg[0][1] * 2.0 + avg[0][2];                                                ""\n"
+            "        slopeInMetersC.x -= avg[2][0] + avg[2][1] * 2.0 + avg[2][2];                                               ""\n"
+            "        slopeInMetersC.y = avg[0][2] + avg[1][2] * 2.0 + avg[2][2];                                                ""\n"
+            "        slopeInMetersC.y -= avg[0][0] + avg[1][0] * 2.0 + avg[2][0];                                               ""\n"
+            "        slopeInMetersTM.x = (height[0][0] + height[1][0] + height[0][2] + height[1][2]) / 2.0;                     ""\n"
+            "        slopeInMetersTM.x += height[0][1] + height[1][1];                                                          ""\n"
+            "        slopeInMetersTM.x -= (height[2][0] + height[3][0] + height[2][2] + height[3][2]) / 2.0;                    ""\n"
+            "        slopeInMetersTM.x -= height[2][1] + height[3][1];                                                          ""\n"
+            "        slopeInMetersTM.y = (height[0][2] + (height[1][2] + height[2][2]) * 3.0 + height[3][2]) / 2.0;             ""\n"
+            "        slopeInMetersTM.y -= (height[0][0] + (height[1][0] + height[2][0]) * 3.0 + height[3][0]) / 2.0;            ""\n"
+            "        slopeInMetersLM.x = (height[0][0] + (height[0][1] + height[0][2]) * 3.0 + height[0][3]) / 2.0;             ""\n"
+            "        slopeInMetersLM.x -= (height[2][0] + (height[2][1] + height[2][2]) * 3.0 + height[2][3]) / 2.0;            ""\n"
+            "        slopeInMetersLM.y = (height[0][2] + height[0][3] + height[2][2] + height[2][3]) / 2.0;                     ""\n"
+            "        slopeInMetersLM.y += height[1][2] + height[1][3];                                                          ""\n"
+            "        slopeInMetersLM.y -= (height[0][0] + height[0][1] + height[2][0] + height[2][1]) / 2.0;                    ""\n"
+            "        slopeInMetersLM.y -= height[1][0] + height[1][1];                                                          ""\n"
+            "        slopeInMetersBM.x = (height[0][1] + height[1][1] + height[0][3] + height[1][3]) / 2.0;                     ""\n"
+            "        slopeInMetersBM.x += height[0][2] + height[1][2];                                                          ""\n"
+            "        slopeInMetersBM.x -= (height[2][1] + height[3][1] + height[2][3] + height[3][3]) / 2.0;                    ""\n"
+            "        slopeInMetersBM.x -= height[2][2] + height[3][2];                                                          ""\n"
+            "        slopeInMetersBM.y = (height[0][3] + (height[1][3] + height[2][3]) * 3.0 + height[3][3]) / 2.0;             ""\n"
+            "        slopeInMetersBM.y -= (height[0][1] + (height[1][1] + height[2][1]) * 3.0 + height[3][1]) / 2.0;            ""\n"
+            "        slopeInMetersRM.x = (height[1][0] + (height[1][1] + height[1][2]) * 3.0 + height[1][3]) / 2.0;             ""\n"
+            "        slopeInMetersRM.x -= (height[3][0] + (height[3][1] + height[3][2]) * 3.0 + height[3][3]) / 2.0;            ""\n"
+            "        slopeInMetersRM.y = (height[1][2] + height[1][3] + height[3][2] + height[3][3]) / 2.0;                     ""\n"
+            "        slopeInMetersRM.y += height[2][2] + height[2][3];                                                          ""\n"
+            "        slopeInMetersRM.y -= (height[1][0] + height[1][1] + height[3][0] + height[3][1]) / 2.0;                    ""\n"
+            "        slopeInMetersRM.y -= height[2][0] + height[2][1];                                                          ""\n"
             "                                                                                                                   ""\n"
-            "            mat3 avg;                                                                                              ""\n"
-            "            avg[0][0] = heightInMeters[0][0] + heightInMeters[0][1] + heightInMeters[1][0] + heightInMeters[1][1]; ""\n"
-            "            avg[0][1] = heightInMeters[0][1] + heightInMeters[0][2] + heightInMeters[1][1] + heightInMeters[1][2]; ""\n"
-            "            avg[0][2] = heightInMeters[0][2] + heightInMeters[0][3] + heightInMeters[1][2] + heightInMeters[1][3]; ""\n"
-            "            avg[1][0] = heightInMeters[1][0] + heightInMeters[1][1] + heightInMeters[2][0] + heightInMeters[2][1]; ""\n"
-            "            avg[1][1] = heightInMeters[1][1] + heightInMeters[1][2] + heightInMeters[2][1] + heightInMeters[2][2]; ""\n"
-            "            avg[1][2] = heightInMeters[1][2] + heightInMeters[1][3] + heightInMeters[2][2] + heightInMeters[2][3]; ""\n"
-            "            avg[2][0] = heightInMeters[2][0] + heightInMeters[2][1] + heightInMeters[3][0] + heightInMeters[3][1]; ""\n"
-            "            avg[2][1] = heightInMeters[2][1] + heightInMeters[2][2] + heightInMeters[3][1] + heightInMeters[3][2]; ""\n"
-            "            avg[2][2] = heightInMeters[2][2] + heightInMeters[2][3] + heightInMeters[3][2] + heightInMeters[3][3]; ""\n"
-            "            avg /= 4.0;                                                                                            ""\n"
-            "            slopeInMetersC.x = (avg[0][0] + avg[0][1] * 2.0 + avg[0][2]);                                          ""\n"
-            "            slopeInMetersC.x -= (avg[2][0] + avg[2][1] * 2.0 + avg[2][2]);                                         ""\n"
-            "            slopeInMetersC.y = (avg[0][2] + avg[1][2] * 2.0 + avg[2][2]);                                          ""\n"
-            "            slopeInMetersC.y -= (avg[0][0] + avg[1][0] * 2.0 + avg[2][0]);                                         ""\n"
+            "        highp float slope = slopeInMeters.x * slopeInMeters.x + slopeInMeters.y * slopeInMeters.y;                 ""\n"
+            "        highp float slopeR = slopeInMetersR.x * slopeInMetersR.x + slopeInMetersR.y * slopeInMetersR.y;            ""\n"
+            "        highp float slopeB = slopeInMetersB.x * slopeInMetersB.x + slopeInMetersB.y * slopeInMetersB.y;            ""\n"
+            "        highp float slopeBR = slopeInMetersBR.x * slopeInMetersBR.x + slopeInMetersBR.y * slopeInMetersBR.y;       ""\n"
+            "        highp float slopeC = slopeInMetersC.x * slopeInMetersC.x + slopeInMetersC.y * slopeInMetersC.y;            ""\n"
+            "        highp float slopeTM = slopeInMetersTM.x * slopeInMetersTM.x + slopeInMetersTM.y * slopeInMetersTM.y;       ""\n"
+            "        highp float slopeLM = slopeInMetersLM.x * slopeInMetersLM.x + slopeInMetersLM.y * slopeInMetersLM.y;       ""\n"
+            "        highp float slopeBM = slopeInMetersBM.x * slopeInMetersBM.x + slopeInMetersBM.y * slopeInMetersBM.y;       ""\n"
+            "        highp float slopeRM = slopeInMetersRM.x * slopeInMetersRM.x + slopeInMetersRM.y * slopeInMetersRM.y;       ""\n"
             "                                                                                                                   ""\n"
-            "            highp float slope_XX = slopeInMeters.x * slopeInMeters.x;                                              ""\n"
-            "            highp float slope_YY = slopeInMeters.y * slopeInMeters.y;                                              ""\n"
-            "            highp float slope_XXpYY = slope_XX + slope_YY;                                                         ""\n"
-            "            highp float slopeR_XX = slopeInMetersR.x * slopeInMetersR.x;                                           ""\n"
-            "            highp float slopeR_YY = slopeInMetersR.y * slopeInMetersR.y;                                           ""\n"
-            "            highp float slopeR_XXpYY = slopeR_XX + slopeR_YY;                                                      ""\n"
-            "            highp float slopeB_XX = slopeInMetersB.x * slopeInMetersB.x;                                           ""\n"
-            "            highp float slopeB_YY = slopeInMetersB.y * slopeInMetersB.y;                                           ""\n"
-            "            highp float slopeB_XXpYY = slopeB_XX + slopeB_YY;                                                      ""\n"
-            "            highp float slopeBR_XX = slopeInMetersBR.x * slopeInMetersBR.x;                                        ""\n"
-            "            highp float slopeBR_YY = slopeInMetersBR.y * slopeInMetersBR.y;                                        ""\n"
-            "            highp float slopeBR_XXpYY = slopeBR_XX + slopeBR_YY;                                                   ""\n"
-            "            highp float slopeC_XX = slopeInMetersC.x * slopeInMetersC.x;                                           ""\n"
-            "            highp float slopeC_YY = slopeInMetersC.y * slopeInMetersC.y;                                           ""\n"
-            "            highp float slopeC_XXpYY = slopeC_XX + slopeC_YY;                                                      ""\n"
+            "        float scale = heixelInMeters * 8.0;                                                                        ""\n"
+            "        float zFactor = param_vs_elevation_hillshadeConfiguration.w;                                               ""\n"
+            "        float zFactorN = zFactor / scale;                                                                          ""\n"
+            "        float zFactorNSq = zFactorN * zFactorN;                                                                    ""\n"
+            "        float sunZenith = param_vs_elevation_hillshadeConfiguration.x;                                             ""\n"
+            "        float zNCosZenith = zFactorN * cos(sunZenith);                                                             ""\n"
             "                                                                                                                   ""\n"
-            "            float scale = heixelInMeters * 8.0;                                                                    ""\n"
-            "            float zFactor = param_vs_elevation_configuration.w;                                                    ""\n"
-            "            float zFactorN = zFactor / scale;                                                                      ""\n"
-            "            float zFactorNSq = zFactorN * zFactorN;                                                                ""\n"
-            "            float sunZenith = param_vs_elevation_hillshadeConfiguration.x;                                         ""\n"
-            "            float zNCosZenith = zFactorN * cos(sunZenith);                                                         ""\n"
-            "                                                                                                                   ""\n"
-            "            vec2 topLight;                                                                                         ""\n"
-            "            vec3 bottomLight;                                                                                      ""\n"
-            "            float sunAzimuth = M_PI - param_vs_elevation_hillshadeConfiguration.y;                                 ""\n"
-            "            vec2 fAZ = vec2(sin(sunAzimuth), cos(sunAzimuth)) * zNCosZenith;                                       ""\n"
-            "            float sZ = sin(sunZenith);                                                                             ""\n"
-            "            float value = sZ + slopeInMeters.x * fAZ.x - slopeInMeters.y * fAZ.y;                                  ""\n"
-            "            value /= sqrt(1.0 + zFactorNSq * slope_XXpYY);                                                         ""\n"
-            "            value *= 1.0 - abs(atan(zFactor * length(slopeInMeters / scale)) / M_PI);                              ""\n"
-            "            topLight.x = max(value, 0.004);                                                                        ""\n"
-            "            value = sZ + slopeInMetersR.x * fAZ.x - slopeInMetersR.y * fAZ.y;                                      ""\n"
-            "            value /= sqrt(1.0 + zFactorNSq * slopeR_XXpYY);                                                        ""\n"
-            "            value *= 1.0 - abs(atan(zFactor * length(slopeInMetersR / scale)) / M_PI);                             ""\n"
-            "            topLight.y = max(value, 0.004);                                                                        ""\n"
-            "            value = sZ + slopeInMetersB.x * fAZ.x - slopeInMetersB.y * fAZ.y;                                      ""\n"
-            "            value /= sqrt(1.0 + zFactorNSq * slopeB_XXpYY);                                                        ""\n"
-            "            value *= 1.0 - abs(atan(zFactor * length(slopeInMetersB / scale)) / M_PI);                             ""\n"
-            "            bottomLight.x = max(value, 0.004);                                                                     ""\n"
-            "            value = sZ + slopeInMetersBR.x * fAZ.x - slopeInMetersBR.y * fAZ.y;                                    ""\n"
-            "            value /= sqrt(1.0 + zFactorNSq * slopeBR_XXpYY);                                                       ""\n"
-            "            value *= 1.0 - abs(atan(zFactor * length(slopeInMetersBR / scale)) / M_PI);                            ""\n"
-            "            bottomLight.y = max(value, 0.004);                                                                     ""\n"
-            "            value = sZ + slopeInMetersC.x * fAZ.x - slopeInMetersC.y * fAZ.y;                                      ""\n"
-            "            value /= sqrt(1.0 + zFactorNSq * slopeC_XXpYY);                                                        ""\n"
-            "            value *= 1.0 - abs(atan(zFactor * length(slopeInMetersC / scale)) / M_PI);                             ""\n"
-            "            bottomLight.z = max(value, 0.004);                                                                     ""\n"
-            "            ivec2 bitIndex = ivec2(vertexIndex.x & 1, vertexIndex.y & 1);                                          ""\n"
-            "            topLight.x = bitIndex.x > 0 ? -topLight.x : topLight.x;                                                ""\n"
-            "            topLight.y = bitIndex.y > 0 ? -topLight.y : topLight.y;                                                ""\n"
-            "            v2f_hsTopLight = topLight;                                                                             ""\n"
-            "            v2f_hsBotLight = bottomLight;                                                                          ""\n"
-            "            v2f_hsCoords = vec2(bitIndex);                                                                         ""\n"
-            "        }                                                                                                          ""\n"
-            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
-            "        float elev = heightInMeters[1][1] / v2f_metersPerUnit;                                                     ""\n"
-            "        bool noElev = false;                                                                                       ""\n"
-            "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+            "        float sunAzimuth = M_PI - param_vs_elevation_hillshadeConfiguration.y;                                     ""\n"
+            "        vec2 fAZ = vec2(sin(sunAzimuth), cos(sunAzimuth)) * zNCosZenith;                                           ""\n"
+            "        float sZ = sin(sunZenith);                                                                                 ""\n"
+            "        float minLm = 0.004;                                                                                       ""\n"
+            "        float value = sZ + slopeInMeters.x * fAZ.x - slopeInMeters.y * fAZ.y;                                      ""\n"
+            "        value /= sqrt(1.0 + zFactorNSq * slope);                                                                   ""\n"
+            "        value *= 1.0 - abs(atan(zFactor * length(slopeInMeters / scale)) / M_PI);                                  ""\n"
+            "        v2f_hsLights[0][0] = max(value, minLm);                                                                    ""\n"
+            "        value = sZ + slopeInMetersR.x * fAZ.x - slopeInMetersR.y * fAZ.y;                                          ""\n"
+            "        value /= sqrt(1.0 + zFactorNSq * slopeR);                                                                  ""\n"
+            "        value *= 1.0 - abs(atan(zFactor * length(slopeInMetersR / scale)) / M_PI);                                 ""\n"
+            "        v2f_hsLights[2][0] = max(value, minLm);                                                                    ""\n"
+            "        value = sZ + slopeInMetersB.x * fAZ.x - slopeInMetersB.y * fAZ.y;                                          ""\n"
+            "        value /= sqrt(1.0 + zFactorNSq * slopeB);                                                                  ""\n"
+            "        value *= 1.0 - abs(atan(zFactor * length(slopeInMetersB / scale)) / M_PI);                                 ""\n"
+            "        v2f_hsLights[0][2] = max(value, minLm);                                                                    ""\n"
+            "        value = sZ + slopeInMetersBR.x * fAZ.x - slopeInMetersBR.y * fAZ.y;                                        ""\n"
+            "        value /= sqrt(1.0 + zFactorNSq * slopeBR);                                                                 ""\n"
+            "        value *= 1.0 - abs(atan(zFactor * length(slopeInMetersBR / scale)) / M_PI);                                ""\n"
+            "        v2f_hsLights[2][2] = max(value, minLm);                                                                    ""\n"
+            "        value = sZ + slopeInMetersC.x * fAZ.x - slopeInMetersC.y * fAZ.y;                                          ""\n"
+            "        value /= sqrt(1.0 + zFactorNSq * slopeC);                                                                  ""\n"
+            "        value *= 1.0 - abs(atan(zFactor * length(slopeInMetersC / scale)) / M_PI);                                 ""\n"
+            "        v2f_hsLights[1][1] = max(value, minLm);                                                                    ""\n"
+            "        value = sZ + slopeInMetersTM.x * fAZ.x - slopeInMetersTM.y * fAZ.y;                                        ""\n"
+            "        value /= sqrt(1.0 + zFactorNSq * slopeTM);                                                                 ""\n"
+            "        value *= 1.0 - abs(atan(zFactor * length(slopeInMetersTM / scale)) / M_PI);                                ""\n"
+            "        v2f_hsLights[1][0] = max(value, minLm);                                                                    ""\n"
+            "        value = sZ + slopeInMetersLM.x * fAZ.x - slopeInMetersLM.y * fAZ.y;                                        ""\n"
+            "        value /= sqrt(1.0 + zFactorNSq * slopeLM);                                                                 ""\n"
+            "        value *= 1.0 - abs(atan(zFactor * length(slopeInMetersLM / scale)) / M_PI);                                ""\n"
+            "        v2f_hsLights[0][1] = max(value, minLm);                                                                    ""\n"
+            "        value = sZ + slopeInMetersBM.x * fAZ.x - slopeInMetersBM.y * fAZ.y;                                        ""\n"
+            "        value /= sqrt(1.0 + zFactorNSq * slopeBM);                                                                 ""\n"
+            "        value *= 1.0 - abs(atan(zFactor * length(slopeInMetersBM / scale)) / M_PI);                                ""\n"
+            "        v2f_hsLights[1][2] = max(value, minLm);                                                                    ""\n"
+            "        value = sZ + slopeInMetersRM.x * fAZ.x - slopeInMetersRM.y * fAZ.y;                                        ""\n"
+            "        value /= sqrt(1.0 + zFactorNSq * slopeRM);                                                                 ""\n"
+            "        value *= 1.0 - abs(atan(zFactor * length(slopeInMetersRM / scale)) / M_PI);                                ""\n"
+            "        v2f_hsLights[2][1] = max(value, minLm);                                                                    ""\n"
+            "        ivec2 bitIndex = ivec2(vertexIndex.x & 1, vertexIndex.y & 1);                                              ""\n"
+            "        v2f_hsLights[0][0] = bitIndex.x > 0 ? -v2f_hsLights[0][0] : v2f_hsLights[0][0];                            ""\n"
+            "        v2f_hsLights[2][2] = bitIndex.y > 0 ? -v2f_hsLights[2][2] : v2f_hsLights[2][2];                            ""\n"
+            "        v2f_hsCoords = vec2(bitIndex);                                                                             ""\n");
+        vertexShader.append(QStringLiteral(
+            "%HillshadeInVertexShader_5%                                                                                        ""\n"
+            "        float elev = height[1][1] / v2f_metersPerUnit;                                                             ""\n"
+            "        bool noElev = false;                                                                                       ""\n"));
+        const auto& hillshadeInVertexShader_6 = QStringLiteral(
             "        noElev = noElev || vertexIndex.y == 0 && (param_vs_tileCoords31.w & 2) > 0;                                ""\n"
             "        noElev = noElev || vertexIndex.x == 0 && (param_vs_tileCoords31.w & 8) > 0;                                ""\n"
             "        noElev = noElev || vertexIndex.y == %HeixelsPerTileSide% && (param_vs_tileCoords31.w & 32) > 0;            ""\n"
@@ -795,13 +817,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "        avgVerElev = avgVerElev || vertexIndex.x == %HeixelsPerTileSide% && (param_vs_tileCoords31.w & 64) > 0;    ""\n"
             "        bool avgMidElev = avgHorElev && (vertexIndex.x & 1) == 0 || avgVerElev && (vertexIndex.y & 1) == 0;        ""\n"
             "        float ext = 0.5;                                                                                           ""\n"
-            "        elev = avgMidElev ? averageHeight(heightInMeters, 1, 1) / v2f_metersPerUnit + ext : elev;                  ""\n"
-            "        elev = avgHorElev && (vertexIndex.x & 1) > 0 ? (averageHeight(heightInMeters, 0, 1)                        ""\n"
-            "            + averageHeight(heightInMeters, 2, 1)) / 2.0 / v2f_metersPerUnit + ext : elev;                         ""\n"
-            "        elev = avgVerElev && (vertexIndex.y & 1) > 0 ? (averageHeight(heightInMeters, 1, 0)                        ""\n"
-            "            + averageHeight(heightInMeters, 1, 2)) / 2.0 / v2f_metersPerUnit + ext : elev;                         ""\n"
-            "        v2f_colorIntensity = noElev ? 0.0 : 1.0;                                                                   ""\n"
-            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+            "        elev = avgMidElev ? averageHeight(height, 1, 1) / v2f_metersPerUnit + ext : elev;                          ""\n"
+            "        elev = avgHorElev && (vertexIndex.x & 1) > 0 ? (averageHeight(height, 0, 1)                                ""\n"
+            "            + averageHeight(height, 2, 1)) / 2.0 / v2f_metersPerUnit + ext : elev;                                 ""\n"
+            "        elev = avgVerElev && (vertexIndex.y & 1) > 0 ? (averageHeight(height, 1, 0)                                ""\n"
+            "            + averageHeight(height, 1, 2)) / 2.0 / v2f_metersPerUnit + ext : elev;                                 ""\n"
+            "        v2f_colorIntensity = noElev ? 0.0 : 1.0;                                                                   ""\n");
+        vertexShader.append(QStringLiteral(
+            "%HillshadeInVertexShader_6%                                                                                        ""\n"
             "        v.xyz += (noElev ? 0.0 : elev) * n;                                                                        ""\n"
             "    }                                                                                                              ""\n"
             "                                                                                                                   ""\n"
@@ -843,7 +866,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    zUTM.y = zUTM.x < 31.0 || zUTM.x >= 38.0 || (zUTM.y >= 3.0 && zUTM.y < 20.0) ? 0.0 : zUTM.y;                   ""\n"
             "    zUTM.y = zUTM.y >= 21.0 && zUTM.y < 22.0 ? 0.0 : zUTM.y;                                                       ""\n"
             "    zUTM.y = zUTM.y >= 20.0 && zUTM.y < 21.0 && zUTM.x >= 33.0 ? 0.0 : zUTM.y;                                     ""\n"
-            "    zUTM -= vec2(param_vs_tileCoords31.w >> 12 & 63, param_vs_tileCoords31.w >> 18) + 0.5;                          ""\n"
+            "    zUTM -= vec2(param_vs_tileCoords31.w >> 12 & 63, param_vs_tileCoords31.w >> 18) + 0.5;                         ""\n"
             "    if (zUTM.x < -0.5 || zUTM.x >= 0.5 || zUTM.y < -0.5 || zUTM.y >= 0.5)                                          ""\n"
             "    {                                                                                                              ""\n"
             "        zUTM.x = zUTM.x < 0.0 ? -1e38 : 1e38;                                                                      ""\n"
@@ -932,25 +955,21 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "        v2f_texCoordsPerLayer_%rasterLayerIndex%);                                                                 ""\n"
             "                                                                                                                   ""\n");
         auto fragmentShader = QStringLiteral(
-            // Definitions
-            "#define ELEVATION_VISUALIZATION_ENABLED %ElevationVisualizationEnabled%                                            ""\n"
-            "                                                                                                                   ""\n"
             // Input data
             "%UnrolledPerRasterLayerTexCoordsDeclarationCode%                                                                   ""\n"
             "PARAM_INPUT float v2f_metersPerUnit;                                                                               ""\n"
             "PARAM_INPUT float v2f_colorIntensity;                                                                              ""\n"
             "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
             "    PARAM_INPUT float v2f_mipmapLOD;                                                                               ""\n"
-            "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-            "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
-            "    PARAM_FLAT_INPUT highp vec2 v2f_hsTopLight;                                                                    ""\n"
-            "    PARAM_FLAT_INPUT highp vec3 v2f_hsBotLight;                                                                    ""\n"
-            "    PARAM_INPUT highp vec2 v2f_hsCoords;                                                                           ""\n"
-            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n");
+            "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n");
+        const auto& hillshadeInFragmentShader_1 = QStringLiteral(
+            "    PARAM_FLAT_INPUT highp mat3 v2f_hsLights;                                                                      ""\n"
+            "    PARAM_INPUT highp vec2 v2f_hsCoords;                                                                           ""\n");
         const auto& gridsInFragmentShader_1 = QStringLiteral(
             "PARAM_INPUT vec4 v2f_primaryLocation;                                                                              ""\n"
             "PARAM_INPUT vec4 v2f_secondaryLocation;                                                                            ""\n");
         fragmentShader.append(QStringLiteral(
+            "%HillshadeInFragmentShader_1%                                                                                      ""\n"
             "%GridsInFragmentShader_1%                                                                                          ""\n"
             "PARAM_INPUT vec4 v2f_position;                                                                                     ""\n"
             "PARAM_INPUT vec4 v2f_normal;                                                                                       ""\n"
@@ -1207,20 +1226,22 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    finalColor = mix(firstColor, finalColor, param_fs_blendingEnabled);                                            ""\n"
             "                                                                                                                   ""\n"
             "%UnrolledPerRasterLayerProcessingCode%                                                                             ""\n"
-            "                                                                                                                   ""\n"
-            "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+            "                                                                                                                   ""\n"));
+        const auto& hillshadeInFragmentShader_2 = QStringLiteral(
             "    if (param_fs_lastBatch > 0.0)                                                                                  ""\n"
             "    {                                                                                                              ""\n"
             "        highp vec2 c = v2f_hsCoords;                                                                               ""\n"
-            "        c.x = v2f_hsTopLight.x < 0.0 ? 1.0 - c.x : c.x;                                                            ""\n"
-            "        c.y = v2f_hsTopLight.y < 0.0 ? 1.0 - c.y : c.y;                                                            ""\n"
-            "        vec2 t = abs(v2f_hsTopLight);                                                                              ""\n"
-            "        vec2 b = v2f_hsBotLight.xy;                                                                                ""\n"
-            "        float m = v2f_hsBotLight.z;                                                                                ""\n"
-            "        float lightTL = c.x < 0.5 ? (c.y < 0.5 ? t.x : (t.x + b.x) / 2.0) : (c.y < 0.5 ? (t.x + t.y) / 2.0 : m);   ""\n"
-            "        float lightTR = c.x < 0.5 ? (c.y < 0.5 ? (t.x + t.y) / 2.0 : m) : (c.y < 0.5 ? t.y : (t.y + b.y) / 2.0);   ""\n"
-            "        float lightBL = c.x < 0.5 ? (c.y < 0.5 ? (t.x + b.x) / 2.0 : b.x) : (c.y < 0.5 ? m : (b.x + b.y) / 2.0);   ""\n"
-            "        float lightBR = c.x < 0.5 ? (c.y < 0.5 ? m : (b.x + b.y) / 2.0) : (c.y < 0.5 ? (t.y + b.y) / 2.0 : b.y);   ""\n"
+            "        c.x = v2f_hsLights[0][0] < 0.0 ? 1.0 - c.x : c.x;                                                          ""\n"
+            "        c.y = v2f_hsLights[2][2] < 0.0 ? 1.0 - c.y : c.y;                                                          ""\n"
+            "        float tl = abs(v2f_hsLights[0][0]);                                                                        ""\n"
+            "        float tr = v2f_hsLights[2][0];                                                                             ""\n"
+            "        float bl = v2f_hsLights[0][2];                                                                             ""\n"
+            "        float br = abs(v2f_hsLights[2][2]);                                                                        ""\n"
+            "        float m = v2f_hsLights[1][1];                                                                              ""\n"
+            "        float lightTL = c.x < 0.5 ? (c.y < 0.5 ? tl : v2f_hsLights[0][1]) : (c.y < 0.5 ? v2f_hsLights[1][0] : m);  ""\n"
+            "        float lightTR = c.x < 0.5 ? (c.y < 0.5 ? v2f_hsLights[1][0] : m) : (c.y < 0.5 ? tr : v2f_hsLights[2][1]);  ""\n"
+            "        float lightBL = c.x < 0.5 ? (c.y < 0.5 ? v2f_hsLights[0][1] : bl) : (c.y < 0.5 ? m : v2f_hsLights[1][2]);  ""\n"
+            "        float lightBR = c.x < 0.5 ? (c.y < 0.5 ? m : v2f_hsLights[1][2]) : (c.y < 0.5 ? v2f_hsLights[2][1] : br);  ""\n"
             "        c *= 2.0;                                                                                                  ""\n"
             "        c -= floor(c);                                                                                             ""\n"
             "        float topLight = mix(lightTL, lightTR, c.x);                                                               ""\n"
@@ -1230,8 +1251,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "        vec4 hsColor = hsLight < 0.7 ? vec4(0.0, 0.0, 0.0, hsAlpha) : vec4(1.0, 1.0, 1.0, hsAlpha);                ""\n"
             "        hsColor.a *= param_fs_backgroundColor.a;                                                                   ""\n"
             "        mixColors(finalColor, hsColor);                                                                            ""\n"
-            "    }                                                                                                              ""\n"
-            "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+            "    }                                                                                                              ""\n");
+        fragmentShader.append(QStringLiteral(
+            "%HillshadeInFragmentShader_2%                                                                                      ""\n"
             "                                                                                                                   ""\n"
 #if 0
             //   NOTE: Useful for debugging mipmap levels
@@ -1301,28 +1323,27 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             preprocessedVertexShader_UnrolledPerRasterLayerParamsDeclarationCode);
         preprocessedVertexShader.replace("%UnrolledPerRasterLayerTexCoordsDeclarationCode%",
             preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsDeclarationCode);
-        preprocessedVertexShader.replace("%SlopeAlgorithm_None%",
-            QString::number(static_cast<int>(ElevationConfiguration::SlopeAlgorithm::None)));
-        preprocessedVertexShader.replace("%SlopeAlgorithm_ZevenbergenThorne%",
-            QString::number(static_cast<int>(ElevationConfiguration::SlopeAlgorithm::ZevenbergenThorne)));
-        preprocessedVertexShader.replace("%SlopeAlgorithm_Horn%",
-            QString::number(static_cast<int>(ElevationConfiguration::SlopeAlgorithm::Horn)));
-        preprocessedVertexShader.replace("%VisualizationStyle_None%",
-            QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::None)));
-        preprocessedVertexShader.replace("%VisualizationStyle_SlopeDegrees%",
-            QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::SlopeDegrees)));
-        preprocessedVertexShader.replace("%VisualizationStyle_SlopePercents%",
-            QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::SlopePercents)));
-        preprocessedVertexShader.replace("%VisualizationStyle_HillshadeTraditional%",
-            QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeTraditional)));
-        preprocessedVertexShader.replace("%VisualizationStyle_HillshadeIgor%",
-            QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeIgor)));
-        preprocessedVertexShader.replace("%VisualizationStyle_HillshadeCombined%",
-            QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeCombined)));
-        preprocessedVertexShader.replace("%VisualizationStyle_HillshadeMultidirectional%",
-            QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeMultidirectional)));
-        preprocessedVertexShader.replace("%ElevationVisualizationEnabled%",
-            QString::number(setupOptions.elevationVisualizationEnabled ? 1 : 0));
+        if ((programFeatures & RenderingFeatures::Hillshade) > 0)
+        {
+
+            preprocessedVertexShader.replace("%HillshadeInVertexShader_1%", hillshadeInVertexShader_1);
+            preprocessedVertexShader.replace("%HillshadeInVertexShader_2%", hillshadeInVertexShader_2);
+            preprocessedVertexShader.replace("%HillshadeInVertexShader_3%", hillshadeInVertexShader_3);
+            preprocessedVertexShader.replace("%HillshadeInVertexShader_4%", hillshadeInVertexShader_4);
+            preprocessedVertexShader.replace("%HillshadeInVertexShader_5%", hillshadeInVertexShader_5);
+            preprocessedVertexShader.replace("%HillshadeInVertexShader_6%", hillshadeInVertexShader_6);
+        }
+        else
+        {
+            const auto emptyString = QString();
+            preprocessedVertexShader.replace("%HillshadeInVertexShader_1%", emptyString);
+            preprocessedVertexShader.replace("%HillshadeInVertexShader_2%", emptyString);
+            preprocessedVertexShader.replace("%HillshadeInVertexShader_3%", emptyString);
+            preprocessedVertexShader.replace("%HillshadeInVertexShader_4%", emptyString);
+            preprocessedVertexShader.replace("%HillshadeInVertexShader_5%", emptyString);
+            preprocessedVertexShader.replace("%HillshadeInVertexShader_6%", emptyString);
+        }
+
         if ((programFeatures & RenderingFeatures::Grids) > 0)
         {
 
@@ -1372,8 +1393,17 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         preprocessedFragmentShader.replace(
             "%UnrolledPerRasterLayerProcessingCode%",
             preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode);
-        preprocessedFragmentShader.replace("%ElevationVisualizationEnabled%",
-            QString::number(setupOptions.elevationVisualizationEnabled ? 1 : 0));
+        if ((programFeatures & RenderingFeatures::Hillshade) > 0)
+        {
+            preprocessedFragmentShader.replace("%HillshadeInFragmentShader_1%", hillshadeInFragmentShader_1);
+            preprocessedFragmentShader.replace("%HillshadeInFragmentShader_2%", hillshadeInFragmentShader_2);
+        }
+        else
+        {
+            const auto emptyString = QString();
+            preprocessedFragmentShader.replace("%HillshadeInFragmentShader_1%", emptyString);
+            preprocessedFragmentShader.replace("%HillshadeInFragmentShader_2%", emptyString);
+        }
         if ((programFeatures & RenderingFeatures::Grids) > 0)
         {
             preprocessedFragmentShader.replace("%GridsInFragmentShader_1%", gridsInFragmentShader_1);
@@ -1495,14 +1525,17 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "param_vs_scaleToRetainProjectedSize",
             GlslVariableType::Uniform);
     }
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.elevation_configuration,
-        "param_vs_elevation_configuration",
-        GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.elevation_hillshadeConfiguration,
-        "param_vs_elevation_hillshadeConfiguration",
-        GlslVariableType::Uniform);
+    if ((programFeatures & RenderingFeatures::Hillshade) > 0)
+    {
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.elevation_hillshadeConfiguration,
+            "param_vs_elevation_hillshadeConfiguration",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.elevationLayerTexelSize,
+            "param_vs_elevationLayerTexelSize",
+            GlslVariableType::Uniform);
+    }
     ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.vs.param.tileCoords31,
         "param_vs_tileCoords31",
@@ -1554,10 +1587,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.vs.param.elevationLayer.txOffsetAndScale,
         "param_vs_elevationLayer.txOffsetAndScale",
-        GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.elevationLayerTexelSize,
-        "param_vs_elevationLayerTexelSize",
         GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.vs.param.elevationLayerDataPlace,
@@ -1744,16 +1773,18 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     GL_PUSH_GROUP_MARKER(QStringLiteral("%1x%2@%3").arg(batch->tileId.x).arg(batch->tileId.y).arg(zoomLevel));
 
     // Activate proper program depending on number of captured layers
-    bool batchWithDynamics = batch->hasDynamics;
+    const bool withHillshade = currentState.elevationDataProvider &&
+        currentState.elevationConfiguration.visualizationStyle != ElevationConfiguration::VisualizationStyle::None;
+    const bool withGrids = currentState.gridConfiguration.primaryGrid || currentState.gridConfiguration.secondaryGrid;
+    const auto programFeatures = (withHillshade ? static_cast<int>(RenderingFeatures::Hillshade) : 0)
+        | (withGrids ? static_cast<int>(RenderingFeatures::Grids) : 0)
+        | (batch->hasDynamics ? static_cast<int>(RenderingFeatures::Dynamics) : 0);
     const auto wasActivated = activateRasterLayersProgram(
         batchedLayersCount,
-        batchWithDynamics,
+        programFeatures,
         elevationDataSamplerIndex,
         lastUsedProgram,
         zoomLevel);
-    const bool withGrids = currentState.gridConfiguration.primaryGrid || currentState.gridConfiguration.secondaryGrid;
-    const auto programFeatures = (withGrids ? static_cast<int>(RenderingFeatures::Grids) : 0)
-        | (batchWithDynamics ? static_cast<int>(RenderingFeatures::Dynamics) : 0);
     const auto& program = _rasterLayerTilePrograms[batchedLayersCount][programFeatures];
     const auto& vao = _rasterTileVAOs[batchedLayersCount][programFeatures];
 
@@ -2052,7 +2083,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                     elevationResource->texCoordsOffset,
                     elevationResource->texCoordsScale,
                     elevationResource->tileSize,
-                    elevationDataSamplerIndex);
+                    elevationDataSamplerIndex,
+                    withHillshade);
             }
             else
                 cancelElevation(program, elevationDataSamplerIndex);
@@ -2232,7 +2264,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
 
 bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     const unsigned int numberOfLayersInBatch,
-    const bool batchWithDynamics,
+    const int programFeatures,
     const int elevationDataSamplerIndex,
     GLname& lastUsedProgram,
     const ZoomLevel zoomLevel)
@@ -2252,9 +2284,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     const auto& currentConfiguration = getCurrentConfiguration();
     const auto& internalState = getInternalState();
 
+    const bool withHillshade = currentState.elevationDataProvider &&
+        currentState.elevationConfiguration.visualizationStyle != ElevationConfiguration::VisualizationStyle::None;
     const bool withGrids = currentState.gridConfiguration.primaryGrid || currentState.gridConfiguration.secondaryGrid;
-    const auto programFeatures = (withGrids ? static_cast<int>(RenderingFeatures::Grids) : 0)
-        | (batchWithDynamics ? static_cast<int>(RenderingFeatures::Dynamics) : 0);
     const auto& program = _rasterLayerTilePrograms[numberOfLayersInBatch][programFeatures];
     const auto& vao = _rasterTileVAOs[numberOfLayersInBatch][programFeatures];
 
@@ -2321,21 +2353,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
 
     // Configure elevation data
     float hillshadeAlpha = 0.0f;
-    if (currentState.elevationDataProvider)
+    if (withHillshade)
     {
         hillshadeAlpha = currentState.elevationConfiguration.visualizationAlpha;
-        glUniform4f(program.vs.param.elevation_configuration,
-            static_cast<float>(currentState.elevationConfiguration.slopeAlgorithm),
-            static_cast<float>(currentState.elevationConfiguration.visualizationStyle),
-            hillshadeAlpha,
-            currentState.elevationConfiguration.visualizationZ);
-        GL_CHECK_RESULT;
-
         glUniform4f(program.vs.param.elevation_hillshadeConfiguration,
             glm::radians(currentState.elevationConfiguration.hillshadeSunAngle),
             glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth),
-            0.0f,
-            0.0f);
+            hillshadeAlpha,
+            currentState.elevationConfiguration.visualizationZ);
         GL_CHECK_RESULT;
     }
 
@@ -2756,7 +2781,8 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
     const PointF& texCoordsOffsetN,
     const PointF& texCoordsScaleN,
     const double tileSize,
-    const int elevationDataSamplerIndex)
+    const int elevationDataSamplerIndex,
+    const bool withHillshade)
 {
     const auto gpuAPI = getGPUAPI();
 
