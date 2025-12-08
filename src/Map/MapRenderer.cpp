@@ -1815,6 +1815,8 @@ bool OsmAnd::MapRenderer::removeSymbolsProvider(
             update = true;
         }
     }
+
+    provider->onRemoved();
     _requestedState.tiledSymbolsSubsections.remove(provider);
 
     if (!update)
