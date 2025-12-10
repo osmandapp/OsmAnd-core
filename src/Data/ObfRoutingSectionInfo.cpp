@@ -275,6 +275,10 @@ void OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::analyze()
         type = RouteTypeRule::Lanes;
         intValue = Utilities::parseArbitraryInt(v, -1);
     }
+    else if (t.compare(QLatin1String("hazard"), Qt::CaseInsensitive) == 0 && !v.isNull())
+    {
+        type = RouteTypeRule::Hazard;
+    }
 }
 
     /*else
