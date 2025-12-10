@@ -423,7 +423,8 @@ bool OsmAnd::GPUAPI_OpenGLES2plus::initialize()
     _isSupported_samplerObjects = (glVersion >= 30);
     _isSupported_texture_float = (glVersion >= 30) || _isSupported_OES_texture_float;
     _isSupported_texture_half_float = (glVersion >= 30) || _isSupported_OES_texture_half_float;
-    _isSupported_textureLod = (glslVersion >= 130) || _isSupported_EXT_shader_texture_lod;
+    //_isSupported_textureLod = (glslVersion >= 130) || _isSupported_EXT_shader_texture_lod;
+    _isSupported_textureLod = false; // Disabled as not currently needed
     _isSupported_texture_rg = (glVersion >= 30) || _isSupported_EXT_texture_rg;
     _isSupported_texture_storage = (glVersion >= 30) || _isSupported_EXT_texture_storage;
 
