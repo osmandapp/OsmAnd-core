@@ -41,7 +41,7 @@ namespace OsmAnd
         {
             Unknown = -1,
 
-            DeletedMaps,
+            DeletedMap,
             MapRegion,
             RoadMapRegion,
             SrtmMapRegion,
