@@ -224,6 +224,12 @@ OsmAnd::ResourcesManager::getOutdatedInstalledResources() const
     return _p->getOutdatedInstalledResources();
 }
 
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> >
+OsmAnd::ResourcesManager::getUnsupportedResources() const
+{
+    return _p->getUnsupportedResources();
+}
+
 bool OsmAnd::ResourcesManager::updateFromFile(const QString& filePath)
 {
     return _p->updateFromFile(filePath);
@@ -373,7 +379,8 @@ OsmAnd::ResourcesManager::ResourceInRepository::ResourceInRepository(
     const uint64_t packageSize_,
     const bool free_,
     const bool hidden_,
-    const QString& message_)
+    const QString& message_,
+    const bool isDeleted_)
     : Resource(id_, type_, ResourceOrigin::Repository)
     , url(url_)
     , size(size_)
@@ -382,6 +389,7 @@ OsmAnd::ResourcesManager::ResourceInRepository::ResourceInRepository(
     , free(free_)
     , hidden(hidden_)
     , message(message_)
+    , isDeleted(isDeleted_)
 {
 }
 

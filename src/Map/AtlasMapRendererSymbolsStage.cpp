@@ -2334,8 +2334,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     const auto pinPoint =
         Utilities::convert31toFloat(Utilities::shortestVector31(currentState.target31, pinPointOnPath.point31),
         currentState.zoomLevel) * static_cast<float>(AtlasMapRenderer::TileSize3D);
-    const auto pinPointInWorld =
-        glm::vec3(pinPoint.x, renderer->getHeightOfLocation(currentState, pinPointOnPath.point31), pinPoint.y);
+    const auto pinPointElevation = renderer->getHeightOfLocation(currentState, pinPointOnPath.point31);
+    const auto pinPointInWorld = currentState.flatEarth ? glm::vec3(pinPoint.x, pinPointElevation, pinPoint.y)
+        : Utilities::sphericalWorldCoordinates(
+            pinPointOnPath.point31, internalState.mGlobeRotationPrecise, internalState.globeRadius, pinPointElevation);
 
     // Test against visible frustum (if allowed)
     const bool isntMarker = !std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolGroup);
@@ -2757,10 +2759,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
                 const auto pointInWorld = symbolPathData.pathInWorld[i];
                 const auto point31 = Utilities::convertFloatTo31(PointF(pointInWorld.x, pointInWorld.y) /
                     AtlasMapRenderer::TileSize3D, currentState.target31, currentState.zoomLevel);
-                const glm::vec3 point(
-                    pointInWorld.x,
-                    getRenderer()->getHeightOfLocation(currentState, point31),
-                    pointInWorld.y);
+                const auto pointElevation = getRenderer()->getHeightOfLocation(currentState, point31);
+                const auto point = currentState.flatEarth ? glm::vec3(pointInWorld.x, pointElevation, pointInWorld.y)
+                    : Utilities::sphericalWorldCoordinates(
+                        point31, internalState.mGlobeRotationPrecise, internalState.globeRadius, pointElevation);
                 debugPathPoints.push_back(point);
             }
             getRenderer()->debugStage->addLine3D(debugPathPoints, is2D ? SK_ColorGREEN : SK_ColorRED);
@@ -2790,14 +2792,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
 
         // Pin-point location
         {
-            const auto pinPointInWorld = Utilities::convert31toFloat(Utilities::shortestVector31(
-                currentState.target31, pinPointOnPath.point31),
-                currentState.zoomLevel) * static_cast<float>(AtlasMapRenderer::TileSize3D);
             const auto pinPointOnScreen = glm_extensions::project(
-                glm::vec3(
-                    pinPointInWorld.x,
-                    getRenderer()->getHeightOfLocation(currentState, pinPointOnPath.point31),
-                    pinPointInWorld.y),
+                pinPointInWorld,
                 internalState.mPerspectiveProjectionView,
                 internalState.glmViewport).xy();
 
@@ -3240,7 +3236,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(
             point31 = Utilities::convertFloatTo31(sourcePoint / AtlasMapRenderer::TileSize3D,
                 currentState.target31, currentState.zoomLevel);
         }
-        pointInWorld = glm::vec3(sourcePoint.x, r->getHeightOfLocation(currentState, point31), sourcePoint.y);
+        const auto elevationInWorld = r->getHeightOfLocation(currentState, point31);
+        pointInWorld = currentState.flatEarth ? glm::vec3(sourcePoint.x, elevationInWorld, sourcePoint.y)
+            : Utilities::sphericalWorldCoordinates(
+                point31, internalState.mGlobeRotationPrecise, internalState.globeRadius, elevationInWorld);
         pointOnScreen = glm_extensions::project(
             pointInWorld,
             internalState.mPerspectiveProjectionView,
@@ -3300,6 +3299,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(
                         prevPointNearInWorld = pointNearInWorld;
                         prevWorldDistance = worldDistance;
                         prevScreenDistance = screenDistance;
+                        pointInWorld = origPointInWorld;
                     }
                     else
                     {
@@ -3995,7 +3995,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointIn2D(
     const auto anchorHeightInWorld = getRenderer()->getHeightOfLocation(currentState, anchorPoint31);
 
     // Project point back to screen, but now with elevation
-    outElevatedAnchorInWorld = glm::vec3(anchorInWorldNoElevation.x, anchorHeightInWorld, anchorInWorldNoElevation.y);
+    outElevatedAnchorInWorld = currentState.flatEarth
+        ? glm::vec3(anchorInWorldNoElevation.x, anchorHeightInWorld, anchorInWorldNoElevation.y)
+        : Utilities::sphericalWorldCoordinates(
+            anchorPoint31, internalState.mGlobeRotationPrecise, internalState.globeRadius, anchorHeightInWorld);
     outElevatedAnchorPoint = glm_extensions::project(
         outElevatedAnchorInWorld,
         internalState.mPerspectiveProjectionView,
@@ -4012,6 +4015,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointsIn3D(
     const glm::vec2& directionInWorld,
     bool checkVisibility) const
 {
+    const auto& internalState = getInternalState();
+
     const auto& bboxInWorld = calculateOnPath3DRotatedBBox(
         glyphsPlacement, glyphHeight, pathPixelSizeInWorld, directionInWorld);
 
@@ -4026,24 +4031,22 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointsIn3D(
             currentState.target31,
             currentState.zoomLevel);
         const auto vertexElevation = getRenderer()->getHeightOfLocation(currentState, bboxVertex31);
-        const glm::vec3 elevatedVertex(vertex.x, vertexElevation, vertex.y);
-
+        const auto elevatedVertex = currentState.flatEarth ? glm::vec3(vertex.x, vertexElevation, vertex.y)
+            : Utilities::sphericalWorldCoordinates(
+            bboxVertex31, internalState.mGlobeRotationPrecise, internalState.globeRadius, vertexElevation);
         elevatedVertices[i] = elevatedVertex;
         elevatedBboxCenter += elevatedVertex;
     }
     elevatedBboxCenter /= 4.0f;
 
     // Calculate normals to all 4 planes of elevated bbox and normal to approximate common bbox plane
-    glm::vec3 bboxPlanesN[4];
     glm::vec3 approximatedBBoxPlaneN(0.0f, 0.0f, 0.0f);
     for (int i = 0; i < 4; i++)
     {
         const auto vertex0 = elevatedVertices[(i + 0) % 4];
         const auto vertex1 = elevatedVertices[(i + 1) % 4];
         const auto vertex2 = elevatedVertices[(i + 2) % 4];
-        const auto planeN = Utilities::calculatePlaneN(vertex0, vertex1, vertex2);
-        bboxPlanesN[(i + 1) % 4] = planeN;
-        approximatedBBoxPlaneN += planeN;
+        approximatedBBoxPlaneN += glm::normalize(glm::cross(vertex1 - vertex0, vertex2 - vertex0));
     }
     approximatedBBoxPlaneN /= 4.0f;
     const auto planeLength = glm::length(approximatedBBoxPlaneN);
@@ -4054,7 +4057,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointsIn3D(
         {
             const auto& internalState = getInternalState();
             const auto viewRayN = glm::normalize(elevatedBboxCenter - internalState.worldCameraPosition);
-            const auto viewAngleCos = static_cast<float>(glm::dot(viewRayN, approximatedBBoxPlaneN));
+            const auto viewAngleCos = glm::dot(viewRayN, approximatedBBoxPlaneN);
             if (viewAngleCos < _tiltThresholdOnPath3D)
                 return false;
         }
@@ -4064,7 +4067,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointsIn3D(
 
     // Calculate rotation angle from approximated bbox plane
     const auto angle = static_cast<float>(qAcos(qBound(-1.0f, -approximatedBBoxPlaneN.y, 1.0f)));
-    const auto rotationN = angle > 0.0f ? glm::normalize(
+    const auto rotationN = !qFuzzyIsNull(angle) ? glm::normalize(
         glm::vec3(-approximatedBBoxPlaneN.z, 0.0f, approximatedBBoxPlaneN.x)) : glm::vec3(-1.0f, 0.0f, 0.0f);
     const auto mRotate = glm::rotate(angle, rotationN);
 

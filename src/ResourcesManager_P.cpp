@@ -1006,6 +1006,8 @@ OsmAnd::ResourcesManager::ResourceType OsmAnd::ResourcesManager_P::getIndexType(
         resourceType = ResourceType::Travel;
     else if (resourceTypeValue == QLatin1String("weather"))
         resourceType = ResourceType::WeatherForecast;
+    else if (resourceTypeValue == QLatin1String("deleted_map"))
+        resourceType = ResourceType::DeletedMap;
     
     return resourceType;
 }
@@ -1094,11 +1096,14 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 qPrintable(name));
             continue;
         }
+        
+        bool isDeleted = resourceType == ResourceType::DeletedMap;
 
         QString resourceId;
         QString downloadUrl;
         switch (resourceType)
         {
+            case ResourceType::DeletedMap:
             case ResourceType::MapRegion:
                 // '[region]_2.obf.zip' -> '[region].obf'
                 resourceId = QString(name)
@@ -1271,7 +1276,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
             containerSize,
             free,
             hidden,
-            message));
+            message,
+            isDeleted));
         repository.push_back(qMove(resource));
 
 #if OSMAND_DEBUG
@@ -1476,6 +1482,7 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const std::shared_ptr<const O
     
     switch (resource->type)
     {
+        case ResourceType::DeletedMap:
         case ResourceType::MapRegion:
         case ResourceType::LiveUpdateRegion:
         case ResourceType::RoadMapRegion:
@@ -2110,11 +2117,34 @@ OsmAnd::ResourcesManager_P::getOutdatedInstalledResources() const
 
         if (installedResource->timestamp >= resourceInRepository->timestamp)
             continue;
+        
+        if (resourceInRepository->isDeleted)
+            continue;
 
         resourcesWithUpdates.insert(localResource->id, localResource);
     }
 
     return resourcesWithUpdates;
+}
+
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> >
+OsmAnd::ResourcesManager_P::getUnsupportedResources() const
+{
+    QReadLocker scopedLocker(&_localResourcesLock);
+
+    QHash< QString, std::shared_ptr<const LocalResource> > unsupportedResources;
+    for (const auto& localResource : constOf(_localResources))
+    {
+        if (localResource->origin != ResourceOrigin::Installed)
+            continue;
+        const auto& resourceInRepository = getResourceInRepository(localResource->id);
+        if (!resourceInRepository || !resourceInRepository->isDeleted)
+            continue;
+
+        unsupportedResources.insert(localResource->id, localResource);
+    }
+
+    return unsupportedResources;
 }
 
 bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& filePath)

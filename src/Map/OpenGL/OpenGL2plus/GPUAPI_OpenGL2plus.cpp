@@ -225,7 +225,8 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal vertex attributes %d", _maxVertexAttribs);
 
     // textureLod() is supported by GLSL 1.30+ specification (which is supported by OpenGL 3.0+), or if GL_ARB_shader_texture_lod is available
-    _isSupported_textureLod = (glslVersion >= 130) || extensions.contains(QLatin1String("GL_ARB_shader_texture_lod"));
+    //_isSupported_textureLod = (glslVersion >= 130) || extensions.contains(QLatin1String("GL_ARB_shader_texture_lod"));
+    _isSupported_textureLod = false; // Disabled as not currently needed
     _isSupported_texturesNPOT = (glVersion >= 20); // OpenGL 2.0+ fully supports NPOT textures
     _isSupported_EXT_debug_marker = extensions.contains("GL_EXT_debug_marker");
     _isSupported_GREMEDY_string_marker = extensions.contains("GL_GREMEDY_string_marker");
