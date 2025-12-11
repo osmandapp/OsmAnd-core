@@ -1007,7 +1007,7 @@ OsmAnd::ResourcesManager::ResourceType OsmAnd::ResourcesManager_P::getIndexType(
     else if (resourceTypeValue == QLatin1String("weather"))
         resourceType = ResourceType::WeatherForecast;
     else if (resourceTypeValue == QLatin1String("deleted_map"))
-        resourceType = ResourceType::DeletedMaps;
+        resourceType = ResourceType::DeletedMap;
     
     return resourceType;
 }
@@ -1097,13 +1097,13 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
             continue;
         }
         
-        bool isDeleted = resourceType == ResourceType::DeletedMaps;
+        bool isDeleted = resourceType == ResourceType::DeletedMap;
 
         QString resourceId;
         QString downloadUrl;
         switch (resourceType)
         {
-            case ResourceType::DeletedMaps:
+            case ResourceType::DeletedMap:
             case ResourceType::MapRegion:
                 // '[region]_2.obf.zip' -> '[region].obf'
                 resourceId = QString(name)
@@ -1482,7 +1482,7 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const std::shared_ptr<const O
     
     switch (resource->type)
     {
-        case ResourceType::DeletedMaps:
+        case ResourceType::DeletedMap:
         case ResourceType::MapRegion:
         case ResourceType::LiveUpdateRegion:
         case ResourceType::RoadMapRegion:
