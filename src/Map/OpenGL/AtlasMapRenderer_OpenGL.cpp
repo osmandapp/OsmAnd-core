@@ -589,7 +589,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         static_cast<float>((zFar * fovTangent - skyLine) * metersPerUnit / 1000.0);
 
     // Compute visible area
-    computeVisibleArea(internalState, state, zLowerDetail, neededSteps);
+    computeVisibleArea(internalState, state, zLowerDetail, state.flatEarth ? 0.0 : elevationCosine, neededSteps);
 
     return true;
 }
@@ -643,7 +643,7 @@ OsmAnd::AtlasMapRendererInternalState_OpenGL OsmAnd::AtlasMapRenderer_OpenGL::ge
 
 
 void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internalState, const MapRendererState& state,
-    const float lowerDetail, const CalculationSteps neededSteps) const
+    const float lowerDetail, const double tiltFactor, const CalculationSteps neededSteps) const
 {
     using namespace Utilities_OpenGL_Common;
 
@@ -1598,7 +1598,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     const bool oddX = tileIdN.x & 1 > 0;
                     const bool oddY = tileIdN.y & 1 > 0;
                     const auto centralPoint = oddY ? (oddX ? normalTL : normalTR) : (oddX ? normalBL : normalBR);
-                    const auto distance = glm::dot(centralPoint - camPos, camDir);
+                    const auto toCenter = centralPoint - camPos;
+                    const auto distance =
+                        glm::dot(toCenter, camDir) * (1.0 - tiltFactor) + tiltFactor * glm::length(toCenter);
                     if (currentZoom > MinZoomLevel && zLower != zFar
                         && distance > zLower + detailDistanceFactor(zShift) * detailThickness)
                     {
@@ -1659,26 +1661,26 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     const auto topY = tileId.y - 1;
                     const auto bottomY = tileId.y + 1;
                     insertTileId((*nextTiles)[currentZoom],
-                        TileId::fromXY(leftX, tileId.y), zDetail, zoomShift, camPos, camDir, visML);
+                        TileId::fromXY(leftX, tileId.y), zDetail, tiltFactor, zoomShift, camPos, camDir, visML);
                     insertTileId((*nextTiles)[currentZoom],
-                        TileId::fromXY(rightX, tileId.y), zDetail, zoomShift, camPos, camDir, visMR);
+                        TileId::fromXY(rightX, tileId.y), zDetail, tiltFactor, zoomShift, camPos, camDir, visMR);
                     if (topY >= 0)
                     {
                         insertTileId((*nextTiles)[currentZoom],
-                            TileId::fromXY(leftX, topY), zDetail, zoomShift, camPos, camDir, visTL);
+                            TileId::fromXY(leftX, topY), zDetail, tiltFactor, zoomShift, camPos, camDir, visTL);
                         insertTileId((*nextTiles)[currentZoom],
-                            TileId::fromXY(tileId.x, topY), zDetail, zoomShift, camPos, camDir, visTM);
+                            TileId::fromXY(tileId.x, topY), zDetail, tiltFactor, zoomShift, camPos, camDir, visTM);
                         insertTileId((*nextTiles)[currentZoom],
-                            TileId::fromXY(rightX, topY), zDetail, zoomShift, camPos, camDir, visTR);
+                            TileId::fromXY(rightX, topY), zDetail, tiltFactor, zoomShift, camPos, camDir, visTR);
                     }
                     if (bottomY < static_cast<int32_t>(1u << currentZoom))
                     {
                         insertTileId((*nextTiles)[currentZoom],
-                            TileId::fromXY(leftX, bottomY), zDetail, zoomShift, camPos, camDir, visBL);
+                            TileId::fromXY(leftX, bottomY), zDetail, tiltFactor, zoomShift, camPos, camDir, visBL);
                         insertTileId((*nextTiles)[currentZoom],
-                            TileId::fromXY(tileId.x, bottomY), zDetail, zoomShift, camPos, camDir, visBM);
+                            TileId::fromXY(tileId.x, bottomY), zDetail, tiltFactor, zoomShift, camPos, camDir, visBM);
                         insertTileId((*nextTiles)[currentZoom],
-                            TileId::fromXY(rightX, bottomY), zDetail, zoomShift, camPos, camDir, visBR);
+                            TileId::fromXY(rightX, bottomY), zDetail, tiltFactor, zoomShift, camPos, camDir, visBR);
                     }
                     shouldRepeat = true;
                     atLeastOneVisibleFound = true;
@@ -1967,7 +1969,7 @@ inline double OsmAnd::AtlasMapRenderer_OpenGL::detailDistanceFactor(const int zo
 }
 
 inline void OsmAnd::AtlasMapRenderer_OpenGL::insertTileId(QHash<TileId, TileVisibility>& nextTiles,
-    const TileId& tileId, const double zDetail, const int32_t zoomShift,
+    const TileId& tileId, const double zDetail, const double tiltFactor, const int32_t zoomShift,
     const glm::dvec3& camPos, const glm::dvec3& camDir, const bool almostVisible) const
 {
     if (zDetail > 0.0)
@@ -1977,7 +1979,8 @@ inline void OsmAnd::AtlasMapRenderer_OpenGL::insertTileId(QHash<TileId, TileVisi
         const auto center31 = PointI(tileIdBR.x << (zoomShift - 1), tileIdBR.y << (zoomShift - 1));
         const auto angCenter = Utilities::getAnglesFrom31(center31);
         const auto centralPoint = Utilities::getGlobeRadialVector(angCenter);
-        const auto distance = glm::dot(camDir, centralPoint - camPos);
+        const auto toCenter = centralPoint - camPos;
+        const auto distance = glm::dot(toCenter, camDir) * (1.0 - tiltFactor) + tiltFactor * glm::length(toCenter);
         if (distance <= zDetail)
             return;
     }

@@ -52,10 +52,10 @@ namespace OsmAnd
         const static ZoomLevel _zoomForFlattening;
 
         void computeVisibleArea(InternalState* internalState, const MapRendererState& state,
-            const float lowerDetail, const CalculationSteps neededSteps) const;
+            const float lowerDetail, const double tiltFactor, const CalculationSteps neededSteps) const;
         double detailDistanceFactor(const int zoomShift) const;
         void insertTileId(QHash<TileId, TileVisibility>& nextTiles,
-            const TileId& tileId, const double zDetail, const int32_t zoomShift,
+            const TileId& tileId, const double zDetail, const double tiltFactor, const int32_t zoomShift,
             const glm::dvec3& camPos, const glm::dvec3& camDir, const bool almostVisible) const;
         bool isPointVisible(const glm::dvec3& point,
             const glm::dvec3& topN, const glm::dvec3& leftN, const glm::dvec3& bottomN, const glm::dvec3& rightN,
