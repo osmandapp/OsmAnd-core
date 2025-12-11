@@ -36,7 +36,7 @@ namespace OsmAnd
         };
 
         ElevationData findElevationData(const TileId& tileIdN, ZoomLevel buildingZoom);
-        void drawResource(const TileId& id, ZoomLevel z, const std::shared_ptr<MapRenderer3DObjectsResource>& res, const ElevationData& elevationData);
+        void drawResource(const TileId& id, ZoomLevel z, const MapRenderer3DObjectsResource::RenderableBuildings& buildings, const ElevationData& elevationData);
 
         void configureElevationData(
             const std::shared_ptr<const GPUAPI::ResourceInGPU>& elevationDataResource,

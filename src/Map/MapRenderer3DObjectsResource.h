@@ -24,9 +24,7 @@ namespace OsmAnd
     public:
         struct RenderableBuildings
         {
-            std::shared_ptr<const GPUAPI::ArrayBufferInGPU> vertexBuffer;
-            std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU> indexBuffer;
-            int totalIndexCount;
+            QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>> buildingResources;
         };
 
         struct PerformanceDebugInfo

@@ -4,6 +4,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
+#include <QSet>
+#include <QHash>
+#include <QPair>
 
 #include "OpenGL/GPUAPI_OpenGL.h"
 #include "AtlasMapRenderer_OpenGL.h"
@@ -382,7 +385,14 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
         std::sort(sortedZoomLevels.begin(), sortedZoomLevels.end());
     }
 
-    gpuAPI->useVAO(_vao);
+    struct CollectedResource
+    {
+        std::shared_ptr<MapRenderer3DObjectsResource> resource;
+        TileId tileId;
+        ZoomLevel zoom;
+        ElevationData elevationData;
+    };
+    QVector<CollectedResource> collectedResources;
 
     for (const auto& zoomLevel : constOf(sortedZoomLevels))
     {
@@ -423,8 +433,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                 const auto object3DResource = std::static_pointer_cast<MapRenderer3DObjectsResource>(tiledResource);
                 if (object3DResource && object3DResource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                 {
-                    drawResource(tileIdN, static_cast<ZoomLevel>(neededZoom), object3DResource, elevationData);
-                    object3DResource->setState(MapRendererResourceState::Uploaded);
+                    collectedResources.append({object3DResource, tileIdN, static_cast<ZoomLevel>(neededZoom), elevationData});
                     rendered = true;
                     tilesDrawnCount++;
                     if (debugDetailedInfo)
@@ -434,7 +443,6 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                 }
             }
 
-            // Try underscaled subtiles (higher zoom) if nothing rendered yet
             if (!rendered)
             {
                 const int maxZoomShift = currentState.map3DObjectsProvider->getMaxMissingDataZoomShift();
@@ -457,8 +465,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                         const auto subRes = std::static_pointer_cast<MapRenderer3DObjectsResource>(subResBase);
                         if (subRes && subRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                         {
-                            drawResource(subId, static_cast<ZoomLevel>(underscaledZoom), subRes, elevationData);
-                            subRes->setState(MapRendererResourceState::Uploaded);
+                            collectedResources.append({subRes, subId, static_cast<ZoomLevel>(underscaledZoom), elevationData});
                             atLeastOne = true;
                             tilesDrawnCount++;
                             if (debugDetailedInfo)
@@ -476,7 +483,6 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                 }
             }
 
-            // Try overscaled parent (lower zoom) if still nothing
             if (!rendered)
             {
                 const int maxZoomShift = currentState.map3DObjectsProvider->getMaxMissingDataZoomShift();
@@ -496,9 +502,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
 
                     if (parentRes && parentRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                     {
-                        drawResource(parentId, static_cast<ZoomLevel>(overscaledZoom), parentRes, elevationData);
-                        parentRes->setState(MapRendererResourceState::Uploaded);
-                        rendered = true;
+                        collectedResources.append({parentRes, parentId, static_cast<ZoomLevel>(overscaledZoom), elevationData});
                         tilesDrawnCount++;
                         if (debugDetailedInfo)
                         {
@@ -509,6 +513,29 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
                 }
             }
         }
+    }
+
+    gpuAPI->useVAO(_vao);
+
+    QSet<QPair<ZoomLevel, TileId>> drawnBuildingResources;
+
+    for (const auto& collected : constOf(collectedResources))
+    {
+        const auto& buildings = collected.resource->getRenderableBuildings();
+        for (const auto& buildingData : constOf(buildings.buildingResources))
+        {
+            QPair<ZoomLevel, TileId> key(buildingData->zoom, buildingData->tileId);
+            if (drawnBuildingResources.contains(key))
+            {
+                continue;
+            }
+            drawnBuildingResources.insert(key);
+
+            MapRenderer3DObjectsResource::RenderableBuildings singleBuilding;
+            singleBuilding.buildingResources.insert(buildingData);
+            drawResource(collected.tileId, collected.zoom, singleBuilding, collected.elevationData);
+        }
+        collected.resource->setState(MapRendererResourceState::Uploaded);
     }
 
     gpuAPI->unuseVAO();
@@ -668,10 +695,9 @@ AtlasMapRendererMap3DObjectsStage_OpenGL::ElevationData AtlasMapRendererMap3DObj
 }
 
 void OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId& id, ZoomLevel z,
-    const std::shared_ptr<MapRenderer3DObjectsResource>& res, const ElevationData& elevationData)
+    const MapRenderer3DObjectsResource::RenderableBuildings& buildings, const ElevationData& elevationData)
 {
-    const auto& buildings = res->getRenderableBuildings();
-    if (!buildings.vertexBuffer || !buildings.indexBuffer || buildings.totalIndexCount <= 0)
+    if (buildings.buildingResources.isEmpty())
     {
         return;
     }
@@ -744,26 +770,29 @@ void OsmAnd::AtlasMapRendererMap3DObjectsStage_OpenGL::drawResource(const TileId
     glUniform1i(*_program.vs.param.tileZoomLevel, static_cast<int>(z));
     GL_CHECK_RESULT;
 
-    glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(buildings.vertexBuffer->refInGPU)));
-    GL_CHECK_RESULT;
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(buildings.indexBuffer->refInGPU)));
-    GL_CHECK_RESULT;
+    for (const auto& buildingData : constOf(buildings.buildingResources))
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(buildingData->vertexBuffer->refInGPU)));
+        GL_CHECK_RESULT;
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(buildingData->indexBuffer->refInGPU)));
+        GL_CHECK_RESULT;
 
-    glVertexAttribIPointer(*_program.vs.in.location31, 2, GL_INT, sizeof(BuildingVertex),
-        reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, location31)));
-    GL_CHECK_RESULT;
-    glVertexAttribPointer(*_program.vs.in.height, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
-        reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, height)));
-    GL_CHECK_RESULT;
-    glVertexAttribPointer(*_program.vs.in.normal, 3, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
-        reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, normal)));
-    GL_CHECK_RESULT;
-    glVertexAttribPointer(*_program.vs.in.color, 3, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
-        reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, color)));
-    GL_CHECK_RESULT;
+        glVertexAttribIPointer(*_program.vs.in.location31, 2, GL_INT, sizeof(BuildingVertex),
+            reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, location31)));
+        GL_CHECK_RESULT;
+        glVertexAttribPointer(*_program.vs.in.height, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+            reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, height)));
+        GL_CHECK_RESULT;
+        glVertexAttribPointer(*_program.vs.in.normal, 3, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+            reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, normal)));
+        GL_CHECK_RESULT;
+        glVertexAttribPointer(*_program.vs.in.color, 3, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+            reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, color)));
+        GL_CHECK_RESULT;
 
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(buildings.totalIndexCount), GL_UNSIGNED_SHORT, 0);
-    GL_CHECK_RESULT;
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(buildingData->indexCount), GL_UNSIGNED_SHORT, 0);
+        GL_CHECK_RESULT;
+    }
 }
 
 bool AtlasMapRendererMap3DObjectsStage_OpenGL::release(bool gpuContextLost)

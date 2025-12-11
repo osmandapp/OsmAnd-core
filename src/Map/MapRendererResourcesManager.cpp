@@ -3,6 +3,7 @@
 #include <cassert>
 
 #include "QtCommon.h"
+#include "MapRenderer3DObjects.h"
 
 #include "MapRenderer.h"
 #include "IMapDataProvider.h"
@@ -3669,4 +3670,80 @@ QVector<std::shared_ptr<const OsmAnd::Metric>> OsmAnd::MapRendererResourcesManag
     }
 
     return allMetrics;
+}
+
+std::shared_ptr<OsmAnd::GPUAPI::MapRenderer3DBuildingGPUData> OsmAnd::MapRendererResourcesManager::find3DBuildingGPUData(ZoomLevel zoom, TileId tileId) const
+{
+    QMutexLocker locker(&_3DBuildingsDataMutex);
+    for (const auto& buildingData : constOf(_shared3DBuildings))
+    {
+        if (buildingData->zoom == zoom && buildingData->tileId == tileId)
+        {
+            return buildingData;
+        }
+    }
+    return nullptr;
+}
+
+void OsmAnd::MapRendererResourcesManager::release3DBuildingGPUData(ZoomLevel zoom, TileId tileId)
+{
+    QMutexLocker locker(&_3DBuildingsDataMutex);
+    
+    for (int i = 0; i < _shared3DBuildings.size(); ++i)
+    {
+        auto& buildingData = _shared3DBuildings[i];
+        if (buildingData->zoom == zoom && buildingData->tileId == tileId)
+        {
+            buildingData->referenceCount--;
+            if (buildingData->referenceCount <= 0)
+            {
+                buildingData->vertexBuffer.reset();
+                buildingData->indexBuffer.reset();
+                buildingData->buildingIDs.clear();
+                _shared3DBuildings.removeAt(i);
+            }
+            return;
+        }
+    }
+}
+
+std::shared_ptr<OsmAnd::GPUAPI::MapRenderer3DBuildingGPUData> OsmAnd::MapRendererResourcesManager::findOrCreate3DBuildingGPUDataLocked(ZoomLevel zoom, TileId tileId, const QVector<BuildingVertex>& vertices, const QVector<uint16_t>& indices, const QSet<uint64_t>& buildingIDs)
+{
+    auto buildingData = std::make_shared<GPUAPI::MapRenderer3DBuildingGPUData>();
+    buildingData->zoom = zoom;
+    buildingData->tileId = tileId;
+    buildingData->referenceCount = 0;
+    buildingData->buildingIDs = buildingIDs;
+    
+    const size_t vertexBufferSize = vertices.size() * sizeof(BuildingVertex);
+    const bool vertexUploadSuccess = uploadVerticesToGPU(
+        vertices.constData(),
+        vertexBufferSize,
+        vertices.size(),
+        buildingData->vertexBuffer,
+        false);
+    
+    if (!vertexUploadSuccess)
+    {
+        return nullptr;
+    }
+    
+    const size_t indexBufferSize = indices.size() * sizeof(uint16_t);
+    const bool indexUploadSuccess = uploadIndicesToGPU(
+        indices.constData(),
+        indexBufferSize,
+        indices.size(),
+        buildingData->indexBuffer,
+        false);
+    
+    if (!indexUploadSuccess)
+    {
+        buildingData->vertexBuffer.reset();
+        return nullptr;
+    }
+    
+    buildingData->indexCount = indices.size();
+    _shared3DBuildings.append(buildingData);
+    
+    return buildingData;
 }

@@ -113,8 +113,7 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
         return true;
     }
 
-    _renderableBuildings.vertexBuffer.reset();
-    _renderableBuildings.indexBuffer.reset();
+    _renderableBuildings.buildingResources.clear();
 
     const auto map3DTileData = std::dynamic_pointer_cast<Map3DObjectsTiledProvider::Data>(_sourceData);
     if (!map3DTileData || map3DTileData->buildings3D.vertices.isEmpty() || map3DTileData->buildings3D.indices.isEmpty())
@@ -126,55 +125,113 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
 
     const auto& buildings3D = map3DTileData->buildings3D;
 
-    const size_t vertexBufferSize = buildings3D.vertices.size() * sizeof(BuildingVertex);
-    std::shared_ptr<const GPUAPI::ArrayBufferInGPU> vertexBufferInGPU;
-
-    const bool vertexUploadSuccess = resourcesManager->uploadVerticesToGPU(buildings3D.vertices.constData(),
-        vertexBufferSize, buildings3D.vertices.size(), vertexBufferInGPU, false);
-
-    if (!vertexUploadSuccess)
+    if (buildings3D.buildingIDs.isEmpty())
     {
         _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
         _performanceDebugInfo.totalGpuMemoryBytes = 0;
-        return false;
+        return true;
     }
 
-    const size_t indexBufferSize = buildings3D.indices.size() * sizeof(uint16_t);
-    std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU> indexBufferInGPU;
+    QMutexLocker locker(&resourcesManager->_3DBuildingsDataMutex);
 
-    const bool indexUploadSuccess = resourcesManager->uploadIndicesToGPU(buildings3D.indices.constData(),
-        indexBufferSize, buildings3D.indices.size(), indexBufferInGPU, false);
-
-    if (!indexUploadSuccess)
+    QSet<uint64_t> uniqueBuildingIDs;
+    QVector<BuildingVertex> uniqueVertices;
+    QVector<uint16_t> uniqueIndices;
+    
+    int vertexOffset = 0;
+    int indexOffset = 0;
+    
+    for (int i = 0; i < buildings3D.buildingIDs.size(); ++i)
     {
-        _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
+        const uint64_t buildingID = buildings3D.buildingIDs[i];
+        const int vertexCount = buildings3D.vertexCounts[i];
+        const int indexCount = buildings3D.indexCounts[i];
+
+        std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> duplicateData;
+        bool isDuplicate = false;
+        for (const auto& data : constOf(resourcesManager->_shared3DBuildings))
+        {
+            for (const uint64_t sahredBuildingID : constOf(data->buildingIDs))
+            {
+                if (buildingID == sahredBuildingID)
+                {
+                    duplicateData = data;
+                    isDuplicate = true;
+                    continue;
+                }
+            }
+        }
+
+        if (isDuplicate)
+        {
+            ++duplicateData->referenceCount;
+            _renderableBuildings.buildingResources.insert(duplicateData);
+            vertexOffset += vertexCount;
+            indexOffset += indexCount;
+            continue;
+        }
+
+        uniqueBuildingIDs.insert(buildingID);
+        
+        uint16_t currentVertexOffset = static_cast<uint16_t>(uniqueVertices.size());
+        for (int j = 0; j < vertexCount; ++j)
+        {
+            uniqueVertices.append(buildings3D.vertices[vertexOffset + j]);
+        }
+        
+        for (int j = 0; j < indexCount; ++j)
+        {
+            uniqueIndices.append(static_cast<uint16_t>(buildings3D.indices[indexOffset + j] - vertexOffset + currentVertexOffset));
+        }
+        
+        vertexOffset += vertexCount;
+        indexOffset += indexCount;
+    }
+    
+    std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> buildingData;
+    
+    if (!uniqueVertices.isEmpty())
+    {
+        buildingData = resourcesManager->findOrCreate3DBuildingGPUDataLocked(zoom, tileId, uniqueVertices, uniqueIndices, uniqueBuildingIDs);
+        if (!buildingData)
+        {
+            _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
+            _performanceDebugInfo.totalGpuMemoryBytes = 0;
+            return false;
+        }
+        
+        buildingData->referenceCount++;
+        _renderableBuildings.buildingResources.insert(buildingData);
+
+        const size_t totalGpuMemoryBytes = uniqueVertices.size() * sizeof(BuildingVertex) + uniqueIndices.size() * sizeof(uint16_t);
+        _performanceDebugInfo.totalGpuMemoryBytes = totalGpuMemoryBytes;
+    }
+    else
+    {
         _performanceDebugInfo.totalGpuMemoryBytes = 0;
-        return false;
     }
 
-    _renderableBuildings.vertexBuffer = vertexBufferInGPU;
-    _renderableBuildings.indexBuffer = indexBufferInGPU;
-    _renderableBuildings.totalIndexCount = buildings3D.indices.size();
-
-    const size_t totalGpuMemoryBytes = vertexBufferSize + indexBufferSize;
     _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
-    _performanceDebugInfo.totalGpuMemoryBytes = totalGpuMemoryBytes;
 
     return true;
 }
 
 void MapRenderer3DObjectsResource::unloadFromGPU()
 {
-    _renderableBuildings.vertexBuffer.reset();
-    _renderableBuildings.indexBuffer.reset();
-    _renderableBuildings.totalIndexCount = 0;
+    for (const auto& buildingData : constOf(_renderableBuildings.buildingResources))
+    {
+        resourcesManager->release3DBuildingGPUData(buildingData->zoom, buildingData->tileId);
+    }
+    _renderableBuildings.buildingResources.clear();
 }
 
 void MapRenderer3DObjectsResource::lostDataInGPU()
 {
-    _renderableBuildings.vertexBuffer.reset();
-    _renderableBuildings.indexBuffer.reset();
-    _renderableBuildings.totalIndexCount = 0;
+    for (const auto& buildingData : constOf(_renderableBuildings.buildingResources))
+    {
+        resourcesManager->release3DBuildingGPUData(buildingData->zoom, buildingData->tileId);
+    }
+    _renderableBuildings.buildingResources.clear();
 }
 
 void MapRenderer3DObjectsResource::releaseData()

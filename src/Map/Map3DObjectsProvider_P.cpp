@@ -148,6 +148,11 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         return;
     }
 
+    if (buildings3D.buildingIDs.contains(sourceObject->id))
+    {
+        return;
+    }
+
     bool isBuilding = false;
     bool isBuildingPart = false;
 
@@ -332,6 +337,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
 
     const int topTriangles = edgePointsCount - 2;
     const int currentVertexOffset = buildings3D.vertices.size();
+    const int currentIndexOffset = buildings3D.indices.size();
+    const uint64_t buildingID = sourceObject->id.id;
 
     QVector<glm::vec3> sideNormals;
     sideNormals.resize(edgePointsCount);
@@ -500,4 +507,10 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         }
         currentWallBaseIdx += innerPoly.size() * 4;
     }
+
+    const int buildingVertexCount = buildings3D.vertices.size() - currentVertexOffset;
+    const int buildingIndexCount = buildings3D.indices.size() - currentIndexOffset;
+    buildings3D.buildingIDs.append(buildingID);
+    buildings3D.vertexCounts.append(buildingVertexCount);
+    buildings3D.indexCounts.append(buildingIndexCount);
 }

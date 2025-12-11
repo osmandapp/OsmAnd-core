@@ -18,6 +18,7 @@
 #include "MapCommonTypes.h"
 #include "IMapTiledDataProvider.h"
 #include "MapRendererBaseResource.h"
+#include "MapRenderer3DObjects.h"
 
 namespace OsmAnd
 {
@@ -125,6 +126,17 @@ namespace OsmAnd
             virtual ~ElementArrayBufferInGPU();
 
             const unsigned int itemsCount;
+        };
+
+        struct MapRenderer3DBuildingGPUData
+        {
+            QSet<uint64_t> buildingIDs;
+            std::shared_ptr<const ArrayBufferInGPU> vertexBuffer;
+            std::shared_ptr<const ElementArrayBufferInGPU> indexBuffer;
+            int indexCount;
+            ZoomLevel zoom;
+            TileId tileId;
+            int referenceCount;
         };
 
         union AtlasTypeId
