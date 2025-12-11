@@ -27,17 +27,9 @@ namespace OsmAnd
             QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>> buildingResources;
         };
 
-        struct PerformanceDebugInfo
-        {
-            size_t totalGpuMemoryBytes;
-            float obtainDataTimeMilliseconds;
-            float uploadToGpuTimeMilliseconds;
-        };
-
         ~MapRenderer3DObjectsResource() override;
 
         const RenderableBuildings& getRenderableBuildings() const { return _renderableBuildings; }
-        const PerformanceDebugInfo& getPerformanceDebugInfo() const { return _performanceDebugInfo; }
 
         friend class OsmAnd::MapRendererResourcesManager;
 
@@ -51,7 +43,7 @@ namespace OsmAnd
         std::shared_ptr<IMapTiledDataProvider::Data> _sourceData;
 
         RenderableBuildings _renderableBuildings;
-        PerformanceDebugInfo _performanceDebugInfo;
+        float _obtainDataTimeMilliseconds = 0;
 
         bool supportsObtainDataAsync() const override;
         bool obtainData(bool& dataAvailable, const std::shared_ptr<const IQueryController>& queryController) override;

@@ -19,11 +19,7 @@ MapRenderer3DObjectsResource::MapRenderer3DObjectsResource(
     const TileId tileId,
     const ZoomLevel zoom)
     : MapRendererBaseTiledResource(owner, MapRendererResourceType::Map3DObjects, collection, tileId, zoom)
-    , _performanceDebugInfo()
 {
-    _performanceDebugInfo.totalGpuMemoryBytes = 0;
-    _performanceDebugInfo.obtainDataTimeMilliseconds = 0.0f;
-    _performanceDebugInfo.uploadToGpuTimeMilliseconds = 0.0f;
 }
 
 MapRenderer3DObjectsResource::~MapRenderer3DObjectsResource()
@@ -89,8 +85,8 @@ bool MapRenderer3DObjectsResource::obtainData(bool& dataAvailable, const std::sh
     const auto map3DTileData = std::dynamic_pointer_cast<Map3DObjectsTiledProvider::Data>(_sourceData);
     dataAvailable = static_cast<bool>(map3DTileData);
     
-    _performanceDebugInfo.obtainDataTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
-    
+    _obtainDataTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
+
     return true;
 }
 
@@ -108,8 +104,6 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
     
     if (!_sourceData)
     {
-        _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
-        _performanceDebugInfo.totalGpuMemoryBytes = 0;
         return true;
     }
 
@@ -118,8 +112,6 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
     const auto map3DTileData = std::dynamic_pointer_cast<Map3DObjectsTiledProvider::Data>(_sourceData);
     if (!map3DTileData || map3DTileData->buildings3D.vertices.isEmpty() || map3DTileData->buildings3D.indices.isEmpty())
     {
-        _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
-        _performanceDebugInfo.totalGpuMemoryBytes = 0;
         return true;
     }
 
@@ -127,8 +119,6 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
 
     if (buildings3D.buildingIDs.isEmpty())
     {
-        _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
-        _performanceDebugInfo.totalGpuMemoryBytes = 0;
         return true;
     }
 
@@ -195,23 +185,14 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
         buildingData = resourcesManager->findOrCreate3DBuildingGPUDataLocked(zoom, tileId, uniqueVertices, uniqueIndices, uniqueBuildingIDs);
         if (!buildingData)
         {
-            _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
-            _performanceDebugInfo.totalGpuMemoryBytes = 0;
             return false;
         }
         
         buildingData->referenceCount++;
+        buildingData->_performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
+        buildingData->_performanceDebugInfo.obtainDataTimeMilliseconds = _obtainDataTimeMilliseconds;
         _renderableBuildings.buildingResources.insert(buildingData);
-
-        const size_t totalGpuMemoryBytes = uniqueVertices.size() * sizeof(BuildingVertex) + uniqueIndices.size() * sizeof(uint16_t);
-        _performanceDebugInfo.totalGpuMemoryBytes = totalGpuMemoryBytes;
     }
-    else
-    {
-        _performanceDebugInfo.totalGpuMemoryBytes = 0;
-    }
-
-    _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
 
     return true;
 }

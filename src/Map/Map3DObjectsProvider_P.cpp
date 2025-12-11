@@ -335,7 +335,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         totalTopVertices += innerPoly.size();
     }
 
-    const int topTriangles = edgePointsCount - 2;
     const int currentVertexOffset = buildings3D.vertices.size();
     const int currentIndexOffset = buildings3D.indices.size();
     const uint64_t buildingID = sourceObject->id.id;

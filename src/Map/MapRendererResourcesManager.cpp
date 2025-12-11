@@ -3741,8 +3741,7 @@ std::shared_ptr<OsmAnd::GPUAPI::MapRenderer3DBuildingGPUData> OsmAnd::MapRendere
         buildingData->vertexBuffer.reset();
         return nullptr;
     }
-    
-    buildingData->indexCount = indices.size();
+
     _shared3DBuildings.append(buildingData);
     
     return buildingData;

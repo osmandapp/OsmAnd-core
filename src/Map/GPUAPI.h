@@ -130,10 +130,15 @@ namespace OsmAnd
 
         struct MapRenderer3DBuildingGPUData
         {
+            struct PerformanceDebugInfo
+            {
+                float obtainDataTimeMilliseconds;
+                float uploadToGpuTimeMilliseconds;
+            } _performanceDebugInfo;
+
             QSet<uint64_t> buildingIDs;
             std::shared_ptr<const ArrayBufferInGPU> vertexBuffer;
             std::shared_ptr<const ElementArrayBufferInGPU> indexBuffer;
-            int indexCount;
             ZoomLevel zoom;
             TileId tileId;
             int referenceCount;
