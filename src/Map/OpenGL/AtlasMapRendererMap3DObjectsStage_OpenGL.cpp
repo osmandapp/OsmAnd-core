@@ -637,7 +637,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDe
 
     for (const auto& resource : collectedResources)
     {
-        if (resource->indexBuffer->itemsCount > 0)
+        if (resource->indexBuffer && resource->indexBuffer->itemsCount > 0)
         {
             prepareElevation(resource->tileId, resource->zoom, _depthProgram);
 
@@ -698,7 +698,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
 
     for (const auto& resource : collectedResources)
     {
-        if (resource->indexBuffer->itemsCount > 0)
+        if (resource->indexBuffer && resource->indexBuffer->itemsCount > 0)
         {
             prepareElevation(resource->tileId, resource->zoom, _program);
 
