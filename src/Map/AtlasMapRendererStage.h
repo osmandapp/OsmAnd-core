@@ -69,7 +69,8 @@ namespace OsmAnd
 
         enum class Init3DObjectsType : int
         {
-            Objects3D,
+            Objects3DDepth,
+            Objects3DColor,
             Complete,
             Incomplete
         };
