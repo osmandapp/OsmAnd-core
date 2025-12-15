@@ -210,12 +210,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
 
     if (!skip && _map3DObjectsStage && !currentDebugSettings->disable3DMapObjectsStage)
     {
-        glEnable(GL_CULL_FACE);
-        GL_CHECK_RESULT;
-
-        glCullFace(currentState.flip ? GL_BACK : GL_FRONT);
-        GL_CHECK_RESULT;
-
         Stopwatch map3DStageStopwatch(metric != nullptr);
 
         const auto stageResult = _map3DObjectsStage->render(metric);
@@ -224,9 +218,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
             ok = false;
         if (metric)
             metric->elapsedTimeForSymbolsStage += map3DStageStopwatch.elapsed();
-
-        glDisable(GL_CULL_FACE);
-        GL_CHECK_RESULT;
 
         if (!ok || stageResult == MapRendererStage::StageResult::Wait)
             skip = true;

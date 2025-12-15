@@ -19,11 +19,7 @@ MapRenderer3DObjectsResource::MapRenderer3DObjectsResource(
     const TileId tileId,
     const ZoomLevel zoom)
     : MapRendererBaseTiledResource(owner, MapRendererResourceType::Map3DObjects, collection, tileId, zoom)
-    , _performanceDebugInfo()
 {
-    _performanceDebugInfo.totalGpuMemoryBytes = 0;
-    _performanceDebugInfo.obtainDataTimeMilliseconds = 0.0f;
-    _performanceDebugInfo.uploadToGpuTimeMilliseconds = 0.0f;
 }
 
 MapRenderer3DObjectsResource::~MapRenderer3DObjectsResource()
@@ -89,8 +85,8 @@ bool MapRenderer3DObjectsResource::obtainData(bool& dataAvailable, const std::sh
     const auto map3DTileData = std::dynamic_pointer_cast<Map3DObjectsTiledProvider::Data>(_sourceData);
     dataAvailable = static_cast<bool>(map3DTileData);
     
-    _performanceDebugInfo.obtainDataTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
-    
+    _obtainDataTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
+
     return true;
 }
 
@@ -108,73 +104,42 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
     
     if (!_sourceData)
     {
-        _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
-        _performanceDebugInfo.totalGpuMemoryBytes = 0;
         return true;
     }
 
-    _renderableBuildings.vertexBuffer.reset();
-    _renderableBuildings.indexBuffer.reset();
+    _renderableBuildings.buildingResources.clear();
 
     const auto map3DTileData = std::dynamic_pointer_cast<Map3DObjectsTiledProvider::Data>(_sourceData);
     if (!map3DTileData || map3DTileData->buildings3D.vertices.isEmpty() || map3DTileData->buildings3D.indices.isEmpty())
     {
-        _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
-        _performanceDebugInfo.totalGpuMemoryBytes = 0;
         return true;
     }
 
-    const auto& buildings3D = map3DTileData->buildings3D;
-
-    const size_t vertexBufferSize = buildings3D.vertices.size() * sizeof(BuildingVertex);
-    std::shared_ptr<const GPUAPI::ArrayBufferInGPU> vertexBufferInGPU;
-
-    const bool vertexUploadSuccess = resourcesManager->uploadVerticesToGPU(buildings3D.vertices.constData(),
-        vertexBufferSize, buildings3D.vertices.size(), vertexBufferInGPU, false);
-
-    if (!vertexUploadSuccess)
+    if (map3DTileData->buildings3D.buildingIDs.isEmpty())
     {
-        _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
-        _performanceDebugInfo.totalGpuMemoryBytes = 0;
-        return false;
+        return true;
     }
 
-    const size_t indexBufferSize = buildings3D.indices.size() * sizeof(uint16_t);
-    std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU> indexBufferInGPU;
-
-    const bool indexUploadSuccess = resourcesManager->uploadIndicesToGPU(buildings3D.indices.constData(),
-        indexBufferSize, buildings3D.indices.size(), indexBufferInGPU, false);
-
-    if (!indexUploadSuccess)
+    auto newBuildingData = resourcesManager->loadGPU3DBuildingData(zoom, tileId, map3DTileData->buildings3D, _renderableBuildings.buildingResources);
+    if (newBuildingData)
     {
-        _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
-        _performanceDebugInfo.totalGpuMemoryBytes = 0;
-        return false;
+        newBuildingData->_performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
+        newBuildingData->_performanceDebugInfo.obtainDataTimeMilliseconds = _obtainDataTimeMilliseconds;
     }
-
-    _renderableBuildings.vertexBuffer = vertexBufferInGPU;
-    _renderableBuildings.indexBuffer = indexBufferInGPU;
-    _renderableBuildings.totalIndexCount = buildings3D.indices.size();
-
-    const size_t totalGpuMemoryBytes = vertexBufferSize + indexBufferSize;
-    _performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
-    _performanceDebugInfo.totalGpuMemoryBytes = totalGpuMemoryBytes;
 
     return true;
 }
 
 void MapRenderer3DObjectsResource::unloadFromGPU()
 {
-    _renderableBuildings.vertexBuffer.reset();
-    _renderableBuildings.indexBuffer.reset();
-    _renderableBuildings.totalIndexCount = 0;
+    resourcesManager->release3DBuildingGPUData(_renderableBuildings.buildingResources);
+    _renderableBuildings.buildingResources.clear();
 }
 
 void MapRenderer3DObjectsResource::lostDataInGPU()
 {
-    _renderableBuildings.vertexBuffer.reset();
-    _renderableBuildings.indexBuffer.reset();
-    _renderableBuildings.totalIndexCount = 0;
+    resourcesManager->release3DBuildingGPUData(_renderableBuildings.buildingResources);
+    _renderableBuildings.buildingResources.clear();
 }
 
 void MapRenderer3DObjectsResource::releaseData()

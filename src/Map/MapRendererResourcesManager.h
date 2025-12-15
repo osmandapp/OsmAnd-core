@@ -149,6 +149,13 @@ namespace OsmAnd
         void batchUnpublishMapSymbols(
             const QList< PublishOrUnpublishMapSymbol >& mapSymbolsToUnublish);
 
+        QVector<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>> _shared3DBuildings;
+        mutable QMutex _3DBuildingsDataMutex;
+        void release3DBuildingGPUData(const QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& buildingResources);
+        std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> find3DBuildingGPUData(ZoomLevel zoom, TileId tileId) const;
+        std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> loadGPU3DBuildingData(ZoomLevel zoom, TileId tileId,
+            const Buildings3D& buildings3D, QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& buildingResources);
+
         // Invalidated resources:
         QAtomicInt _invalidatedResourcesTypesMask;
         void invalidateAllResources();

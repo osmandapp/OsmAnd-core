@@ -22,6 +22,7 @@ namespace OsmAnd
 
     private:
         GLname _vao;
+        GLname _depthVao;
 
         Init3DObjectsType _init3DObjectsType;
 
@@ -34,17 +35,6 @@ namespace OsmAnd
             PointF texCoordsScale;
             bool hasData;
         };
-
-        ElevationData findElevationData(const TileId& tileIdN, ZoomLevel buildingZoom);
-        void drawResource(const TileId& id, ZoomLevel z, const std::shared_ptr<MapRenderer3DObjectsResource>& res, const ElevationData& elevationData);
-
-        void configureElevationData(
-            const std::shared_ptr<const GPUAPI::ResourceInGPU>& elevationDataResource,
-            const TileId tileIdN,
-            const ZoomLevel zoomLevel,
-            const PointF& texCoordsOffsetN,
-            const PointF& texCoordsScaleN);
-        void cancelElevation();
 
         struct Model3DProgram
         {
@@ -68,6 +58,7 @@ namespace OsmAnd
                 struct
                 {
                     GLlocation mPerspectiveProjectionView;
+                    GLlocation resultScale;
                     GLlocation alpha;
                     GLlocation target31;
                     GLlocation zoomLevel;
@@ -87,8 +78,26 @@ namespace OsmAnd
                 } param;
             } vs;
         } _program;
+        Model3DProgram _depthProgram;
 
-        bool initializeProgram();
+        ElevationData findElevationData(const TileId& tileIdN, ZoomLevel buildingZoom);
+
+        void prepareElevation(const TileId& id, ZoomLevel z, const AtlasMapRendererMap3DObjectsStage_OpenGL::Model3DProgram& program);
+
+        void configureElevationData(
+            const std::shared_ptr<const GPUAPI::ResourceInGPU>& elevationDataResource,
+            const TileId tileIdN,
+            const ZoomLevel zoomLevel,
+            const PointF& texCoordsOffsetN,
+            const PointF& texCoordsScaleN,
+            const Model3DProgram& program);
+        void cancelElevation(const Model3DProgram& program);
+
+        bool initializeColorProgram();
+        bool initializeDepthProgram();
+        void prepareDrawObjects(QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& collectedResources);
+        StageResult renderDepth(QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& collectedResources);
+        StageResult renderColor(QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& collectedResources);
 
     public:
         explicit AtlasMapRendererMap3DObjectsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer);
@@ -97,6 +106,8 @@ namespace OsmAnd
         bool initialize() override;
         StageResult render(IMapRenderer_Metrics::Metric_renderFrame* const metric) override;
         bool release(bool gpuContextLost) override;
+
+        bool isDepthPrepassRequired() const;
     };
 }
 

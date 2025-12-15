@@ -22,7 +22,9 @@ namespace OsmAnd
     {
         QVector<BuildingVertex> vertices;
         QVector<uint16_t> indices;
-        QVector<FColorARGB> colors;
+        QVector<uint64_t> buildingIDs;
+        QVector<int> vertexCounts;
+        QVector<int> indexCounts;
     };
 }
 
