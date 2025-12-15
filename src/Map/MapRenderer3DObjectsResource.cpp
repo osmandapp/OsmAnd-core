@@ -115,83 +115,16 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
         return true;
     }
 
-    const auto& buildings3D = map3DTileData->buildings3D;
-
-    if (buildings3D.buildingIDs.isEmpty())
+    if (map3DTileData->buildings3D.buildingIDs.isEmpty())
     {
         return true;
     }
 
-    QMutexLocker locker(&resourcesManager->_3DBuildingsDataMutex);
-
-    QSet<uint64_t> uniqueBuildingIDs;
-    QVector<BuildingVertex> uniqueVertices;
-    QVector<uint16_t> uniqueIndices;
-    
-    int vertexOffset = 0;
-    int indexOffset = 0;
-    
-    for (int i = 0; i < buildings3D.buildingIDs.size(); ++i)
+    auto newBuildingData = resourcesManager->loadGPU3DBuildingData(zoom, tileId, map3DTileData->buildings3D, _renderableBuildings.buildingResources);
+    if (newBuildingData)
     {
-        const uint64_t buildingID = buildings3D.buildingIDs[i];
-        const int vertexCount = buildings3D.vertexCounts[i];
-        const int indexCount = buildings3D.indexCounts[i];
-
-        std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> duplicateData;
-        bool isDuplicate = false;
-        for (const auto& data : constOf(resourcesManager->_shared3DBuildings))
-        {
-            for (const uint64_t sahredBuildingID : constOf(data->buildingIDs))
-            {
-                if (buildingID == sahredBuildingID)
-                {
-                    duplicateData = data;
-                    isDuplicate = true;
-                    continue;
-                }
-            }
-        }
-
-        if (isDuplicate)
-        {
-            ++duplicateData->referenceCount;
-            _renderableBuildings.buildingResources.insert(duplicateData);
-            vertexOffset += vertexCount;
-            indexOffset += indexCount;
-            continue;
-        }
-
-        uniqueBuildingIDs.insert(buildingID);
-        
-        uint16_t currentVertexOffset = static_cast<uint16_t>(uniqueVertices.size());
-        for (int j = 0; j < vertexCount; ++j)
-        {
-            uniqueVertices.append(buildings3D.vertices[vertexOffset + j]);
-        }
-        
-        for (int j = 0; j < indexCount; ++j)
-        {
-            uniqueIndices.append(static_cast<uint16_t>(buildings3D.indices[indexOffset + j] - vertexOffset + currentVertexOffset));
-        }
-        
-        vertexOffset += vertexCount;
-        indexOffset += indexCount;
-    }
-    
-    std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> buildingData;
-    
-    if (!uniqueVertices.isEmpty())
-    {
-        buildingData = resourcesManager->findOrCreate3DBuildingGPUDataLocked(zoom, tileId, uniqueVertices, uniqueIndices, uniqueBuildingIDs);
-        if (!buildingData)
-        {
-            return false;
-        }
-        
-        buildingData->referenceCount++;
-        buildingData->_performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
-        buildingData->_performanceDebugInfo.obtainDataTimeMilliseconds = _obtainDataTimeMilliseconds;
-        _renderableBuildings.buildingResources.insert(buildingData);
+        newBuildingData->_performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
+        newBuildingData->_performanceDebugInfo.obtainDataTimeMilliseconds = _obtainDataTimeMilliseconds;
     }
 
     return true;
@@ -199,19 +132,13 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
 
 void MapRenderer3DObjectsResource::unloadFromGPU()
 {
-    for (const auto& buildingData : constOf(_renderableBuildings.buildingResources))
-    {
-        resourcesManager->release3DBuildingGPUData(buildingData->zoom, buildingData->tileId);
-    }
+    resourcesManager->release3DBuildingGPUData(_renderableBuildings.buildingResources);
     _renderableBuildings.buildingResources.clear();
 }
 
 void MapRenderer3DObjectsResource::lostDataInGPU()
 {
-    for (const auto& buildingData : constOf(_renderableBuildings.buildingResources))
-    {
-        resourcesManager->release3DBuildingGPUData(buildingData->zoom, buildingData->tileId);
-    }
+    resourcesManager->release3DBuildingGPUData(_renderableBuildings.buildingResources);
     _renderableBuildings.buildingResources.clear();
 }
 

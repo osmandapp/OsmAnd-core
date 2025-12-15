@@ -3685,64 +3685,133 @@ std::shared_ptr<OsmAnd::GPUAPI::MapRenderer3DBuildingGPUData> OsmAnd::MapRendere
     return nullptr;
 }
 
-void OsmAnd::MapRendererResourcesManager::release3DBuildingGPUData(ZoomLevel zoom, TileId tileId)
+void OsmAnd::MapRendererResourcesManager::release3DBuildingGPUData(const QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& resourcesToRelease)
 {
     QMutexLocker locker(&_3DBuildingsDataMutex);
-    
-    for (int i = 0; i < _shared3DBuildings.size(); ++i)
+
+    for (const auto& dataToRelease : constOf(resourcesToRelease))
     {
-        auto& buildingData = _shared3DBuildings[i];
-        if (buildingData->zoom == zoom && buildingData->tileId == tileId)
+        for (int i = 0; i < _shared3DBuildings.size(); ++i)
         {
-            buildingData->referenceCount--;
-            if (buildingData->referenceCount <= 0)
+            auto& sharedData = _shared3DBuildings[i];
+            if (sharedData.get() == dataToRelease.get() ||
+                (sharedData->zoom == dataToRelease->zoom && sharedData->tileId == dataToRelease->tileId))
             {
-                buildingData->vertexBuffer.reset();
-                buildingData->indexBuffer.reset();
-                buildingData->buildingIDs.clear();
-                _shared3DBuildings.removeAt(i);
+                if (sharedData->referenceCount > 0)
+                {
+                    --sharedData->referenceCount;
+                }
+
+                if (sharedData->referenceCount <= 0)
+                {
+                    sharedData->vertexBuffer.reset();
+                    sharedData->indexBuffer.reset();
+                    sharedData->buildingIDs.clear();
+                    _shared3DBuildings.removeAt(i);
+                }
+                break;
             }
-            return;
         }
     }
 }
 
-std::shared_ptr<OsmAnd::GPUAPI::MapRenderer3DBuildingGPUData> OsmAnd::MapRendererResourcesManager::findOrCreate3DBuildingGPUDataLocked(ZoomLevel zoom, TileId tileId, const QVector<BuildingVertex>& vertices, const QVector<uint16_t>& indices, const QSet<uint64_t>& buildingIDs)
+std::shared_ptr<OsmAnd::GPUAPI::MapRenderer3DBuildingGPUData> OsmAnd::MapRendererResourcesManager::loadGPU3DBuildingData(ZoomLevel zoom, TileId tileId,
+    const Buildings3D& buildings3D, QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& outResources)
 {
-    auto buildingData = std::make_shared<GPUAPI::MapRenderer3DBuildingGPUData>();
-    buildingData->zoom = zoom;
-    buildingData->tileId = tileId;
-    buildingData->referenceCount = 0;
-    buildingData->buildingIDs = buildingIDs;
-    
-    const size_t vertexBufferSize = vertices.size() * sizeof(BuildingVertex);
-    const bool vertexUploadSuccess = uploadVerticesToGPU(
-        vertices.constData(),
-        vertexBufferSize,
-        vertices.size(),
-        buildingData->vertexBuffer,
-        false);
-    
-    if (!vertexUploadSuccess)
+    QMutexLocker locker(&_3DBuildingsDataMutex);
+
+    QSet<uint64_t> uniqueBuildingIDs;
+    QVector<BuildingVertex> uniqueVertices;
+    QVector<uint16_t> uniqueIndices;
+
+    int vertexOffset = 0;
+    int indexOffset = 0;
+
+    // If existed resource contains needed building
+    // Add it ti outResources, increase referenceCount and dont load building to the GPU
+    for (int i = 0; i < buildings3D.buildingIDs.size(); ++i)
     {
-        return nullptr;
-    }
-    
-    const size_t indexBufferSize = indices.size() * sizeof(uint16_t);
-    const bool indexUploadSuccess = uploadIndicesToGPU(
-        indices.constData(),
-        indexBufferSize,
-        indices.size(),
-        buildingData->indexBuffer,
-        false);
-    
-    if (!indexUploadSuccess)
-    {
-        buildingData->vertexBuffer.reset();
-        return nullptr;
+        const uint64_t buildingID = buildings3D.buildingIDs[i];
+        const int vertexCount = buildings3D.vertexCounts[i];
+        const int indexCount = buildings3D.indexCounts[i];
+
+        std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> duplicateData;
+        bool isDuplicate = false;
+        for (const auto& data : constOf(_shared3DBuildings))
+        {
+            for (const uint64_t sahredBuildingID : constOf(data->buildingIDs))
+            {
+                if (buildingID == sahredBuildingID)
+                {
+                    duplicateData = data;
+                    isDuplicate = true;
+                    continue;
+                }
+            }
+        }
+
+        if (isDuplicate)
+        {
+            if (!outResources.contains(duplicateData))
+            {
+                ++duplicateData->referenceCount;
+                outResources.insert(duplicateData);
+            }
+
+            vertexOffset += vertexCount;
+            indexOffset += indexCount;
+            continue;
+        }
+
+        uniqueBuildingIDs.insert(buildingID);
+
+        uint16_t currentVertexOffset = static_cast<uint16_t>(uniqueVertices.size());
+        for (int j = 0; j < vertexCount; ++j)
+        {
+            uniqueVertices.append(buildings3D.vertices[vertexOffset + j]);
+        }
+
+        for (int j = 0; j < indexCount; ++j)
+        {
+            uniqueIndices.append(static_cast<uint16_t>(buildings3D.indices[indexOffset + j] - vertexOffset + currentVertexOffset));
+        }
+
+        vertexOffset += vertexCount;
+        indexOffset += indexCount;
     }
 
-    _shared3DBuildings.append(buildingData);
-    
+    std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> buildingData;
+
+    if (!uniqueVertices.isEmpty())
+    {
+        buildingData = std::make_shared<GPUAPI::MapRenderer3DBuildingGPUData>();
+        buildingData->zoom = zoom;
+        buildingData->tileId = tileId;
+        buildingData->referenceCount = 1;
+        buildingData->buildingIDs = uniqueBuildingIDs;
+
+        const size_t vertexBufferSize = uniqueVertices.size() * sizeof(BuildingVertex);
+        const bool vertexUploadSuccess = uploadVerticesToGPU( uniqueVertices.constData(),
+            vertexBufferSize, uniqueVertices.size(), buildingData->vertexBuffer, false);
+
+        if (!vertexUploadSuccess)
+        {
+            return nullptr;
+        }
+
+        const size_t indexBufferSize = uniqueIndices.size() * sizeof(uint16_t);
+        const bool indexUploadSuccess = uploadIndicesToGPU(uniqueIndices.constData(),
+            indexBufferSize, uniqueIndices.size(), buildingData->indexBuffer, false);
+
+        if (!indexUploadSuccess)
+        {
+            return nullptr;
+        }
+
+        _shared3DBuildings.append(buildingData);
+        outResources.insert(buildingData);
+    }
+
+    // Return only new unique data
     return buildingData;
 }

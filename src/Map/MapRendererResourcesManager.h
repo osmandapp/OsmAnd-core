@@ -151,9 +151,10 @@ namespace OsmAnd
 
         QVector<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>> _shared3DBuildings;
         mutable QMutex _3DBuildingsDataMutex;
-        void release3DBuildingGPUData(ZoomLevel zoom, TileId tileId);
+        void release3DBuildingGPUData(const QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& buildingResources);
         std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> find3DBuildingGPUData(ZoomLevel zoom, TileId tileId) const;
-        std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> findOrCreate3DBuildingGPUDataLocked(ZoomLevel zoom, TileId tileId, const QVector<BuildingVertex>& vertices, const QVector<uint16_t>& indices, const QSet<uint64_t>& buildingIDs);
+        std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> loadGPU3DBuildingData(ZoomLevel zoom, TileId tileId,
+            const Buildings3D& buildings3D, QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& buildingResources);
 
         // Invalidated resources:
         QAtomicInt _invalidatedResourcesTypesMask;
