@@ -1546,6 +1546,12 @@ bool OsmAnd::MapRenderer::setElevationDataProvider(
 
     setMapTarget(_requestedState, forcedUpdate);
 
+    getResources().invalidateResourcesOfType(MapRendererResourceType::Map3DObjects);
+    if (const auto map3DObjectsProvider = std::dynamic_pointer_cast<Map3DObjectsTiledProvider>(_currentState.map3DObjectsProvider))
+    {
+        map3DObjectsProvider->setElevationDataProvider(provider);
+    }
+
     notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_DataProvider);
 
     return true;
@@ -1583,6 +1589,12 @@ bool OsmAnd::MapRenderer::resetElevationDataProvider(bool forcedUpdate /*= false
 
     setMapTarget(_requestedState, forcedUpdate);
 
+    getResources().invalidateResourcesOfType(MapRendererResourceType::Map3DObjects);
+    if (const auto map3DObjectsProvider = std::dynamic_pointer_cast<Map3DObjectsTiledProvider>(currentState.map3DObjectsProvider))
+    {
+        map3DObjectsProvider->setElevationDataProvider(nullptr);
+    }
+
     notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_DataProvider);
 
     return true;
@@ -1602,6 +1614,11 @@ bool OsmAnd::MapRenderer::setMap3DObjectsProvider(
         return false;
 
     _requestedState.map3DObjectsProvider = provider;
+
+    if (const auto map3DObjectsProvider = std::dynamic_pointer_cast<Map3DObjectsTiledProvider>(provider))
+    {
+        map3DObjectsProvider->setElevationDataProvider(_requestedState.elevationDataProvider);
+    }
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Map3DObjects_Provider);
 

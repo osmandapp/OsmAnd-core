@@ -75,3 +75,8 @@ void Map3DObjectsTiledProvider::obtainDataAsync(
     MapDataProviderHelpers::nonNaturalObtainDataAsync(shared_from_this(), request, callback, collectMetric);
 }
 
+void Map3DObjectsTiledProvider::setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationProvider)
+{
+    _p->setElevationDataProvider(elevationProvider);
+}
+

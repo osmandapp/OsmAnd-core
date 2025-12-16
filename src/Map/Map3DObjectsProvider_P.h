@@ -22,9 +22,14 @@ namespace OsmAnd
     private:
         std::shared_ptr<MapPrimitivesProvider> _tiledProvider;
         std::shared_ptr<MapPresentationEnvironment> _environment;
+        std::shared_ptr<IMapElevationDataProvider> _elevationProvider;
 
-        void processPrimitive(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive, Buildings3D& buildings3D,
-                              const MapPrimitiviser::PrimitivesCollection& PrimitivesCollection) const;
+        void processPrimitive(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
+                              Buildings3D& buildings3D,
+                              const MapPrimitiviser::PrimitivesCollection& PrimitivesCollection,
+                              const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData,
+                              const TileId& tileId,
+                              const ZoomLevel zoom) const;
 
     protected:
         Map3DObjectsTiledProvider_P(Map3DObjectsTiledProvider* const owner,
@@ -57,6 +62,8 @@ namespace OsmAnd
             const IMapDataProvider::Request& request,
             std::shared_ptr<IMapDataProvider::Data>& outData,
             std::shared_ptr<Metric>* const pOutMetric);
+
+        void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationProvider);
 
         friend class OsmAnd::Map3DObjectsTiledProvider;
     };
