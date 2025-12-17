@@ -31,6 +31,15 @@ namespace OsmAnd
                               const TileId& tileId,
                               const ZoomLevel zoom) const;
 
+        void accumulateElevationForPoint(
+            const PointI& point31,
+            const TileId& tileId,
+            ZoomLevel zoom,
+            const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData,
+            float& maxElevationMeters,
+            float& minElevationMeters,
+            bool& hasElevationSample) const;
+
     protected:
         Map3DObjectsTiledProvider_P(Map3DObjectsTiledProvider* const owner,
             const std::shared_ptr<MapPrimitivesProvider>& tiledProvider,

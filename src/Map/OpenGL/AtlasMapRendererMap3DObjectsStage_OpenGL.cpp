@@ -548,6 +548,24 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::prepareDrawObjects(QSet<std::shar
                     }
                 }
             }
+
+            if (!collected)
+            {
+                std::shared_ptr<MapRendererBaseTiledResource> tiledResource;
+                CollectionStapshot->obtainResource(tileIdN, (ZoomLevel)zoomLevel, tiledResource);
+
+                const auto object3DResource = std::static_pointer_cast<MapRenderer3DObjectsResource>(tiledResource);
+                if (object3DResource && object3DResource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
+                {
+                    for (const auto& resource : object3DResource->getRenderableBuildings().buildingResources)
+                    {
+                        collectedResources.insert(resource);
+                    }
+
+                    object3DResource->setState(MapRendererResourceState::Uploaded);
+                    collected = true;
+                }
+            }
         }
     }
 }

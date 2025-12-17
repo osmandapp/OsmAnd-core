@@ -311,39 +311,18 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     if (elevationData)
     {
         float maxElevationMeters = 0.0f;
+        float minElevationMeters = 0.0f;
         bool hasElevationSample = false;
-
-        auto accumulateElevationForPoint = [&maxElevationMeters, &hasElevationSample, &elevationData, &tileId, zoom](const PointI& point31)
-        {
-            const auto zoomLevelDelta = MaxZoomLevel - zoom;
-            const PointI tile31(tileId.x << zoomLevelDelta, tileId.y << zoomLevelDelta);
-            const auto offsetInTile = point31 - tile31;
-            const auto tileSize31 = 1u << zoomLevelDelta;
-            PointF offsetInTileN(
-                static_cast<float>(static_cast<double>(offsetInTile.x) / tileSize31),
-                static_cast<float>(static_cast<double>(offsetInTile.y) / tileSize31)
-            );
-
-            float elevationInMeters = 0.0f;
-            if (elevationData->getValue(offsetInTileN, elevationInMeters))
-            {
-                if (!hasElevationSample || elevationInMeters > maxElevationMeters)
-                {
-                    maxElevationMeters = elevationInMeters;
-                    hasElevationSample = true;
-                }
-            }
-        };
 
         for (const auto& p : constOf(sourceObject->points31))
         {
-            accumulateElevationForPoint(p);
+            accumulateElevationForPoint(p, tileId, zoom, elevationData, maxElevationMeters, minElevationMeters, hasElevationSample);
         }
         for (const auto& innerPolygon : constOf(sourceObject->innerPolygonsPoints31))
         {
             for (const auto& p : innerPolygon)
             {
-                accumulateElevationForPoint(p);
+                accumulateElevationForPoint(p, tileId, zoom, elevationData, maxElevationMeters, minElevationMeters, hasElevationSample);
             }
         }
 
@@ -352,6 +331,10 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             if (minHeight > 0.0)
             {
                 minHeight += maxElevationMeters;
+            }
+            else
+            {
+                minHeight = minElevationMeters;
             }
 
             height += maxElevationMeters;
@@ -579,6 +562,47 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     buildings3D.buildingIDs.append(buildingID);
     buildings3D.vertexCounts.append(buildingVertexCount);
     buildings3D.indexCounts.append(buildingIndexCount);
+}
+
+void Map3DObjectsTiledProvider_P::accumulateElevationForPoint(
+    const PointI& point31,
+    const TileId& tileId,
+    ZoomLevel zoom,
+    const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData,
+    float& maxElevationMeters,
+    float& minElevationMeters,
+    bool& hasElevationSample) const
+{
+    const auto zoomLevelDelta = MaxZoomLevel - zoom;
+    const PointI tile31(tileId.x << zoomLevelDelta, tileId.y << zoomLevelDelta);
+    const auto offsetInTile = point31 - tile31;
+    const auto tileSize31 = 1u << zoomLevelDelta;
+    PointF offsetInTileN(
+        static_cast<float>(static_cast<double>(offsetInTile.x) / tileSize31),
+        static_cast<float>(static_cast<double>(offsetInTile.y) / tileSize31)
+    );
+
+    float elevationInMeters = 0.0f;
+    if (elevationData->getValue(offsetInTileN, elevationInMeters))
+    {
+        if (!hasElevationSample)
+        {
+            maxElevationMeters = elevationInMeters;
+            minElevationMeters = elevationInMeters;
+            hasElevationSample = true;
+        }
+        else
+        {
+            if (elevationInMeters > maxElevationMeters)
+            {
+                maxElevationMeters = elevationInMeters;
+            }
+            if (elevationInMeters < minElevationMeters)
+            {
+                minElevationMeters = elevationInMeters;
+            }
+        }
+    }
 }
 
 void Map3DObjectsTiledProvider_P::setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationProvider)
