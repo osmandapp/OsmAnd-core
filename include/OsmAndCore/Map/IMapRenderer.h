@@ -258,11 +258,8 @@ namespace OsmAnd
         virtual bool isPathVisible(const QVector<PointI>& path31) const = 0;
         virtual bool isAreaVisible(const AreaI& area31) const = 0;
         virtual bool isTileVisible(const int tileX, const int tileY, const int zoom) const = 0;
-        virtual bool obtainScreenPointFromPosition(const PointI64& position, PointI& outScreenPoint) const = 0;
         virtual bool obtainScreenPointFromPosition(const PointI& position31, PointI& outScreenPoint, bool checkOffScreen = false) const = 0;
         virtual bool obtainElevatedPointFromPosition(const PointI& position31, PointI& outScreenPoint, bool checkOffScreen = false) const = 0;
-        virtual bool getNewTargetByScreenPoint(const PointI& screenPoint, const PointI& location31,
-            PointI& target31, const float height = 0.0f) const = 0;
         virtual float getHeightOfLocation(const PointI& location31) const = 0;
         virtual float getMapTargetDistance(const PointI& location31, bool checkOffScreen = false) const = 0;
 

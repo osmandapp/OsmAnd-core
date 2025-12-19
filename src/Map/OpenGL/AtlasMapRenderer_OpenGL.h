@@ -94,11 +94,9 @@ namespace OsmAnd
         bool getHeightLimits(const MapRendererState& state, const TileId& tileId, const double metersPerUnit,
             const ZoomLevel zoomLevel, float& minHeight, float& maxHeight) const;
         bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
-            const PointI& screenPoint, PointD& position,
-            const float height = 0.0f, float* distance = nullptr, float* sinAngle = nullptr) const;
+            const PointD& screenPoint, PointI64& location, const float height = 0.0f) const;
         bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
-            const PointD& screenPoint, PointD& position,
-            const float height = 0.0f, float* distance = nullptr, float* sinAngle = nullptr) const;
+            const PointD& screenPoint, glm::dvec3& coords, const float height = 0.0f) const;
         bool getNearestLocationFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
             const PointI& location31, const PointI& screenPoint,
             PointI64& fixedLocation, PointI64& currentLocation) const;
@@ -146,8 +144,9 @@ namespace OsmAnd
         AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const override;
         AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const override;
         double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const override;
-        bool getNewTargetByScreenPoint(const MapRendererState& state,
-            const PointI& screenPoint, const PointI& location31, PointI& target31, const float height = 0.0f) const override;
+        bool getNewTargetAndZoom(
+            const MapRendererState& state, const PointI& screenPoint, const PointI& location31, const float height,
+            PointI& target31, ZoomLevel& zoomLevel, float& visualZoom) const override;
         bool getExtraZoomAndTiltForRelief(const MapRendererState& state, PointF& zoomAndTilt) const override;
         bool getExtraZoomAndRotationForAiming(const MapRendererState& state,
             const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstPoint,
@@ -167,11 +166,6 @@ namespace OsmAnd
         bool isPointProjectable(const MapRendererInternalState& internalState, const glm::vec3& point) const override;
         bool isPointVisible(const MapRendererInternalState& internalState, const glm::vec3& point, bool skipTop = false,
             bool skipLeft = false, bool skipBottom = false, bool skipRight = false, bool skipFront = false, bool skipBack = false, float tolerance = 0.0) const override;
-        bool getWorldPointFromScreenPoint(
-            const MapRendererInternalState& internalState,
-            const MapRendererState& state,
-            const PointI& screenPoint,
-            PointF& outWorldPoint) const override;
         float getWorldElevationOfLocation(const MapRendererState& state,
             const float elevationInMeters, const PointI& location31) const override;
         float getElevationOfLocationInMeters(const MapRendererState& state,
@@ -204,8 +198,6 @@ namespace OsmAnd
             PointD& tiltAndRotate) const override;
 
         float getLocationHeightInMeters(const PointI& location31) const override;
-        bool getNewTargetByScreenPoint(const PointI& screenPoint, const PointI& location31,
-            PointI& target31, const float height = 0.0f) const override;
         float getHeightOfLocation(const PointI& location31) const override;
         float getMapTargetDistance(const PointI& location31, bool checkOffScreen = false) const override;
 
@@ -216,7 +208,6 @@ namespace OsmAnd
         bool isPathVisible(const QVector<PointI>& path31) const override;
         bool isAreaVisible(const AreaI& area31) const override;
         bool isTileVisible(const int tileX, const int tileY, const int zoom) const override;
-        bool obtainScreenPointFromPosition(const PointI64& position, PointI& outScreenPoint) const override;
         bool obtainScreenPointFromPosition(const PointI& position31, PointI& outScreenPoint, bool checkOffScreen = false) const override;
         bool obtainElevatedPointFromPosition(const PointI& position31, PointI& outScreenPoint, bool checkOffScreen = false) const override;
 

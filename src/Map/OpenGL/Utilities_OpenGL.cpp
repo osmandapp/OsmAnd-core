@@ -148,17 +148,17 @@ bool OsmAnd::Utilities_OpenGL_Common::rayIntersectsSphere(const glm::dvec3& p0, 
     const auto a2 = 2.0 * a;
     auto r1 = p0 + v * ((-b + srd) / a2);
     auto r2 = p0 + v * ((-b - srd) / a2);
-    const auto r1p0 = glm::distance(p0, r1);
-    const auto r2p0 = glm::distance(p0, r2);
-    const bool inFrontR1 = glm::dot(r1 - p0, v) > 0.0;
-    const bool inFrontR2 = glm::dot(r2 - p0, v) > 0.0;
+    const auto r1p0 = glm::dot(r1 - p0, v);
+    const auto r2p0 = glm::dot(r2 - p0, v);
+    const bool inFrontR1 = r1p0 > 0.0;
+    const bool inFrontR2 = r2p0 > 0.0;
     const bool withR1 = withBackward || inFrontR1;
     const bool withR2 = withBackward || inFrontR2;
     if (!withR1 && !withR2)
         return false;
     const bool takeR2 = withBackward && (!inFrontR1 || !inFrontR2)
-        ? (!inFrontR1 && !inFrontR2 ? r1p0 < r2p0 : !inFrontR2) : r2p0 < r1p0;
-    result = glm::normalize((withR1 && withR2 && takeR2) || !withR1 ? r2 : r1);
+        ? (!inFrontR1 && !inFrontR2 ? fabs(r1p0) < fabs(r2p0) : !inFrontR2) : fabs(r2p0) < fabs(r1p0);
+    result = (withR1 && withR2 && takeR2) || !withR1 ? r2 : r1;
     return true;
 }
 
@@ -166,10 +166,12 @@ bool OsmAnd::Utilities_OpenGL_Common::rayIntersectsSphere(const glm::dvec3& p0, 
     const double radius, double& angleX, double& angleY)
 {
     glm::dvec3 result;
-    if (!rayIntersectsSphere(p0, v, radius, result, false))
+    if (!rayIntersectsSphere(p0, v, radius, result))
         return false;
+    if (radius > 1.0)
+        result = glm::normalize(result);
     angleX = qAtan2(result.x, result.y);
-    angleY = -qAsin(result.z);
+    angleY = -qAsin(qBound(-1.0, result.z, 1.0));
     return true;
 }
 
