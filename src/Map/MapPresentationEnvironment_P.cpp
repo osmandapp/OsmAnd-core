@@ -850,3 +850,25 @@ bool OsmAnd::MapPresentationEnvironment_P::getUseDefaultBuildingColor() const
 
     return result;
 }
+
+bool OsmAnd::MapPresentationEnvironment_P::getShow3DBuildingParts() const
+{
+    bool result = false;
+
+    const auto valueDefId = owner->mapStyle->getValueDefinitionIdByName(QStringLiteral("show3DbuildingParts"));
+    if (valueDefId >= 0)
+    {
+        const auto settings = getSettings();
+        const auto it = settings.find(valueDefId);
+        if (it != settings.end())
+        {
+            const auto& settingValue = it.value();
+            if (!settingValue.isComplex)
+            {
+                result = (settingValue.asSimple.asUInt != 0);
+            }
+        }
+    }
+
+    return result;
+}

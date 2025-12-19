@@ -155,6 +155,7 @@ namespace OsmAnd
         float getDefault3DBuildingHeight() const;
         float getDefault3DBuildingLevelHeight() const;
         bool getUseDefaultBuildingColor() const;
+        bool getShow3DBuildingParts() const;
 
     friend class OsmAnd::MapPresentationEnvironment;
     };

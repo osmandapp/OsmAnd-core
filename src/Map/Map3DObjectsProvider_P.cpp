@@ -170,6 +170,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         return;
     }
 
+    bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
+
     bool isBuilding = false;
     bool isBuildingPart = false;
 
@@ -181,8 +183,13 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         return;
     }
 
+    if (!show3DbuildingParts && isBuildingPart)
+    {
+        return;
+    }
+
     bool isEdge = false;
-    if (isBuilding && !isBuildingPart)
+    if (isBuilding && !isBuildingPart && show3DbuildingParts)
     {
         for (int i = 0; i < sourceObject->additionalAttributeIds.size(); ++i)
         {
@@ -210,7 +217,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             }
         }
 
-        if (!isEdge)
+        if (!isEdge && show3DbuildingParts)
         {
             for (const auto& primitiveToCheck : constOf(PrimitivesCollection))
             {
@@ -296,6 +303,11 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             color.a = getDefaultBuildingsAlpha();
             continue;
         }
+    }
+
+    if (height == 0.0f)
+    {
+        return;
     }
 
     if (!heightFound && levelsFound)
