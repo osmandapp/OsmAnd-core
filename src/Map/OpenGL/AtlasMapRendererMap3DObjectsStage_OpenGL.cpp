@@ -407,17 +407,26 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::prepareDrawObjects(QSet<std::shar
 
     const auto& internalState = getInternalState();
     
-    float buildingAlpha = renderer->get3DBuildingsAlpha();
+    const float buildingsAlpha = renderer->get3DBuildingsAlpha();
+    const int buildingsDetalization = renderer->get3DBuildingsDetalization();
 
     const auto CollectionStapshot = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection);
     
     QVector<ZoomLevel> sortedZoomLevels;
     for (auto itTiles = internalState.visibleTiles.cbegin(); itTiles != internalState.visibleTiles.cend(); itTiles++)
     {
-        sortedZoomLevels.append(itTiles.key());
+        if (buildingsDetalization == 1)
+        {
+            sortedZoomLevels.append(currentState.zoomLevel);
+            break;
+        }
+        else
+        {
+            sortedZoomLevels.append(itTiles.key());
+        }
     }
     
-    if (buildingAlpha < 1.0f)
+    if (buildingsAlpha < 1.0f)
     {
         std::sort(sortedZoomLevels.begin(), sortedZoomLevels.end(), std::greater<ZoomLevel>());
     }
