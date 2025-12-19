@@ -67,7 +67,6 @@ void OsmAnd::MapPresentationEnvironment_P::initialize()
     _weatherContourLevelsAttribute = owner->mapStyle->getAttribute(QLatin1String("weatherContourLevels"));
 
     _base3DBuildingsColorAttribute = owner->mapStyle->getAttribute(QStringLiteral("base3DBuildingsColor"));
-    _3DBuildingsAlphaAttribute = owner->mapStyle->getAttribute(QStringLiteral("3DBuildingsAlpha"));
     _useDefaultBuildingColorAttribute = owner->mapStyle->getAttribute(QStringLiteral("useDefaultBuildingColor"));
 
     _default3DBuildingHeight = 3.0f;
@@ -793,28 +792,6 @@ OsmAnd::FColorARGB OsmAnd::MapPresentationEnvironment_P::get3DBuildingsColor() c
                 color.r = static_cast<float>((colorARGB >> 16) & 0xFF) / 255.0f;
                 color.g = static_cast<float>((colorARGB >> 8) & 0xFF) / 255.0f;
                 color.b = static_cast<float>(colorARGB & 0xFF) / 255.0f;
-            }
-        }
-    }
-
-    if (_3DBuildingsAlphaAttribute)
-    {
-        MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
-        if (evaluator.evaluate(_3DBuildingsAlphaAttribute, &evalResult))
-        {
-            float alpha = 1.0f;
-            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, alpha))
-            {
-                if (alpha > 1.0f)
-                {
-                    alpha = alpha / 255.0f;
-                }
-
-                if (alpha < 0.0f)
-                    alpha = 0.0f;
-                else if (alpha > 1.0f)
-                    alpha = 1.0f;
-                color.a = alpha;
             }
         }
     }

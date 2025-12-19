@@ -166,6 +166,9 @@ namespace OsmAnd
 
         int _maxResourceThreadsLimit;
 
+        float _buildings3DAlpha;
+        int _buildings3DDetalization;
+
         OsmAnd::Stopwatch symbolsLoadingStart;
         float symbolsLoadingTime = 0;
 
@@ -453,6 +456,10 @@ namespace OsmAnd
         virtual bool setMyDirectionRadius(const float radius, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setSymbolsOpacity(const float opacityFactor, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual float getSymbolsOpacity() const Q_DECL_OVERRIDE;
+        virtual bool set3DBuildingsAlpha(const float alpha, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual float get3DBuildingsAlpha() const Q_DECL_OVERRIDE;
+        virtual bool set3DBuildingsDetalization(const int detalization, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual int get3DBuildingsDetalization() const Q_DECL_OVERRIDE;
         virtual bool setDateTime(const int64_t dateTime, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool changeTimePeriod() Q_DECL_OVERRIDE;
         virtual bool getMapTargetLocation(PointI& location31) const Q_DECL_OVERRIDE;

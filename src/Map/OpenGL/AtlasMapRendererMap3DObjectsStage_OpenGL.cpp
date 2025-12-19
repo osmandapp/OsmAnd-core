@@ -407,12 +407,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::prepareDrawObjects(QSet<std::shar
 
     const auto& internalState = getInternalState();
     
-    float buildingAlpha = 1.0f;
-    const auto map3DProvider = std::static_pointer_cast<Map3DObjectsTiledProvider>(currentState.map3DObjectsProvider);
-    if (map3DProvider)
-    {
-        buildingAlpha = map3DProvider->getDefaultBuildingsAlpha();
-    }
+    float buildingAlpha = renderer->get3DBuildingsAlpha();
 
     const auto CollectionStapshot = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection);
     
@@ -621,12 +616,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
 
-    float buildingAlpha = 1.0f;
-    const auto map3DProvider = std::static_pointer_cast<Map3DObjectsTiledProvider>(currentState.map3DObjectsProvider);
-    if (map3DProvider)
-    {
-        buildingAlpha = map3DProvider->getDefaultBuildingsAlpha();
-    }
+    float buildingAlpha = renderer->get3DBuildingsAlpha();
 
     glm::vec3 lightDir = glm::normalize(glm::vec3(-0.5f, 1.0f, -0.5f));
 
@@ -847,11 +837,6 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::release(bool gpuContextLost)
 
 bool AtlasMapRendererMap3DObjectsStage_OpenGL::isDepthPrepassRequired() const
 {
-    const auto map3DProvider = std::static_pointer_cast<Map3DObjectsTiledProvider>(currentState.map3DObjectsProvider);
-    if (map3DProvider)
-    {
-        const float buildingAlpha = map3DProvider->getDefaultBuildingsAlpha();
-        return buildingAlpha < 1.0f;
-    }
-    return false;
+    const float buildingAlpha = renderer->get3DBuildingsAlpha();
+    return buildingAlpha < 1.0f;
 }

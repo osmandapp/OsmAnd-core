@@ -137,15 +137,6 @@ FColorARGB Map3DObjectsTiledProvider_P::getDefaultBuildingsColor() const
     return _environment ? _environment->get3DBuildingsColor() : FColorARGB(1.0f, 0.4f, 0.4f, 0.4f);
 }
 
-float Map3DObjectsTiledProvider_P::getDefaultBuildingsAlpha() const
-{
-    if (_environment)
-    {
-        return _environment->get3DBuildingsColor().a;
-    }
-    return 1.0f;
-}
-
 void Map3DObjectsTiledProvider_P::processPrimitive(
     const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
     Buildings3D& buildings3D,
@@ -300,7 +291,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         {
             colorFound = true;
             color = OsmAnd::Utilities::parseColor(caption, color);
-            color.a = getDefaultBuildingsAlpha();
             continue;
         }
     }

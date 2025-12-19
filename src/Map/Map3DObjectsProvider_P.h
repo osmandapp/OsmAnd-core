@@ -57,7 +57,6 @@ namespace OsmAnd
         float getDefaultBuildingsHeight() const;
         float getDefaultBuildingsLevelHeight() const;
         FColorARGB getDefaultBuildingsColor() const;
-        float getDefaultBuildingsAlpha() const;
 
         bool obtainTiledData(
             const IMapTiledDataProvider::Request& request,

@@ -38,8 +38,6 @@ namespace OsmAnd
         virtual ZoomLevel getMinZoom() const override;
         virtual ZoomLevel getMaxZoom() const override;
 
-        float getDefaultBuildingsAlpha() const;
-
         void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationProvider);
 
         virtual bool obtainTiledData(
