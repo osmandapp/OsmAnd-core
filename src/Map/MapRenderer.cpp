@@ -2280,8 +2280,11 @@ bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI&
     bool sameHeight = _requestedState.fixedHeight != 0.0f && _requestedState.fixedLocation31 == location31 &&
         _requestedState.fixedZoomLevel == _requestedState.zoomLevel;
     auto height = sameHeight ? _requestedState.fixedHeight : getHeightOfLocation(_requestedState, location31);
-    PointI target31;
-    bool haveTarget = getNewTargetByScreenPoint(_requestedState, screenPoint_, location31, target31, height);
+    auto target31 = _requestedState.target31;
+    auto zoomLevel = _requestedState.zoomLevel;
+    auto visualZoom = _requestedState.visualZoom;
+    bool haveTarget = getNewTargetAndZoom(
+        _requestedState, screenPoint_, location31, height, target31, zoomLevel, visualZoom);
     if (!haveTarget)
         return false;
 
@@ -2305,6 +2308,15 @@ bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI&
     _requestedState.fixedHeight = height;
     _requestedState.fixedZoomLevel = _requestedState.zoomLevel;
     _requestedState.target31 = target31;
+
+    if (forcedUpdate || _requestedState.zoomLevel != zoomLevel || _requestedState.visualZoom != visualZoom)
+    {
+        _requestedState.zoomLevel = zoomLevel;
+        _requestedState.visualZoom = visualZoom;
+        if (!disableUpdate)
+            notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+    }
+
     _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
     _requestedState.surfaceZoomLevelToBe = _requestedState.surfaceZoomLevel;
     _requestedState.surfaceVisualZoomToBe = _requestedState.surfaceVisualZoom;
@@ -2414,8 +2426,11 @@ bool OsmAnd::MapRenderer::setMapTargetOnly(MapRendererState& state,
     else
         sameHeight = false;
 
-    PointI target31;
-    bool haveTarget = getNewTargetByScreenPoint(state, state.fixedPixel, location31, target31, height);
+    auto target31 = state.target31;
+    auto zoomLevel = state.zoomLevel;
+    auto visualZoom = state.visualZoom;
+    bool haveTarget = getNewTargetAndZoom(
+        state, state.fixedPixel, location31, height, target31, zoomLevel, visualZoom);
     if(!haveTarget)
         return false;
 
@@ -2440,6 +2455,14 @@ bool OsmAnd::MapRenderer::setMapTargetOnly(MapRendererState& state,
 
     state.target31 = target31;
     state.isChanged = true;
+
+    if (forcedUpdate || state.zoomLevel != zoomLevel || state.visualZoom != visualZoom)
+    {
+        state.zoomLevel = zoomLevel;
+        state.visualZoom = visualZoom;
+        if (!disableUpdate)
+            notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+    }
 
     if (disableUpdate)
         return true;
@@ -2632,9 +2655,11 @@ bool OsmAnd::MapRenderer::setMapTargetPixelCoordinates(const PointI& screenPoint
         return false;
     }
 
-    PointI target31;
-    bool haveTarget = getNewTargetByScreenPoint(_requestedState,
-        screenPoint_, _requestedState.fixedLocation31, target31, _requestedState.fixedHeight);
+    auto target31 = _requestedState.target31;
+    auto zoomLevel = _requestedState.zoomLevel;
+    auto visualZoom = _requestedState.visualZoom;
+    bool haveTarget = getNewTargetAndZoom(_requestedState,
+        screenPoint_, _requestedState.fixedLocation31, _requestedState.fixedHeight, target31, zoomLevel, visualZoom);
     if(!haveTarget)
         return false;
 
@@ -2655,6 +2680,15 @@ bool OsmAnd::MapRenderer::setMapTargetPixelCoordinates(const PointI& screenPoint
         return false;
 
     _requestedState.target31 = target31;
+
+    if (forcedUpdate || _requestedState.zoomLevel != zoomLevel || _requestedState.visualZoom != visualZoom)
+    {
+        _requestedState.zoomLevel = zoomLevel;
+        _requestedState.visualZoom = visualZoom;
+        if (!disableUpdate)
+            notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+    }
+
     _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
     _requestedState.surfaceZoomLevelToBe = _requestedState.surfaceZoomLevel;
     _requestedState.surfaceVisualZoomToBe = _requestedState.surfaceVisualZoom;
