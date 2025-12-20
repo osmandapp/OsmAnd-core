@@ -2010,7 +2010,7 @@ inline bool OsmAnd::AtlasMapRenderer_OpenGL::rayIntersectsTileSide(
     if (Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayVector, rayStart, d) && d > 0.0)
     {
         const auto point = rayStart + rayVector * d;
-        const auto angleY = -qAsin(qBound(-1.0, point.z, 1.0));
+        const auto angleY = -qAsin(qBound(-1.0, glm::normalize(point).z, 1.0));
         if (angleY <= top && angleY >= bottom)
         {
             const auto dist = glm::length(point);
