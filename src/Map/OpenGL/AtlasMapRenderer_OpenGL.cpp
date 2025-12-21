@@ -1593,8 +1593,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         && distance > zLower + detailDistanceFactor(zShift) * detailThickness)
                     {
                         tilesN[currentZoom].insert(tileIdN);
-                        (*nextTiles)[currentZoom - 1].insert(
-                            TileId::fromXY(tileId.x / 2, tileId.y / 2), AlmostVisible);
+                        (*nextTiles)[currentZoom - 1].insert(TileId::fromXY(tileId.x / 2 - (tileId.x < 0 ? 1 : 0),
+                            tileId.y / 2 - (tileId.y < 0 ? 1 : 0)), AlmostVisible);
                         shouldRepeat = true;
                         continue;
                     }
