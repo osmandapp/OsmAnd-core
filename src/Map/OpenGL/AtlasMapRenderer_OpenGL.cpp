@@ -1945,8 +1945,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 + topIntersectionPoint[0].x + topIntersectionPoint[1].x) / 4);
             const auto targetX = state.target31.x - INT32_MAX - 1;
             internalState->targetOffset =
-                PointI64(qMax(centerX, state.target31.x) - qMin(centerX, state.target31.x)
-                > qMax(centerX, targetX) - qMin(centerX, targetX) ? 1u + INT32_MAX : 0, 0);
+                PointI64(qAbs(centerX - state.target31.x) > qAbs(centerX - targetX) ? 1u + INT32_MAX : 0, 0);
         }
     }
 }
