@@ -166,7 +166,6 @@ namespace OsmAnd
                     GLlocation cameraElevationAngleN;
                     GLlocation groundCameraPosition;
                     GLlocation scaleToRetainProjectedSize;
-                    GLlocation elevation_hillshadeConfiguration;
                     GLlocation primaryGridAxisX;
                     GLlocation secondaryGridAxisX;
                     GLlocation primaryGridAxisY;
@@ -212,6 +211,7 @@ namespace OsmAnd
                     GLlocation myLocationColor;
                     GLlocation myLocation;
                     GLlocation myDirection;
+                    GLlocation hillshade;
                     GLlocation gridParameters;
                     GLlocation primaryGridColor;
                     GLlocation secondaryGridColor;

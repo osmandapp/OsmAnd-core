@@ -1358,6 +1358,15 @@ namespace OsmAnd
             return result;
         }
 
+        inline static glm::dmat3 getGlobalRotationMatrix(const PointD& angles)
+        {
+            const auto sx = qSin(angles.x);
+            const auto cx = qCos(angles.x);
+            const auto sy = qSin(angles.y);
+            const auto cy = qCos(angles.y);
+            return glm::dmat3(cx, sx * cy, sx * sy, -sx, cx * cy, cx * sy, 0.0, -sy, cy);
+        }
+
         inline static double snapToGridDecimal(const double value)
         {
             // Snap value to the closest number from range [1, 2, 5, 10] * (10 ^ n)

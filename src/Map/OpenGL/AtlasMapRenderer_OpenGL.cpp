@@ -364,9 +364,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->mAzimuth = glm::rotate(glm::radians(state.azimuth), glm::vec3(0.0f, 1.0f, 0.0f));
     internalState->mCameraView = internalState->mDistance * internalState->mElevation * internalState->mAzimuth;
 
-    if (neededSteps == RequiredToUnproject)
-        return true;
-
     // Get inverse camera
     internalState->mDistanceInv = glm::translate(glm::vec3(0.0f, 0.0f, internalState->distanceFromCameraToTarget));
     internalState->mElevationInv = glm::rotate(glm::radians(-state.elevationAngle), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -376,6 +373,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
 
     // Get camera position
     internalState->worldCameraPosition = (internalState->mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz();
+
+    if (neededSteps == RequiredToUnproject)
+        return true;
 
     // Calculate synthetic parameters to make map flat if needed
     const auto shiftToFlatten = state.flatEarth ? qMax(_zoomForFlattening - state.zoomLevel, 0) : 0;
@@ -398,7 +398,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         synthTarget31.x = (internalState->synthTileId.x << zShift) + static_cast<int>(qFloor(tileShift.x));
         synthTarget31.y = (internalState->synthTileId.y << zShift) + static_cast<int>(qFloor(tileShift.y));
     }
-    const auto metersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, state.target31, TileSize3D);
+    auto targetY = static_cast<double>(internalState->targetTileId.y) + internalState->targetInTileOffsetN.y;
+    auto metersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, targetY, TileSize3D);
     internalState->metersPerUnit = metersPerUnit;
     const auto synthScaleFactor31 = state.flatEarth && shiftToFlatten > 0
         ? metersPerUnit / Utilities::getMetersPerTileUnit(internalState->synthZoomLevel, synthTarget31, TileSize3D)
@@ -408,11 +409,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     const auto radiusInWorld = _radius * synthScaleFactor31 / metersPerUnit;
     internalState->globeRadius = radiusInWorld;
     const auto angles = Utilities::getAnglesFrom31(synthTarget31);
-    const auto sx = qSin(angles.x);
-    const auto cx = qCos(angles.x);
-    const auto sy = qSin(angles.y);
-    const auto cy = qCos(angles.y);
-    internalState->mGlobeRotationPrecise = glm::dmat3(cx, sx * cy, sx * sy, -sx, cx * cy, cx * sy, 0.0, -sy, cy);
+    internalState->mGlobeRotationPrecise = Utilities::getGlobalRotationMatrix(angles);
     internalState->mGlobeRotation = glm::mat3(internalState->mGlobeRotationPrecise);
     internalState->mGlobeRotationWithRadius = glm::mat3(internalState->mGlobeRotationPrecise * radiusInWorld);
     internalState->mGlobeRotationPreciseInv = glm::transpose(internalState->mGlobeRotationPrecise);
@@ -1029,8 +1026,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
 
         const auto minAngleX = qAtan2(minVectorX.x, minVectorX.y);
         const auto maxAngleX = qAtan2(maxVectorX.x, maxVectorX.y);
-        const auto minAngleY = -qAsin(maxCoordY);
-        const auto maxAngleY = -qAsin(minCoordY);
+        const auto minAngleY = -qAsin(qBound(-1.0, maxCoordY, 1.0));
+        const auto maxAngleY = -qAsin(qBound(-1.0, minCoordY, 1.0));
         auto min64 = Utilities::get64FromAngles(PointD(minAngleX, maxAngleY));
         auto max64 = Utilities::get64FromAngles(PointD(maxAngleX, minAngleY));
         if (max64.x == 0)
@@ -1596,8 +1593,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         && distance > zLower + detailDistanceFactor(zShift) * detailThickness)
                     {
                         tilesN[currentZoom].insert(tileIdN);
-                        (*nextTiles)[currentZoom - 1].insert(
-                            TileId::fromXY(tileId.x / 2, tileId.y / 2), AlmostVisible);
+                        (*nextTiles)[currentZoom - 1].insert(TileId::fromXY(tileId.x / 2 - (tileId.x < 0 ? 1 : 0),
+                            tileId.y / 2 - (tileId.y < 0 ? 1 : 0)), AlmostVisible);
                         shouldRepeat = true;
                         continue;
                     }
@@ -1948,8 +1945,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 + topIntersectionPoint[0].x + topIntersectionPoint[1].x) / 4);
             const auto targetX = state.target31.x - INT32_MAX - 1;
             internalState->targetOffset =
-                PointI64(qMax(centerX, state.target31.x) - qMin(centerX, state.target31.x)
-                > qMax(centerX, targetX) - qMin(centerX, targetX) ? 1u + INT32_MAX : 0, 0);
+                PointI64(qAbs(centerX - state.target31.x) > qAbs(centerX - targetX) ? 1u + INT32_MAX : 0, 0);
         }
     }
 }
@@ -2013,7 +2009,7 @@ inline bool OsmAnd::AtlasMapRenderer_OpenGL::rayIntersectsTileSide(
     if (Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayVector, rayStart, d) && d > 0.0)
     {
         const auto point = rayStart + rayVector * d;
-        const auto angleY = -qAsin(qBound(-1.0, point.z, 1.0));
+        const auto angleY = -qAsin(qBound(-1.0, glm::normalize(point).z, 1.0));
         if (angleY <= top && angleY >= bottom)
         {
             const auto dist = glm::length(point);
@@ -2265,55 +2261,102 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getHeightLimits(const MapRendererState& st
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalState& internalState,
-    const MapRendererState& state, const PointI& screenPoint, PointD& position,
-    const float height /*=0.0f*/, float* distance /*=nullptr*/, float* sinAngle /*=nullptr*/) const
+    const MapRendererState& state, const PointD& screenPoint, PointI64& location,
+    const float height /* = 0.0f */) const
 {
-    return getPositionFromScreenPoint(internalState, state, PointD(screenPoint), position, height, distance, sinAngle);
+    const auto camPos = glm::dvec3(internalState.worldCameraPosition);
+    const auto farInWorld = glm::unProject(
+        glm::dvec3(screenPoint.x, static_cast<double>(state.windowSize.y) - screenPoint.y, 1.0),
+        glm::dmat4(internalState.mCameraView),
+        glm::dmat4(internalState.mPerspectiveProjection),
+        glm::dvec4(internalState.glmViewport));
+    const auto rayD = glm::normalize(farInWorld - camPos);
+
+    if (state.flatEarth)
+    {
+        const glm::dvec3 planeN(0.0, 1.0, 0.0);
+        const glm::dvec3 planeO(0.0, static_cast<double>(height), 0.0);
+        double length;
+        const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, camPos, length);
+        if (!intersects || !(length > 0.0 && internalState.worldCameraPosition.y > height
+            || length < 0.0 && internalState.worldCameraPosition.y < height))
+            return false;
+
+        const auto point = camPos + length * rayD;
+
+        PointD position = point.xz() / static_cast<double>(TileSize3D);
+
+        position += internalState.targetInTileOffsetN;
+        const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
+        const auto tileSize31 = (1u << zoomLevelDiff);
+        position *= tileSize31;
+
+        location.x = static_cast<int64_t>(position.x) + (internalState.targetTileId.x << zoomLevelDiff);
+        location.y = static_cast<int64_t>(position.y) + (internalState.targetTileId.y << zoomLevelDiff);
+    }
+    else
+    {
+        glm::dvec3 position;
+        const auto rayG = internalState.mGlobeRotationPreciseInv * rayD;
+        const auto intersects = Utilities_OpenGL_Common::rayIntersectsSphere(
+            internalState.cameraRotatedPosition,
+            rayG,
+            1.0 + static_cast<double>(height) / internalState.globeRadius,
+            position,
+            true);
+        if (!intersects || glm::dot(position - internalState.cameraRotatedPosition, rayG) <= 0.0)
+            return false;
+        
+        const auto point = height == 0.0f ? position : glm::normalize(position);
+
+        const auto position31 =
+            Utilities::get31FromAngles(PointD(qAtan2(point.x, point.y), -qAsin(qBound(-1.0, point.z, 1.0))));
+
+        location = PointI64(state.target31) + Utilities::shortestLongitudeVector(position31 - state.target31);
+    }
+
+    return true;
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalState& internalState,
-    const MapRendererState& state, const PointD& screenPoint, PointD& position,
-    const float height /*=0.0f*/, float* distance /*=nullptr*/, float* sinAngle /*=nullptr*/) const
+    const MapRendererState& state, const PointD& screenPoint, glm::dvec3& position,
+    const float height /* = 0.0f */) const
 {
-    const auto screenPointY = static_cast<double>(state.windowSize.y) - screenPoint.y;
-    const auto nearInWorld = glm::unProject(
-        glm::dvec3(screenPoint.x, screenPointY, 0.0),
-        glm::dmat4(internalState.mCameraView),
-        glm::dmat4(internalState.mPerspectiveProjection),
-        glm::dvec4(internalState.glmViewport));
+    const auto camPos = glm::dvec3(internalState.worldCameraPosition);
     const auto farInWorld = glm::unProject(
-        glm::dvec3(screenPoint.x, screenPointY, 1.0),
+        glm::dvec3(screenPoint.x, static_cast<double>(state.windowSize.y) - screenPoint.y, 1.0),
         glm::dmat4(internalState.mCameraView),
         glm::dmat4(internalState.mPerspectiveProjection),
         glm::dvec4(internalState.glmViewport));
-    const auto rayD = glm::normalize(farInWorld - nearInWorld);
+    const auto rayD = glm::normalize(farInWorld - camPos);
 
-    const glm::dvec3 planeN(0.0f, 1.0f, 0.0f);
-    const glm::dvec3 planeO(0.0f, 0.0f, 0.0f);
-    double length;
-    const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, nearInWorld, length);
-    if (!intersects)
-        return false;
-
-    auto intersection = nearInWorld + length * rayD;
-    auto pointOnPlane = intersection.xz();
-
-    double heightFactor = 0.0;
-    if (height != 0.0f)
+    if (state.flatEarth)
     {
-        heightFactor = static_cast<double>(height) / nearInWorld.y;
-        pointOnPlane += (nearInWorld.xz() - pointOnPlane) * heightFactor;
+        const glm::dvec3 planeN(0.0, 1.0, 0.0);
+        const glm::dvec3 planeO(0.0, static_cast<double>(height), 0.0);
+        double length;
+        const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, camPos, length);
+        if (!intersects || !(length > 0.0 && internalState.worldCameraPosition.y > height
+            || length < 0.0 && internalState.worldCameraPosition.y < height))
+            return false;
+
+        position = camPos + length * rayD;
     }
+    else
+    {
+        const auto intersects = Utilities_OpenGL_Common::rayIntersectsSphere(
+            camPos / internalState.globeRadius + glm::dvec3(0.0, 1.0, 0.0),
+            rayD,
+            1.0 + static_cast<double>(height) / internalState.globeRadius,
+            position,
+            true);
 
-    position = pointOnPlane / static_cast<double>(TileSize3D);
+        position.y -= 1.0;
+        position *= internalState.globeRadius;
 
-    const auto visible = (length > 0.0 && heightFactor < 1.0) || (length < 0.0 && heightFactor > 1.0);
-    
-    if (distance)
-        *distance = visible ? static_cast<float>(length) : 0.0f;
-
-    if (sinAngle)
-        *sinAngle = visible ? -static_cast<float>(glm::dot(rayD, planeN)) : 0.0f;
+        if (!intersects || glm::dot(position - camPos, rayD) <= 0.0)
+            return false;
+    }
 
     return true;
 }
@@ -2323,20 +2366,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNearestLocationFromScreenPoint(
     const PointI& location31, const PointI& screenPoint,
     PointI64& fixedLocation, PointI64& currentLocation) const
 {
-    PointD position;
-    bool ok = getPositionFromScreenPoint(internalState, state, screenPoint, position);
+    bool ok = getPositionFromScreenPoint(internalState, state, PointD(screenPoint), currentLocation);
     if (!ok)
         return false;
 
-    position += internalState.targetInTileOffsetN;
-    const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
-    const auto tileSize31 = (1u << zoomLevelDiff);
-    position *= tileSize31;
-
-    currentLocation.x = static_cast<int64_t>(position.x)+(internalState.targetTileId.x << zoomLevelDiff);
-    currentLocation.y = static_cast<int64_t>(position.y)+(internalState.targetTileId.y << zoomLevelDiff);
-
-    auto offset = Utilities::shortestVector31(Utilities::wrapCoordinates(currentLocation - location31));
+    auto offset = Utilities::wrapCoordinates(currentLocation - location31);
+    offset = state.flatEarth ? Utilities::shortestVector31(offset) : Utilities::shortestLongitudeVector(offset);
     fixedLocation = currentLocation - offset;
     
     return true;
@@ -2469,24 +2504,6 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getTileSizeOnScreenInPixels() const
     return 0.0;
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::getWorldPointFromScreenPoint(
-    const MapRendererInternalState& internalState_,
-    const MapRendererState& state,
-    const PointI& screenPoint,
-    PointF& outWorldPoint) const
-{
-    const auto& internalState = static_cast<const InternalState&>(internalState_);
-
-    PointD position;
-    bool ok = getPositionFromScreenPoint(internalState, state, screenPoint, position);
-    if (!ok)
-        return false;
-    position *= AtlasMapRenderer::TileSize3D;
-
-    outWorldPoint = PointF(static_cast<float>(position.x), static_cast<float>(position.y));
-    return true;
-}
-
 float OsmAnd::AtlasMapRenderer_OpenGL::getWorldElevationOfLocation(const MapRendererState& state,
     const float elevationInMeters, const PointI& location31_) const
 {
@@ -2542,8 +2559,7 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getDistanceFactor(const MapRendererState
     const auto viewportHeight = state.viewport.height();
     if (viewportWidth == 0 || viewportHeight == 0)
         return 1.0;
-    InternalState internalState;
-    internalState.glmViewport = glm::vec4(
+    const auto glmViewport = glm::vec4(
         state.viewport.left(),
         state.windowSize.y - state.viewport.bottom(),
         state.viewport.width(),
@@ -2551,24 +2567,62 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getDistanceFactor(const MapRendererState
     const auto aspectRatio = static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight);
     const auto projectionPlaneHalfHeight = static_cast<float>(_zNear * qTan(qDegreesToRadians(state.fieldOfView)));
     const auto projectionPlaneHalfWidth = static_cast<float>(projectionPlaneHalfHeight * aspectRatio);
-    internalState.mPerspectiveProjection = glm::frustum(
+    const auto mPerspectiveProjection = glm::frustum(
         -projectionPlaneHalfWidth, projectionPlaneHalfWidth,
         -projectionPlaneHalfHeight, projectionPlaneHalfHeight,
         _zNear, 1000.0f);
     baseUnits = static_cast<double>(TileSize3D)
-        * 0.5 * internalState.mPerspectiveProjection[0][0] * state.viewport.width()
+        * 0.5 * mPerspectiveProjection[0][0] * state.viewport.width()
         / ((1.0f + state.visualZoomShift) * tileSize);
     const auto distanceToTarget = static_cast<float>(baseUnits / state.visualZoom);
     const auto mDistance = glm::translate(glm::vec3(0.0f, 0.0f, -distanceToTarget));
     const auto mElevation = glm::rotate(glm::radians(state.elevationAngle), glm::vec3(1.0f, 0.0f, 0.0f));
     const auto mAzimuth = glm::rotate(glm::radians(state.azimuth), glm::vec3(0.0f, 1.0f, 0.0f));
-    internalState.mCameraView = mDistance * mElevation * mAzimuth;
-    PointD position;
-    float distanceToPoint = 0.0f;
-    bool ok = getPositionFromScreenPoint(
-        internalState, state, state.fixedPixel, position, 0.0f, &distanceToPoint, &sinAngleToPlane);
-    if (!ok)
-        return 1.0;
+    const auto mCameraView = mDistance * mElevation * mAzimuth;
+    const auto mDistanceInv = glm::translate(glm::vec3(0.0f, 0.0f, distanceToTarget));
+    const auto mElevationInv = glm::rotate(glm::radians(-state.elevationAngle), glm::vec3(1.0f, 0.0f, 0.0f));
+    const auto mAzimuthInv = glm::rotate(glm::radians(-state.azimuth), glm::vec3(0.0f, 1.0f, 0.0f));
+    const auto mCameraViewInv = mAzimuthInv * mElevationInv * mDistanceInv;
+    const auto worldCameraPosition = (mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz();
+    double distanceToPoint = 0.0;
+    const auto camPos = glm::dvec3(worldCameraPosition);
+    const auto farInWorld = glm::unProject(
+        glm::dvec3(state.fixedPixel.x, static_cast<double>(state.windowSize.y) - state.fixedPixel.y, 1.0),
+        glm::dmat4(mCameraView),
+        glm::dmat4(mPerspectiveProjection),
+        glm::dvec4(glmViewport));
+    const auto rayD = glm::normalize(farInWorld - camPos);
+
+    const glm::dvec3 planeN(0.0f, 1.0f, 0.0f);
+    if (state.flatEarth)
+    {
+        const glm::dvec3 planeO(0.0f, 0.0f, 0.0f);
+        const auto ok = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, camPos, distanceToPoint);
+        if (!ok || distanceToPoint <= 0.0)
+            return 1.0;
+    }
+    else
+    {
+        const auto metersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, state.target31, TileSize3D);
+        const auto radiusInWorld = _radius / metersPerUnit;
+
+        glm::dvec3 position;
+        const auto ok = Utilities_OpenGL_Common::rayIntersectsSphere(
+            camPos / radiusInWorld + glm::dvec3(0.0, 1.0, 0.0),
+            rayD,
+            1.0,
+            position,
+            true);
+        if (!ok)
+            return false;
+        
+        position.y -= 1.0;
+        position *= radiusInWorld;
+
+        distanceToPoint = qMax(glm::dot(position - camPos, rayD), 0.0);
+    }
+
+    sinAngleToPlane = -static_cast<float>(glm::dot(rayD, planeN));
 
     return static_cast<double>(distanceToTarget) / distanceToPoint;
 }
@@ -2706,19 +2760,21 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointD& s
     bool ok = updateInternalState(internalState, state, *getConfiguration(), RequiredToUnproject);
     if (!ok)
         return false;
-    
-    PointD position;
-    ok = getPositionFromScreenPoint(internalState, state, screenPoint, position);
+
+    if (!state.flatEarth)
+    {
+        internalState.metersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, state.target31, TileSize3D);
+        internalState.globeRadius = _radius / internalState.metersPerUnit;
+        internalState.mGlobeRotationPrecise =
+            Utilities::getGlobalRotationMatrix(Utilities::getAnglesFrom31(state.target31));
+        internalState.mGlobeRotationPreciseInv = glm::transpose(internalState.mGlobeRotationPrecise);
+        internalState.cameraRotatedPosition = internalState.mGlobeRotationPreciseInv
+            * (glm::dvec3(internalState.worldCameraPosition) / internalState.globeRadius + glm::dvec3(0.0, 1.0, 0.0));
+    }
+
+    ok = getPositionFromScreenPoint(internalState, state, screenPoint, location);
     if (!ok)
         return false;
-
-    position += internalState.targetInTileOffsetN;
-    const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
-    const auto tileSize31 = (1u << zoomLevelDiff);
-    position *= tileSize31;
-
-    location.x = static_cast<int64_t>(position.x)+(internalState.targetTileId.x << zoomLevelDiff);
-    location.y = static_cast<int64_t>(position.y)+(internalState.targetTileId.y << zoomLevelDiff);
 
     return true;
 }
@@ -2732,20 +2788,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
     if (!ok)
         return false;
     
-    PointD position;
-    float distance = 0.0f;
-    ok = getPositionFromScreenPoint(internalState, state, screenPoint, position, 0.0f, &distance);
+    PointI64 location;
+    ok = getPositionFromScreenPoint(internalState, state, PointD(screenPoint), location);
     if (!ok)
         return false;
-
-    position += internalState.targetInTileOffsetN;
-    const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
-    const auto tileSize31 = (1u << zoomLevelDiff);
-    position *= tileSize31;
-
-    PointI64 location;
-    location.x = static_cast<int64_t>(position.x)+(internalState.targetTileId.x << zoomLevelDiff);
-    location.y = static_cast<int64_t>(position.y)+(internalState.targetTileId.y << zoomLevelDiff);
 
     if (!state.elevationDataProvider || state.zoomLevel < state.elevationDataProvider->getMinZoom())
     {
@@ -2753,14 +2799,23 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
         return true;
     }
 
-    position = PointD(internalState.groundCameraPosition);
-    position /= static_cast<double>(TileSize3D);
-    position += internalState.targetInTileOffsetN;
-    position *= tileSize31;
+    const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
+    const auto tileSize31 = (1u << zoomLevelDiff);
 
     PointI64 cameraLocation;
-    cameraLocation.x = static_cast<int64_t>(position.x)+(internalState.targetTileId.x << zoomLevelDiff);
-    cameraLocation.y = static_cast<int64_t>(position.y)+(internalState.targetTileId.y << zoomLevelDiff);
+    if (state.flatEarth)
+    {
+        auto position = PointD(internalState.groundCameraPosition);
+        position /= static_cast<double>(TileSize3D);
+        position += internalState.targetInTileOffsetN;
+        position *= tileSize31;
+
+        cameraLocation.x = static_cast<int64_t>(position.x) + (internalState.targetTileId.x << zoomLevelDiff);
+        cameraLocation.y = static_cast<int64_t>(position.y) + (internalState.targetTileId.y << zoomLevelDiff);
+    }
+    else
+        cameraLocation = location - Utilities::shortestLongitudeVector(
+            Utilities::wrapCoordinates(location - Utilities::get31FromAngles(internalState.cameraAngles)));
 
     if (cameraLocation.x == location.x && cameraLocation.y == location.y)
     {
@@ -2783,11 +2838,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
         Utilities::convert31toDouble(cameraLocation, state.zoomLevel);
     auto startPointZ = static_cast<double>(internalState.worldCameraPosition.y);
     double endPointZ = 0.0;
-    if (distance < 0.0f)
-    {
-        endPoint = startPoint + startPoint - endPoint;
-        endPointZ = startPointZ * 2.0;
-    }
     const auto endTileId = PointD(std::floor(endPoint.x), std::floor(endPoint.y));
     const auto deltaX = endPoint.x - startPoint.x;
     const auto deltaY = endPoint.y - startPoint.y;
@@ -3287,46 +3337,106 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const PointI& l
     return getLocationHeightInMeters(state, location31);
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetByScreenPoint(const MapRendererState& state,
-    const PointI& screenPoint, const PointI& location31, PointI& target31, const float height /*=0.0f*/) const
+bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState& state,
+    const PointI& screenPoint, const PointI& location31, const float height,
+    PointI& target31, ZoomLevel& zoomLevel, float& visualZoom) const
 {
     InternalState internalState;
     bool ok = updateInternalState(internalState, state, *getConfiguration(), RequiredToUnproject);
     if (!ok)
         return false;
 
-    PointD position;
-    float distance = 0.0f;
-    ok = getPositionFromScreenPoint(internalState, state, screenPoint, position, height, &distance);
-    if (!ok)
-        return false;
+    if (!state.flatEarth)
+    {
+        internalState.metersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, state.target31, TileSize3D);
+        internalState.globeRadius = _radius / internalState.metersPerUnit;
+    }
 
-    // Indicate target is invisible due to terrain elevation
-    if (distance == 0.0f)
+    glm::dvec3 point;
+    ok = getPositionFromScreenPoint(internalState, state, PointD(screenPoint), point, height);
+    if (!ok)
     {
         target31 = PointI(-1, -1);
         return true;
     }
 
-    const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
-    const auto tileSize31 = (1u << zoomLevelDiff);
-    position *= tileSize31;
+    if (state.flatEarth)
+    {
+        PointD position = point.xz() / static_cast<double>(TileSize3D);
 
-    PointI64 target;
-    target.x = static_cast<int64_t>(location31.x) + (1ull << ZoomLevel::MaxZoomLevel) - static_cast<int64_t>(position.x);
-    target.y = static_cast<int64_t>(location31.y) + (1ull << ZoomLevel::MaxZoomLevel) - static_cast<int64_t>(position.y);
+        const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
+        const auto tileSize31 = (1u << zoomLevelDiff);
+        position *= tileSize31;
 
-    target31 = Utilities::normalizeCoordinates(target, ZoomLevel31);
+        PointI64 target;
+        target.x = static_cast<int64_t>(location31.x) - static_cast<int64_t>(position.x);
+        target.y = static_cast<int64_t>(location31.y) - static_cast<int64_t>(position.y);
+
+        target31 = Utilities::normalizeCoordinates(target, ZoomLevel31);        
+    }
+    else
+    {
+        point /= internalState.globeRadius;
+        point.y += 1.0;
+        if (height != 0.0f)
+            point = glm::normalize(point);
+
+        const auto mGlobeRotation = Utilities::getGlobalRotationMatrix(Utilities::getAnglesFrom31(state.target31));
+        const auto mGlobeRotationInv = glm::transpose(mGlobeRotation);
+
+        const auto currentV = mGlobeRotationInv * point;
+        const auto neededV =  Utilities::getGlobeRadialVector(location31);
+        const auto v = glm::cross(neededV, currentV);
+        const auto l = glm::length(v);
+        if (qFuzzyIsNull(l))
+        {
+            target31 = PointI(-1, -1);
+            return true;
+        }
+        const auto n = v / l;
+        const auto a = qAtan2(l, glm::dot(neededV, currentV));
+        const auto s = qSin(a);
+        const auto c = qCos(a);
+        const auto t = 1.0 - c;
+
+        const auto futureMatrix = mGlobeRotation * glm::dmat3(
+            t * n.x * n.x + c, t * n.x * n.y + s * n.z, t * n.x * n.z - s * n.y,
+            0.0, 0.0, 0.0, // Not needed
+            t * n.x * n.z + s * n.y, t * n.y * n.z - s * n.x, t * n.z * n.z + c);
+    
+        const auto sy = -futureMatrix[2].y;
+        const auto cy = futureMatrix[2].z;
+        const auto sx = futureMatrix[0].y / cy;
+        const auto cx = futureMatrix[0].x;
+        const PointD angles(qAtan2(sx, cx), qAtan2(sy, cy));
+
+        target31 = Utilities::get31FromAngles(angles);
+
+        const auto futureMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, target31, TileSize3D);
+        auto scaleFactor = futureMetersPerUnit / internalState.metersPerUnit;
+        scaleFactor *= static_cast<double>(1u << state.zoomLevel) * state.visualZoom;
+        const auto minZoom = qCeil(log2(scaleFactor / _maximumVisualZoom));
+        const auto maxZoom = qFloor(log2(scaleFactor / _minimumVisualZoom));
+        auto resultZoom = qAbs(state.zoomLevel - minZoom) < qAbs(state.zoomLevel - maxZoom) ? minZoom : maxZoom;
+
+        float visZoom = 1.0f;
+        if (resultZoom > state.maxZoomLimit)
+            resultZoom = state.maxZoomLimit;
+        else if (resultZoom < state.minZoomLimit)
+            resultZoom = state.minZoomLimit;
+        else
+            visZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
+
+        if ((resultZoom == state.maxZoomLimit && visZoom > 1.0f)
+            || (resultZoom == state.minZoomLimit && visZoom < 1.0f))
+            visualZoom = 1.0f;
+        else
+            visualZoom = visZoom;
+
+        zoomLevel = static_cast<ZoomLevel>(resultZoom);
+    }
 
     return true;
-}
-
-bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetByScreenPoint(const PointI& screenPoint, const PointI& location31,
-    PointI& target31, const float height /*=0.0f*/) const
-{
-    const auto state = getState();
-
-    return getNewTargetByScreenPoint(state, screenPoint, location31, target31, height);
 }
 
 float OsmAnd::AtlasMapRenderer_OpenGL::getHeightOfLocation(const MapRendererState& state,
@@ -3596,34 +3706,6 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getZoomOffset(
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(
-    const PointI64& position, PointI& outScreenPoint) const
-{
-    bool ok;
-    MapRendererState state;
-    const auto internalState = getRequiredInternalState(ok, &state);
-    if (!ok)
-        return false;
-
-    if (!static_cast<const Frustum2DI64*>(&internalState.globalFrustum2D31)->test(position))
-        return false;
-
-    const auto offsetFromTarget31 = position - state.target31;
-    const auto offsetFromTarget = Utilities::convert31toDouble(offsetFromTarget31, state.zoomLevel);
-    const auto positionInWorld = glm::vec3(
-        offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
-        0.0f, // TODO: this is not compatible with elevation
-        offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
-
-    const auto projectedPosition = glm_extensions::project(
-        positionInWorld,
-        internalState.mPerspectiveProjectionView,
-        internalState.glmViewport);
-    outScreenPoint.x = projectedPosition.x;
-    outScreenPoint.y = state.windowSize.y - projectedPosition.y;
-    return true;
-}
-
-bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(
     const PointI& position31, PointI& outScreenPoint, bool checkOffScreen) const
 {
     bool ok;
@@ -3635,12 +3717,16 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(
     if (!checkOffScreen && !internalState.globalFrustum2D31.test(position31))
         return false;
 
-    const auto offsetFromTarget31 = Utilities::shortestLongitudeVector(position31 - state.target31);
-    const auto offsetFromTarget = Utilities::convert31toFloat(offsetFromTarget31, state.zoomLevel);
-    const auto positionInWorld = glm::vec3(
-        offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
-        0.0f, // TODO: this is not compatible with elevation
-        offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
+    glm::vec3 positionInWorld;
+    if (state.flatEarth)
+    {
+        const auto offsetFromTarget = Utilities::convert31toFloat(Utilities::shortestLongitudeVector(
+            position31 - state.target31), state.zoomLevel) * AtlasMapRenderer::TileSize3D;
+        positionInWorld = glm::vec3(offsetFromTarget.x, 0.0f, offsetFromTarget.y);
+    }
+    else
+        positionInWorld = Utilities::sphericalWorldCoordinates(
+            position31, internalState.mGlobeRotationPrecise, internalState.globeRadius, 0.0);
 
     const auto projectedPosition = glm_extensions::project(
         positionInWorld,
@@ -3663,13 +3749,18 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::obtainElevatedPointFromPosition(const Poin
     if (!checkOffScreen && !internalState.globalFrustum2D31.test(position31))
         return false;
 
-    float height = getHeightOfLocation(state, position31);
-    const auto offsetFromTarget31 = Utilities::shortestLongitudeVector(position31 - state.target31);
-    const auto offsetFromTarget = Utilities::convert31toFloat(offsetFromTarget31, state.zoomLevel);
-    const auto positionInWorld = glm::vec3(
-        offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
-        height,
-        offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
+    const auto height = getHeightOfLocation(state, position31);
+    glm::vec3 positionInWorld;
+    if (state.flatEarth)
+    {
+        const auto offsetFromTarget = Utilities::convert31toFloat(Utilities::shortestLongitudeVector(
+            position31 - state.target31), state.zoomLevel) * AtlasMapRenderer::TileSize3D;
+        positionInWorld = glm::vec3(offsetFromTarget.x, height, offsetFromTarget.y);
+    }
+    else
+        positionInWorld = Utilities::sphericalWorldCoordinates(
+            position31, internalState.mGlobeRotationPrecise, internalState.globeRadius, height);
+
 
     const auto projectedPosition = glm_extensions::project(
         positionInWorld,

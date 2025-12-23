@@ -180,8 +180,9 @@ namespace OsmAnd
         virtual AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const = 0;
         virtual AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const = 0;
         virtual double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const = 0;
-        virtual bool getNewTargetByScreenPoint(const MapRendererState& state, const PointI& screenPoint,
-            const PointI& location31, PointI& target31, const float height = 0.0f) const = 0;
+        virtual bool getNewTargetAndZoom(
+            const MapRendererState& state, const PointI& screenPoint, const PointI& location31, const float height,
+            PointI& target31, ZoomLevel& zoomLevel, float& visualZoom) const = 0;
         virtual bool isLocationHeightAvailable(const MapRendererState& state, const PointI& location31) const = 0;
         virtual bool getExtraZoomAndTiltForRelief(const MapRendererState& state, PointF& zoomAndTilt) const = 0;
         virtual bool getExtraZoomAndRotationForAiming(const MapRendererState& state,
@@ -199,8 +200,6 @@ namespace OsmAnd
         virtual bool isPointProjectable(const MapRendererInternalState& internalState, const glm::vec3& point) const = 0;
         virtual bool isPointVisible(const MapRendererInternalState& internalState, const glm::vec3& point, bool skipTop = false,
             bool skipLeft = false, bool skipBottom = false, bool skipRight = false, bool skipFront = false, bool skipBack = false, float tolerance = 0.0) const = 0;
-        virtual bool getWorldPointFromScreenPoint(const MapRendererInternalState& internalState, const MapRendererState& state,
-            const PointI& screenPoint, PointF& outWorldPoint) const = 0;
         virtual float getWorldElevationOfLocation(const MapRendererState& state,
             const float elevationInMeters, const PointI& location31) const = 0;
         virtual float getElevationOfLocationInMeters(const MapRendererState& state,
