@@ -302,11 +302,21 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
 
     if (!heightFound && levelsFound)
     {
+        if (levels == 0)
+        {
+            return;
+        }
+
         height = levels * levelHeight;
     }
 
     if (!minHeightFound && minLevelsFound)
     {
+        if (minLevels == 0)
+        {
+            return;
+        }
+
         minHeight = minLevels * levelHeight;
     }
 
@@ -319,13 +329,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         for (const auto& p : constOf(sourceObject->points31))
         {
             accumulateElevationForPoint(p, tileId, zoom, elevationData, maxElevationMeters, minElevationMeters, hasElevationSample);
-        }
-        for (const auto& innerPolygon : constOf(sourceObject->innerPolygonsPoints31))
-        {
-            for (const auto& p : innerPolygon)
-            {
-                accumulateElevationForPoint(p, tileId, zoom, elevationData, maxElevationMeters, minElevationMeters, hasElevationSample);
-            }
         }
 
         if (hasElevationSample)
