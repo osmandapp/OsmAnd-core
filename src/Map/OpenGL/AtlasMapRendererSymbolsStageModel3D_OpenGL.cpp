@@ -105,7 +105,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
             "    vec3 r = reflect(l, n);                                                                                        ""\n"
             "    float h = pow((clamp(dot(r, v), 0.5, 1.0) - 0.5) * 2.0, 6.0) / 2.0;                                            ""\n"
             "    float d = clamp(dot(r, n), 0.0, 1.0) + 0.5;                                                                    ""\n"
-            "    FRAGMENT_COLOR_OUTPUT = vec4(mix(v2f_pointColor.rgb * d, vec3(1.0), h), v2f_pointColor.a);                     ""\n"
+            "    vec3 dc = clamp(v2f_pointColor.rgb * d, 0.0, 1.0);                                                             ""\n"
+            "    FRAGMENT_COLOR_OUTPUT = vec4(mix(dc, vec3(1.0), h), v2f_pointColor.a);                                         ""\n"
             "}                                                                                                                  ""\n");
         auto preprocessedFragmentShader = fragmentShader;
         gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
