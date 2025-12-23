@@ -347,8 +347,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
             ? 12 : 0) /*v2f_hsTL + v2f_hsTR + v2f_hsBL + v2f_hsBR + v2f_hsCoordsDir + v2f_hsCoords*/ +
         4 /*v2f_primaryLocation*/ +
         4 /*v2f_secondaryLocation*/ +
-        4 /*v2f_position*/ +
-        4 /*v2f_normal*/;
+        3 /*v2f_position*/ +
+        3 /*v2f_normal*/;
     const auto maxBatchSizeByVaryingFloats =
         (gpuAPI->maxVaryingFloats - otherVaryingFloats) / varyingFloatsPerLayer;
 
@@ -429,8 +429,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "                                                                                                                   ""\n"
             // Output data to next shader stages
             "%UnrolledPerRasterLayerTexCoordsDeclarationCode%                                                                   ""\n"
-            "PARAM_OUTPUT float v2f_metersPerUnit;                                                                              ""\n"
-            "PARAM_OUTPUT float v2f_colorIntensity;                                                                             ""\n"
+            "PARAM_OUTPUT highp float v2f_metersPerUnit;                                                                        ""\n"
+            "PARAM_OUTPUT highp float v2f_colorIntensity;                                                                       ""\n"
             "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
             "    PARAM_OUTPUT float v2f_mipmapLOD;                                                                              ""\n"
             "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n");
@@ -442,13 +442,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "PARAM_FLAT_OUTPUT highp vec2 v2f_hsCoordsDir;                                                                      ""\n"
             "PARAM_OUTPUT highp vec2 v2f_hsCoords;                                                                              ""\n");
         const auto& gridsInVertexShader_1 = QStringLiteral(
-            "PARAM_OUTPUT vec4 v2f_primaryLocation;                                                                             ""\n"
-            "PARAM_OUTPUT vec4 v2f_secondaryLocation;                                                                           ""\n");
+            "PARAM_OUTPUT highp vec4 v2f_primaryLocation;                                                                       ""\n"
+            "PARAM_OUTPUT highp vec4 v2f_secondaryLocation;                                                                     ""\n");
         vertexShader.append(QStringLiteral(
             "%HillshadeInVertexShader_1%                                                                                        ""\n"
             "%GridsInVertexShader_1%                                                                                            ""\n"
-            "PARAM_OUTPUT vec4 v2f_position;                                                                                    ""\n"
-            "PARAM_OUTPUT vec4 v2f_normal;                                                                                      ""\n"
+            "PARAM_OUTPUT highp vec3 v2f_position;                                                                              ""\n"
+            "PARAM_OUTPUT highp vec3 v2f_normal;                                                                                ""\n"
             "                                                                                                                   ""\n"
             // Parameters: common data
             "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
@@ -582,13 +582,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    vec3 leftN = normalize(mix(param_vs_globeTileTLnv, param_vs_globeTileBLnv, in_vs_vertexPosition.y));           ""\n"
             "    vec3 rightN = normalize(mix(param_vs_globeTileTRnv, param_vs_globeTileBRnv, in_vs_vertexPosition.y));          ""\n"
             "    vec3 midN = normalize(mix(leftN, rightN, in_vs_vertexPosition.x));                                             ""\n"
-            "    float extraUp = extraUpToSphere(param_vs_objectSizes.x, in_vs_vertexPosition,                                  ""\n"
+            "    midVertex += midN * extraUpToSphere(param_vs_objectSizes.x, in_vs_vertexPosition,                              ""\n"
             "        param_vs_globeTileTLnv, param_vs_globeTileTRnv, param_vs_globeTileBLnv, param_vs_globeTileBRnv);           ""\n"
-            "    midVertex += midN * extraUp;                                                                                   ""\n"
             "    midVertex = overY || loc31.y == 0 ? cv : midVertex;                                                            ""\n"
             "    midN = overY || loc31.y == 0 ? nv : midN;                                                                      ""\n"
             "    vec4 v = vec4(param_vs_objectSizes.z != 0.0 ? cv : midVertex, 1.0);                                            ""\n"
-            "    vec3 n = param_vs_objectSizes.z != 0.0 ? nv : midN;                                                            ""\n"
+            "    v2f_normal = param_vs_objectSizes.z != 0.0 ? nv : midN;                                                        ""\n"
             "                                                                                                                   ""\n"
             //   Get meters per unit, which is needed at both shader stages
             "    v2f_metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, in_vs_vertexTexCoords.t);      ""\n"
@@ -728,7 +727,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "        elev = avgVerElev && (vertexIndex.y & 1) > 0 ? (averageHeight(height, 1, 0)                                ""\n"
             "            + averageHeight(height, 1, 2)) / 2.0 / v2f_metersPerUnit + ext : elev;                                 ""\n"
             "        v2f_colorIntensity = noElev ? 0.0 : 1.0;                                                                   ""\n"
-            "        v.xyz += (noElev ? 0.0 : elev) * n;                                                                        ""\n"
+            "        v.xyz += (noElev ? 0.0 : elev) * v2f_normal;                                                               ""\n"
             "    }                                                                                                              ""\n"
             "                                                                                                                   ""\n"
             "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
@@ -843,13 +842,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    v2f_secondaryLocation = secondary;                                                                             ""\n");
         vertexShader.append(QStringLiteral(
             "%GridsInVertexShader_3%                                                                                            ""\n"
-            "    v2f_position = v;                                                                                              ""\n"
-            "    v2f_normal = vec4(n.xyz, 1.0);                                                                                 ""\n"
+            "    v2f_position = v.xyz;                                                                                          ""\n"
             "    v = param_vs_mPerspectiveProjectionView * v;                                                                   ""\n"
             "    gl_Position = v * param_vs_resultScale;                                                                        ""\n"
             "}                                                                                                                  ""\n"));
         const auto& vertexShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
-            "PARAM_OUTPUT vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                        ""\n");
+            "PARAM_OUTPUT highp vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                  ""\n");
         const auto& vertexShader_perRasterLayerParamsDeclaration = QString::fromLatin1(
             "uniform VsRasterLayerTile param_vs_rasterTileLayer_%rasterLayerIndex%;                                             ""\n");
         const auto& vertexShader_perRasterLayerTexCoordsProcessing = QString::fromLatin1(
@@ -860,10 +858,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         auto fragmentShader = QStringLiteral(
             // Input data
             "%UnrolledPerRasterLayerTexCoordsDeclarationCode%                                                                   ""\n"
-            "PARAM_INPUT float v2f_metersPerUnit;                                                                               ""\n"
-            "PARAM_INPUT float v2f_colorIntensity;                                                                              ""\n"
+            "PARAM_INPUT highp float v2f_metersPerUnit;                                                                         ""\n"
+            "PARAM_INPUT highp float v2f_colorIntensity;                                                                        ""\n"
             "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
-            "    PARAM_INPUT float v2f_mipmapLOD;                                                                               ""\n"
+            "    PARAM_INPUT highp float v2f_mipmapLOD;                                                                         ""\n"
             "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n");
         const auto& hillshadeInFragmentShader_1 = QStringLiteral(
             "PARAM_FLAT_INPUT highp vec2 v2f_hsTL;                                                                              ""\n"
@@ -873,13 +871,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "PARAM_FLAT_INPUT highp vec2 v2f_hsCoordsDir;                                                                       ""\n"
             "PARAM_INPUT highp vec2 v2f_hsCoords;                                                                               ""\n");
         const auto& gridsInFragmentShader_1 = QStringLiteral(
-            "PARAM_INPUT vec4 v2f_primaryLocation;                                                                              ""\n"
-            "PARAM_INPUT vec4 v2f_secondaryLocation;                                                                            ""\n");
+            "PARAM_INPUT highp vec4 v2f_primaryLocation;                                                                        ""\n"
+            "PARAM_INPUT highp vec4 v2f_secondaryLocation;                                                                      ""\n");
         fragmentShader.append(QStringLiteral(
             "%HillshadeInFragmentShader_1%                                                                                      ""\n"
             "%GridsInFragmentShader_1%                                                                                          ""\n"
-            "PARAM_INPUT vec4 v2f_position;                                                                                     ""\n"
-            "PARAM_INPUT vec4 v2f_normal;                                                                                       ""\n"
+            "PARAM_INPUT highp vec3 v2f_position;                                                                               ""\n"
+            "PARAM_INPUT highp vec3 v2f_normal;                                                                                 ""\n"
             "                                                                                                                   ""\n"
             // Parameters: common data
             "uniform lowp float param_fs_lastBatch;                                                                             ""\n"
@@ -1052,7 +1050,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "                                                                                                                   ""\n"
             //   Calculate color of accuracy circle
             "    lowp vec4 circle = param_fs_myLocationColor;                                                                   ""\n"
-            "    vec3 vMyToPos = v2f_position.xyz - param_fs_myLocation.xyz;                                                    ""\n"
+            "    vec3 vMyToPos = v2f_position - param_fs_myLocation.xyz;                                                        ""\n"
             "    float dist = length(vMyToPos);                                                                                 ""\n"
             "    float fdist = min(pow(min(dist / param_fs_myLocation.w, 1.0), 100.0), 1.0);                                    ""\n"
             "    circle.a = (1.0 - fdist) * (1.0 + 2.0 * fdist) * circle.a;                                                     ""\n"
@@ -1102,22 +1100,25 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    secondaryColor = d.x > f.x && d.x < 1.0 - f.x && d.y > f.y && d.y < 1.0 - f.y ? vec4(0.0) : halfColor;         ""\n"
             "    secondaryColor.a += d.x > n.x && d.x < 1.0 - n.x && d.y > n.y && d.y < 1.0 - n.y ? 0.0 : halfAlfa;             ""\n"
             "    secondaryColor.a = primaryColor.a < param_fs_primaryGridColor.a ? secondaryColor.a : 0.0;                      ""\n"
+            "    float dF = distance(param_fs_worldCameraPosition.xyz, v2f_position) / length(param_fs_worldCameraPosition.xyz);""\n"
+            "    float aF = 3.0 - clamp(dF, 2.0, 3.0);                                                                          ""\n"
+            "    primaryColor.a *= aF;                                                                                          ""\n"
+            "    secondaryColor.a *= aF;                                                                                        ""\n"
             "                                                                                                                   ""\n");
         fragmentShader.append(QStringLiteral(
             //   Calculate colors of grids
             "%GridsInFragmentShader_3%                                                                                          ""\n"
             //   Calculate mist color
             "    lowp vec4 mistColor = param_fs_mistColor;                                                                      ""\n"
-            "    vec4 infrontPosition = v2f_position;                                                                           ""\n"
+            "    vec3 infrontPosition = v2f_position;                                                                           ""\n"
             "    infrontPosition.xz = v2f_position.xz * param_fs_mistConfiguration.xy;                                          ""\n"
             "    infrontPosition.xz = v2f_position.xz - (infrontPosition.x + infrontPosition.z) * param_fs_mistConfiguration.xy;""\n"
-            "    vec4 worldCameraPosition = vec4(param_fs_worldCameraPosition.xyz, 1.0);                                        ""\n"
-            "    float toFog = param_fs_mistConfiguration.z - distance(infrontPosition, worldCameraPosition);                   ""\n"
+            "    float toFog = param_fs_mistConfiguration.z - distance(infrontPosition, param_fs_worldCameraPosition.xyz);      ""\n"
             "    float expScale = (3.0 - param_fs_mistColor.w ) / param_fs_mistConfiguration.w;                                 ""\n"
             "    float expOffset = 2.354 - param_fs_mistColor.w * 0.5;                                                          ""\n"
             "    float farMist = max(0.0, expOffset - toFog * expScale);                                                        ""\n"
             "    farMist = clamp(1.0 - 1.0 / exp(farMist * farMist), 0.0, 1.0);                                                 ""\n"
-            "    float globeMist = 1.0 - dot(v2f_normal, normalize(worldCameraPosition));                                       ""\n"
+            "    float globeMist = 1.0 - dot(v2f_normal, normalize(param_fs_worldCameraPosition.xyz));                          ""\n"
             "    float mistFactor = min(param_fs_worldCameraPosition.w * 1.5, 1.0);                                             ""\n"
             "    mistColor.a = mix(globeMist * globeMist * globeMist, farMist, mistFactor * mistFactor * mistFactor);           ""\n"
             "                                                                                                                   ""\n"
@@ -1199,7 +1200,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "        mixColors(finalColor, tc, param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);               ""\n"
             "    }                                                                                                              ""\n");
         const auto& fragmentShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
-            "PARAM_INPUT vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                         ""\n");
+            "PARAM_INPUT highp vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                   ""\n");
         const auto& fragmentShader_perRasterLayerParamsDeclaration = QString::fromLatin1(
             "uniform FsRasterLayerTile param_fs_rasterTileLayer_%rasterLayerIndex%;                                             ""\n");
 
@@ -2252,16 +2253,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     }
 
     // Configure elevation data
-    float hillshadeAlpha = 0.0f;
     if (withHillshade)
     {
-        hillshadeAlpha = currentState.elevationConfiguration.visualizationAlpha;
         const auto zenith = glm::radians(currentState.elevationConfiguration.hillshadeSunAngle);
         const auto cosZenith = qCos(zenith);
         const auto azimuth = M_PI - glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth);
         glUniform4f(program.fs.param.hillshade,
             qSin(zenith),
-            hillshadeAlpha,
+            currentState.elevationConfiguration.visualizationAlpha,
             qSin(azimuth) * cosZenith,
             qCos(azimuth) * cosZenith);
         GL_CHECK_RESULT;

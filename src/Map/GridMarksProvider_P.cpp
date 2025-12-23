@@ -7,7 +7,7 @@
 
 # define MIN_ZOOM_LEVEL_SIDE_MARKS 5
 
-# define GRID_MARKS_PER_AXIS 20
+# define GRID_MARKS_PER_AXIS 10
 # define MAP_CHANGE_FACTOR_PART 4
 
 OsmAnd::GridMarksProvider_P::GridMarksProvider_P(
