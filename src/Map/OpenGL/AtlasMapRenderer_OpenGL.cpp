@@ -2199,7 +2199,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getHeightLimits(const MapRendererState& st
                 TileId::fromXY(tileId.x << absZoomShift, tileId.y << absZoomShift);
             const auto underscaledZoomLevel = static_cast<ZoomLevel>(underscaledZoom);
             const int subCount = 1 << absZoomShift;
-            const auto scaleFactor = static_cast<float>(subCount);
             minimum = std::numeric_limits<float>::max();
             maximum = std::numeric_limits<float>::lowest();
             bool complete = true;
@@ -2225,8 +2224,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getHeightLimits(const MapRendererState& st
             }
             if (complete)
             {
-                minHeight = minimum / scaleFactor;
-                maxHeight = maximum / scaleFactor;
+                if (state.flatEarth)
+                {
+                    const auto scaleFactor = static_cast<float>(subCount);
+                    minHeight = minimum / scaleFactor;
+                    maxHeight = maximum / scaleFactor;
+                }
                 return true;
             }
         }
@@ -2249,9 +2252,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getHeightLimits(const MapRendererState& st
                         state, elevationData, overscaledTileIdN, overscaledZoomLevel, minValue, maxValue);
                 else
                     getElevationDataLimits(state, elevationData, metersPerUnit, minValue, maxValue);
-                const auto scaleFactor = static_cast<float>(1 << absZoomShift);
-                minHeight = minValue * scaleFactor;
-                maxHeight = maxValue * scaleFactor;
+                if (state.flatEarth)
+                {
+                    const auto scaleFactor = static_cast<float>(1 << absZoomShift);
+                    minHeight = minValue * scaleFactor;
+                    maxHeight = maxValue * scaleFactor;
+                }
                 return true;
             }
         }
