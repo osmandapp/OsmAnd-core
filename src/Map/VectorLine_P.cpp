@@ -1522,7 +1522,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
                     _mapZoomLevel,
                     Utilities::convert31toDouble(*(verticesAndIndices->position31), _mapZoomLevel),
                     isOut ? 0 : AtlasMapRenderer::HeixelsPerTileSide - 1,
-                    0.4f, false,
+                    0.4f, true,
                     _colorizationScheme == COLORIZATION_SOLID);
                 if (_isElevatedLineVisible)
                 {
@@ -1577,7 +1577,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
                 Utilities::convert31toDouble(*(verticesAndIndices->position31), zoomLevel),
                 isOut ? 0 : cellsPerTileSize,
                 0.5f, 0.01f,
-                false, false,
+                true, false,
                 tessVertices);
 
     if (tesselated)

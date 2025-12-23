@@ -2285,11 +2285,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     // Slightly lift arrows up to their vector lines (must exactly match shader code for vector lines)
     if (renderable->adjustElevationToVectorObject)
     {
-        const auto c = internalState.worldCameraPosition - positionInWorld;
-        const auto dist = glm::length(c);
+        const auto dist = glm::distance(internalState.worldCameraPosition, positionInWorld);
         const auto  extraZfar = 2.0f * dist / internalState.zFar;
         const auto  extraCam = dist / glm::length(internalState.worldCameraPosition);
-        positionInWorld += glm::normalize(glm::vec3(n) * 0.3f + c / dist * 0.7f) * (fmin(extraZfar, extraCam) + 0.1f);
+        positionInWorld += glm::vec3(n) * (fmin(extraZfar, extraCam) + 0.1f);
     }
 
     const auto rotateModel = currentState.flatEarth ? glm::mat4(1.0f)
@@ -2545,11 +2544,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
             "            param_vs_globeTileTLnv, param_vs_globeTileTRnv, param_vs_globeTileBLnv, param_vs_globeTileBRnv);       ""\n"
             "        v = vec3(mix(leftVertex, rightVertex, texCoords.x) + n * elevation);                                       ""\n"
             "    }                                                                                                              ""\n"
-            "    vec3 c = param_vs_cameraPositionAndZfar.xyz - v;                                                               ""\n"
-            "    float dist = length(c);                                                                                        ""\n"
+            "    float dist = distance(param_vs_cameraPositionAndZfar.xyz, v.xyz);                                              ""\n"
             "    float extraZfar = 2.0 * dist / param_vs_cameraPositionAndZfar.w;                                               ""\n"
             "    float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                            ""\n"
-            "    v += normalize(n * 0.3 + c / dist * 0.7) * (min(extraZfar, extraCam) + 0.1);                                   ""\n"
+            "    v += n * (min(extraZfar, extraCam) + 0.1);                                                                     ""\n"
             "    vec4 vertexPosition = param_vs_mPerspectiveProjectionView * vec4(v, 1.0);                                      ""\n"
             "    gl_Position = vertexPosition * param_vs_resultScale;                                                           ""\n"
             "                                                                                                                   ""\n"

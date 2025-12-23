@@ -389,7 +389,8 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 				}
 			}
 			// median diagonal line to cut (y=-x):
-			c = static_cast<int32_t>(round(((uMin + uMax) * 0.5f - gridPosU) / gridStepWU));
+/* Not needed
+            c = static_cast<int32_t>(round(((uMin + uMax) * 0.5f - gridPosU) / gridStepWU));
 			w = c * gridStepWU + gridPosU;
 			j = 3 - iMinU - iMaxU;
 			if (w >= uMin + minDist && w <= uMax - minDist)
@@ -434,6 +435,7 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 					}
 				}
 			}
+*/
 		}
 		switch (next)
 		{
@@ -807,7 +809,8 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
 				}
 			}
 			// median diagonal line to cut (y=-x):
-			c = static_cast<int32_t>(round(((uMin + uMax) * 0.5f - gridPosU) / gridStepWU));
+/* Not needed
+            c = static_cast<int32_t>(round(((uMin + uMax) * 0.5f - gridPosU) / gridStepWU));
 			w = c * gridStepWU + gridPosU;
 			if (w >= uMin + minDist && w <= uMax - minDist)
 			{
@@ -817,6 +820,7 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
 					next = 4;
 				}
 			}
+*/
 		}
 		switch (next)
 		{
