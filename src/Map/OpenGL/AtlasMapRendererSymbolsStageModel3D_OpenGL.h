@@ -36,6 +36,7 @@ namespace OsmAnd
                 {
                     // Per-model data
                     GLlocation mModel;
+                    GLlocation positionInWorld;
                     GLlocation mainColor;
 
                     // Common data

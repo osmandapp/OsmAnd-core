@@ -61,27 +61,25 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
             "INPUT vec4 in_vs_vertexColor;                                                                                      ""\n"
             "                                                                                                                   ""\n"
             // Output data to next shader stages
-            "PARAM_OUTPUT vec3 v2f_pointPosition;                                                                               ""\n"
-            "PARAM_OUTPUT vec3 v2f_pointNormal;                                                                                 ""\n"
-            "PARAM_OUTPUT vec4 v2f_pointColor;                                                                                  ""\n"
+            "PARAM_OUTPUT highp vec3 v2f_pointPosition;                                                                         ""\n"
+            "PARAM_OUTPUT highp vec3 v2f_pointNormal;                                                                           ""\n"
+            "PARAM_OUTPUT highp vec4 v2f_pointColor;                                                                            ""\n"
             "                                                                                                                   ""\n"
             // Parameters: common data
             "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
             "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
             "                                                                                                                   ""\n"
             // Parameters: per-model data
-            "uniform mat4 param_vs_mModel;                                                                                      ""\n"
+            "uniform mat3 param_vs_mModel;                                                                                      ""\n"
+            "uniform vec3 param_vs_positionInWorld;                                                                             ""\n"
             "uniform vec4 param_vs_mainColor;                                                                                   ""\n"
             "                                                                                                                   ""\n"
             "void main()                                                                                                        ""\n"
             "{                                                                                                                  ""\n"
-            "    vec4 v = vec4(in_vs_vertexPosition, 1.0);                                                                      ""\n"
-            "    v = param_vs_mModel * v;                                                                                       ""\n"
-            "    v2f_pointPosition = v.xyz;                                                                                     ""\n"
-            "    mat3 nModel = mat3(param_vs_mModel[0].xyz, param_vs_mModel[1].xyz, param_vs_mModel[2].xyz);                    ""\n"
-            "    v2f_pointNormal = nModel * in_vs_vertexNormal;                                                                 ""\n"
-            "    v2f_pointColor.argb = in_vs_vertexColor.x > -1.0 ? in_vs_vertexColor.xyzw : param_vs_mainColor.argb;           ""\n"
-            "    v = param_vs_mPerspectiveProjectionView * v;                                                                   ""\n"
+            "    v2f_pointPosition = param_vs_mModel * in_vs_vertexPosition + param_vs_positionInWorld;                         ""\n"
+            "    v2f_pointNormal = param_vs_mModel * in_vs_vertexNormal;                                                        ""\n"
+            "    v2f_pointColor = in_vs_vertexColor.x > -1.0 ? in_vs_vertexColor.yzwx : param_vs_mainColor;                     ""\n"
+            "    vec4 v = param_vs_mPerspectiveProjectionView * vec4(v2f_pointPosition, 1.0);                                   ""\n"
             "    gl_Position = v * param_vs_resultScale;                                                                        ""\n"
             "}                                                                                                                  ""\n");
         auto preprocessedVertexShader = vertexShader;
@@ -90,9 +88,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
 
         const QString fragmentShader = QLatin1String(
             // Input data
-            "PARAM_INPUT vec3 v2f_pointPosition;                                                                                ""\n"
-            "PARAM_INPUT vec3 v2f_pointNormal;                                                                                  ""\n"
-            "PARAM_INPUT vec4 v2f_pointColor;                                                                                   ""\n"
+            "PARAM_INPUT highp vec3 v2f_pointPosition;                                                                          ""\n"
+            "PARAM_INPUT highp vec3 v2f_pointNormal;                                                                            ""\n"
+            "PARAM_INPUT highp vec4 v2f_pointColor;                                                                             ""\n"
             "                                                                                                                   ""\n"
             // Parameters: common data
             "uniform vec3 param_fs_cameraPosition;                                                                              ""\n"
@@ -170,6 +168,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
     ok = ok && lookup->lookupLocation(_program.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.mModel, "param_vs_mModel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.positionInWorld, "param_vs_positionInWorld", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.cameraPosition, "param_fs_cameraPosition", GlslVariableType::Uniform);
     if (!ok)
     {
@@ -269,15 +268,21 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStageModel3
             internalState.mGlobeRotationPrecise, internalState.globeRadius, elevationInWorld, &angles);
     const auto rotateModel = currentState.flatEarth ? glm::mat4(1.0f)
         : glm::mat4(internalState.mGlobeRotation * Utilities::getModelRotationMatrix(angles));
-    const auto placeModel = glm::translate(positionInWorld);
-    const auto mModel = placeModel * rotateModel * renderable->mModel;
+    const auto mModel = glm::mat3(rotateModel * renderable->mModel);
 
     // Model matrix
-    glUniformMatrix4fv(
+    glUniformMatrix3fv(
         _program.vs.param.mModel,
         1,
         GL_FALSE,
         glm::value_ptr(mModel));
+    GL_CHECK_RESULT;
+
+    // Set position
+    glUniform3f(_program.vs.param.positionInWorld,
+        positionInWorld.x,
+        positionInWorld.y,
+        positionInWorld.z);
     GL_CHECK_RESULT;
 
     // Set main color
