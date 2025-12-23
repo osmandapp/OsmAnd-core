@@ -12,6 +12,7 @@
 #include <OsmAndCore/Map/MapPrimitiviser.h>
 #include <OsmAndCore/Map/MapPresentationEnvironment.h>
 #include <OsmAndCore/Map/MapRenderer3DObjects.h>
+#include <OsmAndCore/Map/IMapElevationDataProvider.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <memory>
 
@@ -38,6 +39,8 @@ namespace OsmAnd
         virtual ZoomLevel getMaxZoom() const override;
 
         float getDefaultBuildingsAlpha() const;
+
+        void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationProvider);
 
         virtual bool obtainTiledData(
             const IMapTiledDataProvider::Request& request,

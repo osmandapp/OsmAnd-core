@@ -26,16 +26,6 @@ namespace OsmAnd
 
         Init3DObjectsType _init3DObjectsType;
 
-        struct ElevationData
-        {
-            std::shared_ptr<const GPUAPI::ResourceInGPU> resource;
-            ZoomLevel zoom;
-            TileId tileIdN;
-            PointF texCoordsOffset;
-            PointF texCoordsScale;
-            bool hasData;
-        };
-
         struct Model3DProgram
         {
             GLname id;
@@ -62,36 +52,13 @@ namespace OsmAnd
                     GLlocation alpha;
                     GLlocation target31;
                     GLlocation zoomLevel;
-                    GLlocation tileZoomLevel;
                     GLlocation lightDirection;
                     GLlocation ambient;
-                    // Elevation data
-                    GLlocation elevation_dataSampler;
-                    struct
-                    {
-                        GLlocation txOffsetAndScale;
-                    } elevationLayer;
-                    GLlocation elevationLayerDataPlace;
-                    GLlocation elevation_scale;
-                    GLlocation elevationTileCoords31;
-                    GLlocation elevationTileZoomLevel;
+                    GLlocation metersPerUnit;
                 } param;
             } vs;
         } _program;
         Model3DProgram _depthProgram;
-
-        ElevationData findElevationData(const TileId& tileIdN, ZoomLevel buildingZoom);
-
-        void prepareElevation(const TileId& id, ZoomLevel z, const AtlasMapRendererMap3DObjectsStage_OpenGL::Model3DProgram& program);
-
-        void configureElevationData(
-            const std::shared_ptr<const GPUAPI::ResourceInGPU>& elevationDataResource,
-            const TileId tileIdN,
-            const ZoomLevel zoomLevel,
-            const PointF& texCoordsOffsetN,
-            const PointF& texCoordsScaleN,
-            const Model3DProgram& program);
-        void cancelElevation(const Model3DProgram& program);
 
         bool initializeColorProgram();
         bool initializeDepthProgram();

@@ -19,6 +19,7 @@ Map3DObjectsTiledProvider_P::Map3DObjectsTiledProvider_P(
     const std::shared_ptr<MapPresentationEnvironment>& environment)
     : _tiledProvider(tiledProvider)
     , _environment(environment)
+    , _elevationProvider(nullptr)
     , owner(owner_)
 {
 }
@@ -63,16 +64,27 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
 
     Buildings3D buildings3D;
 
+    std::shared_ptr<IMapElevationDataProvider::Data> elevationData;
+    if (_elevationProvider)
+    {
+        IMapElevationDataProvider::Request elevationRequest;
+        elevationRequest.tileId = request.tileId;
+        elevationRequest.zoom = request.zoom;
+        elevationRequest.queryController = request.queryController;
+
+        _elevationProvider->obtainElevationData(elevationRequest, elevationData, nullptr);
+    }
+
     if (tileData && tileData->primitivisedObjects)
     {
         for (const auto& primitive : constOf(tileData->primitivisedObjects->polygons))
         {
-            processPrimitive(primitive, buildings3D, tileData->primitivisedObjects->polygons);
+            processPrimitive(primitive, buildings3D, tileData->primitivisedObjects->polygons, elevationData, request.tileId, request.zoom);
         }
 
         for (const auto& primitive : constOf(tileData->primitivisedObjects->polylines))
         {
-            processPrimitive(primitive, buildings3D, tileData->primitivisedObjects->polylines);
+            processPrimitive(primitive, buildings3D, tileData->primitivisedObjects->polylines, elevationData, request.tileId, request.zoom);
         }
     }
 
@@ -134,8 +146,13 @@ float Map3DObjectsTiledProvider_P::getDefaultBuildingsAlpha() const
     return 1.0f;
 }
 
-void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive, Buildings3D& buildings3D,
-    const MapPrimitiviser::PrimitivesCollection& PrimitivesCollection) const
+void Map3DObjectsTiledProvider_P::processPrimitive(
+    const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
+    Buildings3D& buildings3D,
+    const MapPrimitiviser::PrimitivesCollection& PrimitivesCollection,
+    const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData,
+    const TileId& tileId,
+    const ZoomLevel zoom) const
 {
     if (primitive->type != MapPrimitiviser::PrimitiveType::Polygon)
     {
@@ -289,6 +306,39 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
     if (!minHeightFound && minLevelsFound)
     {
         minHeight = minLevels * levelHeight;
+    }
+
+    if (elevationData)
+    {
+        float maxElevationMeters = 0.0f;
+        float minElevationMeters = 0.0f;
+        bool hasElevationSample = false;
+
+        for (const auto& p : constOf(sourceObject->points31))
+        {
+            accumulateElevationForPoint(p, tileId, zoom, elevationData, maxElevationMeters, minElevationMeters, hasElevationSample);
+        }
+        for (const auto& innerPolygon : constOf(sourceObject->innerPolygonsPoints31))
+        {
+            for (const auto& p : innerPolygon)
+            {
+                accumulateElevationForPoint(p, tileId, zoom, elevationData, maxElevationMeters, minElevationMeters, hasElevationSample);
+            }
+        }
+
+        if (hasElevationSample)
+        {
+            if (minHeight > 0.0)
+            {
+                minHeight += maxElevationMeters;
+            }
+            else
+            {
+                minHeight = minElevationMeters;
+            }
+
+            height += maxElevationMeters;
+        }
     }
 
     const glm::vec3 colorVec(color.r, color.g, color.b);
@@ -512,4 +562,50 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
     buildings3D.buildingIDs.append(buildingID);
     buildings3D.vertexCounts.append(buildingVertexCount);
     buildings3D.indexCounts.append(buildingIndexCount);
+}
+
+void Map3DObjectsTiledProvider_P::accumulateElevationForPoint(
+    const PointI& point31,
+    const TileId& tileId,
+    ZoomLevel zoom,
+    const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData,
+    float& maxElevationMeters,
+    float& minElevationMeters,
+    bool& hasElevationSample) const
+{
+    const auto zoomLevelDelta = MaxZoomLevel - zoom;
+    const PointI tile31(tileId.x << zoomLevelDelta, tileId.y << zoomLevelDelta);
+    const auto offsetInTile = point31 - tile31;
+    const auto tileSize31 = 1u << zoomLevelDelta;
+    PointF offsetInTileN(
+        static_cast<float>(static_cast<double>(offsetInTile.x) / tileSize31),
+        static_cast<float>(static_cast<double>(offsetInTile.y) / tileSize31)
+    );
+
+    float elevationInMeters = 0.0f;
+    if (elevationData->getValue(offsetInTileN, elevationInMeters))
+    {
+        if (!hasElevationSample)
+        {
+            maxElevationMeters = elevationInMeters;
+            minElevationMeters = elevationInMeters;
+            hasElevationSample = true;
+        }
+        else
+        {
+            if (elevationInMeters > maxElevationMeters)
+            {
+                maxElevationMeters = elevationInMeters;
+            }
+            if (elevationInMeters < minElevationMeters)
+            {
+                minElevationMeters = elevationInMeters;
+            }
+        }
+    }
+}
+
+void Map3DObjectsTiledProvider_P::setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationProvider)
+{
+    _elevationProvider = elevationProvider;
 }

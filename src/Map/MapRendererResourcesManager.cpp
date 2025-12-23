@@ -3704,9 +3704,6 @@ void OsmAnd::MapRendererResourcesManager::release3DBuildingGPUData(const QSet<st
 
                 if (sharedData->referenceCount <= 0)
                 {
-                    sharedData->vertexBuffer.reset();
-                    sharedData->indexBuffer.reset();
-                    sharedData->buildingIDs.clear();
                     _shared3DBuildings.removeAt(i);
                 }
                 break;
