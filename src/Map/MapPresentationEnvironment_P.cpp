@@ -67,7 +67,6 @@ void OsmAnd::MapPresentationEnvironment_P::initialize()
     _weatherContourLevelsAttribute = owner->mapStyle->getAttribute(QLatin1String("weatherContourLevels"));
 
     _base3DBuildingsColorAttribute = owner->mapStyle->getAttribute(QStringLiteral("base3DBuildingsColor"));
-    _3DBuildingsAlphaAttribute = owner->mapStyle->getAttribute(QStringLiteral("3DBuildingsAlpha"));
     _useDefaultBuildingColorAttribute = owner->mapStyle->getAttribute(QStringLiteral("useDefaultBuildingColor"));
 
     _default3DBuildingHeight = 3.0f;
@@ -797,28 +796,6 @@ OsmAnd::FColorARGB OsmAnd::MapPresentationEnvironment_P::get3DBuildingsColor() c
         }
     }
 
-    if (_3DBuildingsAlphaAttribute)
-    {
-        MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
-        if (evaluator.evaluate(_3DBuildingsAlphaAttribute, &evalResult))
-        {
-            float alpha = 1.0f;
-            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, alpha))
-            {
-                if (alpha > 1.0f)
-                {
-                    alpha = alpha / 255.0f;
-                }
-
-                if (alpha < 0.0f)
-                    alpha = 0.0f;
-                else if (alpha > 1.0f)
-                    alpha = 1.0f;
-                color.a = alpha;
-            }
-        }
-    }
-
     return color;
 }
 
@@ -845,6 +822,28 @@ bool OsmAnd::MapPresentationEnvironment_P::getUseDefaultBuildingColor() const
         if (evaluator.evaluate(_useDefaultBuildingColorAttribute, &evalResult))
         {
             evalResult.getBooleanValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_BOOL_VALUE, result);
+        }
+    }
+
+    return result;
+}
+
+bool OsmAnd::MapPresentationEnvironment_P::getShow3DBuildingParts() const
+{
+    bool result = false;
+
+    const auto valueDefId = owner->mapStyle->getValueDefinitionIdByName(QStringLiteral("show3DbuildingParts"));
+    if (valueDefId >= 0)
+    {
+        const auto settings = getSettings();
+        const auto it = settings.find(valueDefId);
+        if (it != settings.end())
+        {
+            const auto& settingValue = it.value();
+            if (!settingValue.isComplex)
+            {
+                result = (settingValue.asSimple.asUInt != 0);
+            }
         }
     }
 

@@ -83,7 +83,6 @@ namespace OsmAnd
         std::shared_ptr<const IMapStyle::IAttribute> _weatherContourLevelsAttribute;
 
         std::shared_ptr<const IMapStyle::IAttribute> _base3DBuildingsColorAttribute;
-        std::shared_ptr<const IMapStyle::IAttribute> _3DBuildingsAlphaAttribute;
         std::shared_ptr<const IMapStyle::IAttribute> _useDefaultBuildingColorAttribute;
 
         float _default3DBuildingHeight;
@@ -155,6 +154,7 @@ namespace OsmAnd
         float getDefault3DBuildingHeight() const;
         float getDefault3DBuildingLevelHeight() const;
         bool getUseDefaultBuildingColor() const;
+        bool getShow3DBuildingParts() const;
 
     friend class OsmAnd::MapPresentationEnvironment;
     };

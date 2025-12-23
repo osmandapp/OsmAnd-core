@@ -1329,6 +1329,30 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.getSymbolsOpacity();
     }
 
+    public final boolean set3DBuildingsAlpha(float alpha) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.set3DBuildingsAlpha(alpha);
+    }
+
+    public final float get3DBuildingsAlpha() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.get3DBuildingsAlpha();
+    }
+
+    public final boolean set3DBuildingsDetalization(int detalization) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.set3DBuildingsDetalization(detalization);
+    }
+
+    public final int get3DBuildingsDetalization() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.get3DBuildingsDetalization();
+    }
+
     public final boolean setDateTime(long dateTime) {
         NativeCore.checkIfLoaded();
 

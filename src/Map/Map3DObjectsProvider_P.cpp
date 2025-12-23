@@ -137,15 +137,6 @@ FColorARGB Map3DObjectsTiledProvider_P::getDefaultBuildingsColor() const
     return _environment ? _environment->get3DBuildingsColor() : FColorARGB(1.0f, 0.4f, 0.4f, 0.4f);
 }
 
-float Map3DObjectsTiledProvider_P::getDefaultBuildingsAlpha() const
-{
-    if (_environment)
-    {
-        return _environment->get3DBuildingsColor().a;
-    }
-    return 1.0f;
-}
-
 void Map3DObjectsTiledProvider_P::processPrimitive(
     const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
     Buildings3D& buildings3D,
@@ -170,6 +161,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         return;
     }
 
+    bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
+
     bool isBuilding = false;
     bool isBuildingPart = false;
 
@@ -181,8 +174,13 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         return;
     }
 
+    if (!show3DbuildingParts && isBuildingPart)
+    {
+        return;
+    }
+
     bool isEdge = false;
-    if (isBuilding && !isBuildingPart)
+    if (isBuilding && !isBuildingPart && show3DbuildingParts)
     {
         for (int i = 0; i < sourceObject->additionalAttributeIds.size(); ++i)
         {
@@ -210,7 +208,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             }
         }
 
-        if (!isEdge)
+        if (!isEdge && show3DbuildingParts)
         {
             for (const auto& primitiveToCheck : constOf(PrimitivesCollection))
             {
@@ -293,18 +291,32 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         {
             colorFound = true;
             color = OsmAnd::Utilities::parseColor(caption, color);
-            color.a = getDefaultBuildingsAlpha();
             continue;
         }
     }
 
+    if (height == 0.0f)
+    {
+        return;
+    }
+
     if (!heightFound && levelsFound)
     {
+        if (levels == 0)
+        {
+            return;
+        }
+
         height = levels * levelHeight;
     }
 
     if (!minHeightFound && minLevelsFound)
     {
+        if (minLevels == 0)
+        {
+            return;
+        }
+
         minHeight = minLevels * levelHeight;
     }
 
@@ -317,13 +329,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         for (const auto& p : constOf(sourceObject->points31))
         {
             accumulateElevationForPoint(p, tileId, zoom, elevationData, maxElevationMeters, minElevationMeters, hasElevationSample);
-        }
-        for (const auto& innerPolygon : constOf(sourceObject->innerPolygonsPoints31))
-        {
-            for (const auto& p : innerPolygon)
-            {
-                accumulateElevationForPoint(p, tileId, zoom, elevationData, maxElevationMeters, minElevationMeters, hasElevationSample);
-            }
         }
 
         if (hasElevationSample)

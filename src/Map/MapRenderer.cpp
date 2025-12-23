@@ -68,6 +68,8 @@ OsmAnd::MapRenderer::MapRenderer(
     , currentDebugSettings(_currentDebugSettingsAsConst)
     , _jsonEnabled(false)
     , _maxResourceThreadsLimit(0)
+    , _buildings3DAlpha(0.8f)
+    , _buildings3DDetalization(1)
 {
 }
 
@@ -3341,6 +3343,50 @@ float OsmAnd::MapRenderer::getSymbolsOpacity() const
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     return _requestedState.symbolsOpacity;
+}
+
+bool OsmAnd::MapRenderer::set3DBuildingsAlpha(const float alpha, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    float clampedAlpha = std::clamp(alpha, 0.0f, 1.0f);
+
+    bool update = forcedUpdate || _buildings3DAlpha != clampedAlpha;
+    if (!update)
+        return false;
+
+    _buildings3DAlpha = clampedAlpha;
+
+    return true;
+}
+
+float OsmAnd::MapRenderer::get3DBuildingsAlpha() const
+{
+    return _buildings3DAlpha;
+}
+
+bool OsmAnd::MapRenderer::set3DBuildingsDetalization(const int detalization, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    int clampedDetalization = detalization;
+    if (clampedDetalization < 0)
+        clampedDetalization = 0;
+    else if (clampedDetalization > 2)
+        clampedDetalization = 2;
+
+    bool update = forcedUpdate || _buildings3DDetalization != clampedDetalization;
+    if (!update)
+        return false;
+
+    _buildings3DDetalization = clampedDetalization;
+
+    return true;
+}
+
+int OsmAnd::MapRenderer::get3DBuildingsDetalization() const
+{
+    return _buildings3DDetalization;
 }
 
 bool OsmAnd::MapRenderer::setDateTime(const int64_t dateTime, bool forcedUpdate /*= false*/)

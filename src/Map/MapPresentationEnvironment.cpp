@@ -225,4 +225,9 @@ bool OsmAnd::MapPresentationEnvironment::getUseDefaultBuildingColor() const
     return _p->getUseDefaultBuildingColor();
 }
 
+bool OsmAnd::MapPresentationEnvironment::getShow3DBuildingParts() const
+{
+    return _p->getShow3DBuildingParts();
+}
+
 
