@@ -205,9 +205,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glEnable(GL_BLEND);
     GL_CHECK_RESULT;
 
-    // Set premultiplied alpha color blending
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
     if (!skip && _map3DObjectsStage && !currentDebugSettings->disable3DMapObjectsStage)
     {
         Stopwatch map3DStageStopwatch(metric != nullptr);
@@ -226,6 +223,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
     if (!skip && !currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
     {
+        // Set premultiplied alpha color blending
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
         Stopwatch symbolsStageStopwatch(metric != nullptr);
         const auto stageResult = _symbolsStage->render(metric);
         if (stageResult == MapRendererStage::StageResult::Fail)

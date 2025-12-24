@@ -122,7 +122,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
         )");
         const QString colorCalculation = QString(R"(
                 float ndotl = max(dot(in_vs_normal, param_vs_lightDirection), 0.0);
-                float diffuse = (param_vs_ambient + (1.0 - param_vs_ambient) * ndotl) * param_vs_alpha;
+                float diffuse = param_vs_ambient + (1.0 - param_vs_ambient) * ndotl;
                 v2f_color = vec4(in_vs_color * diffuse, param_vs_alpha);
         )");
 
@@ -646,6 +646,9 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
     glUniform1f(*_program.vs.param.ambient, 0.2f);
     GL_CHECK_RESULT;
     glUniform1f(*_program.vs.param.alpha, buildingAlpha);
+    GL_CHECK_RESULT;
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 
     gpuAPI->useVAO(_vao);

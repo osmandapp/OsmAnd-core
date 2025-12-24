@@ -74,9 +74,9 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             _elevationProvider->obtainElevationData(elevationRequest, elevationData, nullptr);
         }
 
-        QList<std::shared_ptr<const OsmAnd::ObfMapObject>> buildings;
-        QList<std::shared_ptr<const OsmAnd::ObfMapObject>> buildingParts;
-        QList<std::shared_ptr<const OsmAnd::ObfMapObject>> buildingPassages;
+        QSet<std::shared_ptr<const OsmAnd::ObfMapObject>> buildings;
+        QSet<std::shared_ptr<const OsmAnd::ObfMapObject>> buildingParts;
+        QSet<std::shared_ptr<const OsmAnd::ObfMapObject>> buildingPassages;
 
         for (const auto& primitive : tileData->primitivisedObjects->polygons)
         {
@@ -105,8 +105,8 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
     return true;
 }
 
-void Map3DObjectsTiledProvider_P::filterBuildings(QList<std::shared_ptr<const OsmAnd::ObfMapObject>>& buildings,
-                                                  QList<std::shared_ptr<const OsmAnd::ObfMapObject>>& buildingParts) const
+void Map3DObjectsTiledProvider_P::filterBuildings(QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& buildings,
+                                                  QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& buildingParts) const
 {
     const bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
     if (!show3DbuildingParts)
@@ -154,9 +154,9 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QList<std::shared_ptr<const Os
 }
 
 void Map3DObjectsTiledProvider_P::collectFromPoliline(const std::shared_ptr<const MapPrimitiviser::Primitive>& polylinePrimitive,
-                                                  QList<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildings,
-                                                  QList<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingParts,
-                                                  QList<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingPassages) const
+                                                  QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildings,
+                                                  QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingParts,
+                                                  QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingPassages) const
 {
     const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(polylinePrimitive->sourceObject);
     if (!sourceObject || sourceObject->points31.isEmpty())
@@ -170,25 +170,25 @@ void Map3DObjectsTiledProvider_P::collectFromPoliline(const std::shared_ptr<cons
 
         if (sourceObject->containsTag(QLatin1String("building")))
         {
-            outBuildings.push_back(sourceObject);
+            outBuildings.insert(sourceObject);
         }
         else if (show3DbuildingParts && sourceObject->containsTag(QLatin1String("building:part")))
         {
-            outBuildingParts.push_back(sourceObject);
+            outBuildingParts.insert(sourceObject);
         }
     }
     else if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polyline)
     {
         if (sourceObject->containsAttribute(QLatin1String("tunnel"), QLatin1String("building_passage")))
         {
-            outBuildingPassages.push_back(sourceObject);
+            outBuildingPassages.insert(sourceObject);
         }
     }
 }
 
 void Map3DObjectsTiledProvider_P::collectFromPoligons(const std::shared_ptr<const MapPrimitiviser::Primitive>& poligonPrimitive,
-                                                  QList<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildings,
-                                                  QList<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingParts) const
+                                                  QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildings,
+                                                  QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingParts) const
 {
     const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(poligonPrimitive->sourceObject);
     if (!sourceObject || sourceObject->points31.isEmpty())
@@ -200,11 +200,11 @@ void Map3DObjectsTiledProvider_P::collectFromPoligons(const std::shared_ptr<cons
 
     if (sourceObject->containsTag(QLatin1String("building")))
     {
-        outBuildings.push_back(sourceObject);
+        outBuildings.insert(sourceObject);
     }
     else if (show3DbuildingParts && sourceObject->containsTag(QLatin1String("building:part")))
     {
-        outBuildingParts.push_back(sourceObject);
+        outBuildingParts.insert(sourceObject);
     }
 }
 
