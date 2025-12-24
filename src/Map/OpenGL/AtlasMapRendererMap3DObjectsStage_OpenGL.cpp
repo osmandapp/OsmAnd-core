@@ -122,7 +122,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
         )");
         const QString colorCalculation = QString(R"(
                 float ndotl = max(dot(in_vs_normal, param_vs_lightDirection), 0.0);
-                float diffuse = param_vs_ambient + (1.0 - param_vs_ambient) * ndotl;
+                float diffuse = (param_vs_ambient + (1.0 - param_vs_ambient) * ndotl) * param_vs_alpha;
                 v2f_color = vec4(in_vs_color * diffuse, param_vs_alpha);
         )");
 
@@ -847,5 +847,5 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::release(bool gpuContextLost)
 bool AtlasMapRendererMap3DObjectsStage_OpenGL::isDepthPrepassRequired() const
 {
     const float buildingAlpha = renderer->get3DBuildingsAlpha();
-    return buildingAlpha < 1.0f;
+    return buildingAlpha < 1.0f && buildingAlpha > 0.0;
 }

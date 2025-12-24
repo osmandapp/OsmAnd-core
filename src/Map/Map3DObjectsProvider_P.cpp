@@ -2,8 +2,6 @@
 
 #include <mapbox/earcut.hpp>
 
-#include <OsmAndCore/Data/ObfMapObject.h>
-
 #include "MapDataProviderHelpers.h"
 #include "Utilities.h"
 #include "MapRenderer.h"
@@ -63,28 +61,43 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
     }
 
     Buildings3D buildings3D;
-
-    std::shared_ptr<IMapElevationDataProvider::Data> elevationData;
-    if (_elevationProvider)
-    {
-        IMapElevationDataProvider::Request elevationRequest;
-        elevationRequest.tileId = request.tileId;
-        elevationRequest.zoom = request.zoom;
-        elevationRequest.queryController = request.queryController;
-
-        _elevationProvider->obtainElevationData(elevationRequest, elevationData, nullptr);
-    }
-
     if (tileData && tileData->primitivisedObjects)
     {
-        for (const auto& primitive : constOf(tileData->primitivisedObjects->polygons))
+        std::shared_ptr<IMapElevationDataProvider::Data> elevationData;
+        if (_elevationProvider)
         {
-            processPrimitive(primitive, buildings3D, tileData->primitivisedObjects->polygons, elevationData, request.tileId, request.zoom);
+            IMapElevationDataProvider::Request elevationRequest;
+            elevationRequest.tileId = request.tileId;
+            elevationRequest.zoom = request.zoom;
+            elevationRequest.queryController = request.queryController;
+
+            _elevationProvider->obtainElevationData(elevationRequest, elevationData, nullptr);
         }
 
-        for (const auto& primitive : constOf(tileData->primitivisedObjects->polylines))
+        QList<std::shared_ptr<const OsmAnd::ObfMapObject>> buildings;
+        QList<std::shared_ptr<const OsmAnd::ObfMapObject>> buildingParts;
+        QList<std::shared_ptr<const OsmAnd::ObfMapObject>> buildingPassages;
+
+        for (const auto& primitive : tileData->primitivisedObjects->polygons)
         {
-            processPrimitive(primitive, buildings3D, tileData->primitivisedObjects->polylines, elevationData, request.tileId, request.zoom);
+            collectFromPoligons(primitive, buildings, buildingParts);
+        }
+
+        for (const auto& primitive : tileData->primitivisedObjects->polylines)
+        {
+            collectFromPoliline(primitive, buildings, buildingParts, buildingPassages);
+        }
+
+        filterBuildings(buildings, buildingParts);
+
+        for (const auto& buildingPart : buildingParts)
+        {
+            processPrimitive(buildingPart, buildings3D, elevationData, request.tileId, request.zoom);
+        }
+
+        for (const auto& building : buildings)
+        {
+            processPrimitive(building, buildings3D, elevationData, request.tileId, request.zoom);
         }
     }
 
@@ -92,6 +105,108 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
     return true;
 }
 
+void Map3DObjectsTiledProvider_P::filterBuildings(QList<std::shared_ptr<const OsmAnd::ObfMapObject>>& buildings,
+                                                  QList<std::shared_ptr<const OsmAnd::ObfMapObject>>& buildingParts) const
+{
+    const bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
+    if (!show3DbuildingParts)
+    {
+        return;
+    }
+
+    for (auto it = buildings.begin(); it != buildings.end();)
+    {
+        const auto& building = *it;
+
+        if (building->containsTag(QLatin1String("role_outline"), true) ||
+            building->containsTag(QLatin1String("role_inner"), true) ||
+            building->containsTag(QLatin1String("role_outer"), true))
+        {
+            it = buildings.erase(it);
+            continue;
+        }
+
+        if (building->containsAttribute(QLatin1String("layer"), QLatin1String("-1"), true))
+        {
+            it = buildings.erase(it);
+            continue;
+        }
+
+        bool shouldRemove = false;
+        for (const auto& buildingPart : buildingParts)
+        {
+            if (building->bbox31.contains(buildingPart->bbox31))
+            {
+                shouldRemove = true;
+                break;
+            }
+        }
+
+        if (shouldRemove)
+        {
+            it = buildings.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
+
+void Map3DObjectsTiledProvider_P::collectFromPoliline(const std::shared_ptr<const MapPrimitiviser::Primitive>& polylinePrimitive,
+                                                  QList<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildings,
+                                                  QList<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingParts,
+                                                  QList<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingPassages) const
+{
+    const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(polylinePrimitive->sourceObject);
+    if (!sourceObject || sourceObject->points31.isEmpty())
+    {
+        return;
+    }
+
+    if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polygon)
+    {
+        const bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
+
+        if (sourceObject->containsTag(QLatin1String("building")))
+        {
+            outBuildings.push_back(sourceObject);
+        }
+        else if (show3DbuildingParts && sourceObject->containsTag(QLatin1String("building:part")))
+        {
+            outBuildingParts.push_back(sourceObject);
+        }
+    }
+    else if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polyline)
+    {
+        if (sourceObject->containsAttribute(QLatin1String("tunnel"), QLatin1String("building_passage")))
+        {
+            outBuildingPassages.push_back(sourceObject);
+        }
+    }
+}
+
+void Map3DObjectsTiledProvider_P::collectFromPoligons(const std::shared_ptr<const MapPrimitiviser::Primitive>& poligonPrimitive,
+                                                  QList<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildings,
+                                                  QList<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingParts) const
+{
+    const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(poligonPrimitive->sourceObject);
+    if (!sourceObject || sourceObject->points31.isEmpty())
+    {
+        return;
+    }
+
+    const bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
+
+    if (sourceObject->containsTag(QLatin1String("building")))
+    {
+        outBuildings.push_back(sourceObject);
+    }
+    else if (show3DbuildingParts && sourceObject->containsTag(QLatin1String("building:part")))
+    {
+        outBuildingParts.push_back(sourceObject);
+    }
+}
 
 bool Map3DObjectsTiledProvider_P::obtainData(
     const IMapDataProvider::Request& request,
@@ -138,109 +253,12 @@ FColorARGB Map3DObjectsTiledProvider_P::getDefaultBuildingsColor() const
 }
 
 void Map3DObjectsTiledProvider_P::processPrimitive(
-    const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
+    const std::shared_ptr<const OsmAnd::ObfMapObject>& sourceObject,
     Buildings3D& buildings3D,
-    const MapPrimitiviser::PrimitivesCollection& PrimitivesCollection,
     const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData,
     const TileId& tileId,
     const ZoomLevel zoom) const
 {
-    if (primitive->type != MapPrimitiviser::PrimitiveType::Polygon)
-    {
-        return;
-    }
-
-    const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(primitive->sourceObject);
-    if (!sourceObject || sourceObject->points31.isEmpty())
-    {
-        return;
-    }
-
-    if (buildings3D.buildingIDs.contains(sourceObject->id))
-    {
-        return;
-    }
-
-    bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
-
-    bool isBuilding = false;
-    bool isBuildingPart = false;
-
-    isBuilding = sourceObject->containsTag(QLatin1String("building"));
-    isBuildingPart = sourceObject->containsTag(QLatin1String("building:part"));
-
-    if (!isBuilding && !isBuildingPart)
-    {
-        return;
-    }
-
-    if (!show3DbuildingParts && isBuildingPart)
-    {
-        return;
-    }
-
-    bool isEdge = false;
-    if (isBuilding && !isBuildingPart && show3DbuildingParts)
-    {
-        for (int i = 0; i < sourceObject->additionalAttributeIds.size(); ++i)
-        {
-            const auto pPrimitiveAttribute = sourceObject->resolveAttributeByIndex(i, true);
-            if (!pPrimitiveAttribute)
-            {
-                continue;
-            }
-
-            if (pPrimitiveAttribute->tag == QLatin1String("role_outline") ||
-                pPrimitiveAttribute->tag == QLatin1String("role_inner") ||
-                pPrimitiveAttribute->tag == QLatin1String("role_outer"))
-            {
-                isEdge = true;
-                break;
-            }
-
-            if (pPrimitiveAttribute->tag == QLatin1String("layer"))
-            {
-                if (pPrimitiveAttribute->value == QLatin1String("-1"))
-                {
-                    isEdge = true;
-                    break;
-                }
-            }
-        }
-
-        if (!isEdge && show3DbuildingParts)
-        {
-            for (const auto& primitiveToCheck : constOf(PrimitivesCollection))
-            {
-                if (primitiveToCheck->type != MapPrimitiviser::PrimitiveType::Polygon)
-                {
-                    continue;
-                }
-
-                if (primitiveToCheck == primitive)
-                {
-                    continue;
-                }
-
-                if (!primitiveToCheck->sourceObject->containsTag(QLatin1String("building:part")))
-                {
-                    continue;
-                }
-
-                if (sourceObject->bbox31.contains(primitiveToCheck->sourceObject->bbox31))
-                {
-                    isEdge = true;
-                    break;
-                }
-            }
-        }
-    }
-
-    if (isEdge)
-    {
-        return;
-    }
-
     float levelHeight = getDefaultBuildingsLevelHeight();
 
     float height = getDefaultBuildingsHeight();
