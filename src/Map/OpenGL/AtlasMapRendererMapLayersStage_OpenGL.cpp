@@ -711,23 +711,27 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "%HillshadeInVertexShader_3%                                                                                        ""\n"
             "        float elev = height[1][1] / v2f_metersPerUnit;                                                             ""\n"
             "        bool noElev = false;                                                                                       ""\n"
-            "        noElev = noElev || vertexIndex.y == 0 && (param_vs_tileCoords31.w & 2) > 0;                                ""\n"
-            "        noElev = noElev || vertexIndex.x == 0 && (param_vs_tileCoords31.w & 8) > 0;                                ""\n"
-            "        noElev = noElev || vertexIndex.y == %HeixelsPerTileSide% && (param_vs_tileCoords31.w & 32) > 0;            ""\n"
-            "        noElev = noElev || vertexIndex.x == %HeixelsPerTileSide% && (param_vs_tileCoords31.w & 128) > 0;           ""\n"
-            "        bool avgHorElev = vertexIndex.y == 0 && (param_vs_tileCoords31.w & 1) > 0;                                 ""\n"
-            "        bool avgVerElev = vertexIndex.x == 0 && (param_vs_tileCoords31.w & 4) > 0;                                 ""\n"
-            "        avgHorElev = avgHorElev || vertexIndex.y == %HeixelsPerTileSide% && (param_vs_tileCoords31.w & 16) > 0;    ""\n"
-            "        avgVerElev = avgVerElev || vertexIndex.x == %HeixelsPerTileSide% && (param_vs_tileCoords31.w & 64) > 0;    ""\n"
+            "        noElev = noElev || vertexIndex.y == 0 && (param_vs_tileCoords31.w & 3) == 2;                               ""\n"
+            "        noElev = noElev || vertexIndex.x == 0 && (param_vs_tileCoords31.w & 12) == 8;                              ""\n"
+            "        noElev = noElev || vertexIndex.y == %HeixelsPerTileSide% && (param_vs_tileCoords31.w & 48) == 32;          ""\n"
+            "        noElev = noElev || vertexIndex.x == %HeixelsPerTileSide% && (param_vs_tileCoords31.w & 192) == 128;        ""\n"
+            "        bool bitLower = false;                                                                                     ""\n"
+            "        bitLower = bitLower || vertexIndex.y == 0 && (param_vs_tileCoords31.w & 3) == 3;                           ""\n"
+            "        bitLower = bitLower || vertexIndex.x == 0 && (param_vs_tileCoords31.w & 12) == 12;                         ""\n"
+            "        bitLower = bitLower || vertexIndex.y == %HeixelsPerTileSide% && (param_vs_tileCoords31.w & 48) == 48;      ""\n"
+            "        bitLower = bitLower || vertexIndex.x == %HeixelsPerTileSide% && (param_vs_tileCoords31.w & 192) == 192;    ""\n"
+            "        bool avgHorElev = vertexIndex.y == 0 && (param_vs_tileCoords31.w & 3) == 1;                                ""\n"
+            "        bool avgVerElev = vertexIndex.x == 0 && (param_vs_tileCoords31.w & 12) == 4;                               ""\n"
+            "        avgHorElev = avgHorElev || vertexIndex.y == %HeixelsPerTileSide% && (param_vs_tileCoords31.w & 48) == 16;  ""\n"
+            "        avgVerElev = avgVerElev || vertexIndex.x == %HeixelsPerTileSide% && (param_vs_tileCoords31.w & 192) == 64; ""\n"
             "        bool avgMidElev = avgHorElev && (vertexIndex.x & 1) == 0 || avgVerElev && (vertexIndex.y & 1) == 0;        ""\n"
-            "        float ext = 0.5;                                                                                           ""\n"
-            "        elev = avgMidElev ? averageHeight(height, 1, 1) / v2f_metersPerUnit + ext : elev;                          ""\n"
+            "        elev = avgMidElev ? averageHeight(height, 1, 1) / v2f_metersPerUnit : elev;                                ""\n"
             "        elev = avgHorElev && (vertexIndex.x & 1) > 0 ? (averageHeight(height, 0, 1)                                ""\n"
-            "            + averageHeight(height, 2, 1)) / 2.0 / v2f_metersPerUnit + ext : elev;                                 ""\n"
+            "            + averageHeight(height, 2, 1)) / 2.0 / v2f_metersPerUnit : elev;                                       ""\n"
             "        elev = avgVerElev && (vertexIndex.y & 1) > 0 ? (averageHeight(height, 1, 0)                                ""\n"
-            "            + averageHeight(height, 1, 2)) / 2.0 / v2f_metersPerUnit + ext : elev;                                 ""\n"
+            "            + averageHeight(height, 1, 2)) / 2.0 / v2f_metersPerUnit : elev;                                       ""\n"
             "        v2f_colorIntensity = noElev ? 0.0 : 1.0;                                                                   ""\n"
-            "        v.xyz += (noElev ? 0.0 : elev) * v2f_normal;                                                               ""\n"
+            "        v.xyz += (noElev ? 0.0 : (bitLower ? elev - 0.25 : elev)) * v2f_normal;                                    ""\n"
             "    }                                                                                                              ""\n"
             "                                                                                                                   ""\n"
             "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
@@ -1785,18 +1789,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
         const auto leftTileIdN = Utilities::normalizeTileId(TileId::fromXY(tileIdN.x - 1, tileIdN.y), zoomLevel);
         const auto lowerTileIdN = Utilities::normalizeTileId(TileId::fromXY(tileIdN.x, tileIdN.y + 1), zoomLevel);
         const auto rightTileIdN = Utilities::normalizeTileId(TileId::fromXY(tileIdN.x + 1, tileIdN.y), zoomLevel);
-        elevatedSides |= isUpperVisible ? (!isNearElevatedTile(
-            PointI(0, -1), upperTileIdN, elevatedTiles, isHighDetail, zoomLevel) ? 2 : 0) : (isNearElevatedTile(
-                PointI(0, -1), upperTileIdN, elevatedTiles, isHighDetail, zoomLevel) ? 0 : 1);
-        elevatedSides |= isLeftVisible ? (!isNearElevatedTile(
-            PointI(-1, 0), leftTileIdN, elevatedTiles, isHighDetail, zoomLevel) ? 8 : 0) : (isNearElevatedTile(
-                PointI(-1, 0), leftTileIdN, elevatedTiles, isHighDetail, zoomLevel) ? 0 : 4);
-        elevatedSides |= isLowerVisible ? (!isNearElevatedTile(
-            PointI(0, 1), lowerTileIdN, elevatedTiles, isHighDetail, zoomLevel) ? 32 : 0) : (isNearElevatedTile(
-                PointI(0, 1), lowerTileIdN, elevatedTiles, isHighDetail, zoomLevel) ? 0 : 16);
-        elevatedSides |= isRightVisible ? (!isNearElevatedTile(
-            PointI(1, 0), rightTileIdN, elevatedTiles, isHighDetail, zoomLevel) ? 128 : 0) : (isNearElevatedTile(
-                PointI(1, 0), rightTileIdN, elevatedTiles, isHighDetail, zoomLevel) ? 0 : 64);
+        bool isOtherDetail;
+        elevatedSides |= isNearElevatedTile(PointI(0, -1), upperTileIdN, elevatedTiles, zoomLevel, isOtherDetail)
+            ? (isUpperVisible && isOtherDetail ? 3 : 0) : (isUpperVisible ? 2 : 1);
+        elevatedSides |= isNearElevatedTile(PointI(-1, 0), leftTileIdN, elevatedTiles, zoomLevel, isOtherDetail)
+            ? (isLeftVisible && isOtherDetail ? 12 : 0) : (isLeftVisible ? 8 : 4);
+        elevatedSides |= isNearElevatedTile(PointI(0, 1), lowerTileIdN, elevatedTiles, zoomLevel, isOtherDetail)
+            ? (isLowerVisible && isOtherDetail ? 48 : 0) : (isLowerVisible ? 32 : 16);
+        elevatedSides |= isNearElevatedTile(PointI(1, 0), rightTileIdN, elevatedTiles, zoomLevel, isOtherDetail)
+            ? (isRightVisible && isOtherDetail ? 192 : 0) : (isRightVisible ? 128 : 64);
     }
 
     int primaryZoom = 0;
@@ -2835,14 +2836,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::isNearElevatedTile(
     const PointI& offset,
     const TileId tileIdN,
     const QMap<ZoomLevel, QSet<TileId>>& elevatedTiles,
-    const bool isHighDetail,
-    const ZoomLevel zoomLevel) const
+    const ZoomLevel zoomLevel,
+    bool& isOtherDetail) const
 {
     if (elevatedTiles.value(zoomLevel).contains(tileIdN))
+    {
+        isOtherDetail = false;
         return true;
-
-    if (isHighDetail)
-        return false;
+    }
 
     const auto prevZoom = static_cast<int32_t>(zoomLevel) + 1;
     const auto& itElevatedTileset = elevatedTiles.constFind(static_cast<ZoomLevel>(prevZoom));
@@ -2857,7 +2858,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::isNearElevatedTile(
             tileId.x + (offset.x != 0 ? (offset.x > 0 ? 0 : 1) : 1),
             tileId.y + (offset.y != 0 ? (offset.y > 0 ? 0 : 1) : 1));
         if (elevatedTileset.contains(firstTileId) || elevatedTileset.contains(secondTileId))
+        {
+            isOtherDetail = true;
             return true;
+        }
     }
 
     return false;

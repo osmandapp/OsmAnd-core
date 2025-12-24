@@ -266,8 +266,8 @@ namespace OsmAnd
             const PointI& offset,
             const TileId tileIdN,
             const QMap<ZoomLevel, QSet<TileId>>& elevatedTiles,
-            const bool isHighDetail,
-            const ZoomLevel zoomLevel) const;
+            const ZoomLevel zoomLevel,
+            bool& isOtherDetail) const;
         bool activateRasterLayersProgram(
             const unsigned int numberOfLayersInBatch,
             const int programFeatures,
