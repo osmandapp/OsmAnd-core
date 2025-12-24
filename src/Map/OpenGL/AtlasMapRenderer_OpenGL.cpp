@@ -2898,9 +2898,15 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
         std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
         PointF scaledStart(startPointOffset.x, startPointOffset.y);
         const PointD midPointOffset(midPoint.x - startTileId.x, midPoint.y - startTileId.y);
-        const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y, TileSize3D);
-        const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y + 1, TileSize3D);
-        const auto midMetersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, midPointOffset.y);
+        double upperMetersPerUnit, lowerMetersPerUnit, midMetersPerUnit;
+        if (state.flatEarth)
+        {
+            upperMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y, TileSize3D);
+            lowerMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y + 1, TileSize3D);
+            midMetersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, midPointOffset.y);
+        }
+        else
+            midMetersPerUnit = internalState.metersPerUnit;
         const auto midElevationFactor = midMetersPerUnit / elevationScaleFactor;
         auto scaledZoom = InvalidZoomLevel;
         if (midPointZ * midElevationFactor < _maximumHeightFromSeaLevelInMeters)
@@ -2910,7 +2916,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
             const double tileSize = 1ull << (state.zoomLevel - scaledZoom);
             const auto scaledDistance = (midPointOffset - startPointOffset) / tileSize;
             PointF scaledEnd(scaledStart.x + scaledDistance.x, scaledStart.y + scaledDistance.y);
-            const auto startMetersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, startPointOffset.y);
+            const auto startMetersPerUnit = state.flatEarth
+                ? glm::mix(upperMetersPerUnit, lowerMetersPerUnit, startPointOffset.y) : internalState.metersPerUnit;
             const auto startElevationFactor = startMetersPerUnit / elevationScaleFactor;
             PointF exactLocation;
             float exactHeight = 0.0f;
