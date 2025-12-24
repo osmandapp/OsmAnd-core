@@ -1089,7 +1089,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         toCamera.y += 1 << zoomLevel;
     camTileId = TileId::fromXY(internalState->synthTileId.x + toCamera.x, internalState->synthTileId.y + toCamera.y);
     const PointD tilesToTarget(toCamera);
-    const auto distanceLimit = tilesToTarget.norm();
+    const auto distanceLimit = tilesToTarget.norm() - M_SQRT2;
     bool lookForStrictlyVisible = distanceLimit > 0.0;
     auto targetTileId = lookForStrictlyVisible ? camTileId : internalState->synthTileId;
     testTiles1[zoomLevel].insert(targetTileId, NotTestedYet);
