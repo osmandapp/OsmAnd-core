@@ -182,7 +182,10 @@ namespace OsmAnd
         virtual double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const = 0;
         virtual bool getNewTargetAndZoom(
             const MapRendererState& state, const PointI& screenPoint, const PointI& location31, const float height,
-            PointI& target31, ZoomLevel& zoomLevel, float& visualZoom) const = 0;
+            PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, double* shiftInPixels = nullptr) const = 0;
+        virtual bool getNewTargetAndZoom(
+            const MapRendererState& state, const PointI& location31, const float height,
+            PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, PointI& screenPoint) const = 0;
         virtual bool isLocationHeightAvailable(const MapRendererState& state, const PointI& location31) const = 0;
         virtual bool getExtraZoomAndTiltForRelief(const MapRendererState& state, PointF& zoomAndTilt) const = 0;
         virtual bool getExtraZoomAndRotationForAiming(const MapRendererState& state,

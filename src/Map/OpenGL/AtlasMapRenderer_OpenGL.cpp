@@ -39,6 +39,8 @@
 #include <TargetConditionals.h>
 #endif
 
+#define MIN_COS_SURFACE 0.03
+
 // Set camera's near depth limit
 const float OsmAnd::AtlasMapRenderer_OpenGL::_zNear = 1.0f;
 // Set average radius of Earth
@@ -1089,7 +1091,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         toCamera.y += 1 << zoomLevel;
     camTileId = TileId::fromXY(internalState->synthTileId.x + toCamera.x, internalState->synthTileId.y + toCamera.y);
     const PointD tilesToTarget(toCamera);
-    const auto distanceLimit = tilesToTarget.norm() - M_SQRT2;
+    const auto distanceLimit = tilesToTarget.norm() - 1.0;
     bool lookForStrictlyVisible = distanceLimit > 0.0;
     auto targetTileId = lookForStrictlyVisible ? camTileId : internalState->synthTileId;
     testTiles1[zoomLevel].insert(targetTileId, NotTestedYet);
@@ -1683,7 +1685,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
             const auto deltaX = dirX * dir;
             const auto deltaY = dirY * dir;
             if ((!atLeastOneAdded && atLeastOneFlatVisibleFound)
-                || (lookForStrictlyVisible && distanceFromTarget > distanceLimit))
+                || (lookForStrictlyVisible && distanceFromTarget >= distanceLimit))
             {
                 if (lookForStrictlyVisible)
                 {
@@ -1727,7 +1729,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 auto nearTileId = TileId::fromXY(
                     static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distanceFromTarget)),
                     static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distanceFromTarget)));
-                if (nearTileId == firstTileId)
+                if (nearTileId == firstTileId && distanceFromTarget < distanceLimit)
                 {
                     distanceFromTarget += 1.0;
                     nearTileId = TileId::fromXY(
@@ -2285,7 +2287,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
         double length;
         const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, camPos, length);
         if (!intersects || !(length > 0.0 && internalState.worldCameraPosition.y > height
-            || length < 0.0 && internalState.worldCameraPosition.y < height))
+            || length < 0.0 && internalState.worldCameraPosition.y < height)
+            || (height == 0.0f && glm::dot(rayD, -planeN) < MIN_COS_SURFACE))
             return false;
 
         const auto point = camPos + length * rayD;
@@ -2310,7 +2313,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
             1.0 + static_cast<double>(height) / internalState.globeRadius,
             position,
             true);
-        if (!intersects || glm::dot(position - internalState.cameraRotatedPosition, rayG) <= 0.0)
+        if (!intersects || glm::dot(position - internalState.cameraRotatedPosition, rayG) <= 0.0
+            || (height == 0.0f && glm::dot(rayG, -position) < MIN_COS_SURFACE))
             return false;
         
         const auto point = height == 0.0f ? position : glm::normalize(position);
@@ -2343,7 +2347,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
         double length;
         const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, camPos, length);
         if (!intersects || !(length > 0.0 && internalState.worldCameraPosition.y > height
-            || length < 0.0 && internalState.worldCameraPosition.y < height))
+            || length < 0.0 && internalState.worldCameraPosition.y < height)
+            || (height == 0.0f && glm::dot(rayD, -planeN) < MIN_COS_SURFACE))
             return false;
 
         position = camPos + length * rayD;
@@ -2360,7 +2365,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
         position.y -= 1.0;
         position *= internalState.globeRadius;
 
-        if (!intersects || glm::dot(position - camPos, rayD) <= 0.0)
+        if (!intersects || glm::dot(position - camPos, rayD) <= 0.0
+            || (height == 0.0f && glm::dot(glm::normalize(glm::dvec3(0.0, -internalState.globeRadius, 0.0) - position),
+                rayD) < MIN_COS_SURFACE))
             return false;
     }
 
@@ -3352,18 +3359,16 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const PointI& l
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState& state,
     const PointI& screenPoint, const PointI& location31, const float height,
-    PointI& target31, ZoomLevel& zoomLevel, float& visualZoom) const
+    PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, double* shiftInPixels /* = nullptr */) const
 {
     InternalState internalState;
     bool ok = updateInternalState(internalState, state, *getConfiguration(), RequiredToUnproject);
     if (!ok)
         return false;
 
+    internalState.metersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, state.target31, TileSize3D);
     if (!state.flatEarth)
-    {
-        internalState.metersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, state.target31, TileSize3D);
         internalState.globeRadius = _radius / internalState.metersPerUnit;
-    }
 
     glm::dvec3 point;
     ok = getPositionFromScreenPoint(internalState, state, PointD(screenPoint), point, height);
@@ -3385,7 +3390,19 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
         target.x = static_cast<int64_t>(location31.x) - static_cast<int64_t>(position.x);
         target.y = static_cast<int64_t>(location31.y) - static_cast<int64_t>(position.y);
 
-        target31 = Utilities::normalizeCoordinates(target, ZoomLevel31);        
+        target31 = Utilities::normalizeCoordinates(target, ZoomLevel31);
+
+        if (shiftInPixels)
+        {
+            const auto angles = Utilities::getAnglesFrom31(target31) / M_PI * 180.0;
+            const auto prevAngles = Utilities::getAnglesFrom31(state.target31) / M_PI * 180.0;
+            const auto distanceInMeters =
+                Utilities::distance(OsmAnd::LatLon(angles.y, angles.x), OsmAnd::LatLon(prevAngles.y, prevAngles.x));
+            const auto pTile = internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor;
+            *shiftInPixels = distanceInMeters * pTile / (internalState.metersPerUnit * TileSize3D);
+            target31 = PointI(0, 0);
+            return true;
+        }
     }
     else
     {
@@ -3406,11 +3423,18 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
             target31 = PointI(-1, -1);
             return true;
         }
-        const auto n = v / l;
         const auto a = qAtan2(l, glm::dot(neededV, currentV));
+        if (shiftInPixels)
+        {
+            const auto pTile = internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor;
+            *shiftInPixels = a * _radius * pTile / (internalState.metersPerUnit * TileSize3D);
+            target31 = PointI(0, 0);
+            return true;
+        }
         const auto s = qSin(a);
         const auto c = qCos(a);
         const auto t = 1.0 - c;
+        const auto n = v / l;
 
         const auto futureMatrix = mGlobeRotation * glm::dmat3(
             t * n.x * n.x + c, t * n.x * n.y + s * n.z, t * n.x * n.z - s * n.y,
@@ -3450,6 +3474,34 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
     }
 
     return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState& state,
+    const PointI& location31, const float height,
+    PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, PointI& screenPoint) const
+{
+    bool res;
+    const auto point = screenPoint;
+    if (state.fixedLocation31 == location31 && state.fixedPixel.x >= 0 && state.fixedPixel.y >= 0
+        && (state.fixedPixel.x != screenPoint.x || state.fixedPixel.y != screenPoint.y))
+    {
+        double shiftInPixels;
+        res = getNewTargetAndZoom(state, point, location31, height, target31, zoomLevel, visualZoom, &shiftInPixels);
+        if (res && target31.x >= 0)
+        {
+            const auto v = PointD(screenPoint - state.fixedPixel);
+            const auto f = 1.0 - (shiftInPixels >= 1.0 ? qMin(v.norm() / shiftInPixels, 1.0) : 1.0);
+            const auto r = PointD(state.fixedPixel) + v * (1.0 - f * f * f * f);
+            const auto midPoint = PointI(static_cast<int>(qRound(r.x)), static_cast<int>(qRound(r.y)));
+            res = getNewTargetAndZoom(state, midPoint, location31, height, target31, zoomLevel, visualZoom);
+            if (res && target31.x >= 0)
+                screenPoint = midPoint;
+        }
+    }
+    else
+        res = getNewTargetAndZoom(state, point, location31, height, target31, zoomLevel, visualZoom);
+
+    return res;
 }
 
 float OsmAnd::AtlasMapRenderer_OpenGL::getHeightOfLocation(const MapRendererState& state,
