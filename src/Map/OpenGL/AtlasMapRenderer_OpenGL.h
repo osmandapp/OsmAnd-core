@@ -146,7 +146,10 @@ namespace OsmAnd
         double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const override;
         bool getNewTargetAndZoom(
             const MapRendererState& state, const PointI& screenPoint, const PointI& location31, const float height,
-            PointI& target31, ZoomLevel& zoomLevel, float& visualZoom) const override;
+            PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, double* shiftInPixels = nullptr) const override;
+        bool getNewTargetAndZoom(
+            const MapRendererState& state, const PointI& location31, const float height,
+            PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, PointI& screenPoint) const override;
         bool getExtraZoomAndTiltForRelief(const MapRendererState& state, PointF& zoomAndTilt) const override;
         bool getExtraZoomAndRotationForAiming(const MapRendererState& state,
             const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstPoint,

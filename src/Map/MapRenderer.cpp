@@ -2308,19 +2308,14 @@ bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI&
     auto target31 = _requestedState.target31;
     auto zoomLevel = _requestedState.zoomLevel;
     auto visualZoom = _requestedState.visualZoom;
+    auto screenPoint = screenPoint_;
     bool haveTarget = getNewTargetAndZoom(
-        _requestedState, screenPoint_, location31, height, target31, zoomLevel, visualZoom);
-    if (!haveTarget)
+        _requestedState, location31, height, target31, zoomLevel, visualZoom, screenPoint);
+    if (!haveTarget || target31.x < 0)
         return false;
 
-    if (target31.x < 0)
-    {
-        height = 0.0f;
-        target31 = location31;
-    }
-
     bool update = forcedUpdate
-        || _requestedState.fixedPixel != screenPoint_
+        || _requestedState.fixedPixel != screenPoint
         || _requestedState.fixedLocation31 != location31
         || _requestedState.fixedHeight != height
         || _requestedState.fixedZoomLevel != _requestedState.zoomLevel
@@ -2328,7 +2323,7 @@ bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI&
     if (!update)
         return false;
 
-    _requestedState.fixedPixel = screenPoint_;
+    _requestedState.fixedPixel = screenPoint;
     _requestedState.fixedLocation31 = location31;
     _requestedState.fixedHeight = height;
     _requestedState.fixedZoomLevel = _requestedState.zoomLevel;
@@ -2683,22 +2678,13 @@ bool OsmAnd::MapRenderer::setMapTargetPixelCoordinates(const PointI& screenPoint
     auto target31 = _requestedState.target31;
     auto zoomLevel = _requestedState.zoomLevel;
     auto visualZoom = _requestedState.visualZoom;
-    bool haveTarget = getNewTargetAndZoom(_requestedState,
-        screenPoint_, _requestedState.fixedLocation31, _requestedState.fixedHeight, target31, zoomLevel, visualZoom);
-    if(!haveTarget)
+    auto screenPoint = screenPoint_;
+    bool haveTarget = getNewTargetAndZoom(_requestedState, _requestedState.fixedLocation31,
+        _requestedState.fixedHeight, target31, zoomLevel, visualZoom, screenPoint);
+    if(!haveTarget || target31.x < 0)
         return false;
 
-    if (target31.x < 0)
-    {
-        _requestedState.fixedHeight = 0.0f;
-        _requestedState.surfaceZoomLevel = _requestedState.zoomLevel;
-        _requestedState.surfaceVisualZoom = _requestedState.visualZoom;
-        _requestedState.surfaceZoomLevelToBe = _requestedState.surfaceZoomLevel;
-        _requestedState.surfaceVisualZoomToBe = _requestedState.surfaceVisualZoom;
-        target31 = _requestedState.fixedLocation31;
-    }
-
-    _requestedState.fixedPixel = screenPoint_;
+    _requestedState.fixedPixel = screenPoint;
 
     bool update = forcedUpdate || _requestedState.target31 != target31;
     if (!update)
