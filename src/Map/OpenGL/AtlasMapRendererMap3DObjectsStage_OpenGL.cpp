@@ -121,7 +121,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
             uniform float param_vs_ambient;
         )");
         const QString colorCalculation = QString(R"(
-                float ndotl = max(dot(in_vs_normal, param_vs_lightDirection), 0.0);
+                float ndotl = max(dot(in_vs_normal, -param_vs_lightDirection), 0.0);
                 float diffuse = param_vs_ambient + (1.0 - param_vs_ambient) * ndotl;
                 v2f_color = vec4(in_vs_color * diffuse, param_vs_alpha);
         )");
@@ -627,7 +627,14 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
 
     float buildingAlpha = renderer->get3DBuildingsAlpha();
 
-    glm::vec3 lightDir = glm::normalize(glm::vec3(-0.5f, 1.0f, -0.5f));
+    const auto zenith = glm::radians(currentState.elevationConfiguration.hillshadeSunAngle);
+    const auto cosZenith = qCos(zenith);
+    const auto sinZenith = qSin(zenith);
+    const auto azimuth = M_PI - glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth);
+    const auto cosAzimuth = qCos(azimuth);
+    const auto sinAzimuth = qSin(azimuth);
+    
+    const glm::vec3 lightDir = glm::normalize(glm::vec3(sinAzimuth * cosZenith, -sinZenith, cosAzimuth * cosZenith));
 
     glUseProgram(_program.id);
     GL_CHECK_RESULT;
