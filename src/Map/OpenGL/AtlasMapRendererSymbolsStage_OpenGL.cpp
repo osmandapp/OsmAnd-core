@@ -129,7 +129,6 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
         return StageResult::Wait;
     }
 
-    prepareSymbolsDrawing();
     prepare(metric);
 
     return ok ? StageResult::Success : StageResult::Fail;
@@ -141,6 +140,8 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 
     bool ok = true;
+
+    prepareSymbolsDrawing();
 
     const auto gpuAPI = getGPUAPI();
     auto currentAlphaChannelType = AlphaChannelType::Straight;
