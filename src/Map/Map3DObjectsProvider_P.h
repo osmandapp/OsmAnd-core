@@ -5,6 +5,9 @@
 
 #include "QtExtensions.h"
 #include <QVector>
+#include <QSet>
+
+#include <OsmAndCore/Data/ObfMapObject.h>
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
@@ -24,12 +27,23 @@ namespace OsmAnd
         std::shared_ptr<MapPresentationEnvironment> _environment;
         std::shared_ptr<IMapElevationDataProvider> _elevationProvider;
 
-        void processPrimitive(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
+        void processPrimitive(const std::shared_ptr<const OsmAnd::ObfMapObject>& primitive,
                               Buildings3D& buildings3D,
-                              const MapPrimitiviser::PrimitivesCollection& PrimitivesCollection,
                               const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData,
                               const TileId& tileId,
                               const ZoomLevel zoom) const;
+
+        void collectFromPoliline(const std::shared_ptr<const MapPrimitiviser::Primitive>& polylinePrimitive,
+                            QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildings,
+                            QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingParts,
+                            QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingPassages) const;
+
+        void collectFromPoligons(const std::shared_ptr<const MapPrimitiviser::Primitive>& poligonPrimitive,
+                            QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildings,
+                            QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingParts) const;
+
+        void filterBuildings(QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& buildings,
+                             QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& buildingParts) const;
 
         void accumulateElevationForPoint(
             const PointI& point31,

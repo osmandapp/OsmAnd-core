@@ -648,6 +648,9 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
     glUniform1f(*_program.vs.param.alpha, buildingAlpha);
     GL_CHECK_RESULT;
 
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GL_CHECK_RESULT;
+
     gpuAPI->useVAO(_vao);
 
     for (const auto& resource : collectedResources)
@@ -847,5 +850,5 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::release(bool gpuContextLost)
 bool AtlasMapRendererMap3DObjectsStage_OpenGL::isDepthPrepassRequired() const
 {
     const float buildingAlpha = renderer->get3DBuildingsAlpha();
-    return buildingAlpha < 1.0f;
+    return buildingAlpha < 1.0f && buildingAlpha > 0.0;
 }
