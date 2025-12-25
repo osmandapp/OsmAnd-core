@@ -627,7 +627,14 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
 
     float buildingAlpha = renderer->get3DBuildingsAlpha();
 
-    glm::vec3 lightDir = glm::normalize(glm::vec3(-0.5f, 1.0f, -0.5f));
+    const auto zenith = glm::radians(currentState.elevationConfiguration.hillshadeSunAngle);
+    const auto cosZenith = qCos(zenith);
+    const auto sinZenith = qSin(zenith);
+    const auto azimuth = M_PI - glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth);
+    const auto cosAzimuth = qCos(azimuth);
+    const auto sinAzimuth = qSin(azimuth);
+    
+    const glm::vec3 lightDir = -glm::normalize(glm::vec3(sinAzimuth * cosZenith, -sinZenith, cosAzimuth * cosZenith));
 
     glUseProgram(_program.id);
     GL_CHECK_RESULT;
