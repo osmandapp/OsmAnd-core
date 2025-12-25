@@ -201,6 +201,24 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
             skip = true;
     }
 
+    if (!skip && !currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
+    {
+        Stopwatch symbolsPreapareStageStopwatch(metric != nullptr);
+
+        const auto stageResult = _symbolsStage->prepareSymbols(metric);
+
+        if (stageResult == MapRendererStage::StageResult::Fail)
+            ok = false;
+
+        if (!ok || stageResult == MapRendererStage::StageResult::Wait)
+            skip = true;
+
+        if (metric)
+        {
+            metric->elapsedTimeForSymbolsStage = symbolsPreapareStageStopwatch.elapsed();
+        }
+    }
+
     // Turn on blending since now objects with transparency are going to be rendered
     glEnable(GL_BLEND);
     GL_CHECK_RESULT;
@@ -214,7 +232,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
         if (metric)
-            metric->elapsedTimeForSymbolsStage += map3DStageStopwatch.elapsed();
+            metric->elapsedTimeForObjects3DStage += map3DStageStopwatch.elapsed();
 
         if (!ok || stageResult == MapRendererStage::StageResult::Wait)
             skip = true;
@@ -226,13 +244,13 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         // Set premultiplied alpha color blending
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-        Stopwatch symbolsStageStopwatch(metric != nullptr);
+        Stopwatch symbolsDrawStageStopwatch(metric != nullptr);
         const auto stageResult = _symbolsStage->render(metric);
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
         if (metric)
         {
-            metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
+            metric->elapsedTimeForSymbolsStage += symbolsDrawStageStopwatch.elapsed();
             // Disable for now
             //_symbolsStage->drawDebugMetricSymbol(metric);
         }

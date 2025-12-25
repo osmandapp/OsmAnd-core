@@ -148,6 +148,8 @@ namespace OsmAnd
             QVector< GlyphPlacement > glyphsPlacement;
             QVector<glm::vec3> rotatedElevatedBBoxInWorld;
         };
+
+        virtual OsmAnd::MapRendererStage::StageResult prepareSymbols(IMapRenderer_Metrics::Metric_renderFrame* metric_) = 0;
     private:
         bool obtainRenderableSymbols(
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,

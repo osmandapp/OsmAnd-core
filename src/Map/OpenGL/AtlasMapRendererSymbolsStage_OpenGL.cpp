@@ -106,8 +106,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
     return ok;
 }
 
-OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(
-    IMapRenderer_Metrics::Metric_renderFrame* metric_)
+OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::prepareSymbols(IMapRenderer_Metrics::Metric_renderFrame* metric_)
 {
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 
@@ -130,12 +129,21 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
         return StageResult::Wait;
     }
 
+    prepareSymbolsDrawing();
+    prepare(metric);
+
+    return ok ? StageResult::Success : StageResult::Fail;
+}
+
+OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(
+    IMapRenderer_Metrics::Metric_renderFrame* metric_)
+{
+    const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
+
+    bool ok = true;
+
     const auto gpuAPI = getGPUAPI();
     auto currentAlphaChannelType = AlphaChannelType::Straight;
-
-    prepareSymbolsDrawing();
-
-    prepare(metric);
 
     // Resume drawing
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
