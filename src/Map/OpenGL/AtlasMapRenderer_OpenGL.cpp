@@ -205,7 +205,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     {
         Stopwatch symbolsPreapareStageStopwatch(metric != nullptr);
 
-        const auto stageResult = _symbolsStage->prepareSymbols(metric);
+        auto stageResult = _symbolsStage->prepareSymbols(metric);
+
+        if (stageResult == MapRendererStage::StageResult::Success)
+            stageResult = _symbolsStage->renderOnSurfaceSymbols(metric);
 
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
