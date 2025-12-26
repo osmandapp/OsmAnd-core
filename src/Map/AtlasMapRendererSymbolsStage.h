@@ -150,7 +150,7 @@ namespace OsmAnd
         };
 
         virtual OsmAnd::MapRendererStage::StageResult prepareSymbols(IMapRenderer_Metrics::Metric_renderFrame* metric_) = 0;
-        virtual OsmAnd::MapRendererStage::StageResult renderOnSurfaceSymbols(IMapRenderer_Metrics::Metric_renderFrame* metric_) = 0;
+        virtual OsmAnd::MapRendererStage::StageResult renderWithDepth(IMapRenderer_Metrics::Metric_renderFrame* metric_) = 0;
     private:
         bool obtainRenderableSymbols(
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
