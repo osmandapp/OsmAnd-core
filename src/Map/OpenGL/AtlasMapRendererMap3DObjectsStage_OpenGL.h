@@ -40,6 +40,7 @@ namespace OsmAnd
                 {
                     GLlocation location31;
                     GLlocation height;
+                    GLlocation terrainHeight;
                     GLlocation normal;
                     GLlocation color;
                 } in;
@@ -55,6 +56,7 @@ namespace OsmAnd
                     GLlocation lightDirection;
                     GLlocation ambient;
                     GLlocation metersPerUnit;
+                    GLlocation zScaleFactor;
                 } param;
             } vs;
         } _program;
