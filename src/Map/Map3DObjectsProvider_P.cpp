@@ -263,6 +263,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
 
     float height = getDefaultBuildingsHeight();
     float minHeight = 0.0f;
+    float terrainHeight = 0.0f;
 
     float levels = 0.0;
     float minLevels = 0.0;
@@ -351,16 +352,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
 
         if (hasElevationSample)
         {
-            if (minHeight > 0.0)
-            {
-                minHeight += maxElevationMeters;
-            }
-            else
-            {
-                minHeight = minElevationMeters;
-            }
-
-            height += maxElevationMeters;
+            terrainHeight = maxElevationMeters;
         }
     }
 
@@ -466,14 +458,14 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     for (int i = 0; i < edgePointsCount; ++i)
     {
         const auto& point31 = points31[i];
-        buildings3D.vertices.append({glm::ivec2(point31.x, point31.y), height, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
+        buildings3D.vertices.append({glm::ivec2(point31.x, point31.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
     }
 
     for (const auto& innerPoly : innerPolygons)
     {
         for (const auto& point31 : innerPoly)
         {
-            buildings3D.vertices.append({glm::ivec2(point31.x, point31.y), height, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
+            buildings3D.vertices.append({glm::ivec2(point31.x, point31.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
         }
     }
 
@@ -484,13 +476,15 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         const int next = (i + 1) % edgePointsCount;
         const glm::vec3& edgeNormal = sideNormals[i];
 
+        const float minTerrainHeight = minHeight > 0.0 ? terrainHeight : 0.0;
+
         const auto& point31_i = points31[i];
-        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, edgeNormal, colorVec});
-        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, edgeNormal, colorVec});
+        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, terrainHeight, edgeNormal, colorVec});
+        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
 
         const auto& point31_next = points31[next];
-        buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, edgeNormal, colorVec});
-        buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, edgeNormal, colorVec});
+        buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, terrainHeight, edgeNormal, colorVec});
+        buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
     }
 
     for (int polyIdx = 0; polyIdx < innerPolygons.size(); ++polyIdx)
@@ -503,13 +497,15 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             const int next = (i + 1) % innerPoly.size();
             const glm::vec3& edgeNormal = innerNormals[i];
 
+            const float minTerrainHeight = minHeight > 0.0 ? terrainHeight : 0.0;
+
             const auto& point31_i = innerPoly[i];
-            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, edgeNormal, colorVec});
-            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, edgeNormal, colorVec});
+            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, terrainHeight, edgeNormal, colorVec});
+            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
 
             const auto& point31_next = innerPoly[next];
-            buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, edgeNormal, colorVec});
-            buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, edgeNormal, colorVec});
+            buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, terrainHeight, edgeNormal, colorVec});
+            buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
         }
     }
 

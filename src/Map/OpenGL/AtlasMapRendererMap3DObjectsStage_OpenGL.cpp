@@ -25,6 +25,7 @@ namespace
     const QString vertexShaderBase = QString(R"(
             INPUT ivec2 in_vs_location31;
             INPUT float in_vs_height;
+            INPUT float in_vs_terrainHeight;
             
             %ColorInOutDeclaration%
             
@@ -33,6 +34,7 @@ namespace
             uniform ivec2 param_vs_target31;
             uniform int param_vs_zoomLevel;
             uniform float param_vs_metersPerUnit;
+            uniform float param_vs_zScaleFactor;
             
             const float TILE_SIZE_3D = 100.0;
             const int HEIXELS_PER_TILE_SIDE = 32;
@@ -72,7 +74,10 @@ namespace
 
             void main()
             {
-                float elevation = in_vs_height / param_vs_metersPerUnit;
+                float buildingHeight = in_vs_height / param_vs_metersPerUnit;
+                float terrainElevation = in_vs_terrainHeight * param_vs_zScaleFactor / param_vs_metersPerUnit;
+                float elevation = terrainElevation + buildingHeight;
+        
                 vec3 worldPos = planeWorldCoordinates(in_vs_location31, param_vs_target31, param_vs_zoomLevel, elevation);
                 
                 vec4 v = param_vs_mPerspectiveProjectionView * vec4(worldPos, 1.0);
@@ -198,6 +203,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
     bool ok = true;
     ok = ok && lookup->lookupLocation(_program.vs.in.location31, "in_vs_location31", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.in.height, "in_vs_height", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_program.vs.in.terrainHeight, "in_vs_terrainHeight", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.in.normal, "in_vs_normal", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.in.color, "in_vs_color", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
@@ -208,6 +214,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
     ok = ok && lookup->lookupLocation(_program.vs.param.lightDirection, "param_vs_lightDirection", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.ambient, "param_vs_ambient", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.metersPerUnit, "param_vs_metersPerUnit", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.zScaleFactor, "param_vs_zScaleFactor", GlslVariableType::Uniform);
 
     if (!ok)
     {
@@ -228,6 +235,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
         glEnableVertexAttribArray(*_program.vs.in.location31);
         GL_CHECK_RESULT;
         glEnableVertexAttribArray(*_program.vs.in.height);
+        GL_CHECK_RESULT;
+        glEnableVertexAttribArray(*_program.vs.in.terrainHeight);
         GL_CHECK_RESULT;
         glEnableVertexAttribArray(*_program.vs.in.normal);
         GL_CHECK_RESULT;
@@ -328,11 +337,13 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeDepthProgram()
     bool ok = true;
     ok = ok && lookup->lookupLocation(_depthProgram.vs.in.location31, "in_vs_location31", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_depthProgram.vs.in.height, "in_vs_height", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_depthProgram.vs.in.terrainHeight, "in_vs_terrainHeight", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_depthProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_depthProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_depthProgram.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_depthProgram.vs.param.zoomLevel, "param_vs_zoomLevel", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_depthProgram.vs.param.metersPerUnit, "param_vs_metersPerUnit", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_depthProgram.vs.param.zScaleFactor, "param_vs_zScaleFactor", GlslVariableType::Uniform);
 
     if (!ok)
     {
@@ -354,7 +365,9 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeDepthProgram()
         GL_CHECK_RESULT;
         glEnableVertexAttribArray(*_depthProgram.vs.in.height);
         GL_CHECK_RESULT;
-        
+        glEnableVertexAttribArray(*_depthProgram.vs.in.terrainHeight);
+        GL_CHECK_RESULT;
+
         gpuAPI->initializeVAO(_depthVao);
         gpuAPI->unuseVAO();
     }
@@ -591,6 +604,8 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDe
     GL_CHECK_RESULT;
     glUniform1f(*_depthProgram.vs.param.metersPerUnit, static_cast<float>(internalState.metersPerUnit));
     GL_CHECK_RESULT;
+    glUniform1f(*_depthProgram.vs.param.zScaleFactor, currentState.elevationConfiguration.zScaleFactor);
+    GL_CHECK_RESULT;
 
     gpuAPI->useVAO(_depthVao);
 
@@ -608,6 +623,9 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDe
             GL_CHECK_RESULT;
             glVertexAttribPointer(*_depthProgram.vs.in.height, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
                                   reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, height)));
+            GL_CHECK_RESULT;
+            glVertexAttribPointer(*_depthProgram.vs.in.terrainHeight, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+                                  reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, terrainHeight)));
             GL_CHECK_RESULT;
 
             glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(resource->indexBuffer->itemsCount), GL_UNSIGNED_SHORT, 0);
@@ -648,6 +666,8 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
     GL_CHECK_RESULT;
     glUniform1f(*_program.vs.param.metersPerUnit, static_cast<float>(internalState.metersPerUnit));
     GL_CHECK_RESULT;
+    glUniform1f(*_program.vs.param.zScaleFactor, currentState.elevationConfiguration.zScaleFactor);
+    GL_CHECK_RESULT;
     glUniform3f(*_program.vs.param.lightDirection, lightDir.x, lightDir.y, lightDir.z);
     GL_CHECK_RESULT;
     glUniform1f(*_program.vs.param.ambient, 0.2f);
@@ -674,6 +694,9 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
             GL_CHECK_RESULT;
             glVertexAttribPointer(*_program.vs.in.height, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
                                   reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, height)));
+            GL_CHECK_RESULT;
+            glVertexAttribPointer(*_program.vs.in.terrainHeight, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+                                  reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, terrainHeight)));
             GL_CHECK_RESULT;
 
             glVertexAttribPointer(*_program.vs.in.normal, 3, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),

@@ -14,6 +14,7 @@ namespace OsmAnd
     {
         glm::ivec2 location31;
         float height;
+        float terrainHeight;
         glm::vec3 normal;
         glm::vec3 color;
     };
