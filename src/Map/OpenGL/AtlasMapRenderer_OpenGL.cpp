@@ -3416,38 +3416,28 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
 
         const auto currentV = mGlobeRotationInv * point;
         const auto neededV =  Utilities::getGlobeRadialVector(location31);
-        const auto v = glm::cross(neededV, currentV);
-        const auto l = glm::length(v);
-        if (qFuzzyIsNull(l))
-        {
-            target31 = PointI(-1, -1);
-            return true;
-        }
-        const auto a = qAtan2(l, glm::dot(neededV, currentV));
         if (shiftInPixels)
         {
+            const auto v = glm::cross(neededV, currentV);
+            const auto l = glm::length(v);
+            if (qFuzzyIsNull(l))
+            {
+                target31 = PointI(-1, -1);
+                return true;
+            }
+            const auto a = qAtan2(l, glm::dot(neededV, currentV));
             const auto pTile = internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor;
             *shiftInPixels = a * _radius * pTile / (internalState.metersPerUnit * TileSize3D);
             target31 = PointI(0, 0);
             return true;
         }
-        const auto s = qSin(a);
-        const auto c = qCos(a);
-        const auto t = 1.0 - c;
-        const auto n = v / l;
-
-        const auto futureMatrix = mGlobeRotation * glm::dmat3(
-            t * n.x * n.x + c, t * n.x * n.y + s * n.z, t * n.x * n.z - s * n.y,
-            0.0, 0.0, 0.0, // Not needed
-            t * n.x * n.z + s * n.y, t * n.y * n.z - s * n.x, t * n.z * n.z + c);
-    
-        const auto sy = -futureMatrix[2].y;
-        const auto cy = futureMatrix[2].z;
-        const auto sx = futureMatrix[0].y / cy;
-        const auto cx = futureMatrix[0].x;
-        const PointD angles(qAtan2(sx, cx), qAtan2(sy, cy));
-
-        target31 = Utilities::get31FromAngles(angles);
+        const auto z = glm::dvec3(0.0, 0.0, 1.0);
+        const auto currentN = glm::normalize(glm::cross(z, currentV));
+        const auto n = glm::normalize(glm::cross(z, neededV));
+        const auto d = glm::normalize(glm::cross(n, neededV));
+        const auto m = mGlobeRotation * glm::dmat3(glm::normalize(glm::cross(currentN, currentV)), currentN, currentV)
+            * glm::dmat3(d.x, n.x, neededV.x, d.y, n.y, neededV.y, d.z, n.z, neededV.z);
+        target31 = Utilities::get31FromAngles(PointD(qAtan2(-m[1].x, m[0].x), qAsin(qBound(-1.0, -m[2].y, 1.0))));
 
         const auto futureMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, target31, TileSize3D);
         auto scaleFactor = futureMetersPerUnit / internalState.metersPerUnit;
