@@ -106,8 +106,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
     return ok;
 }
 
-OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(
-    IMapRenderer_Metrics::Metric_renderFrame* metric_)
+OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::prepareSymbols(IMapRenderer_Metrics::Metric_renderFrame* metric_)
 {
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 
@@ -130,12 +129,78 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
         return StageResult::Wait;
     }
 
-    const auto gpuAPI = getGPUAPI();
-    auto currentAlphaChannelType = AlphaChannelType::Straight;
+    prepare(metric);
+
+    return ok ? StageResult::Success : StageResult::Fail;
+}
+
+OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderWithDepth(IMapRenderer_Metrics::Metric_renderFrame* metric_)
+{
+    const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
+
+    bool ok = true;
 
     prepareSymbolsDrawing();
 
-    prepare(metric);
+    const auto gpuAPI = getGPUAPI();
+    auto currentAlphaChannelType = AlphaChannelType::Straight;
+
+    // Resume drawing
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    GL_CHECK_RESULT;
+
+    // Prepare JSON report
+    QJsonArray jsonArray;
+    bool withJson = renderer->withJSON();
+
+    for (const auto& renderableSymbol : constOf(renderableSymbols))
+    {
+        if (const auto& renderableOnSurfaceSymbol = std::dynamic_pointer_cast<const RenderableOnSurfaceSymbol>(renderableSymbol))
+        {
+            Stopwatch renderOnSurfaceSymbolStopwatch(metric != nullptr);
+            ok = ok && renderOnSurfaceSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType);
+            if (metric)
+            {
+                metric->elapsedTimeForOnSurfaceSymbolsRendering += renderOnSurfaceSymbolStopwatch.elapsed();
+                metric->onSurfaceSymbolsRendered += 1;
+            }
+        }
+        else if (const auto& renderableModel3DSymbol = std::dynamic_pointer_cast<const RenderableModel3DSymbol>(renderableSymbol))
+        {
+            Stopwatch renderableModel3DSymbolStopwatch(metric != nullptr);
+            ok = ok && _model3DSubstage->render(
+                renderableModel3DSymbol, currentAlphaChannelType) == MapRendererStage::StageResult::Success;
+            if (metric)
+            {
+                metric->elapsedTimeForModel3DSymbolsRendering += renderableModel3DSymbolStopwatch.elapsed();
+                metric->model3DSymbolsRendered += 1;
+            }
+        }
+    }
+
+    if (withJson)
+    {
+        auto jsonDocument = new QJsonDocument();
+        jsonDocument->setArray(jsonArray);
+        renderer->setJSON(jsonDocument);
+    }
+
+    endSymbolsDrawing(gpuAPI);
+
+    return ok ? StageResult::Success : StageResult::Fail;
+}
+
+OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(
+    IMapRenderer_Metrics::Metric_renderFrame* metric_)
+{
+    const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
+
+    bool ok = true;
+
+    prepareSymbolsDrawing();
+
+    const auto gpuAPI = getGPUAPI();
+    auto currentAlphaChannelType = AlphaChannelType::Straight;
 
     // Resume drawing
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -193,27 +258,6 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
             {
                 metric->elapsedTimeForOnPathSymbolsRendering += renderOnPathSymbolStopwatch.elapsed();
                 metric->onPathSymbolsRendered += 1;
-            }
-        }
-        else if (const auto& renderableModel3DSymbol = std::dynamic_pointer_cast<const RenderableModel3DSymbol>(renderableSymbol))
-        {
-            Stopwatch renderableModel3DSymbolStopwatch(metric != nullptr);
-            ok = ok && _model3DSubstage->render(
-                renderableModel3DSymbol, currentAlphaChannelType) == MapRendererStage::StageResult::Success;
-            if (metric)
-            {
-                metric->elapsedTimeForModel3DSymbolsRendering += renderableModel3DSymbolStopwatch.elapsed();
-                metric->model3DSymbolsRendered += 1;
-            }
-        }
-        else if (const auto& renderableOnSurfaceSymbol = std::dynamic_pointer_cast<const RenderableOnSurfaceSymbol>(renderableSymbol))
-        {
-            Stopwatch renderOnSurfaceSymbolStopwatch(metric != nullptr);
-            ok = ok && renderOnSurfaceSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType);
-            if (metric)
-            {
-                metric->elapsedTimeForOnSurfaceSymbolsRendering += renderOnSurfaceSymbolStopwatch.elapsed();
-                metric->onSurfaceSymbolsRendered += 1;
             }
         }
     }
