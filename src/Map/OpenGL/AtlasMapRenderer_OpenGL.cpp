@@ -839,14 +839,14 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         const auto backD = glm::dot(backN, backP);
         double length;
         auto rayD = camTL;
-        if (!rayIntersectPlane(backN, backP, rayD, camPos, length))
+        if (!rayIntersectPlane(backN, backP, rayD, camPos, length) || length < 0.0)
         {
             rayD = glm::normalize((camTL + camBL) / 2.0);
             rayIntersectPlane(backN, backP, rayD, camPos, length);
         }
         const auto MTL = camPos + rayD * length;
         rayD = camTR;
-        if (!rayIntersectPlane(backN, backP, rayD, camPos, length))
+        if (!rayIntersectPlane(backN, backP, rayD, camPos, length) || length < 0.0)
         {
             rayD = glm::normalize((camTR + camBR) / 2.0);
             rayIntersectPlane(backN, backP, rayD, camPos, length);
