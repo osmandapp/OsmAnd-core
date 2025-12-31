@@ -756,9 +756,12 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
 
     const bool needsDepthPrepass = isDepthPrepassRequired();
 
+    glDepthFunc(GL_LEQUAL);
+    GL_CHECK_RESULT;
+    glDepthMask(GL_TRUE);
+    GL_CHECK_RESULT;
     glEnable(GL_CULL_FACE);
     GL_CHECK_RESULT;
-
     glCullFace(currentState.flip ? GL_BACK : GL_FRONT);
     GL_CHECK_RESULT;
 

@@ -1581,9 +1581,7 @@ bool OsmAnd::MapRenderer::resetElevationDataProvider(bool forcedUpdate /*= false
         }
     }
 
-    const bool with3DObjects = _requestedState.map3DObjectsProvider != nullptr;
-
-    if (withVolumetricSymbols || with3DObjects)
+    if (withVolumetricSymbols)
         _requestedState.elevationDataProvider.reset(new SqliteHeightmapTileProvider());
     else
         _requestedState.elevationDataProvider.reset();
@@ -1643,36 +1641,6 @@ bool OsmAnd::MapRenderer::resetMap3DObjectsProvider(bool forcedUpdate /*= false*
 
     _requestedState.map3DObjectsProvider.reset();
     notifyRequestedStateWasUpdated(MapRendererStateChange::Map3DObjects_Provider);
-
-    // Check there is elevation provider without heightmap collections
-    bool withoutHeightmaps = false;
-    if (const auto heightmapProvider =
-        std::dynamic_pointer_cast<SqliteHeightmapTileProvider>(_requestedState.elevationDataProvider))
-    {
-        if (!heightmapProvider->sourcesCollection && !heightmapProvider->filesCollection)
-            withoutHeightmaps = true;
-    }
-
-    bool withVolumetricSymbols = false;
-    if (withoutHeightmaps)
-    {
-        for (auto& keyedSymbolsSubsection : _requestedState.keyedSymbolsProviders)
-        {
-            // Check there are vector symbols that need elevation provider to be present
-            for (const auto& provider : constOf(keyedSymbolsSubsection))
-            {
-                if (const auto vectorLinesCollection = std::dynamic_pointer_cast<VectorLinesCollection>(provider))
-                    withVolumetricSymbols = withVolumetricSymbols || vectorLinesCollection->hasVolumetricSymbols;
-            }
-        }
-    }
-
-    // Remove elevation provider if there is no volumetric symbols
-    if (withoutHeightmaps && !withVolumetricSymbols)
-    {
-        _requestedState.elevationDataProvider.reset();
-        notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_DataProvider);
-    }
 
     return true;
 }
@@ -1971,10 +1939,8 @@ bool OsmAnd::MapRenderer::removeSymbolsProvider(
     if (!update)
         return false;
 
-    const bool with3DObjects = _requestedState.map3DObjectsProvider != nullptr;
-
     // Remove elevation provider if it isn't needed anymore
-    if (withoutHeightmaps && !withVolumetricSymbols && !with3DObjects)
+    if (withoutHeightmaps && !withVolumetricSymbols)
     {
         _requestedState.elevationDataProvider.reset();
 
