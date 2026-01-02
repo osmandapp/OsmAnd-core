@@ -31,16 +31,17 @@ namespace OsmAnd
                               Buildings3D& buildings3D,
                               const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData,
                               const TileId& tileId,
-                              const ZoomLevel zoom) const;
+                              const ZoomLevel zoom,
+                              const QHash<std::shared_ptr<const OsmAnd::ObfMapObject>, float>& passagesData) const;
 
         void collectFromPoliline(const std::shared_ptr<const MapPrimitiviser::Primitive>& polylinePrimitive,
-                            QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildings,
-                            QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingParts,
-                            QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingPassages) const;
+                                 QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildings,
+                                 QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingParts,
+                                 QHash<std::shared_ptr<const OsmAnd::ObfMapObject>, float>& outBuildingPassages) const;
 
         void collectFromPoligons(const std::shared_ptr<const MapPrimitiviser::Primitive>& poligonPrimitive,
-                            QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildings,
-                            QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingParts) const;
+                                QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildings,
+                                QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingParts) const;
 
         void filterBuildings(QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& buildings,
                              QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& buildingParts) const;
@@ -53,6 +54,9 @@ namespace OsmAnd
             float& maxElevationMeters,
             float& minElevationMeters,
             bool& hasElevationSample) const;
+
+        glm::vec3 calculateNormalFrom2Points(PointI point31_i, PointI point31_next) const;
+        glm::vec3 calculateNormalFrom2Points(glm::ivec2 point31_i, glm::ivec2 point31_next) const;
 
     protected:
         Map3DObjectsTiledProvider_P(Map3DObjectsTiledProvider* const owner,
