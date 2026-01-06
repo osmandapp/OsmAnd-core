@@ -56,7 +56,6 @@ namespace OsmAnd
             bool& hasElevationSample) const;
 
         glm::vec3 calculateNormalFrom2Points(PointI point31_i, PointI point31_next) const;
-        glm::vec3 calculateNormalFrom2Points(glm::ivec2 point31_i, glm::ivec2 point31_next) const;
 
     protected:
         Map3DObjectsTiledProvider_P(Map3DObjectsTiledProvider* const owner,
@@ -92,6 +91,10 @@ namespace OsmAnd
         void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationProvider);
 
         friend class OsmAnd::Map3DObjectsTiledProvider;
+
+    private:
+        std::vector<uint16_t> fullSideIndices;
+        std::vector<uint16_t> pasageSideIndices;
     };
 }
 

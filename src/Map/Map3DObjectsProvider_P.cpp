@@ -1,6 +1,9 @@
 #include "Map3DObjectsProvider_P.h"
 
 #include <mapbox/earcut.hpp>
+#include <limits>
+#include <Polyline2D/LineSegment.h>
+#include <Polyline2D/Vec2.h>
 
 #include "MapDataProviderHelpers.h"
 #include "Utilities.h"
@@ -20,6 +23,34 @@ Map3DObjectsTiledProvider_P::Map3DObjectsTiledProvider_P(
     , _elevationProvider(nullptr)
     , owner(owner_)
 {
+    std::vector<std::vector<std::array<float, 2>>> polygon;
+
+    std::vector<std::array<float, 2>> side = {
+        {0.0f, 0.0f},
+        {0.0f, 1.0f},
+        {1.0f, 1.0f},
+        {1.0f, 0.0f}
+    };
+
+    polygon.push_back(side);
+    fullSideIndices = mapbox::earcut<uint16_t>(polygon);
+
+    polygon.clear();
+
+    std::vector<std::array<float, 2>> passageSide = {
+        {0.0f, 0.0f},
+        {0.0f, 1.0f},
+        {1.0f, 1.0f},
+        {1.0f, 0.0f},
+
+        {0.75f, 0.0f},
+        {0.75f, 0.75f},
+        {0.25f, 0.75f},
+        {0.25f, 0.25f},
+    };
+
+    polygon.push_back(passageSide);
+    pasageSideIndices = mapbox::earcut<uint16_t>(polygon);
 }
 
 Map3DObjectsTiledProvider_P::~Map3DObjectsTiledProvider_P()
@@ -363,6 +394,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const O
 
     QVector<PointI> points31 = sourceObject->points31;
 
+    // Reverse points if needed
     double area = Utilities::computeSignedArea(points31);
     bool isClockwise = (area < 0.0);
 
@@ -372,7 +404,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const O
     }
 
     const int edgePointsCount = points31.size();
-    int totalTopVertices = edgePointsCount;
 
     QVector<QVector<PointI>> innerPolygons;
     if (!sourceObject->innerPolygonsPoints31.isEmpty())
@@ -394,44 +425,69 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const O
             }
 
             innerPolygons.append(innerPoints);
-            totalTopVertices += innerPoints.size();
         }
     }
 
-    const int currentVertexOffset = buildings3D.vertices.size();
+    int currentVertexOffset = buildings3D.vertices.size();
     const int currentIndexOffset = buildings3D.indices.size();
-    const uint64_t buildingID = sourceObject->id.id;
 
+    // Construct top side of the mesh
+    std::vector<std::vector<std::array<int32_t, 2>>> topPoligon;
+
+    std::vector<std::array<int32_t, 2>> outerRing;
     for (int i = 0; i < edgePointsCount; ++i)
     {
-        const auto& point31 = points31[i];
-        buildings3D.vertices.append({glm::ivec2(point31.x, point31.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
+        const auto& p = points31[i];
+
+        outerRing.push_back({p.x, p.y});
+        buildings3D.vertices.append({glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
     }
+
+    topPoligon.push_back(std::move(outerRing));
 
     for (const auto& innerPoly : innerPolygons)
     {
-        for (const auto& point31 : innerPoly)
+        std::vector<std::array<int32_t, 2>> innerRing;
+        for (const auto& p : innerPoly)
         {
-            buildings3D.vertices.append({glm::ivec2(point31.x, point31.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
+            innerRing.push_back({p.x, p.y});
+            buildings3D.vertices.append({glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
         }
+
+        topPoligon.push_back(std::move(innerRing));
     }
 
+    std::vector<uint16_t> topIndices = mapbox::earcut<uint16_t>(topPoligon);
+    for (uint16_t idx : topIndices)
+    {
+        buildings3D.indices.append(static_cast<uint16_t>(idx + currentVertexOffset));
+    }
+
+    // Construct walls of the mesh
     for (int i = 0; i < edgePointsCount; ++i)
     {
         const int next = (i + 1) % edgePointsCount;
         const auto& point31_i = points31[i];
         const auto& point31_next = points31[next];
 
+        const uint32_t baseVertex = buildings3D.vertices.size();
+
         const glm::vec3 edgeNormal = calculateNormalFrom2Points(point31_i, point31_next);
         const float minTerrainHeight = minHeight > 0.0 ? terrainHeight : 0.0;
 
-        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, terrainHeight, edgeNormal, colorVec});
+        // Should match the side order (counter-clockwise)
         buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
-
+        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, terrainHeight, edgeNormal, colorVec});
         buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, terrainHeight, edgeNormal, colorVec});
         buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
+
+        for (uint16_t idx : pasageSideIndices)
+        {
+            buildings3D.indices.append(baseVertex + idx);
+        }
     }
 
+    // Construct inner walls of the mesh
     for (int polyIdx = 0; polyIdx < innerPolygons.size(); ++polyIdx)
     {
         const auto& innerPoly = innerPolygons[polyIdx];
@@ -442,87 +498,27 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const O
             const auto& point31_i = innerPoly[i];
             const auto& point31_next = innerPoly[next];
 
-            const float minTerrainHeight = minHeight > 0.0 ? terrainHeight : 0.0;
+            const uint32_t baseVertex = buildings3D.vertices.size();
+
             const glm::vec3 edgeNormal = calculateNormalFrom2Points(point31_i, point31_next);
+            const float minTerrainHeight = minHeight > 0.0 ? terrainHeight : 0.0;
 
-            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, terrainHeight, edgeNormal, colorVec});
+            // Should match the side order (counter-clockwise)
             buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
-
+            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, terrainHeight, edgeNormal, colorVec});
             buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, terrainHeight, edgeNormal, colorVec});
             buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
+
+            for (uint16_t idx : fullSideIndices)
+            {
+                buildings3D.indices.append(baseVertex + idx);
+            }
         }
-    }
-
-    std::vector<std::vector<std::array<int32_t, 2>>> polygon;
-    
-    std::vector<std::array<int32_t, 2>> outerRing;
-    outerRing.reserve(edgePointsCount);
-    for (int i = 0; i < edgePointsCount; ++i)
-    {
-        const auto& p = points31[i];
-        outerRing.push_back({p.x, p.y});
-    }
-    polygon.push_back(std::move(outerRing));
-
-    for (const auto& innerPoly : innerPolygons)
-    {
-        std::vector<std::array<int32_t, 2>> innerRing;
-        innerRing.reserve(innerPoly.size());
-        for (const auto& p : innerPoly)
-        {
-            innerRing.push_back({p.x, p.y});
-        }
-        polygon.push_back(std::move(innerRing));
-    }
-
-    std::vector<uint16_t> topIndices = mapbox::earcut<uint16_t>(polygon);
-    if (topIndices.empty())
-    {
-        return;
-    }
-
-    for (uint16_t idx : topIndices)
-    {
-        buildings3D.indices.append(static_cast<uint16_t>(idx + currentVertexOffset));
-    }
-
-    int currentWallBaseIdx = totalTopVertices;
-    for (int i = 0; i < edgePointsCount; ++i)
-    {
-        const int baseIdx = currentWallBaseIdx + 4 * i;
-
-        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 0 + currentVertexOffset));
-        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 1 + currentVertexOffset));
-        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 2 + currentVertexOffset));
-
-        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 1 + currentVertexOffset));
-        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 3 + currentVertexOffset));
-        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 2 + currentVertexOffset));
-    }
-    currentWallBaseIdx += edgePointsCount * 4;
-
-    for (int polyIdx = 0; polyIdx < innerPolygons.size(); ++polyIdx)
-    {
-        const auto& innerPoly = innerPolygons[polyIdx];
-        
-        for (int i = 0; i < innerPoly.size(); ++i)
-        {
-            const int baseIdx = currentWallBaseIdx + 4 * i;
-
-            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 0 + currentVertexOffset));
-            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 1 + currentVertexOffset));
-            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 2 + currentVertexOffset));
-
-            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 1 + currentVertexOffset));
-            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 3 + currentVertexOffset));
-            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 2 + currentVertexOffset));
-        }
-        currentWallBaseIdx += innerPoly.size() * 4;
     }
 
     const int buildingVertexCount = buildings3D.vertices.size() - currentVertexOffset;
     const int buildingIndexCount = buildings3D.indices.size() - currentIndexOffset;
-    buildings3D.buildingIDs.append(buildingID);
+    buildings3D.buildingIDs.append(sourceObject->id.id);
     buildings3D.vertexCounts.append(buildingVertexCount);
     buildings3D.indexCounts.append(buildingIndexCount);
 }
