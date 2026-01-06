@@ -28,10 +28,11 @@ namespace OsmAnd
         bool matches(const QString& name) const;
 
         static bool cmatches(const QString& _base, const QString& _part, StringMatcherMode _mode);
+        static bool cmatches(const QString& _base, const QString& _part, bool alignPart, StringMatcherMode _mode);
         static bool ccontains(const QString& _base, const QString& _part);
         static bool cstartsWith(const QString& _searchInParam, const QString& _theStart,
                          bool checkBeginning, bool checkSpaces, bool equals);
-        static QString simplifyStringAndAlignChars(const QString& fullText);
+        static QString lowercaseAndAlignChars(const QString& fullText);
         static QString alignChars(const QString& fullText);
     };
 }

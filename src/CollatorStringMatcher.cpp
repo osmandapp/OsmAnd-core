@@ -6,7 +6,7 @@
 OsmAnd::CollatorStringMatcher::CollatorStringMatcher(const QString& part, const StringMatcherMode mode)
     : _p(new CollatorStringMatcher_P(this))
 {
-    QString part_ = CollatorStringMatcher_P::simplifyStringAndAlignChars(part);
+    QString part_ = CollatorStringMatcher_P::lowercaseAndAlignChars(part);
     StringMatcherMode mode_ = mode;
     if (part_.length() > 0 && part_.at(part_.length() - 1) == L'.') {
         part_ = part_.mid(0, part.length() - 1);
@@ -40,16 +40,28 @@ bool OsmAnd::CollatorStringMatcher::matches(const QString& name) const
 
 bool OsmAnd::CollatorStringMatcher::cmatches(const QString& _base, const QString& _part, StringMatcherMode _mode)
 {
+    return cmatches(_base, _part, true, _mode);
+}
+
+bool OsmAnd::CollatorStringMatcher::cmatches(const QString& _base, const QString& _part, bool alignPart, StringMatcherMode _mode)
+{
+    
+    
     QString base = _base;
+    if (!_base.isNull() && _base.indexOf('-') != -1)
+    {
+        // Test if it matches without the hyphen
+        if (cmatches(base.replace("-", ""), _part, _mode))
+        {
+            return true;
+        }
+    }
     QString part = _part;
-    if (OsmAnd::ArabicNormalizer::isSpecialArabic(_base)) {
-        QString normalized = OsmAnd::ArabicNormalizer::normalize(_base);
-        base = normalized.isEmpty() ? _base : normalized;
+    if (alignPart)
+    {
+        part = alignChars(part);
     }
-    if (OsmAnd::ArabicNormalizer::isSpecialArabic(_part)) {
-        QString normalized = OsmAnd::ArabicNormalizer::normalize(_part);
-        part = normalized.isEmpty() ? _part : normalized;
-    }
+    base = lowercaseAndAlignChars(base);
     return OsmAnd::ICU::cmatches(base, part, _mode);
 }
 
@@ -64,12 +76,19 @@ bool OsmAnd::CollatorStringMatcher::cstartsWith(const QString& _searchInParam, c
     return OsmAnd::ICU::cstartsWith(_searchInParam, _theStart, checkBeginning, checkSpaces, equals);
 }
 
-QString OsmAnd::CollatorStringMatcher::simplifyStringAndAlignChars(const QString& fullText)
+QString OsmAnd::CollatorStringMatcher::lowercaseAndAlignChars(const QString& fullText)
 {
-    return CollatorStringMatcher_P::simplifyStringAndAlignChars(fullText);
+    return CollatorStringMatcher_P::lowercaseAndAlignChars(fullText);
 }
 
 QString OsmAnd::CollatorStringMatcher::alignChars(const QString& fullText)
 {
+    if (OsmAnd::ArabicNormalizer::isSpecialArabic(fullText)) {
+        QString normalized  = OsmAnd::ArabicNormalizer::normalize(fullText);
+        if (!normalized.isEmpty())
+        {
+            return CollatorStringMatcher_P::alignChars(normalized);;
+        }
+    }
     return CollatorStringMatcher_P::alignChars(fullText);
 }
