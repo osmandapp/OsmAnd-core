@@ -295,6 +295,45 @@ namespace OsmAnd
             u >= 0.0 && u <= 1.0;
     }
 
+    inline bool computeLineSegmentIntersection(const PointI& a0, const PointI& a1, const PointI& b0, const PointI& b1, PointI& outIntersection)
+    {
+        const auto a1x_a0x = a1.x - a0.x;
+        const auto a1y_a0y = a1.y - a0.y;
+        const auto b0y_b1y = b0.y - b1.y;
+        const auto b0x_b1x = b0.x - b1.x;
+        const auto b0x_a0x = b0.x - a0.x;
+        const auto b0y_a0y = b0.y - a0.y;
+
+        const auto d_ = static_cast<int64_t>(a1x_a0x*b0y_b1y) - static_cast<int64_t>(b0x_b1x*a1y_a0y);
+        const auto t_ = static_cast<int64_t>(b0y_b1y*b0x_a0x) - static_cast<int64_t>(b0x_b1x*b0y_a0y);
+        const auto u_ = static_cast<int64_t>(a1x_a0x*b0y_a0y) - static_cast<int64_t>(a1y_a0y*b0x_a0x);
+
+        if (d_ == 0)
+        {
+            if (t_ == 0 && u_ == 0)
+            {
+                outIntersection = a0;
+                return true;
+            }
+            return false;
+        }
+
+        const auto t = (static_cast<double>(t_) / static_cast<double>(d_));
+        const auto u = (static_cast<double>(u_) / static_cast<double>(d_));
+
+        if (t < 0.0 || t > 1.0 || u < 0.0 || u > 1.0)
+        {
+            return false;
+        }
+
+        outIntersection = PointI(
+            a0.x + static_cast<int32_t>(qRound(static_cast<double>(a1x_a0x) * t)),
+            a0.y + static_cast<int32_t>(qRound(static_cast<double>(a1y_a0y) * t))
+        );
+        
+        return true;
+    }
+
     inline bool testLineLineIntersection(const PointF& a0, const PointF& a1, const PointF& b0, const PointF& b1)
     {
         const auto a1x_a0x = a1.x - a0.x;
