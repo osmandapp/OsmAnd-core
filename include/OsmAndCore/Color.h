@@ -72,6 +72,14 @@ namespace OsmAnd
         {
         }
 
+        explicit inline FColorARGB(uint32_t colorARGB)
+            : a(static_cast<float>((colorARGB >> 24) & 0xFF) / 255.0f)
+            , r(static_cast<float>((colorARGB >> 16) & 0xFF) / 255.0f)
+            , g(static_cast<float>((colorARGB >> 8) & 0xFF) / 255.0f)
+            , b(static_cast<float>(colorARGB & 0xFF) / 255.0f)
+        {
+        }
+
 #if !defined(SWIG)
         float value[4];
         struct
