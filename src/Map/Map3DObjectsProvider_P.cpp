@@ -405,8 +405,11 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         uint32_t colorARGB = 0;
         if (primitive->evaluationResult.getIntegerValue(_environment->styleBuiltinValueDefs->id_OUTPUT_COLOR, colorARGB))
         {
+            if (colorARGB != 0)
+            {
                 color = FColorARGB(colorARGB);
                 colorFound = true;
+            }
         }
     }
 
