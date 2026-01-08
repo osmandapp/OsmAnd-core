@@ -27,23 +27,24 @@ namespace OsmAnd
         std::shared_ptr<MapPresentationEnvironment> _environment;
         std::shared_ptr<IMapElevationDataProvider> _elevationProvider;
 
-        void processPrimitive(const std::shared_ptr<const OsmAnd::ObfMapObject>& primitive,
+        void processPrimitive(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
                               Buildings3D& buildings3D,
                               const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData,
                               const TileId& tileId,
-                              const ZoomLevel zoom) const;
+                              const ZoomLevel zoom,
+                              const QHash<std::shared_ptr<const MapPrimitiviser::Primitive>, float>& passagesData) const;
 
         void collectFromPoliline(const std::shared_ptr<const MapPrimitiviser::Primitive>& polylinePrimitive,
-                            QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildings,
-                            QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingParts,
-                            QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingPassages) const;
+                                 QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildings,
+                                 QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildingParts,
+                                 QHash<std::shared_ptr<const MapPrimitiviser::Primitive>, float>& outBuildingPassages) const;
 
         void collectFromPoligons(const std::shared_ptr<const MapPrimitiviser::Primitive>& poligonPrimitive,
-                            QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildings,
-                            QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingParts) const;
+                                QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildings,
+                                QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildingParts) const;
 
-        void filterBuildings(QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& buildings,
-                             QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& buildingParts) const;
+        void filterBuildings(QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& buildings,
+                             QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& buildingParts) const;
 
         void accumulateElevationForPoint(
             const PointI& point31,
@@ -53,6 +54,8 @@ namespace OsmAnd
             float& maxElevationMeters,
             float& minElevationMeters,
             bool& hasElevationSample) const;
+
+        glm::vec3 calculateNormalFrom2Points(PointI point31_i, PointI point31_next) const;
 
     protected:
         Map3DObjectsTiledProvider_P(Map3DObjectsTiledProvider* const owner,
@@ -88,6 +91,10 @@ namespace OsmAnd
         void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationProvider);
 
         friend class OsmAnd::Map3DObjectsTiledProvider;
+
+    private:
+        std::vector<uint16_t> fullSideIndices;
+        std::vector<uint16_t> pasageSideIndices;
     };
 }
 

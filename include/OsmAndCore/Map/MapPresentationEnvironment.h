@@ -140,6 +140,7 @@ namespace OsmAnd
         float getDefault3DBuildingLevelHeight() const;
         bool getUseDefaultBuildingColor() const;
         bool getShow3DBuildingParts() const;
+        bool getColoredBuildings() const;
 
         enum {
             DefaultShadowLevelMin = 0,

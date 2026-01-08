@@ -849,3 +849,25 @@ bool OsmAnd::MapPresentationEnvironment_P::getShow3DBuildingParts() const
 
     return result;
 }
+
+bool OsmAnd::MapPresentationEnvironment_P::getColoredBuildings() const
+{
+    bool result = false;
+
+    const auto valueDefId = owner->mapStyle->getValueDefinitionIdByName(QStringLiteral("coloredBuildings"));
+    if (valueDefId >= 0)
+    {
+        const auto settings = getSettings();
+        const auto it = settings.find(valueDefId);
+        if (it != settings.end())
+        {
+            const auto& settingValue = it.value();
+            if (!settingValue.isComplex)
+            {
+                result = (settingValue.asSimple.asUInt != 0);
+            }
+        }
+    }
+
+    return result;
+}

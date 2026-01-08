@@ -1,15 +1,57 @@
 #include "Map3DObjectsProvider_P.h"
 
 #include <mapbox/earcut.hpp>
+#include <limits>
+#include <Polyline2D/LineSegment.h>
+#include <Polyline2D/Vec2.h>
 
 #include "MapDataProviderHelpers.h"
 #include "Utilities.h"
 #include "MapRenderer.h"
 #include "MapPresentationEnvironment.h"
+#include "MapStyleBuiltinValueDefinitions.h"
 
 #include "IMapTiledSymbolsProvider.h"
 
 using namespace OsmAnd;
+
+namespace OsmAnd
+{
+    inline uint qHash(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive) Q_DECL_NOTHROW
+    {
+        if (!primitive || !primitive->sourceObject)
+            return 0;
+
+        const auto& obfMapObject = std::dynamic_pointer_cast<const ObfMapObject>(primitive->sourceObject);
+        if (obfMapObject)
+        {
+            return ::qHash(static_cast<uint64_t>(obfMapObject->id));
+        }
+
+        return ::qHash(primitive->sourceObject.get());
+    }
+
+    inline bool operator==(const std::shared_ptr<const MapPrimitiviser::Primitive>& lhs,
+                           const std::shared_ptr<const MapPrimitiviser::Primitive>& rhs) Q_DECL_NOTHROW
+    {
+        if (lhs.get() == rhs.get())
+            return true;
+        if (!lhs || !rhs)
+            return false;
+        if (!lhs->sourceObject || !rhs->sourceObject)
+            return lhs->sourceObject.get() == rhs->sourceObject.get();
+
+        const auto& lhsObj = std::dynamic_pointer_cast<const ObfMapObject>(lhs->sourceObject);
+        const auto& rhsObj = std::dynamic_pointer_cast<const ObfMapObject>(rhs->sourceObject);
+
+        if (lhsObj && rhsObj)
+        {
+            return lhsObj->id == rhsObj->id;
+        }
+
+        return lhs->sourceObject.get() == rhs->sourceObject.get();
+    }
+}
 
 Map3DObjectsTiledProvider_P::Map3DObjectsTiledProvider_P(
     Map3DObjectsTiledProvider* const owner_,
@@ -20,6 +62,34 @@ Map3DObjectsTiledProvider_P::Map3DObjectsTiledProvider_P(
     , _elevationProvider(nullptr)
     , owner(owner_)
 {
+    std::vector<std::vector<std::array<float, 2>>> polygon;
+
+    std::vector<std::array<float, 2>> side = {
+        {0.0f, 0.0f},
+        {0.0f, 1.0f},
+        {1.0f, 1.0f},
+        {1.0f, 0.0f}
+    };
+
+    polygon.push_back(side);
+    fullSideIndices = mapbox::earcut<uint16_t>(polygon);
+
+    polygon.clear();
+
+    std::vector<std::array<float, 2>> passageSide = {
+        {0.0f, 0.0f},
+        {0.0f, 1.0f},
+        {1.0f, 1.0f},
+        {1.0f, 0.0f},
+
+        {0.75f, 0.0f},
+        {0.75f, 0.75f},
+        {0.25f, 0.75f},
+        {0.25f, 0.25f},
+    };
+
+    polygon.push_back(passageSide);
+    pasageSideIndices = mapbox::earcut<uint16_t>(polygon);
 }
 
 Map3DObjectsTiledProvider_P::~Map3DObjectsTiledProvider_P()
@@ -28,7 +98,7 @@ Map3DObjectsTiledProvider_P::~Map3DObjectsTiledProvider_P()
 
 ZoomLevel Map3DObjectsTiledProvider_P::getMinZoom() const
 {
-    return _tiledProvider ? _tiledProvider->getMinZoom() : MinZoomLevel;
+    return ZoomLevel16;
 }
 
 ZoomLevel Map3DObjectsTiledProvider_P::getMaxZoom() const
@@ -74,9 +144,9 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             _elevationProvider->obtainElevationData(elevationRequest, elevationData, nullptr);
         }
 
-        QSet<std::shared_ptr<const OsmAnd::ObfMapObject>> buildings;
-        QSet<std::shared_ptr<const OsmAnd::ObfMapObject>> buildingParts;
-        QSet<std::shared_ptr<const OsmAnd::ObfMapObject>> buildingPassages;
+        QSet<std::shared_ptr<const MapPrimitiviser::Primitive>> buildings;
+        QSet<std::shared_ptr<const MapPrimitiviser::Primitive>> buildingParts;
+        QHash<std::shared_ptr<const MapPrimitiviser::Primitive>, float> buildingPassages;
 
         for (const auto& primitive : tileData->primitivisedObjects->polygons)
         {
@@ -92,12 +162,12 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
 
         for (const auto& buildingPart : buildingParts)
         {
-            processPrimitive(buildingPart, buildings3D, elevationData, request.tileId, request.zoom);
+            processPrimitive(buildingPart, buildings3D, elevationData, request.tileId, request.zoom, buildingPassages);
         }
 
         for (const auto& building : buildings)
         {
-            processPrimitive(building, buildings3D, elevationData, request.tileId, request.zoom);
+            processPrimitive(building, buildings3D, elevationData, request.tileId, request.zoom, buildingPassages);
         }
     }
 
@@ -105,8 +175,8 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
     return true;
 }
 
-void Map3DObjectsTiledProvider_P::filterBuildings(QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& buildings,
-                                                  QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& buildingParts) const
+void Map3DObjectsTiledProvider_P::filterBuildings(QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& buildings,
+                                                  QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& buildingParts) const
 {
     const bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
     if (!show3DbuildingParts)
@@ -116,7 +186,13 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QSet<std::shared_ptr<const Osm
 
     for (auto it = buildings.begin(); it != buildings.end();)
     {
-        const auto& building = *it;
+        const auto& buildingPrimitive = *it;
+        const auto& building = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPrimitive->sourceObject);
+        if (!building)
+        {
+            ++it;
+            continue;
+        }
 
         if (building->containsTag(QLatin1String("role_outline"), true) ||
             building->containsTag(QLatin1String("role_inner"), true) ||
@@ -133,9 +209,10 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QSet<std::shared_ptr<const Osm
         }
 
         bool shouldRemove = false;
-        for (const auto& buildingPart : buildingParts)
+        for (const auto& buildingPartPrimitive : buildingParts)
         {
-            if (building->bbox31.contains(buildingPart->bbox31))
+            const auto& buildingPart = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPartPrimitive->sourceObject);
+            if (buildingPart && building->bbox31.contains(buildingPart->bbox31))
             {
                 shouldRemove = true;
                 break;
@@ -154,9 +231,9 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QSet<std::shared_ptr<const Osm
 }
 
 void Map3DObjectsTiledProvider_P::collectFromPoliline(const std::shared_ptr<const MapPrimitiviser::Primitive>& polylinePrimitive,
-                                                  QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildings,
-                                                  QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingParts,
-                                                  QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingPassages) const
+                                                      QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildings,
+                                                      QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildingParts,
+                                                      QHash<std::shared_ptr<const MapPrimitiviser::Primitive>, float>& outBuildingPassages) const
 {
     const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(polylinePrimitive->sourceObject);
     if (!sourceObject || sourceObject->points31.isEmpty())
@@ -170,25 +247,31 @@ void Map3DObjectsTiledProvider_P::collectFromPoliline(const std::shared_ptr<cons
 
         if (sourceObject->containsTag(QLatin1String("building")))
         {
-            outBuildings.insert(sourceObject);
+            outBuildings.insert(polylinePrimitive);
         }
         else if (show3DbuildingParts && sourceObject->containsTag(QLatin1String("building:part")))
         {
-            outBuildingParts.insert(sourceObject);
+            outBuildingParts.insert(polylinePrimitive);
         }
     }
     else if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polyline)
     {
         if (sourceObject->containsAttribute(QLatin1String("tunnel"), QLatin1String("building_passage")))
         {
-            outBuildingPassages.insert(sourceObject);
+            float width = 2.0;
+
+            const QString tag = QLatin1String("width");
+            QString widthValue = sourceObject->getResolvedAttribute(QStringRef(&tag));
+            width = OsmAnd::Utilities::parseLength(widthValue, width);
+
+            outBuildingPassages.insert(polylinePrimitive, width);
         }
     }
 }
 
 void Map3DObjectsTiledProvider_P::collectFromPoligons(const std::shared_ptr<const MapPrimitiviser::Primitive>& poligonPrimitive,
-                                                  QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildings,
-                                                  QSet<std::shared_ptr<const OsmAnd::ObfMapObject>>& outBuildingParts) const
+                                                  QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildings,
+                                                  QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildingParts) const
 {
     const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(poligonPrimitive->sourceObject);
     if (!sourceObject || sourceObject->points31.isEmpty())
@@ -200,11 +283,11 @@ void Map3DObjectsTiledProvider_P::collectFromPoligons(const std::shared_ptr<cons
 
     if (sourceObject->containsTag(QLatin1String("building")))
     {
-        outBuildings.insert(sourceObject);
+        outBuildings.insert(poligonPrimitive);
     }
     else if (show3DbuildingParts && sourceObject->containsTag(QLatin1String("building:part")))
     {
-        outBuildingParts.insert(sourceObject);
+        outBuildingParts.insert(poligonPrimitive);
     }
 }
 
@@ -252,13 +335,16 @@ FColorARGB Map3DObjectsTiledProvider_P::getDefaultBuildingsColor() const
     return _environment ? _environment->get3DBuildingsColor() : FColorARGB(1.0f, 0.4f, 0.4f, 0.4f);
 }
 
-void Map3DObjectsTiledProvider_P::processPrimitive(
-    const std::shared_ptr<const OsmAnd::ObfMapObject>& sourceObject,
-    Buildings3D& buildings3D,
-    const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData,
-    const TileId& tileId,
-    const ZoomLevel zoom) const
+void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
+    Buildings3D& buildings3D, const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData, const TileId& tileId,
+    const ZoomLevel zoom, const QHash<std::shared_ptr<const MapPrimitiviser::Primitive>, float>& passagesData) const
 {
+    const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(primitive->sourceObject);
+    if (!sourceObject)
+    {
+        return;
+    }
+
     float levelHeight = getDefaultBuildingsLevelHeight();
 
     float height = getDefaultBuildingsHeight();
@@ -314,6 +400,19 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         }
     }
 
+    if (!colorFound && _environment && _environment->getColoredBuildings())
+    {
+        uint32_t colorARGB = 0;
+        if (primitive->evaluationResult.getIntegerValue(_environment->styleBuiltinValueDefs->id_OUTPUT_COLOR, colorARGB))
+        {
+            if (colorARGB != 0)
+            {
+                color = FColorARGB(colorARGB);
+                colorFound = true;
+            }
+        }
+    }
+
     if (height == 0.0f)
     {
         return;
@@ -360,6 +459,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
 
     QVector<PointI> points31 = sourceObject->points31;
 
+    // Reverse points if needed
     double area = Utilities::computeSignedArea(points31);
     bool isClockwise = (area < 0.0);
 
@@ -367,6 +467,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     {
         std::reverse(points31.begin(), points31.end());
     }
+
+    const int edgePointsCount = points31.size();
 
     QVector<QVector<PointI>> innerPolygons;
     if (!sourceObject->innerPolygonsPoints31.isEmpty())
@@ -391,194 +493,97 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         }
     }
 
-    const int edgePointsCount = points31.size();
-
-    int totalTopVertices = edgePointsCount;
-
-    for (const auto& innerPoly : innerPolygons)
-    {
-        totalTopVertices += innerPoly.size();
-    }
-
-    const int currentVertexOffset = buildings3D.vertices.size();
+    int currentVertexOffset = buildings3D.vertices.size();
     const int currentIndexOffset = buildings3D.indices.size();
-    const uint64_t buildingID = sourceObject->id.id;
 
-    QVector<glm::vec3> sideNormals;
-    sideNormals.resize(edgePointsCount);
-    for (int i = 0; i < edgePointsCount; ++i)
-    {
-        const int next = (i + 1) % edgePointsCount;
-        const auto& p0 = points31[i];
-        const auto& p1 = points31[next];
-        const float dx = static_cast<float>(p1.x - p0.x);
-        const float dz = static_cast<float>(p1.y - p0.y);
-        glm::vec3 n(-dz, 0.0f, dx);
-        const float len = glm::length(n);
-        if (len > 0.0f)
-        {
-            n /= len;
-        }
-        else
-        {
-            n = glm::vec3(0.0f, 0.0f, 1.0f);
-        }
+    // Construct top side of the mesh
+    std::vector<std::vector<std::array<int32_t, 2>>> topPoligon;
 
-        sideNormals[i] = n;
-    }
-
-    QVector<QVector<glm::vec3>> innerSideNormals;
-    for (const auto& innerPoly : innerPolygons)
-    {
-        QVector<glm::vec3> innerNormals;
-        innerNormals.resize(innerPoly.size());
-        for (int i = 0; i < innerPoly.size(); ++i)
-        {
-            const int next = (i + 1) % innerPoly.size();
-            const auto& p0 = innerPoly[i];
-            const auto& p1 = innerPoly[next];
-            const float dx = static_cast<float>(p1.x - p0.x);
-            const float dz = static_cast<float>(p1.y - p0.y);
-            glm::vec3 n(-dz, 0.0f, dx);
-            const float len = glm::length(n);
-            if (len > 0.0f)
-            {
-                n /= len;
-            }
-            else
-            {
-                n = glm::vec3(0.0f, 0.0f, 1.0f);
-            }
-
-            innerNormals[i] = n;
-        }
-        innerSideNormals.append(innerNormals);
-    }
-
-    for (int i = 0; i < edgePointsCount; ++i)
-    {
-        const auto& point31 = points31[i];
-        buildings3D.vertices.append({glm::ivec2(point31.x, point31.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
-    }
-
-    for (const auto& innerPoly : innerPolygons)
-    {
-        for (const auto& point31 : innerPoly)
-        {
-            buildings3D.vertices.append({glm::ivec2(point31.x, point31.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
-        }
-    }
-
-    const int wallVertexStart = totalTopVertices;
-    
-    for (int i = 0; i < edgePointsCount; ++i)
-    {
-        const int next = (i + 1) % edgePointsCount;
-        const glm::vec3& edgeNormal = sideNormals[i];
-
-        const float minTerrainHeight = minHeight > 0.0 ? terrainHeight : 0.0;
-
-        const auto& point31_i = points31[i];
-        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, terrainHeight, edgeNormal, colorVec});
-        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
-
-        const auto& point31_next = points31[next];
-        buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, terrainHeight, edgeNormal, colorVec});
-        buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
-    }
-
-    for (int polyIdx = 0; polyIdx < innerPolygons.size(); ++polyIdx)
-    {
-        const auto& innerPoly = innerPolygons[polyIdx];
-        const auto& innerNormals = innerSideNormals[polyIdx];
-        
-        for (int i = 0; i < innerPoly.size(); ++i)
-        {
-            const int next = (i + 1) % innerPoly.size();
-            const glm::vec3& edgeNormal = innerNormals[i];
-
-            const float minTerrainHeight = minHeight > 0.0 ? terrainHeight : 0.0;
-
-            const auto& point31_i = innerPoly[i];
-            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, terrainHeight, edgeNormal, colorVec});
-            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
-
-            const auto& point31_next = innerPoly[next];
-            buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, terrainHeight, edgeNormal, colorVec});
-            buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
-        }
-    }
-
-    std::vector<std::vector<std::array<int32_t, 2>>> polygon;
-    
     std::vector<std::array<int32_t, 2>> outerRing;
-    outerRing.reserve(edgePointsCount);
     for (int i = 0; i < edgePointsCount; ++i)
     {
         const auto& p = points31[i];
+
         outerRing.push_back({p.x, p.y});
+        buildings3D.vertices.append({glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
     }
-    polygon.push_back(std::move(outerRing));
+
+    topPoligon.push_back(std::move(outerRing));
 
     for (const auto& innerPoly : innerPolygons)
     {
         std::vector<std::array<int32_t, 2>> innerRing;
-        innerRing.reserve(innerPoly.size());
         for (const auto& p : innerPoly)
         {
             innerRing.push_back({p.x, p.y});
+            buildings3D.vertices.append({glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
         }
-        polygon.push_back(std::move(innerRing));
+
+        topPoligon.push_back(std::move(innerRing));
     }
 
-    std::vector<uint16_t> topIndices = mapbox::earcut<uint16_t>(polygon);
-    if (topIndices.empty())
-    {
-        return;
-    }
-
+    std::vector<uint16_t> topIndices = mapbox::earcut<uint16_t>(topPoligon);
     for (uint16_t idx : topIndices)
     {
         buildings3D.indices.append(static_cast<uint16_t>(idx + currentVertexOffset));
     }
 
-    int currentWallBaseIdx = wallVertexStart;
+    // Construct walls of the mesh
     for (int i = 0; i < edgePointsCount; ++i)
     {
-        const int baseIdx = currentWallBaseIdx + 4 * i;
+        const int next = (i + 1) % edgePointsCount;
+        const auto& point31_i = points31[i];
+        const auto& point31_next = points31[next];
 
-        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 0 + currentVertexOffset));
-        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 1 + currentVertexOffset));
-        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 2 + currentVertexOffset));
+        const uint32_t baseVertex = buildings3D.vertices.size();
 
-        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 1 + currentVertexOffset));
-        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 3 + currentVertexOffset));
-        buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 2 + currentVertexOffset));
+        const glm::vec3 edgeNormal = calculateNormalFrom2Points(point31_i, point31_next);
+        const float minTerrainHeight = minHeight > 0.0 ? terrainHeight : 0.0;
+
+        // Should match the side order (counter-clockwise)
+        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
+        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, terrainHeight, edgeNormal, colorVec});
+        buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, terrainHeight, edgeNormal, colorVec});
+        buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
+
+        for (uint16_t idx : fullSideIndices)
+        {
+            buildings3D.indices.append(baseVertex + idx);
+        }
     }
-    currentWallBaseIdx += edgePointsCount * 4;
 
+    // Construct inner walls of the mesh
     for (int polyIdx = 0; polyIdx < innerPolygons.size(); ++polyIdx)
     {
         const auto& innerPoly = innerPolygons[polyIdx];
-        
+
         for (int i = 0; i < innerPoly.size(); ++i)
         {
-            const int baseIdx = currentWallBaseIdx + 4 * i;
+            const int next = (i + 1) % innerPoly.size();
+            const auto& point31_i = innerPoly[i];
+            const auto& point31_next = innerPoly[next];
 
-            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 0 + currentVertexOffset));
-            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 1 + currentVertexOffset));
-            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 2 + currentVertexOffset));
+            const uint32_t baseVertex = buildings3D.vertices.size();
 
-            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 1 + currentVertexOffset));
-            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 3 + currentVertexOffset));
-            buildings3D.indices.append(static_cast<uint16_t>(baseIdx + 2 + currentVertexOffset));
+            const glm::vec3 edgeNormal = calculateNormalFrom2Points(point31_i, point31_next);
+            const float minTerrainHeight = minHeight > 0.0 ? terrainHeight : 0.0;
+
+            // Should match the side order (counter-clockwise)
+            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
+            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, terrainHeight, edgeNormal, colorVec});
+            buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, terrainHeight, edgeNormal, colorVec});
+            buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
+
+            for (uint16_t idx : fullSideIndices)
+            {
+                buildings3D.indices.append(baseVertex + idx);
+            }
         }
-        currentWallBaseIdx += innerPoly.size() * 4;
     }
 
     const int buildingVertexCount = buildings3D.vertices.size() - currentVertexOffset;
     const int buildingIndexCount = buildings3D.indices.size() - currentIndexOffset;
-    buildings3D.buildingIDs.append(buildingID);
+    buildings3D.buildingIDs.append(sourceObject->id.id);
     buildings3D.vertexCounts.append(buildingVertexCount);
     buildings3D.indexCounts.append(buildingIndexCount);
 }
@@ -627,4 +632,23 @@ void Map3DObjectsTiledProvider_P::accumulateElevationForPoint(
 void Map3DObjectsTiledProvider_P::setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationProvider)
 {
     _elevationProvider = elevationProvider;
+}
+
+glm::vec3 Map3DObjectsTiledProvider_P::calculateNormalFrom2Points(PointI point31_i, PointI point31_next) const
+{
+    const float dx = static_cast<float>(point31_next.x - point31_i.x);
+    const float dz = static_cast<float>(point31_next.y - point31_i.y);
+
+    glm::vec3 n(-dz, 0.0f, dx);
+    const float len = glm::length(n);
+    if (len > 0.0f)
+    {
+        n /= len;
+    }
+    else
+    {
+        n = glm::vec3(0.0f, 0.0f, 1.0f);
+    }
+
+    return n;
 }
