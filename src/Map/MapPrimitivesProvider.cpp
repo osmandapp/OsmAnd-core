@@ -48,6 +48,11 @@ QList<std::shared_ptr<const OsmAnd::MapObject>> OsmAnd::MapPrimitivesProvider::r
     return _p->retreivePolygons(point, zoom);
 }
 
+void OsmAnd::MapPrimitivesProvider::clearEntriesCache()
+{
+    _p->clearEntriesCache();
+}
+
 bool OsmAnd::MapPrimitivesProvider::supportsNaturalObtainData() const
 {
     return true;
