@@ -713,8 +713,9 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
                 const auto layerType = mapObject->getLayerType();
                 const auto attributeIdsCount = mapObject->attributeIds.size();
+                const auto additionalAttributeIdsCount = mapObject->additionalAttributeIds.size();
                 auto pAttributeId = mapObject->attributeIds.constData();
-                bool isLabel = !mapObject->isArea && attributeIdsCount == 1
+                bool isLabel = !mapObject->isArea && attributeIdsCount == 1 && additionalAttributeIdsCount == 0
                     && mapObject->points31.size() == 1 && mapObject->captions.size() > 0;
 
                 if (isLabel)
@@ -729,7 +730,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                         && filterCoords.y >= 0.0 && filterCoords.y < 128.0)
                     {
                         const auto gridCode = (static_cast<int>(filterCoords.y) << 25
-                            | static_cast<int>(filterCoords.x) << 18 | static_cast<int>(layerType) << 16)
+                            | static_cast<int>(filterCoords.x) << 18 | (static_cast<int>(layerType) + 1) << 16)
                             ^ *pAttributeId;
                         if (filteringGrid.contains(gridCode))
                             isPresent = false;
