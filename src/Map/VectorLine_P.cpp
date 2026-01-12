@@ -1672,7 +1672,8 @@ void OsmAnd::VectorLine_P::addArrowsOnFlatSegmentPath(
     const PointD location(origin);
     bool withHeights = !segmentHeights.isEmpty();
     float pathIconStep = getPointStepPx();
-    double step = Utilities::metersToX31(pathIconStep * _metersPerPixel);
+    double step = Utilities::metersToY31(pathIconStep * _metersPerPixel);
+    step = correctDistance(_target31.y, 0.0, 0.0, step);
     double halfStep = step / 2.0;
     bool ok = halfStep > 0.0;
     if (!ok)
