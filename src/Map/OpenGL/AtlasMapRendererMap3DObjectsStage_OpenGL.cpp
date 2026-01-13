@@ -776,15 +776,15 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
 
         depthPrepassResult = renderDepth(collectedResources);
 
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glEnable(GL_BLEND);
         GL_CHECK_RESULT;
 
         glDepthMask(GL_FALSE);
         GL_CHECK_RESULT;
-
-        glEnable(GL_BLEND);
-        GL_CHECK_RESULT;
     }
+
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    GL_CHECK_RESULT;
 
     const auto colorPassResult = renderColor(collectedResources);
 
