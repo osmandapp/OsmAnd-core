@@ -207,6 +207,27 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glEnable(GL_BLEND);
     GL_CHECK_RESULT;
 
+    if (!skip && !currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
+    {
+        Stopwatch symbolsPreapareStageStopwatch(metric != nullptr);
+
+        auto stageResult = _symbolsStage->prepareSymbols(metric);
+
+        if (stageResult == MapRendererStage::StageResult::Success)
+            stageResult = _symbolsStage->renderWithDepth(metric);
+
+        if (stageResult == MapRendererStage::StageResult::Fail)
+            ok = false;
+
+        if (!ok || stageResult == MapRendererStage::StageResult::Wait)
+            skip = true;
+
+        if (metric)
+        {
+            metric->elapsedTimeForSymbolsStage = symbolsPreapareStageStopwatch.elapsed();
+        }
+    }
+
     if (!skip && _map3DObjectsStage && !currentDebugSettings->disable3DMapObjectsStage)
     {
         Stopwatch map3DStageStopwatch(metric != nullptr);
@@ -216,7 +237,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
         if (metric)
-            metric->elapsedTimeForSymbolsStage += map3DStageStopwatch.elapsed();
+            metric->elapsedTimeForObjects3DStage += map3DStageStopwatch.elapsed();
 
         if (!ok || stageResult == MapRendererStage::StageResult::Wait)
             skip = true;
@@ -228,13 +249,13 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         // Set premultiplied alpha color blending
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-        Stopwatch symbolsStageStopwatch(metric != nullptr);
+        Stopwatch symbolsDrawStageStopwatch(metric != nullptr);
         const auto stageResult = _symbolsStage->render(metric);
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
         if (metric)
         {
-            metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
+            metric->elapsedTimeForSymbolsStage += symbolsDrawStageStopwatch.elapsed();
             // Disable for now
             //_symbolsStage->drawDebugMetricSymbol(metric);
         }

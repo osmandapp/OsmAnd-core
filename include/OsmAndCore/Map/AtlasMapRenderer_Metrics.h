@@ -31,6 +31,7 @@ namespace OsmAnd
         FIELD_ACTION(float, elapsedTimeForObtainingRenderableSymbolsWithLock, "s");                             \
         FIELD_ACTION(float, elapsedTimeForObtainingRenderableSymbolsOnlyLock, "s");                             \
         FIELD_ACTION(float, elapsedTimeForObtainRenderableSymbolCalls, "s");                                    \
+        FIELD_ACTION(float, elapsedTimeForObjects3DStage, "s");                                                 \
         FIELD_ACTION(unsigned int, obtainRenderableSymbolCalls, "");                                            \
         FIELD_ACTION(unsigned int, onPathSymbolsRejectedByFrustum, "");                                         \
         FIELD_ACTION(unsigned int, model3DSymbolsRejectedByFrustum, "");                                        \

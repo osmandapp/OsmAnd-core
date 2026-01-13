@@ -375,6 +375,9 @@ namespace OsmAnd
 
         void drawDebugMetricSymbol(IMapRenderer_Metrics::Metric_renderFrame* metric_) override;
 
+        OsmAnd::MapRendererStage::StageResult prepareSymbols(IMapRenderer_Metrics::Metric_renderFrame* metric_) override;
+        OsmAnd::MapRendererStage::StageResult renderWithDepth(IMapRenderer_Metrics::Metric_renderFrame* metric_) override;
+
     friend class AtlasMapRendererSymbolsStageModel3D_OpenGL;
     };
 }
