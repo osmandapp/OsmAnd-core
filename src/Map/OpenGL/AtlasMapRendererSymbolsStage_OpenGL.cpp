@@ -134,7 +134,7 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
     return ok ? StageResult::Success : StageResult::Fail;
 }
 
-OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderWithDepth(IMapRenderer_Metrics::Metric_renderFrame* metric_)
+OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbols(IMapRenderer_Metrics::Metric_renderFrame* metric_)
 {
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 
@@ -163,17 +163,6 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
             {
                 metric->elapsedTimeForOnSurfaceSymbolsRendering += renderOnSurfaceSymbolStopwatch.elapsed();
                 metric->onSurfaceSymbolsRendered += 1;
-            }
-        }
-        else if (const auto& renderableModel3DSymbol = std::dynamic_pointer_cast<const RenderableModel3DSymbol>(renderableSymbol))
-        {
-            Stopwatch renderableModel3DSymbolStopwatch(metric != nullptr);
-            ok = ok && _model3DSubstage->render(
-                renderableModel3DSymbol, currentAlphaChannelType) == MapRendererStage::StageResult::Success;
-            if (metric)
-            {
-                metric->elapsedTimeForModel3DSymbolsRendering += renderableModel3DSymbolStopwatch.elapsed();
-                metric->model3DSymbolsRendered += 1;
             }
         }
     }
@@ -258,6 +247,17 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
             {
                 metric->elapsedTimeForOnPathSymbolsRendering += renderOnPathSymbolStopwatch.elapsed();
                 metric->onPathSymbolsRendered += 1;
+            }
+        }
+        else if (const auto& renderableModel3DSymbol = std::dynamic_pointer_cast<const RenderableModel3DSymbol>(renderableSymbol))
+        {
+            Stopwatch renderableModel3DSymbolStopwatch(metric != nullptr);
+            ok = ok && _model3DSubstage->render(
+                renderableModel3DSymbol, currentAlphaChannelType) == MapRendererStage::StageResult::Success;
+            if (metric)
+            {
+                metric->elapsedTimeForModel3DSymbolsRendering += renderableModel3DSymbolStopwatch.elapsed();
+                metric->model3DSymbolsRendered += 1;
             }
         }
     }

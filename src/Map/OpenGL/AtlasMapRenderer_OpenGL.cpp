@@ -203,10 +203,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
             skip = true;
     }
 
-    // Turn on blending since now objects with transparency are going to be rendered
-    glEnable(GL_BLEND);
-    GL_CHECK_RESULT;
-
     if (!skip && !currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
     {
         Stopwatch symbolsPreapareStageStopwatch(metric != nullptr);
@@ -214,7 +210,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         auto stageResult = _symbolsStage->prepareSymbols(metric);
 
         if (stageResult == MapRendererStage::StageResult::Success)
-            stageResult = _symbolsStage->renderWithDepth(metric);
+            stageResult = _symbolsStage->renderOnSurfaceSymbols(metric);
 
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
@@ -227,6 +223,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
             metric->elapsedTimeForSymbolsStage = symbolsPreapareStageStopwatch.elapsed();
         }
     }
+
+    // Turn on blending since now objects with transparency are going to be rendered
+    glEnable(GL_BLEND);
+    GL_CHECK_RESULT;
 
     if (!skip && _map3DObjectsStage && !currentDebugSettings->disable3DMapObjectsStage)
     {
