@@ -45,5 +45,5 @@ QString OsmAnd::CollatorStringMatcher_P::alignChars(const QString& fullText)
     {
         res = res.mid(0, i) + QStringLiteral("ss") + res.mid(i + 1);
     }
-    return res;
+    return OsmAnd::ICU::stripAccentsAndDiacritics(res);
 }
