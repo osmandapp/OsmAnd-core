@@ -129,6 +129,7 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
         return StageResult::Wait;
     }
 
+    prepareSymbolsDrawing();
     prepare(metric);
 
     return ok ? StageResult::Success : StageResult::Fail;
