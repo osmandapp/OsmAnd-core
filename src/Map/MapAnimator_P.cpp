@@ -727,7 +727,10 @@ OsmAnd::PointI64 OsmAnd::MapAnimator_P::flatTargetGetter(const Key key, Animatio
 
 void OsmAnd::MapAnimator_P::flatTargetSetter(const Key key, const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
-    _renderer->setTarget(Utilities::normalizeCoordinates(newValue, ZoomLevel31));
+    auto target31 = Utilities::normalizeCoordinates(newValue, ZoomLevel31);
+    if (!_renderer->getState().flatEarth)
+        target31.y = static_cast<int>(qBound(static_cast<int64_t>(0), newValue.y, static_cast<int64_t>(INT32_MAX)));
+    _renderer->setTarget(target31);
     _renderer->targetChangedObservable.postNotify(_renderer.get());
 }
 
