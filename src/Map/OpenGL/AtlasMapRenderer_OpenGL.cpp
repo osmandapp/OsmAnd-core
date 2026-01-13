@@ -203,26 +203,36 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
             skip = true;
     }
 
+    // Turn on blending since now objects with transparency are going to be rendered
+    glEnable(GL_BLEND);
+    GL_CHECK_RESULT;
+
+    // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
     if (!skip && !currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
     {
-        Stopwatch symbolsPreapareStageStopwatch(metric != nullptr);
+        // Set premultiplied alpha color blending
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-        const auto stageResult = _symbolsStage->prepareSymbols(metric);
-
+        Stopwatch symbolsStageStopwatch(metric != nullptr);
+        const auto stageResult = _symbolsStage->render(metric);
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
+        if (metric)
+        {
+            metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
+            // Disable for now
+            //_symbolsStage->drawDebugMetricSymbol(metric);
+        }
+
+        glDepthMask(GL_TRUE);
+        GL_CHECK_RESULT;
 
         if (!ok || stageResult == MapRendererStage::StageResult::Wait)
             skip = true;
-
-        if (metric)
-        {
-            metric->elapsedTimeForSymbolsStage = symbolsPreapareStageStopwatch.elapsed();
-        }
     }
 
-    // Turn on blending since now objects with transparency are going to be rendered
-    glEnable(GL_BLEND);
+    // Restore straight color blending
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 
     if (!skip && _map3DObjectsStage && !currentDebugSettings->disable3DMapObjectsStage)
@@ -239,34 +249,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         if (!ok || stageResult == MapRendererStage::StageResult::Wait)
             skip = true;
     }
-
-    // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
-    if (!skip && !currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
-    {
-        // Set premultiplied alpha color blending
-        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
-        Stopwatch symbolsDrawStageStopwatch(metric != nullptr);
-        const auto stageResult = _symbolsStage->render(metric);
-        if (stageResult == MapRendererStage::StageResult::Fail)
-            ok = false;
-        if (metric)
-        {
-            metric->elapsedTimeForSymbolsStage += symbolsDrawStageStopwatch.elapsed();
-            // Disable for now
-            //_symbolsStage->drawDebugMetricSymbol(metric);
-        }
-
-        glDepthMask(GL_TRUE);
-        GL_CHECK_RESULT;
-
-        if (!ok || stageResult == MapRendererStage::StageResult::Wait)
-            skip = true;
-    }
-
-    // Restore straight color blending
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    GL_CHECK_RESULT;
 
     //TODO: render special fog object some day
 
