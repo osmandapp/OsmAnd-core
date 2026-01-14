@@ -39,7 +39,7 @@ namespace OsmAnd
                                  QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildingParts,
                                  QHash<std::shared_ptr<const MapPrimitiviser::Primitive>, float>& outBuildingPassages) const;
 
-        void collectFromPoligons(const std::shared_ptr<const MapPrimitiviser::Primitive>& poligonPrimitive,
+        void collectFrompolygons(const std::shared_ptr<const MapPrimitiviser::Primitive>& polygonPrimitive,
                                 QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildings,
                                 QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildingParts) const;
 
@@ -56,6 +56,16 @@ namespace OsmAnd
             bool& hasElevationSample) const;
 
         glm::vec3 calculateNormalFrom2Points(PointI point31_i, PointI point31_next) const;
+        uint32_t getPolygonColor(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive) const;
+
+        void generateBuildingWall(
+            Buildings3D& buildings3D,
+            const PointI& point31_i,
+            const PointI& point31_next,
+            float minHeight,
+            float height,
+            float terrainHeight,
+            const glm::vec3& colorVec) const;
 
     protected:
         Map3DObjectsTiledProvider_P(Map3DObjectsTiledProvider* const owner,

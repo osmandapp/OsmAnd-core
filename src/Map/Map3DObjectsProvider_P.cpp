@@ -150,7 +150,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
 
         for (const auto& primitive : tileData->primitivisedObjects->polygons)
         {
-            collectFromPoligons(primitive, buildings, buildingParts);
+            collectFrompolygons(primitive, buildings, buildingParts);
         }
 
         for (const auto& primitive : tileData->primitivisedObjects->polylines)
@@ -247,11 +247,39 @@ void Map3DObjectsTiledProvider_P::collectFromPoliline(const std::shared_ptr<cons
 
         if (sourceObject->containsTag(QLatin1String("building")))
         {
-            outBuildings.insert(polylinePrimitive);
+            const auto primitiveIt = outBuildings.find(polylinePrimitive);
+
+            if (primitiveIt == outBuildings.end())
+            {
+                outBuildings.insert(polylinePrimitive);
+            }
+            else
+            {
+                const uint32_t savedPrimitiveColor = getPolygonColor(*primitiveIt);
+                if (savedPrimitiveColor == 0)
+                {
+                    outBuildings.erase(primitiveIt);
+                    outBuildings.insert(polylinePrimitive);
+                }
+            }
         }
         else if (show3DbuildingParts && sourceObject->containsTag(QLatin1String("building:part")))
         {
-            outBuildingParts.insert(polylinePrimitive);
+            const auto primitiveIt = outBuildingParts.find(polylinePrimitive);
+
+            if (primitiveIt == outBuildingParts.end())
+            {
+                outBuildingParts.insert(polylinePrimitive);
+            }
+            else
+            {
+                const uint32_t savedPrimitiveColor = getPolygonColor(*primitiveIt);
+                if (savedPrimitiveColor == 0)
+                {
+                    outBuildingParts.erase(primitiveIt);
+                    outBuildingParts.insert(polylinePrimitive);
+                }
+            }
         }
     }
     else if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polyline)
@@ -269,11 +297,11 @@ void Map3DObjectsTiledProvider_P::collectFromPoliline(const std::shared_ptr<cons
     }
 }
 
-void Map3DObjectsTiledProvider_P::collectFromPoligons(const std::shared_ptr<const MapPrimitiviser::Primitive>& poligonPrimitive,
+void Map3DObjectsTiledProvider_P::collectFrompolygons(const std::shared_ptr<const MapPrimitiviser::Primitive>& polygonPrimitive,
                                                   QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildings,
                                                   QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildingParts) const
 {
-    const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(poligonPrimitive->sourceObject);
+    const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(polygonPrimitive->sourceObject);
     if (!sourceObject || sourceObject->points31.isEmpty())
     {
         return;
@@ -283,11 +311,39 @@ void Map3DObjectsTiledProvider_P::collectFromPoligons(const std::shared_ptr<cons
 
     if (sourceObject->containsTag(QLatin1String("building")))
     {
-        outBuildings.insert(poligonPrimitive);
+        const auto primitiveIt = outBuildings.find(polygonPrimitive);
+
+        if (primitiveIt == outBuildings.end())
+        {
+            outBuildings.insert(polygonPrimitive);
+        }
+        else
+        {
+            const uint32_t savedPrimitiveColor = getPolygonColor(*primitiveIt);
+            if (savedPrimitiveColor == 0)
+            {
+                outBuildings.erase(primitiveIt);
+                outBuildings.insert(polygonPrimitive);
+            }
+        }
     }
     else if (show3DbuildingParts && sourceObject->containsTag(QLatin1String("building:part")))
     {
-        outBuildingParts.insert(poligonPrimitive);
+        const auto primitiveIt = outBuildingParts.find(polygonPrimitive);
+
+        if (primitiveIt == outBuildingParts.end())
+        {
+            outBuildingParts.insert(polygonPrimitive);
+        }
+        else
+        {
+            const uint32_t savedPrimitiveColor = getPolygonColor(*primitiveIt);
+            if (savedPrimitiveColor == 0)
+            {
+                outBuildingParts.erase(primitiveIt);
+                outBuildingParts.insert(polygonPrimitive);
+            }
+        }
     }
 }
 
@@ -355,12 +411,16 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
     float minLevels = 0.0;
 
     FColorARGB color = getDefaultBuildingsColor();
+    const uint32_t polygonColor = getPolygonColor(primitive);
+    if (polygonColor != 0)
+    {
+        color = FColorARGB(polygonColor);
+    }
 
     bool heightFound = false;
     bool minHeightFound = false;
     bool levelsFound = false;
     bool minLevelsFound = false;
-    bool colorFound = false;
 
     for (const auto& captionAttributeId : constOf(sourceObject->captionsOrder))
     {
@@ -390,26 +450,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
             minLevelsFound = true;
             minLevels = caption.toFloat();
             continue;
-        }
-
-        if (!getUseDefaultBuildingsColor() && !colorFound && captionTag == QStringLiteral("building:colour"))
-        {
-            colorFound = true;
-            color = OsmAnd::Utilities::parseColor(caption, color);
-            continue;
-        }
-    }
-
-    if (!colorFound && _environment && _environment->getColoredBuildings())
-    {
-        uint32_t colorARGB = 0;
-        if (primitive->evaluationResult.getIntegerValue(_environment->styleBuiltinValueDefs->id_OUTPUT_COLOR, colorARGB))
-        {
-            if (colorARGB != 0)
-            {
-                color = FColorARGB(colorARGB);
-                colorFound = true;
-            }
         }
     }
 
@@ -497,7 +537,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
     const int currentIndexOffset = buildings3D.indices.size();
 
     // Construct top side of the mesh
-    std::vector<std::vector<std::array<int32_t, 2>>> topPoligon;
+    std::vector<std::vector<std::array<int32_t, 2>>> toppolygon;
 
     std::vector<std::array<int32_t, 2>> outerRing;
     for (int i = 0; i < edgePointsCount; ++i)
@@ -508,7 +548,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         buildings3D.vertices.append({glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
     }
 
-    topPoligon.push_back(std::move(outerRing));
+    toppolygon.push_back(std::move(outerRing));
 
     for (const auto& innerPoly : innerPolygons)
     {
@@ -519,10 +559,10 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
             buildings3D.vertices.append({glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
         }
 
-        topPoligon.push_back(std::move(innerRing));
+        toppolygon.push_back(std::move(innerRing));
     }
 
-    std::vector<uint16_t> topIndices = mapbox::earcut<uint16_t>(topPoligon);
+    std::vector<uint16_t> topIndices = mapbox::earcut<uint16_t>(toppolygon);
     for (uint16_t idx : topIndices)
     {
         buildings3D.indices.append(static_cast<uint16_t>(idx + currentVertexOffset));
@@ -535,21 +575,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         const auto& point31_i = points31[i];
         const auto& point31_next = points31[next];
 
-        const uint32_t baseVertex = buildings3D.vertices.size();
-
-        const glm::vec3 edgeNormal = calculateNormalFrom2Points(point31_i, point31_next);
-        const float minTerrainHeight = minHeight > 0.0 ? terrainHeight : 0.0;
-
-        // Should match the side order (counter-clockwise)
-        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
-        buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, terrainHeight, edgeNormal, colorVec});
-        buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, terrainHeight, edgeNormal, colorVec});
-        buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
-
-        for (uint16_t idx : fullSideIndices)
-        {
-            buildings3D.indices.append(baseVertex + idx);
-        }
+        generateBuildingWall(buildings3D, point31_i, point31_next, minHeight, height, terrainHeight, colorVec);
     }
 
     // Construct inner walls of the mesh
@@ -563,21 +589,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
             const auto& point31_i = innerPoly[i];
             const auto& point31_next = innerPoly[next];
 
-            const uint32_t baseVertex = buildings3D.vertices.size();
-
-            const glm::vec3 edgeNormal = calculateNormalFrom2Points(point31_i, point31_next);
-            const float minTerrainHeight = minHeight > 0.0 ? terrainHeight : 0.0;
-
-            // Should match the side order (counter-clockwise)
-            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
-            buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, terrainHeight, edgeNormal, colorVec});
-            buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, terrainHeight, edgeNormal, colorVec});
-            buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
-
-            for (uint16_t idx : fullSideIndices)
-            {
-                buildings3D.indices.append(baseVertex + idx);
-            }
+            generateBuildingWall(buildings3D, point31_i, point31_next, minHeight, height, terrainHeight, colorVec);
         }
     }
 
@@ -651,4 +663,37 @@ glm::vec3 Map3DObjectsTiledProvider_P::calculateNormalFrom2Points(PointI point31
     }
 
     return n;
+}
+
+void Map3DObjectsTiledProvider_P::generateBuildingWall(
+    Buildings3D& buildings3D,
+    const PointI& point31_i,
+    const PointI& point31_next,
+    float minHeight,
+    float height,
+    float terrainHeight,
+    const glm::vec3& colorVec) const
+{
+    const uint32_t baseVertex = buildings3D.vertices.size();
+
+    const glm::vec3 edgeNormal = calculateNormalFrom2Points(point31_i, point31_next);
+    const float minTerrainHeight = minHeight > 0.0 ? terrainHeight : 0.0;
+
+    // Should match the side order (counter-clockwise)
+    buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
+    buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, terrainHeight, edgeNormal, colorVec});
+    buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, terrainHeight, edgeNormal, colorVec});
+    buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
+
+    for (uint16_t idx : fullSideIndices)
+    {
+        buildings3D.indices.append(baseVertex + idx);
+    }
+}
+
+uint32_t Map3DObjectsTiledProvider_P::getPolygonColor(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive) const
+{
+    uint32_t colorARGB = 0;
+    primitive->evaluationResult.getIntegerValue(_environment->styleBuiltinValueDefs->id_OUTPUT_COLOR, colorARGB);
+    return colorARGB;
 }
