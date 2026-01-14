@@ -2186,80 +2186,32 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getHeightLimits(const MapRendererState& st
         return true;
     }
 
-    const auto maxMissingDataZoomShift = state.elevationDataProvider->getMaxMissingDataZoomShift();
-    const auto maxUnderZoomShift = state.elevationDataProvider->getMaxMissingDataUnderZoomShift();
     const auto maxZoom = state.elevationDataProvider->getMaxZoom();
-    float minimum, maximum, minValue, maxValue;
-    for (int absZoomShift = 1; absZoomShift <= maxMissingDataZoomShift; absZoomShift++)
+    if (zoomLevel > maxZoom)
     {
-        // Look for underscaled first. Only full match is accepted.
-        // Don't replace tiles of absent zoom levels by the underscaled ones
-        const auto underscaledZoom = static_cast<int>(zoomLevel) + absZoomShift;
-        if (zoomLevel >= minZoom && underscaledZoom <= maxZoom && absZoomShift <= maxUnderZoomShift)
-        {
-            auto underscaledTileIdN =
-                TileId::fromXY(tileId.x << absZoomShift, tileId.y << absZoomShift);
-            const auto underscaledZoomLevel = static_cast<ZoomLevel>(underscaledZoom);
-            const int subCount = 1 << absZoomShift;
-            minimum = std::numeric_limits<float>::max();
-            maximum = std::numeric_limits<float>::lowest();
-            bool complete = true;
-            for (int yShift = 0; yShift < subCount; yShift++)
-            {
-                for (int xShift = 0; xShift < subCount; xShift++)
-                {
-                    if (captureElevationDataResource(state, underscaledTileIdN, underscaledZoomLevel, &elevationData))
-                    {
-                        if (state.flatEarth)
-                            getElevationDataLimits(
-                                state, elevationData, underscaledTileIdN, underscaledZoomLevel, minValue, maxValue);
-                        else
-                            getElevationDataLimits(state, elevationData, metersPerUnit, minValue, maxValue);
-                        minimum = qMin(minimum, minValue);
-                        maximum = qMax(maximum, maxValue);
-                    }
-                    else
-                        complete = false;
-                    underscaledTileIdN.x++;
-                }
-                underscaledTileIdN.y++;
-            }
-            if (complete)
-            {
-                if (state.flatEarth)
-                {
-                    const auto scaleFactor = static_cast<float>(subCount);
-                    minHeight = minimum / scaleFactor;
-                    maxHeight = maximum / scaleFactor;
-                }
-                return true;
-            }
-        }
-        // If underscaled was not found, look for overscaled (surely, if such zoom level exists at all)
-        const auto overscaledZoom = static_cast<int>(zoomLevel) - absZoomShift;
-        if (overscaledZoom >= minZoom && overscaledZoom <= maxZoom)
+        // Look for overscaled if data for needed zoom level is unavailable
+        const auto zoomShift = zoomLevel - maxZoom;
+        if (zoomShift <= state.elevationDataProvider->getMaxMissingDataZoomShift())
         {
             PointF texCoordsOffset;
             PointF texCoordsScale;
             const auto overscaledTileIdN = Utilities::getTileIdOverscaledByZoomShift(
                 tileId,
-                absZoomShift,
+                zoomShift,
                 &texCoordsOffset,
                 &texCoordsScale);
-            const auto overscaledZoomLevel = static_cast<ZoomLevel>(overscaledZoom);
-            if (captureElevationDataResource(state, overscaledTileIdN, overscaledZoomLevel, &elevationData))
+            if (captureElevationDataResource(state, overscaledTileIdN, maxZoom, &elevationData))
             {
                 if (state.flatEarth)
-                    getElevationDataLimits(
-                        state, elevationData, overscaledTileIdN, overscaledZoomLevel, minValue, maxValue);
-                else
-                    getElevationDataLimits(state, elevationData, metersPerUnit, minValue, maxValue);
-                if (state.flatEarth)
                 {
-                    const auto scaleFactor = static_cast<float>(1 << absZoomShift);
+                    float minValue, maxValue;
+                    getElevationDataLimits(state, elevationData, overscaledTileIdN, maxZoom, minValue, maxValue);
+                    const auto scaleFactor = static_cast<float>(1 << zoomShift);
                     minHeight = minValue * scaleFactor;
                     maxHeight = maxValue * scaleFactor;
                 }
+                else
+                    getElevationDataLimits(state, elevationData, metersPerUnit, minHeight, maxHeight);
                 return true;
             }
         }
