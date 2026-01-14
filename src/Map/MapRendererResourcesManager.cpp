@@ -1190,6 +1190,29 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
                     }
                 }
             }
+            if (isElevationData && activeZoom > minZoom)
+            {
+                const auto overscaledZoom = static_cast<ZoomLevel>(qMax(
+                    static_cast<int>(activeZoom) - maxMissingDataZoomShift, static_cast<int>(minZoom)));
+                if (overscaledZoom <= maxZoom)
+                {
+                    const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(
+                        activeTileId,
+                        activeZoom - overscaledZoom);
+                    if (!resourcesCollection->containsResource(
+                        overscaledTileId,
+                        overscaledZoom))
+                    {
+                        std::shared_ptr<MapRendererBaseTiledResource> resource;
+                        resourcesCollection->obtainOrAllocateEntry(
+                            resource,
+                            overscaledTileId,
+                            overscaledZoom,
+                            resourceAllocator);
+                        requestNeededResource(resource);
+                    }
+                }
+            }
         }
     }
 }
@@ -2482,6 +2505,19 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     1 + (resourcesType == MapRendererResourceType::Symbols ? 0 : maxMissingDataUnderZoomShift);
                 for (const auto& activeTileId : constOf(activeTiles))
                 {
+                    // Keep the most overscaled elevation resource if present
+                    if (resourcesType == MapRendererResourceType::ElevationData && activeZoom > minZoom)
+                    {
+                        const auto overscaledZoom = static_cast<ZoomLevel>(qMax(
+                            static_cast<int>(activeZoom) - maxMissingDataZoomShift, static_cast<int>(minZoom)));
+                        if (overscaledZoom <= maxZoom)
+                        {
+                            const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(
+                                activeTileId,
+                                activeZoom - overscaledZoom);
+                            neededTilesMap[overscaledZoom].insert(overscaledTileId);
+                        }
+                    }
                     // If resources have complete set or match for this tile, use only that
                     const auto neededZoomForTile = extraZoom != neededZoom
                         && extraDetailedTiles.contains(activeTileId) ? extraZoom : neededZoom;
