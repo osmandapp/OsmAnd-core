@@ -2902,12 +2902,13 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
         // Collect elevation resources
         std::shared_ptr<QList<Ref<ElevationResource>>> elevationResources;
         elevationResources.reset(new QList<Ref<ElevationResource>>());
+        bool isNotReady = false;
         if (currentState.elevationDataProvider)
         {
             ZoomLevel elevationZoom = zoomLevel;
             auto tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
                 static_cast<double>(1ull << currentState.zoomLevel - elevationZoom);
-            auto elevationResource = captureElevationDataResource(tileIdN, zoomLevel);
+            auto elevationResource = captureElevationDataResource(tileIdN, zoomLevel, nullptr, &isNotReady);
             if (elevationResource)
             {
                 elevationResources->push_back(Ref<ElevationResource>::New(
@@ -2945,7 +2946,9 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
                             auto& gpuResource = *(pGpuResource++);
                             gpuResource = captureElevationDataResource(
                                 underscaledTileId,
-                                elevationZoom);
+                                elevationZoom,
+                                nullptr,
+                                &isNotReady);
                             if (gpuResource)
                                 atLeastOnePresent = true;
                         }
@@ -3005,7 +3008,9 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
                         elevationZoom = static_cast<ZoomLevel>(overscaledZoom);
                         if (elevationResource = captureElevationDataResource(
                             overscaledTileIdN,
-                            elevationZoom))
+                            elevationZoom,
+                            nullptr,
+                            &isNotReady))
                         {
                             tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
                                 static_cast<double>(1ull << currentState.zoomLevel - elevationZoom);
@@ -3344,7 +3349,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
         if (!batch->layers.isEmpty())
             batch->lastBatch = true;
 
-        if (!elevationResources->isEmpty())
+        if (!elevationResources->isEmpty() || isNotReady)
         {
             haveElevation = true;
             elevatedTileset.insert(tileIdN);
