@@ -1131,8 +1131,6 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
     // Request all other zoom levels that cover unavailable tile, in case all scaled tiles are not unavailable
     if (isMapLayer || isElevationData)
     {
-        const auto debugSettings = renderer->getDebugSettings();
-
         for (const auto& activeTileId : constOf(activeTiles))
         {
             if (activeZoom < minZoom && !isElevationData)
@@ -1190,11 +1188,11 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
                     }
                 }
             }
-            if (isElevationData && activeZoom > minZoom)
+            if (isElevationData && currentZoom > minZoom)
             {
                 const auto overscaledZoom = static_cast<ZoomLevel>(qMax(
-                    static_cast<int>(activeZoom) - maxMissingDataZoomShift, static_cast<int>(minZoom)));
-                if (overscaledZoom <= maxZoom)
+                    currentZoom - maxMissingDataZoomShift, static_cast<int>(minZoom)));
+                if (overscaledZoom <= maxZoom && activeZoom > overscaledZoom)
                 {
                     const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(
                         activeTileId,
@@ -2506,11 +2504,11 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                 for (const auto& activeTileId : constOf(activeTiles))
                 {
                     // Keep the most overscaled elevation resource if present
-                    if (resourcesType == MapRendererResourceType::ElevationData && activeZoom > minZoom)
+                    if (resourcesType == MapRendererResourceType::ElevationData && currentZoom > minZoom)
                     {
-                        const auto overscaledZoom = static_cast<ZoomLevel>(qMax(
-                            static_cast<int>(activeZoom) - maxMissingDataZoomShift, static_cast<int>(minZoom)));
-                        if (overscaledZoom <= maxZoom)
+                        const auto overscaledZoom = static_cast<ZoomLevel>(
+                            qMax(currentZoom - maxMissingDataZoomShift, static_cast<int>(minZoom)));
+                        if (overscaledZoom <= maxZoom && activeZoom > overscaledZoom)
                         {
                             const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(
                                 activeTileId,
