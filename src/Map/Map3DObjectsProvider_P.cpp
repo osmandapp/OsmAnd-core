@@ -537,7 +537,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
     const int currentIndexOffset = buildings3D.indices.size();
 
     // Construct top side of the mesh
-    std::vector<std::vector<std::array<int32_t, 2>>> toppolygon;
+    std::vector<std::vector<std::array<int32_t, 2>>> topPolygon;
 
     std::vector<std::array<int32_t, 2>> outerRing;
     for (int i = 0; i < edgePointsCount; ++i)
@@ -548,7 +548,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
         buildings3D.vertices.append({glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
     }
 
-    toppolygon.push_back(std::move(outerRing));
+    topPolygon.push_back(std::move(outerRing));
 
     for (const auto& innerPoly : innerPolygons)
     {
@@ -559,10 +559,10 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
             buildings3D.vertices.append({glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
         }
 
-        toppolygon.push_back(std::move(innerRing));
+        topPolygon.push_back(std::move(innerRing));
     }
 
-    std::vector<uint16_t> topIndices = mapbox::earcut<uint16_t>(toppolygon);
+    std::vector<uint16_t> topIndices = mapbox::earcut<uint16_t>(topPolygon);
     for (uint16_t idx : topIndices)
     {
         buildings3D.indices.append(static_cast<uint16_t>(idx + currentVertexOffset));
