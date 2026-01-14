@@ -150,7 +150,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
 
         for (const auto& primitive : tileData->primitivisedObjects->polygons)
         {
-            collectFrompolygons(primitive, buildings, buildingParts);
+            collectFromPolygons(primitive, buildings, buildingParts);
         }
 
         for (const auto& primitive : tileData->primitivisedObjects->polylines)
@@ -297,7 +297,7 @@ void Map3DObjectsTiledProvider_P::collectFromPoliline(const std::shared_ptr<cons
     }
 }
 
-void Map3DObjectsTiledProvider_P::collectFrompolygons(const std::shared_ptr<const MapPrimitiviser::Primitive>& polygonPrimitive,
+void Map3DObjectsTiledProvider_P::collectFromPolygons(const std::shared_ptr<const MapPrimitiviser::Primitive>& polygonPrimitive,
                                                   QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildings,
                                                   QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildingParts) const
 {

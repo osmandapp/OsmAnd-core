@@ -39,7 +39,7 @@ namespace OsmAnd
                                  QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildingParts,
                                  QHash<std::shared_ptr<const MapPrimitiviser::Primitive>, float>& outBuildingPassages) const;
 
-        void collectFrompolygons(const std::shared_ptr<const MapPrimitiviser::Primitive>& polygonPrimitive,
+        void collectFromPolygons(const std::shared_ptr<const MapPrimitiviser::Primitive>& polygonPrimitive,
                                 QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildings,
                                 QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildingParts) const;
 
