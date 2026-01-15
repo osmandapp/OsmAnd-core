@@ -1803,16 +1803,19 @@ bool OsmAnd::VectorLine_P::useSpecialArrow() const
 
 double OsmAnd::VectorLine_P::getPointStepPx() const
 {
+    double result = static_cast<double>(1u << static_cast<int>(_mapZoomLevel)) * _mapVisualZoom
+        / (static_cast<double>(1u << static_cast<int>(_surfaceZoomLevel)) * _surfaceVisualZoom);
     if (useSpecialArrow())
     {
-        return _specialPathIconStep > 0
+        result *= _specialPathIconStep > 0
             ? _specialPathIconStep
             : owner->specialPathIcon->height() * SPECIAL_ARROW_DISTANCE_MULTIPLIER;
     }
     else
     {
-        return _pathIconStep > 0 ? _pathIconStep : _scaledPathIcon->height();
+        result *= _pathIconStep > 0 ? _pathIconStep : _scaledPathIcon->height();
     }
+    return result;
 }
 
 sk_sp<const SkImage> OsmAnd::VectorLine_P::getPointImage() const
