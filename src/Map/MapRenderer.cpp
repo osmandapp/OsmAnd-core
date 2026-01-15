@@ -2256,6 +2256,36 @@ bool OsmAnd::MapRenderer::setTarget(
     return true;
 }
 
+bool OsmAnd::MapRenderer::setTargetWithFlatZoom(const PointI& target31_,
+    const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    const auto target31 = Utilities::normalizeCoordinates(target31_, ZoomLevel31);
+    bool update = forcedUpdate
+        || _requestedState.target31 != target31
+        || _requestedState.zoomLevel != zoomLevel
+        || !qFuzzyCompare(_requestedState.visualZoom, visualZoom);
+    if (!update)
+        return false;
+
+    _requestedState.target31 = target31;
+    _requestedState.zoomLevel = qBound(_requestedState.minZoomLimit, zoomLevel, _requestedState.maxZoomLimit);
+    _requestedState.visualZoom = visualZoom;
+    _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
+    _requestedState.surfaceZoomLevelToBe = _requestedState.surfaceZoomLevel;
+    _requestedState.surfaceVisualZoomToBe = _requestedState.surfaceVisualZoom;
+    _requestedState.isChanged = true;
+
+    if (disableUpdate)
+        return true;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+
+    return true;
+}
+
 bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI& location31_,
     bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {

@@ -3309,6 +3309,34 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const PointI& l
     return getLocationHeightInMeters(state, location31);
 }
 
+void OsmAnd::AtlasMapRenderer_OpenGL::getCorrectZoomOverGlobe(
+    const MapRendererState& state, const PointI& target31, ZoomLevel& zoomLevel, float& visualZoom) const
+{
+        const auto metersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, state.target31, TileSize3D);
+        const auto futureMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, target31, TileSize3D);
+        auto scaleFactor = futureMetersPerUnit / metersPerUnit;
+        scaleFactor *= static_cast<double>(1u << state.zoomLevel) * state.visualZoom;
+        const auto minZoom = qCeil(log2(scaleFactor / _maximumVisualZoom));
+        const auto maxZoom = qFloor(log2(scaleFactor / _minimumVisualZoom));
+        auto resultZoom = qAbs(state.zoomLevel - minZoom) < qAbs(state.zoomLevel - maxZoom) ? minZoom : maxZoom;
+
+        float visZoom = 1.0f;
+        if (resultZoom > state.maxZoomLimit)
+            resultZoom = state.maxZoomLimit;
+        else if (resultZoom < state.minZoomLimit)
+            resultZoom = state.minZoomLimit;
+        else
+            visZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
+
+        if ((resultZoom == state.maxZoomLimit && visZoom > 1.0f)
+            || (resultZoom == state.minZoomLimit && visZoom < 1.0f))
+            visualZoom = 1.0f;
+        else
+            visualZoom = visZoom;
+
+        zoomLevel = static_cast<ZoomLevel>(resultZoom);
+}
+
 bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState& state,
     const PointI& screenPoint, const PointI& location31, const float height,
     PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, double* shiftInPixels /* = nullptr */) const
@@ -3390,29 +3418,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
         const auto m = mGlobeRotation * glm::dmat3(glm::normalize(glm::cross(currentN, currentV)), currentN, currentV)
             * glm::dmat3(d.x, n.x, neededV.x, d.y, n.y, neededV.y, d.z, n.z, neededV.z);
         target31 = Utilities::get31FromAngles(PointD(qAtan2(-m[1].x, m[0].x), qAsin(qBound(-1.0, -m[2].y, 1.0))));
-
-        const auto futureMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, target31, TileSize3D);
-        auto scaleFactor = futureMetersPerUnit / internalState.metersPerUnit;
-        scaleFactor *= static_cast<double>(1u << state.zoomLevel) * state.visualZoom;
-        const auto minZoom = qCeil(log2(scaleFactor / _maximumVisualZoom));
-        const auto maxZoom = qFloor(log2(scaleFactor / _minimumVisualZoom));
-        auto resultZoom = qAbs(state.zoomLevel - minZoom) < qAbs(state.zoomLevel - maxZoom) ? minZoom : maxZoom;
-
-        float visZoom = 1.0f;
-        if (resultZoom > state.maxZoomLimit)
-            resultZoom = state.maxZoomLimit;
-        else if (resultZoom < state.minZoomLimit)
-            resultZoom = state.minZoomLimit;
-        else
-            visZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
-
-        if ((resultZoom == state.maxZoomLimit && visZoom > 1.0f)
-            || (resultZoom == state.minZoomLimit && visZoom < 1.0f))
-            visualZoom = 1.0f;
-        else
-            visualZoom = visZoom;
-
-        zoomLevel = static_cast<ZoomLevel>(resultZoom);
+        getCorrectZoomOverGlobe(state, target31, zoomLevel, visualZoom);
     }
 
     return true;

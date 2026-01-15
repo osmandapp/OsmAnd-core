@@ -157,6 +157,8 @@ namespace OsmAnd
         virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false) = 0;
         virtual bool setTarget(const PointI& target31,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
+        virtual bool setTargetWithFlatZoom(const PointI& target31, const ZoomLevel zoomLevel, const float visualZoom,
+            bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool resetMapTarget() = 0;
@@ -218,6 +220,9 @@ namespace OsmAnd
         virtual ZoomLevel getMaxZoomLevel() const = 0;
         virtual bool setMinZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
         virtual bool setMaxZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
+
+        virtual void getCorrectZoomOverGlobe(const MapRendererState& state, const PointI& target31,
+            ZoomLevel& zoomLevel, float& visualZoom) const = 0;
 
         virtual ZoomLevel getMinimalZoomLevelsRangeLowerBound() const = 0;
         virtual ZoomLevel getMinimalZoomLevelsRangeUpperBound() const = 0;
