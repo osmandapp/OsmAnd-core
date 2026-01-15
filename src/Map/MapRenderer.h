@@ -418,6 +418,8 @@ namespace OsmAnd
         virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setTarget(const PointI& target31,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setTargetWithFlatZoom(const PointI& target31, const ZoomLevel zoomLevel, const float visualZoom,
+            bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool resetMapTarget() Q_DECL_OVERRIDE;
