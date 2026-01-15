@@ -345,7 +345,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         _zNear, 1000.0f);
 
     // Calculate distance from camera to target based on visual zoom and visual zoom shift
-    internalState->tileOnScreenScaleFactor = state.visualZoom * (1.0f + state.visualZoomShift);
+    internalState->tileOnScreenScaleFactor = state.visualZoom * (1.0f + state.visualZoomShift) * state.extraScale;
     internalState->referenceTileSizeOnScreenInPixels = configuration->referenceTileSizeOnScreenInPixels;
     internalState->distanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(
         internalState->mPerspectiveProjection,
@@ -2463,7 +2463,8 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getTileSizeOnScreenInPixels() const
     if (const auto& configuration = std::dynamic_pointer_cast<const AtlasMapRendererConfiguration>(getConfiguration()))
     {
         const auto state = getState();
-        return configuration->referenceTileSizeOnScreenInPixels * state.visualZoom * (1.0f + state.visualZoomShift);
+        return configuration->referenceTileSizeOnScreenInPixels
+            * state.visualZoom * (1.0f + state.visualZoomShift) * state.extraScale;
     }
 
     return 0.0;
@@ -2538,7 +2539,7 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getDistanceFactor(const MapRendererState
         _zNear, 1000.0f);
     baseUnits = static_cast<double>(TileSize3D)
         * 0.5 * mPerspectiveProjection[0][0] * state.viewport.width()
-        / ((1.0f + state.visualZoomShift) * tileSize);
+        / ((1.0f + state.visualZoomShift) * state.extraScale * tileSize);
     const auto distanceToTarget = static_cast<float>(baseUnits / state.visualZoom);
     const auto mDistance = glm::translate(glm::vec3(0.0f, 0.0f, -distanceToTarget));
     const auto mElevation = glm::rotate(glm::radians(state.elevationAngle), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -3309,37 +3310,42 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const PointI& l
     return getLocationHeightInMeters(state, location31);
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::getCorrectedZoomOverGlobe(
-    const MapRendererState& state, const PointI& target31, ZoomLevel& zoomLevel, float& visualZoom) const
+void OsmAnd::AtlasMapRenderer_OpenGL::getCorrectedZoomOverGlobe(const MapRendererState& state,
+    const PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, float& extraScale) const
 {
         const auto metersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, state.target31, TileSize3D);
         const auto futureMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, target31, TileSize3D);
         auto scaleFactor = futureMetersPerUnit / metersPerUnit;
-        scaleFactor *= static_cast<double>(1u << state.zoomLevel) * state.visualZoom;
+        scaleFactor *= static_cast<double>(1u << state.zoomLevel) * state.visualZoom * state.extraScale;
         const auto minZoom = qCeil(log2(scaleFactor / _maximumVisualZoom));
         const auto maxZoom = qFloor(log2(scaleFactor / _minimumVisualZoom));
         auto resultZoom = qAbs(state.zoomLevel - minZoom) < qAbs(state.zoomLevel - maxZoom) ? minZoom : maxZoom;
 
-        float visZoom = 1.0f;
         if (resultZoom > state.maxZoomLimit)
             resultZoom = state.maxZoomLimit;
         else if (resultZoom < state.minZoomLimit)
             resultZoom = state.minZoomLimit;
-        else
-            visZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
+
+        const auto visZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
 
         if ((resultZoom == state.maxZoomLimit && visZoom > 1.0f)
             || (resultZoom == state.minZoomLimit && visZoom < 1.0f))
+        {
             visualZoom = 1.0f;
+            extraScale = visZoom;
+        }
         else
+        {
             visualZoom = visZoom;
+            extraScale = 1.0f;
+        }
 
         zoomLevel = static_cast<ZoomLevel>(resultZoom);
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState& state,
-    const PointI& screenPoint, const PointI& location31, const float height,
-    PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, double* shiftInPixels /* = nullptr */) const
+    const PointI& screenPoint, const PointI& location31, const float height, PointI& target31,
+    ZoomLevel& zoomLevel, float& visualZoom, float& extraScale, double* shiftInPixels /* = nullptr */) const
 {
     InternalState internalState;
     bool ok = updateInternalState(internalState, state, *getConfiguration(), RequiredToUnproject);
@@ -3418,7 +3424,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
         const auto m = mGlobeRotation * glm::dmat3(glm::normalize(glm::cross(currentN, currentV)), currentN, currentV)
             * glm::dmat3(d.x, n.x, neededV.x, d.y, n.y, neededV.y, d.z, n.z, neededV.z);
         target31 = Utilities::get31FromAngles(PointD(qAtan2(-m[1].x, m[0].x), qAsin(qBound(-1.0, -m[2].y, 1.0))));
-        getCorrectedZoomOverGlobe(state, target31, zoomLevel, visualZoom);
+        getCorrectedZoomOverGlobe(state, target31, zoomLevel, visualZoom, extraScale);
     }
 
     return true;
@@ -3426,7 +3432,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState& state,
     const PointI& location31, const float height,
-    PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, PointI& screenPoint) const
+    PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, float& extraScale, PointI& screenPoint) const
 {
     bool res;
     const auto point = screenPoint;
@@ -3434,20 +3440,22 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
         && (state.fixedPixel.x != screenPoint.x || state.fixedPixel.y != screenPoint.y))
     {
         double shiftInPixels;
-        res = getNewTargetAndZoom(state, point, location31, height, target31, zoomLevel, visualZoom, &shiftInPixels);
+        res = getNewTargetAndZoom(
+            state, point, location31, height, target31, zoomLevel, visualZoom, extraScale, &shiftInPixels);
         if (res && target31.x >= 0)
         {
             const auto v = PointD(screenPoint - state.fixedPixel);
             const auto f = 1.0 - (shiftInPixels >= 1.0 ? qMin(v.norm() / shiftInPixels, 1.0) : 1.0);
             const auto r = PointD(state.fixedPixel) + v * (1.0 - f * f * f * f);
             const auto midPoint = PointI(static_cast<int>(qRound(r.x)), static_cast<int>(qRound(r.y)));
-            res = getNewTargetAndZoom(state, midPoint, location31, height, target31, zoomLevel, visualZoom);
+            res = getNewTargetAndZoom(
+                state, midPoint, location31, height, target31, zoomLevel, visualZoom, extraScale);
             if (res && target31.x >= 0)
                 screenPoint = midPoint;
         }
     }
     else
-        res = getNewTargetAndZoom(state, point, location31, height, target31, zoomLevel, visualZoom);
+        res = getNewTargetAndZoom(state, point, location31, height, target31, zoomLevel, visualZoom, extraScale);
 
     return res;
 }
@@ -3814,8 +3822,8 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getPixelsToMetersScaleFactor() const
     if (const auto& configuration = std::dynamic_pointer_cast<const AtlasMapRendererConfiguration>(getConfiguration()))
     {
         const auto state = getState();
-        const auto tileSizeOnScreenInPixels =
-            configuration->referenceTileSizeOnScreenInPixels * state.visualZoom * (1.0f + state.visualZoomShift);
+        const auto tileSizeOnScreenInPixels = configuration->referenceTileSizeOnScreenInPixels
+            * state.visualZoom * (1.0f + state.visualZoomShift) * state.extraScale;
         PointF targetInTileOffsetN;
         const auto targetTileId = Utilities::getTileId(state.target31, state.zoomLevel, &targetInTileOffsetN);
         const auto targetY = static_cast<double>(targetTileId.y) + targetInTileOffsetN.y;

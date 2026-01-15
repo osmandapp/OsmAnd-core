@@ -29,6 +29,7 @@ OsmAnd::MapRendererState::MapRendererState()
     , surfaceZoomLevelToBe(ZoomLevel2)
     , surfaceVisualZoomToBe(1.0f)
     , visualZoomShift(0.0f)
+    , extraScale(1.0f)
     , minZoomLimit(ZoomLevel2)
     , maxZoomLimit(ZoomLevel22)
     , stubsStyle(MapStubStyle::Light)
@@ -78,6 +79,7 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     mapState.surfaceZoomLevel = surfaceZoomLevel;
     mapState.surfaceVisualZoom = surfaceVisualZoom;
     mapState.visualZoomShift = visualZoomShift;
+    mapState.extraScale = extraScale;
     mapState.minZoomLimit = minZoomLimit;
     mapState.maxZoomLimit = maxZoomLimit;
     mapState.stubsStyle = stubsStyle;
@@ -121,6 +123,7 @@ OsmAnd::MapState::MapState()
     , surfaceZoomLevel(ZoomLevel2)
     , surfaceVisualZoom(1.0f)
     , visualZoomShift(0.0f)
+    , extraScale(1.0f)
     , minZoomLimit(ZoomLevel2)
     , maxZoomLimit(ZoomLevel22)
     , stubsStyle(MapStubStyle::Light)

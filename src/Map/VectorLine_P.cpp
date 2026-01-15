@@ -55,6 +55,7 @@ OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
     , _mapVisualZoom(0.f)
     , _surfaceVisualZoom(0.f)
     , _mapVisualZoomShift(0.f)
+    , _mapExtraScale(0.f)
     , _isElevatedLineVisible(true)
     , _isSurfaceLineVisible(false)
     , _elevationScaleFactor(1.0f)
@@ -552,6 +553,8 @@ bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
     changed |= _surfaceZoomLevel != mapState.surfaceZoomLevel;
     changed |= qAbs(_mapVisualZoom - mapState.visualZoom) > 0.25;
     changed |= qAbs(_surfaceVisualZoom - mapState.surfaceVisualZoom) > 0.25;
+    changed |= qAbs(_mapVisualZoomShift - mapState.visualZoomShift) > 0.25;
+    changed |= qAbs(_mapExtraScale - mapState.extraScale) > 0.25;
     changed |= _hasElevationDataProvider != mapState.hasElevationDataProvider;
     changed |= _hasElevationDataResources != mapState.hasElevationDataResources;
     changed |= _flatEarth != mapState.flatEarth;
@@ -606,6 +609,7 @@ void OsmAnd::VectorLine_P::applyMapState(const MapState& mapState)
     _surfaceZoomLevel = mapState.surfaceZoomLevel;
     _surfaceVisualZoom = mapState.surfaceVisualZoom;
     _mapVisualZoomShift = mapState.visualZoomShift;
+    _mapExtraScale = mapState.extraScale;
     _hasElevationDataProvider = mapState.hasElevationDataProvider;
     _hasElevationDataResources = mapState.hasElevationDataResources;
     _flatEarth = mapState.flatEarth;
@@ -1282,7 +1286,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
     double scale = Utilities::getPowZoom(31 - zoom) * qSqrt(zoom) /
         (AtlasMapRenderer::TileSize3D * AtlasMapRenderer::TileSize3D); // TODO: this should come from renderer
 
-    double visualShiftCoef = 1 / (1 + _mapVisualZoomShift);
+    double visualShiftCoef = 1 / ((1 + _mapVisualZoomShift) * _mapExtraScale);
     double thickness = _lineWidth * scale * visualShiftCoef * 2.0;
     double outlineThickness = _outlineWidth * scale * visualShiftCoef * 2.0;
     bool approximate = _isApproximationEnabled;

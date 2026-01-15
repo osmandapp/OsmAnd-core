@@ -180,12 +180,12 @@ namespace OsmAnd
         virtual AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const = 0;
         virtual AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const = 0;
         virtual double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const = 0;
+        virtual bool getNewTargetAndZoom(const MapRendererState& state,
+            const PointI& screenPoint, const PointI& location31, const float height, PointI& target31,
+            ZoomLevel& zoomLevel, float& visualZoom, float& extraScale, double* shiftInPixels = nullptr) const = 0;
         virtual bool getNewTargetAndZoom(
-            const MapRendererState& state, const PointI& screenPoint, const PointI& location31, const float height,
-            PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, double* shiftInPixels = nullptr) const = 0;
-        virtual bool getNewTargetAndZoom(
-            const MapRendererState& state, const PointI& location31, const float height,
-            PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, PointI& screenPoint) const = 0;
+            const MapRendererState& state, const PointI& location31, const float height, PointI& target31,
+            ZoomLevel& zoomLevel, float& visualZoom, float& extraScale, PointI& screenPoint) const = 0;
         virtual bool isLocationHeightAvailable(const MapRendererState& state, const PointI& location31) const = 0;
         virtual bool getExtraZoomAndTiltForRelief(const MapRendererState& state, PointF& zoomAndTilt) const = 0;
         virtual bool getExtraZoomAndRotationForAiming(const MapRendererState& state,
@@ -419,7 +419,7 @@ namespace OsmAnd
         virtual bool setTarget(const PointI& target31,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setTargetWithFlatZoom(const PointI& target31, const ZoomLevel zoomLevel, const float visualZoom,
-            bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
+            const float extraScale, bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool resetMapTarget() Q_DECL_OVERRIDE;
@@ -447,6 +447,7 @@ namespace OsmAnd
         virtual bool setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setVisualZoom(const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setVisualZoomShift(const float visualZoomShift, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setExtraScale(const float extraScale, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool restoreFlatZoom(const float heightInMeters, bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
         virtual bool setStubsStyle(const MapStubStyle style, bool forcedUpdate = false) Q_DECL_OVERRIDE;

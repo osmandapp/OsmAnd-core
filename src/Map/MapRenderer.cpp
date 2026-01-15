@@ -2256,8 +2256,8 @@ bool OsmAnd::MapRenderer::setTarget(
     return true;
 }
 
-bool OsmAnd::MapRenderer::setTargetWithFlatZoom(const PointI& target31_,
-    const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
+bool OsmAnd::MapRenderer::setTargetWithFlatZoom(const PointI& target31_, const ZoomLevel zoomLevel,
+    const float visualZoom, const float extraScale, bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -2265,13 +2265,15 @@ bool OsmAnd::MapRenderer::setTargetWithFlatZoom(const PointI& target31_,
     bool update = forcedUpdate
         || _requestedState.target31 != target31
         || _requestedState.zoomLevel != zoomLevel
-        || !qFuzzyCompare(_requestedState.visualZoom, visualZoom);
+        || !qFuzzyCompare(_requestedState.visualZoom, visualZoom)
+        || !qFuzzyCompare(_requestedState.extraScale, extraScale);
     if (!update)
         return false;
 
     _requestedState.target31 = target31;
     _requestedState.zoomLevel = qBound(_requestedState.minZoomLimit, zoomLevel, _requestedState.maxZoomLimit);
     _requestedState.visualZoom = visualZoom;
+    _requestedState.extraScale = extraScale;
     _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
     _requestedState.surfaceZoomLevelToBe = _requestedState.surfaceZoomLevel;
     _requestedState.surfaceVisualZoomToBe = _requestedState.surfaceVisualZoom;
@@ -2304,9 +2306,10 @@ bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI&
     auto target31 = _requestedState.target31;
     auto zoomLevel = _requestedState.zoomLevel;
     auto visualZoom = _requestedState.visualZoom;
+    auto extraScale = _requestedState.extraScale;
     auto screenPoint = screenPoint_;
     bool haveTarget = getNewTargetAndZoom(
-        _requestedState, location31, height, target31, zoomLevel, visualZoom, screenPoint);
+        _requestedState, location31, height, target31, zoomLevel, visualZoom, extraScale, screenPoint);
     if (!haveTarget || target31.x < 0)
         return false;
 
@@ -2325,10 +2328,13 @@ bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI&
     _requestedState.fixedZoomLevel = _requestedState.zoomLevel;
     _requestedState.target31 = target31;
 
-    if (forcedUpdate || _requestedState.zoomLevel != zoomLevel || _requestedState.visualZoom != visualZoom)
+    if (forcedUpdate || _requestedState.zoomLevel != zoomLevel
+        || _requestedState.visualZoom != visualZoom
+        || _requestedState.extraScale != extraScale)
     {
         _requestedState.zoomLevel = qBound(_requestedState.minZoomLimit, zoomLevel, _requestedState.maxZoomLimit);
         _requestedState.visualZoom = visualZoom;
+        _requestedState.extraScale = extraScale;
         if (!disableUpdate)
             notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
     }
@@ -2445,8 +2451,9 @@ bool OsmAnd::MapRenderer::setMapTargetOnly(MapRendererState& state,
     auto target31 = state.target31;
     auto zoomLevel = state.zoomLevel;
     auto visualZoom = state.visualZoom;
+    auto extraScale = state.extraScale;
     bool haveTarget = getNewTargetAndZoom(
-        state, state.fixedPixel, location31, height, target31, zoomLevel, visualZoom);
+        state, state.fixedPixel, location31, height, target31, zoomLevel, visualZoom, extraScale);
     if(!haveTarget)
         return false;
 
@@ -2472,10 +2479,13 @@ bool OsmAnd::MapRenderer::setMapTargetOnly(MapRendererState& state,
     state.target31 = target31;
     state.isChanged = true;
 
-    if (forcedUpdate || state.zoomLevel != zoomLevel || state.visualZoom != visualZoom)
+    if (forcedUpdate || state.zoomLevel != zoomLevel
+        || state.visualZoom != visualZoom
+        || state.extraScale != extraScale)
     {
         state.zoomLevel = qBound(state.minZoomLimit, zoomLevel, state.maxZoomLimit);
         state.visualZoom = visualZoom;
+        state.extraScale = extraScale;
         if (!disableUpdate)
             notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
     }
@@ -2674,9 +2684,10 @@ bool OsmAnd::MapRenderer::setMapTargetPixelCoordinates(const PointI& screenPoint
     auto target31 = _requestedState.target31;
     auto zoomLevel = _requestedState.zoomLevel;
     auto visualZoom = _requestedState.visualZoom;
+    auto extraScale = _requestedState.extraScale;
     auto screenPoint = screenPoint_;
     bool haveTarget = getNewTargetAndZoom(_requestedState, _requestedState.fixedLocation31,
-        _requestedState.fixedHeight, target31, zoomLevel, visualZoom, screenPoint);
+        _requestedState.fixedHeight, target31, zoomLevel, visualZoom, extraScale, screenPoint);
     if(!haveTarget || target31.x < 0)
         return false;
 
@@ -2688,10 +2699,13 @@ bool OsmAnd::MapRenderer::setMapTargetPixelCoordinates(const PointI& screenPoint
 
     _requestedState.target31 = target31;
 
-    if (forcedUpdate || _requestedState.zoomLevel != zoomLevel || _requestedState.visualZoom != visualZoom)
+    if (forcedUpdate || _requestedState.zoomLevel != zoomLevel
+        || _requestedState.visualZoom != visualZoom
+        || _requestedState.extraScale != extraScale)
     {
         _requestedState.zoomLevel = qBound(_requestedState.minZoomLimit, zoomLevel, _requestedState.maxZoomLimit);
         _requestedState.visualZoom = visualZoom;
+        _requestedState.extraScale = extraScale;
         if (!disableUpdate)
             notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
     }
@@ -3141,6 +3155,26 @@ bool OsmAnd::MapRenderer::setVisualZoomShift(const float visualZoomShift, bool f
         return false;
 
     _requestedState.visualZoomShift = visualZoomShift;
+    _requestedState.isChanged = true;
+
+    setMapTarget(_requestedState, forcedUpdate);
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setExtraScale(const float extraScale, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update =
+        forcedUpdate ||
+        !qFuzzyCompare(_requestedState.extraScale, extraScale);
+    if (!update)
+        return false;
+
+    _requestedState.extraScale = extraScale;
     _requestedState.isChanged = true;
 
     setMapTarget(_requestedState, forcedUpdate);
