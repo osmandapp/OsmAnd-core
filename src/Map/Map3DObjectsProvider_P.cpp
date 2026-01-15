@@ -51,6 +51,18 @@ namespace OsmAnd
 
         return lhs->sourceObject.get() == rhs->sourceObject.get();
     }
+
+    inline uint qHash(const OsmAnd::Map3DObjectsTiledProvider_P::Primirive3D& primitive) Q_DECL_NOTHROW
+    {
+        return qHash(primitive.primitive);
+    }
+
+    inline bool operator==(const OsmAnd::Map3DObjectsTiledProvider_P::Primirive3D& lhs,
+                           const OsmAnd::Map3DObjectsTiledProvider_P::Primirive3D& rhs) Q_DECL_NOTHROW
+    {
+        return lhs.primitive == rhs.primitive;
+    }
+
 }
 
 Map3DObjectsTiledProvider_P::Map3DObjectsTiledProvider_P(
@@ -144,8 +156,8 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             _elevationProvider->obtainElevationData(elevationRequest, elevationData, nullptr);
         }
 
-        QSet<std::shared_ptr<const MapPrimitiviser::Primitive>> buildings;
-        QSet<std::shared_ptr<const MapPrimitiviser::Primitive>> buildingParts;
+        QSet<Primirive3D> buildings;
+        QSet<Primirive3D> buildingParts;
         QHash<std::shared_ptr<const MapPrimitiviser::Primitive>, float> buildingPassages;
 
         for (const auto& primitive : tileData->primitivisedObjects->polygons)
@@ -175,8 +187,8 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
     return true;
 }
 
-void Map3DObjectsTiledProvider_P::filterBuildings(QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& buildings,
-                                                  QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& buildingParts) const
+void Map3DObjectsTiledProvider_P::filterBuildings(QSet<Primirive3D>& buildings,
+                                                  QSet<Primirive3D>& buildingParts) const
 {
     const bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
     if (!show3DbuildingParts)
@@ -187,7 +199,7 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QSet<std::shared_ptr<const Map
     for (auto it = buildings.begin(); it != buildings.end();)
     {
         const auto& buildingPrimitive = *it;
-        const auto& building = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPrimitive->sourceObject);
+        const auto& building = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPrimitive.primitive->sourceObject);
         if (!building)
         {
             ++it;
@@ -211,9 +223,17 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QSet<std::shared_ptr<const Map
         bool shouldRemove = false;
         for (const auto& buildingPartPrimitive : buildingParts)
         {
-            const auto& buildingPart = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPartPrimitive->sourceObject);
+            const auto& buildingPart = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPartPrimitive.primitive->sourceObject);
             if (buildingPart && building->bbox31.contains(buildingPart->bbox31))
             {
+                if (buildingPartPrimitive.polygonColor == 0)
+                {
+                    Primirive3D modifiedBuildingPart = buildingPartPrimitive;
+                    modifiedBuildingPart.polygonColor = buildingPrimitive.polygonColor;
+                    buildingParts.remove(buildingPartPrimitive);
+                    buildingParts.insert(modifiedBuildingPart);
+                }
+
                 shouldRemove = true;
                 break;
             }
@@ -230,9 +250,27 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QSet<std::shared_ptr<const Map
     }
 }
 
+void Map3DObjectsTiledProvider_P::insertOrUpdateBuilding(const Primirive3D& primitive, QSet<Primirive3D>& outCollection) const
+{
+    auto primitiveIt = outCollection.find(primitive);
+
+    if (primitiveIt == outCollection.end())
+    {
+        outCollection.insert(primitive);
+    }
+    else
+    {
+        if (primitiveIt->polygonColor == 0)
+        {
+            outCollection.remove(*primitiveIt);
+            outCollection.insert(primitive);
+        }
+    }
+}
+
 void Map3DObjectsTiledProvider_P::collectFromPoliline(const std::shared_ptr<const MapPrimitiviser::Primitive>& polylinePrimitive,
-                                                      QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildings,
-                                                      QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildingParts,
+                                                      QSet<Primirive3D>& outBuildings,
+                                                      QSet<Primirive3D>& outBuildingParts,
                                                       QHash<std::shared_ptr<const MapPrimitiviser::Primitive>, float>& outBuildingPassages) const
 {
     const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(polylinePrimitive->sourceObject);
@@ -243,43 +281,19 @@ void Map3DObjectsTiledProvider_P::collectFromPoliline(const std::shared_ptr<cons
 
     if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polygon)
     {
+        Primirive3D primirive3D;
+        primirive3D.primitive = polylinePrimitive;
+        primirive3D.polygonColor = getPolygonColor(primirive3D.primitive);
+
         const bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
 
         if (sourceObject->containsTag(QLatin1String("building")))
         {
-            const auto primitiveIt = outBuildings.find(polylinePrimitive);
-
-            if (primitiveIt == outBuildings.end())
-            {
-                outBuildings.insert(polylinePrimitive);
-            }
-            else
-            {
-                const uint32_t savedPrimitiveColor = getPolygonColor(*primitiveIt);
-                if (savedPrimitiveColor == 0)
-                {
-                    outBuildings.erase(primitiveIt);
-                    outBuildings.insert(polylinePrimitive);
-                }
-            }
+            insertOrUpdateBuilding(primirive3D, outBuildings);
         }
         else if (show3DbuildingParts && sourceObject->containsTag(QLatin1String("building:part")))
         {
-            const auto primitiveIt = outBuildingParts.find(polylinePrimitive);
-
-            if (primitiveIt == outBuildingParts.end())
-            {
-                outBuildingParts.insert(polylinePrimitive);
-            }
-            else
-            {
-                const uint32_t savedPrimitiveColor = getPolygonColor(*primitiveIt);
-                if (savedPrimitiveColor == 0)
-                {
-                    outBuildingParts.erase(primitiveIt);
-                    outBuildingParts.insert(polylinePrimitive);
-                }
-            }
+            insertOrUpdateBuilding(primirive3D, outBuildingParts);
         }
     }
     else if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polyline)
@@ -298,9 +312,13 @@ void Map3DObjectsTiledProvider_P::collectFromPoliline(const std::shared_ptr<cons
 }
 
 void Map3DObjectsTiledProvider_P::collectFromPolygons(const std::shared_ptr<const MapPrimitiviser::Primitive>& polygonPrimitive,
-                                                  QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildings,
-                                                  QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildingParts) const
+                                                  QSet<Primirive3D>& outBuildings,
+                                                  QSet<Primirive3D>& outBuildingParts) const
 {
+    Primirive3D primirive3D;
+    primirive3D.primitive = polygonPrimitive;
+    primirive3D.polygonColor = getPolygonColor(primirive3D.primitive);
+
     const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(polygonPrimitive->sourceObject);
     if (!sourceObject || sourceObject->points31.isEmpty())
     {
@@ -311,39 +329,11 @@ void Map3DObjectsTiledProvider_P::collectFromPolygons(const std::shared_ptr<cons
 
     if (sourceObject->containsTag(QLatin1String("building")))
     {
-        const auto primitiveIt = outBuildings.find(polygonPrimitive);
-
-        if (primitiveIt == outBuildings.end())
-        {
-            outBuildings.insert(polygonPrimitive);
-        }
-        else
-        {
-            const uint32_t savedPrimitiveColor = getPolygonColor(*primitiveIt);
-            if (savedPrimitiveColor == 0)
-            {
-                outBuildings.erase(primitiveIt);
-                outBuildings.insert(polygonPrimitive);
-            }
-        }
+        insertOrUpdateBuilding(primirive3D, outBuildings);
     }
     else if (show3DbuildingParts && sourceObject->containsTag(QLatin1String("building:part")))
     {
-        const auto primitiveIt = outBuildingParts.find(polygonPrimitive);
-
-        if (primitiveIt == outBuildingParts.end())
-        {
-            outBuildingParts.insert(polygonPrimitive);
-        }
-        else
-        {
-            const uint32_t savedPrimitiveColor = getPolygonColor(*primitiveIt);
-            if (savedPrimitiveColor == 0)
-            {
-                outBuildingParts.erase(primitiveIt);
-                outBuildingParts.insert(polygonPrimitive);
-            }
-        }
+        insertOrUpdateBuilding(primirive3D, outBuildingParts);
     }
 }
 
@@ -391,11 +381,11 @@ FColorARGB Map3DObjectsTiledProvider_P::getDefaultBuildingsColor() const
     return _environment ? _environment->get3DBuildingsColor() : FColorARGB(1.0f, 0.4f, 0.4f, 0.4f);
 }
 
-void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
+void Map3DObjectsTiledProvider_P::processPrimitive(const Primirive3D& primitive,
     Buildings3D& buildings3D, const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData, const TileId& tileId,
     const ZoomLevel zoom, const QHash<std::shared_ptr<const MapPrimitiviser::Primitive>, float>& passagesData) const
 {
-    const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(primitive->sourceObject);
+    const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(primitive.primitive->sourceObject);
     if (!sourceObject)
     {
         return;
@@ -411,10 +401,9 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const std::shared_ptr<const M
     float minLevels = 0.0;
 
     FColorARGB color = getDefaultBuildingsColor();
-    const uint32_t polygonColor = getPolygonColor(primitive);
-    if (polygonColor != 0)
+    if (primitive.polygonColor != 0)
     {
-        color = FColorARGB(polygonColor);
+        color = FColorARGB(primitive.polygonColor);
     }
 
     bool heightFound = false;
