@@ -3309,7 +3309,7 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const PointI& l
     return getLocationHeightInMeters(state, location31);
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::getCorrectZoomOverGlobe(
+void OsmAnd::AtlasMapRenderer_OpenGL::getCorrectedZoomOverGlobe(
     const MapRendererState& state, const PointI& target31, ZoomLevel& zoomLevel, float& visualZoom) const
 {
         const auto metersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, state.target31, TileSize3D);
@@ -3418,7 +3418,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
         const auto m = mGlobeRotation * glm::dmat3(glm::normalize(glm::cross(currentN, currentV)), currentN, currentV)
             * glm::dmat3(d.x, n.x, neededV.x, d.y, n.y, neededV.y, d.z, n.z, neededV.z);
         target31 = Utilities::get31FromAngles(PointD(qAtan2(-m[1].x, m[0].x), qAsin(qBound(-1.0, -m[2].y, 1.0))));
-        getCorrectZoomOverGlobe(state, target31, zoomLevel, visualZoom);
+        getCorrectedZoomOverGlobe(state, target31, zoomLevel, visualZoom);
     }
 
     return true;

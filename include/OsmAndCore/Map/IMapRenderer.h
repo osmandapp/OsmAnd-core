@@ -221,7 +221,7 @@ namespace OsmAnd
         virtual bool setMinZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
         virtual bool setMaxZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
 
-        virtual void getCorrectZoomOverGlobe(const MapRendererState& state, const PointI& target31,
+        virtual void getCorrectedZoomOverGlobe(const MapRendererState& state, const PointI& target31,
             ZoomLevel& zoomLevel, float& visualZoom) const = 0;
 
         virtual ZoomLevel getMinimalZoomLevelsRangeLowerBound() const = 0;

@@ -204,7 +204,7 @@ namespace OsmAnd
         float getHeightOfLocation(const PointI& location31) const override;
         float getMapTargetDistance(const PointI& location31, bool checkOffScreen = false) const override;
 
-        void getCorrectZoomOverGlobe(const MapRendererState& state, const PointI& target31,
+        void getCorrectedZoomOverGlobe(const MapRendererState& state, const PointI& target31,
             ZoomLevel& zoomLevel, float& visualZoom) const override;
 
         AreaI getVisibleBBox31() const override;
