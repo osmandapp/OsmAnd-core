@@ -22,12 +22,19 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(Map3DObjectsTiledProvider_P);
 
+    public:
+        struct Primirive3D
+        {
+            std::shared_ptr<const MapPrimitiviser::Primitive> primitive;
+            uint32_t polygonColor = 0;
+        };
+
     private:
         std::shared_ptr<MapPrimitivesProvider> _tiledProvider;
         std::shared_ptr<MapPresentationEnvironment> _environment;
         std::shared_ptr<IMapElevationDataProvider> _elevationProvider;
 
-        void processPrimitive(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
+        void processPrimitive(const Primirive3D& primitive,
                               Buildings3D& buildings3D,
                               const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData,
                               const TileId& tileId,
@@ -35,16 +42,18 @@ namespace OsmAnd
                               const QHash<std::shared_ptr<const MapPrimitiviser::Primitive>, float>& passagesData) const;
 
         void collectFromPoliline(const std::shared_ptr<const MapPrimitiviser::Primitive>& polylinePrimitive,
-                                 QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildings,
-                                 QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildingParts,
+                                 QSet<Primirive3D>& outBuildings,
+                                 QSet<Primirive3D>& outBuildingParts,
                                  QHash<std::shared_ptr<const MapPrimitiviser::Primitive>, float>& outBuildingPassages) const;
 
-        void collectFromPoligons(const std::shared_ptr<const MapPrimitiviser::Primitive>& poligonPrimitive,
-                                QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildings,
-                                QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& outBuildingParts) const;
+        void collectFromPolygons(const std::shared_ptr<const MapPrimitiviser::Primitive>& polygonPrimitive,
+                                QSet<Primirive3D>& outBuildings,
+                                QSet<Primirive3D>& outBuildingParts) const;
 
-        void filterBuildings(QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& buildings,
-                             QSet<std::shared_ptr<const MapPrimitiviser::Primitive>>& buildingParts) const;
+        void filterBuildings(QSet<Primirive3D>& buildings,
+                             QSet<Primirive3D>& buildingParts) const;
+
+        void insertOrUpdateBuilding(const Primirive3D& primitive, QSet<Primirive3D>& outCollection) const;
 
         void accumulateElevationForPoint(
             const PointI& point31,
@@ -56,6 +65,16 @@ namespace OsmAnd
             bool& hasElevationSample) const;
 
         glm::vec3 calculateNormalFrom2Points(PointI point31_i, PointI point31_next) const;
+        uint32_t getPolygonColor(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive) const;
+
+        void generateBuildingWall(
+            Buildings3D& buildings3D,
+            const PointI& point31_i,
+            const PointI& point31_next,
+            float minHeight,
+            float height,
+            float terrainHeight,
+            const glm::vec3& colorVec) const;
 
     protected:
         Map3DObjectsTiledProvider_P(Map3DObjectsTiledProvider* const owner,
