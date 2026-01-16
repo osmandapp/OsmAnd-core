@@ -1056,13 +1056,12 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
     bool isMapLayer = resourceType == MapRendererResourceType::MapLayer;
     bool isElevationData = resourceType == MapRendererResourceType::ElevationData;
     bool isSymbolData = resourceType == MapRendererResourceType::Symbols;
-    bool isMap3DObjects = resourceType == MapRendererResourceType::Map3DObjects;
 
     std::shared_ptr<IMapDataProvider> provider_;
     obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(resourcesCollection.get()), provider_);
     const auto& tiledProvider = std::dynamic_pointer_cast<IMapTiledDataProvider>(provider_);
 
-    if (isMapLayer || isElevationData || isMap3DObjects)
+    if (isMapLayer || isElevationData)
     {
         if (tiledProvider)
         {
@@ -2325,8 +2324,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
             int maxMissingDataUnderZoomShift = MapRenderer::MaxMissingDataUnderZoomShift;
 
             if (tiledProvider && (resourcesType == MapRendererResourceType::MapLayer
-                || resourcesType == MapRendererResourceType::ElevationData
-                || resourcesType == MapRendererResourceType::Map3DObjects))
+                || resourcesType == MapRendererResourceType::ElevationData))
             {
                 minZoom = Utilities::clipZoomLevel(tiledProvider->getMinZoom());
                 maxZoom = Utilities::clipZoomLevel(tiledProvider->getMaxZoom());
@@ -2356,10 +2354,6 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     // Determine if resource is junk:
                     bool isJunk = false;
 
-                    if (resourcesType == MapRendererResourceType::Map3DObjects)
-                    {
-                        isJunk = isJunk || (currentZoom < minZoom || currentZoom > maxZoom);
-                    }
 
                     // If this tiled entry is part of current zoom, it's treated as junk only if it's not a part
                     // of active tiles set and can't be used underscaled
