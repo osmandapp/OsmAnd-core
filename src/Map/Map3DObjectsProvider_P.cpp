@@ -221,8 +221,10 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QSet<Primirive3D>& buildings,
         }
 
         bool shouldRemove = false;
-        for (const auto& buildingPartPrimitive : buildingParts)
+        QVector<QPair<Primirive3D, Primirive3D>> itemsToModify;
+        for (auto it = buildingParts.begin(); it != buildingParts.end(); ++it)
         {
+            const auto& buildingPartPrimitive = *it;
             const auto& buildingPart = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPartPrimitive.primitive->sourceObject);
             if (buildingPart && building->bbox31.contains(buildingPart->bbox31))
             {
@@ -230,13 +232,17 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QSet<Primirive3D>& buildings,
                 {
                     Primirive3D modifiedBuildingPart = buildingPartPrimitive;
                     modifiedBuildingPart.polygonColor = buildingPrimitive.polygonColor;
-                    buildingParts.remove(buildingPartPrimitive);
-                    buildingParts.insert(modifiedBuildingPart);
+                    itemsToModify.append(qMakePair(buildingPartPrimitive, modifiedBuildingPart));
                 }
 
                 shouldRemove = true;
-                break;
             }
+        }
+
+        for (const auto& pair : itemsToModify)
+        {
+            buildingParts.remove(pair.first);
+            buildingParts.insert(pair.second);
         }
 
         if (shouldRemove)
