@@ -2114,6 +2114,8 @@ bool OsmAnd::MapRenderer::setFlatEarth(bool flatEarth, bool forcedUpdate /*= fal
     if (!update)
         return false;
 
+    if (flatEarth)
+        _requestedState.extraScale = 1.0f;
     _requestedState.flatEarth = flatEarth;
     _requestedState.isChanged = true;
 

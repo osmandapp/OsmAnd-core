@@ -3389,6 +3389,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
             target31 = PointI(0, 0);
             return true;
         }
+        extraScale = 1.0f;
     }
     else
     {
