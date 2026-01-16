@@ -3424,6 +3424,11 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
         const auto d = glm::normalize(glm::cross(n, neededV));
         const auto m = mGlobeRotation * glm::dmat3(glm::normalize(glm::cross(currentN, currentV)), currentN, currentV)
             * glm::dmat3(d.x, n.x, neededV.x, d.y, n.y, neededV.y, d.z, n.z, neededV.z);
+        if ((m[2].y - mGlobeRotation[2].y) * (neededV.z - currentV.z) < 0.0)
+        {
+            target31 = PointI(-1, -1);
+            return true;
+        }
         target31 = Utilities::get31FromAngles(PointD(qAtan2(-m[1].x, m[0].x), qAsin(qBound(-1.0, -m[2].y, 1.0))));
         getCorrectedZoomOverGlobe(state, target31, zoomLevel, visualZoom, extraScale);
     }
