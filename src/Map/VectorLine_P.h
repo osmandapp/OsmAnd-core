@@ -109,6 +109,7 @@ namespace OsmAnd
         float _mapVisualZoom;
         float _surfaceVisualZoom;
         float _mapVisualZoomShift;
+        float _mapExtraScale;
         bool _hasElevationDataProvider;
         bool _hasElevationDataResources;
         bool _flatEarth;

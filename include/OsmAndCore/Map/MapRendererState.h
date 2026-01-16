@@ -104,6 +104,7 @@ namespace OsmAnd
         ZoomLevel surfaceZoomLevel;
         float surfaceVisualZoom;
         float visualZoomShift;
+        float extraScale;
         ZoomLevel minZoomLimit;
         ZoomLevel maxZoomLimit;
         MapStubStyle stubsStyle;
@@ -178,6 +179,7 @@ namespace OsmAnd
         ZoomLevel surfaceZoomLevelToBe;
         float surfaceVisualZoomToBe;
         float visualZoomShift;
+        float extraScale;
         ZoomLevel minZoomLimit;
         ZoomLevel maxZoomLimit;
         MapStubStyle stubsStyle;
