@@ -110,7 +110,7 @@ Map3DObjectsTiledProvider_P::~Map3DObjectsTiledProvider_P()
 
 ZoomLevel Map3DObjectsTiledProvider_P::getMinZoom() const
 {
-    return ZoomLevel16;
+    return _tiledProvider ? _tiledProvider->getMinZoom() : MinZoomLevel;
 }
 
 ZoomLevel Map3DObjectsTiledProvider_P::getMaxZoom() const
@@ -128,6 +128,12 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
     if (!_tiledProvider)
     {
         return false;
+    }
+
+    if (request.zoom < 16)
+    {
+        outTiledData = std::make_shared<Map3DObjectsTiledProvider::Data>(request.tileId, request.zoom, Buildings3D());
+        return true;
     }
 
     MapPrimitivesProvider::Request tileRequest;
