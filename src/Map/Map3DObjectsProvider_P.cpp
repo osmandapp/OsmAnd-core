@@ -413,7 +413,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const Primirive3D& primitive,
     float minLevels = 0.0;
 
     FColorARGB color = getDefaultBuildingsColor();
-    if (primitive.polygonColor != 0)
+    if (primitive.polygonColor != 0 && !getUseDefaultBuildingsColor())
     {
         color = FColorARGB(primitive.polygonColor);
     }
