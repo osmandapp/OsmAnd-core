@@ -3352,8 +3352,6 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getMinZoomLimit(
     const auto result = minZoomLevel + qMax(state.minZoomLimit - minZoom, 0);
     minVisualZoom = static_cast<float>(scale / static_cast<double>(1u << minZoomLevel));
 
-    LogPrintf(OsmAnd::LogSeverityLevel::Debug, "OSMTEST: %d %f", result, minVisualZoom);
-
     return static_cast<ZoomLevel>(result);
 }
 
