@@ -158,7 +158,7 @@ namespace OsmAnd
         virtual bool setTarget(const PointI& target31,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setTargetWithFlatZoom(const PointI& target31, const ZoomLevel zoomLevel, const float visualZoom,
-            const float extraScale, bool forcedUpdate = false, bool disableUpdate = false) = 0;
+            bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool resetMapTarget() = 0;
@@ -185,7 +185,6 @@ namespace OsmAnd
         virtual bool setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
         virtual bool setVisualZoom(const float visualZoom, bool forcedUpdate = false) = 0;
         virtual bool setVisualZoomShift(const float visualZoomShift, bool forcedUpdate = false) = 0;
-        virtual bool setExtraScale(const float extraScale, bool forcedUpdate = false) = 0;
         virtual bool restoreFlatZoom(const float heightInMeters, bool forcedUpdate = false) = 0;
 
         virtual bool setStubsStyle(const MapStubStyle style, bool forcedUpdate = false) = 0;
@@ -217,13 +216,13 @@ namespace OsmAnd
         virtual void setJSON(const QJsonDocument* jsonDocument) = 0;
         virtual QByteArray getJSON() const = 0;
 
-        virtual ZoomLevel getMinZoomLevel() const = 0;
-        virtual ZoomLevel getMaxZoomLevel() const = 0;
+        virtual float getMinZoomLevel() const = 0;
+        virtual float getMaxZoomLevel() const = 0;
         virtual bool setMinZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
         virtual bool setMaxZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
 
         virtual void getCorrectedZoomOverGlobe(const MapRendererState& state, const PointI& target31,
-            ZoomLevel& zoomLevel, float& visualZoom, float& extraScale) const = 0;
+            ZoomLevel& zoomLevel, float& visualZoom) const = 0;
 
         virtual ZoomLevel getMinimalZoomLevelsRangeLowerBound() const = 0;
         virtual ZoomLevel getMinimalZoomLevelsRangeUpperBound() const = 0;

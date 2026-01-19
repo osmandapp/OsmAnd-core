@@ -143,12 +143,15 @@ namespace OsmAnd
 
         AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const override;
         AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const override;
-        double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const override;
+        double getPixelsToMetersScaleFactor(
+            const MapRendererState& state, const MapRendererInternalState& internalState) const override;
+        ZoomLevel getMinZoomLimit(
+            const MapRendererState& state, const PointI& target31, float& minVisualZoom) const override;
         bool getNewTargetAndZoom(const MapRendererState& state, const PointI& screenPoint, const PointI& location31,
-            const float height, PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, float& extraScale,
+            const float height, PointI& target31, ZoomLevel& zoomLevel, float& visualZoom,
             double* shiftInPixels = nullptr) const override;
         bool getNewTargetAndZoom(const MapRendererState& state, const PointI& location31, const float height,
-            PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, float& extraScale,
+            PointI& target31, ZoomLevel& zoomLevel, float& visualZoom,
             PointI& screenPoint) const override;
         bool getExtraZoomAndTiltForRelief(const MapRendererState& state, PointF& zoomAndTilt) const override;
         bool getExtraZoomAndRotationForAiming(const MapRendererState& state,
@@ -205,7 +208,7 @@ namespace OsmAnd
         float getMapTargetDistance(const PointI& location31, bool checkOffScreen = false) const override;
 
         void getCorrectedZoomOverGlobe(const MapRendererState& state, const PointI& target31,
-            ZoomLevel& zoomLevel, float& visualZoom, float& extraScale) const override;
+            ZoomLevel& zoomLevel, float& visualZoom) const override;
 
         AreaI getVisibleBBox31() const override;
         AreaI getVisibleBBoxShifted() const override;

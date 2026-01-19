@@ -1716,8 +1716,7 @@ private:
 	inline static float correct(double y, double startY31, float flatten, float thickness) {
         if (isnan(startY31))
             return thickness;
-        auto s = sinh((2.0 * M_PI * (y + startY31)) / intFull - M_PI);
-        auto f = static_cast<float>(qSqrt(s * s + 1.0));
+        auto f = cosh((2.0 * M_PI * (y + startY31)) / intFull - M_PI);
         return thickness * (f + flatten - f * flatten);
     }
 

@@ -1233,8 +1233,7 @@ namespace OsmAnd
             const static double C = 40075017.0;
 
             const auto powZoom = getPowZoom(zoom);
-            const auto sinhValue = sinh((2.0 * M_PI * yTile) / powZoom - M_PI);
-            const auto res = C / (powZoom * unitsPerTile * qSqrt(sinhValue*sinhValue + 1.0));
+            const auto res = C / (powZoom * unitsPerTile * cosh((2.0 * M_PI * yTile) / powZoom - M_PI));
 
             return res;
         }

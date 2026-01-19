@@ -736,9 +736,8 @@ void OsmAnd::MapAnimator_P::flatTargetSetter(const Key key, const PointI64 newVa
         target31.y = static_cast<int>(qBound(static_cast<int64_t>(0), newValue.y, static_cast<int64_t>(INT32_MAX)));
         auto zoomLevel = state.zoomLevel;
         auto visualZoom = state.visualZoom;
-        auto extraScale = state.extraScale;
-        _renderer->getCorrectedZoomOverGlobe(state, target31, zoomLevel, visualZoom, extraScale);
-        _renderer->setTargetWithFlatZoom(target31, zoomLevel, visualZoom, extraScale);
+        _renderer->getCorrectedZoomOverGlobe(state, target31, zoomLevel, visualZoom);
+        _renderer->setTargetWithFlatZoom(target31, zoomLevel, visualZoom);
     }
     _renderer->targetChangedObservable.postNotify(_renderer.get());
 }

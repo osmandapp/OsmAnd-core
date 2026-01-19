@@ -97,8 +97,8 @@ OsmAnd::GridConfiguration::GridConfiguration()
     , secondaryTopMarginFactor(8.0f)
     , primaryBottomMarginFactor(8.0f)
     , secondaryBottomMarginFactor(8.0f)
-    , primaryMinZoomLevel(ZoomLevel::ZoomLevel2)
-    , secondaryMinZoomLevel(ZoomLevel::ZoomLevel2)
+    , primaryMinZoomLevel(ZoomLevel::ZoomLevel0)
+    , secondaryMinZoomLevel(ZoomLevel::ZoomLevel0)
     , primaryMaxZoomLevel(ZoomLevel::ZoomLevel22)
     , secondaryMaxZoomLevel(ZoomLevel::ZoomLevel22)
 {
@@ -141,7 +141,7 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setProjectionParameters(
             parameters->factorY2 = 0.0f;
             parameters->factorY3 = 1.0f;
             parameters->offsetY = 0.0f;
-            parameters->minZoom = ZoomLevel2;
+            parameters->minZoom = ZoomLevel0;
             parameters->maxZoomForFloat = ZoomLevel12;
             parameters->maxZoomForMixed = ZoomLevel14;
             break;
@@ -155,7 +155,7 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setProjectionParameters(
             parameters->factorY2 = 0.0f;
             parameters->factorY3 = 0.0f;
             parameters->offsetY = 0.0f;
-            parameters->minZoom = ZoomLevel2;
+            parameters->minZoom = ZoomLevel0;
             parameters->maxZoomForFloat = ZoomLevel12;
             parameters->maxZoomForMixed = ZoomLevel14;
     }
