@@ -1559,6 +1559,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
         partSizes,
         verticesAndIndices->zoomLevel,
         verticesAndIndices->isDenseObject,
+        verticesAndIndices->isSeenThrough,
         position31);
 
     if (waitForGPU)

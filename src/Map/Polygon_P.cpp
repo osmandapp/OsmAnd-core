@@ -347,7 +347,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
     const auto zoomLevel = _mapZoomLevel < MaxZoomLevel ? static_cast<ZoomLevel>(_mapZoomLevel + 1) : _mapZoomLevel;
 
     bool tesselated = false;
-
+/* Disabled to avoid stutter during map gestures
     if (!_flatEarth)
     {
         tesselated = GeometryModifiers::cutMeshWithGrid(
@@ -363,13 +363,14 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
                 false, false,
                 tessVertices);
     }
-
+*/
     if (tesselated)
         vertices = &tessVertices;
 
     verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
     verticesAndIndices->zoomLevel = tesselated ? zoomLevel : InvalidZoomLevel;
     verticesAndIndices->isDenseObject = false;
+    verticesAndIndices->isSeenThrough = true;
 
     verticesAndIndices->verticesCount = vertices->size();
     verticesAndIndices->vertices = new VectorMapSymbol::Vertex[vertices->size()];

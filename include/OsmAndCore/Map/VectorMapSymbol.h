@@ -63,6 +63,7 @@ namespace OsmAnd
             std::shared_ptr<std::vector<std::pair<TileId, int32_t>>> partSizes;
             ZoomLevel zoomLevel;
             bool isDenseObject;
+            bool isSeenThrough;
         };
         
         enum class PrimitiveType
