@@ -290,6 +290,7 @@ namespace OsmAnd
                 const std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>& partSizes,
                 const ZoomLevel zoomLevel,
                 const bool isDenseObject,
+                const bool isSeenThrough,
                 const PointI* position31 = nullptr);
 
             virtual ~MeshInGPU();
@@ -300,6 +301,7 @@ namespace OsmAnd
             const ZoomLevel zoomLevel;
             const PointI* position31;
             const bool isDenseObject;
+            const bool isSeenThrough;
 
             void lostRefInGPU() const override;
         };

@@ -2723,10 +2723,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         // Just in case un-use any possibly used VAO
         gpuAPI->unuseVAO();
 
-        // Change depth test function to perform <= depth test (regardless of elevation presence)
-        glDepthFunc(GL_LEQUAL);
-        GL_CHECK_RESULT;
-
         glDepthMask(GL_FALSE);
         GL_CHECK_RESULT;
 
@@ -2828,6 +2824,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
 
     // Set starting distance
     glUniform1f(_onSurfaceVectorProgram.fs.param.startingDistance, symbol->startingDistance);
+    GL_CHECK_RESULT;
+
+    // Perform <= depth test (regardless of elevation presence) if needed
+    glDepthFunc(gpuResource->isSeenThrough ? GL_ALWAYS : GL_LEQUAL);
     GL_CHECK_RESULT;
 
     // If symbol has no tiled parts - render it flat using single elevation value

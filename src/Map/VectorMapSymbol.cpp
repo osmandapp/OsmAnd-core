@@ -27,6 +27,7 @@ OsmAnd::VectorMapSymbol::VerticesAndIndices::VerticesAndIndices()
 , partSizes(nullptr)
 , zoomLevel(InvalidZoomLevel)
 , isDenseObject(false)
+, isSeenThrough(false)
 {
 }
 
@@ -61,6 +62,7 @@ OsmAnd::VectorMapSymbol::VerticesAndIndices::~VerticesAndIndices()
     
     zoomLevel = InvalidZoomLevel;
     isDenseObject = false;
+    isSeenThrough = false;
 }
 
 const std::shared_ptr<OsmAnd::VectorMapSymbol::VerticesAndIndices> OsmAnd::VectorMapSymbol::getVerticesAndIndices() const
@@ -222,6 +224,7 @@ void OsmAnd::VectorMapSymbol::generateModel3DPrimitive(
         pVertex++;
     }
     verticesAndIndices->isDenseObject = true;
+    verticesAndIndices->isSeenThrough = false;
 
     mapSymbol.setVerticesAndIndices(verticesAndIndices);
 }

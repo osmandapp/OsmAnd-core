@@ -374,6 +374,7 @@ OsmAnd::GPUAPI::MeshInGPU::MeshInGPU(
     const std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>& partSizes_,
     const ZoomLevel zoomLevel_,
     const bool isDenseObject_,
+    const bool isSeenThrough_,
     const PointI* position31_/* = nullptr*/)
     : MetaResourceInGPU(Type::Mesh, api_)
     , vertexBuffer(vertexBuffer_)
@@ -381,6 +382,7 @@ OsmAnd::GPUAPI::MeshInGPU::MeshInGPU(
     , partSizes(partSizes_)
     , zoomLevel(zoomLevel_)
     , isDenseObject(isDenseObject_)
+    , isSeenThrough(isSeenThrough_)
     , position31(position31_)
 {
 }

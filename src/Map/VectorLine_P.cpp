@@ -1601,6 +1601,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
     verticesAndIndices->zoomLevel = tesselated ? zoomLevel : InvalidZoomLevel;
     verticesAndIndices->isDenseObject =
         tesselated && withHeights && _nearOutlineColor.a == 1.0f && _farOutlineColor.a == 1.0f;
+    verticesAndIndices->isSeenThrough = false;
 
     verticesAndIndices->verticesCount = (unsigned int) vertices->size();
     verticesAndIndices->vertices = new VectorMapSymbol::Vertex[vertices->size()];
