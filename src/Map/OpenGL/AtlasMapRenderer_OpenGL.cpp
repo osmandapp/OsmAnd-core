@@ -39,6 +39,8 @@
 #include <TargetConditionals.h>
 #endif
 
+#define MIN_VISUAL_ZOOM_AT_ZERO_LEVEL 0.75
+
 #define MIN_COS_SURFACE 0.03
 
 // Set camera's near depth limit
@@ -345,7 +347,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         _zNear, 1000.0f);
 
     // Calculate distance from camera to target based on visual zoom and visual zoom shift
-    internalState->tileOnScreenScaleFactor = state.visualZoom * (1.0f + state.visualZoomShift) * state.extraScale;
+    internalState->tileOnScreenScaleFactor = state.visualZoom * (1.0f + state.visualZoomShift);
     internalState->referenceTileSizeOnScreenInPixels = configuration->referenceTileSizeOnScreenInPixels;
     internalState->distanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(
         internalState->mPerspectiveProjection,
@@ -1060,693 +1062,706 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     const PointI tileDelta(internalState->synthTileId.x - internalState->targetTileId.x,
         internalState->synthTileId.y - internalState->targetTileId.y);
 
-    const auto dirAngle = static_cast<double>(state.azimuth) * M_PI / 180.0;
-    const auto dirX = qSin(dirAngle);
-    const auto dirY = qCos(dirAngle);
-
-    auto maxDistance = 0.0;
+    auto maxDistance = 1.0;
     auto zoomLevel = internalState->synthZoomLevel;
+    QMap<int32_t, QHash<TileId, TileVisibility>> tiles;
     QMap<int32_t, QSet<TileId>> tilesN;
-    QMap<int32_t, QHash<TileId, TileVisibility>> tiles, testTiles1, testTiles2;
-    const auto sZoom = ZoomLevel31 - zoomLevel;
-    const auto cameraTile31 = Utilities::get31FromAngles(internalState->cameraAngles);
-    auto camTileId = TileId::fromXY(cameraTile31.x >> sZoom, cameraTile31.y >> sZoom);
-    PointI toCamera(camTileId.x - internalState->synthTileId.x, camTileId.y - internalState->synthTileId.y);
-    if (!state.flatEarth && zoomLevel < ZoomLevel9)
+    if (zoomLevel < ZoomLevel2)
     {
-        toCamera.x = 0;
-        toCamera.y = 0;
-    }
-    if (abs(toCamera.x) == 1)
-        toCamera.x = 0;
-    if (abs(toCamera.y) == 1)
-        toCamera.y = 0;
-    if (toCamera.x > 0 && dirX > 0.0)
-        toCamera.x -= 1 << zoomLevel;
-    else if (toCamera.x < 0 && dirX < 0.0)
-        toCamera.x += 1 << zoomLevel;
-    if (toCamera.y > 0 && dirY < 0.0)
-        toCamera.y -= 1 << zoomLevel;
-    else if (toCamera.y < 0 && dirY > 0.0)
-        toCamera.y += 1 << zoomLevel;
-    camTileId = TileId::fromXY(internalState->synthTileId.x + toCamera.x, internalState->synthTileId.y + toCamera.y);
-    const PointD tilesToTarget(toCamera);
-    const auto distanceLimit = tilesToTarget.norm() - 1.0;
-    bool lookForStrictlyVisible = distanceLimit > 0.0;
-    auto targetTileId = lookForStrictlyVisible ? camTileId : internalState->synthTileId;
-    testTiles1[zoomLevel].insert(targetTileId, NotTestedYet);
-    glm::dvec3 ITL, ITR, IBL, IBR, OTL, OTR, OBL, OBR;
-    bool visTL, visTM, visTR, visML, visMR, visBL, visBM, visBR;
-    auto procTiles = &testTiles1;
-    auto nextTiles = &testTiles2;
-    const auto topLeft = internalState->globalFrustum2D31.p3;
-    const auto bottomRight = internalState->globalFrustum2D31.p1;
-    auto topLeftEx = topLeft;
-    auto bottomRightEx = bottomRight;
-    topLeftEx.x += 1ll + INT32_MAX;
-    bottomRightEx.x += 1ll + INT32_MAX;
-    double distanceFromTarget = 0.0;
-    bool atLeastOneVisibleFound = false;
-    bool atLeastOneFlatVisibleFound = false;
-    bool shouldRepeat = true;
-    while (shouldRepeat)
-    {
-        shouldRepeat = false;
-        bool atLeastOneAdded = false;    
-        for (const auto& setEntry : rangeOf(constOf(*procTiles)))
+        tiles[zoomLevel].insert(TileId::zero(), TileVisibility::Visible);
+        tilesN[zoomLevel].insert(TileId::zero());
+        if (zoomLevel > ZoomLevel0)
         {
-            const auto currentZoom = setEntry.key();
-            const auto currentZoomLevel = static_cast<ZoomLevel>(currentZoom);
-            const auto zoomShift = MaxZoomLevel - currentZoomLevel;
-            const auto zShift = zoomLevel - currentZoom;
-            const auto tileSize31 = 1u << zoomShift;
-            const auto realZoomLevel = static_cast<ZoomLevel>(currentZoom - zoomDelta);
-            const auto rShift = state.zoomLevel - realZoomLevel;
-            for (const auto& tileEntry : rangeOf(constOf(setEntry.value())))
+            auto tileId = TileId::fromXY(1, 0);
+            tiles[zoomLevel].insert(tileId, TileVisibility::Visible);
+            tilesN[zoomLevel].insert(tileId);
+            tileId = TileId::fromXY(0, 1);
+            tiles[zoomLevel].insert(tileId, TileVisibility::Visible);
+            tilesN[zoomLevel].insert(tileId);
+            tileId = TileId::fromXY(1, 1);
+            tiles[zoomLevel].insert(tileId, TileVisibility::Visible);
+            tilesN[zoomLevel].insert(tileId);
+        }
+    }
+    else
+    {
+        const auto dirAngle = static_cast<double>(state.azimuth) * M_PI / 180.0;
+        const auto dirX = qSin(dirAngle);
+        const auto dirY = qCos(dirAngle);
+        QMap<int32_t, QHash<TileId, TileVisibility>> testTiles1, testTiles2;
+        const auto sZoom = ZoomLevel31 - zoomLevel;
+        const auto cameraTile31 = Utilities::get31FromAngles(internalState->cameraAngles);
+        auto camTileId = TileId::fromXY(cameraTile31.x >> sZoom, cameraTile31.y >> sZoom);
+        PointI toCamera(camTileId.x - internalState->synthTileId.x, camTileId.y - internalState->synthTileId.y);
+        if (!state.flatEarth && zoomLevel < ZoomLevel9)
+        {
+            toCamera.x = 0;
+            toCamera.y = 0;
+        }
+        if (abs(toCamera.x) == 1)
+            toCamera.x = 0;
+        if (abs(toCamera.y) == 1)
+            toCamera.y = 0;
+        if (toCamera.x > 0 && dirX > 0.0)
+            toCamera.x -= 1 << zoomLevel;
+        else if (toCamera.x < 0 && dirX < 0.0)
+            toCamera.x += 1 << zoomLevel;
+        if (toCamera.y > 0 && dirY < 0.0)
+            toCamera.y -= 1 << zoomLevel;
+        else if (toCamera.y < 0 && dirY > 0.0)
+            toCamera.y += 1 << zoomLevel;
+        camTileId = TileId::fromXY(internalState->synthTileId.x + toCamera.x, internalState->synthTileId.y + toCamera.y);
+        const PointD tilesToTarget(toCamera);
+        const auto distanceLimit = tilesToTarget.norm() - 1.0;
+        bool lookForStrictlyVisible = distanceLimit > 0.0;
+        auto targetTileId = lookForStrictlyVisible ? camTileId : internalState->synthTileId;
+        testTiles1[zoomLevel].insert(targetTileId, NotTestedYet);
+        glm::dvec3 ITL, ITR, IBL, IBR, OTL, OTR, OBL, OBR;
+        bool visTL, visTM, visTR, visML, visMR, visBL, visBM, visBR;
+        auto procTiles = &testTiles1;
+        auto nextTiles = &testTiles2;
+        const auto topLeft = internalState->globalFrustum2D31.p3;
+        const auto bottomRight = internalState->globalFrustum2D31.p1;
+        auto topLeftEx = topLeft;
+        auto bottomRightEx = bottomRight;
+        topLeftEx.x += 1ll + INT32_MAX;
+        bottomRightEx.x += 1ll + INT32_MAX;
+        double distanceFromTarget = 0.0;
+        bool atLeastOneVisibleFound = false;
+        bool atLeastOneFlatVisibleFound = false;
+        bool shouldRepeat = true;
+        while (shouldRepeat)
+        {
+            shouldRepeat = false;
+            bool atLeastOneAdded = false;    
+            for (const auto& setEntry : rangeOf(constOf(*procTiles)))
             {
-                const auto tileId = tileEntry.key();
-                const auto tileState = tileEntry.value();
-                const auto tileIdN = Utilities::normalizeTileId(tileId, currentZoomLevel);
-                if (tilesN[currentZoom].contains(tileIdN))
-                    continue;
-                float minHeightInWorld = 0.0f;
-                float maxHeightInWorld = 0.0f;
-                const auto realTileIdN = state.flatEarth ? Utilities::normalizeTileId(TileId::fromXY(
-                    ((tileIdN.x << rShift) - tileDelta.x) >> rShift, ((tileIdN.y << rShift) - tileDelta.y) >> rShift),
-                        realZoomLevel) : tileIdN;
-                getHeightLimits(state, realTileIdN, internalState->metersPerUnit,
-                    realZoomLevel, minHeightInWorld, maxHeightInWorld);
-                const auto minHeight = static_cast<double>(minHeightInWorld) / globeRadius;
-                const auto maxHeight = static_cast<double>(maxHeightInWorld) / globeRadius;
-                const auto minD = minHeight + 1.0;
-                const auto maxD = maxHeight + 1.0;
-                PointI tile31(tileIdN.x << zoomShift, tileIdN.y << zoomShift);
-                bool isOverX = tileSize31 + static_cast<uint32_t>(tile31.x) > INT32_MAX;
-                bool isOverY = tileSize31 + static_cast<uint32_t>(tile31.y) > INT32_MAX;
-                PointI nextTile31(
-                    isOverX ? INT32_MAX : tile31.x + tileSize31, isOverY ? INT32_MAX : tile31.y + tileSize31);
-                const auto angTL = Utilities::getAnglesFrom31(tile31);
-                const auto angBR = Utilities::getAnglesFrom31(nextTile31);
-                const auto normalTL = Utilities::getGlobeRadialVector(angTL);
-                const auto normalTR = Utilities::getGlobeRadialVector(PointD(angBR.x, angTL.y));
-                const auto normalBL = Utilities::getGlobeRadialVector(PointD(angTL.x, angBR.y));
-                const auto normalBR = Utilities::getGlobeRadialVector(angBR);
-                if (minHeight != 0.0 || maxHeight != 0.0)
+                const auto currentZoom = setEntry.key();
+                const auto currentZoomLevel = static_cast<ZoomLevel>(currentZoom);
+                const auto zoomShift = MaxZoomLevel - currentZoomLevel;
+                const auto zShift = zoomLevel - currentZoom;
+                const auto tileSize31 = 1u << zoomShift;
+                const auto realZoomLevel = static_cast<ZoomLevel>(currentZoom - zoomDelta);
+                const auto rShift = state.zoomLevel - realZoomLevel;
+                for (const auto& tileEntry : rangeOf(constOf(setEntry.value())))
                 {
-                    OTL = normalTL * maxD;
-                    OTR = normalTR * maxD;
-                    OBL = normalBL * maxD;
-                    OBR = normalBR * maxD;
-                }
-
-                // Check tile visibility
-                bool isNorthPoleTile = tile31.y == 0;
-                bool isSouthPoleTile = nextTile31.y == INT32_MAX;
-                bool isFlatVisible = false;
-                bool isVisible = false;
-                do
-                {
-                    if (zoomLevel < ZoomLevel2)
+                    const auto tileId = tileEntry.key();
+                    const auto tileState = tileEntry.value();
+                    const auto tileIdN = Utilities::normalizeTileId(tileId, currentZoomLevel);
+                    if (tilesN[currentZoom].contains(tileIdN))
+                        continue;
+                    float minHeightInWorld = 0.0f;
+                    float maxHeightInWorld = 0.0f;
+                    const auto realTileIdN = state.flatEarth ? Utilities::normalizeTileId(TileId::fromXY(
+                        ((tileIdN.x << rShift) - tileDelta.x) >> rShift, ((tileIdN.y << rShift) - tileDelta.y) >> rShift),
+                            realZoomLevel) : tileIdN;
+                    getHeightLimits(state, realTileIdN, internalState->metersPerUnit,
+                        realZoomLevel, minHeightInWorld, maxHeightInWorld);
+                    const auto minHeight = static_cast<double>(minHeightInWorld) / globeRadius;
+                    const auto maxHeight = static_cast<double>(maxHeightInWorld) / globeRadius;
+                    const auto minD = minHeight + 1.0;
+                    const auto maxD = maxHeight + 1.0;
+                    PointI tile31(tileIdN.x << zoomShift, tileIdN.y << zoomShift);
+                    bool isOverX = tileSize31 + static_cast<uint32_t>(tile31.x) > INT32_MAX;
+                    bool isOverY = tileSize31 + static_cast<uint32_t>(tile31.y) > INT32_MAX;
+                    PointI nextTile31(
+                        isOverX ? INT32_MAX : tile31.x + tileSize31, isOverY ? INT32_MAX : tile31.y + tileSize31);
+                    const auto angTL = Utilities::getAnglesFrom31(tile31);
+                    const auto angBR = Utilities::getAnglesFrom31(nextTile31);
+                    const auto normalTL = Utilities::getGlobeRadialVector(angTL);
+                    const auto normalTR = Utilities::getGlobeRadialVector(PointD(angBR.x, angTL.y));
+                    const auto normalBL = Utilities::getGlobeRadialVector(PointD(angTL.x, angBR.y));
+                    const auto normalBR = Utilities::getGlobeRadialVector(angBR);
+                    if (minHeight != 0.0 || maxHeight != 0.0)
                     {
-                        isVisible = true;
-                        break;
+                        OTL = normalTL * maxD;
+                        OTR = normalTR * maxD;
+                        OBL = normalBL * maxD;
+                        OBR = normalBR * maxD;
                     }
 
-                    // Add border tiles near the poles
-                    if (!currentState.flatEarth
-                        && ((isNorthPoleTile && topLeft.y < 0) || (isSouthPoleTile && bottomRight.y > INT32_MAX))
-                        && ((topLeft.x <= nextTile31.x && tile31.x <= bottomRight.x)
-                            || (topLeftEx.x <= nextTile31.x && tile31.x <= bottomRightEx.x)))
+                    // Check tile visibility
+                    bool isNorthPoleTile = tile31.y == 0;
+                    bool isSouthPoleTile = nextTile31.y == INT32_MAX;
+                    bool isFlatVisible = false;
+                    bool isVisible = false;
+                    do
                     {
-                        isVisible = true;
-                        break;
-                    }
-
-                    // Check occlusion of all corners of the tile:
-                    // a tile should be considered invisible if all its corners are hidden by the horizon
-                    if (glm::dot(glm::normalize(normalTL - camPos), normalTL) > 0.0
-                        && glm::dot(glm::normalize(normalTR - camPos), normalTR) > 0.0
-                        && glm::dot(glm::normalize(normalBL - camPos), normalBL) > 0.0
-                        && glm::dot(glm::normalize(normalBR - camPos), normalBR) > 0.0)
-                        break;
-
-                    // Check map border tiles near the poles
-                    if (!currentState.flatEarth && ((isNorthPoleTile && internalState->globalFrustum2D31.p2.y == 0)
-                        || (isSouthPoleTile && internalState->globalFrustum2D31.p0.y == INT32_MAX))
-                        && ((static_cast<int64_t>(tile31.x) < internalState->globalFrustum2D31.p2.x
-                        && static_cast<int64_t>(nextTile31.x) > internalState->globalFrustum2D31.p0.x)
-                        || (internalState->globalFrustum2D31.p0.x < 0
-                        && static_cast<int64_t>(tile31.x) < internalState->globalFrustum2D31.p2.x + INT32_MAX + 1
-                        && static_cast<int64_t>(nextTile31.x) > internalState->globalFrustum2D31.p0.x + INT32_MAX + 1))
-                        )
-                    {
-                        isVisible = true;
-                        break;
-                    }
-
-                    visTL = false;
-                    visTM = false;
-                    visTR = false;
-                    visML = false;
-                    visMR = false;
-                    visBL = false;
-                    visBM = false;
-                    visBR = false;
-        
-                    // The tile should be considered visible
-                    // if it was found out during the visibility check of its neighbour
-                    if (minHeight == 0.0 && maxHeight == 0.0 && tileState == AlmostVisible)
-                    {
-                        isVisible = true;
-                        break;
-                    }
-
-                    // Check position of the camera, which may be put inside the tile:
-                    // in this case, the tile should be considered visible
-                    if (cameraHeight <= maxHeight
-                        && ca.x >= angTL.x && ca.x <= angBR.x && ca.y <= angTL.y && ca.y >= angBR.y)
-                    {
-                        isVisible = true;
-                        break;
-                    }
-
-                    // Check distance of base corners of the tile:
-                    // a tile should be considered invisible if its base corners are too far
-                    if (zoomLevel > MinZoomLevel
-                        && glm::dot(camDir, normalTL - camPos) > zFar && glm::dot(camDir, normalTR - camPos) > zFar
-                        && glm::dot(camDir, normalBL - camPos) > zFar && glm::dot(camDir, normalBR - camPos) > zFar)
-                        break;
-
-                    // Check visibility of base corners of the tile:
-                    // a tile should be considered flat visible if any of these corners is visible
-                    if (isPointVisible(normalTL, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
-                        checkVert ? botLeftD : bottomD, rightD, false, false, false, false,
-                        checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
-                    {
-                        if (minHeight == 0.0)
-                        {
-                            visTL = true;
-                            visTM = true;
-                            visML = true;
-                            isVisible = true;
-                            break;
-                        }
-                        else
-                            isFlatVisible = true;
-                    }
-                    if (isPointVisible(normalTR, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
-                        checkVert ? botLeftD : bottomD, rightD, false, false, false, false,
-                        checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
-                    {
-                        if (minHeight == 0.0)
-                        {
-                            visTM = true;
-                            visTR = true;
-                            visMR = true;
-                            isVisible = true;
-                            break;
-                        }
-                        else
-                            isFlatVisible = true;
-                    }
-                    if (isPointVisible(normalBL, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
-                        checkVert ? botLeftD : bottomD, rightD, false, false, false, false,
-                        checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
-                    {
-                        if (minHeight == 0.0)
-                        {
-                            visML = true;
-                            visBL = true;
-                            visBM = true;
-                            isVisible = true;
-                            break;
-                        }
-                        else
-                            isFlatVisible = true;
-                    }
-                    if (isPointVisible(normalBR, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
-                        checkVert ? botLeftD : bottomD, rightD, false, false, false, false,
-                        checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
-                    {
-                        if (minHeight == 0.0)
-                        {
-                            visMR = true;
-                            visBM = true;
-                            visBR = true;
-                            isVisible = true;
-                            break;
-                        }
-                        else
-                            isFlatVisible = true;
-                    }
-
-                    ITL = normalTL * minD;
-                    ITR = normalTR * minD;
-                    IBL = normalBL * minD;
-                    IBR = normalBR * minD;
-
-                    // Check visibility of inner corners of the tile:
-                    // a tile should be considered visible if any of its corners is visible
-                    if (minHeight != 0.0)
-                    {
-                        if (isPointVisible(ITL,
-                            topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false)
-                            || isPointVisible(ITR,
-                            topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false)
-                            || isPointVisible(IBL,
-                            topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false)
-                            || isPointVisible(IBR,
-                            topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false))
+                        // Add border tiles near the poles
+                        if (!currentState.flatEarth
+                            && ((isNorthPoleTile && topLeft.y < 0) || (isSouthPoleTile && bottomRight.y > INT32_MAX))
+                            && ((topLeft.x <= nextTile31.x && tile31.x <= bottomRight.x)
+                                || (topLeftEx.x <= nextTile31.x && tile31.x <= bottomRightEx.x)))
                         {
                             isVisible = true;
                             break;
                         }
-                    }
 
-                    if (maxD != minD)
-                    {
-                        // Check visibility of outer corners of the tile:
-                        // a tile should be considered visible if any of its corners is visible
-                        if (isPointVisible(OTL,
-                            topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false)
-                            || isPointVisible(OTR,
-                                topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false)
-                            || isPointVisible(OBL,
-                                topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false)
-                            || isPointVisible(OBR,
-                                topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false)
+                        // Check occlusion of all corners of the tile:
+                        // a tile should be considered invisible if all its corners are hidden by the horizon
+                        if (glm::dot(glm::normalize(normalTL - camPos), normalTL) > 0.0
+                            && glm::dot(glm::normalize(normalTR - camPos), normalTR) > 0.0
+                            && glm::dot(glm::normalize(normalBL - camPos), normalBL) > 0.0
+                            && glm::dot(glm::normalize(normalBR - camPos), normalBR) > 0.0)
+                            break;
+
+                        // Check map border tiles near the poles
+                        if (!currentState.flatEarth && ((isNorthPoleTile && internalState->globalFrustum2D31.p2.y == 0)
+                            || (isSouthPoleTile && internalState->globalFrustum2D31.p0.y == INT32_MAX))
+                            && ((static_cast<int64_t>(tile31.x) < internalState->globalFrustum2D31.p2.x
+                            && static_cast<int64_t>(nextTile31.x) > internalState->globalFrustum2D31.p0.x)
+                            || (internalState->globalFrustum2D31.p0.x < 0
+                            && static_cast<int64_t>(tile31.x) < internalState->globalFrustum2D31.p2.x + INT32_MAX + 1
+                            && static_cast<int64_t>(nextTile31.x) > internalState->globalFrustum2D31.p0.x + INT32_MAX + 1))
                             )
                         {
                             isVisible = true;
                             break;
                         }
-                    }
 
-                    // Tile should be considered visible if any corner ray of frustum intersects surface of the tile
-                    if (checkVert && rayIntersectsTileSurface(camPos, camDown, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
-                        || rayIntersectsTileSurface(camPos, camTL, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
-                        || rayIntersectsTileSurface(camPos, camTR, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
-                        || rayIntersectsTileSurface(camPos, camBL, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
-                        || rayIntersectsTileSurface(camPos, camBR, angTL.x, angBR.x, angTL.y, angBR.y, 1.0))
-                    {
-                        if (minHeight == 0.0)
-                        {
-                            isVisible = true;
-                            break;
-                        }
-                        else
-                            isFlatVisible = true;
-                    }
-
-                    if (minHeight != 0.0
-                        && (rayIntersectsTileSurface(camPos, camTL, angTL.x, angBR.x, angTL.y, angBR.y, minD)
-                        || rayIntersectsTileSurface(camPos, camTR, angTL.x, angBR.x, angTL.y, angBR.y, minD)
-                        || rayIntersectsTileSurface(camPos, camBL, angTL.x, angBR.x, angTL.y, angBR.y, minD)
-                        || rayIntersectsTileSurface(camPos, camBR, angTL.x, angBR.x, angTL.y, angBR.y, minD)))
-                    {
-                        isVisible = true;
-                        break;
-                    }
-
-                    if (maxD != minD)
-                    {
-                        // Tile should be considered visible
-                        // if any corner ray of frustum intersects top surface of the tile
-                        if (rayIntersectsTileSurface(camPos, camTL, angTL.x, angBR.x, angTL.y, angBR.y, maxD)
-                            || rayIntersectsTileSurface(camPos, camTR, angTL.x, angBR.x, angTL.y, angBR.y, maxD)
-                            || rayIntersectsTileSurface(camPos, camBL, angTL.x, angBR.x, angTL.y, angBR.y, maxD)
-                            || rayIntersectsTileSurface(camPos, camBR, angTL.x, angBR.x, angTL.y, angBR.y, maxD))
+                        visTL = false;
+                        visTM = false;
+                        visTR = false;
+                        visML = false;
+                        visMR = false;
+                        visBL = false;
+                        visBM = false;
+                        visBR = false;
+            
+                        // The tile should be considered visible
+                        // if it was found out during the visibility check of its neighbour
+                        if (minHeight == 0.0 && maxHeight == 0.0 && tileState == AlmostVisible)
                         {
                             isVisible = true;
                             break;
                         }
 
-                        // Tile should be considered visible
-                        // if any corner ray of frustum intersects left side face of the tile
-                        auto n = glm::normalize(glm::cross(normalBL, normalTL));
-                        if (rayIntersectsTileSide(camPos, camTL, normalTL, n, angTL.y, angBR.y, minD, maxD)
-                            || rayIntersectsTileSide(camPos, camTR, normalTL, n, angTL.y, angBR.y, minD, maxD)
-                            || rayIntersectsTileSide(camPos, camBL, normalTL, n, angTL.y, angBR.y, minD, maxD)
-                            || rayIntersectsTileSide(camPos, camBR, normalTL, n, angTL.y, angBR.y, minD, maxD))
+                        // Check position of the camera, which may be put inside the tile:
+                        // in this case, the tile should be considered visible
+                        if (cameraHeight <= maxHeight
+                            && ca.x >= angTL.x && ca.x <= angBR.x && ca.y <= angTL.y && ca.y >= angBR.y)
                         {
                             isVisible = true;
                             break;
                         }
 
-                        // Tile should be considered visible
-                        // if any corner ray of frustum intersects right side face of the tile
-                        n = glm::normalize(glm::cross(normalTR, normalBR));
-                        if (rayIntersectsTileSide(camPos, camTL, normalBR, n, angTL.y, angBR.y, minD, maxD)
-                            || rayIntersectsTileSide(camPos, camTR, normalBR, n, angTL.y, angBR.y, minD, maxD)
-                            || rayIntersectsTileSide(camPos, camBL, normalBR, n, angTL.y, angBR.y, minD, maxD)
-                            || rayIntersectsTileSide(camPos, camBR, normalBR, n, angTL.y, angBR.y, minD, maxD))
+                        // Check distance of base corners of the tile:
+                        // a tile should be considered invisible if its base corners are too far
+                        if (zoomLevel > MinZoomLevel
+                            && glm::dot(camDir, normalTL - camPos) > zFar && glm::dot(camDir, normalTR - camPos) > zFar
+                            && glm::dot(camDir, normalBL - camPos) > zFar && glm::dot(camDir, normalBR - camPos) > zFar)
+                            break;
+
+                        // Check visibility of base corners of the tile:
+                        // a tile should be considered flat visible if any of these corners is visible
+                        if (isPointVisible(normalTL, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
+                            checkVert ? botLeftD : bottomD, rightD, false, false, false, false,
+                            checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
+                        {
+                            if (minHeight == 0.0)
+                            {
+                                visTL = true;
+                                visTM = true;
+                                visML = true;
+                                isVisible = true;
+                                break;
+                            }
+                            else
+                                isFlatVisible = true;
+                        }
+                        if (isPointVisible(normalTR, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
+                            checkVert ? botLeftD : bottomD, rightD, false, false, false, false,
+                            checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
+                        {
+                            if (minHeight == 0.0)
+                            {
+                                visTM = true;
+                                visTR = true;
+                                visMR = true;
+                                isVisible = true;
+                                break;
+                            }
+                            else
+                                isFlatVisible = true;
+                        }
+                        if (isPointVisible(normalBL, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
+                            checkVert ? botLeftD : bottomD, rightD, false, false, false, false,
+                            checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
+                        {
+                            if (minHeight == 0.0)
+                            {
+                                visML = true;
+                                visBL = true;
+                                visBM = true;
+                                isVisible = true;
+                                break;
+                            }
+                            else
+                                isFlatVisible = true;
+                        }
+                        if (isPointVisible(normalBR, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
+                            checkVert ? botLeftD : bottomD, rightD, false, false, false, false,
+                            checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
+                        {
+                            if (minHeight == 0.0)
+                            {
+                                visMR = true;
+                                visBM = true;
+                                visBR = true;
+                                isVisible = true;
+                                break;
+                            }
+                            else
+                                isFlatVisible = true;
+                        }
+
+                        ITL = normalTL * minD;
+                        ITR = normalTR * minD;
+                        IBL = normalBL * minD;
+                        IBR = normalBR * minD;
+
+                        // Check visibility of inner corners of the tile:
+                        // a tile should be considered visible if any of its corners is visible
+                        if (minHeight != 0.0)
+                        {
+                            if (isPointVisible(ITL,
+                                topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false)
+                                || isPointVisible(ITR,
+                                topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false)
+                                || isPointVisible(IBL,
+                                topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false)
+                                || isPointVisible(IBR,
+                                topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false))
+                            {
+                                isVisible = true;
+                                break;
+                            }
+                        }
+
+                        if (maxD != minD)
+                        {
+                            // Check visibility of outer corners of the tile:
+                            // a tile should be considered visible if any of its corners is visible
+                            if (isPointVisible(OTL,
+                                topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false)
+                                || isPointVisible(OTR,
+                                    topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false)
+                                || isPointVisible(OBL,
+                                    topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false)
+                                || isPointVisible(OBR,
+                                    topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, false, false, false, false)
+                                )
+                            {
+                                isVisible = true;
+                                break;
+                            }
+                        }
+
+                        // Tile should be considered visible if any corner ray of frustum intersects surface of the tile
+                        if (checkVert && rayIntersectsTileSurface(camPos, camDown, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
+                            || rayIntersectsTileSurface(camPos, camTL, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
+                            || rayIntersectsTileSurface(camPos, camTR, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
+                            || rayIntersectsTileSurface(camPos, camBL, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
+                            || rayIntersectsTileSurface(camPos, camBR, angTL.x, angBR.x, angTL.y, angBR.y, 1.0))
+                        {
+                            if (minHeight == 0.0)
+                            {
+                                isVisible = true;
+                                break;
+                            }
+                            else
+                                isFlatVisible = true;
+                        }
+
+                        if (minHeight != 0.0
+                            && (rayIntersectsTileSurface(camPos, camTL, angTL.x, angBR.x, angTL.y, angBR.y, minD)
+                            || rayIntersectsTileSurface(camPos, camTR, angTL.x, angBR.x, angTL.y, angBR.y, minD)
+                            || rayIntersectsTileSurface(camPos, camBL, angTL.x, angBR.x, angTL.y, angBR.y, minD)
+                            || rayIntersectsTileSurface(camPos, camBR, angTL.x, angBR.x, angTL.y, angBR.y, minD)))
                         {
                             isVisible = true;
                             break;
                         }
 
-                        // Tile should be considered visible
-                        // if any corner ray of frustum intersects north side of the tile
-                        auto nSqrTanLat = 1.0 / qTan(angTL.y);
-                        nSqrTanLat *= nSqrTanLat;
-                        nSqrTanLat *= angTL.y > 0.0 ? -1.0 : 1.0;
-                        if (rayIntersectsTileCut(camPos, camTL, nSqrTanLat, angTL.x, angBR.x, minD, maxD)
-                            || rayIntersectsTileCut(camPos, camTR, nSqrTanLat, angTL.x, angBR.x, minD, maxD)
-                            || rayIntersectsTileCut(camPos, camBL, nSqrTanLat, angTL.x, angBR.x, minD, maxD)
-                            || rayIntersectsTileCut(camPos, camBR, nSqrTanLat, angTL.x, angBR.x, minD, maxD))
+                        if (maxD != minD)
                         {
-                            isVisible = true;
-                            break;
+                            // Tile should be considered visible
+                            // if any corner ray of frustum intersects top surface of the tile
+                            if (rayIntersectsTileSurface(camPos, camTL, angTL.x, angBR.x, angTL.y, angBR.y, maxD)
+                                || rayIntersectsTileSurface(camPos, camTR, angTL.x, angBR.x, angTL.y, angBR.y, maxD)
+                                || rayIntersectsTileSurface(camPos, camBL, angTL.x, angBR.x, angTL.y, angBR.y, maxD)
+                                || rayIntersectsTileSurface(camPos, camBR, angTL.x, angBR.x, angTL.y, angBR.y, maxD))
+                            {
+                                isVisible = true;
+                                break;
+                            }
+
+                            // Tile should be considered visible
+                            // if any corner ray of frustum intersects left side face of the tile
+                            auto n = glm::normalize(glm::cross(normalBL, normalTL));
+                            if (rayIntersectsTileSide(camPos, camTL, normalTL, n, angTL.y, angBR.y, minD, maxD)
+                                || rayIntersectsTileSide(camPos, camTR, normalTL, n, angTL.y, angBR.y, minD, maxD)
+                                || rayIntersectsTileSide(camPos, camBL, normalTL, n, angTL.y, angBR.y, minD, maxD)
+                                || rayIntersectsTileSide(camPos, camBR, normalTL, n, angTL.y, angBR.y, minD, maxD))
+                            {
+                                isVisible = true;
+                                break;
+                            }
+
+                            // Tile should be considered visible
+                            // if any corner ray of frustum intersects right side face of the tile
+                            n = glm::normalize(glm::cross(normalTR, normalBR));
+                            if (rayIntersectsTileSide(camPos, camTL, normalBR, n, angTL.y, angBR.y, minD, maxD)
+                                || rayIntersectsTileSide(camPos, camTR, normalBR, n, angTL.y, angBR.y, minD, maxD)
+                                || rayIntersectsTileSide(camPos, camBL, normalBR, n, angTL.y, angBR.y, minD, maxD)
+                                || rayIntersectsTileSide(camPos, camBR, normalBR, n, angTL.y, angBR.y, minD, maxD))
+                            {
+                                isVisible = true;
+                                break;
+                            }
+
+                            // Tile should be considered visible
+                            // if any corner ray of frustum intersects north side of the tile
+                            auto nSqrTanLat = 1.0 / qTan(angTL.y);
+                            nSqrTanLat *= nSqrTanLat;
+                            nSqrTanLat *= angTL.y > 0.0 ? -1.0 : 1.0;
+                            if (rayIntersectsTileCut(camPos, camTL, nSqrTanLat, angTL.x, angBR.x, minD, maxD)
+                                || rayIntersectsTileCut(camPos, camTR, nSqrTanLat, angTL.x, angBR.x, minD, maxD)
+                                || rayIntersectsTileCut(camPos, camBL, nSqrTanLat, angTL.x, angBR.x, minD, maxD)
+                                || rayIntersectsTileCut(camPos, camBR, nSqrTanLat, angTL.x, angBR.x, minD, maxD))
+                            {
+                                isVisible = true;
+                                break;
+                            }
+
+                            // Tile should be considered visible
+                            // if any corner ray of frustum intersects south side of the tile
+                            nSqrTanLat = 1.0 / qTan(angBR.y);
+                            nSqrTanLat *= nSqrTanLat;
+                            nSqrTanLat *= angBR.y > 0.0 ? -1.0 : 1.0;
+                            if (rayIntersectsTileCut(camPos, camTL, nSqrTanLat, angTL.x, angBR.x, minD, maxD)
+                                || rayIntersectsTileCut(camPos, camTR, nSqrTanLat, angTL.x, angBR.x, minD, maxD)
+                                || rayIntersectsTileCut(camPos, camBL, nSqrTanLat, angTL.x, angBR.x, minD, maxD)
+                                || rayIntersectsTileCut(camPos, camBR, nSqrTanLat, angTL.x, angBR.x, minD, maxD))
+                            {
+                                isVisible = true;
+                                break;
+                            }
+
                         }
 
-                        // Tile should be considered visible
-                        // if any corner ray of frustum intersects south side of the tile
-                        nSqrTanLat = 1.0 / qTan(angBR.y);
-                        nSqrTanLat *= nSqrTanLat;
-                        nSqrTanLat *= angBR.y > 0.0 ? -1.0 : 1.0;
-                        if (rayIntersectsTileCut(camPos, camTL, nSqrTanLat, angTL.x, angBR.x, minD, maxD)
-                            || rayIntersectsTileCut(camPos, camTR, nSqrTanLat, angTL.x, angBR.x, minD, maxD)
-                            || rayIntersectsTileCut(camPos, camBL, nSqrTanLat, angTL.x, angBR.x, minD, maxD)
-                            || rayIntersectsTileCut(camPos, camBR, nSqrTanLat, angTL.x, angBR.x, minD, maxD))
-                        {
-                            isVisible = true;
-                            break;
-                        }
-
-                    }
-
-                    // Check visibility of side edges of the tile:
-                    // a tile should be considered visible if any of its side edge intersects any side of frustum
-                    if (isEdgeVisible(camPos, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
-                        checkVert ? botLeftD : bottomD, rightD, normalTL, normalBL,
-                        checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
-                    {
-                        if (minHeight == 0.0)
-                        {
-                            visML = true;
-                            isVisible = true;
-                            break;
-                        }
-                        else
-                            isFlatVisible = true;
-                    }
-                    if (isEdgeVisible(camPos, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
-                        checkVert ? botLeftD : bottomD, rightD, normalBR, normalTR,
-                        checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
-                    {
-                        if (minHeight == 0.0)
-                        {
-                            visMR = true;
-                            isVisible = true;
-                            break;
-                        }
-                        else
-                            isFlatVisible = true;
-                    }
-
-                    if (minHeight != 0.0)
-                    {
-                        if (isEdgeVisible(
-                            camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, ITL, IBL))
-                        {
-                            isVisible = true;
-                            break;
-                        }
-                        if (isEdgeVisible(
-                            camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, IBR, ITR))
-                        {
-                            isVisible = true;
-                            break;
-                        }
-                    }
-
-                    if (maxD != minD)
-                    {
-                        // Check visibility of side edges of the top surface of tile:
+                        // Check visibility of side edges of the tile:
                         // a tile should be considered visible if any of its side edge intersects any side of frustum
-                        if (isEdgeVisible(camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, OTL, OBL)
-                        || isEdgeVisible(camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, OBR, OTR))
+                        if (isEdgeVisible(camPos, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
+                            checkVert ? botLeftD : bottomD, rightD, normalTL, normalBL,
+                            checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
                         {
-                            isVisible = true;
-                            break;
+                            if (minHeight == 0.0)
+                            {
+                                visML = true;
+                                isVisible = true;
+                                break;
+                            }
+                            else
+                                isFlatVisible = true;
+                        }
+                        if (isEdgeVisible(camPos, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
+                            checkVert ? botLeftD : bottomD, rightD, normalBR, normalTR,
+                            checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
+                        {
+                            if (minHeight == 0.0)
+                            {
+                                visMR = true;
+                                isVisible = true;
+                                break;
+                            }
+                            else
+                                isFlatVisible = true;
                         }
 
-                    }
-
-                    // Check visibility of north edge of the tile:
-                    // a tile should be considered visible if its north edge intersects any side of frustum
-                    const auto cosTL = qCos(angTL.y);
-                    auto sqrR = cosTL;
-                    sqrR *= sqrR;
-                    if (isArcVisible(camPos, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
-                        checkVert ? botLeftD : bottomD, rightD, angTL.x, angBR.x, normalTL.z, sqrR,
-                        checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
-                    {
-                        if (minHeight == 0.0)
+                        if (minHeight != 0.0)
                         {
-                            visTM = true;
-                            isVisible = true;
-                            break;
+                            if (isEdgeVisible(
+                                camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, ITL, IBL))
+                            {
+                                isVisible = true;
+                                break;
+                            }
+                            if (isEdgeVisible(
+                                camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, IBR, ITR))
+                            {
+                                isVisible = true;
+                                break;
+                            }
                         }
-                        else
-                            isFlatVisible = true;
-                    }
 
-                    // Check visibility of south edge of the tile:
-                    // a tile should be considered visible if its south edge intersects any side of frustum
-                    const auto cosBR = qCos(angBR.y);
-                    sqrR = cosBR;
-                    sqrR *= sqrR;
-                    if (isArcVisible(camPos, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
-                        checkVert ? botLeftD : bottomD, rightD, angTL.x, angBR.x, normalBR.z, sqrR,
-                        checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
-                    {
-                        if (minHeight == 0.0)
+                        if (maxD != minD)
                         {
-                            visBM = true;
-                            isVisible = true;
-                            break;
-                        }
-                        else
-                            isFlatVisible = true;
-                    }
+                            // Check visibility of side edges of the top surface of tile:
+                            // a tile should be considered visible if any of its side edge intersects any side of frustum
+                            if (isEdgeVisible(camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, OTL, OBL)
+                            || isEdgeVisible(camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, OBR, OTR))
+                            {
+                                isVisible = true;
+                                break;
+                            }
 
-                    if (minHeight != 0.0)
-                    {
-                        sqrR = minD * cosTL;
+                        }
+
+                        // Check visibility of north edge of the tile:
+                        // a tile should be considered visible if its north edge intersects any side of frustum
+                        const auto cosTL = qCos(angTL.y);
+                        auto sqrR = cosTL;
                         sqrR *= sqrR;
-                        if (isArcVisible(camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD,
-                            angTL.x, angBR.x, ITL.z, sqrR))
+                        if (isArcVisible(camPos, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
+                            checkVert ? botLeftD : bottomD, rightD, angTL.x, angBR.x, normalTL.z, sqrR,
+                            checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
                         {
-                            isVisible = true;
-                            break;
+                            if (minHeight == 0.0)
+                            {
+                                visTM = true;
+                                isVisible = true;
+                                break;
+                            }
+                            else
+                                isFlatVisible = true;
                         }
 
                         // Check visibility of south edge of the tile:
                         // a tile should be considered visible if its south edge intersects any side of frustum
-                        sqrR = minD * cosBR;
+                        const auto cosBR = qCos(angBR.y);
+                        sqrR = cosBR;
                         sqrR *= sqrR;
-                        if (isArcVisible(camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD,
-                            angTL.x, angBR.x, IBR.z, sqrR))
+                        if (isArcVisible(camPos, topN, leftN, checkVert ? botLeftN : bottomN, rightN, topD, leftD,
+                            checkVert ? botLeftD : bottomD, rightD, angTL.x, angBR.x, normalBR.z, sqrR,
+                            checkVert ? &botRightN : nullptr, checkVert ? &botRightD : nullptr))
                         {
-                            isVisible = true;
-                            break;
-                        }
-                    }
-
-                    if (maxD != minD)
-                    {
-                        // Check visibility of north edge of the top surface of tile:
-                        // a tile should be considered visible
-                        // if north edge of its top surface intersects any side of frustum
-                        sqrR = maxD * cosTL;
-                        sqrR *= sqrR;
-                        if (isArcVisible(camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD,
-                            angTL.x, angBR.x, OTL.z, sqrR))
-                        {
-                            isVisible = true;
-                            break;
-                        }
-
-                        // Check visibility of south edge of the top surface of tile:
-                        // a tile should be considered visible
-                        // if south edge of its top surface intersects any side of frustum
-                        sqrR = maxD * cosBR;
-                        sqrR *= sqrR;
-                        if (isArcVisible(camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD,
-                            angTL.x, angBR.x, OBR.z, sqrR))
-                        {
-                            isVisible = true;
-                            break;
-                        }
-                    }
-                } while (false);
-                if (isVisible || isFlatVisible)
-                {
-                    // Check distance of middle point of the super-tile:
-                    // it should be considered visible instead if its central point is far enough
-                    const bool oddX = tileIdN.x & 1 > 0;
-                    const bool oddY = tileIdN.y & 1 > 0;
-                    const auto centralPoint = oddY ? (oddX ? normalTL : normalTR) : (oddX ? normalBL : normalBR);
-                    const auto toCenter = centralPoint - camPos;
-                    const auto distance =
-                        glm::dot(toCenter, camDir) * (1.0 - tiltFactor) + tiltFactor * glm::length(toCenter);
-                    if (currentZoom > MinZoomLevel && zLower != zFar
-                        && distance > zLower + detailDistanceFactor(zShift) * detailThickness)
-                    {
-                        tilesN[currentZoom].insert(tileIdN);
-                        (*nextTiles)[currentZoom - 1].insert(TileId::fromXY(tileId.x / 2 - (tileId.x < 0 ? 1 : 0),
-                            tileId.y / 2 - (tileId.y < 0 ? 1 : 0)), AlmostVisible);
-                        shouldRepeat = true;
-                        continue;
-                    }
-                    TileVisibility visibility = isVisible ? Visible : VisibleFlat;
-                    if (isVisible && (minHeight != 0.0 || maxHeight != 0.0))
-                    {
-                        internalState->maxElevation = qMax(internalState->maxElevation, maxHeightInWorld);
-                        if (currentZoomLevel == zoomLevel)
-                        {
-                            const auto center = (OTL + OTR + OBL + OBR) / 4.0;
-                            const auto toCenter = glm::distance(camPos, center);
-                            if (toCenter < extraDetailDistance)
-                                visibility = ExtraDetail;
-                            const auto gap = 0.1 / globeRadius;
-                            const auto difference = maxD - cameraDistance;
-                            if (difference + gap > 0.0)
+                            if (minHeight == 0.0)
                             {
-                                const auto under = qMax(0.0, difference);
-                                const auto maxR = qMax(glm::distance(center, OTL), glm::distance(center, OBR));
-                                const auto sqrMax = toCenter * toCenter - under * under;
-                                const auto delta = sqrMax > 0.0 ? qMax(qSqrt(sqrMax) - maxR, 0.0) : 0.0;
-                                const auto extra = (difference + gap - delta * 4.0) * globeRadius;
-                                if (extra > 0.0 && extra > internalState->extraElevation)
-                                    internalState->extraElevation = static_cast<float>(extra);
+                                visBM = true;
+                                isVisible = true;
+                                break;
+                            }
+                            else
+                                isFlatVisible = true;
+                        }
+
+                        if (minHeight != 0.0)
+                        {
+                            sqrR = minD * cosTL;
+                            sqrR *= sqrR;
+                            if (isArcVisible(camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD,
+                                angTL.x, angBR.x, ITL.z, sqrR))
+                            {
+                                isVisible = true;
+                                break;
+                            }
+
+                            // Check visibility of south edge of the tile:
+                            // a tile should be considered visible if its south edge intersects any side of frustum
+                            sqrR = minD * cosBR;
+                            sqrR *= sqrR;
+                            if (isArcVisible(camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD,
+                                angTL.x, angBR.x, IBR.z, sqrR))
+                            {
+                                isVisible = true;
+                                break;
                             }
                         }
-                    }
 
-                    atLeastOneAdded = true;
-                    atLeastOneFlatVisibleFound = true;
+                        if (maxD != minD)
+                        {
+                            // Check visibility of north edge of the top surface of tile:
+                            // a tile should be considered visible
+                            // if north edge of its top surface intersects any side of frustum
+                            sqrR = maxD * cosTL;
+                            sqrR *= sqrR;
+                            if (isArcVisible(camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD,
+                                angTL.x, angBR.x, OTL.z, sqrR))
+                            {
+                                isVisible = true;
+                                break;
+                            }
 
-                    if (!lookForStrictlyVisible || (isVisible && (minHeight != 0.0 || maxHeight != 0.0)))
+                            // Check visibility of south edge of the top surface of tile:
+                            // a tile should be considered visible
+                            // if south edge of its top surface intersects any side of frustum
+                            sqrR = maxD * cosBR;
+                            sqrR *= sqrR;
+                            if (isArcVisible(camPos, topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD,
+                                angTL.x, angBR.x, OBR.z, sqrR))
+                            {
+                                isVisible = true;
+                                break;
+                            }
+                        }
+                    } while (false);
+                    if (isVisible || isFlatVisible)
                     {
-                        tiles[currentZoom].insert(tileId, visibility);
-                        tilesN[currentZoom].insert(tileIdN);
+                        // Check distance of middle point of the super-tile:
+                        // it should be considered visible instead if its central point is far enough
+                        const bool oddX = tileIdN.x & 1 > 0;
+                        const bool oddY = tileIdN.y & 1 > 0;
+                        const auto centralPoint = oddY ? (oddX ? normalTL : normalTR) : (oddX ? normalBL : normalBR);
+                        const auto toCenter = centralPoint - camPos;
+                        const auto distance =
+                            glm::dot(toCenter, camDir) * (1.0 - tiltFactor) + tiltFactor * glm::length(toCenter);
+                        if (currentZoom > MinZoomLevel && zLower != zFar
+                            && distance > zLower + detailDistanceFactor(zShift) * detailThickness)
+                        {
+                            tilesN[currentZoom].insert(tileIdN);
+                            (*nextTiles)[currentZoom - 1].insert(TileId::fromXY(tileId.x / 2 - (tileId.x < 0 ? 1 : 0),
+                                tileId.y / 2 - (tileId.y < 0 ? 1 : 0)), AlmostVisible);
+                            shouldRepeat = true;
+                            continue;
+                        }
+                        TileVisibility visibility = isVisible ? Visible : VisibleFlat;
+                        if (isVisible && (minHeight != 0.0 || maxHeight != 0.0))
+                        {
+                            internalState->maxElevation = qMax(internalState->maxElevation, maxHeightInWorld);
+                            if (currentZoomLevel == zoomLevel)
+                            {
+                                const auto center = (OTL + OTR + OBL + OBR) / 4.0;
+                                const auto toCenter = glm::distance(camPos, center);
+                                if (toCenter < extraDetailDistance)
+                                    visibility = ExtraDetail;
+                                const auto gap = 0.1 / globeRadius;
+                                const auto difference = maxD - cameraDistance;
+                                if (difference + gap > 0.0)
+                                {
+                                    const auto under = qMax(0.0, difference);
+                                    const auto maxR = qMax(glm::distance(center, OTL), glm::distance(center, OBR));
+                                    const auto sqrMax = toCenter * toCenter - under * under;
+                                    const auto delta = sqrMax > 0.0 ? qMax(qSqrt(sqrMax) - maxR, 0.0) : 0.0;
+                                    const auto extra = (difference + gap - delta * 4.0) * globeRadius;
+                                    if (extra > 0.0 && extra > internalState->extraElevation)
+                                        internalState->extraElevation = static_cast<float>(extra);
+                                }
+                            }
+                        }
 
-                        if (lookForStrictlyVisible)
-                            lookForStrictlyVisible = false;
+                        atLeastOneAdded = true;
+                        atLeastOneFlatVisibleFound = true;
+
+                        if (!lookForStrictlyVisible || (isVisible && (minHeight != 0.0 || maxHeight != 0.0)))
+                        {
+                            tiles[currentZoom].insert(tileId, visibility);
+                            tilesN[currentZoom].insert(tileIdN);
+
+                            if (lookForStrictlyVisible)
+                                lookForStrictlyVisible = false;
+                        }
+                        else
+                            continue;
+
+                        if (!isVisible)
+                            continue;
+
+                        maxDistance = qMax(maxDistance, maxD);
+
+                        const auto zDetail = zShift > 0 && currentZoom < MaxZoomLevel && zLower != zFar
+                            ? zLower + detailDistanceFactor(zShift - 1) * detailThickness : 0.0;
+                        const auto leftX = tileId.x - 1;
+                        const auto rightX = tileId.x + 1;
+                        const auto topY = tileId.y - 1;
+                        const auto bottomY = tileId.y + 1;
+                        insertTileId((*nextTiles)[currentZoom],
+                            TileId::fromXY(leftX, tileId.y), zDetail, tiltFactor, zoomShift, camPos, camDir, visML);
+                        insertTileId((*nextTiles)[currentZoom],
+                            TileId::fromXY(rightX, tileId.y), zDetail, tiltFactor, zoomShift, camPos, camDir, visMR);
+                        if (topY >= 0)
+                        {
+                            insertTileId((*nextTiles)[currentZoom],
+                                TileId::fromXY(leftX, topY), zDetail, tiltFactor, zoomShift, camPos, camDir, visTL);
+                            insertTileId((*nextTiles)[currentZoom],
+                                TileId::fromXY(tileId.x, topY), zDetail, tiltFactor, zoomShift, camPos, camDir, visTM);
+                            insertTileId((*nextTiles)[currentZoom],
+                                TileId::fromXY(rightX, topY), zDetail, tiltFactor, zoomShift, camPos, camDir, visTR);
+                        }
+                        if (bottomY < static_cast<int32_t>(1u << currentZoom))
+                        {
+                            insertTileId((*nextTiles)[currentZoom],
+                                TileId::fromXY(leftX, bottomY), zDetail, tiltFactor, zoomShift, camPos, camDir, visBL);
+                            insertTileId((*nextTiles)[currentZoom],
+                                TileId::fromXY(tileId.x, bottomY), zDetail, tiltFactor, zoomShift, camPos, camDir, visBM);
+                            insertTileId((*nextTiles)[currentZoom],
+                                TileId::fromXY(rightX, bottomY), zDetail, tiltFactor, zoomShift, camPos, camDir, visBR);
+                        }
+                        shouldRepeat = true;
+                        atLeastOneVisibleFound = true;
                     }
                     else
-                        continue;
-
-                    if (!isVisible)
-                        continue;
-
-                    maxDistance = qMax(maxDistance, maxD);
-
-                    const auto zDetail = zShift > 0 && currentZoom < MaxZoomLevel && zLower != zFar
-                        ? zLower + detailDistanceFactor(zShift - 1) * detailThickness : 0.0;
-                    const auto leftX = tileId.x - 1;
-                    const auto rightX = tileId.x + 1;
-                    const auto topY = tileId.y - 1;
-                    const auto bottomY = tileId.y + 1;
-                    insertTileId((*nextTiles)[currentZoom],
-                        TileId::fromXY(leftX, tileId.y), zDetail, tiltFactor, zoomShift, camPos, camDir, visML);
-                    insertTileId((*nextTiles)[currentZoom],
-                        TileId::fromXY(rightX, tileId.y), zDetail, tiltFactor, zoomShift, camPos, camDir, visMR);
-                    if (topY >= 0)
-                    {
-                        insertTileId((*nextTiles)[currentZoom],
-                            TileId::fromXY(leftX, topY), zDetail, tiltFactor, zoomShift, camPos, camDir, visTL);
-                        insertTileId((*nextTiles)[currentZoom],
-                            TileId::fromXY(tileId.x, topY), zDetail, tiltFactor, zoomShift, camPos, camDir, visTM);
-                        insertTileId((*nextTiles)[currentZoom],
-                            TileId::fromXY(rightX, topY), zDetail, tiltFactor, zoomShift, camPos, camDir, visTR);
-                    }
-                    if (bottomY < static_cast<int32_t>(1u << currentZoom))
-                    {
-                        insertTileId((*nextTiles)[currentZoom],
-                            TileId::fromXY(leftX, bottomY), zDetail, tiltFactor, zoomShift, camPos, camDir, visBL);
-                        insertTileId((*nextTiles)[currentZoom],
-                            TileId::fromXY(tileId.x, bottomY), zDetail, tiltFactor, zoomShift, camPos, camDir, visBM);
-                        insertTileId((*nextTiles)[currentZoom],
-                            TileId::fromXY(rightX, bottomY), zDetail, tiltFactor, zoomShift, camPos, camDir, visBR);
-                    }
-                    shouldRepeat = true;
-                    atLeastOneVisibleFound = true;
+                        tilesN[currentZoom].insert(tileIdN);
                 }
-                else
-                    tilesN[currentZoom].insert(tileIdN);
             }
-        }
-        if (!atLeastOneVisibleFound && !shouldRepeat)
-        {
-            const auto dir = lookForStrictlyVisible ? -1.0 : 1.0;
-            const auto deltaX = dirX * dir;
-            const auto deltaY = dirY * dir;
-            if ((!atLeastOneAdded && atLeastOneFlatVisibleFound)
-                || (lookForStrictlyVisible && distanceFromTarget >= distanceLimit))
+            if (!atLeastOneVisibleFound && !shouldRepeat)
             {
-                if (lookForStrictlyVisible)
+                const auto dir = lookForStrictlyVisible ? -1.0 : 1.0;
+                const auto deltaX = dirX * dir;
+                const auto deltaY = dirY * dir;
+                if ((!atLeastOneAdded && atLeastOneFlatVisibleFound)
+                    || (lookForStrictlyVisible && distanceFromTarget >= distanceLimit))
                 {
-                    lookForStrictlyVisible = false;
-                    atLeastOneFlatVisibleFound = false;
-                    maxDistance = 0.0;
-                    distanceFromTarget = 0.0;
-                    targetTileId = internalState->synthTileId;
-                    (*nextTiles)[zoomLevel].insert(targetTileId, NotTestedYet);
-                    shouldRepeat = true;
-                }
-                else
-                {
-                    tiles.last().clear();    
-                    tiles.last().insert(targetTileId, Visible);
-                    double distance = 1.0;
-                    auto prevTileId = targetTileId;
-                    TileId nextTileId;
-                    for (int i = 0; i < 10; i++)
+                    if (lookForStrictlyVisible)
                     {
-                        nextTileId = TileId::fromXY(
-                            static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distance)),
-                            static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distance)));
-                        if (nextTileId == prevTileId)
+                        lookForStrictlyVisible = false;
+                        atLeastOneFlatVisibleFound = false;
+                        maxDistance = 1.0;
+                        distanceFromTarget = 0.0;
+                        targetTileId = internalState->synthTileId;
+                        (*nextTiles)[zoomLevel].insert(targetTileId, NotTestedYet);
+                        shouldRepeat = true;
+                    }
+                    else
+                    {
+                        tiles.last().clear();    
+                        tiles.last().insert(targetTileId, Visible);
+                        double distance = 1.0;
+                        auto prevTileId = targetTileId;
+                        TileId nextTileId;
+                        for (int i = 0; i < 10; i++)
                         {
-                            distance += 1.0;
                             nextTileId = TileId::fromXY(
                                 static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distance)),
                                 static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distance)));
+                            if (nextTileId == prevTileId)
+                            {
+                                distance += 1.0;
+                                nextTileId = TileId::fromXY(
+                                    static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distance)),
+                                    static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distance)));
+                            }
+                            tiles.last().insert(nextTileId, Visible);
+                            distance += 1.0;
+                            prevTileId = nextTileId;
                         }
-                        tiles.last().insert(nextTileId, Visible);
-                        distance += 1.0;
-                        prevTileId = nextTileId;
+                    }
+                }
+                else
+                {
+                    const auto firstTileId = (*procTiles)[zoomLevel].begin().key();
+                    distanceFromTarget += 1.0;
+                    auto nearTileId = TileId::fromXY(
+                        static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distanceFromTarget)),
+                        static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distanceFromTarget)));
+                    if (nearTileId == firstTileId && distanceFromTarget < distanceLimit)
+                    {
+                        distanceFromTarget += 1.0;
+                        nearTileId = TileId::fromXY(
+                            static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distanceFromTarget)),
+                            static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distanceFromTarget)));
+                    }
+                    if (nearTileId.y >= 0 && nearTileId.y < static_cast<int32_t>(1u << zoomLevel))
+                    {
+                        (*nextTiles)[zoomLevel].insert(nearTileId, NotTestedYet);
+                        shouldRepeat = true;
                     }
                 }
             }
-            else
-            {
-                const auto firstTileId = (*procTiles)[zoomLevel].begin().key();
-                distanceFromTarget += 1.0;
-                auto nearTileId = TileId::fromXY(
-                    static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distanceFromTarget)),
-                    static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distanceFromTarget)));
-                if (nearTileId == firstTileId && distanceFromTarget < distanceLimit)
-                {
-                    distanceFromTarget += 1.0;
-                    nearTileId = TileId::fromXY(
-                        static_cast<int>(qRound(static_cast<double>(targetTileId.x) - deltaX * distanceFromTarget)),
-                        static_cast<int>(qRound(static_cast<double>(targetTileId.y) + deltaY * distanceFromTarget)));
-                }
-                if (nearTileId.y >= 0 && nearTileId.y < static_cast<int32_t>(1u << zoomLevel))
-                {
-                    (*nextTiles)[zoomLevel].insert(nearTileId, NotTestedYet);
-                    shouldRepeat = true;
-                }
-            }
+            procTiles->clear();
+            std::swap(procTiles, nextTiles);
         }
-        procTiles->clear();
-        std::swap(procTiles, nextTiles);
     }
-
     // Normalize and make unique visible tiles
     internalState->visibleTilesCount = 0;
     internalState->visibleTiles.clear();
@@ -2464,7 +2479,7 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getTileSizeOnScreenInPixels() const
     {
         const auto state = getState();
         return configuration->referenceTileSizeOnScreenInPixels
-            * state.visualZoom * (1.0f + state.visualZoomShift) * state.extraScale;
+            * state.visualZoom * (1.0f + state.visualZoomShift);
     }
 
     return 0.0;
@@ -2539,7 +2554,7 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getDistanceFactor(const MapRendererState
         _zNear, 1000.0f);
     baseUnits = static_cast<double>(TileSize3D)
         * 0.5 * mPerspectiveProjection[0][0] * state.viewport.width()
-        / ((1.0f + state.visualZoomShift) * state.extraScale * tileSize);
+        / ((1.0f + state.visualZoomShift) * tileSize);
     const auto distanceToTarget = static_cast<float>(baseUnits / state.visualZoom);
     const auto mDistance = glm::translate(glm::vec3(0.0f, 0.0f, -distanceToTarget));
     const auto mElevation = glm::rotate(glm::radians(state.elevationAngle), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -2634,15 +2649,19 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getSurfaceZoom(
     if (resultZoom < state.zoomLevel)
         resultZoom = state.zoomLevel;
 
-    float visZoom = 1.0f;
-    if (resultZoom > state.maxZoomLimit)
-        resultZoom = state.maxZoomLimit;
-    else if (resultZoom < state.minZoomLimit)
-        resultZoom = state.minZoomLimit;
-    else
-        visZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
+    float minVisualZoom;
+    const auto minZoomLimit = getMinZoomLimit(state, state.target31, minVisualZoom);
 
-    if ((resultZoom == state.maxZoomLimit && visZoom > 1.0f) || (resultZoom == state.minZoomLimit && visZoom < 1.0f))
+    if (resultZoom < minZoomLimit)
+        resultZoom = minZoomLimit;
+    else if (resultZoom > state.maxZoomLimit)
+        resultZoom = state.maxZoomLimit;
+
+    float visZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
+
+    if (resultZoom == minZoomLimit && visZoom < minVisualZoom)
+        surfaceVisualZoom = minVisualZoom;
+    else if (resultZoom == state.maxZoomLimit && visZoom > 1.0f)
         surfaceVisualZoom = 1.0f;
     else
         surfaceVisualZoom = visZoom;
@@ -2682,15 +2701,19 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getFlatZoom(const MapRenderer
     if (resultZoom > surfaceZoomLevel)
         resultZoom = surfaceZoomLevel;
 
-    float visZoom = 1.0f;
-    if (resultZoom > state.maxZoomLimit)
-        resultZoom = state.maxZoomLimit;
-    else if (resultZoom < state.minZoomLimit)
-        resultZoom = state.minZoomLimit;
-    else
-        visZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
+    float minVisualZoom;
+    const auto minZoomLimit = getMinZoomLimit(state, state.target31, minVisualZoom);
 
-    if ((resultZoom == state.maxZoomLimit && visZoom > 1.0f) || (resultZoom == state.minZoomLimit && visZoom < 1.0f))
+    if (resultZoom < minZoomLimit)
+        resultZoom = minZoomLimit;
+    else if (resultZoom > state.maxZoomLimit)
+        resultZoom = state.maxZoomLimit;
+
+    float visZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
+
+    if (resultZoom == minZoomLimit && visZoom < minVisualZoom)
+        flatVisualZoom = minVisualZoom;
+    else if (resultZoom == state.maxZoomLimit && visZoom > 1.0f)
         flatVisualZoom = 1.0f;
     else
         flatVisualZoom = visZoom;
@@ -3310,42 +3333,65 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const PointI& l
     return getLocationHeightInMeters(state, location31);
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::getCorrectedZoomOverGlobe(const MapRendererState& state,
-    const PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, float& extraScale) const
+OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getMinZoomLimit(
+    const MapRendererState& state, const PointI& target31, float& minVisualZoom) const
 {
-        const auto metersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, state.target31, TileSize3D);
-        const auto futureMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, target31, TileSize3D);
-        auto scaleFactor = futureMetersPerUnit / metersPerUnit;
-        scaleFactor *= static_cast<double>(1u << state.zoomLevel) * state.visualZoom * state.extraScale;
+    if (state.flatEarth)
+    {
+        minVisualZoom = 1.0f;
+        return state.minZoomLimit;
+    }
+
+    const auto maxScale = cosh(M_PI);
+    const auto minZoom = static_cast<int>(ceil(log2(maxScale) / 2.0));
+    const auto yPos = static_cast<double>(target31.y - (INT32_MAX / 2 + 1)) / static_cast<double>(1ll + INT32_MAX);
+    const auto scale = MIN_VISUAL_ZOOM_AT_ZERO_LEVEL * maxScale / cosh(2.0 * M_PI * yPos);
+    const auto zoom = log2(scale);
+    const auto base = qFloor(zoom);
+    const auto minZoomLevel = static_cast<int>(base) + (zoom - base < log2(1.5) ? 0 : 1);
+    const auto result = minZoomLevel + qMax(state.minZoomLimit - minZoom, 0);
+    minVisualZoom = static_cast<float>(scale / static_cast<double>(1u << minZoomLevel));
+
+    return static_cast<ZoomLevel>(result);
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL::getCorrectedZoomOverGlobe(const MapRendererState& state,
+    const PointI& target31, ZoomLevel& zoomLevel, float& visualZoom) const
+{
+        const auto intFull = 1ll + INT32_MAX;
+        const auto intHalf = intFull / 2;
+        const auto prevPos = static_cast<double>(state.target31.y - intHalf) / static_cast<double>(intFull);
+        const auto nextPos = static_cast<double>(target31.y - intHalf) / static_cast<double>(intFull);
+        const auto PI2 = M_PI * 2.0;
+        auto scaleFactor = cosh(PI2 * prevPos) / cosh(PI2 * nextPos);
+        scaleFactor *= static_cast<double>(1u << state.zoomLevel) * state.visualZoom;
         const auto minZoom = qCeil(log2(scaleFactor / _maximumVisualZoom));
         const auto maxZoom = qFloor(log2(scaleFactor / _minimumVisualZoom));
         auto resultZoom = qAbs(state.zoomLevel - minZoom) < qAbs(state.zoomLevel - maxZoom) ? minZoom : maxZoom;
 
-        if (resultZoom > state.maxZoomLimit)
+        float minVisualZoom;
+        const auto minZoomLimit = getMinZoomLimit(state, target31, minVisualZoom);
+
+        if (resultZoom < minZoomLimit)
+            resultZoom = minZoomLimit;
+        else if (resultZoom > state.maxZoomLimit)
             resultZoom = state.maxZoomLimit;
-        else if (resultZoom < state.minZoomLimit)
-            resultZoom = state.minZoomLimit;
 
-        const auto visZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
+        float visZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
 
-        if ((resultZoom == state.maxZoomLimit && visZoom > 1.0f)
-            || (resultZoom == state.minZoomLimit && visZoom < 1.0f))
-        {
+        if (resultZoom == minZoomLimit && visZoom < minVisualZoom)
+            visualZoom = minVisualZoom;
+        else if (resultZoom == state.maxZoomLimit && visZoom > 1.0f)
             visualZoom = 1.0f;
-            extraScale = visZoom;
-        }
         else
-        {
             visualZoom = visZoom;
-            extraScale = 1.0f;
-        }
 
         zoomLevel = static_cast<ZoomLevel>(resultZoom);
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState& state,
     const PointI& screenPoint, const PointI& location31, const float height, PointI& target31,
-    ZoomLevel& zoomLevel, float& visualZoom, float& extraScale, double* shiftInPixels /* = nullptr */) const
+    ZoomLevel& zoomLevel, float& visualZoom, double* shiftInPixels /* = nullptr */) const
 {
     InternalState internalState;
     bool ok = updateInternalState(internalState, state, *getConfiguration(), RequiredToUnproject);
@@ -3389,7 +3435,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
             target31 = PointI(0, 0);
             return true;
         }
-        extraScale = 1.0f;
     }
     else
     {
@@ -3430,7 +3475,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
             return true;
         }
         target31 = Utilities::get31FromAngles(PointD(qAtan2(-m[1].x, m[0].x), qAsin(qBound(-1.0, -m[2].y, 1.0))));
-        getCorrectedZoomOverGlobe(state, target31, zoomLevel, visualZoom, extraScale);
+        const auto minPossibleZoomLevel = ceil(log2(cosh(M_PI)) / 2.0);
+        getCorrectedZoomOverGlobe(state, target31, zoomLevel, visualZoom);
     }
 
     return true;
@@ -3438,7 +3484,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState& state,
     const PointI& location31, const float height,
-    PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, float& extraScale, PointI& screenPoint) const
+    PointI& target31, ZoomLevel& zoomLevel, float& visualZoom, PointI& screenPoint) const
 {
     bool res;
     const auto point = screenPoint;
@@ -3447,7 +3493,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
     {
         double shiftInPixels;
         res = getNewTargetAndZoom(
-            state, point, location31, height, target31, zoomLevel, visualZoom, extraScale, &shiftInPixels);
+            state, point, location31, height, target31, zoomLevel, visualZoom, &shiftInPixels);
         if (res && target31.x >= 0)
         {
             const auto v = PointD(screenPoint - state.fixedPixel);
@@ -3455,13 +3501,13 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
             const auto r = PointD(state.fixedPixel) + v * (1.0 - f * f * f * f);
             const auto midPoint = PointI(static_cast<int>(qRound(r.x)), static_cast<int>(qRound(r.y)));
             res = getNewTargetAndZoom(
-                state, midPoint, location31, height, target31, zoomLevel, visualZoom, extraScale);
+                state, midPoint, location31, height, target31, zoomLevel, visualZoom);
             if (res && target31.x >= 0)
                 screenPoint = midPoint;
         }
     }
     else
-        res = getNewTargetAndZoom(state, point, location31, height, target31, zoomLevel, visualZoom, extraScale);
+        res = getNewTargetAndZoom(state, point, location31, height, target31, zoomLevel, visualZoom);
 
     return res;
 }
@@ -3829,7 +3875,7 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getPixelsToMetersScaleFactor() const
     {
         const auto state = getState();
         const auto tileSizeOnScreenInPixels = configuration->referenceTileSizeOnScreenInPixels
-            * state.visualZoom * (1.0f + state.visualZoomShift) * state.extraScale;
+            * state.visualZoom * (1.0f + state.visualZoomShift);
         PointF targetInTileOffsetN;
         const auto targetTileId = Utilities::getTileId(state.target31, state.zoomLevel, &targetInTileOffsetN);
         const auto targetY = static_cast<double>(targetTileId.y) + targetInTileOffsetN.y;

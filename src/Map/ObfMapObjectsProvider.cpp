@@ -55,7 +55,7 @@ bool OsmAnd::ObfMapObjectsProvider::obtainTiledObfMapObjects(
 
 OsmAnd::ZoomLevel OsmAnd::ObfMapObjectsProvider::getMinZoom() const
 {
-    return MinZoomLevel;//TODO: invalid
+    return ZoomLevel2;
 }
 
 OsmAnd::ZoomLevel OsmAnd::ObfMapObjectsProvider::getMaxZoom() const

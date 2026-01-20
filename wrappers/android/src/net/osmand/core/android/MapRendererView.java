@@ -1377,13 +1377,13 @@ public abstract class MapRendererView extends FrameLayout {
         _mapRenderer.setDebugSettings(debugSettings);
     }
 
-    public final ZoomLevel getMinZoomLevel() {
+    public final float getMinZoomLevel() {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.getMinZoomLevel();
     }
 
-    public final ZoomLevel getMaxZoomLevel() {
+    public final float getMaxZoomLevel() {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.getMaxZoomLevel();
