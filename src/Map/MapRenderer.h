@@ -181,8 +181,6 @@ namespace OsmAnd
         virtual AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const = 0;
         virtual double getPixelsToMetersScaleFactor(
             const MapRendererState& state, const MapRendererInternalState& internalState) const = 0;
-        virtual ZoomLevel getMinZoomLimit(
-            const MapRendererState& state, const PointI& target31, float& minVisualZoom) const = 0;
         virtual bool getNewTargetAndZoom(const MapRendererState& state,
             const PointI& screenPoint, const PointI& location31, const float height, PointI& target31,
             ZoomLevel& zoomLevel, float& visualZoom, double* shiftInPixels = nullptr) const = 0;
@@ -339,6 +337,8 @@ namespace OsmAnd
         // General:
         virtual bool isRenderingInitialized() const Q_DECL_OVERRIDE;
         virtual float getLocationHeightInMeters(const MapRendererState& state, const PointI& location31) const = 0;
+        virtual ZoomLevel getMinZoomLimit(
+            const MapRendererState& state, const PointI& target31, float& minVisualZoom) const = 0;
 
         // Configuration-related:
         virtual std::shared_ptr<MapRendererConfiguration> getConfiguration() const Q_DECL_OVERRIDE;
@@ -366,8 +366,7 @@ namespace OsmAnd
         virtual MapRendererState getState() const Q_DECL_OVERRIDE;
         virtual MapState getMapState() const Q_DECL_OVERRIDE;
         virtual MapState getFutureState() const Q_DECL_OVERRIDE;
-        virtual void getGridConfiguration(GridConfiguration* gridConfiguration,
-            ZoomLevel* zoomLevel) const Q_DECL_OVERRIDE;
+        virtual void getGridConfiguration(GridConfiguration* gridConfiguration) const Q_DECL_OVERRIDE;
         virtual ZoomLevel getVisibleArea(AreaI* visibleBBoxShifted, PointI* target31) const Q_DECL_OVERRIDE;
         virtual bool isFrameInvalidated() const Q_DECL_OVERRIDE;
         virtual void forcedFrameInvalidate() Q_DECL_OVERRIDE;

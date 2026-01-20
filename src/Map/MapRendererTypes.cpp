@@ -567,7 +567,7 @@ OsmAnd::PointD OsmAnd::GridConfiguration::getCurrentGaps(
     {
         auto difFactor =
             primaryGranularity / secondaryGranularity;
-        if (primaryGranularity == 0.0 || primaryProjection != primaryProjection
+        if (primaryGranularity == 0.0 || primaryProjection != secondaryProjection
             || difFactor - std::floor(difFactor) > 0.0f)
         {
             refLons.y = getSecondaryGridReference(centerTile31);

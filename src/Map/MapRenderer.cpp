@@ -1422,18 +1422,21 @@ OsmAnd::MapState OsmAnd::MapRenderer::getFutureState() const
     return _requestedState.getMapState();
 }
 
-void OsmAnd::MapRenderer::getGridConfiguration(GridConfiguration* gridConfiguration, ZoomLevel* zoomLevel) const
+void OsmAnd::MapRenderer::getGridConfiguration(GridConfiguration* gridConfiguration) const
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    return currentState.getGridConfiguration(gridConfiguration, zoomLevel);
+    currentState.getGridConfiguration(gridConfiguration);
 }
 
 OsmAnd::ZoomLevel OsmAnd::MapRenderer::getVisibleArea(AreaI* visibleBBoxShifted, PointI* target31) const
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    return currentState.getVisibleArea(visibleBBoxShifted, target31);
+    float minVisualZoom;
+    const auto result = qMax(currentState.getVisibleArea(visibleBBoxShifted, target31),
+        getMinZoomLimit(currentState, PointI(0, INT32_MAX / 2 + 1), minVisualZoom));
+    return result;
 }
 
 bool OsmAnd::MapRenderer::isFrameInvalidated() const

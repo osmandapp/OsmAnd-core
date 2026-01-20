@@ -185,7 +185,7 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
         _primaryZone = zone;
         _secondaryZone = zone;
     
-        renderer->getGridConfiguration(&_gridConfiguration, &mapZoomLevel);
+        renderer->getGridConfiguration(&_gridConfiguration);
 
         const bool withPrimary = mapZoomLevel >= _gridConfiguration.gridParameters[0].minZoom
             && mapZoomLevel >= _gridConfiguration.primaryMinZoomLevel

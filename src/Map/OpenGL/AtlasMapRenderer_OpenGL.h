@@ -145,8 +145,6 @@ namespace OsmAnd
         AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const override;
         double getPixelsToMetersScaleFactor(
             const MapRendererState& state, const MapRendererInternalState& internalState) const override;
-        ZoomLevel getMinZoomLimit(
-            const MapRendererState& state, const PointI& target31, float& minVisualZoom) const override;
         bool getNewTargetAndZoom(const MapRendererState& state, const PointI& screenPoint, const PointI& location31,
             const float height, PointI& target31, ZoomLevel& zoomLevel, float& visualZoom,
             double* shiftInPixels = nullptr) const override;
@@ -207,6 +205,8 @@ namespace OsmAnd
         float getHeightOfLocation(const PointI& location31) const override;
         float getMapTargetDistance(const PointI& location31, bool checkOffScreen = false) const override;
 
+        ZoomLevel getMinZoomLimit(
+            const MapRendererState& state, const PointI& target31, float& minVisualZoom) const override;
         void getCorrectedZoomOverGlobe(const MapRendererState& state, const PointI& target31,
             ZoomLevel& zoomLevel, float& visualZoom) const override;
 

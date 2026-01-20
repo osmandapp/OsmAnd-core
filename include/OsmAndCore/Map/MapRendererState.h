@@ -130,7 +130,7 @@ namespace OsmAnd
         ~MapRendererState();
 
         MapState getMapState() const; 
-        void getGridConfiguration(GridConfiguration* gridConfiguration, ZoomLevel* zoomLevel) const;
+        void getGridConfiguration(GridConfiguration* gridConfiguration) const;
         ZoomLevel getVisibleArea(AreaI* visibleBBoxShifted, PointI* target31) const;
     
         QMap<int, std::shared_ptr<IMapLayerProvider> > mapLayersProviders;

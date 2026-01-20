@@ -2323,8 +2323,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
             currentState.gridConfiguration.gridParameters[1].factorY3,
             currentState.gridConfiguration.gridParameters[1].offsetY);
         GL_CHECK_RESULT;
+        float minVisualZoom;
+        const auto minZoomLevel = renderer->getMinZoomLimit(currentState, PointI(0, INT32_MAX / 2 + 1), minVisualZoom);
         auto currentGaps = currentState.gridConfiguration.getCurrentGaps(
-            currentState.target31, currentState.surfaceZoomLevel);
+            currentState.target31, qMax(currentState.surfaceZoomLevel, minZoomLevel));
         auto density = renderer->getSetupOptions().displayDensityFactor;
         glUniform4f(program.fs.param.gridParameters,
             static_cast<float>(currentGaps.x),
