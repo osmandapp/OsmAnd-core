@@ -3443,7 +3443,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
         if (height != 0.0f)
             point = glm::normalize(point);
 
-        const auto mGlobeRotation = Utilities::getGlobalRotationMatrix(Utilities::getAnglesFrom31(state.target31));
+        const auto angles = Utilities::getAnglesFrom31(state.target31);
+        const auto targetV = Utilities::getGlobeRadialVector(angles);
+        const auto mGlobeRotation = Utilities::getGlobalRotationMatrix(angles);
         const auto mGlobeRotationInv = glm::transpose(mGlobeRotation);
 
         const auto currentV = mGlobeRotationInv * point;
@@ -3469,7 +3471,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
         const auto d = glm::normalize(glm::cross(n, neededV));
         const auto m = mGlobeRotation * glm::dmat3(glm::normalize(glm::cross(currentN, currentV)), currentN, currentV)
             * glm::dmat3(d.x, n.x, neededV.x, d.y, n.y, neededV.y, d.z, n.z, neededV.z);
-        if ((m[2].y - mGlobeRotation[2].y) * (neededV.z - currentV.z) < 0.0)
+        const auto sameHemisphere = glm::dot(targetV.xy(), currentV.xy()) > 0.0;
+        const auto zMult = (m[2].y - mGlobeRotation[2].y) * (neededV.z - currentV.z);
+        if (sameHemisphere && zMult < 0.0 || !sameHemisphere && zMult > 0.0)
         {
             target31 = PointI(-1, -1);
             return true;
