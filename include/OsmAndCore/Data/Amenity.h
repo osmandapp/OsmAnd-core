@@ -75,6 +75,7 @@ namespace OsmAnd
 
         QString getName(const QString lang, bool transliterate) const;
         QString getCityFromTagGroups(const QString & lang) const;
+        static bool isNameLangTag(const QString & tag);
     };
 }
 
