@@ -504,7 +504,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     const auto highDetail = state.detailedDistance * internalState->distanceFromCameraToTarget /
         internalState->scaleToRetainProjectedSize * static_cast<float>(fovTangent)
         + static_cast<float>(_detailDistanceFactor / 3.0);
-    const auto zFactor = state.zoomLevel < ZoomLevel4 && !state.flatEarth ? 0.0f : 1.0f;
+    const auto zFactor = state.flatEarth ? 1.0f : qMin(static_cast<float>(state.zoomLevel) / 8.0f, 1.0f);
     const auto zLowerDetail = highDetail < visibleDistance
         ? qMin(internalState->zFar, internalState->distanceFromCameraToTarget + static_cast<float>(qMax(0.01,
             static_cast<double>(highDetail) * elevationCosine))) * zFactor + (1.0f - zFactor) * internalState->zFar
@@ -2623,15 +2623,14 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getSurfaceZoom(
     double baseUnits = 0.0;
     float sinAngle = 0.0f;
     const auto distanceFactor = getDistanceFactor(state, referenceTileSizeOnScreenInPixels, baseUnits, sinAngle);
-    if (sinAngle == 0.0f)
+    if (sinAngle == 0.0f || state.fixedHeight == 0.0f)
     {
         surfaceVisualZoom = state.visualZoom;
         return state.zoomLevel;
     }
 
     // Calculate zoom to the surface
-    const auto elevation = static_cast<double>(state.fixedHeight)
-        / (state.fixedHeight == 0.0f ? 1.0 : static_cast<double>(1u << state.fixedZoomLevel));
+    const auto elevation = static_cast<double>(state.fixedHeight) / static_cast<double>(1u << state.fixedZoomLevel);
     const auto distanceToSurface = baseUnits
         / (state.visualZoom * static_cast<double>(1u << state.zoomLevel) * distanceFactor) - elevation / sinAngle;
     if (distanceToSurface <= 0.0)
@@ -2685,7 +2684,7 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getFlatZoom(const MapRenderer
     double baseUnits = 0.0;
     float sinAngle = 0.0f;
     const auto distanceFactor = getDistanceFactor(state, referenceTileSizeOnScreenInPixels, baseUnits, sinAngle);
-    if (sinAngle == 0.0f)
+    if (sinAngle == 0.0f || pointElevation == 0.0)
     {
         flatVisualZoom = surfaceVisualZoom;
         return surfaceZoomLevel;
