@@ -208,6 +208,27 @@ QHash< QString, QHash<QString, QList< std::shared_ptr<const OsmAnd::Amenity> > >
     return result;
 }
 
+bool OsmAnd::Amenity::isNameLangTag(const QString &tag)
+{
+    const QString prefix = "name:";
+
+    if (tag.startsWith(prefix))
+    {
+        // languages code <= 3
+        if (tag.length() <= prefix.length() + 3)
+        {
+            return true;
+        }
+
+        int l = tag.indexOf("-");
+        if (l != -1 && l <= prefix.length() + 3)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 OsmAnd::Amenity::DecodedCategory::DecodedCategory()
 {
 }

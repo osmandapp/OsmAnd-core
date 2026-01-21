@@ -1020,9 +1020,9 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                         nativeName = entry.value().toString();
                         itStringOrDataValue.remove();
                     }
-                    else if (tag.startsWith(QLatin1String("name:")))
+                    else if (OsmAnd::Amenity::isNameLangTag(tag))
                     {
-                        localizedNames.insert(tag.mid(5), entry.value().toString());
+                        localizedNames.insert(tag, entry.value().toString());
                         itStringOrDataValue.remove();
                     }
                     else if (tag == QLatin1String("brand"))
