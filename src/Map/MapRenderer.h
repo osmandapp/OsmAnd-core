@@ -443,10 +443,13 @@ namespace OsmAnd
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFlatZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFlatVisualZoom(const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual float getZoom() Q_DECL_OVERRIDE;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setZoom(
             const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual ZoomLevel getZoomLevel() Q_DECL_OVERRIDE;
         virtual bool setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual float getVisualZoom() Q_DECL_OVERRIDE;
         virtual bool setVisualZoom(const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setVisualZoomShift(const float visualZoomShift, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool restoreFlatZoom(const float heightInMeters, bool forcedUpdate = false) Q_DECL_OVERRIDE;

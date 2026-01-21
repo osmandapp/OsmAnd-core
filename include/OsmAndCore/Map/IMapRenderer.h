@@ -180,9 +180,12 @@ namespace OsmAnd
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setFlatZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
         virtual bool setFlatVisualZoom(const float visualZoom, bool forcedUpdate = false) = 0;
+        virtual float getZoom() = 0;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) = 0;
         virtual bool setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) = 0;
+        virtual ZoomLevel getZoomLevel() = 0;
         virtual bool setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
+        virtual float getVisualZoom() = 0;
         virtual bool setVisualZoom(const float visualZoom, bool forcedUpdate = false) = 0;
         virtual bool setVisualZoomShift(const float visualZoomShift, bool forcedUpdate = false) = 0;
         virtual bool restoreFlatZoom(const float heightInMeters, bool forcedUpdate = false) = 0;

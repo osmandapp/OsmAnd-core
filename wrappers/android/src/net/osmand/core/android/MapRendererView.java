@@ -1171,14 +1171,6 @@ public abstract class MapRendererView extends FrameLayout {
         return getFlatZoomLevel().ordinal() + zoomFloatPart;
     }
 
-    public final float getZoom() {
-        NativeCore.checkIfLoaded();
-
-        return _mapRenderer.getState().getSurfaceZoomLevel().ordinal() + (_mapRenderer.getState().getSurfaceVisualZoom() >= 1.0f
-            ? _mapRenderer.getState().getSurfaceVisualZoom() - 1.0f
-            : (_mapRenderer.getState().getSurfaceVisualZoom() - 1.0f) * 2.0f);
-    }
-
     public final boolean setFlatZoom(float zoom) {
         NativeCore.checkIfLoaded();
 
@@ -1203,6 +1195,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setFlatZoom(zoomLevel, visualZoom);
     }
 
+    public final float getZoom() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getZoom();
+    }
+
     public final boolean setZoom(ZoomLevel zoomLevel, float visualZoom) {
         NativeCore.checkIfLoaded();
 
@@ -1212,7 +1210,7 @@ public abstract class MapRendererView extends FrameLayout {
     public final ZoomLevel getZoomLevel() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getState().getSurfaceZoomLevel();
+        return _mapRenderer.getZoomLevel();
     }
 
     public final ZoomLevel getFlatZoomLevel() {
@@ -1236,7 +1234,7 @@ public abstract class MapRendererView extends FrameLayout {
     public final float getVisualZoom() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getState().getSurfaceVisualZoom();
+        return _mapRenderer.getVisualZoom();
     }
 
     public final float getFlatVisualZoom() {

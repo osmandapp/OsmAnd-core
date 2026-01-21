@@ -2452,6 +2452,13 @@ bool OsmAnd::MapRenderer::setMapTarget(MapRendererState& state,
             notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
     }
     auto result = setMapTargetOnly(state, state.fixedLocation31, 0.0f, forcedUpdate, disableUpdate);
+    if (result && !state.flatEarth)
+    {
+        state.surfaceZoomLevel = getSurfaceZoom(state, state.surfaceVisualZoom);
+        state.surfaceZoomLevelToBe = state.surfaceZoomLevel;
+        state.surfaceVisualZoomToBe = state.surfaceVisualZoom;
+        state.isChanged = true;
+    }
     if (!ignoreSecondaryTarget && (result || update))
         setSecondaryTarget(state, forcedUpdate, disableUpdate);
 
@@ -3138,6 +3145,16 @@ bool OsmAnd::MapRenderer::setFlatVisualZoom(const float visualZoom, bool forcedU
     return true;
 }
 
+float OsmAnd::MapRenderer::getZoom()
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    auto result = static_cast<float>(_requestedState.surfaceZoomLevel)
+        + Utilities::visualZoomToFraction(_requestedState.surfaceVisualZoom);
+
+    return result;
+}
+
 bool OsmAnd::MapRenderer::setZoom(const float zoom, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
@@ -3150,6 +3167,13 @@ bool OsmAnd::MapRenderer::setZoom(const ZoomLevel zoomLevel, const float visualZ
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     return setZoomToState(_requestedState, zoomLevel, visualZoom, forcedUpdate);
+}
+
+OsmAnd::ZoomLevel OsmAnd::MapRenderer::getZoomLevel()
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    return _requestedState.surfaceZoomLevel;
 }
 
 bool OsmAnd::MapRenderer::setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate /*= false*/)
@@ -3182,6 +3206,13 @@ bool OsmAnd::MapRenderer::setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpd
     setMapTarget(_requestedState, forcedUpdate);
 
     return true;
+}
+
+float OsmAnd::MapRenderer::getVisualZoom()
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    return _requestedState.surfaceVisualZoom;
 }
 
 bool OsmAnd::MapRenderer::setVisualZoom(const float visualZoom, bool forcedUpdate /*= false*/)
