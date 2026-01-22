@@ -1144,6 +1144,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         topLeftEx.x += 1ll + INT32_MAX;
         bottomRightEx.x += 1ll + INT32_MAX;
         double distanceFromTarget = 0.0;
+        auto topInWorld = -std::numeric_limits<float>::infinity();
+        bool takeTop = false;
         bool atLeastOneVisibleFound = false;
         bool atLeastOneFlatVisibleFound = false;
         bool shouldRepeat = true;
@@ -1170,12 +1172,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     float minHeightInWorld = 0.0f;
                     float maxHeightInWorld = 0.0f;
                     const auto realTileIdN = state.flatEarth ? Utilities::normalizeTileId(TileId::fromXY(
-                        ((tileIdN.x << rShift) - tileDelta.x) >> rShift, ((tileIdN.y << rShift) - tileDelta.y) >> rShift),
-                            realZoomLevel) : tileIdN;
+                        ((tileIdN.x << rShift) - tileDelta.x) >> rShift,
+                        ((tileIdN.y << rShift) - tileDelta.y) >> rShift), realZoomLevel) : tileIdN;
                     getHeightLimits(state, realTileIdN, internalState->metersPerUnit,
                         realZoomLevel, minHeightInWorld, maxHeightInWorld);
+                    topInWorld = takeTop ? qMax(maxHeightInWorld, topInWorld) : maxHeightInWorld;
                     const auto minHeight = static_cast<double>(minHeightInWorld) / globeRadius;
-                    const auto maxHeight = static_cast<double>(maxHeightInWorld) / globeRadius;
+                    const auto maxHeight = static_cast<double>(topInWorld) / globeRadius;
                     const auto minD = minHeight + 1.0;
                     const auto maxD = maxHeight + 1.0;
                     PointI tile31(tileIdN.x << zoomShift, tileIdN.y << zoomShift);
@@ -1666,7 +1669,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                             tilesN[currentZoom].insert(tileIdN);
 
                             if (lookForStrictlyVisible)
+                            {
+                                takeTop = true;
                                 lookForStrictlyVisible = false;
+                            }
                         }
                         else
                             continue;
