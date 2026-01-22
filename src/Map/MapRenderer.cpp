@@ -2570,7 +2570,8 @@ bool OsmAnd::MapRenderer::setZoomToState(MapRendererState& state, const ZoomLeve
         return true;
 
     state.surfaceZoomLevelToBe = zoomLevel;
-    state.surfaceVisualZoomToBe = zoomLevel == minZoomLevelLimit ? qMax(visualZoom, minVisualZoom) : visualZoom;
+    state.surfaceVisualZoomToBe =
+        zoomLevel == minZoomLevelLimit ? qMax(visualZoom, minVisualZoom) : clampVisualZoom(visualZoom);
 
     state.surfaceZoomLevel = zoomLevel;
     state.surfaceVisualZoom = state.surfaceVisualZoomToBe;
@@ -2614,7 +2615,7 @@ bool OsmAnd::MapRenderer::setFlatZoomToState(MapRendererState& state, const Zoom
         return false;
 
     state.zoomLevel = zoomLevel;
-    state.visualZoom = zoomLevel == minZoomLevelLimit ? qMax(visualZoom, minVisualZoom) : visualZoom;
+    state.visualZoom = zoomLevel == minZoomLevelLimit ? qMax(visualZoom, minVisualZoom) : clampVisualZoom(visualZoom);
     state.isChanged = true;
 
     setMapTargetOnly(state, state.fixedLocation31, 0.0f, forcedUpdate, disableUpdate);
@@ -3236,7 +3237,7 @@ bool OsmAnd::MapRenderer::setVisualZoom(const float visualZoom, bool forcedUpdat
     else if (visualZoom > 1.0f && _requestedState.surfaceZoomLevel == _requestedState.maxZoomLimit)
         _requestedState.surfaceVisualZoom = 1.0f;
     else
-        _requestedState.surfaceVisualZoom = visualZoom;
+        _requestedState.surfaceVisualZoom = clampVisualZoom(visualZoom);
     _requestedState.surfaceVisualZoomToBe = _requestedState.surfaceVisualZoom;
     _requestedState.isChanged = true;
 

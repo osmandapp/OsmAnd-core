@@ -207,6 +207,7 @@ namespace OsmAnd
 
         ZoomLevel getMinZoomLimit(
             const MapRendererState& state, const PointI& target31, float& minVisualZoom) const override;
+        float clampVisualZoom(const float visualZoom) const override;
         void getCorrectedZoomOverGlobe(const MapRendererState& state, const PointI& target31,
             ZoomLevel& zoomLevel, float& visualZoom) const override;
 

@@ -339,6 +339,7 @@ namespace OsmAnd
         virtual float getLocationHeightInMeters(const MapRendererState& state, const PointI& location31) const = 0;
         virtual ZoomLevel getMinZoomLimit(
             const MapRendererState& state, const PointI& target31, float& minVisualZoom) const = 0;
+        virtual float clampVisualZoom(const float visualZoom) const = 0;
 
         // Configuration-related:
         virtual std::shared_ptr<MapRendererConfiguration> getConfiguration() const Q_DECL_OVERRIDE;

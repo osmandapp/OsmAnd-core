@@ -504,11 +504,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     const auto highDetail = state.detailedDistance * internalState->distanceFromCameraToTarget /
         internalState->scaleToRetainProjectedSize * static_cast<float>(fovTangent)
         + static_cast<float>(_detailDistanceFactor / 3.0);
-    const auto zFactor = state.flatEarth ? 1.0f : qMin(static_cast<float>(state.zoomLevel) / 8.0f, 1.0f);
     const auto zLowerDetail = highDetail < visibleDistance
-        ? qMin(internalState->zFar, internalState->distanceFromCameraToTarget + static_cast<float>(qMax(0.01,
-            static_cast<double>(highDetail) * elevationCosine))) * zFactor + (1.0f - zFactor) * internalState->zFar
-        : internalState->zFar;
+        ? qMin(internalState->zFar, internalState->distanceFromCameraToTarget + static_cast<float>(qMax(
+            state.flatEarth ? 0.01 : static_cast<float>(ZoomLevel31 - state.zoomLevel) * TileSize3D,
+            static_cast<double>(highDetail) * elevationCosine))) : internalState->zFar;
 
     // Recalculate perspective projection
     internalState->mPerspectiveProjection = glm::frustum(
@@ -3352,6 +3351,11 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getMinZoomLimit(
     minVisualZoom = static_cast<float>(scale / static_cast<double>(1u << minZoomLevel));
 
     return static_cast<ZoomLevel>(result);
+}
+
+float OsmAnd::AtlasMapRenderer_OpenGL::clampVisualZoom(const float visualZoom) const
+{
+    return qBound(_minimumVisualZoom, visualZoom, _maximumVisualZoom);
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::getCorrectedZoomOverGlobe(const MapRendererState& state,
