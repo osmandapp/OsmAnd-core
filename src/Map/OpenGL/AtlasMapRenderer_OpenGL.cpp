@@ -504,10 +504,28 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     const auto highDetail = state.detailedDistance * internalState->distanceFromCameraToTarget /
         internalState->scaleToRetainProjectedSize * static_cast<float>(fovTangent)
         + static_cast<float>(_detailDistanceFactor / 3.0);
+    double minAddToLower = 0.01;
+    if (!state.flatEarth)
+    {
+        const auto d = internalState->distanceFromCameraToTarget + radiusInWorld;
+        const auto ds = d * d;
+        const auto f = fovTangent * fovTangent + 1.0;
+        const auto s = ds - f * (ds - radiusInWorld * radiusInWorld);
+        if (s < 0.0)
+            minAddToLower = radiusInWorld;
+        else
+        {
+            const auto df = d / f;
+            const auto pf = qSqrt(s) / f;
+            minAddToLower = df - pf;
+            if (minAddToLower < internalState->distanceFromCameraToTarget)
+                minAddToLower = df + pf;
+            minAddToLower -= internalState->distanceFromCameraToTarget;
+        }
+    }
     const auto zLowerDetail = highDetail < visibleDistance
         ? qMin(internalState->zFar, internalState->distanceFromCameraToTarget + static_cast<float>(qMax(
-            state.flatEarth ? 0.01 : static_cast<float>(ZoomLevel31 - state.zoomLevel) * TileSize3D,
-            static_cast<double>(highDetail) * elevationCosine))) : internalState->zFar;
+            minAddToLower, static_cast<double>(highDetail) * elevationCosine))) : internalState->zFar;
 
     // Recalculate perspective projection
     internalState->mPerspectiveProjection = glm::frustum(
