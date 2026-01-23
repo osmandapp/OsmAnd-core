@@ -35,6 +35,11 @@ OsmAnd::PointI OsmAnd::MapTiledCollectionProvider::getPinIconOffset() const
     return PointI(0, 0);
 }
 
+bool OsmAnd::MapTiledCollectionProvider::waitForLoading() const
+{
+    return true;
+}
+
 bool OsmAnd::MapTiledCollectionProvider::supportsNaturalObtainData() const
 {
     return true;

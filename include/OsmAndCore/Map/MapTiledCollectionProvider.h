@@ -88,6 +88,8 @@ namespace OsmAnd
             virtual void obtainDataAsync(const IMapDataProvider::Request& request,
                 const IMapDataProvider::ObtainDataAsyncCallback callback,
                 const bool collectMetric = false) Q_DECL_OVERRIDE;
+
+            virtual bool waitForLoading() const Q_DECL_OVERRIDE;
     };
     
     SWIG_EMIT_DIRECTOR_BEGIN(MapTiledCollectionProvider);
@@ -147,6 +149,9 @@ namespace OsmAnd
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             OsmAnd::PointI,
             getPinIconOffset);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            bool,
+            waitForLoading);
     SWIG_EMIT_DIRECTOR_END(MapTiledCollectionProvider);
 }
 

@@ -2490,7 +2490,12 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                             shouldRedrawSymbols = true;
                         }
                         else
-                            isLoadingSymbols = isLoading;
+                        {
+                            if (symbolsProvider && !symbolsProvider->waitForLoading())
+                                isLoadingSymbols = false;
+                            else
+                                isLoadingSymbols = isLoading;
+                        }
                     }
                 }
                 const int levelCount =

@@ -65,3 +65,8 @@ std::shared_ptr<OsmAnd::IMapDataProvider::Request> OsmAnd::IMapTiledSymbolsProvi
 {
     return std::shared_ptr<IMapDataProvider::Request>(new Request(*this));
 }
+
+bool OsmAnd::IMapTiledSymbolsProvider::waitForLoading() const
+{
+    return true;
+}
