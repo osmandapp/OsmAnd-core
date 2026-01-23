@@ -79,6 +79,8 @@ namespace OsmAnd
             const Request& request,
             std::shared_ptr<Data>& outTiledSymbols,
             std::shared_ptr<Metric>* const pOutMetric = nullptr);
+
+        virtual bool waitForLoading() const;
     };
 }
 
