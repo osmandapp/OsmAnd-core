@@ -822,9 +822,9 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
     GL_CHECK_RESULT;
     glUniform3f(*_program.vs.param.lightDirection, lightDir.x, lightDir.y, lightDir.z);
     GL_CHECK_RESULT;
-    glUniform1f(*_program.vs.param.ambient, 0.4f);
+    glUniform1f(*_program.vs.param.ambient, 0.2f);
     GL_CHECK_RESULT;
-    glUniform1f(*_program.vs.param.contrast, 1.0f);
+    glUniform1f(*_program.vs.param.contrast, 1.5f);
     GL_CHECK_RESULT;
     glUniform1f(*_program.vs.param.alpha, buildingAlpha);
     GL_CHECK_RESULT;
