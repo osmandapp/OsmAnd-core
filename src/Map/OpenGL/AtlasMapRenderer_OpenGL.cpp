@@ -51,8 +51,8 @@ const double OsmAnd::AtlasMapRenderer_OpenGL::_radius = 6371e3;
 const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumHeightFromSeaLevelInMeters = 10000.0;
 // Set maximum depth of terrain to render
 const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumDepthFromSeaLevelInMeters = 12000.0;
-// Set minimal distance factor for tiles of each detail level
-const double OsmAnd::AtlasMapRenderer_OpenGL::_detailDistanceFactor = 3.0 * TileSize3D * M_SQRT2;
+// Set minimal distance factor for tiles of each detail level / 3
+const double OsmAnd::AtlasMapRenderer_OpenGL::_detailDistanceFactor = TileSize3D * M_SQRT2;
 // Set invalid value for elevation of terrain
 const float OsmAnd::AtlasMapRenderer_OpenGL::_invalidElevationValue = -20000.0f;
 // Set minimum visual zoom
@@ -69,6 +69,8 @@ OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gp
         gpuAPI_,
         std::unique_ptr<const MapRendererConfiguration>(new AtlasMapRendererConfiguration()),
         std::unique_ptr<const MapRendererDebugSettings>(new MapRendererDebugSettings()))
+    , _tileZoomLevel(OsmAnd::ZoomLevel2)
+    , _tileZoomLevelOffset(0)
 {
 }
 
@@ -475,7 +477,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->factorOfDistance = static_cast<float>(factorOfDistance);
     const auto inglobeAngle = qAcos(qBound(0.0, factorOfDistance, 1.0));
     const auto cameraAngle = M_PI_2 - inglobeAngle;
-    const auto targetAngle = qAcos(qBound(0.0, glm::dot(vectorFromTargetToCameraN, vectorToCameraN), 1.0));
+    const auto targetCosine = glm::dot(vectorFromTargetToCameraN, vectorToCameraN);
+    const auto targetAngle = qAcos(qBound(0.0, targetCosine, 1.0));
     const auto distanceFromCameraToHorizon = distanceToCamera * qCos(cameraAngle);
     const auto groundDistanceToHorizon = inglobeAngle * radiusInWorld;
     internalState->tilesToHorizon =
@@ -503,29 +506,44 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         static_cast<float>(qMin(groundDistanceFromTargetToSkyplane, additionalDistanceToZFar / elevationCosine)));
     const auto highDetail = state.detailedDistance * internalState->distanceFromCameraToTarget /
         internalState->scaleToRetainProjectedSize * static_cast<float>(fovTangent)
-        + static_cast<float>(_detailDistanceFactor / 3.0);
-    double minAddToLower = 0.01;
+        + static_cast<float>(_detailDistanceFactor);
+    auto zLowerDetail = highDetail < visibleDistance
+        ? qMin(internalState->zFar, internalState->distanceFromCameraToTarget + static_cast<float>(qMax(
+            0.01, static_cast<double>(highDetail) * elevationCosine))) : internalState->zFar;
     if (!state.flatEarth)
     {
-        const auto d = internalState->distanceFromCameraToTarget + radiusInWorld;
-        const auto ds = d * d;
-        const auto f = fovTangent * fovTangent + 1.0;
-        const auto s = ds - f * (ds - radiusInWorld * radiusInWorld);
-        if (s < 0.0)
-            minAddToLower = radiusInWorld;
-        else
+        // Calculate radial distance from camera to the limit of visible tiles
+        auto f = fovTangent * qMax(internalState->aspectRatio, 1.0f) * 1.5;
+        f = f * f + 1.0;
+        const auto ds = distanceToCamera * distanceToCamera;
+        const auto k = ds - f * (ds - radiusInWorld * radiusInWorld);
+        double distanceToLowerDetail = distanceToCamera;
+        if (k >= 0.0)
         {
-            const auto df = d / f;
-            const auto pf = qSqrt(s) / f;
-            minAddToLower = df - pf;
-            if (minAddToLower < internalState->distanceFromCameraToTarget)
-                minAddToLower = df + pf;
-            minAddToLower -= internalState->distanceFromCameraToTarget;
+            const auto df = distanceToCamera / f;
+            const auto pf = qSqrt(k) / f;
+            distanceToLowerDetail = df > pf ? df - pf : df + pf;
         }
+
+        // Calculate radial distance from camera to the nearest pole
+        const auto c = glm::normalize(internalState->cameraRotatedPosition);
+        const auto poleProx = qMax(glm::dot(glm::dvec3(0.0, 0.0, -1.0), c), glm::dot(glm::dvec3(0.0, 0.0, 1.0), c));
+        const auto poleDistance = distanceToCamera - poleProx * radiusInWorld;
+        auto poleDim = fabs(angles.y * 2.0 / M_PI); //poleProx > 0.0 ? qMax(1.0 - poleProx, 0.0) : 0.0;
+        auto latFactor = 1.0 - qMax(0.95 - poleDim, 0.0) / 0.95;
+        latFactor = qPow(latFactor, 5.0) / static_cast<double>(1 << qMax(state.zoomLevel - ZoomLevel2, 0));
+        poleDim *= poleDim;
+
+        // Advance detail distance from camera to zFar near the poles (for low zoom levels)
+        distanceToLowerDetail =
+            qMin(distanceToLowerDetail, poleDistance * (1.0 - poleDim) + poleDim * distanceToLowerDetail);
+
+        const auto zLowerDetailAdvanced = qMin(static_cast<float>(qMax(qMax(
+            2.0 * _detailDistanceFactor * elevationCosine + internalState->distanceFromCameraToTarget,
+            distanceToLowerDetail / targetCosine), internalState->zFar * latFactor)), internalState->zFar);
+        if (zLowerDetailAdvanced > zLowerDetail || highDetail >= visibleDistance)
+            zLowerDetail = zLowerDetailAdvanced;
     }
-    const auto zLowerDetail = highDetail < visibleDistance
-        ? qMin(internalState->zFar, internalState->distanceFromCameraToTarget + static_cast<float>(qMax(
-            minAddToLower, static_cast<double>(highDetail) * elevationCosine))) : internalState->zFar;
 
     // Recalculate perspective projection
     internalState->mPerspectiveProjection = glm::frustum(
@@ -1071,7 +1089,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     // Compute visible tileset
     const auto zLower = static_cast<double>(lowerDetail) / globeRadius;
     const auto zFar = static_cast<double>(internalState->zFar) / globeRadius;
-    const auto detailThickness = _detailDistanceFactor / globeRadius;
+    const auto detailThickness = 3.0 * _detailDistanceFactor / globeRadius;
     const auto extraDetailDistance = static_cast<float>(
         static_cast<double>(internalState->distanceFromCameraToTarget) / globeRadius / 2.0);
 
@@ -1623,9 +1641,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         const bool oddX = tileIdN.x & 1 > 0;
                         const bool oddY = tileIdN.y & 1 > 0;
                         const auto centralPoint = oddY ? (oddX ? normalTL : normalTR) : (oddX ? normalBL : normalBR);
-                        const auto toCenter = centralPoint - camPos;
-                        const auto distance =
-                            glm::dot(toCenter, camDir) * (1.0 - tiltFactor) + tiltFactor * glm::length(toCenter);
+                        const auto distance = getDistanceToTile(centralPoint, camPos, camDir, tiltFactor);
                         if (currentZoom > MinZoomLevel && zLower != zFar
                             && distance > zLower + detailDistanceFactor(zShift) * detailThickness)
                         {
@@ -1641,6 +1657,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                             internalState->maxElevation = qMax(internalState->maxElevation, maxHeightInWorld);
                             if (currentZoomLevel == zoomLevel)
                             {
+                                const auto mD = static_cast<double>(maxHeightInWorld) / globeRadius + 1.0;
+                                OTL = normalTL * mD;
+                                OTR = normalTR * mD;
+                                OBL = normalBL * mD;
+                                OBR = normalBR * mD;
                                 const auto center = (OTL + OTR + OBL + OBR) / 4.0;
                                 const auto toCenter = glm::distance(camPos, center);
                                 if (toCenter < extraDetailDistance)
@@ -1791,12 +1812,14 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     internalState->visibleTilesSet.clear();
     internalState->uniqueTiles.clear();
     internalState->extraDetailedTiles.clear();
+    int total = 0;
     for (const auto& setEntry : rangeOf(constOf(tiles)))
     {
         const auto realZoom = setEntry.key() - zoomDelta;
         if (realZoom < 0)
             continue;
         zoomLevel = static_cast<ZoomLevel>(realZoom);
+        internalState->visibleTilesSet[zoomLevel];
         QSet<TileId> uniqueTiles;
         for (const auto& tileEntry : rangeOf(constOf(setEntry.value())))
         {
@@ -1818,7 +1841,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
             if (visibility == ExtraDetail)
                 internalState->extraDetailedTiles.insert(tileIdN);
         }
-        internalState->visibleTilesCount += uniqueTiles.size();
+        internalState->visibleTilesCount += internalState->visibleTilesSet[zoomLevel].size();
+        total += uniqueTiles.size();
         internalState->uniqueTiles[zoomLevel] = QVector<TileId>(uniqueTiles.begin(), uniqueTiles.end());
         const auto zoomShift = MaxZoomLevel - zoomLevel;
         const auto targetTileId = TileId::fromXY(state.target31.x >> zoomShift, state.target31.y >> zoomShift);
@@ -1851,9 +1875,20 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
             zoomLevelOffset = 1;
         if (zoomLevelOffset > 0 && internalState->visibleTilesCount > MaxNumberOfTilesToUseUnderscaledOnce)
             zoomLevelOffset = 0;
+        int offsetDelta = _tileZoomLevel + _tileZoomLevelOffset - state.zoomLevel - zoomLevelOffset;
+        if (offsetDelta > 0)
+        {
+            zoomLevelOffset = qMin(zoomLevelOffset + offsetDelta, static_cast<int>(MaxMissingDataUnderZoomShift));
+            if (zoomLevelOffset > 2 && internalState->visibleTilesCount > 1)
+                zoomLevelOffset = 2;
+            if (zoomLevelOffset > 1 && internalState->visibleTilesCount > MaxNumberOfTilesUnderscaledTwice)
+                zoomLevelOffset = 1;
+            if (zoomLevelOffset > 0 && internalState->visibleTilesCount > MaxNumberOfTilesUnderscaledOnce)
+                zoomLevelOffset = 0;
+        }
         internalState->zoomLevelOffset = zoomLevelOffset;
         if (!internalState->extraDetailedTiles.empty() && (zoomLevelOffset > 0 || internalState->visibleTilesCount
-            + internalState->extraDetailedTiles.size() * 3 > MaxNumberOfTilesAllowed))
+            + internalState->extraDetailedTiles.size() * 3 > MaxNumberOfTilesSuitable))
         {
             internalState->extraDetailedTiles.clear();
         }
@@ -1990,6 +2025,14 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     }
 }
 
+inline double OsmAnd::AtlasMapRenderer_OpenGL::getDistanceToTile(
+    const glm::dvec3& tileCenter, const glm::dvec3& camPos, const glm::dvec3& camDir, double tiltFactor) const
+{
+    const auto toTileCenter = tileCenter - camPos;
+    const auto distance = glm::dot(toTileCenter, camDir) * (1.0 - tiltFactor) + tiltFactor * glm::length(toTileCenter);
+    return distance;
+}
+
 inline double OsmAnd::AtlasMapRenderer_OpenGL::detailDistanceFactor(const int zoomShift) const
 {
     return zoomShift > 0 ? qPow(2.0, zoomShift) - 1.0 : 0.0;
@@ -2006,8 +2049,7 @@ inline void OsmAnd::AtlasMapRenderer_OpenGL::insertTileId(QHash<TileId, TileVisi
         const auto center31 = PointI(tileIdBR.x << (zoomShift - 1), tileIdBR.y << (zoomShift - 1));
         const auto angCenter = Utilities::getAnglesFrom31(center31);
         const auto centralPoint = Utilities::getGlobeRadialVector(angCenter);
-        const auto toCenter = centralPoint - camPos;
-        const auto distance = glm::dot(toCenter, camDir) * (1.0 - tiltFactor) + tiltFactor * glm::length(toCenter);
+        const auto distance = getDistanceToTile(centralPoint, camPos, camDir, tiltFactor);
         if (distance <= zDetail)
             return;
     }
@@ -3924,6 +3966,14 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getPixelsToMetersScaleFactor(
     const auto targetY = static_cast<double>(internalState->targetTileId.y) + internalState->targetInTileOffsetN.y;
     const auto metersPerPixel = Utilities::getMetersPerTileUnit(state.zoomLevel, targetY, tileSizeOnScreenInPixels);
     return metersPerPixel;
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL::setTileZoomLevel(
+    const MapRendererState& state, const MapRendererInternalState& internalState_)
+{
+    const auto internalState = static_cast<const InternalState*>(&internalState_);
+    _tileZoomLevel = state.zoomLevel;
+    _tileZoomLevelOffset = internalState->zoomLevelOffset;
 }
 
 double OsmAnd::AtlasMapRenderer_OpenGL::getMaxViewportScale() const

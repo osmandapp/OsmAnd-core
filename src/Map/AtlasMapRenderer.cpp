@@ -58,7 +58,7 @@ bool OsmAnd::AtlasMapRenderer::postPrepareFrame()
 
     // Notify resources manager about new active zone
     getResources().updateActiveZone(internalState->uniqueTiles, internalState->uniqueTilesTargets,
-        internalState->extraDetailedTiles, internalState->zoomLevelOffset);
+        internalState->visibleTilesSet, internalState->extraDetailedTiles, internalState->zoomLevelOffset);
 
     return true;
 }

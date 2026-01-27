@@ -63,9 +63,12 @@ namespace OsmAnd
             MaxMissingDataUnderZoomShift = 2,
             HeixelsPerTileSide = (1 << MapRenderer::MaxMissingDataZoomShift) + 1,
             ElevationDataTileSize = HeixelsPerTileSide + 2,
-            MaxNumberOfTilesAllowed = 64,
-            MaxNumberOfTilesToUseUnderscaledOnce = MaxNumberOfTilesAllowed >> 2,
-            MaxNumberOfTilesToUseUnderscaledTwice = MaxNumberOfTilesToUseUnderscaledOnce >> 2
+            MaxNumberOfTilesSuitable = 64,
+            MaxNumberOfTilesToUseUnderscaledOnce = MaxNumberOfTilesSuitable >> 2,
+            MaxNumberOfTilesToUseUnderscaledTwice = MaxNumberOfTilesToUseUnderscaledOnce >> 2,
+            MaxNumberOfTilesAllowed = 80,
+            MaxNumberOfTilesUnderscaledOnce = MaxNumberOfTilesAllowed >> 2,
+            MaxNumberOfTilesUnderscaledTwice = MaxNumberOfTilesUnderscaledOnce >> 2
         };
 
     private:
@@ -181,6 +184,8 @@ namespace OsmAnd
         virtual AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const = 0;
         virtual double getPixelsToMetersScaleFactor(
             const MapRendererState& state, const MapRendererInternalState& internalState) const = 0;
+        virtual void setTileZoomLevel(
+            const MapRendererState& state, const MapRendererInternalState& internalState) = 0;
         virtual bool getNewTargetAndZoom(const MapRendererState& state,
             const PointI& screenPoint, const PointI& location31, const float height, PointI& target31,
             ZoomLevel& zoomLevel, float& visualZoom, double* shiftInPixels = nullptr) const = 0;
