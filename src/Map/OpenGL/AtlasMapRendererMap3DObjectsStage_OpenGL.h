@@ -55,6 +55,7 @@ namespace OsmAnd
                     GLlocation zoomLevel;
                     GLlocation lightDirection;
                     GLlocation ambient;
+                    GLlocation contrast;
                     GLlocation metersPerUnit;
                     GLlocation zScaleFactor;
                 } param;

@@ -124,12 +124,14 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
             uniform float param_vs_alpha;
             uniform vec3 param_vs_lightDirection;
             uniform float param_vs_ambient;
+            uniform float param_vs_contrast;
         )");
         const QString colorCalculation = QString(R"(
-                float ndotl = max(dot(in_vs_normal, -param_vs_lightDirection), 0.0);
-                float diffuse = param_vs_ambient + (1.0 - param_vs_ambient) * ndotl;
-                v2f_color = vec4(in_vs_color * diffuse, param_vs_alpha);
-        )");
+            float ndotl = max(dot(in_vs_normal, -param_vs_lightDirection), 0.0);
+            ndotl = pow(ndotl, 1.0 / param_vs_contrast);
+            float diffuse = param_vs_ambient + (1.0 - param_vs_ambient) * ndotl;
+            v2f_color = vec4(in_vs_color * diffuse * (2.0 - param_vs_alpha), param_vs_alpha);
+    )");
 
         auto vertexShader = vertexShaderBase;
         vertexShader.replace("%ColorInOutDeclaration%", colorInOutDeclaration);
@@ -213,6 +215,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
     ok = ok && lookup->lookupLocation(_program.vs.param.zoomLevel, "param_vs_zoomLevel", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.lightDirection, "param_vs_lightDirection", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.ambient, "param_vs_ambient", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.contrast, "param_vs_contrast", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.metersPerUnit, "param_vs_metersPerUnit", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.zScaleFactor, "param_vs_zScaleFactor", GlslVariableType::Uniform);
 
@@ -645,10 +648,19 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
 
     float buildingAlpha = renderer->get3DBuildingsAlpha();
 
-    const auto zenith = glm::radians(currentState.elevationConfiguration.hillshadeSunAngle);
+//    const auto zenith = glm::radians(currentState.elevationConfiguration.hillshadeSunAngle);
+//    const auto cosZenith = qCos(zenith);
+//    const auto sinZenith = qSin(zenith);
+//    const auto azimuth = M_PI - glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth);
+//    const auto cosAzimuth = qCos(azimuth);
+//    const auto sinAzimuth = qSin(azimuth);
+//
+//    const glm::vec3 lightDir = glm::normalize(glm::vec3(sinAzimuth * cosZenith, -sinZenith, cosAzimuth * cosZenith));
+
+    const auto zenith = glm::radians(30.0);
     const auto cosZenith = qCos(zenith);
     const auto sinZenith = qSin(zenith);
-    const auto azimuth = M_PI - glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth);
+    const auto azimuth = M_PI - glm::radians(30.0);
     const auto cosAzimuth = qCos(azimuth);
     const auto sinAzimuth = qSin(azimuth);
     
@@ -671,6 +683,8 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
     glUniform3f(*_program.vs.param.lightDirection, lightDir.x, lightDir.y, lightDir.z);
     GL_CHECK_RESULT;
     glUniform1f(*_program.vs.param.ambient, 0.2f);
+    GL_CHECK_RESULT;
+    glUniform1f(*_program.vs.param.contrast, 1.5f);
     GL_CHECK_RESULT;
     glUniform1f(*_program.vs.param.alpha, buildingAlpha);
     GL_CHECK_RESULT;
