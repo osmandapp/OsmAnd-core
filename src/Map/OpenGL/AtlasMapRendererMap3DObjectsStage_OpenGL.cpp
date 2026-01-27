@@ -254,6 +254,143 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
     return true;
 }
 
+bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeOutlineProgram()
+{
+    const auto nextInit3DobjectsType = static_cast<Init3DObjectsType>(static_cast<int>(_init3DObjectsType) + 1);
+    _init3DObjectsType = Init3DObjectsType::Incomplete;
+
+    const auto gpuAPI = getGPUAPI();
+
+    QHash<QString, GPUAPI_OpenGL::GlslProgramVariable> variablesMap;
+    _outlineProgram.id = 0;
+
+    if (!_outlineProgram.binaryCache.isEmpty())
+    {
+        _outlineProgram.id = gpuAPI->linkProgram(0, nullptr, _outlineProgram.binaryCache, _outlineProgram.cacheFormat, true, &variablesMap);
+    }
+
+    if (!_outlineProgram.id.isValid())
+    {
+        const QString colorInOutDeclaration = QString(R"(
+            PARAM_OUTPUT vec4 v2f_color;
+        )");
+
+        const QString colorCalculation = QString(R"(
+    
+            v2f_color = vec4(0.0, 0.0, 0.0, 1.0);
+    )");
+
+        auto vertexShader = vertexShaderBase;
+        vertexShader.replace("%ColorInOutDeclaration%", colorInOutDeclaration);
+        vertexShader.replace("%ColorCalculation%", colorCalculation);
+
+        const QString fragmentShader = R"(
+            PARAM_INPUT vec4 v2f_color;
+            
+            void main()
+            {
+                FRAGMENT_COLOR_OUTPUT = v2f_color;
+            }
+        )";
+
+        auto preprocessedVertexShader = vertexShader;
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+
+        auto preprocessedFragmentShader = fragmentShader;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+
+        _outlineProgram.binaryCache = gpuAPI->readProgramBinary(preprocessedVertexShader,
+            preprocessedFragmentShader, setupOptions.pathToOpenGLShadersCache, _outlineProgram.cacheFormat);
+
+        if (!_outlineProgram.binaryCache.isEmpty())
+        {
+            _outlineProgram.id = gpuAPI->linkProgram(0, nullptr, _outlineProgram.binaryCache, _outlineProgram.cacheFormat, true, &variablesMap);
+        }
+        if (_outlineProgram.binaryCache.isEmpty() || !_outlineProgram.id.isValid())
+        {
+            const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+            if (vsId == 0)
+            {
+                LogPrintf(LogSeverityLevel::Error, "Failed to compile Map3DObjects outline vertex shader");
+                return false;
+            }
+
+            const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+            if (fsId == 0)
+            {
+                glDeleteShader(vsId);
+                GL_CHECK_RESULT;
+
+                LogPrintf(LogSeverityLevel::Error, "Failed to compile Map3DObjects outline fragment shader");
+                return false;
+            }
+
+            const GLuint shaders[] = { vsId, fsId };
+            _outlineProgram.id = gpuAPI->linkProgram(2, shaders, _outlineProgram.binaryCache, _outlineProgram.cacheFormat, true, &variablesMap);
+            if (_outlineProgram.id.isValid() && !_outlineProgram.binaryCache.isEmpty())
+            {
+                gpuAPI->writeProgramBinary(
+                    preprocessedVertexShader,
+                    preprocessedFragmentShader,
+                    setupOptions.pathToOpenGLShadersCache,
+                    _outlineProgram.binaryCache,
+                    _outlineProgram.cacheFormat);
+            }
+        }
+    }
+
+    if (!_outlineProgram.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link Map3DObjects outline shader program");
+        return false;
+    }
+
+    const auto lookup = gpuAPI->obtainVariablesLookupContext(_outlineProgram.id, variablesMap);
+    bool ok = true;
+    ok = ok && lookup->lookupLocation(_outlineProgram.vs.in.location31, "in_vs_location31", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_outlineProgram.vs.in.height, "in_vs_height", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_outlineProgram.vs.in.terrainHeight, "in_vs_terrainHeight", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_outlineProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_outlineProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_outlineProgram.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_outlineProgram.vs.param.zoomLevel, "param_vs_zoomLevel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_outlineProgram.vs.param.metersPerUnit, "param_vs_metersPerUnit", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_outlineProgram.vs.param.zScaleFactor, "param_vs_zScaleFactor", GlslVariableType::Uniform);
+
+    if (!ok)
+    {
+        glDeleteProgram(_outlineProgram.id);
+        GL_CHECK_RESULT;
+
+        _outlineProgram.id.reset();
+
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find variable in Map3DObjects outline shader program");
+        return false;
+    }
+
+    if (_outlineVao.isValid())
+    {
+        gpuAPI->useVAO(_outlineVao);
+
+        glEnableVertexAttribArray(*_outlineProgram.vs.in.location31);
+        GL_CHECK_RESULT;
+        glEnableVertexAttribArray(*_outlineProgram.vs.in.height);
+        GL_CHECK_RESULT;
+        glEnableVertexAttribArray(*_outlineProgram.vs.in.terrainHeight);
+        GL_CHECK_RESULT;
+
+        gpuAPI->initializeVAO(_outlineVao);
+        gpuAPI->unuseVAO();
+    }
+
+    _init3DObjectsType = nextInit3DobjectsType;
+    return true;
+}
+
 bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeDepthProgram()
 {
     const auto nextInit3DobjectsType = static_cast<Init3DObjectsType>(static_cast<int>(_init3DObjectsType) + 1);
@@ -405,6 +542,9 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
     
     _depthVao = gpuAPI->allocateUninitializedVAO();
     gpuAPI->initializeVAO(_depthVao);
+
+    _outlineVao = gpuAPI->allocateUninitializedVAO();
+    gpuAPI->initializeVAO(_outlineVao);
 
     _init3DObjectsType = Init3DObjectsType::Objects3DDepth;
 
@@ -682,9 +822,9 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
     GL_CHECK_RESULT;
     glUniform3f(*_program.vs.param.lightDirection, lightDir.x, lightDir.y, lightDir.z);
     GL_CHECK_RESULT;
-    glUniform1f(*_program.vs.param.ambient, 0.2f);
+    glUniform1f(*_program.vs.param.ambient, 0.4f);
     GL_CHECK_RESULT;
-    glUniform1f(*_program.vs.param.contrast, 1.5f);
+    glUniform1f(*_program.vs.param.contrast, 1.0f);
     GL_CHECK_RESULT;
     glUniform1f(*_program.vs.param.alpha, buildingAlpha);
     GL_CHECK_RESULT;
@@ -730,6 +870,60 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
     return StageResult::Success;
 }
 
+MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderOutline(QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& collectedResources)
+{
+    const auto gpuAPI = getGPUAPI();
+    const auto& internalState = getInternalState();
+
+    glUseProgram(_outlineProgram.id);
+    GL_CHECK_RESULT;
+    glUniformMatrix4fv(*_outlineProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
+    GL_CHECK_RESULT;
+    glUniform4f(*_outlineProgram.vs.param.resultScale, 1.0f, currentState.flip ? -1.0f : 1.0f, 1.0f, 1.0f);
+    GL_CHECK_RESULT;
+    glUniform2i(*_outlineProgram.vs.param.target31, currentState.target31.x, currentState.target31.y);
+    GL_CHECK_RESULT;
+    glUniform1i(*_outlineProgram.vs.param.zoomLevel, (int)currentState.zoomLevel);
+    GL_CHECK_RESULT;
+    glUniform1f(*_outlineProgram.vs.param.metersPerUnit, static_cast<float>(internalState.metersPerUnit));
+    GL_CHECK_RESULT;
+    glUniform1f(*_outlineProgram.vs.param.zScaleFactor, currentState.elevationConfiguration.zScaleFactor);
+    GL_CHECK_RESULT;
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GL_CHECK_RESULT;
+
+    gpuAPI->useVAO(_outlineVao);
+
+    for (const auto& resource : collectedResources)
+    {
+        if (resource->outlineVertexBuffer && resource->outlineIndexBuffer)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(resource->outlineVertexBuffer->refInGPU)));
+            GL_CHECK_RESULT;
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(resource->outlineIndexBuffer->refInGPU)));
+            GL_CHECK_RESULT;
+
+            glVertexAttribIPointer(*_outlineProgram.vs.in.location31, 2, GL_INT, sizeof(BuildingVertex),
+                                   reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, location31)));
+            GL_CHECK_RESULT;
+            glVertexAttribPointer(*_outlineProgram.vs.in.height, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+                                  reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, height)));
+            GL_CHECK_RESULT;
+            glVertexAttribPointer(*_outlineProgram.vs.in.terrainHeight, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+                                  reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, terrainHeight)));
+            GL_CHECK_RESULT;
+
+            glDrawElements(GL_LINES, static_cast<GLsizei>(resource->outlineIndexBuffer->itemsCount), GL_UNSIGNED_SHORT, nullptr);
+            GL_CHECK_RESULT;
+        }
+    }
+
+    gpuAPI->unuseVAO();
+
+    return StageResult::Success;
+}
+
 MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const metric)
 {
     bool ok = true;
@@ -739,6 +933,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
         const auto init3DObjectsType = _init3DObjectsType;
         ok = ok && (init3DObjectsType != Init3DObjectsType::Objects3DDepth || initializeDepthProgram());
         ok = ok && (init3DObjectsType != Init3DObjectsType::Objects3DColor || initializeColorProgram());
+        ok = ok && (init3DObjectsType != Init3DObjectsType::Objects3DOutline || initializeOutlineProgram());
 
         if (!ok || _init3DObjectsType == Init3DObjectsType::Incomplete)
         {
@@ -801,6 +996,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
     GL_CHECK_RESULT;
 
     const auto colorPassResult = renderColor(collectedResources);
+    const auto outlinePassResult = renderOutline(collectedResources);
 
     if (needsDepthPrepass)
     {
@@ -854,7 +1050,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
         return StageResult::Fail;
     }
 
-    if (depthPrepassResult == StageResult::Wait || colorPassResult == StageResult::Wait)
+    if (depthPrepassResult == StageResult::Wait || colorPassResult == StageResult::Wait || outlinePassResult == StageResult::Wait)
     {
         return StageResult::Wait;
     }
@@ -890,6 +1086,13 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::release(bool gpuContextLost)
         glDeleteProgram(_depthProgram.id);
         GL_CHECK_RESULT;
         _depthProgram.id = 0;
+    }
+    
+    if (_outlineProgram.id)
+    {
+        glDeleteProgram(_outlineProgram.id);
+        GL_CHECK_RESULT;
+        _outlineProgram.id = 0;
     }
     return true;
 }

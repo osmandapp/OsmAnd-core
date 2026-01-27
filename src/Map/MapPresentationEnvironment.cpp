@@ -230,6 +230,11 @@ bool OsmAnd::MapPresentationEnvironment::getShow3DBuildingParts() const
     return _p->getShow3DBuildingParts();
 }
 
+bool OsmAnd::MapPresentationEnvironment::getShow3DBuildingOutline() const
+{
+    return _p->getShow3DBuildingOutline();
+}
+
 bool OsmAnd::MapPresentationEnvironment::getColoredBuildings() const
 {
     return _p->getColoredBuildings();

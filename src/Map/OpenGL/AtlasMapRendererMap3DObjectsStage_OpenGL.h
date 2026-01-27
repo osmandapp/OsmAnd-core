@@ -23,6 +23,7 @@ namespace OsmAnd
     private:
         GLname _vao;
         GLname _depthVao;
+        GLname _outlineVao;
 
         Init3DObjectsType _init3DObjectsType;
 
@@ -61,13 +62,16 @@ namespace OsmAnd
                 } param;
             } vs;
         } _program;
+        Model3DProgram _outlineProgram;
         Model3DProgram _depthProgram;
 
         bool initializeColorProgram();
+        bool initializeOutlineProgram();
         bool initializeDepthProgram();
         void prepareDrawObjects(QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& collectedResources);
         StageResult renderDepth(QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& collectedResources);
         StageResult renderColor(QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& collectedResources);
+        StageResult renderOutline(QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& collectedResources);
 
     public:
         explicit AtlasMapRendererMap3DObjectsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer);

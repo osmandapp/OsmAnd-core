@@ -3760,9 +3760,14 @@ std::shared_ptr<OsmAnd::GPUAPI::MapRenderer3DBuildingGPUData> OsmAnd::MapRendere
     QSet<uint64_t> uniqueBuildingIDs;
     QVector<BuildingVertex> uniqueVertices;
     QVector<uint16_t> uniqueIndices;
+    QVector<BuildingVertex> uniqueOutlineVertices;
+    QVector<uint16_t> uniqueOutlineIndices;
+    QVector<int> uniqueOutlineVertexCounts;
 
     int vertexOffset = 0;
     int indexOffset = 0;
+    int outlineVertexOffset = 0;
+    int outlineIndexOffset = 0;
 
     // If existed resource contains needed building
     // Add it ti outResources, increase referenceCount and dont load building to the GPU
@@ -3771,6 +3776,8 @@ std::shared_ptr<OsmAnd::GPUAPI::MapRenderer3DBuildingGPUData> OsmAnd::MapRendere
         const uint64_t buildingID = buildings3D.buildingIDs[i];
         const int vertexCount = buildings3D.vertexCounts[i];
         const int indexCount = buildings3D.indexCounts[i];
+        const int outlineVertexCount = (i < buildings3D.outlineVertexCounts.size()) ? buildings3D.outlineVertexCounts[i] : 0;
+        const int outlineIndexCount = outlineVertexCount > 1 ? outlineVertexCount * 2 : 0;
 
         std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> duplicateData;
         bool isDuplicate = false;
@@ -3797,6 +3804,8 @@ std::shared_ptr<OsmAnd::GPUAPI::MapRenderer3DBuildingGPUData> OsmAnd::MapRendere
 
             vertexOffset += vertexCount;
             indexOffset += indexCount;
+            outlineVertexOffset += outlineVertexCount;
+            outlineIndexOffset += outlineIndexCount;
             continue;
         }
 
@@ -3813,8 +3822,28 @@ std::shared_ptr<OsmAnd::GPUAPI::MapRenderer3DBuildingGPUData> OsmAnd::MapRendere
             uniqueIndices.append(static_cast<uint16_t>(buildings3D.indices[indexOffset + j] - vertexOffset + currentVertexOffset));
         }
 
+        if (outlineVertexCount > 0)
+        {
+            uint16_t currentOutlineVertexOffset = static_cast<uint16_t>(uniqueOutlineVertices.size());
+
+            for (int j = 0; j < outlineVertexCount; ++j)
+            {
+                uniqueOutlineVertices.append(buildings3D.outlineVertices[outlineVertexOffset + j]);
+            }
+
+            for (int j = 0; j < outlineIndexCount; ++j)
+            {
+                const uint16_t srcIdx = buildings3D.outlineIndices[outlineIndexOffset + j];
+                uniqueOutlineIndices.append(static_cast<uint16_t>(srcIdx - outlineVertexOffset + currentOutlineVertexOffset));
+            }
+
+            uniqueOutlineVertexCounts.append(outlineVertexCount);
+        }
+
         vertexOffset += vertexCount;
         indexOffset += indexCount;
+        outlineVertexOffset += outlineVertexCount;
+        outlineIndexOffset += outlineIndexCount;
     }
 
     std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> buildingData;
@@ -3843,6 +3872,29 @@ std::shared_ptr<OsmAnd::GPUAPI::MapRenderer3DBuildingGPUData> OsmAnd::MapRendere
         if (!indexUploadSuccess)
         {
             return nullptr;
+        }
+
+        if (!uniqueOutlineVertices.isEmpty() && !uniqueOutlineIndices.isEmpty())
+        {
+            const size_t outlineVertexBufferSize = uniqueOutlineVertices.size() * sizeof(BuildingVertex);
+            const bool outlineVertexUploadSuccess = uploadVerticesToGPU(uniqueOutlineVertices.constData(),
+                outlineVertexBufferSize, uniqueOutlineVertices.size(), buildingData->outlineVertexBuffer, false);
+
+            if (!outlineVertexUploadSuccess)
+            {
+                return nullptr;
+            }
+
+            const size_t outlineIndexBufferSize = uniqueOutlineIndices.size() * sizeof(uint16_t);
+            const bool outlineIndexUploadSuccess = uploadIndicesToGPU(uniqueOutlineIndices.constData(),
+                outlineIndexBufferSize, uniqueOutlineIndices.size(), buildingData->outlineIndexBuffer, false);
+
+            if (!outlineIndexUploadSuccess)
+            {
+                return nullptr;
+            }
+
+            buildingData->outlineVertexCounts = uniqueOutlineVertexCounts;
         }
 
         _shared3DBuildings.append(buildingData);
