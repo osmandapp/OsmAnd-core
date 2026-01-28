@@ -74,7 +74,8 @@ namespace OsmAnd
             float minHeight,
             float height,
             float terrainHeight,
-            const glm::vec3& colorVec) const;
+            const glm::vec3& colorVec,
+            bool generateOutline) const;
 
     protected:
         Map3DObjectsTiledProvider_P(Map3DObjectsTiledProvider* const owner,

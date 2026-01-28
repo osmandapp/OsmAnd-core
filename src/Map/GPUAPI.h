@@ -139,6 +139,9 @@ namespace OsmAnd
             QSet<uint64_t> buildingIDs;
             std::shared_ptr<const ArrayBufferInGPU> vertexBuffer;
             std::shared_ptr<const ElementArrayBufferInGPU> indexBuffer;
+            std::shared_ptr<const ArrayBufferInGPU> outlineVertexBuffer;
+            std::shared_ptr<const ElementArrayBufferInGPU> outlineIndexBuffer;
+            QVector<int> outlineVertexCounts;
             ZoomLevel zoom;
             TileId tileId;
             int referenceCount;

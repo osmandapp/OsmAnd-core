@@ -71,6 +71,7 @@ namespace OsmAnd
         {
             Objects3DDepth,
             Objects3DColor,
+            Objects3DOutline,
             Complete,
             Incomplete
         };

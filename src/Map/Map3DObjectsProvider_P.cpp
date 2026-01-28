@@ -403,6 +403,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const Primirive3D& primitive,
         return;
     }
 
+    const bool show3DbuildingOutline = _environment ? _environment->getShow3DBuildingOutline() : false;
+
     float levelHeight = getDefaultBuildingsLevelHeight();
 
     float height = getDefaultBuildingsHeight();
@@ -535,6 +537,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const Primirive3D& primitive,
     }
 
     int currentVertexOffset = buildings3D.vertices.size();
+    const int currentOutlineVertexOffset = buildings3D.outlineVertices.size();
     const int currentIndexOffset = buildings3D.indices.size();
 
     // Construct top side of the mesh
@@ -543,10 +546,18 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const Primirive3D& primitive,
     std::vector<std::array<int32_t, 2>> outerRing;
     for (int i = 0; i < edgePointsCount; ++i)
     {
+        const int next = (i + 1) % edgePointsCount;
         const auto& p = points31[i];
+        BuildingVertex v{glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec};
 
         outerRing.push_back({p.x, p.y});
-        buildings3D.vertices.append({glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
+        buildings3D.vertices.append(v);
+        if (show3DbuildingOutline)
+        {
+            buildings3D.outlineVertices.append(v);
+            buildings3D.outlineIndices.append(static_cast<uint16_t>(currentOutlineVertexOffset + i));
+            buildings3D.outlineIndices.append(static_cast<uint16_t>(currentOutlineVertexOffset + next));
+        }
     }
 
     topPolygon.push_back(std::move(outerRing));
@@ -554,10 +565,34 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const Primirive3D& primitive,
     for (const auto& innerPoly : innerPolygons)
     {
         std::vector<std::array<int32_t, 2>> innerRing;
+
+        int innerOutlineStart = 0;
+        if (show3DbuildingOutline)
+        {
+            innerOutlineStart = buildings3D.outlineVertices.size();
+        }
+
         for (const auto& p : innerPoly)
         {
+            BuildingVertex v{glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec};
+
             innerRing.push_back({p.x, p.y});
-            buildings3D.vertices.append({glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec});
+            buildings3D.vertices.append(v);
+            if (show3DbuildingOutline)
+            {
+                buildings3D.outlineVertices.append(v);
+            }
+        }
+
+        if (show3DbuildingOutline)
+        {
+            const int innerOutlineCount = buildings3D.outlineVertices.size() - innerOutlineStart;
+            for (int i = 0; i < innerOutlineCount; ++i)
+            {
+                const int next = (i + 1) % innerOutlineCount;
+                buildings3D.outlineIndices.append(static_cast<uint16_t>(innerOutlineStart + i));
+                buildings3D.outlineIndices.append(static_cast<uint16_t>(innerOutlineStart + next));
+            }
         }
 
         topPolygon.push_back(std::move(innerRing));
@@ -576,7 +611,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const Primirive3D& primitive,
         const auto& point31_i = points31[i];
         const auto& point31_next = points31[next];
 
-        generateBuildingWall(buildings3D, point31_i, point31_next, minHeight, height, terrainHeight, colorVec);
+        generateBuildingWall(buildings3D, point31_i, point31_next, minHeight, height, terrainHeight, colorVec, show3DbuildingOutline);
     }
 
     // Construct inner walls of the mesh
@@ -590,15 +625,18 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const Primirive3D& primitive,
             const auto& point31_i = innerPoly[i];
             const auto& point31_next = innerPoly[next];
 
-            generateBuildingWall(buildings3D, point31_i, point31_next, minHeight, height, terrainHeight, colorVec);
+            generateBuildingWall(buildings3D, point31_i, point31_next, minHeight, height, terrainHeight, colorVec, show3DbuildingOutline);
         }
     }
 
     const int buildingVertexCount = buildings3D.vertices.size() - currentVertexOffset;
     const int buildingIndexCount = buildings3D.indices.size() - currentIndexOffset;
+    const int outlineVertexCount = show3DbuildingOutline ? (buildings3D.outlineVertices.size() - currentOutlineVertexOffset) : 0;
+
     buildings3D.buildingIDs.append(sourceObject->id.id);
     buildings3D.vertexCounts.append(buildingVertexCount);
     buildings3D.indexCounts.append(buildingIndexCount);
+    buildings3D.outlineVertexCounts.append(outlineVertexCount);
 }
 
 void Map3DObjectsTiledProvider_P::accumulateElevationForPoint(
@@ -673,7 +711,8 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     float minHeight,
     float height,
     float terrainHeight,
-    const glm::vec3& colorVec) const
+    const glm::vec3& colorVec,
+    bool generateOutline) const
 {
     const uint32_t baseVertex = buildings3D.vertices.size();
 
@@ -689,6 +728,25 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     for (uint16_t idx : fullSideIndices)
     {
         buildings3D.indices.append(baseVertex + idx);
+    }
+
+    if (generateOutline)
+    {
+        const uint16_t outlineBase = static_cast<uint16_t>(buildings3D.outlineVertices.size());
+
+        buildings3D.outlineVertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
+        buildings3D.outlineVertices.append({glm::ivec2(point31_i.x,      point31_i.y),      height,    terrainHeight,    edgeNormal, colorVec});
+        buildings3D.outlineVertices.append({glm::ivec2(point31_next.x,   point31_next.y),   height,    terrainHeight,    edgeNormal, colorVec});
+        buildings3D.outlineVertices.append({glm::ivec2(point31_next.x,   point31_next.y),   minHeight, minTerrainHeight, edgeNormal, colorVec});
+
+        buildings3D.outlineIndices.append(outlineBase + 0);
+        buildings3D.outlineIndices.append(outlineBase + 1);
+        buildings3D.outlineIndices.append(outlineBase + 2);
+        buildings3D.outlineIndices.append(outlineBase + 3);
+        buildings3D.outlineIndices.append(outlineBase + 0);
+        buildings3D.outlineIndices.append(outlineBase + 3);
+        buildings3D.outlineIndices.append(outlineBase + 1);
+        buildings3D.outlineIndices.append(outlineBase + 2);
     }
 }
 
