@@ -75,7 +75,11 @@ namespace OsmAnd
             float height,
             float terrainHeight,
             const glm::vec3& colorVec,
-            bool generateOutline) const;
+            bool generateOutline,
+            const PointI& passageIntersection,
+            float passageHeight,
+            bool hasPassage,
+            QVector<BuildingVertex>& passageVertices) const;
 
     protected:
         Map3DObjectsTiledProvider_P(Map3DObjectsTiledProvider* const owner,

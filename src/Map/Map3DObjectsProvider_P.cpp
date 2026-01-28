@@ -604,6 +604,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const Primirive3D& primitive,
         buildings3D.indices.append(static_cast<uint16_t>(idx + currentVertexOffset));
     }
 
+    QVector<BuildingVertex> passageVertices;
+
     // Construct walls of the mesh
     for (int i = 0; i < edgePointsCount; ++i)
     {
@@ -611,7 +613,17 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const Primirive3D& primitive,
         const auto& point31_i = points31[i];
         const auto& point31_next = points31[next];
 
-        generateBuildingWall(buildings3D, point31_i, point31_next, minHeight, height, terrainHeight, colorVec, show3DbuildingOutline);
+        PointI passageIntersection;
+        float passageHeight = 2.5;
+        bool hasPassage = false;
+        if ((i == 1 || i == 3) && innerPolygons.isEmpty())
+        {
+            passageIntersection = PointI(static_cast<int32_t>((static_cast<int64_t>(point31_i.x) + point31_next.x) / 2),
+                static_cast<int32_t>((static_cast<int64_t>(point31_i.y) + point31_next.y) / 2));
+            hasPassage = true;
+        }
+
+        generateBuildingWall(buildings3D, point31_i, point31_next, minHeight, height, terrainHeight, colorVec, show3DbuildingOutline, passageIntersection, passageHeight, hasPassage, passageVertices);
     }
 
     // Construct inner walls of the mesh
@@ -625,8 +637,40 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const Primirive3D& primitive,
             const auto& point31_i = innerPoly[i];
             const auto& point31_next = innerPoly[next];
 
-            generateBuildingWall(buildings3D, point31_i, point31_next, minHeight, height, terrainHeight, colorVec, show3DbuildingOutline);
+            PointI passageIntersection;
+            float passageHeight = 2.5;
+            bool hasPassage = false;
+
+            generateBuildingWall(buildings3D, point31_i, point31_next, minHeight, height, terrainHeight, colorVec, show3DbuildingOutline, passageIntersection, passageHeight, hasPassage, passageVertices);
         }
+    }
+
+    if (passageVertices.size() > 0)
+    {
+        uint32_t baseVertex = buildings3D.vertices.size();
+
+        buildings3D.vertices.append(passageVertices[1]);
+        buildings3D.vertices.append(passageVertices[0]);
+        buildings3D.vertices.append(passageVertices[7]);
+        buildings3D.vertices.append(passageVertices[6]);
+
+
+        for (uint16_t idx : fullSideIndices)
+        {
+            buildings3D.indices.append(baseVertex + idx);
+        }
+
+        baseVertex = buildings3D.vertices.size();
+
+        buildings3D.vertices.append(passageVertices[3]);
+        buildings3D.vertices.append(passageVertices[2]);
+        buildings3D.vertices.append(passageVertices[5]);
+        buildings3D.vertices.append(passageVertices[4]);
+
+       for (uint16_t idx : fullSideIndices)
+       {
+           buildings3D.indices.append(baseVertex + idx);
+       }
     }
 
     const int buildingVertexCount = buildings3D.vertices.size() - currentVertexOffset;
@@ -712,7 +756,11 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     float height,
     float terrainHeight,
     const glm::vec3& colorVec,
-    bool generateOutline) const
+    bool generateOutline,
+    const PointI& passageIntersection,
+    float passageHeight,
+    bool hasPassage,
+    QVector<BuildingVertex>& passageVertices) const
 {
     const uint32_t baseVertex = buildings3D.vertices.size();
 
@@ -725,9 +773,53 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, terrainHeight, edgeNormal, colorVec});
     buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, minTerrainHeight, edgeNormal, colorVec});
 
-    for (uint16_t idx : fullSideIndices)
+    if (hasPassage)
     {
-        buildings3D.indices.append(baseVertex + idx);
+        const float passageHeight = 2.5f;
+        const float passageBottomHeight = 0;
+        const float passageWidth = 2.25;
+
+        const int64_t wallDx = static_cast<int64_t>(point31_next.x) - static_cast<int64_t>(point31_i.x);
+        const int64_t wallDy = static_cast<int64_t>(point31_next.y) - static_cast<int64_t>(point31_i.y);
+
+        const double wallLength31 = qSqrt(static_cast<double>(wallDx * wallDx + wallDy * wallDy));
+        const double wallLengthMeters = Utilities::distance31(point31_i.x, point31_i.y, point31_next.x, point31_next.y);
+
+        const double metersPer31Unit = wallLengthMeters / wallLength31;
+        const double passageWidthIn31 = passageWidth / metersPer31Unit;
+        const double passageHalfWidth31 = passageWidthIn31 / 2.0;
+
+        const double dirX = wallLength31 > 0.0 ? static_cast<double>(wallDx) / wallLength31 : 0.0;
+        const double dirY = wallLength31 > 0.0 ? static_cast<double>(wallDy) / wallLength31 : 0.0;
+
+        const int32_t passageLeftX = passageIntersection.x - static_cast<int32_t>(qRound(dirX * passageHalfWidth31));
+        const int32_t passageLeftY = passageIntersection.y - static_cast<int32_t>(qRound(dirY * passageHalfWidth31));
+
+        const int32_t passageRightX = passageIntersection.x + static_cast<int32_t>(qRound(dirX * passageHalfWidth31));
+        const int32_t passageRightY = passageIntersection.y + static_cast<int32_t>(qRound(dirY * passageHalfWidth31));
+
+        // Should match the side order (counter-clockwise)
+        buildings3D.vertices.append({glm::ivec2(passageRightX, passageRightY), passageBottomHeight, terrainHeight, edgeNormal, colorVec});
+        buildings3D.vertices.append({glm::ivec2(passageRightX, passageRightY), passageHeight, terrainHeight, edgeNormal, colorVec});
+        buildings3D.vertices.append({glm::ivec2(passageLeftX, passageLeftY), passageHeight, terrainHeight, edgeNormal, colorVec});
+        buildings3D.vertices.append({glm::ivec2(passageLeftX, passageLeftY), passageBottomHeight, terrainHeight, edgeNormal, colorVec});
+
+        passageVertices.push_back({glm::ivec2(passageRightX, passageRightY), passageBottomHeight, terrainHeight, edgeNormal, colorVec});
+        passageVertices.push_back({glm::ivec2(passageRightX, passageRightY), passageHeight, terrainHeight, edgeNormal, colorVec});
+        passageVertices.push_back({glm::ivec2(passageLeftX, passageLeftY), passageHeight, terrainHeight, edgeNormal, colorVec});
+        passageVertices.push_back({glm::ivec2(passageLeftX, passageLeftY), passageBottomHeight, terrainHeight, edgeNormal, colorVec});
+
+        for (uint16_t idx : pasageSideIndices)
+        {
+            buildings3D.indices.append(baseVertex + idx);
+        }
+    }
+    else
+    {
+        for (uint16_t idx : fullSideIndices)
+        {
+            buildings3D.indices.append(baseVertex + idx);
+        }
     }
 
     if (generateOutline)
