@@ -674,6 +674,8 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
         _currentState.metersPerPixel = getPixelsToMetersScaleFactor(_currentState, getInternalState());
         _currentState.visibleBBox31 = getVisibleBBox31(getInternalState());
         _currentState.visibleBBoxShifted = getVisibleBBoxShifted(getInternalState());
+
+        setTileZoomLevel(_currentState, getInternalState());
     }
 
     return true;

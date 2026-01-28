@@ -53,6 +53,8 @@ namespace OsmAnd
 
         void computeVisibleArea(InternalState* internalState, const MapRendererState& state,
             const float lowerDetail, const double tiltFactor, const CalculationSteps neededSteps) const;
+        double getDistanceToTile(
+            const glm::dvec3& tileCenter, const glm::dvec3& camPos, const glm::dvec3& camDir, double tiltFactor) const;
         double detailDistanceFactor(const int zoomShift) const;
         void insertTileId(QHash<TileId, TileVisibility>& nextTiles,
             const TileId& tileId, const double zDetail, const double tiltFactor, const int32_t zoomShift,
@@ -141,10 +143,16 @@ namespace OsmAnd
         AtlasMapRendererSymbolsStage* createSymbolsStage() override;
         AtlasMapRendererDebugStage* createDebugStage() override;
 
+        // Detail level:
+        OsmAnd::ZoomLevel _tileZoomLevel;
+        int _tileZoomLevelOffset;
+
         AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const override;
         AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const override;
         double getPixelsToMetersScaleFactor(
             const MapRendererState& state, const MapRendererInternalState& internalState) const override;
+        void setTileZoomLevel(
+            const MapRendererState& state, const MapRendererInternalState& internalState) override;
         bool getNewTargetAndZoom(const MapRendererState& state, const PointI& screenPoint, const PointI& location31,
             const float height, PointI& target31, ZoomLevel& zoomLevel, float& visualZoom,
             double* shiftInPixels = nullptr) const override;
