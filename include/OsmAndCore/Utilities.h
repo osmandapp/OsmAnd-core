@@ -1227,6 +1227,19 @@ namespace OsmAnd
                 : commonDivisor(y, x % y);
         }
 
+        static inline double calcZoomForResolution(double resolution, double latitude) {
+            const static double C = 40075017.0;
+            const double kTileSize = 256.0;
+
+            if (resolution <= 0) return 0;
+
+            double latRad = latitude * M_PI / 180.0;
+            double topPart = C * cos(latRad);
+            double bottomPart = resolution * kTileSize;
+
+            return log2(topPart / bottomPart);
+        }
+
         inline static double getMetersPerTileUnit(const float zoom, const double yTile, const double unitsPerTile)
         {
             // Equatorial circumference of the Earth in meters
