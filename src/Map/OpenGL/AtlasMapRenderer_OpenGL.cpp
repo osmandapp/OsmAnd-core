@@ -1128,23 +1128,22 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         const auto cameraTile31 = Utilities::get31FromAngles(internalState->cameraAngles);
         auto camTileId = TileId::fromXY(cameraTile31.x >> sZoom, cameraTile31.y >> sZoom);
         PointI toCamera(camTileId.x - internalState->synthTileId.x, camTileId.y - internalState->synthTileId.y);
-        if (!state.flatEarth && zoomLevel < ZoomLevel9)
+        if (zoomLevel < ZoomLevel9)
         {
             toCamera.x = 0;
             toCamera.y = 0;
         }
-        if (abs(toCamera.x) == 1)
-            toCamera.x = 0;
-        if (abs(toCamera.y) == 1)
-            toCamera.y = 0;
-        if (toCamera.x > 0 && dirX > 0.0)
-            toCamera.x -= 1 << zoomLevel;
-        else if (toCamera.x < 0 && dirX < 0.0)
-            toCamera.x += 1 << zoomLevel;
-        if (toCamera.y > 0 && dirY < 0.0)
-            toCamera.y -= 1 << zoomLevel;
-        else if (toCamera.y < 0 && dirY > 0.0)
-            toCamera.y += 1 << zoomLevel;
+        else
+        {
+            if (toCamera.x > 1 && dirX > 0.0)
+                toCamera.x -= 1 << zoomLevel;
+            else if (toCamera.x < -1 && dirX < 0.0)
+                toCamera.x += 1 << zoomLevel;
+            if (toCamera.y > 1 && dirY < 0.0)
+                toCamera.y -= 1 << zoomLevel;
+            else if (toCamera.y < -1 && dirY > 0.0)
+                toCamera.y += 1 << zoomLevel;
+        }
         camTileId = TileId::fromXY(internalState->synthTileId.x + toCamera.x, internalState->synthTileId.y + toCamera.y);
         const PointD tilesToTarget(toCamera);
         const auto distanceLimit = tilesToTarget.norm() - 1.0;
