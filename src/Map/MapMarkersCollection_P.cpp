@@ -13,6 +13,13 @@ OsmAnd::MapMarkersCollection_P::~MapMarkersCollection_P()
 {
 }
 
+std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkersCollection_P::getMarkerById(int id) const
+{
+    QReadLocker scopedLocker(&_markersLock);
+
+    return _markersById.value(id);
+}
+
 QList< std::shared_ptr<OsmAnd::MapMarker> > OsmAnd::MapMarkersCollection_P::getMarkers() const
 {
     QReadLocker scopedLocker(&_markersLock);
@@ -29,6 +36,7 @@ bool OsmAnd::MapMarkersCollection_P::addMarker(const std::shared_ptr<MapMarker>&
         return false;
 
     _markers.insert(key, marker);
+    _markersById.insert(marker->markerId, marker);
 
     return true;
 }
@@ -37,6 +45,7 @@ bool OsmAnd::MapMarkersCollection_P::removeMarker(const std::shared_ptr<MapMarke
 {
     QWriteLocker scopedLocker(&_markersLock);
 
+    _markersById.remove(marker->markerId);
     const bool removed = (_markers.remove(reinterpret_cast<IMapKeyedSymbolsProvider::Key>(marker.get())) > 0);
     return removed;
 }
@@ -45,6 +54,7 @@ void OsmAnd::MapMarkersCollection_P::removeAllMarkers()
 {
     QWriteLocker scopedLocker(&_markersLock);
 
+    _markersById.clear();;
     _markers.clear();
 }
 
