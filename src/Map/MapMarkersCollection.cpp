@@ -13,6 +13,11 @@ OsmAnd::MapMarkersCollection::~MapMarkersCollection()
 {
 }
 
+std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkersCollection::getMarkerById(int id) const
+{
+    return _p->getMarkerById(id);
+}
+
 QList< std::shared_ptr<OsmAnd::MapMarker> > OsmAnd::MapMarkersCollection::getMarkers() const
 {
     return _p->getMarkers();

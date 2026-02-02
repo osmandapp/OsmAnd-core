@@ -36,15 +36,6 @@ void OsmAnd::VectorLineArrowsProvider_P::init()
     rebuildArrows();
 }
 
-std::shared_ptr<OsmAnd::MapMarker> OsmAnd::VectorLineArrowsProvider_P::getMarker(int markerId) const
-{
-    for (const auto& marker : _markersCollection->getMarkers())
-        if (marker->markerId == markerId)
-            return marker;
-
-    return nullptr;
-}
-
 QList<std::shared_ptr<OsmAnd::MapMarker>> OsmAnd::VectorLineArrowsProvider_P::getLineMarkers(int lineId) const
 {
     QList<std::shared_ptr<OsmAnd::MapMarker>> res;
@@ -79,7 +70,7 @@ void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
         for (const auto& symbolInfo : symbolsData)
         {
             int markerId = lineId | (i++ << 15);
-            const auto& marker = getMarker(markerId);
+            const auto& marker = _markersCollection->getMarkerById(markerId);
             if (marker)
             {
                 marker->setIsHidden(

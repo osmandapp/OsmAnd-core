@@ -32,6 +32,7 @@ namespace OsmAnd
 
         mutable QReadWriteLock _markersLock;
         QHash< IMapKeyedSymbolsProvider::Key, std::shared_ptr<MapMarker> > _markers;
+        QHash< int, std::shared_ptr<MapMarker> > _markersById;
 
         bool addMarker(const std::shared_ptr<MapMarker>& marker);
     public:
@@ -39,6 +40,7 @@ namespace OsmAnd
 
         ImplementationInterface<MapMarkersCollection> owner;
 
+        std::shared_ptr<MapMarker> getMarkerById(int id) const;
         QList< std::shared_ptr<MapMarker> > getMarkers() const;
         bool removeMarker(const std::shared_ptr<MapMarker>& marker);
         void removeAllMarkers();
