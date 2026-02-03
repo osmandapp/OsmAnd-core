@@ -1878,6 +1878,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         if (offsetDelta > 0)
         {
             zoomLevelOffset = qMin(zoomLevelOffset + offsetDelta, static_cast<int>(MaxMissingDataUnderZoomShift));
+            zoomLevelOffset = qMin(zoomDelta, zoomLevelOffset);
             if (zoomLevelOffset > 2 && internalState->visibleTilesCount > 1)
                 zoomLevelOffset = 2;
             if (zoomLevelOffset > 1 && internalState->visibleTilesCount > MaxNumberOfTilesUnderscaledTwice)
