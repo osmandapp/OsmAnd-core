@@ -360,17 +360,23 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
     if (wasLocked)
         _resourcesStoragesLock.unlock();
 
-    auto isPeriodChanged = updatedMask.isSet(MapRendererStateChange::TimePeriod);
-    auto newState = isPeriodChanged ? MapRendererResourceState::Outdated : MapRendererResourceState::PreparedRenew;
-    if (isPeriodChanged || updatedMask.isSet(MapRendererStateChange::DateTime))
+    bool isTimeChanged = updatedMask.isSet(MapRendererStateChange::DateTime);
+    bool isPeriodChanged = updatedMask.isSet(MapRendererStateChange::TimePeriod);
+    bool isDetailChanged = updatedMask.isSet(MapRendererStateChange::DetailLevel);
+    auto newState = isPeriodChanged || isDetailChanged ? MapRendererResourceState::Outdated
+        : MapRendererResourceState::PreparedRenew;
+    if (isTimeChanged || isPeriodChanged || isDetailChanged)
     {
+        if (isTimeChanged || isPeriodChanged)
         {
             QWriteLocker scopedLocker(&_tileDateTimeLock);
 
             _tileDateTime = state.dateTime;
         }
 
-        // Mark tile resources as needed to reupload in accordance to changed tile time
+        const auto detailedZoom = isDetailChanged ? renderer->getDetailedZoomLevel() : InvalidZoomLevel;
+
+        // Mark tile resources as needed to reupload in accordance to changed tile time or the actual detail level
         const auto mapLayerType = static_cast<int>(MapRendererResourceType::MapLayer);
         const auto& resourcesCollections = _storageByType[mapLayerType];
         const auto& bindings = _bindings[mapLayerType];
@@ -383,34 +389,41 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
                 continue;
 
             resourcesCollection->forEachResourceExecute(
-                [&atLeastOneMarked, &needsResourcesUploadOrUnload, isPeriodChanged, newState]
+                [&atLeastOneMarked, &needsResourcesUploadOrUnload, isPeriodChanged, isDetailChanged, detailedZoom, newState]
                 (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel)
                 {
                     if (auto resource = std::dynamic_pointer_cast<MapRendererRasterMapLayerResource>(entry))
                     {
-                        bool withData = resource->_sourceData && resource->_sourceData->images.size() > 1;
+                        const auto dZoom = static_cast<ZoomLevel>(resource->detailedZoom.loadAcquire());
+                        bool otherZoom = isDetailChanged && dZoom != InvalidZoomLevel && dZoom != detailedZoom;
+                        bool withTimedData = resource->_sourceData && resource->_sourceData->images.size() > 1;
                         auto state = resource->getState();
-                        if (withData && !isPeriodChanged && (state == MapRendererResourceState::Uploading
-                            || state == MapRendererResourceState::Renewing))
+                        if (withTimedData && !isPeriodChanged
+                            && (state == MapRendererResourceState::Uploading
+                                || state == MapRendererResourceState::Renewing))
                         {
                             resource->markAsOldTime();
                         }
-                        if (withData && resource->setStateIf(MapRendererResourceState::Uploaded, newState))
+                        if ((withTimedData || otherZoom)
+                            && resource->setStateIf(MapRendererResourceState::Uploaded, newState))
                         {
                             atLeastOneMarked = true;
                             LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Uploaded, newState);
                         }
-                        else if (withData && isPeriodChanged
+                        else if ((withTimedData && isPeriodChanged || otherZoom)
                             && resource->setStateIf(MapRendererResourceState::PreparedRenew, newState))
+                        {
                             LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::PreparedRenew, newState);
-                        else if (isPeriodChanged && (state == MapRendererResourceState::ProcessingRequest
+                        }
+                        else if ((isPeriodChanged || otherZoom)
+                            && (state == MapRendererResourceState::ProcessingRequest
                             || state == MapRendererResourceState::ProcessingUpdate
                             || state == MapRendererResourceState::ProcessingUpdateWhileRenewing
                             || state == MapRendererResourceState::Unavailable))
                         {
                             resource->markAsJunk();
                         }
-                        else if (withData && isPeriodChanged
+                        else if ((withTimedData && isPeriodChanged || otherZoom)
                             && (state == MapRendererResourceState::Ready
                             || state == MapRendererResourceState::Uploading
                             || state == MapRendererResourceState::Uploaded
@@ -423,11 +436,10 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
                     }
                 });
         }
-        if (isPeriodChanged)
+        if (isPeriodChanged || isDetailChanged)
             renderer->invalidateFrame();
         else if (atLeastOneMarked)
             requestResourcesUploadOrUnload();
-
     }
 
     return true;
@@ -967,6 +979,8 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(
             activeZoom, currentZoom, zoomLevelOffset);
     }
 
+    requestOutdatedResources(resourcesCollections);
+
     _resourcesRequestWorkerPool.enqueue(
         _requestedResourcesTasks,
         [centerTileId, activeTiles, activeZoom]
@@ -1099,6 +1113,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
         isElevationData || zoomLevelOffset != 0 || activeZoom != currentZoom || extraDetailedTiles.empty() ? neededZoom
         : static_cast<ZoomLevel>(
             std::min(activeZoom + std::min(1, maxMissingDataUnderZoomShift), static_cast<int>(maxZoom)));
+    const auto detailedZoom = static_cast<ZoomLevel>(currentZoom + zoomLevelOffset);
     // Request all tiles on needed zoom levels
     const int levelCount = 1 + (isSymbolData ? 0 : maxMissingDataUnderZoomShift);
     for (const auto& activeTileId : constOf(activeTiles))
@@ -1131,7 +1146,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
                     resourcesCollection->setLoadingState(true);
                     renderer->setSymbolsLoading(true);
                 }
-                requestNeededResource(resource);
+                requestNeededResource(resource, detailedZoom);
             }
         }
     }
@@ -1170,7 +1185,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
                                 underscaledTileId,
                                 underscaledZoom,
                                 resourceAllocator);
-                            requestNeededResource(resource);
+                            requestNeededResource(resource, detailedZoom);
                         }
                     }
                 }
@@ -1194,7 +1209,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
                             overscaledTileId,
                             overscaledZoom,
                             resourceAllocator);
-                        requestNeededResource(resource);
+                        requestNeededResource(resource, detailedZoom);
                     }
                 }
             }
@@ -1217,7 +1232,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
                             overscaledTileId,
                             overscaledZoom,
                             resourceAllocator);
-                        requestNeededResource(resource);
+                        requestNeededResource(resource, detailedZoom);
                     }
                 }
             }
@@ -1268,26 +1283,48 @@ void OsmAnd::MapRendererResourcesManager::requestNeededKeyedResources(
 }
 
 void OsmAnd::MapRendererResourcesManager::requestNeededResource(
-    const std::shared_ptr<MapRendererBaseResource>& resource)
+    const std::shared_ptr<MapRendererBaseResource>& resource, ZoomLevel detailedZoom /* = InvalidZoomLevel */)
 {
+    auto resourceState = resource->getState();
+
+    // Check detailed zoom level of present resource
+    if (detailedZoom != InvalidZoomLevel)
+    {
+        if (auto rasterResource = std::dynamic_pointer_cast<MapRendererRasterMapLayerResource>(resource))
+        {
+            if (resourceState == MapRendererResourceState::Uploaded)
+            {
+                const auto dZoom = static_cast<ZoomLevel>(rasterResource->detailedZoom.loadAcquire());
+                if (dZoom != InvalidZoomLevel && dZoom != detailedZoom
+                    && resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::Outdated))
+                {
+                    LOG_RESOURCE_STATE_CHANGE(
+                        resource, MapRendererResourceState::Uploaded, MapRendererResourceState::Outdated);
+                }
+                return;
+            }
+        }
+    }
+
     // Only if tile entry has "Unknown" state proceed to "Requesting" state
-    if (resource->getState() != MapRendererResourceState::Updating)
+    if (resourceState != MapRendererResourceState::Updating)
     {
         if (!resource->setStateIf(MapRendererResourceState::Unknown, MapRendererResourceState::Requesting))
             return;
         LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Unknown, MapRendererResourceState::Requesting);
     }
 
+    resourceState = resource->getState();
     if (resource->supportsObtainDataAsync())
     {
         // Since resource supports natural async, there's no need to use workers pool
 
-        if (resource->getState() == MapRendererResourceState::Requesting)
+        if (resourceState == MapRendererResourceState::Requesting)
         {
             resource->setState(MapRendererResourceState::Requested);
             LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::Requested);
         }
-        else if (resource->getState() == MapRendererResourceState::Updating)
+        else if (resourceState == MapRendererResourceState::Updating)
         {
             resource->setState(MapRendererResourceState::RequestedUpdate);
             LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::RequestedUpdate);
@@ -1428,12 +1465,12 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                     }
                 }
             };
-        if (resource->getState() == MapRendererResourceState::Requesting)
+        if (resourceState == MapRendererResourceState::Requesting)
         {
             resource->setState(MapRendererResourceState::Requested);
             LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::Requested);
         }
-        else if (resource->getState() == MapRendererResourceState::Updating)
+        else if (resourceState == MapRendererResourceState::Updating)
         {
             resource->setState(MapRendererResourceState::RequestedUpdate);
             LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::RequestedUpdate);
@@ -1609,7 +1646,7 @@ void OsmAnd::MapRendererResourcesManager::endResourceRequestProcessing(
         return;
     }
 #if OSMAND_LOG_RESOURCE_STATE_CHANGE
-    else if (resource->getState() == MapRendererResourceState::MapRendererResourceState::ProcessingRequest)
+    else if (resource->getState() == MapRendererResourceState::ProcessingRequest)
     {
         if (dataAvailable)
         {
@@ -1626,7 +1663,7 @@ void OsmAnd::MapRendererResourcesManager::endResourceRequestProcessing(
                 MapRendererResourceState::Unavailable);
         }
     }
-    else if (resource->getState() == MapRendererResourceState::MapRendererResourceState::ProcessingUpdate)
+    else if (resource->getState() == MapRendererResourceState::ProcessingUpdate)
     {
         if (dataAvailable)
         {
@@ -1643,7 +1680,7 @@ void OsmAnd::MapRendererResourcesManager::endResourceRequestProcessing(
                 MapRendererResourceState::Uploaded);
         }
     }
-    else if (resource->getState() == MapRendererResourceState::MapRendererResourceState::ProcessingUpdateWhileRenewing)
+    else if (resource->getState() == MapRendererResourceState::ProcessingUpdateWhileRenewing)
     {
         if (dataAvailable)
         {
@@ -1882,11 +1919,8 @@ void OsmAnd::MapRendererResourcesManager::updateResources(
             const auto& citTargetTileId = activeTilesTargets.constFind(zoomLevel);
             const auto& citVisibleTilesOfZoom = visibleTiles.constFind(zoomLevel);
             if (citTargetTileId != activeTilesTargets.cend() && citVisibleTilesOfZoom != visibleTiles.cend())
-            {
                 requestNeededResources(otherResourcesCollections, citTargetTileId.value(), tilesEntry.value(),
                     zoomLevel, currentZoom, citVisibleTilesOfZoom.value(), extraDetailedTiles, zoomLevelOffset);
-                requestOutdatedResources(otherResourcesCollections);
-            }
         }
     }
 }
@@ -2056,7 +2090,9 @@ bool OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
 
         // Since state change is allowed (it's not changed to "Uploading" during query), check state here
         if (resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading))
+        {
             LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Ready, MapRendererResourceState::Uploading);
+        }
         else if (resource->setStateIf(MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing))
         {
             LOG_RESOURCE_STATE_CHANGE(
@@ -2423,7 +2459,16 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
 
                     // Only resources in GPU are usable
                     const auto state = entry->getState();
-                    return state == MapRendererResourceState::Uploaded;
+                    return state == MapRendererResourceState::Uploaded
+                        || state == MapRendererResourceState::IsBeingUsed
+                        || state == MapRendererResourceState::PreparingRenew
+                        || state == MapRendererResourceState::PreparedRenew
+                        || state == MapRendererResourceState::Renewing
+                        || state == MapRendererResourceState::Outdated
+                        || state == MapRendererResourceState::Updating
+                        || state == MapRendererResourceState::RequestedUpdate
+                        || state == MapRendererResourceState::ProcessingUpdate
+                        || state == MapRendererResourceState::ProcessingUpdateWhileRenewing;
                 };
             const auto isCompletedResource =
                 []

@@ -24,7 +24,8 @@ namespace OsmAnd
         MapRasterLayerProvider_Software(
             const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider,
             const bool fillBackground = true,
-            const bool forceObtainDataAsync = false);
+            const bool forceObtainDataAsync = false,
+            const bool adjustToDetailedZoom = false);
         virtual ~MapRasterLayerProvider_Software();
     };
 }

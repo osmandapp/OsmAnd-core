@@ -204,7 +204,7 @@ void OsmAnd::MapRasterizer_P::rasterizeMapPrimitives(
 bool OsmAnd::MapRasterizer_P::updatePaint(
     const Context& context,
     SkPaint& paint,
-    const MapStyleEvaluationResult::Packed& evalResult,
+    const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
     const PaintValuesSet valueSetSelector,
     const bool isArea)
 {
@@ -279,6 +279,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
             return false;
     }
 
+    const auto evalResult = primitive->evaluationResult;
     if (isArea)
     {
         if (!evalResult.contains(valueDefId_color) && !evalResult.contains(env->styleBuiltinValueDefs->id_OUTPUT_SHADER))
@@ -299,7 +300,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
         paint.setColorFilter(nullptr);
         paint.setShader(nullptr);
         paint.setStyle(SkPaint::kStroke_Style);
-        paint.setStrokeWidth(stroke);
+        paint.setStrokeWidth(stroke * primitive->detailScaleFactor);
 
         QString cap;
         evalResult.getStringValue(valueDefId_cap, cap);
@@ -402,7 +403,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     //////////////////////////////////////////////////////////////////////////
 
     SkPaint paint = _defaultPaint;
-    if (!updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_1, true))
+    if (!updatePaint(context, paint, primitive, PaintValuesSet::Layer_1, true))
         return;
 
     // Construct and test geometry against bbox area
@@ -490,11 +491,11 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
         }
     }
 
-    if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_0, true))
+    if (updatePaint(context, paint, primitive, PaintValuesSet::Layer_0, true))
         canvas.drawPath(path, paint);
-    if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_1, true))
+    if (updatePaint(context, paint, primitive, PaintValuesSet::Layer_1, true))
         canvas.drawPath(path, paint);
-    if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_2, false))
+    if (updatePaint(context, paint, primitive, PaintValuesSet::Layer_2, false))
         canvas.drawPath(path, paint);
 }
 
@@ -575,14 +576,14 @@ void OsmAnd::MapRasterizer_P::drawLineLayer(
     const Context& context,
     const AreaI& area31,
     const QVector<PointI>& points31,
-    const MapStyleEvaluationResult::Packed& evalResult,
+    const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
     const PaintValuesSet valueSetSelector,
     const IMapStyle::ValueDefinitionId hMarginId)
 {
-    if (updatePaint(context, paint, evalResult, valueSetSelector, false))
+    if (updatePaint(context, paint, primitive, valueSetSelector, false))
     {
         float hMargin = 0.0f;
-        if (evalResult.getFloatValue(hMarginId, hMargin))
+        if (primitive->evaluationResult.getFloatValue(hMarginId, hMargin))
         {
             SkPath newPath;
             if (calculateLinePath(context, points31, area31, newPath, hMargin))
@@ -604,7 +605,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     const auto& env = context.env;
 
     SkPaint paint = _defaultPaint;
-    if (!updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_1, false))
+    if (!updatePaint(context, paint, primitive, PaintValuesSet::Layer_1, false))
         return;
 
     bool ok;
@@ -660,28 +661,28 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     }
     else
     {
-        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive->evaluationResult, PaintValuesSet::Layer_minus2,
+        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive, PaintValuesSet::Layer_minus2,
                       env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__2);
 
-        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive->evaluationResult, PaintValuesSet::Layer_minus1,
+        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive, PaintValuesSet::Layer_minus1,
                       env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__1);
 
-        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive->evaluationResult, PaintValuesSet::Layer_0,
+        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive, PaintValuesSet::Layer_0,
                       env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_0);
 
-        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive->evaluationResult, PaintValuesSet::Layer_1,
+        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive, PaintValuesSet::Layer_1,
                       env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN);
 
-        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive->evaluationResult, PaintValuesSet::Layer_2,
+        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive, PaintValuesSet::Layer_2,
                       env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_2);
 
-        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive->evaluationResult, PaintValuesSet::Layer_3,
+        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive, PaintValuesSet::Layer_3,
                       env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_3);
 
-        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive->evaluationResult, PaintValuesSet::Layer_4,
+        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive, PaintValuesSet::Layer_4,
                       env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_4);
 
-        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive->evaluationResult, PaintValuesSet::Layer_5,
+        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive, PaintValuesSet::Layer_5,
                       env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_5);
 
         rasterizePolylineIcons(context, canvas, path, primitive->evaluationResult);

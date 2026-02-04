@@ -51,6 +51,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimiti
     const AreaI area31,
     const PointI areaSizeInPixels,
     const ZoomLevel zoom,
+    const ZoomLevel detailedZoom,
     const TileId tileId,
     const AreaI visibleArea31,
     const int64_t visibleAreaTime,
@@ -60,8 +61,8 @@ std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimiti
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
     MapPrimitiviser_Metrics::Metric_primitiviseWithSurface* const metric /*= nullptr*/)
 {
-    return _p->primitiviseWithSurface(area31, areaSizeInPixels, zoom, tileId, visibleArea31, visibleAreaTime,
-        surfaceType, objects, cache, queryController, metric);
+    return _p->primitiviseWithSurface(area31, areaSizeInPixels, zoom, detailedZoom, tileId, visibleArea31,
+        visibleAreaTime, surfaceType, objects, cache, queryController, metric);
 }
 
 std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimitiviser::primitiviseWithoutSurface(
@@ -111,6 +112,7 @@ OsmAnd::MapPrimitiviser::Primitive::Primitive(
     , attributeIdIndex(typeRuleIdIndex_)
     , zOrder(0)
     , doubledArea(-1)
+    , detailScaleFactor(1.0f)
 {
 }
 
@@ -118,7 +120,8 @@ OsmAnd::MapPrimitiviser::Primitive::Primitive(
     const std::shared_ptr<const PrimitivesGroup>& group_,
     const PrimitiveType type_,
     const uint32_t typeRuleIdIndex_,
-    const MapStyleEvaluationResult& evaluationResult_)
+    const MapStyleEvaluationResult& evaluationResult_,
+    const float detailScaleFactor_ /* = 1.0f */)
     : group(group_)
     , sourceObject(group_->sourceObject)
     , type(type_)
@@ -126,6 +129,7 @@ OsmAnd::MapPrimitiviser::Primitive::Primitive(
     , evaluationResult(evaluationResult_.pack())
     , zOrder(0)
     , doubledArea(-1)
+    , detailScaleFactor(detailScaleFactor_)
 {
 }
 

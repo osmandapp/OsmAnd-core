@@ -10,11 +10,13 @@ OsmAnd::MapRasterLayerProvider::MapRasterLayerProvider(
     MapRasterLayerProvider_P* const p_,
     const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider_,
     const bool fillBackground_,
-    const bool forceObtainDataAsync_)
+    const bool forceObtainDataAsync_,
+    const bool adjustToDetailedZoom_)
     : _p(p_)
     , primitivesProvider(primitivesProvider_)
     , fillBackground(fillBackground_)
     , forceObtainDataAsync(forceObtainDataAsync_)
+    , adjustToDetailedZoom(adjustToDetailedZoom_)
 {
     _p->initialize();
 }

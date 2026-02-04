@@ -184,7 +184,7 @@ namespace OsmAnd
         virtual AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const = 0;
         virtual double getPixelsToMetersScaleFactor(
             const MapRendererState& state, const MapRendererInternalState& internalState) const = 0;
-        virtual void setTileZoomLevel(
+        virtual ZoomLevel setTileZoomLevel(
             const MapRendererState& state, const MapRendererInternalState& internalState) = 0;
         virtual bool getNewTargetAndZoom(const MapRendererState& state,
             const PointI& screenPoint, const PointI& location31, const float height, PointI& target31,
@@ -276,6 +276,7 @@ namespace OsmAnd
             const CalculationSteps neededSteps = Complete) const;
 
         // Resources-related:
+        QAtomicInt _detailedZoomLevel;
         const MapRendererResourcesManager& getResources() const;
         MapRendererResourcesManager& getResources();
         std::shared_ptr<MapRendererResourcesManager>& getResourcesSharedPtr();
@@ -493,6 +494,8 @@ namespace OsmAnd
         virtual float getMaxZoomLevel() const Q_DECL_OVERRIDE;
         virtual bool setMinZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setMaxZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+
+        virtual ZoomLevel getDetailedZoomLevel() const Q_DECL_OVERRIDE;
 
         virtual ZoomLevel getMinimalZoomLevelsRangeLowerBound() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMinimalZoomLevelsRangeUpperBound() const Q_DECL_OVERRIDE;

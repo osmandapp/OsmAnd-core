@@ -110,13 +110,6 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
     if (queryController->isAborted())
         return false;
 
-    const auto empty =
-        []
-        (const std::shared_ptr<TileEntry>& entry) -> bool
-        {
-            return !entry->dataWeakRef.lock();
-        };
-
     const Stopwatch totalStopwatch(metric != nullptr);
 
     std::shared_ptr<TileEntry> tileEntry;
@@ -157,13 +150,17 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
             if (tileEntry->getState() == TileState::Loaded)
                 outTiledPrimitives = tileEntry->dataWeakRef.lock();
 
-            // If successfully locked, just return it
             if (outTiledPrimitives)
-                return true;
+            {
+                if (request.detailedZoom == InvalidZoomLevel || request.detailedZoom == outTiledPrimitives->detailedZoom)
+                    return true;
+                else
+                    outTiledPrimitives.reset();
+            }
 
             // Otherwise consider this tile entry as expired, remove it from collection (it's safe to do that right now)
             // This will enable creation of new entry on next loop cycle
-            _tileReferences.removeEntry(request.tileId, request.zoom, empty);
+            _tileReferences.removeEntry(request.tileId, request.zoom);
             tileEntry.reset();
 
             if (queryController->isAborted())
@@ -178,7 +175,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
             QWriteLocker scopedLocker(&tileEntry->loadedConditionLock);
             tileEntry->loadedCondition.wakeAll();
         }
-        _tileReferences.removeEntry(request.tileId, request.zoom, empty);
+        _tileReferences.removeEntry(request.tileId, request.zoom);
         tileEntry.reset();
 
         return false;
@@ -201,7 +198,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
             QWriteLocker scopedLocker(&tileEntry->loadedConditionLock);
             tileEntry->loadedCondition.wakeAll();
         }
-        _tileReferences.removeEntry(request.tileId, request.zoom, empty);
+        _tileReferences.removeEntry(request.tileId, request.zoom);
         tileEntry.reset();
 
         return false;
@@ -273,6 +270,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
             tileBBox31,
             PointI(owner->tileSize, owner->tileSize),
             request.zoom,
+            request.detailedZoom != InvalidZoomLevel ? request.detailedZoom : request.zoom,
             request.tileId,
             request.visibleArea31,
             request.areaTime,
@@ -292,7 +290,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
             QWriteLocker scopedLocker(&tileEntry->loadedConditionLock);
             tileEntry->loadedCondition.wakeAll();
         }
-        _tileReferences.removeEntry(request.tileId, request.zoom, empty);
+        _tileReferences.removeEntry(request.tileId, request.zoom);
         tileEntry.reset();
 
         return false;
@@ -302,6 +300,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
     const std::shared_ptr<MapPrimitivesProvider::Data> newTiledData(new MapPrimitivesProvider::Data(
         request.tileId,
         request.zoom,
+        request.detailedZoom != InvalidZoomLevel ? request.detailedZoom : request.zoom,
         dataTile,
         primitivisedObjects,
         new RetainableCacheMetadata(tileEntry, dataTile->retainableCacheMetadata)));

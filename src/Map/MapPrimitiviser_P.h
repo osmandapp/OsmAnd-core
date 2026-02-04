@@ -84,6 +84,7 @@ namespace OsmAnd
 
         static void obtainPrimitives(
             const Context& context,
+            const ZoomLevel detailedZoom,
             const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
             const QList< std::shared_ptr<const OsmAnd::MapObject> >& source,
             MapStyleEvaluationResult& evaluationResult,
@@ -93,6 +94,7 @@ namespace OsmAnd
 
         static std::shared_ptr<const PrimitivesGroup> obtainPrimitivesGroup(
             const Context& context,
+            const float detailScaleFactor,
             const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
             const std::shared_ptr<const MapObject>& mapObject,
             MapStyleEvaluationResult& evaluationResult,
@@ -222,6 +224,7 @@ namespace OsmAnd
             const AreaI area31,
             const PointI areaSizeInPixels,
             const ZoomLevel zoom,
+            const ZoomLevel detailedZoom,
             const TileId tileId,
             const AreaI visibleArea31,
             const int64_t visibleAreaTime,

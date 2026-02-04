@@ -3968,12 +3968,13 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getPixelsToMetersScaleFactor(
     return metersPerPixel;
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::setTileZoomLevel(
+OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::setTileZoomLevel(
     const MapRendererState& state, const MapRendererInternalState& internalState_)
 {
     const auto internalState = static_cast<const InternalState*>(&internalState_);
     _tileZoomLevel = state.zoomLevel;
     _tileZoomLevelOffset = internalState->zoomLevelOffset;
+    return static_cast<ZoomLevel>(_tileZoomLevel + _tileZoomLevelOffset);
 }
 
 double OsmAnd::AtlasMapRenderer_OpenGL::getMaxViewportScale() const

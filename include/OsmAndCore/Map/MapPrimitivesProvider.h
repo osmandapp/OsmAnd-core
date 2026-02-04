@@ -35,10 +35,13 @@ namespace OsmAnd
             Data(
                 const TileId tileId,
                 const ZoomLevel zoom,
+                const ZoomLevel detailedZoom,
                 const std::shared_ptr<const IMapObjectsProvider::Data>& mapObjectsData,
                 const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
                 const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
             virtual ~Data();
+
+            const ZoomLevel detailedZoom;
 
             std::shared_ptr<const IMapObjectsProvider::Data> mapObjectsData;
             std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects> primitivisedObjects;

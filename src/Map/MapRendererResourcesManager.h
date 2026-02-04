@@ -210,7 +210,7 @@ namespace OsmAnd
             const std::shared_ptr<MapRendererKeyedResourcesCollection>& resourcesCollection,
             const ZoomLevel zoom);
         void requestNeededResource(
-            const std::shared_ptr<MapRendererBaseResource>& resource);
+            const std::shared_ptr<MapRendererBaseResource>& resource, ZoomLevel detailedZoom = InvalidZoomLevel);
         void addCombinedTilesToRequest(
             const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection,
             const TiledResourceAllocator resourceAllocator,
