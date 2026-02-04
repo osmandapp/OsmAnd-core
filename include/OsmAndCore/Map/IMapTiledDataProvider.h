@@ -42,6 +42,7 @@ namespace OsmAnd
 
             TileId tileId;
             ZoomLevel zoom;
+            ZoomLevel detailedZoom;
             AreaI visibleArea31;
             int64_t areaTime;
             bool cacheOnly;

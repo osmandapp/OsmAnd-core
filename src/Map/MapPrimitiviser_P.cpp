@@ -112,7 +112,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     MapStyleEvaluationResult evaluationResult(context.env->mapStyle->getValueDefinitionsCount());
 
     const Stopwatch obtainPrimitivesStopwatch(metric != nullptr);
-    obtainPrimitives(context, primitivisedObjects, objects, evaluationResult, cache, queryController, metric);
+    obtainPrimitives(context, zoom, primitivisedObjects, objects, evaluationResult, cache, queryController, metric);
     if (metric)
         metric->elapsedTimeForObtainingPrimitives += obtainPrimitivesStopwatch.elapsed();
     
@@ -145,6 +145,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const AreaI area31,
     const PointI areaSizeInPixels,
     const ZoomLevel zoom,
+    const ZoomLevel detailedZoom,
     const TileId tileId,
     const AreaI visibleArea31,
     const int64_t visibleAreaTime,
@@ -444,6 +445,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const Stopwatch obtainPrimitivesFromDetailedmapStopwatch(metric != nullptr);
     obtainPrimitives(
         context,
+        detailedZoom,
         primitivisedObjects,
         detailedmapMapObjects,
         evaluationResult,
@@ -458,6 +460,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         const Stopwatch obtainPrimitivesFromBasemapStopwatch(metric != nullptr);
         obtainPrimitives(
             context,
+            detailedZoom,
             primitivisedObjects,
             basemapMapObjects,
             evaluationResult,
@@ -475,6 +478,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const Stopwatch obtainPrimitivesFromCoastlinesStopwatch(metric != nullptr);
     obtainPrimitives(
         context,
+        detailedZoom,
         primitivisedObjects,
         polygonizedCoastlineObjects,
         evaluationResult,
@@ -577,14 +581,16 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     MapStyleEvaluationResult evaluationResult(context.env->mapStyle->getValueDefinitionsCount());
 
     const Stopwatch obtainPrimitivesFromDetailedmapStopwatch(metric != nullptr);
-    obtainPrimitives(context, primitivisedObjects, detailedmapMapObjects, evaluationResult, cache, queryController, metric);
+    obtainPrimitives(
+        context, zoom, primitivisedObjects, detailedmapMapObjects, evaluationResult, cache, queryController, metric);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesFromDetailedmap += obtainPrimitivesFromDetailedmapStopwatch.elapsed();
 
     if ((zoom <= static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap)) || detailedDataMissing)
     {
         const Stopwatch obtainPrimitivesFromBasemapStopwatch(metric != nullptr);
-        obtainPrimitives(context, primitivisedObjects, basemapMapObjects, evaluationResult, cache, queryController, metric);
+        obtainPrimitives(
+            context, zoom, primitivisedObjects, basemapMapObjects, evaluationResult, cache, queryController, metric);
         if (metric)
             metric->elapsedTimeForObtainingPrimitivesFromBasemap += obtainPrimitivesFromBasemapStopwatch.elapsed();
     }
@@ -616,6 +622,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
 void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
     const Context& context,
+    const ZoomLevel detailedZoom,
     const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
     const QList< std::shared_ptr<const OsmAnd::MapObject> >& source,
     MapStyleEvaluationResult& evaluationResult,
@@ -625,6 +632,9 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
 {
     const auto& env = context.env;
     const auto zoom = primitivisedObjects->zoom;
+    auto detailScaleFactor = static_cast<float>(1 << abs(detailedZoom - zoom));
+    if (detailedZoom > zoom)
+        detailScaleFactor = 1.0f / detailScaleFactor;
 
     const Stopwatch obtainPrimitivesStopwatch(metric != nullptr);
 
@@ -643,8 +653,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
     // Initialize shared settings for polyline evaluation
     MapStyleEvaluator polylineEvaluator(env->mapStyle, env->displayDensityFactor * env->mapScaleFactor);
     env->applyTo(polylineEvaluator);
-    polylineEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
-    polylineEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
+    polylineEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, detailedZoom);
+    polylineEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, detailedZoom);
 
     // Initialize shared settings for point evaluation
     MapStyleEvaluator pointEvaluator(env->mapStyle, env->displayDensityFactor * env->mapScaleFactor);
@@ -701,6 +711,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
         const Stopwatch obtainPrimitivesGroupStopwatch(metric != nullptr);
         const auto group = obtainPrimitivesGroup(
             context,
+            detailScaleFactor,
             primitivisedObjects,
             mapObject,
             evaluationResult,
@@ -763,6 +774,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
 
 std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPrimitiviser_P::obtainPrimitivesGroup(
     const Context& context,
+    const float detailScaleFactor,    
     const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const MapObject>& mapObject,
     MapStyleEvaluationResult& evaluationResult,
@@ -1118,7 +1130,8 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                 group,
                 objectType,
                 attributeIdIndex,
-                evaluationResult));
+                evaluationResult,
+                detailScaleFactor));
             primitive->zOrder = zOrder;
 
             // Accept this primitive

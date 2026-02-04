@@ -61,7 +61,8 @@ namespace OsmAnd
         MyLocation,
         SymbolsOpacity,
         DateTime,
-        TimePeriod
+        TimePeriod,
+        DetailLevel
     };
     typedef Bitmask<MapRendererStateChange> MapRendererStateChanges;
 

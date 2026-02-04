@@ -102,7 +102,8 @@ namespace OsmAnd
                 const std::shared_ptr<const PrimitivesGroup>& group,
                 const PrimitiveType type,
                 const uint32_t typeRuleIdIndex,
-                const MapStyleEvaluationResult& evaluationResult);
+                const MapStyleEvaluationResult& evaluationResult,
+                const float detailScaleFactor = 1.0f);
         public:
             ~Primitive();
 
@@ -115,6 +116,7 @@ namespace OsmAnd
 
             int zOrder;
             int64_t doubledArea;
+            float detailScaleFactor;
 
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;
@@ -360,6 +362,7 @@ namespace OsmAnd
             const AreaI area31,
             const PointI areaSizeInPixels,
             const ZoomLevel zoom,
+            const ZoomLevel detailedZoom,
             const TileId tileId,
             const AreaI visibleArea31,
             const int64_t visibleAreaTime,

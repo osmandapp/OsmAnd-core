@@ -11,6 +11,7 @@
 #include "GPUAPI.h"
 #include "MapRendererBaseTiledResource.h"
 #include "IRasterMapLayerProvider.h"
+#include "MapRasterLayerProvider.h"
 
 namespace OsmAnd
 {
@@ -48,6 +49,7 @@ namespace OsmAnd
 
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU;
         mutable QAtomicInt resourceInGPULock;
+        QAtomicInt detailedZoom;
 
         std::shared_ptr<Metric> metric;
 

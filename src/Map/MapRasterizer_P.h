@@ -79,7 +79,7 @@ namespace OsmAnd
         bool updatePaint(
             const Context& context,
             SkPaint& paint,
-            const MapStyleEvaluationResult::Packed& evalResult,
+            const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
             const PaintValuesSet valueSetSelector,
             const bool isArea);
 
@@ -122,7 +122,7 @@ namespace OsmAnd
             const Context& context,
             const AreaI& area31,
             const QVector<PointI>& points31,
-            const MapStyleEvaluationResult::Packed& evalResult,
+            const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
             const PaintValuesSet valueSetSelector,
             const IMapStyle::ValueDefinitionId hMarginId);
         bool calculateLinePath(

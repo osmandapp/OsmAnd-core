@@ -11,6 +11,7 @@ OsmAnd::MapRendererRasterMapLayerResource::MapRendererRasterMapLayerResource(
     const ZoomLevel zoom_)
     : MapRendererBaseTiledResource(owner_, MapRendererResourceType::MapLayer, collection_, tileId_, zoom_)
     , resourceInGPU(_resourceInGPU)
+    , detailedZoom(InvalidZoomLevel)
 {
 }
 
@@ -59,6 +60,16 @@ bool OsmAnd::MapRendererRasterMapLayerResource::obtainData(
     IRasterMapLayerProvider::Request request;
     request.tileId = tileId;
     request.zoom = zoom;
+    auto detailedZoomLevel = InvalidZoomLevel;
+    if (const auto provider = std::dynamic_pointer_cast<MapRasterLayerProvider>(provider_))
+    {
+        if (provider->adjustToDetailedZoom)
+        {
+            detailedZoomLevel = resourcesManager->renderer->getDetailedZoomLevel();
+            detailedZoom.storeRelaxed(detailedZoomLevel);
+        }
+    }
+    request.detailedZoom = detailedZoomLevel;
     const auto mapState = resourcesManager->renderer->getMapState();
     const auto visibleArea = Utilities::roundBoundingBox31(mapState.visibleBBox31, mapState.zoomLevel);
     request.visibleArea31 = Utilities::getEnlargedVisibleArea(visibleArea);

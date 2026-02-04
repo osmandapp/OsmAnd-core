@@ -2434,6 +2434,7 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMap
         std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
         auto state = resource->getState();
         if (state == MapRendererResourceState::Uploaded
+            || state == MapRendererResourceState::PreparingRenew
             || state == MapRendererResourceState::PreparedRenew
             || state == MapRendererResourceState::Outdated
             || state == MapRendererResourceState::Renewing

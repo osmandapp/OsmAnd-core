@@ -675,7 +675,12 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
         _currentState.visibleBBox31 = getVisibleBBox31(getInternalState());
         _currentState.visibleBBoxShifted = getVisibleBBoxShifted(getInternalState());
 
-        setTileZoomLevel(_currentState, getInternalState());
+        const auto detailedZoomLevel = static_cast<int>(setTileZoomLevel(_currentState, getInternalState()));
+        if (_detailedZoomLevel.fetchAndStoreAcquire(detailedZoomLevel) != detailedZoomLevel)
+        {
+            const auto changeMask = (1u << static_cast<uint32_t>(MapRendererStateChange::DetailLevel));
+            _requestedStateUpdatedMask.fetchAndOrOrdered(changeMask);
+        }
     }
 
     return true;
@@ -3691,6 +3696,13 @@ bool OsmAnd::MapRenderer::setMaxZoomLevel(const ZoomLevel zoomLevel, bool forced
     }
 
     return true;
+}
+
+OsmAnd::ZoomLevel OsmAnd::MapRenderer::getDetailedZoomLevel() const
+{
+    const auto result = _detailedZoomLevel.loadAcquire();
+
+    return static_cast<ZoomLevel>(result);
 }
 
 OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMinimalZoomLevelsRangeLowerBound() const

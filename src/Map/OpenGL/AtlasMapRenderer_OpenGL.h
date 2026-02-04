@@ -151,7 +151,7 @@ namespace OsmAnd
         AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const override;
         double getPixelsToMetersScaleFactor(
             const MapRendererState& state, const MapRendererInternalState& internalState) const override;
-        void setTileZoomLevel(
+        ZoomLevel setTileZoomLevel(
             const MapRendererState& state, const MapRendererInternalState& internalState) override;
         bool getNewTargetAndZoom(const MapRendererState& state, const PointI& screenPoint, const PointI& location31,
             const float height, PointI& target31, ZoomLevel& zoomLevel, float& visualZoom,

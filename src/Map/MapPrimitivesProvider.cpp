@@ -77,10 +77,12 @@ void OsmAnd::MapPrimitivesProvider::obtainDataAsync(
 OsmAnd::MapPrimitivesProvider::Data::Data(
     const TileId tileId_,
     const ZoomLevel zoom_,
+    const ZoomLevel detailedZoom_,
     const std::shared_ptr<const IMapObjectsProvider::Data>& mapObjectsData_,
     const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects_,
     const RetainableCacheMetadata* const pRetainableCacheMetadata_ /*= nullptr*/)
     : IMapTiledDataProvider::Data(tileId_, zoom_, pRetainableCacheMetadata_)
+    , detailedZoom(detailedZoom_)
     , mapObjectsData(mapObjectsData_)
     , primitivisedObjects(primitivisedObjects_)
 {
