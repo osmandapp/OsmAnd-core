@@ -842,7 +842,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
             return;
     }
 
-    const auto checkVert = internalState->isNotTopDownProjection;
+    const auto isNotTopDownProjection = internalState->isNotTopDownProjection;
     const auto ca = internalState->cameraAngles;
     const auto camPos = internalState->cameraRotatedPosition;
     const auto camDir = -internalState->cameraRotatedDirection;
@@ -1031,7 +1031,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY);
         }
 
-        if (checkExtra && checkVert && rayIntersectsSphere(camPos, camDown, 1.0, FD))
+        if (checkExtra && isNotTopDownProjection && rayIntersectsSphere(camPos, camDown, 1.0, FD))
         {
             if (withFBL && withFBR)
             {
@@ -1169,7 +1169,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         while (shouldRepeat)
         {
             shouldRepeat = false;
-            bool atLeastOneAdded = false;    
+            bool atLeastOneAdded = false;
+            const bool checkVert = isNotTopDownProjection && !lookForStrictlyVisible;
             for (const auto& setEntry : rangeOf(constOf(*procTiles)))
             {
                 const auto currentZoom = setEntry.key();
@@ -1641,7 +1642,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         const bool oddY = tileIdN.y & 1 > 0;
                         const auto centralPoint = oddY ? (oddX ? normalTL : normalTR) : (oddX ? normalBL : normalBR);
                         const auto distance = getDistanceToTile(centralPoint, camPos, camDir, tiltFactor);
-                        if (currentZoom > MinZoomLevel && zLower != zFar
+                        if (!lookForStrictlyVisible && currentZoom > MinZoomLevel && zLower != zFar
                             && distance > zLower + detailDistanceFactor(zShift) * detailThickness)
                         {
                             tilesN[currentZoom].insert(tileIdN);
@@ -1685,14 +1686,14 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
 
                         if (!lookForStrictlyVisible || (isVisible && (minHeight != 0.0 || maxHeight != 0.0)))
                         {
-                            tiles[currentZoom].insert(tileId, visibility);
-                            tilesN[currentZoom].insert(tileIdN);
-
                             if (lookForStrictlyVisible)
                             {
                                 takeTop = true;
                                 lookForStrictlyVisible = false;
+                                tilesN[currentZoom].clear();
                             }
+                            tiles[currentZoom].insert(tileId, visibility);
+                            tilesN[currentZoom].insert(tileIdN);
                         }
                         else
                             continue;
@@ -1748,6 +1749,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     if (lookForStrictlyVisible)
                     {
                         lookForStrictlyVisible = false;
+                        tilesN[zoomLevel].clear();
                         atLeastOneFlatVisibleFound = false;
                         maxDistance = 1.0;
                         distanceFromTarget = 0.0;
