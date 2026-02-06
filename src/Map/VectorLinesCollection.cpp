@@ -31,11 +31,19 @@ QList<std::shared_ptr<OsmAnd::VectorLine>> OsmAnd::VectorLinesCollection::getLin
 
 bool OsmAnd::VectorLinesCollection::removeLine(const std::shared_ptr<VectorLine>& line)
 {
+    auto arrowsProvider = _arrowsProvider.lock();
+    if (arrowsProvider)
+        arrowsProvider->removeLineMarkers(line->lineId);
+
     return _p->removeLine(line);
 }
 
 void OsmAnd::VectorLinesCollection::removeAllLines()
 {
+    auto arrowsProvider = _arrowsProvider.lock();
+    if (arrowsProvider)
+        arrowsProvider->removeAllMarkers();
+
     _p->removeAllLines();
 }
 

@@ -13,14 +13,29 @@ OsmAnd::MapMarkersCollection::~MapMarkersCollection()
 {
 }
 
-std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkersCollection::getMarkerById(int id) const
+std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkersCollection::getMarkerById(int markerId, int groupId /*= 0*/) const
 {
-    return _p->getMarkerById(id);
+    return _p->getMarkerById(markerId, groupId);
 }
 
 QList< std::shared_ptr<OsmAnd::MapMarker> > OsmAnd::MapMarkersCollection::getMarkers() const
 {
     return _p->getMarkers();
+}
+
+int OsmAnd::MapMarkersCollection::getMarkersCountByGroupId(int groupId) const
+{
+    return _p->getMarkersCountByGroupId(groupId);
+}
+
+void OsmAnd::MapMarkersCollection::removeMarkersByGroupId(int groupId)
+{
+    _p->removeMarkersByGroupId(groupId);
+}
+
+bool OsmAnd::MapMarkersCollection::removeMarkerById(int markerId, int groupId)
+{
+    return _p->removeMarkerById(markerId, groupId);
 }
 
 bool OsmAnd::MapMarkersCollection::removeMarker(const std::shared_ptr<MapMarker>& marker)

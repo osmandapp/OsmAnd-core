@@ -13,40 +13,81 @@ OsmAnd::MapMarkersCollection_P::~MapMarkersCollection_P()
 {
 }
 
-std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkersCollection_P::getMarkerById(int id) const
+std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkersCollection_P::getMarkerById(int markerId, int groupId) const
 {
     QReadLocker scopedLocker(&_markersLock);
 
-    return _markersById.value(id);
+    return _markersById.value(groupId).value(markerId);
 }
 
 QList< std::shared_ptr<OsmAnd::MapMarker> > OsmAnd::MapMarkersCollection_P::getMarkers() const
 {
     QReadLocker scopedLocker(&_markersLock);
 
-    return _markers.values();
+    QList< std::shared_ptr<OsmAnd::MapMarker> > result;
+    for (auto& markers : _markers)
+    {
+        result.append(markers.values());
+    }
+
+    return result;
+}
+
+int OsmAnd::MapMarkersCollection_P::getMarkersCountByGroupId(int groupId) const
+{
+    QReadLocker scopedLocker(&_markersLock);
+
+    return _markersById[groupId].size();
 }
 
 bool OsmAnd::MapMarkersCollection_P::addMarker(const std::shared_ptr<MapMarker>& marker)
 {
+    if (!marker)
+        return false;
+
     QWriteLocker scopedLocker(&_markersLock);
 
     const auto key = reinterpret_cast<IMapKeyedSymbolsProvider::Key>(marker.get());
-    if (_markers.contains(key))
+    if (_markers[marker->groupId].contains(key))
         return false;
 
-    _markers.insert(key, marker);
-    _markersById.insert(marker->markerId, marker);
+    _markers[marker->groupId].insert(key, marker);
+    _markersById[marker->groupId].insert(marker->markerId, marker);
 
     return true;
 }
 
-bool OsmAnd::MapMarkersCollection_P::removeMarker(const std::shared_ptr<MapMarker>& marker)
+void OsmAnd::MapMarkersCollection_P::removeMarkersByGroupId(int groupId)
 {
     QWriteLocker scopedLocker(&_markersLock);
 
-    _markersById.remove(marker->markerId);
-    const bool removed = (_markers.remove(reinterpret_cast<IMapKeyedSymbolsProvider::Key>(marker.get())) > 0);
+    _markersById[groupId].clear();
+    _markers[groupId].clear();
+}
+
+bool OsmAnd::MapMarkersCollection_P::removeMarkerById(int markerId, int groupId)
+{
+    QWriteLocker scopedLocker(&_markersLock);
+
+    const auto marker = _markersById[groupId].value(markerId);
+    if (!marker)
+        return false;
+    _markersById[groupId].remove(markerId);
+    const bool removed =
+        (_markers[groupId].remove(reinterpret_cast<IMapKeyedSymbolsProvider::Key>(marker.get())) > 0);
+    return removed;
+}
+
+bool OsmAnd::MapMarkersCollection_P::removeMarker(const std::shared_ptr<MapMarker>& marker)
+{
+    if (!marker)
+        return false;
+
+    QWriteLocker scopedLocker(&_markersLock);
+
+    _markersById[marker->groupId].remove(marker->markerId);
+    const bool removed =
+        (_markers[marker->groupId].remove(reinterpret_cast<IMapKeyedSymbolsProvider::Key>(marker.get())) > 0);
     return removed;
 }
 
@@ -54,7 +95,7 @@ void OsmAnd::MapMarkersCollection_P::removeAllMarkers()
 {
     QWriteLocker scopedLocker(&_markersLock);
 
-    _markersById.clear();;
+    _markersById.clear();
     _markers.clear();
 }
 
@@ -62,7 +103,13 @@ QList<OsmAnd::IMapKeyedSymbolsProvider::Key> OsmAnd::MapMarkersCollection_P::get
 {
     QReadLocker scopedLocker(&_markersLock);
 
-    return _markers.keys();
+    QList<OsmAnd::IMapKeyedSymbolsProvider::Key> result;
+    for (auto& markers : _markers)
+    {
+        result.append(markers.keys());
+    }
+
+    return result;
 }
 
 bool OsmAnd::MapMarkersCollection_P::obtainData(
@@ -73,10 +120,18 @@ bool OsmAnd::MapMarkersCollection_P::obtainData(
 
     QReadLocker scopedLocker(&_markersLock);
 
-    const auto citMarker = _markers.constFind(request.key);
-    if (citMarker == _markers.cend())
+    std::shared_ptr<MapMarker> marker;
+    for (auto& markers : _markers)
+    {
+        const auto citMarker = markers.constFind(request.key);
+        if (citMarker != markers.cend())
+        {
+            marker = *citMarker;
+            break;
+        }        
+    }
+    if (!marker)
         return false;
-    auto& marker = *citMarker;
 
     outData.reset(new IMapKeyedSymbolsProvider::Data(request.key, marker->createSymbolsGroup(owner->subsection)));
 

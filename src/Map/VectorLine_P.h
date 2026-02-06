@@ -75,6 +75,7 @@ namespace OsmAnd
         mutable QReadWriteLock _arrowsOnPathLock;
         bool _hasUnappliedChanges;
         bool _hasUnappliedPrimitiveChanges;
+        bool _hasUnappliedStartingDistance;
 
         bool _isHidden;
         float _startingDistance;

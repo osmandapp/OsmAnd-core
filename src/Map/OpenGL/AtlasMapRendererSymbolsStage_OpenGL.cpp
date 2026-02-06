@@ -3514,8 +3514,8 @@ int OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::startTerrainVisibilityFiltering
 
         // The larger checking point of symbol requires the more distinctive visible terrain location
         const auto cameraVectorN = internalState.worldCameraPosition / internalState.distanceFromCameraToTarget;
-        pointSize = _querySizeFactor * (90.0f - currentState.elevationAngle) / 
-            glm::dot(internalState.worldCameraPosition - firstPointInWorld, cameraVectorN);
+        pointSize = static_cast<float>(currentState.viewport.height()) * (90.0f - currentState.elevationAngle)
+            / (180.0f * glm::dot(internalState.worldCameraPosition - firstPointInWorld, cameraVectorN));
         if (pointSize < 1.0f)
             pointSize = 1.0f;
     }

@@ -34,6 +34,18 @@ OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setMarkerId(const int marker
     return *this;
 }
 
+int OsmAnd::MapMarkerBuilder::getGroupId() const
+{
+    return _p->getGroupId();
+}
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setGroupId(const int groupId)
+{
+    _p->setGroupId(groupId);
+    
+    return *this;
+}
+
 int OsmAnd::MapMarkerBuilder::getBaseOrder() const
 {
     return _p->getBaseOrder();

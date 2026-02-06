@@ -35,8 +35,11 @@ namespace OsmAnd
 
         int subsection;
 
-        std::shared_ptr<MapMarker> getMarkerById(int id) const;
+        std::shared_ptr<MapMarker> getMarkerById(int markerId, int groupId = 0) const;
         QList< std::shared_ptr<MapMarker> > getMarkers() const;
+        int getMarkersCountByGroupId(int groupId) const;
+        void removeMarkersByGroupId(int groupId);
+        bool removeMarkerById(int markerId, int groupId);
         bool removeMarker(const std::shared_ptr<MapMarker>& marker);
         void removeAllMarkers();
 

@@ -36,14 +36,18 @@ void OsmAnd::VectorLineArrowsProvider_P::init()
     rebuildArrows();
 }
 
-QList<std::shared_ptr<OsmAnd::MapMarker>> OsmAnd::VectorLineArrowsProvider_P::getLineMarkers(int lineId) const
+void OsmAnd::VectorLineArrowsProvider_P::removeLineMarkers(int lineId) const
 {
-    QList<std::shared_ptr<OsmAnd::MapMarker>> res;
-    for (const auto& marker : _markersCollection->getMarkers())
-        if ((marker->markerId & 0x7FFF) == lineId)
-            res.push_back(marker);
+    QWriteLocker scopedLocker(&_markersLock);
 
-    return res;
+    _markersCollection->removeMarkersByGroupId(lineId);
+}
+
+void OsmAnd::VectorLineArrowsProvider_P::removeAllMarkers() const
+{
+    QWriteLocker scopedLocker(&_markersLock);
+
+    _markersCollection->removeAllMarkers();
 }
 
 void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
@@ -58,9 +62,7 @@ void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
         int lineId = line->lineId;
         if (line->isHidden())
         {
-            for (const auto& marker : getLineMarkers(lineId))
-                _markersCollection->removeMarker(marker);
-
+            _markersCollection->removeMarkersByGroupId(lineId);
             continue;
         }
 
@@ -69,12 +71,12 @@ void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
         int i = 0;
         for (const auto& symbolInfo : symbolsData)
         {
-            int markerId = lineId | (i++ << 15);
-            const auto& marker = _markersCollection->getMarkerById(markerId);
+            const auto start = line->getStartingDistance() + line->getArrowStartingGap();
+            int markerId = i++;
+            const auto& marker = _markersCollection->getMarkerById(markerId, lineId);
             if (marker)
             {
-                marker->setIsHidden(
-                    symbolInfo.distance < line->getStartingDistance() + line->getArrowStartingGap() / 2.0f);
+                marker->setIsHidden(symbolInfo.distance < start);
                 marker->setPosition(symbolInfo.position31);
                 marker->setHeight(symbolInfo.elevation);
                 marker->setElevationScaleFactor(symbolInfo.elevationScaleFactor);
@@ -97,9 +99,10 @@ void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
                     builder.setPinIcon(pointImage);
                 
                 builder.setMarkerId(markerId);
+                builder.setGroupId(lineId);
+                builder.setUpdateAfterCreated(true);
                 builder.setBaseOrder(baseOrder);
-                builder.setIsHidden(
-                    symbolInfo.distance < line->getStartingDistance() + line->getArrowStartingGap() / 2.0f);
+                builder.setIsHidden(symbolInfo.distance < start);
                 builder.setPosition(symbolInfo.position31);
                 builder.setHeight(symbolInfo.elevation);
                 builder.setElevationScaleFactor(symbolInfo.elevationScaleFactor);
@@ -110,11 +113,13 @@ void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
                     newMarker->setOnMapSurfaceIconDirection(markerKey, symbolInfo.direction);
             }
         }
-        for (const auto& marker : getLineMarkers(lineId))
+        const auto total = _markersCollection->getMarkersCountByGroupId(lineId);
+        for (int markerId = i; markerId < total; markerId++)
         {
-            int instanceId = marker->markerId >> 15;
-            if (instanceId >= i)
+            const auto& marker = _markersCollection->getMarkerById(markerId, lineId);
+            if (marker)
                 marker->setIsHidden(true);
+            //_markersCollection->removeMarkerById(markerId, lineId);
         }
     }
 }

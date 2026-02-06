@@ -29,6 +29,9 @@ namespace OsmAnd
         VectorLineArrowsProvider(const std::shared_ptr<VectorLinesCollection>& collection);
         virtual ~VectorLineArrowsProvider();
 
+        void removeLineMarkers(int lineId);
+        void removeAllMarkers();
+
         virtual QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const Q_DECL_OVERRIDE;
 
         virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;

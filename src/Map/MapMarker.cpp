@@ -13,9 +13,11 @@ OsmAnd::MapMarker::MapMarker(
     const std::shared_ptr<const Model3D>& model3D_,
     const QHash<QString, FColorARGB>& model3DCustomMaterialColors_,
     const bool isAccuracyCircleSupported_,
-    const FColorRGB accuracyCircleBaseColor_)
+    const FColorRGB accuracyCircleBaseColor_,
+    const int groupId_ /* = 0 */)
     : _p(new MapMarker_P(this))
     , markerId(markerId_)
+    , groupId(groupId_)
     , baseOrder(baseOrder_)
     , pinIcon(pinIcon_)
     , pinIconVerticalAlignment(pinIconVerticalAlignment_)
