@@ -195,6 +195,7 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererMapLayersStage_Ope
     bool withElevation = true;
     QMap<ZoomLevel, QSet<TileId>> elevatedTiles;
     auto tilesBegin = internalState.visibleTiles.cbegin();
+    layers.clear();
     for (auto itTiles = internalState.visibleTiles.cend(); itTiles != tilesBegin; itTiles--)
     {
         const auto& tilesEntry = itTiles - 1;
@@ -203,13 +204,13 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererMapLayersStage_Ope
         if (visibleTilesSet == internalState.visibleTilesSet.cend())
             continue;
         auto& elevatedTilesSet = elevatedTiles[zoomLevel];
-        const auto& batchedLayersByTiles = batchLayersByTiles(
+        layers.append(batchLayersByTiles(
             tilesEntry.value(),
             visibleTilesSet.value(),
             zoomLevel,
             elevatedTilesSet,
-            withElevation);
-        for (const auto& batchedLayersByTile : constOf(batchedLayersByTiles))
+            withElevation));
+        for (const auto& batchedLayersByTile : constOf(layers.last()))
         {
             // Any layer or layers batch after first one has to be rendered using blending,
             // since output color of new batch needs to be blended with destination color.

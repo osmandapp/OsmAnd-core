@@ -128,6 +128,7 @@ namespace OsmAnd
         GLname _rasterTileVBO;
         GLname _rasterTileIBO;
         QHash<unsigned int, QHash<int, GLname>> _rasterTileVAOs;
+        QList<QList< OsmAnd::Ref<OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::PerTileBatchedLayers> > > layers;
         void initializeRasterTile();
         void releaseRasterTile(bool gpuContextLost);
 
