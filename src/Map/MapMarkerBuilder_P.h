@@ -40,6 +40,7 @@ namespace OsmAnd
         bool _isHidden;
 
         int _markerId;
+        int _groupId;
         int _baseOrder;
 
         bool _isAccuracyCircleSupported;
@@ -80,6 +81,9 @@ namespace OsmAnd
 
         int getMarkerId() const;
         void setMarkerId(const int markerId);
+
+        int getGroupId() const;
+        void setGroupId(const int groupId);
 
         int getBaseOrder() const;
         void setBaseOrder(const int baseOrder);

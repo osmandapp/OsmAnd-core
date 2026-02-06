@@ -42,6 +42,9 @@ namespace OsmAnd
         int getMarkerId() const;
         MapMarkerBuilder& setMarkerId(const int markerId);
 
+        int getGroupId() const;
+        MapMarkerBuilder& setGroupId(const int groupId);
+
         int getBaseOrder() const;
         MapMarkerBuilder& setBaseOrder(const int baseOrder);
 

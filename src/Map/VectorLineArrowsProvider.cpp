@@ -14,6 +14,16 @@ OsmAnd::VectorLineArrowsProvider::~VectorLineArrowsProvider()
 {
 }
 
+void OsmAnd::VectorLineArrowsProvider::removeLineMarkers(int lineId)
+{
+    _p->removeLineMarkers(lineId);
+}
+
+void OsmAnd::VectorLineArrowsProvider::removeAllMarkers()
+{
+    _p->removeAllMarkers();
+}
+
 QList<OsmAnd::IMapKeyedSymbolsProvider::Key> OsmAnd::VectorLineArrowsProvider::getProvidedDataKeys() const
 {
     return _p->getProvidedDataKeys();

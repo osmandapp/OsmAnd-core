@@ -40,6 +40,7 @@
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
     : _hasUnappliedChanges(false)
     , _hasUnappliedPrimitiveChanges(false)
+    , _hasUnappliedStartingDistance(false)
     , _isHidden(false)
     , _startingDistance(0.0f)
     , _isApproximationEnabled(true)
@@ -97,8 +98,11 @@ void OsmAnd::VectorLine_P::setStartingDistance(const float distanceInMeters)
 
     if (_startingDistance != distanceInMeters)
     {
+        const auto halfGap = getPointStepPx() * _metersPerPixel * 0.5;
+        bool changeArrows = qFloor(distanceInMeters / halfGap) != qFloor(_startingDistance / halfGap);
         _startingDistance = distanceInMeters;
-        _hasUnappliedChanges = true;
+        _hasUnappliedStartingDistance = true;
+        _hasUnappliedChanges = changeArrows;
     }
 }
 
@@ -106,7 +110,7 @@ float OsmAnd::VectorLine_P::getArrowStartingGap() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return getPointStepPx() * _metersPerPixel;
+    return static_cast<float>(getPointStepPx() * _metersPerPixel * 0.5);
 }
 
 bool OsmAnd::VectorLine_P::showArrows() const
@@ -536,7 +540,7 @@ bool OsmAnd::VectorLine_P::hasUnappliedChanges() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _hasUnappliedChanges;
+    return _hasUnappliedChanges || _hasUnappliedStartingDistance;
 }
 
 bool OsmAnd::VectorLine_P::hasUnappliedPrimitiveChanges() const
@@ -626,38 +630,45 @@ bool OsmAnd::VectorLine_P::update(const MapState& mapState)
 
 bool OsmAnd::VectorLine_P::applyChanges()
 {
-    QReadLocker scopedLocker1(&_lock);
-
-    if (!_hasUnappliedChanges && !_hasUnappliedPrimitiveChanges)
-        return false;
-
     bool result = true;
-    QReadLocker scopedLocker2(&_symbolsGroupsRegistryLock);
-    for (const auto& symbolGroup_ : constOf(_symbolsGroupsRegistry))
     {
-        const auto symbolGroup = symbolGroup_.lock();
-        if (!symbolGroup)
-            continue;
+        QReadLocker scopedLocker1(&_lock);
 
-        bool needUpdatePrimitive = _hasUnappliedPrimitiveChanges;
-        for (const auto& symbol_ : constOf(symbolGroup->symbols))
+        if (!_hasUnappliedChanges && !_hasUnappliedPrimitiveChanges && !_hasUnappliedStartingDistance)
+            return false;
+
+        QReadLocker scopedLocker2(&_symbolsGroupsRegistryLock);
+        for (const auto& symbolGroup_ : constOf(_symbolsGroupsRegistry))
         {
-            symbol_->isHidden = _isHidden;
+            const auto symbolGroup = symbolGroup_.lock();
+            if (!symbolGroup)
+                continue;
 
-            if (const auto symbol = std::dynamic_pointer_cast<OnSurfaceVectorMapSymbol>(symbol_))
+            bool needUpdatePrimitive = _hasUnappliedPrimitiveChanges;
+            for (const auto& symbol_ : constOf(symbolGroup->symbols))
             {
-                symbol->startingDistance = _startingDistance;
-                if (needUpdatePrimitive && (_points.size() < 2 || !generatePrimitive(symbol)))
+                symbol_->isHidden = _isHidden;
+
+                if (const auto symbol = std::dynamic_pointer_cast<OnSurfaceVectorMapSymbol>(symbol_))
                 {
-                    symbol->isHidden = true;
-                    result = false;
+                    symbol->startingDistance = _startingDistance;
+                    if (needUpdatePrimitive && (_points.size() < 2 || !generatePrimitive(symbol)))
+                    {
+                        symbol->isHidden = true;
+                        result = false;
+                    }
                 }
             }
         }
+        if (_hasUnappliedChanges || _hasUnappliedPrimitiveChanges)
+            owner->updatedObservable.postNotify(owner);
     }
-    owner->updatedObservable.postNotify(owner);
+    
+    QWriteLocker scopedLocker3(&_lock);
+
     _hasUnappliedChanges = false;
     _hasUnappliedPrimitiveChanges = false;
+    _hasUnappliedStartingDistance = false;
 
     return result;
 }

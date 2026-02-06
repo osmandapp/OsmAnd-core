@@ -89,13 +89,15 @@ namespace OsmAnd
             const std::shared_ptr<const Model3D>& model3D,
             const QHash<QString, FColorARGB>& model3DCustomMaterialColors,
             const bool isAccuracyCircleSupported,
-            const FColorRGB accuracyCircleBaseColor);
+            const FColorRGB accuracyCircleBaseColor,
+            const int groupId = 0);
 
         bool applyChanges();
     public:
         virtual ~MapMarker();
 
         const int markerId;
+        const int groupId;
         const int baseOrder;
         const sk_sp<const SkImage> pinIcon;
         const PinIconVerticalAlignment pinIconVerticalAlignment;

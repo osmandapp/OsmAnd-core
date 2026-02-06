@@ -12,6 +12,7 @@
 OsmAnd::MapMarkerBuilder_P::MapMarkerBuilder_P(MapMarkerBuilder* const owner_)
     : _isHidden(false)
     , _markerId(0)
+    , _groupId(0)
     , _baseOrder(std::numeric_limits<int>::min())
     , _isAccuracyCircleSupported(false)
     , _isAccuracyCircleVisible(false)
@@ -55,6 +56,20 @@ void OsmAnd::MapMarkerBuilder_P::setMarkerId(const int markerId)
     QWriteLocker scopedLocker(&_lock);
     
     _markerId = markerId;
+}
+
+int OsmAnd::MapMarkerBuilder_P::getGroupId() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _groupId;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setGroupId(const int groupId)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _groupId = groupId;
 }
 
 int OsmAnd::MapMarkerBuilder_P::getBaseOrder() const
@@ -408,7 +423,8 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
         _model3D,
         detachedOf(_model3DCustomMaterialColors),
         _isAccuracyCircleSupported,
-        _accuracyCircleBaseColor));
+        _accuracyCircleBaseColor,
+        _groupId));
     
     marker->setCaption(_caption);
     marker->setCaptionStyle(_captionStyle);
