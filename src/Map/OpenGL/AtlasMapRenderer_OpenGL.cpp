@@ -1865,28 +1865,44 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
 
     if (internalState->visibleTilesCount > 0)
     {
-        // Use underscaled resources carefully in accordance to total number of visible tiles
-        const auto zoomDelta = qFloor(log2(qMax(1.0,
-            static_cast<double>(1u << state.surfaceZoomLevel) * static_cast<double>(state.surfaceVisualZoom)
-            / (static_cast<double>(1u << state.zoomLevel) * static_cast<double>(state.visualZoom)))));
-        int zoomLevelOffset = qMin(zoomDelta, static_cast<int>(MaxMissingDataUnderZoomShift));
-        if (zoomLevelOffset > 2 && internalState->visibleTilesCount > 1)
-            zoomLevelOffset = 2;
-        if (zoomLevelOffset > 1 && internalState->visibleTilesCount > MaxNumberOfTilesToUseUnderscaledTwice)
-            zoomLevelOffset = 1;
-        if (zoomLevelOffset > 0 && internalState->visibleTilesCount > MaxNumberOfTilesToUseUnderscaledOnce)
-            zoomLevelOffset = 0;
-        int offsetDelta = _tileZoomLevel + _tileZoomLevelOffset - state.zoomLevel - zoomLevelOffset;
-        if (offsetDelta > 0)
+        int zoomLevelOffset = 0;
+        if (!state.flatEarth && state.zoomLevel < ZoomLevel6)
         {
-            zoomLevelOffset = qMin(zoomLevelOffset + offsetDelta, static_cast<int>(MaxMissingDataUnderZoomShift));
-            zoomLevelOffset = qMin(zoomDelta, zoomLevelOffset);
+            // Try to compensate zoom changes during rotation of the globe
+            int offsetDelta = _tileZoomLevel + _tileZoomLevelOffset - state.zoomLevel - zoomLevelOffset;
+            if (offsetDelta > 0)
+            {
+                const auto yPos =
+                    static_cast<double>(state.target31.y - (INT32_MAX / 2 + 1)) / static_cast<double>(1ll + INT32_MAX);
+                zoomLevelOffset = qMin(qCeil(log2(cosh(2.0 * M_PI * yPos))), offsetDelta);
+                zoomLevelOffset = qMin(zoomLevelOffset, static_cast<int>(MaxMissingDataUnderZoomShift));
+            }
+        }
+        else
+        {
+            // Use underscaled resources carefully in accordance to total number of visible tiles
+            const auto zoomDelta = qFloor(log2(qMax(1.0,
+                static_cast<double>(1u << state.surfaceZoomLevel) * static_cast<double>(state.surfaceVisualZoom)
+                / (static_cast<double>(1u << state.zoomLevel) * static_cast<double>(state.visualZoom)))));
+            zoomLevelOffset = qMin(zoomDelta, static_cast<int>(MaxMissingDataUnderZoomShift));
             if (zoomLevelOffset > 2 && internalState->visibleTilesCount > 1)
                 zoomLevelOffset = 2;
-            if (zoomLevelOffset > 1 && internalState->visibleTilesCount > MaxNumberOfTilesUnderscaledTwice)
+            if (zoomLevelOffset > 1 && internalState->visibleTilesCount > MaxNumberOfTilesToUseUnderscaledTwice)
                 zoomLevelOffset = 1;
-            if (zoomLevelOffset > 0 && internalState->visibleTilesCount > MaxNumberOfTilesUnderscaledOnce)
+            if (zoomLevelOffset > 0 && internalState->visibleTilesCount > MaxNumberOfTilesToUseUnderscaledOnce)
                 zoomLevelOffset = 0;
+            int offsetDelta = _tileZoomLevel + _tileZoomLevelOffset - state.zoomLevel - zoomLevelOffset;
+            if (offsetDelta > 0)
+            {
+                zoomLevelOffset = qMin(zoomLevelOffset + offsetDelta, static_cast<int>(MaxMissingDataUnderZoomShift));
+                zoomLevelOffset = qMin(zoomDelta, zoomLevelOffset);
+                if (zoomLevelOffset > 2 && internalState->visibleTilesCount > 1)
+                    zoomLevelOffset = 2;
+                if (zoomLevelOffset > 1 && internalState->visibleTilesCount > MaxNumberOfTilesUnderscaledTwice)
+                    zoomLevelOffset = 1;
+                if (zoomLevelOffset > 0 && internalState->visibleTilesCount > MaxNumberOfTilesUnderscaledOnce)
+                    zoomLevelOffset = 0;
+            }
         }
         internalState->zoomLevelOffset = zoomLevelOffset;
         if (!internalState->extraDetailedTiles.empty() && (zoomLevelOffset > 0 || internalState->visibleTilesCount
