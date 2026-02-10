@@ -38,7 +38,7 @@ bool OsmAnd::VectorLinesCollection_P::addLine(const std::shared_ptr<VectorLine> 
 {
     QWriteLocker scopedLocker(&_linesLock);
 
-    const auto key = reinterpret_cast<IMapKeyedSymbolsProvider::Key>(line.get());
+    const auto key = reinterpret_cast<IMapKeyedSymbolsProvider::Key>(line->_p.get());
     if (_lines.contains(key))
         return false;
 
@@ -51,7 +51,7 @@ bool OsmAnd::VectorLinesCollection_P::removeLine(const std::shared_ptr<VectorLin
 {
     QWriteLocker scopedLocker(&_linesLock);
 
-    const bool removed = (_lines.remove(reinterpret_cast<IMapKeyedSymbolsProvider::Key>(line.get())) > 0);
+    const bool removed = (_lines.remove(reinterpret_cast<IMapKeyedSymbolsProvider::Key>(line->_p.get())) > 0);
     return removed;
 }
 

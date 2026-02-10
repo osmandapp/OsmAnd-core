@@ -116,10 +116,7 @@ void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
         const auto total = _markersCollection->getMarkersCountByGroupId(lineId);
         for (int markerId = i; markerId < total; markerId++)
         {
-            const auto& marker = _markersCollection->getMarkerById(markerId, lineId);
-            if (marker)
-                marker->setIsHidden(true);
-            //_markersCollection->removeMarkerById(markerId, lineId);
+            _markersCollection->removeMarkerById(markerId, lineId);
         }
     }
 }

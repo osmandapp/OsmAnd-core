@@ -233,29 +233,29 @@ OsmAnd::MapMarker::SymbolsGroup::SymbolsGroup(const std::shared_ptr<MapMarker_P>
 
 OsmAnd::MapMarker::SymbolsGroup::~SymbolsGroup()
 {
-    if (const auto mapMarkerP = _mapMarkerP.lock())
-        mapMarkerP->unregisterSymbolsGroup(this);
+    if (_mapMarkerP)
+        _mapMarkerP->unregisterSymbolsGroup(this);
 }
 
 const OsmAnd::MapMarker* OsmAnd::MapMarker::SymbolsGroup::getMapMarker() const
 {
-    if (const auto mapMarkerP = _mapMarkerP.lock())
-        return mapMarkerP->owner;
+    if (_mapMarkerP)
+        return _mapMarkerP->owner;
     return nullptr;
 }
 
 bool OsmAnd::MapMarker::SymbolsGroup::updatesPresent()
 {
-    if (const auto mapMarkerP = _mapMarkerP.lock())
-        return mapMarkerP->hasUnappliedChanges() || mapMarkerP->hasUnappliedPrimitiveChanges();
+    if (_mapMarkerP)
+        return _mapMarkerP->hasUnappliedChanges() || _mapMarkerP->hasUnappliedPrimitiveChanges();
 
     return false;
 }
 
 OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::MapMarker::SymbolsGroup::update(const MapState& mapState)
 {
-    if (const auto mapMarkerP = _mapMarkerP.lock())
-        return mapMarkerP->applyChanges() ? UpdateResult::Properties : UpdateResult::None;
+    if (_mapMarkerP)
+        return _mapMarkerP->applyChanges() ? UpdateResult::Properties : UpdateResult::None;
 
     return UpdateResult::None;
 }
