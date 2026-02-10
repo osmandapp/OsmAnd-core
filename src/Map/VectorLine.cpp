@@ -289,21 +289,21 @@ OsmAnd::VectorLine::SymbolsGroup::SymbolsGroup(const std::shared_ptr<VectorLine_
 
 OsmAnd::VectorLine::SymbolsGroup::~SymbolsGroup()
 {
-    if (const auto vectorLineP = _vectorLineP.lock())
-        vectorLineP->unregisterSymbolsGroup(this);
+    if (_vectorLineP)
+        _vectorLineP->unregisterSymbolsGroup(this);
 }
 
 const OsmAnd::VectorLine* OsmAnd::VectorLine::SymbolsGroup::getVectorLine() const
 {
-    if (const auto vectorLineP = _vectorLineP.lock())
-        return vectorLineP->owner;
+    if (_vectorLineP)
+        return _vectorLineP->owner;
     return nullptr;
 }
 
 bool OsmAnd::VectorLine::SymbolsGroup::updatesPresent()
 {
-    if (const auto vectorLineP = _vectorLineP.lock())
-        return vectorLineP->hasUnappliedChanges();
+    if (_vectorLineP)
+        return _vectorLineP->hasUnappliedChanges();
 
     return false;
 }
@@ -316,12 +316,12 @@ bool OsmAnd::VectorLine::SymbolsGroup::supportsResourcesRenew()
 OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::VectorLine::SymbolsGroup::update(const MapState& mapState)
 {
     UpdateResult result = UpdateResult::None;
-    if (const auto vectorLineP = _vectorLineP.lock())
+    if (_vectorLineP)
     {
-        vectorLineP->update(mapState);
+        _vectorLineP->update(mapState);
         
-        bool hasPropertiesChanges = vectorLineP->hasUnappliedChanges();
-        bool hasPrimitiveChanges = vectorLineP->hasUnappliedPrimitiveChanges();
+        bool hasPropertiesChanges = _vectorLineP->hasUnappliedChanges();
+        bool hasPrimitiveChanges = _vectorLineP->hasUnappliedPrimitiveChanges();
         if (hasPropertiesChanges && hasPrimitiveChanges)
         {
             result = UpdateResult::All;
@@ -335,7 +335,7 @@ OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::VectorLine::SymbolsGroup
             result = UpdateResult::Primitive;
         }
         
-        if (!vectorLineP->applyChanges())
+        if (!_vectorLineP->applyChanges())
             result = UpdateResult::None;
     }
 

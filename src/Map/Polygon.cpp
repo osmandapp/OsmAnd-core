@@ -58,21 +58,21 @@ OsmAnd::Polygon::SymbolsGroup::SymbolsGroup(const std::shared_ptr<Polygon_P>& po
 
 OsmAnd::Polygon::SymbolsGroup::~SymbolsGroup()
 {
-    if (const auto polygonP = _polygonP.lock())
-        polygonP->unregisterSymbolsGroup(this);
+    if (_polygonP)
+        _polygonP->unregisterSymbolsGroup(this);
 }
 
 const OsmAnd::Polygon* OsmAnd::Polygon::SymbolsGroup::getPolygon() const
 {
-    if (const auto polygonP = _polygonP.lock())
-        return polygonP->owner;
+    if (_polygonP)
+        return _polygonP->owner;
     return nullptr;
 }
 
 bool OsmAnd::Polygon::SymbolsGroup::updatesPresent()
 {
-    if (const auto polygonP = _polygonP.lock())
-        return polygonP->hasUnappliedChanges();
+    if (_polygonP)
+        return _polygonP->hasUnappliedChanges();
 
     return false;
 }
@@ -85,12 +85,12 @@ bool OsmAnd::Polygon::SymbolsGroup::supportsResourcesRenew()
 OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::Polygon::SymbolsGroup::update(const MapState& mapState)
 {
     UpdateResult result = UpdateResult::None;
-    if (const auto polygonP = _polygonP.lock())
+    if (_polygonP)
     {
-        polygonP->update(mapState);
+        _polygonP->update(mapState);
         
-        bool hasPropertiesChanges = polygonP->hasUnappliedChanges();
-        bool hasPrimitiveChanges = polygonP->hasUnappliedPrimitiveChanges();
+        bool hasPropertiesChanges = _polygonP->hasUnappliedChanges();
+        bool hasPrimitiveChanges = _polygonP->hasUnappliedPrimitiveChanges();
         if (hasPropertiesChanges && hasPrimitiveChanges)
         {
             result = UpdateResult::All;
@@ -104,7 +104,7 @@ OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::Polygon::SymbolsGroup::u
             result = UpdateResult::Primitive;
         }
         
-        polygonP->applyChanges();
+        _polygonP->applyChanges();
     }
 
     return result;

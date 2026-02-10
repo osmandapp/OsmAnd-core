@@ -41,7 +41,7 @@ namespace OsmAnd
             , public IUpdatableMapSymbolsGroup
         {
         private:
-            const std::weak_ptr<VectorLine_P> _vectorLineP;
+            const std::shared_ptr<VectorLine_P> _vectorLineP;
         protected:
             SymbolsGroup(const std::shared_ptr<VectorLine_P>& vectorLineP);
         public:

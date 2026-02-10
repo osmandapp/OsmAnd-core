@@ -57,7 +57,7 @@ namespace OsmAnd
             , public IUpdatableMapSymbolsGroup
         {
         private:
-            const std::weak_ptr<MapMarker_P> _mapMarkerP;
+            const std::shared_ptr<MapMarker_P> _mapMarkerP;
         protected:
             SymbolsGroup(const std::shared_ptr<MapMarker_P>& mapMarkerP);
         public:

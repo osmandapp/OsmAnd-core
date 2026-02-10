@@ -41,7 +41,7 @@ namespace OsmAnd
             , public IUpdatableMapSymbolsGroup
         {
         private:
-            const std::weak_ptr<Polygon_P> _polygonP;
+            const std::shared_ptr<Polygon_P> _polygonP;
         protected:
             SymbolsGroup(const std::shared_ptr<Polygon_P>& polygonP);
         public:

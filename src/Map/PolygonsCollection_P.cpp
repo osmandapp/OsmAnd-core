@@ -24,7 +24,7 @@ bool OsmAnd::PolygonsCollection_P::addPolygon(const std::shared_ptr<Polygon>& po
 {
     QWriteLocker scopedLocker(&_polygonsLock);
 
-    const auto key = reinterpret_cast<IMapKeyedSymbolsProvider::Key>(polygon.get());
+    const auto key = reinterpret_cast<IMapKeyedSymbolsProvider::Key>(polygon->_p.get());
     if (_polygons.contains(key))
         return false;
 
@@ -37,7 +37,7 @@ bool OsmAnd::PolygonsCollection_P::removePolygon(const std::shared_ptr<Polygon>&
 {
     QWriteLocker scopedLocker(&_polygonsLock);
 
-    const bool removed = (_polygons.remove(reinterpret_cast<IMapKeyedSymbolsProvider::Key>(polygon.get())) > 0);
+    const bool removed = (_polygons.remove(reinterpret_cast<IMapKeyedSymbolsProvider::Key>(polygon->_p.get())) > 0);
     return removed;
 }
 
