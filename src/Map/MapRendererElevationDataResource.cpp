@@ -10,7 +10,6 @@ OsmAnd::MapRendererElevationDataResource::MapRendererElevationDataResource(
     const ZoomLevel zoom_)
     : MapRendererBaseTiledResource(owner_, MapRendererResourceType::ElevationData, collection_, tileId_, zoom_)
     , sourceData(_sourceData)
-    , resourceInGPU(_resourceInGPU)
 {
 }
 
@@ -126,9 +125,23 @@ bool OsmAnd::MapRendererElevationDataResource::uploadToGPU()
     return true;
 }
 
+void OsmAnd::MapRendererElevationDataResource::captureResourceInGPU(
+    std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU>& resourceInGPU) const
+{
+    if (resourceInGPULock.testAndSetAcquire(0, 1))
+    {
+        resourceInGPU = _resourceInGPU;
+        resourceInGPULock.storeRelease(0);
+    }
+}
+
 void OsmAnd::MapRendererElevationDataResource::unloadFromGPU()
 {
-    _resourceInGPU.reset();
+    REPEAT_UNTIL(resourceInGPULock.testAndSetAcquire(0, 1))
+    {
+        _resourceInGPU.reset();
+        resourceInGPULock.storeRelease(0);
+    }
 }
 
 void OsmAnd::MapRendererElevationDataResource::lostDataInGPU()

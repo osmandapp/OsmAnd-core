@@ -17,6 +17,7 @@
 #include "IRasterMapLayerProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "MapRendererRasterMapLayerResource.h"
+#include "MapRendererElevationDataResource.h"
 #include "MapSymbol.h"
 #include "RasterMapSymbol.h"
 #include "VectorMapSymbol.h"
@@ -1269,6 +1270,12 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
             resourceInGPU = textureInGPU;
             lockableResource->resourceInGPULock.storeRelease(0);
         }
+        else if (const auto lockableResource = std::dynamic_pointer_cast<MapRendererElevationDataResource>(resource))
+        {
+            REPEAT_UNTIL(lockableResource->resourceInGPULock.testAndSetAcquire(0, 1));
+            resourceInGPU = textureInGPU;
+            lockableResource->resourceInGPULock.storeRelease(0);
+        }
         else
             resourceInGPU = textureInGPU;
 
@@ -1350,6 +1357,12 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
         waitUntilUploadIsComplete(gpuContextLost);
 
     if (const auto lockableResource = std::dynamic_pointer_cast<MapRendererRasterMapLayerResource>(resource))
+    {
+        REPEAT_UNTIL(lockableResource->resourceInGPULock.testAndSetAcquire(0, 1));
+        resourceInGPU = slotInGPU;
+        lockableResource->resourceInGPULock.storeRelease(0);
+    }
+    else if (const auto lockableResource = std::dynamic_pointer_cast<MapRendererElevationDataResource>(resource))
     {
         REPEAT_UNTIL(lockableResource->resourceInGPULock.testAndSetAcquire(0, 1));
         resourceInGPU = slotInGPU;

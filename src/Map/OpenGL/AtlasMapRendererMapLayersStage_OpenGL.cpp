@@ -2446,11 +2446,7 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMap
             || state == MapRendererResourceState::UpdatingCancelledWhileBeingProcessed)
         {
             // Capture GPU resource (if any)
-            if (resource->resourceInGPULock.testAndSetAcquire(0, 1))
-            {
-                gpuResource = resource->resourceInGPU;
-                resource->resourceInGPULock.storeRelease(0);
-            }
+            resource->captureResourceInGPU(gpuResource);
 
             if (outState != nullptr)
                 *outState = state;

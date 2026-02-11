@@ -44,7 +44,9 @@ namespace OsmAnd
         ~MapRendererElevationDataResource() override;
 
         const std::shared_ptr<IMapElevationDataProvider::Data>& sourceData;
-        const std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU;
+
+        void captureResourceInGPU(std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU) const;
+        mutable QAtomicInt resourceInGPULock;
 
     friend class OsmAnd::MapRendererResourcesManager;
     };

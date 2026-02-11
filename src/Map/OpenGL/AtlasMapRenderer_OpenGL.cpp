@@ -2461,15 +2461,15 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRenderer_Op
         const auto resource = std::static_pointer_cast<MapRendererElevationDataResource>(resource_);
 
         // Check state and obtain GPU resource
-        if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
+        auto state = resource->getState();
+        if (state == MapRendererResourceState::Uploaded)
         {
             // Capture GPU resource
-            auto gpuResource = resource->resourceInGPU;
+            std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
+            resource->captureResourceInGPU(gpuResource);
             if (pOutSource) {
                 *pOutSource = resource->sourceData;
             }
-
-            resource->setState(MapRendererResourceState::Uploaded);
 
             return gpuResource;
         }
