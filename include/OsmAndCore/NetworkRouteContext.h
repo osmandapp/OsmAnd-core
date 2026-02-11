@@ -103,7 +103,7 @@ namespace OsmAnd
         static QVector<NetworkRouteKey> getRouteKeys(const QHash<QString, QString>& tags);
         static QVector<NetworkRouteKey> getRouteKeys(const std::shared_ptr<const Road> &road);
 
-        static bool containsUnsupportedRouteTags(const QHash<QString, QString>& tags);
+        static bool containsUnclickableRouteTags(const QHash<QString, QString>& tags);
 
         static int getRouteQuantity(const QHash<QString, QString>& tags, const QString& tagPrefix);
         QString getTag() const;

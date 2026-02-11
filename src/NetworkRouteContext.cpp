@@ -232,7 +232,7 @@ QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::getRouteKeys(const QHa
     return lst;
 }
 
-bool OsmAnd::NetworkRouteKey::containsUnsupportedRouteTags(const QHash<QString, QString>& tags)
+bool OsmAnd::NetworkRouteKey::containsUnclickableRouteTags(const QHash<QString, QString>& tags)
 {
     for (const auto routeType : VALUES)
     {
@@ -243,7 +243,7 @@ bool OsmAnd::NetworkRouteKey::containsUnsupportedRouteTags(const QHash<QString, 
             return true;
         }
     }
-    return false;
+    return "." == tags.value(QStringLiteral("shield_stub_name"));
 }
 
 QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::getRouteKeys(const std::shared_ptr<const Road> &road)
