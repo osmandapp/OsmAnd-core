@@ -339,7 +339,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
                     // Get larger bbox, to take into account possible rotation
                     const auto maxSize = qMax(billboardSymbol->size.x, billboardSymbol->size.y);
-                    *(pSymbolWidthInPixels++) = static_cast<float>(qSqrt(2 * maxSize * maxSize));
+                    *(pSymbolWidthInPixels++) = static_cast<float>(maxSize) * static_cast<float>(M_SQRT2);
                 }
                 else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathRasterMapSymbol>(symbol))
                 {
