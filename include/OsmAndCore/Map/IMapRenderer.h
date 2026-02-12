@@ -201,6 +201,7 @@ namespace OsmAnd
         virtual bool setMyDirectionRadius(const float radius, bool forcedUpdate = false) = 0;
         virtual bool setSymbolsOpacity(const float opacityFactor, bool forcedUpdate = false) = 0;
         virtual float getSymbolsOpacity() const = 0;
+        virtual bool hitSurface() const = 0;
         virtual bool set3DBuildingsAlpha(const float alpha, bool forcedUpdate = false) = 0;
         virtual float get3DBuildingsAlpha() const = 0;
         virtual bool set3DBuildingsDetalization(const int detalization, bool forcedUpdate = false) = 0;

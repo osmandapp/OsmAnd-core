@@ -1327,6 +1327,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.getSymbolsOpacity();
     }
 
+    public final boolean hitSurface() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.hitSurface();
+    }
+
     public final boolean set3DBuildingsAlpha(float alpha) {
         NativeCore.checkIfLoaded();
 
