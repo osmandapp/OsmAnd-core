@@ -104,20 +104,29 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     style.wrapWidth = textSymbol->wrapWidth;
 
                 QList< sk_sp<const SkImage> > backgroundLayers;
+                QString captionByBackground;
                 if (!textSymbol->shieldResourceName.isEmpty())
                 {
                     sk_sp<const SkImage> shield;
                     env->obtainIcon(textSymbol->shieldResourceName, textSymbol->scaleFactor, shield);
 
                     if (shield)
+                    {
                         backgroundLayers.push_back(shield);
+                        captionByBackground.append(textSymbol->shieldResourceName);
+                    }
                 }
 
                 for (const auto& underlayIconResourceName : textSymbol->underlayIconResourceNames)
                 {
                     sk_sp<const SkImage> icon;
                     if (env->obtainIcon(underlayIconResourceName, textSymbol->scaleFactor, icon) && icon)
+                    {
                         backgroundLayers.push_back(icon);
+                        if (!captionByBackground.isEmpty())
+                            captionByBackground.append(QStringLiteral("_"));
+                        captionByBackground.append(underlayIconResourceName);
+                    }
                 }
 
                 style
@@ -251,7 +260,8 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     rasterizedSymbol->image = rasterizedText;
                     rasterizedSymbol->order = textSymbol->order;
                     rasterizedSymbol->contentType = RasterizedSymbol::ContentType::Text;
-                    rasterizedSymbol->content = textSymbol->baseValue;
+                    rasterizedSymbol->content = textSymbol->baseValue != QStringViewLiteral(".")
+                        || captionByBackground.isEmpty() ? textSymbol->baseValue : captionByBackground;
                     rasterizedSymbol->languageId = textSymbol->languageId;
                     rasterizedSymbol->minDistance = textSymbol->minDistance;
                     rasterizedSymbol->ignoreClick = textSymbol->ignoreClick;
