@@ -128,20 +128,16 @@ bool OsmAnd::MapRendererElevationDataResource::uploadToGPU()
 void OsmAnd::MapRendererElevationDataResource::captureResourceInGPU(
     std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU>& resourceInGPU) const
 {
-    if (resourceInGPULock.testAndSetAcquire(0, 1))
-    {
-        resourceInGPU = _resourceInGPU;
-        resourceInGPULock.storeRelease(0);
-    }
+    REPEAT_UNTIL(resourceInGPULock.testAndSetAcquire(0, 1));
+    resourceInGPU = _resourceInGPU;
+    resourceInGPULock.storeRelease(0);
 }
 
 void OsmAnd::MapRendererElevationDataResource::unloadFromGPU()
 {
-    REPEAT_UNTIL(resourceInGPULock.testAndSetAcquire(0, 1))
-    {
-        _resourceInGPU.reset();
-        resourceInGPULock.storeRelease(0);
-    }
+    REPEAT_UNTIL(resourceInGPULock.testAndSetAcquire(0, 1));
+    _resourceInGPU.reset();
+    resourceInGPULock.storeRelease(0);
 }
 
 void OsmAnd::MapRendererElevationDataResource::lostDataInGPU()
