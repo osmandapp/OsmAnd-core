@@ -38,7 +38,8 @@
 #define MIN_RGB_DELTA 0.075f
 
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
-    : _hasUnappliedChanges(false)
+    : _ownerIsLost(false)
+    , _hasUnappliedChanges(false)
     , _hasUnappliedPrimitiveChanges(false)
     , _hasUnappliedStartingDistance(false)
     , _isHidden(false)
@@ -536,6 +537,13 @@ void OsmAnd::VectorLine_P::setLineDash(const std::vector<double> dashPattern)
     }
 }
 
+void OsmAnd::VectorLine_P::setOwnerIsLost()
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _ownerIsLost = true;
+}
+
 bool OsmAnd::VectorLine_P::hasUnappliedChanges() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -634,6 +642,9 @@ bool OsmAnd::VectorLine_P::applyChanges()
     {
         QReadLocker scopedLocker1(&_lock);
 
+        if (_ownerIsLost)
+            return false;
+
         if (!_hasUnappliedChanges && !_hasUnappliedPrimitiveChanges && !_hasUnappliedStartingDistance)
             return false;
 
@@ -677,6 +688,9 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
 {
     QReadLocker scopedLocker(&_lock);
 
+    if (_ownerIsLost)
+        return nullptr;
+
     // Construct new map symbols group for this marker
     const std::shared_ptr<VectorLine::SymbolsGroup> symbolsGroup(new VectorLine::SymbolsGroup(std::const_pointer_cast<VectorLine_P>(shared_from_this())));
     symbolsGroup->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing;
@@ -709,7 +723,8 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::createSy
     applyMapState(mapState);
 
     const auto inflatedSymbolsGroup = inflateSymbolsGroup();
-    registerSymbolsGroup(inflatedSymbolsGroup);
+    if (inflatedSymbolsGroup)
+        registerSymbolsGroup(inflatedSymbolsGroup);
     return inflatedSymbolsGroup;
 }
 

@@ -31,6 +31,7 @@ namespace OsmAnd
         Polygon_P(Polygon* const owner);
 
         mutable QReadWriteLock _lock;
+        bool _ownerIsLost;
         bool _hasUnappliedChanges;
         bool _hasUnappliedPrimitiveChanges;
 
@@ -76,6 +77,7 @@ namespace OsmAnd
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
 
+        void setOwnerIsLost();
         bool hasUnappliedChanges() const;
         bool hasUnappliedPrimitiveChanges() const;
 

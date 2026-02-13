@@ -24,6 +24,7 @@ OsmAnd::VectorLine::VectorLine(
 
 OsmAnd::VectorLine::~VectorLine()
 {
+    _p->setOwnerIsLost();
 }
 
 bool OsmAnd::VectorLine::isHidden() const

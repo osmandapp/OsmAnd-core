@@ -21,7 +21,8 @@
 #include "GeometryModifiers.h"
 
 OsmAnd::Polygon_P::Polygon_P(Polygon* const owner_)
-: _hasUnappliedChanges(false)
+: _ownerIsLost(false)
+, _hasUnappliedChanges(false)
 , _hasUnappliedPrimitiveChanges(false)
 , _isHidden(false)
 , _mapZoomLevel(InvalidZoomLevel)
@@ -64,6 +65,13 @@ void OsmAnd::Polygon_P::setPoints(const QVector<PointI>& points)
     
     _hasUnappliedPrimitiveChanges = true;
     _hasUnappliedChanges = true;
+}
+
+void OsmAnd::Polygon_P::setOwnerIsLost()
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _ownerIsLost = true;
 }
 
 bool OsmAnd::Polygon_P::hasUnappliedChanges() const
@@ -109,30 +117,37 @@ bool OsmAnd::Polygon_P::update(const MapState& mapState)
 
 bool OsmAnd::Polygon_P::applyChanges()
 {
-    QReadLocker scopedLocker1(&_lock);
-    
-    if (!_hasUnappliedChanges && !_hasUnappliedPrimitiveChanges)
-        return false;
-    
-    QReadLocker scopedLocker2(&_symbolsGroupsRegistryLock);
-    for (const auto& symbolGroup_ : constOf(_symbolsGroupsRegistry))
     {
-        const auto symbolGroup = symbolGroup_.lock();
-        if (!symbolGroup)
-            continue;
+        QReadLocker scopedLocker1(&_lock);
         
-        bool needUpdatePrimitive = _hasUnappliedPrimitiveChanges && _points.size() > 1;
-        for (const auto& symbol_ : constOf(symbolGroup->symbols))
+        if (_ownerIsLost)
+            return false;
+
+        if (!_hasUnappliedChanges && !_hasUnappliedPrimitiveChanges)
+            return false;
+        
+        QReadLocker scopedLocker2(&_symbolsGroupsRegistryLock);
+        for (const auto& symbolGroup_ : constOf(_symbolsGroupsRegistry))
         {
-            symbol_->isHidden = _isHidden;
+            const auto symbolGroup = symbolGroup_.lock();
+            if (!symbolGroup)
+                continue;
             
-            if (const auto symbol = std::dynamic_pointer_cast<OnSurfaceVectorMapSymbol>(symbol_))
+            bool needUpdatePrimitive = _hasUnappliedPrimitiveChanges && _points.size() > 1;
+            for (const auto& symbol_ : constOf(symbolGroup->symbols))
             {
-                if (needUpdatePrimitive)
-                    generatePrimitive(symbol);
+                symbol_->isHidden = _isHidden;
+                
+                if (const auto symbol = std::dynamic_pointer_cast<OnSurfaceVectorMapSymbol>(symbol_))
+                {
+                    if (needUpdatePrimitive)
+                        generatePrimitive(symbol);
+                }
             }
         }
     }
+
+    QWriteLocker scopedLocker3(&_lock);
 
     _hasUnappliedChanges = false;
     _hasUnappliedPrimitiveChanges = false;
@@ -144,6 +159,9 @@ std::shared_ptr<OsmAnd::Polygon::SymbolsGroup> OsmAnd::Polygon_P::inflateSymbols
 {
     QReadLocker scopedLocker(&_lock);
     
+    if (_ownerIsLost)
+        return nullptr;
+
     // Construct new map symbols group for this marker
     const std::shared_ptr<Polygon::SymbolsGroup> symbolsGroup(new Polygon::SymbolsGroup(std::const_pointer_cast<Polygon_P>(shared_from_this())));
     symbolsGroup->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing;
@@ -164,7 +182,8 @@ std::shared_ptr<OsmAnd::Polygon::SymbolsGroup> OsmAnd::Polygon_P::createSymbolsG
     applyMapState(mapState);
     
     const auto inflatedSymbolsGroup = inflateSymbolsGroup();
-    registerSymbolsGroup(inflatedSymbolsGroup);
+    if (inflatedSymbolsGroup)
+        registerSymbolsGroup(inflatedSymbolsGroup);
     return inflatedSymbolsGroup;
 }
 

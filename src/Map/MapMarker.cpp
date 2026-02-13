@@ -34,6 +34,7 @@ OsmAnd::MapMarker::MapMarker(
 
 OsmAnd::MapMarker::~MapMarker()
 {
+    _p->setOwnerIsLost();
 }
 
 bool OsmAnd::MapMarker::isHidden() const

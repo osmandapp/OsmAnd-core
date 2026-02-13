@@ -37,6 +37,7 @@ namespace OsmAnd
         MapMarker_P(MapMarker* const owner);
 
         mutable QReadWriteLock _lock;
+        bool _ownerIsLost;
         bool _hasUnappliedChanges;
         bool _hasUnappliedPrimitiveChanges;
 
@@ -144,6 +145,7 @@ namespace OsmAnd
         void setCaption(const QString& caption);
         void setCaptionStyle(const TextRasterizer::Style& captionStyle);
 
+        void setOwnerIsLost();
         bool hasUnappliedChanges() const;
         bool hasUnappliedPrimitiveChanges() const;
         

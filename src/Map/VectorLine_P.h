@@ -73,6 +73,7 @@ namespace OsmAnd
 
         mutable QReadWriteLock _lock;
         mutable QReadWriteLock _arrowsOnPathLock;
+        bool _ownerIsLost;
         bool _hasUnappliedChanges;
         bool _hasUnappliedPrimitiveChanges;
         bool _hasUnappliedStartingDistance;
@@ -238,6 +239,7 @@ namespace OsmAnd
         float getElevationScaleFactor() const;
         void setElevationScaleFactor(const float scaleFactor);
 
+        void setOwnerIsLost();
         bool hasUnappliedChanges() const;
         bool hasUnappliedPrimitiveChanges() const;
 

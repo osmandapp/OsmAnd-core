@@ -19,6 +19,7 @@ OsmAnd::MapMarker_P::MapMarker_P(MapMarker* const owner_)
     , _model3DDirection(-90.0f)
     , _positionType(PositionType::Coordinate31)
     , _adjustElevationToVectorObject(false)
+    , _ownerIsLost(false)
     , _hasUnappliedPrimitiveChanges(false)
 {
 }
@@ -324,6 +325,13 @@ void OsmAnd::MapMarker_P::setCaptionStyle(const TextRasterizer::Style& captionSt
     }
 }
 
+void OsmAnd::MapMarker_P::setOwnerIsLost()
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _ownerIsLost = true;
+}
+
 bool OsmAnd::MapMarker_P::hasUnappliedChanges() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -340,63 +348,70 @@ bool OsmAnd::MapMarker_P::hasUnappliedPrimitiveChanges() const
 
 bool OsmAnd::MapMarker_P::applyChanges()
 {
-    QReadLocker scopedLocker1(&_lock);
-    
-    if (!_hasUnappliedChanges)
-        return false;
-
-    QReadLocker scopedLocker2(&_symbolsGroupsRegistryLock);
-    for (const auto& symbolGroup_ : constOf(_symbolsGroupsRegistry))
     {
-        const auto symbolGroup = symbolGroup_.lock();
-        if (!symbolGroup)
-            continue;
+        QReadLocker scopedLocker1(&_lock);
+        
+        if (_ownerIsLost)
+            return false;
 
-        for (const auto& symbol_ : constOf(symbolGroup->symbols))
+        if (!_hasUnappliedChanges && !_hasUnappliedPrimitiveChanges)
+            return false;
+
+        QReadLocker scopedLocker2(&_symbolsGroupsRegistryLock);
+        for (const auto& symbolGroup_ : constOf(_symbolsGroupsRegistry))
         {
-            symbol_->isHidden = _isHidden;
-            symbol_->updateAfterCreated = _updateAfterCreated;
+            const auto symbolGroup = symbolGroup_.lock();
+            if (!symbolGroup)
+                continue;
 
-            if (const auto symbol = std::dynamic_pointer_cast<Model3DMapSymbol>(symbol_))
+            for (const auto& symbol_ : constOf(symbolGroup->symbols))
             {
-                symbol->setPosition31(_position);
-                symbol->direction = _model3DDirection;
-                symbol->maxSizeInPixels = _model3DMaxSizeInPixels;
-            }
+                symbol_->isHidden = _isHidden;
+                symbol_->updateAfterCreated = _updateAfterCreated;
 
-            if (const auto symbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol_))
-            {
-                if (_linePoints.size() > 1)
-                {
-                    symbol->linePoints = qMove(_linePoints);
-                    symbol->offsetFromLine = _offsetFromLine;
-                    symbol->positionType = PositionType::AttachedToLine;
-                }
-                else
+                if (const auto symbol = std::dynamic_pointer_cast<Model3DMapSymbol>(symbol_))
                 {
                     symbol->setPosition31(_position);
+                    symbol->direction = _model3DDirection;
+                    symbol->maxSizeInPixels = _model3DMaxSizeInPixels;
                 }
-                
-                symbol->setElevation(_height);
-                symbol->setElevationScaleFactor(_elevationScaleFactor);
-                symbol->modulationColor = _pinIconModulationColor;
-            }
 
-            if (const auto symbol = std::dynamic_pointer_cast<KeyedOnSurfaceRasterMapSymbol>(symbol_))
-            {
-                symbol->setPosition31(_position);
+                if (const auto symbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol_))
+                {
+                    if (_linePoints.size() > 1)
+                    {
+                        symbol->linePoints = qMove(_linePoints);
+                        symbol->offsetFromLine = _offsetFromLine;
+                        symbol->positionType = PositionType::AttachedToLine;
+                    }
+                    else
+                    {
+                        symbol->setPosition31(_position);
+                    }
+                    
+                    symbol->setElevation(_height);
+                    symbol->setElevationScaleFactor(_elevationScaleFactor);
+                    symbol->modulationColor = _pinIconModulationColor;
+                }
 
-                const auto citDirection = _directions.constFind(symbol->key);
-                if (citDirection != _directions.cend())
-                    symbol->direction = *citDirection;
+                if (const auto symbol = std::dynamic_pointer_cast<KeyedOnSurfaceRasterMapSymbol>(symbol_))
+                {
+                    symbol->setPosition31(_position);
 
-                symbol->setElevation(_height);
-                symbol->setElevationScaleFactor(_elevationScaleFactor);
-                symbol->setAdjustElevationToVectorObject(_adjustElevationToVectorObject);
-                symbol->modulationColor = _onSurfaceIconModulationColor;
+                    const auto citDirection = _directions.constFind(symbol->key);
+                    if (citDirection != _directions.cend())
+                        symbol->direction = *citDirection;
+
+                    symbol->setElevation(_height);
+                    symbol->setElevationScaleFactor(_elevationScaleFactor);
+                    symbol->setAdjustElevationToVectorObject(_adjustElevationToVectorObject);
+                    symbol->modulationColor = _onSurfaceIconModulationColor;
+                }
             }
         }
     }
+
+    QWriteLocker scopedLocker3(&_lock);
 
     _hasUnappliedChanges = false;
     _hasUnappliedPrimitiveChanges = false;
@@ -407,6 +422,9 @@ bool OsmAnd::MapMarker_P::applyChanges()
 std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGroup(int subsection) const
 {
     QReadLocker scopedLocker(&_lock);
+
+    if (_ownerIsLost)
+        return nullptr;
 
     bool ok;
 
@@ -601,7 +619,8 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
 std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::createSymbolsGroup(int subsection) const
 {
     const auto inflatedSymbolsGroup = inflateSymbolsGroup(subsection);
-    registerSymbolsGroup(inflatedSymbolsGroup);
+    if (inflatedSymbolsGroup)
+        registerSymbolsGroup(inflatedSymbolsGroup);
     return inflatedSymbolsGroup;
 }
 

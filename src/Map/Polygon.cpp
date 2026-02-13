@@ -14,6 +14,7 @@ OsmAnd::Polygon::Polygon(
 
 OsmAnd::Polygon::~Polygon()
 {
+    _p->setOwnerIsLost();
 }
 
 bool OsmAnd::Polygon::isHidden() const
