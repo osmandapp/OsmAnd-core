@@ -87,6 +87,7 @@ namespace OsmAnd
         bool updateCurrentConfiguration(const unsigned int currentConfigurationInvalidatedMask);
 
         // State-related:
+        mutable QAtomicInt _hitSurface;
         mutable QAtomicInt _frameInvalidatesCounter;
         int _frameInvalidatesToBeProcessed;
         mutable QMutex _requestedStateMutex;
@@ -472,6 +473,7 @@ namespace OsmAnd
         virtual bool setMyDirectionRadius(const float radius, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setSymbolsOpacity(const float opacityFactor, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual float getSymbolsOpacity() const Q_DECL_OVERRIDE;
+        virtual bool hitSurface() const Q_DECL_OVERRIDE;
         virtual bool set3DBuildingsAlpha(const float alpha, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual float get3DBuildingsAlpha() const Q_DECL_OVERRIDE;
         virtual bool set3DBuildingsDetalization(const int detalization, bool forcedUpdate = false) Q_DECL_OVERRIDE;

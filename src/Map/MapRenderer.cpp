@@ -633,6 +633,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
                 const auto changeMask = (1u << static_cast<uint32_t>(MapRendererStateChange::Zoom));
                 _requestedStateUpdatedMask.fetchAndOrOrdered(changeMask);
                 isNew = false;
+                _hitSurface.storeRelease(1);
             }
         }
 
@@ -3448,6 +3449,11 @@ float OsmAnd::MapRenderer::getSymbolsOpacity() const
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     return _requestedState.symbolsOpacity;
+}
+
+bool OsmAnd::MapRenderer::hitSurface() const
+{
+    return _hitSurface.fetchAndStoreAcquire(0) > 0;
 }
 
 bool OsmAnd::MapRenderer::set3DBuildingsAlpha(const float alpha, bool forcedUpdate /*= false*/)
