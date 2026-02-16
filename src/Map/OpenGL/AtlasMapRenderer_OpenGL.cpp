@@ -512,37 +512,43 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
             0.01, static_cast<double>(highDetail) * elevationCosine))) : internalState->zFar;
     if (!state.flatEarth)
     {
-        // Calculate radial distance from camera to the limit of visible tiles
-        auto f = fovTangent * qMax(internalState->aspectRatio, 1.0f) * 1.5;
-        f = f * f + 1.0;
-        const auto ds = distanceToCamera * distanceToCamera;
-        const auto k = ds - f * (ds - radiusInWorld * radiusInWorld);
-        double distanceToLowerDetail = distanceToCamera;
-        if (k >= 0.0)
+        if (state.zoomLevel < ZoomLevel4)
+            zLowerDetail = internalState->zFar;
+        else
         {
-            const auto df = distanceToCamera / f;
-            const auto pf = qSqrt(k) / f;
-            distanceToLowerDetail = df > pf ? df - pf : df + pf;
+            // Calculate radial distance from camera to the limit of visible tiles
+            auto f = fovTangent * qMax(internalState->aspectRatio, 1.0f) * 2.0;
+            f = f * f + 1.0;
+            const auto ds = distanceToCamera * distanceToCamera;
+            const auto k = ds - f * (ds - radiusInWorld * radiusInWorld);
+            double distanceToLowerDetail = distanceToCamera;
+            if (k >= 0.0)
+            {
+                const auto df = distanceToCamera / f;
+                const auto pf = qSqrt(k) / f;
+                distanceToLowerDetail = df > pf ? df - pf : df + pf;
+            }
+
+            // Calculate radial distance from camera to the nearest pole
+            const auto c = glm::normalize(internalState->cameraRotatedPosition);
+            const auto prox = qMax(glm::dot(glm::dvec3(0.0, 0.0, -1.0), c), glm::dot(glm::dvec3(0.0, 0.0, 1.0), c));
+            const auto poleDistance = distanceToCamera - prox * radiusInWorld;
+            auto poleDim = fabs(angles.y * 2.0 / M_PI);
+            auto latFactor = 1.0 - qMax(0.95 - poleDim, 0.0) / 0.95;
+            latFactor = qPow(latFactor, 5.0) / static_cast<double>(1 << (state.zoomLevel - ZoomLevel2));
+            poleDim *= poleDim;
+
+            const auto pr = distanceToLowerDetail;
+            // Advance detail distance from camera to zFar near the poles (for low zoom levels)
+            distanceToLowerDetail =
+                qMin(distanceToLowerDetail, poleDistance * (1.0 - poleDim) + poleDim * distanceToLowerDetail);
+
+            const auto zLowerDetailAdvanced = qMin(static_cast<float>(qMax(qMax(
+                2.0 * _detailDistanceFactor * elevationCosine + internalState->distanceFromCameraToTarget,
+                distanceToLowerDetail / targetCosine), internalState->zFar * latFactor)), internalState->zFar);
+            if (zLowerDetailAdvanced > zLowerDetail || highDetail >= visibleDistance)
+                zLowerDetail = zLowerDetailAdvanced;
         }
-
-        // Calculate radial distance from camera to the nearest pole
-        const auto c = glm::normalize(internalState->cameraRotatedPosition);
-        const auto poleProx = qMax(glm::dot(glm::dvec3(0.0, 0.0, -1.0), c), glm::dot(glm::dvec3(0.0, 0.0, 1.0), c));
-        const auto poleDistance = distanceToCamera - poleProx * radiusInWorld;
-        auto poleDim = fabs(angles.y * 2.0 / M_PI); //poleProx > 0.0 ? qMax(1.0 - poleProx, 0.0) : 0.0;
-        auto latFactor = 1.0 - qMax(0.95 - poleDim, 0.0) / 0.95;
-        latFactor = qPow(latFactor, 5.0) / static_cast<double>(1 << qMax(state.zoomLevel - ZoomLevel2, 0));
-        poleDim *= poleDim;
-
-        // Advance detail distance from camera to zFar near the poles (for low zoom levels)
-        distanceToLowerDetail =
-            qMin(distanceToLowerDetail, poleDistance * (1.0 - poleDim) + poleDim * distanceToLowerDetail);
-
-        const auto zLowerDetailAdvanced = qMin(static_cast<float>(qMax(qMax(
-            2.0 * _detailDistanceFactor * elevationCosine + internalState->distanceFromCameraToTarget,
-            distanceToLowerDetail / targetCosine), internalState->zFar * latFactor)), internalState->zFar);
-        if (zLowerDetailAdvanced > zLowerDetail || highDetail >= visibleDistance)
-            zLowerDetail = zLowerDetailAdvanced;
     }
 
     // Recalculate perspective projection
