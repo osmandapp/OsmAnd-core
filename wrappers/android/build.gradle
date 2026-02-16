@@ -197,7 +197,7 @@ tasks.register('cleanupOsmAndResources', Delete) {
 tasks.register('copyOsmAndResources', Copy) {
     description = "Copy OsmAnd resources"
     group = "build"
-    mustRunAfter(cleanupOsmAndResources)
+    dependsOn cleanupOsmAndResources
 
     outputs.dir(rawOsmAndAssetsDir)
     from("../../../resources/rendering_styles") { include "default.render.xml", "default.map_styles_presets.xml"; eachFile { it.path = "map/styles/" + it.path } }
