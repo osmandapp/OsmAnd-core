@@ -19,7 +19,9 @@
 namespace OsmAnd
 {
     class Map3DObjectsTiledProvider_P;
-    class OSMAND_CORE_API Map3DObjectsTiledProvider : public IMapTiledDataProvider, public std::enable_shared_from_this<Map3DObjectsTiledProvider>
+    class OSMAND_CORE_API Map3DObjectsTiledProvider
+        : public IMapTiledDataProvider
+        , public std::enable_shared_from_this<Map3DObjectsTiledProvider>
     {
     public:
         struct Data : public IMapTiledDataProvider::Data
@@ -32,7 +34,9 @@ namespace OsmAnd
 
         explicit Map3DObjectsTiledProvider(
             const std::shared_ptr<MapPrimitivesProvider>& tiledProvider,
-            const std::shared_ptr<MapPresentationEnvironment>& environment);
+            const std::shared_ptr<MapPresentationEnvironment>& environment,
+            const bool useCustomColor,
+            const FColorRGB& customColor);
         virtual ~Map3DObjectsTiledProvider();
 
         virtual ZoomLevel getMinZoom() const override;

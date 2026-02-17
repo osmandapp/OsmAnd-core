@@ -68,9 +68,13 @@ namespace OsmAnd
 Map3DObjectsTiledProvider_P::Map3DObjectsTiledProvider_P(
     Map3DObjectsTiledProvider* const owner_,
     const std::shared_ptr<MapPrimitivesProvider>& tiledProvider,
-    const std::shared_ptr<MapPresentationEnvironment>& environment)
+    const std::shared_ptr<MapPresentationEnvironment>& environment,
+    const bool useCustomColor,
+    const FColorRGB& customColor)
     : _tiledProvider(tiledProvider)
     , _environment(environment)
+    , _useCustomColor(useCustomColor)
+    , _customColor(customColor)
     , _elevationProvider(nullptr)
     , owner(owner_)
 {
@@ -414,11 +418,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const Primirive3D& primitive,
     float levels = 0.0;
     float minLevels = 0.0;
 
-    FColorARGB color = getDefaultBuildingsColor();
-    if (primitive.polygonColor != 0 && !getUseDefaultBuildingsColor())
-    {
-        color = FColorARGB(primitive.polygonColor);
-    }
+    auto color = _useCustomColor ? _customColor : FColorRGB(getUseDefaultBuildingsColor()
+        || primitive.polygonColor == 0 ? getDefaultBuildingsColor() : FColorARGB(primitive.polygonColor));
 
     bool heightFound = false;
     bool minHeightFound = false;

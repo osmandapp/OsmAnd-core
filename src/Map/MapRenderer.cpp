@@ -3473,6 +3473,8 @@ bool OsmAnd::MapRenderer::set3DBuildingsAlpha(const float alpha, bool forcedUpda
 
 float OsmAnd::MapRenderer::get3DBuildingsAlpha() const
 {
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
     return _buildings3DAlpha;
 }
 
@@ -3497,6 +3499,8 @@ bool OsmAnd::MapRenderer::set3DBuildingsDetalization(const int detalization, boo
 
 int OsmAnd::MapRenderer::get3DBuildingsDetalization() const
 {
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
     return _buildings3DDetalization;
 }
 
