@@ -551,7 +551,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    const float M_2PI = 2.0 * M_PI;                                                                                ""\n"
             "                                                                                                                   ""\n"
             //   Calculate basic vertex coordinates
-            "    int tilePiece = param_vs_tileCoords31.z / %HeixelsPerTileSide%;                                                ""\n"
+            "    int tilePiece = param_vs_tileCoords31.z;                                                                       ""\n"
             "    ivec2 vertexIndex = ivec2(in_vs_vertexPosition * %HeixelsPerTileSide%.0 + 0.5);                                ""\n"
             "    ivec2 loc31 = vertexIndex * tilePiece;                                                                         ""\n"
             "    bool overX = loc31.x - 1 + param_vs_tileCoords31.x == 2147483647;                                              ""\n"
@@ -1905,7 +1905,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     glUniform4i(program.vs.param.tileCoords31,
         tile31.x,
         tile31.y,
-        zoomShift < 31 ? 1 << zoomShift : INT32_MAX,
+        static_cast<int>((1u << zoomShift) / (AtlasMapRenderer::HeixelsPerTileSide - 1u)),
         zone << 12 | secondaryZoom << 10 | primaryZoom << 8 | elevatedSides);
     GL_CHECK_RESULT;
 
