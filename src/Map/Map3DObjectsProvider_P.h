@@ -32,6 +32,8 @@ namespace OsmAnd
     private:
         std::shared_ptr<MapPrimitivesProvider> _tiledProvider;
         std::shared_ptr<MapPresentationEnvironment> _environment;
+        const bool _useCustomColor;
+        const FColorRGB _customColor;
         std::shared_ptr<IMapElevationDataProvider> _elevationProvider;
 
         void processPrimitive(const Primirive3D& primitive,
@@ -80,7 +82,9 @@ namespace OsmAnd
     protected:
         Map3DObjectsTiledProvider_P(Map3DObjectsTiledProvider* const owner,
             const std::shared_ptr<MapPrimitivesProvider>& tiledProvider,
-            const std::shared_ptr<MapPresentationEnvironment>& environment);
+            const std::shared_ptr<MapPresentationEnvironment>& environment,
+            const bool useCustomColor,
+            const FColorRGB& customColor);
 
     public:
         ~Map3DObjectsTiledProvider_P();

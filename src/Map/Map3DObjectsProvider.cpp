@@ -17,8 +17,10 @@ Map3DObjectsTiledProvider::Data::~Data()
 
 Map3DObjectsTiledProvider::Map3DObjectsTiledProvider(
     const std::shared_ptr<MapPrimitivesProvider>& tiledProvider,
-    const std::shared_ptr<MapPresentationEnvironment>& environment)
-    : _p(new Map3DObjectsTiledProvider_P(this, tiledProvider, environment))
+    const std::shared_ptr<MapPresentationEnvironment>& environment,
+    const bool useCustomColor,
+    const FColorRGB& customColor)
+    : _p(new Map3DObjectsTiledProvider_P(this, tiledProvider, environment, useCustomColor, customColor))
 {
 }
 

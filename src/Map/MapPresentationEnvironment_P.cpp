@@ -67,7 +67,6 @@ void OsmAnd::MapPresentationEnvironment_P::initialize()
     _weatherContourLevelsAttribute = owner->mapStyle->getAttribute(QLatin1String("weatherContourLevels"));
 
     _base3DBuildingsColorAttribute = owner->mapStyle->getAttribute(QStringLiteral("base3DBuildingsColor"));
-    _useDefaultBuildingColorAttribute = owner->mapStyle->getAttribute(QStringLiteral("useDefaultBuildingColor"));
 
     _default3DBuildingHeight = 3.0f;
     _default3DBuildingLevelHeight = 3.0f;
@@ -813,15 +812,18 @@ bool OsmAnd::MapPresentationEnvironment_P::getUseDefaultBuildingColor() const
 {
     bool result = false;
 
-    if (_useDefaultBuildingColorAttribute)
+    const auto valueDefId = owner->mapStyle->getValueDefinitionIdByName(QStringLiteral("useDefaultBuildingColor"));
+    if (valueDefId >= 0)
     {
-        MapStyleEvaluator evaluator(owner->mapStyle, owner->displayDensityFactor * owner->mapScaleFactor);
-        applyTo(evaluator);
-
-        MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
-        if (evaluator.evaluate(_useDefaultBuildingColorAttribute, &evalResult))
+        const auto settings = getSettings();
+        const auto it = settings.find(valueDefId);
+        if (it != settings.end())
         {
-            evalResult.getBooleanValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_BOOL_VALUE, result);
+            const auto& settingValue = it.value();
+            if (!settingValue.isComplex)
+            {
+                result = (settingValue.asSimple.asUInt != 0);
+            }
         }
     }
 
