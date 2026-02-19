@@ -1764,7 +1764,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     GL_CHECK_RESULT;
     
     int elevatedSides = 0;
-    if (!currentState.flatEarth && withElevation)
+    if (!currentState.flatEarth && withElevation && currentState.surfaceZoomLevel < ZoomLevel18)
     {
         // Encode special elevation on the edges of a tile if needed
         bool isUpperVisible = true;
