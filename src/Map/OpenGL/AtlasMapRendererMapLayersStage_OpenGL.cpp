@@ -1764,7 +1764,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     GL_CHECK_RESULT;
     
     int elevatedSides = 0;
-    if (!currentState.flatEarth && withElevation && currentState.surfaceZoomLevel < ZoomLevel18)
+    bool withWaterfall = currentState.surfaceZoomLevel < ZoomLevel18;
+    if (!currentState.flatEarth && withElevation)
     {
         // Encode special elevation on the edges of a tile if needed
         bool isUpperVisible = true;
@@ -1792,13 +1793,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
         const auto rightTileIdN = Utilities::normalizeTileId(TileId::fromXY(tileIdN.x + 1, tileIdN.y), zoomLevel);
         bool isOtherDetail;
         elevatedSides |= isNearElevatedTile(PointI(0, -1), upperTileIdN, elevatedTiles, zoomLevel, isOtherDetail)
-            ? (isUpperVisible && isOtherDetail ? 3 : 0) : (isUpperVisible ? 2 : 1);
+            ? (isUpperVisible && isOtherDetail ? 3 : 0) : (isUpperVisible ? (withWaterfall ? 2 : 0) : 1);
         elevatedSides |= isNearElevatedTile(PointI(-1, 0), leftTileIdN, elevatedTiles, zoomLevel, isOtherDetail)
-            ? (isLeftVisible && isOtherDetail ? 12 : 0) : (isLeftVisible ? 8 : 4);
+            ? (isLeftVisible && isOtherDetail ? 12 : 0) : (isLeftVisible ? (withWaterfall ? 8 : 0) : 4);
         elevatedSides |= isNearElevatedTile(PointI(0, 1), lowerTileIdN, elevatedTiles, zoomLevel, isOtherDetail)
-            ? (isLowerVisible && isOtherDetail ? 48 : 0) : (isLowerVisible ? 32 : 16);
+            ? (isLowerVisible && isOtherDetail ? 48 : 0) : (isLowerVisible ? (withWaterfall ? 32 : 0) : 16);
         elevatedSides |= isNearElevatedTile(PointI(1, 0), rightTileIdN, elevatedTiles, zoomLevel, isOtherDetail)
-            ? (isRightVisible && isOtherDetail ? 192 : 0) : (isRightVisible ? 128 : 64);
+            ? (isRightVisible && isOtherDetail ? 192 : 0) : (isRightVisible ? (withWaterfall ? 128 : 0) : 64);
     }
 
     int primaryZoom = 0;
