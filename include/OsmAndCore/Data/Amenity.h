@@ -69,6 +69,7 @@ namespace OsmAnd
         QList<DecodedCategory> getDecodedCategories() const;
         QList<DecodedValue> getDecodedValues() const;
         QHash<QString, QString> getDecodedValuesHash() const;
+        QString getDecodedValue(const QString& key) const;
 
         static QHash< QString, QHash<QString, QList< std::shared_ptr<const OsmAnd::Amenity> > > > groupByCategories(
             const QList< std::shared_ptr<const OsmAnd::Amenity> >& input);

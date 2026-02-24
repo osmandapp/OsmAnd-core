@@ -191,6 +191,52 @@ QHash<QString, QString> OsmAnd::Amenity::getDecodedValuesHash() const
     return result;
 }
 
+QString OsmAnd::Amenity::getDecodedValue(const QString& key) const
+{
+    const auto sectionSubtypes = obfSection->getSubtypes();
+    if (!sectionSubtypes)
+        return QString();
+
+    for (const auto& valueEntry : rangeOf(constOf(values)))
+    {
+        const auto subtypeIndex = valueEntry.key();
+        if (subtypeIndex >= sectionSubtypes->subtypes.size())
+        {
+            LogPrintf(LogSeverityLevel::Warning,
+                "Amenity %s (%s) references non-existent subtype %d",
+                qPrintable(id.toString()),
+                qPrintable(nativeName),
+                subtypeIndex);
+            continue;
+        }
+
+        const auto& subtype = sectionSubtypes->subtypes[subtypeIndex];
+        if (subtype->tagName != key)
+            continue;
+
+        const auto& value = valueEntry.value();
+        switch (value.type())
+        {
+            case QVariant::Int:
+            case QVariant::UInt:
+            {
+                const auto intValue = value.toInt();
+                if (subtype->possibleValues.size() > intValue)
+                    return subtype->possibleValues[intValue];
+                return QString();
+            }
+            case QVariant::String:
+                return value.toString();
+            case QVariant::ByteArray:
+                return QString::fromUtf8(zlibUtilities::gzipDecompress(value.toByteArray()));
+            default:
+                return QString();
+        }
+    }
+
+    return QString();
+}
+
 QHash< QString, QHash<QString, QList< std::shared_ptr<const OsmAnd::Amenity> > > > OsmAnd::Amenity::groupByCategories(
     const QList< std::shared_ptr<const OsmAnd::Amenity> >& input)
 {
