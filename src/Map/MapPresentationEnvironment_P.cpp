@@ -332,6 +332,9 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainIconLayerData(
 
 std::shared_ptr<const OsmAnd::IconData> OsmAnd::MapPresentationEnvironment_P::getIconData(const QString& name) const
 {
+    if (name.isEmpty())
+        return nullptr;
+
     if (_shadersAndShields->containsResource(name))
         return getShaderOrShieldData(name);
     
@@ -379,6 +382,9 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainIcon(
     const float scale,
     sk_sp<const SkImage>& outIcon) const
 {
+    if (name.isEmpty())
+        return false;
+
     if (_shadersAndShields->containsResource(name))
         return _shadersAndShields->obtainIcon(name, scale, outIcon);
 
