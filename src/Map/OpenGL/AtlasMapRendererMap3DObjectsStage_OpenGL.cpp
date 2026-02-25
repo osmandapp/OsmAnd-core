@@ -566,7 +566,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::prepareDrawObjects(QSet<std::shar
     const float buildingsAlpha = renderer->get3DBuildingsAlpha();
     const int buildingsDetalization = renderer->get3DBuildingsDetalization();
 
-    const auto CollectionStapshot = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection);
+    const auto CollectionSnapshot = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection);
     
     QVector<ZoomLevel> sortedZoomLevels;
     for (auto itTiles = internalState.visibleTiles.cbegin(); itTiles != internalState.visibleTiles.cend(); itTiles++)
@@ -624,7 +624,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::prepareDrawObjects(QSet<std::shar
 
             {
                 std::shared_ptr<MapRendererBaseTiledResource> tiledResource;
-                CollectionStapshot->obtainResource(tileIdN, (ZoomLevel)neededZoom, tiledResource);
+                CollectionSnapshot->obtainResource(tileIdN, (ZoomLevel)neededZoom, tiledResource);
 
                 const auto object3DResource = std::static_pointer_cast<MapRenderer3DObjectsResource>(tiledResource);
                 if (object3DResource && object3DResource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
@@ -656,7 +656,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::prepareDrawObjects(QSet<std::shar
                     for (const auto& subId : constOf(subTileIds))
                     {
                         std::shared_ptr<MapRendererBaseTiledResource> subResBase;
-                        CollectionStapshot->obtainResource(subId, static_cast<ZoomLevel>(underscaledZoom), subResBase);
+                        CollectionSnapshot->obtainResource(subId, static_cast<ZoomLevel>(underscaledZoom), subResBase);
 
                         const auto subRes = std::static_pointer_cast<MapRenderer3DObjectsResource>(subResBase);
                         if (subRes && subRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
@@ -693,7 +693,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::prepareDrawObjects(QSet<std::shar
                     const auto parentId = Utilities::getTileIdOverscaledByZoomShift(tileIdN, absZoomShift);
                     std::shared_ptr<MapRendererBaseTiledResource> parentBase;
 
-                    CollectionStapshot->obtainResource(parentId, static_cast<ZoomLevel>(overscaledZoom), parentBase);
+                    CollectionSnapshot->obtainResource(parentId, static_cast<ZoomLevel>(overscaledZoom), parentBase);
                     const auto parentRes = std::static_pointer_cast<MapRenderer3DObjectsResource>(parentBase);
 
                     if (parentRes && parentRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
@@ -712,7 +712,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::prepareDrawObjects(QSet<std::shar
             if (!collected)
             {
                 std::shared_ptr<MapRendererBaseTiledResource> tiledResource;
-                CollectionStapshot->obtainResource(tileIdN, (ZoomLevel)zoomLevel, tiledResource);
+                CollectionSnapshot->obtainResource(tileIdN, (ZoomLevel)zoomLevel, tiledResource);
 
                 const auto object3DResource = std::static_pointer_cast<MapRenderer3DObjectsResource>(tiledResource);
                 if (object3DResource && object3DResource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
@@ -1009,7 +1009,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
 
     if (debugEnabled)
     {
-        const auto CollectionStapshot = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection);
+        const auto CollectionSnapshot = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection);
         const float renderTime = renderStopwatch.elapsed() * 1000.0f;
         size_t totalGpuMemoryBytes = 0;
 

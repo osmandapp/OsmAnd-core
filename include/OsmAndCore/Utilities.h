@@ -1260,6 +1260,16 @@ namespace OsmAnd
             return getMetersPerTileUnit(zoomLevel, targetY, unitsPerTile);
         }
 
+        inline static double getMetersPer31Coordinate(const PointI& location)
+        {
+            const static auto fullInt = static_cast<double>(1ll + INT32_MAX);
+            const static auto atEquator = 40075017.0 / fullInt;
+            const auto yPos = static_cast<double>(location.y - (INT32_MAX / 2 + 1)) / fullInt;
+            const auto res = atEquator / cosh(2.0 * M_PI * yPos);
+
+            return res;
+        }
+
         static PointD getTileEllipsoidNumberAndOffsetY(int zoom, double latitude, int tileSize);
 
         static TileId getTileId(const PointI& point31, ZoomLevel zoom, PointF* pOutOffsetN = nullptr, PointI* pOutOffset = nullptr);
