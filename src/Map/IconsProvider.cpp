@@ -45,6 +45,9 @@ bool OsmAnd::IconsProvider::obtainResourceByPath(const QString& path, QByteArray
 {
     bool ok = false;
 
+    if (path.isEmpty())
+        return false;
+
     if (externalResourcesProvider)
     {
         outResource = externalResourcesProvider->containsResource(path, displayDensityFactor)
