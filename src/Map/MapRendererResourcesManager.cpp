@@ -3844,7 +3844,7 @@ std::shared_ptr<OsmAnd::GPUAPI::MapRenderer3DBuildingGPUData> OsmAnd::MapRendere
         const int indexCount = buildings3D.indexCounts[i];
         const int outlineVertexCount = (i < buildings3D.outlineVertexCounts.size()) ? buildings3D.outlineVertexCounts[i] : 0;
         const int outlineIndexCount = outlineVertexCount > 1 ? outlineVertexCount * 2 : 0;
-
+/* Buildings are cut by tiles, so they need to be provided for each occupied tile.
         std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> duplicateData;
         bool isDuplicate = false;
         for (const auto& data : constOf(_shared3DBuildings))
@@ -3874,7 +3874,7 @@ std::shared_ptr<OsmAnd::GPUAPI::MapRenderer3DBuildingGPUData> OsmAnd::MapRendere
             outlineIndexOffset += outlineIndexCount;
             continue;
         }
-
+*/
         uniqueBuildingIDs.insert(buildingID);
 
         uint16_t currentVertexOffset = static_cast<uint16_t>(uniqueVertices.size());

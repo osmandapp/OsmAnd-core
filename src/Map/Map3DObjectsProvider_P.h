@@ -23,10 +23,32 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(Map3DObjectsTiledProvider_P);
 
     public:
-        struct Primirive3D
+        struct BuildingPrimitive
         {
             std::shared_ptr<const MapPrimitiviser::Primitive> primitive;
             uint32_t polygonColor = 0;
+        };
+
+        struct PassagePrimitive
+        {
+            std::shared_ptr<const MapPrimitiviser::Primitive> primitive;
+            PointI startingPoint;
+            PointI endingPoint;
+            PointI centerPoint;
+            float height;
+            int halfWidth31;
+            bool putStart;
+            bool putEnd;
+            bool withStart;
+            bool withEnd;
+            BuildingVertex startBottomLeft;
+            BuildingVertex startTopLeft;
+            BuildingVertex startTopRight;
+            BuildingVertex startBottomRight;
+            BuildingVertex endBottomLeft;
+            BuildingVertex endTopLeft;
+            BuildingVertex endTopRight;
+            BuildingVertex endBottomRight;
         };
 
     private:
@@ -36,26 +58,64 @@ namespace OsmAnd
         const FColorRGB _customColor;
         std::shared_ptr<IMapElevationDataProvider> _elevationProvider;
 
-        void processPrimitive(const Primirive3D& primitive,
+        void processPrimitive(const BuildingPrimitive& primitive,
                               Buildings3D& buildings3D,
                               const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData,
                               const TileId& tileId,
                               const ZoomLevel zoom,
-                              const QHash<std::shared_ptr<const MapPrimitiviser::Primitive>, float>& passagesData) const;
+                              QSet<PassagePrimitive>& buildingPassages) const;
 
-        void collectFromPoliline(const std::shared_ptr<const MapPrimitiviser::Primitive>& polylinePrimitive,
-                                 QSet<Primirive3D>& outBuildings,
-                                 QSet<Primirive3D>& outBuildingParts,
-                                 QHash<std::shared_ptr<const MapPrimitiviser::Primitive>, float>& outBuildingPassages) const;
+        void collectFromPolyline(const std::shared_ptr<const MapPrimitiviser::Primitive>& polylinePrimitive,
+                                 QSet<BuildingPrimitive>& outBuildings,
+                                 QSet<BuildingPrimitive>& outBuildingParts,
+                                 QSet<PassagePrimitive>& outBuildingPassages) const;
 
         void collectFromPolygons(const std::shared_ptr<const MapPrimitiviser::Primitive>& polygonPrimitive,
-                                QSet<Primirive3D>& outBuildings,
-                                QSet<Primirive3D>& outBuildingParts) const;
+                                QSet<BuildingPrimitive>& outBuildings,
+                                QSet<BuildingPrimitive>& outBuildingParts) const;
 
-        void filterBuildings(QSet<Primirive3D>& buildings,
-                             QSet<Primirive3D>& buildingParts) const;
+        void filterBuildings(QSet<BuildingPrimitive>& buildings,
+                             QSet<BuildingPrimitive>& buildingParts) const;
 
-        void insertOrUpdateBuilding(const Primirive3D& primitive, QSet<Primirive3D>& outCollection) const;
+        void insertOrUpdateBuilding(const BuildingPrimitive& primitive, QSet<BuildingPrimitive>& outCollection) const;
+        void insertOrUpdatePassage(const PassagePrimitive& primitive, QSet<PassagePrimitive>& outCollection) const;
+
+        inline BuildingVertex getIntersection(
+            const BuildingVertex& startVertex,
+            const BuildingVertex& endVertex,
+            double range) const;
+
+        inline void appendOneTriangle(
+            QVector<BuildingVertex>& vertices,
+            QVector<uint16_t>& outIndices,
+            uint16_t& index,
+            const int max,
+            const int ad,
+            const int bd,
+            const int cd,
+            const uint16_t ai,
+            const uint16_t bi,
+            const uint16_t ci) const;
+
+        inline void appendTwoTriangles(
+            QVector<BuildingVertex>& vertices,
+            QVector<uint16_t>& outIndices,
+            uint16_t& index,
+            const int max,
+            const int ad,
+            const int bd,
+            const int cd,
+            const uint16_t ai,
+            const uint16_t bi,
+            const uint16_t ci) const;
+
+        void cutMeshForTile(
+            const std::vector<uint16_t>& indices,
+            QVector<BuildingVertex>& vertices,
+            QVector<uint16_t>& outIndices,
+            const uint16_t offset,
+            const PointI& minTile31,
+            const PointI& maxTile31) const;
 
         void accumulateElevationForPoint(
             const PointI& point31,
@@ -73,11 +133,16 @@ namespace OsmAnd
             Buildings3D& buildings3D,
             const PointI& point31_i,
             const PointI& point31_next,
+            const glm::vec3& edgeNormal,
             float minHeight,
             float height,
+            float baseTerrainHeight,
             float terrainHeight,
+            const PointI& minTile31,
+            const PointI& maxTile31,
             const glm::vec3& colorVec,
-            bool generateOutline) const;
+            bool generateOutline,
+            QList<PassagePrimitive*>& passagePrimitives) const;
 
     protected:
         Map3DObjectsTiledProvider_P(Map3DObjectsTiledProvider* const owner,
@@ -118,7 +183,6 @@ namespace OsmAnd
 
     private:
         std::vector<uint16_t> fullSideIndices;
-        std::vector<uint16_t> pasageSideIndices;
     };
 }
 
