@@ -1127,7 +1127,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     else
     {
         const auto dirAngle = static_cast<double>(state.azimuth) * M_PI / 180.0;
-        const auto dirX = qSin(dirAngle);
+        const auto dirX = -qSin(dirAngle);
         const auto dirY = qCos(dirAngle);
         QMap<int32_t, QHash<TileId, TileVisibility>> testTiles1, testTiles2;
         const auto sZoom = ZoomLevel31 - zoomLevel;
@@ -1139,7 +1139,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         {
             toCamera.x = 0;
             toCamera.y = 0;
-            stage = 4;
+            stage = 2;
         }
         else
         {
@@ -1780,13 +1780,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         for (int i = 1; i < 10; i++)
                         {
                             nextTileId = TileId::fromXY(
-                                qRound(static_cast<double>(targetTileId.x) - deltaX * distance),
+                                qRound(static_cast<double>(targetTileId.x) + deltaX * distance),
                                 qRound(static_cast<double>(targetTileId.y) + deltaY * distance));
                             if (nextTileId == prevTileId)
                             {
                                 distance += 1.0;
                                 nextTileId = TileId::fromXY(
-                                    qRound(static_cast<double>(targetTileId.x) - deltaX * distance),
+                                    qRound(static_cast<double>(targetTileId.x) + deltaX * distance),
                                     qRound(static_cast<double>(targetTileId.y) + deltaY * distance));
                             }
                             tiles.last().insert(nextTileId, Visible);
@@ -1800,7 +1800,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     const auto firstTileId = (*procTiles)[zoomLevel].begin().key();
                     double shiftX = deltaX;
                     double shiftY = deltaY;
-                    if (stage < 4 && distanceFromTarget == 0.0)
+                    if (stage < 2 && distanceFromTarget == 0.0)
                     {
                         if (stage == 0)
                         {
@@ -1812,16 +1812,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                             shiftX += deltaY;
                             shiftY -= deltaX;
                         }
-                        else if (stage == 2)
-                        {
-                            shiftX = -deltaY;
-                            shiftY = deltaX;
-                        }
-                        else if (stage == 3)
-                        {
-                            shiftX = deltaY;
-                            shiftY = -deltaX;
-                        }
                         stage++;
                     }
                     else
@@ -1831,13 +1821,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         shiftY = deltaY * distanceFromTarget;
                     }
                     auto nearTileId = TileId::fromXY(
-                        qRound(static_cast<double>(targetTileId.x) - shiftX),
+                        qRound(static_cast<double>(targetTileId.x) + shiftX),
                         qRound(static_cast<double>(targetTileId.y) + shiftY));
                     if (nearTileId == firstTileId && (!lookForStrictlyVisible || distanceFromTarget < distanceLimit))
                     {
                         distanceFromTarget += 1.0;
                         nearTileId = TileId::fromXY(
-                            qRound(static_cast<double>(targetTileId.x) - deltaX * distanceFromTarget),
+                            qRound(static_cast<double>(targetTileId.x) + deltaX * distanceFromTarget),
                             qRound(static_cast<double>(targetTileId.y) + deltaY * distanceFromTarget));
                     }
                     if (nearTileId.y >= 0 && nearTileId.y < static_cast<int32_t>(1u << zoomLevel))
