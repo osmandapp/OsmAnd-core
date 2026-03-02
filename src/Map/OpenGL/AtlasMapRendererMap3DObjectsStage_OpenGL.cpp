@@ -159,7 +159,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
 
         if (!_program.binaryCache.isEmpty())
         {
-            _program.id = gpuAPI->linkProgram(0, nullptr, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
+            _program.id = gpuAPI->linkProgram(
+                0, nullptr, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
         }
         if (_program.binaryCache.isEmpty() || !_program.id.isValid())
         {
@@ -181,7 +182,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
             }
 
             const GLuint shaders[] = { vsId, fsId };
-            _program.id = gpuAPI->linkProgram(2, shaders, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
+            _program.id = gpuAPI->linkProgram(
+                2, shaders, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
             if (_program.id.isValid() && !_program.binaryCache.isEmpty())
             {
                 gpuAPI->writeProgramBinary(
@@ -254,143 +256,6 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
     return true;
 }
 
-bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeOutlineProgram()
-{
-    const auto nextInit3DobjectsType = static_cast<Init3DObjectsType>(static_cast<int>(_init3DObjectsType) + 1);
-    _init3DObjectsType = Init3DObjectsType::Incomplete;
-
-    const auto gpuAPI = getGPUAPI();
-
-    QHash<QString, GPUAPI_OpenGL::GlslProgramVariable> variablesMap;
-    _outlineProgram.id = 0;
-
-    if (!_outlineProgram.binaryCache.isEmpty())
-    {
-        _outlineProgram.id = gpuAPI->linkProgram(0, nullptr, _outlineProgram.binaryCache, _outlineProgram.cacheFormat, true, &variablesMap);
-    }
-
-    if (!_outlineProgram.id.isValid())
-    {
-        const QString colorInOutDeclaration = QString(R"(
-            PARAM_OUTPUT vec4 v2f_color;
-        )");
-
-        const QString colorCalculation = QString(R"(
-    
-            v2f_color = vec4(0.0, 0.0, 0.0, 1.0);
-    )");
-
-        auto vertexShader = vertexShaderBase;
-        vertexShader.replace("%ColorInOutDeclaration%", colorInOutDeclaration);
-        vertexShader.replace("%ColorCalculation%", colorCalculation);
-
-        const QString fragmentShader = R"(
-            PARAM_INPUT vec4 v2f_color;
-            
-            void main()
-            {
-                FRAGMENT_COLOR_OUTPUT = v2f_color;
-            }
-        )";
-
-        auto preprocessedVertexShader = vertexShader;
-        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-
-        auto preprocessedFragmentShader = fragmentShader;
-        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-
-        _outlineProgram.binaryCache = gpuAPI->readProgramBinary(preprocessedVertexShader,
-            preprocessedFragmentShader, setupOptions.pathToOpenGLShadersCache, _outlineProgram.cacheFormat);
-
-        if (!_outlineProgram.binaryCache.isEmpty())
-        {
-            _outlineProgram.id = gpuAPI->linkProgram(0, nullptr, _outlineProgram.binaryCache, _outlineProgram.cacheFormat, true, &variablesMap);
-        }
-        if (_outlineProgram.binaryCache.isEmpty() || !_outlineProgram.id.isValid())
-        {
-            const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-            if (vsId == 0)
-            {
-                LogPrintf(LogSeverityLevel::Error, "Failed to compile Map3DObjects outline vertex shader");
-                return false;
-            }
-
-            const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-            if (fsId == 0)
-            {
-                glDeleteShader(vsId);
-                GL_CHECK_RESULT;
-
-                LogPrintf(LogSeverityLevel::Error, "Failed to compile Map3DObjects outline fragment shader");
-                return false;
-            }
-
-            const GLuint shaders[] = { vsId, fsId };
-            _outlineProgram.id = gpuAPI->linkProgram(2, shaders, _outlineProgram.binaryCache, _outlineProgram.cacheFormat, true, &variablesMap);
-            if (_outlineProgram.id.isValid() && !_outlineProgram.binaryCache.isEmpty())
-            {
-                gpuAPI->writeProgramBinary(
-                    preprocessedVertexShader,
-                    preprocessedFragmentShader,
-                    setupOptions.pathToOpenGLShadersCache,
-                    _outlineProgram.binaryCache,
-                    _outlineProgram.cacheFormat);
-            }
-        }
-    }
-
-    if (!_outlineProgram.id.isValid())
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to link Map3DObjects outline shader program");
-        return false;
-    }
-
-    const auto lookup = gpuAPI->obtainVariablesLookupContext(_outlineProgram.id, variablesMap);
-    bool ok = true;
-    ok = ok && lookup->lookupLocation(_outlineProgram.vs.in.location31, "in_vs_location31", GlslVariableType::In);
-    ok = ok && lookup->lookupLocation(_outlineProgram.vs.in.height, "in_vs_height", GlslVariableType::In);
-    ok = ok && lookup->lookupLocation(_outlineProgram.vs.in.terrainHeight, "in_vs_terrainHeight", GlslVariableType::In);
-    ok = ok && lookup->lookupLocation(_outlineProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_outlineProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_outlineProgram.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_outlineProgram.vs.param.zoomLevel, "param_vs_zoomLevel", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_outlineProgram.vs.param.metersPerUnit, "param_vs_metersPerUnit", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_outlineProgram.vs.param.zScaleFactor, "param_vs_zScaleFactor", GlslVariableType::Uniform);
-
-    if (!ok)
-    {
-        glDeleteProgram(_outlineProgram.id);
-        GL_CHECK_RESULT;
-
-        _outlineProgram.id.reset();
-
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to find variable in Map3DObjects outline shader program");
-        return false;
-    }
-
-    if (_outlineVao.isValid())
-    {
-        gpuAPI->useVAO(_outlineVao);
-
-        glEnableVertexAttribArray(*_outlineProgram.vs.in.location31);
-        GL_CHECK_RESULT;
-        glEnableVertexAttribArray(*_outlineProgram.vs.in.height);
-        GL_CHECK_RESULT;
-        glEnableVertexAttribArray(*_outlineProgram.vs.in.terrainHeight);
-        GL_CHECK_RESULT;
-
-        gpuAPI->initializeVAO(_outlineVao);
-        gpuAPI->unuseVAO();
-    }
-
-    _init3DObjectsType = nextInit3DobjectsType;
-    return true;
-}
-
 bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeDepthProgram()
 {
     const auto nextInit3DobjectsType = static_cast<Init3DObjectsType>(static_cast<int>(_init3DObjectsType) + 1);
@@ -403,7 +268,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeDepthProgram()
 
     if (!_depthProgram.binaryCache.isEmpty())
     {
-        _depthProgram.id = gpuAPI->linkProgram(0, nullptr, _depthProgram.binaryCache, _depthProgram.cacheFormat, true, &variablesMap);
+        _depthProgram.id = gpuAPI->linkProgram(
+            0, nullptr, _depthProgram.binaryCache, _depthProgram.cacheFormat, true, &variablesMap);
     }
 
     if (!_depthProgram.id.isValid())
@@ -431,7 +297,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeDepthProgram()
 
         if (!_depthProgram.binaryCache.isEmpty())
         {
-            _depthProgram.id = gpuAPI->linkProgram(0, nullptr, _depthProgram.binaryCache, _depthProgram.cacheFormat, true, &variablesMap);
+            _depthProgram.id = gpuAPI->linkProgram(
+                0, nullptr, _depthProgram.binaryCache, _depthProgram.cacheFormat, true, &variablesMap);
         }
         if (_depthProgram.binaryCache.isEmpty() || !_depthProgram.id.isValid())
         {
@@ -453,7 +320,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeDepthProgram()
             }
 
             const GLuint shaders[] = { vsId, fsId };
-            _depthProgram.id = gpuAPI->linkProgram(2, shaders, _depthProgram.binaryCache, _depthProgram.cacheFormat, true, &variablesMap);
+            _depthProgram.id = gpuAPI->linkProgram(
+                2, shaders, _depthProgram.binaryCache, _depthProgram.cacheFormat, true, &variablesMap);
             if (_depthProgram.id.isValid() && !_depthProgram.binaryCache.isEmpty())
             {
                 gpuAPI->writeProgramBinary(
@@ -543,201 +411,234 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
     _depthVao = gpuAPI->allocateUninitializedVAO();
     gpuAPI->initializeVAO(_depthVao);
 
-    _outlineVao = gpuAPI->allocateUninitializedVAO();
-    gpuAPI->initializeVAO(_outlineVao);
-
     _init3DObjectsType = Init3DObjectsType::Objects3DDepth;
 
     return true;
 }
 
-void AtlasMapRendererMap3DObjectsStage_OpenGL::prepareDrawObjects(QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& collectedResources)
+void AtlasMapRendererMap3DObjectsStage_OpenGL::occupySpace(TileId tileIdN, int zoomLevel,
+    QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const
 {
-    const auto resourcesCollection = getResources().getCollectionSnapshot(MapRendererResourceType::Map3DObjects,
-        std::static_pointer_cast<IMapDataProvider>(currentState.map3DObjectsProvider));
-
-    if (!resourcesCollection)
+    presentTiles[zoomLevel].insert(tileIdN);
+    int zoomShift = zoomLevel;
+    for (int zoom = 0; zoom <= zoomLevel; zoom++)
     {
-        return;
+        occupiedSpace[zoom].insert(TileId::fromXY(tileIdN.x >> zoomShift, tileIdN.y >> zoomShift));
+        zoomShift--;
     }
+}
 
-    const auto& internalState = getInternalState();
-    
-    const float buildingsAlpha = renderer->get3DBuildingsAlpha();
-    const int buildingsDetalization = renderer->get3DBuildingsDetalization();
-
-    const auto CollectionSnapshot = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection);
-    
-    QVector<ZoomLevel> sortedZoomLevels;
-    for (auto itTiles = internalState.visibleTiles.cbegin(); itTiles != internalState.visibleTiles.cend(); itTiles++)
+bool AtlasMapRendererMap3DObjectsStage_OpenGL::spaceAlreadyOccupied(TileId tileIdN, int zoomLevel,
+    QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const
+{
+    if (presentTiles.isEmpty())
+        return false;
+    const auto startZoom = presentTiles.firstKey();
+    if (zoomLevel < startZoom)
+        return false;
+    int zoomShift = zoomLevel - startZoom + 1;
+    for (int zoom = startZoom; zoom <= zoomLevel; zoom++)
     {
-        if (buildingsDetalization == 1)
-        {
-            sortedZoomLevels.append(currentState.zoomLevel);
-            break;
-        }
-        else
-        {
-            sortedZoomLevels.append(itTiles.key());
-        }
-    }
-    
-    if (buildingsAlpha < 1.0f)
-    {
-        std::sort(sortedZoomLevels.begin(), sortedZoomLevels.end(), std::greater<ZoomLevel>());
-    }
-    else
-    {
-        std::sort(sortedZoomLevels.begin(), sortedZoomLevels.end());
-    }
-
-    for (const auto& zoomLevel : constOf(sortedZoomLevels))
-    {
-        const auto& visibleTilesSet = internalState.visibleTilesSet.constFind(zoomLevel);
-        if (visibleTilesSet == internalState.visibleTilesSet.cend())
-        {
+        zoomShift--;
+        if (!presentTiles.contains(zoom))
             continue;
-        }
-        
-        const auto& tilesForZoom = internalState.visibleTiles.value(zoomLevel);
-        for (const auto& tileId : constOf(tilesForZoom))
+        if (presentTiles[zoom].contains(TileId::fromXY(tileIdN.x >> zoomShift, tileIdN.y >> zoomShift)))
+            return true;
+    }
+    const auto endZoom = occupiedSpace.lastKey();
+    for (int zoom = zoomLevel; zoom <= endZoom; zoom++)
+    {
+        if (occupiedSpace[zoom].contains(tileIdN))
+            return true;
+        zoomShift--;
+    }
+
+    return false;
+}
+
+void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
+    const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection, int detalizationLevel)
+{
+    const auto& internalState = getInternalState();
+
+    auto maxMissingDataZoomShift = currentState.map3DObjectsProvider->getMaxMissingDataZoomShift();
+    auto maxMissingDataUnderZoomShift = currentState.map3DObjectsProvider->getMaxMissingDataUnderZoomShift();
+
+    QMap<int, QSet<TileId>> presentTiles, occupiedSpace;
+
+    bool isNextDetailLevel = false;
+    auto tilesBegin = internalState.visibleTiles.cbegin();
+    for (auto itTiles = internalState.visibleTiles.cend(); itTiles != tilesBegin; itTiles--)
+    {
+        if (isNextDetailLevel && detalizationLevel < 2)
+            break;
+        isNextDetailLevel = true;
+        const auto& tilesEntry = itTiles - 1;
+        const auto zoomLevel = tilesEntry.key();
+        const auto& tiles = tilesEntry.value();
+        const auto& citVisibleTilesSet = internalState.visibleTilesSet.constFind(zoomLevel);
+        if (citVisibleTilesSet == internalState.visibleTilesSet.cend())
+            continue;
+
+        for (const auto& tileId : constOf(tiles))
         {
-            const auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomLevel);
+            const auto tileIdN = Utilities::normalizeTileId(tileId, zoomLevel);
 
-            if (!visibleTilesSet->contains(tileIdN))
-            {
+            // Don't render invisible tiles
+            if (!citVisibleTilesSet.value().contains(tileIdN))
                 continue;
-            }
 
-            const int maxMissingDataUnderZoomShift = currentState.map3DObjectsProvider->getMaxMissingDataUnderZoomShift();
-
-            int desiredOffset = internalState.zoomLevelOffset;
-            if (desiredOffset == 0 && !internalState.extraDetailedTiles.empty())
+            // Try to obtain more detailed resource (of higher zoom level) if needed and possible
+            int neededZoom = internalState.zoomLevelOffset == 0 ? zoomLevel : std::min(static_cast<int>(MaxZoomLevel),
+                zoomLevel + std::min(internalState.zoomLevelOffset, maxMissingDataUnderZoomShift));
+            neededZoom = internalState.zoomLevelOffset != 0 || internalState.extraDetailedTiles.empty() ? neededZoom
+                : std::min(static_cast<int>(MaxZoomLevel), zoomLevel + std::min(1, maxMissingDataUnderZoomShift));
+            bool haveMatch = false;
+            while (neededZoom > zoomLevel)
             {
-                desiredOffset = 1;
-            }
+                const int absZoomShift = neededZoom - zoomLevel;
+                const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
+                    tileIdN,
+                    absZoomShift);
+                const auto subtilesCount = underscaledTileIdsN.size();
 
-            const int appliedOffset = std::min(desiredOffset, maxMissingDataUnderZoomShift);
-            const int neededZoom = std::min(static_cast<int>(MaxZoomLevel), static_cast<int>(zoomLevel) + appliedOffset);
-
-            bool collected = false;
-
-            {
-                std::shared_ptr<MapRendererBaseTiledResource> tiledResource;
-                CollectionSnapshot->obtainResource(tileIdN, (ZoomLevel)neededZoom, tiledResource);
-
-                const auto object3DResource = std::static_pointer_cast<MapRenderer3DObjectsResource>(tiledResource);
-                if (object3DResource && object3DResource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
+                int count = 0;
+                bool allPresent = true;
+                auto pUnderscaledTileIdN = underscaledTileIdsN.constData();
+                for (auto tileIdx = 0; tileIdx < subtilesCount; tileIdx++)
                 {
-                    for (const auto& resource : object3DResource->getRenderableBuildings().buildingResources)
+                    const auto& underscaledTileId = *(pUnderscaledTileIdN++);
+                    if (spaceAlreadyOccupied(underscaledTileId, neededZoom, presentTiles, occupiedSpace))
                     {
-                        collectedResources.insert(resource);
-                    }
-
-                    object3DResource->setState(MapRendererResourceState::Uploaded);
-                    collected = true;
-                }
-            }
-
-            if (!collected)
-            {
-                const int maxZoomShift = currentState.map3DObjectsProvider->getMaxMissingDataZoomShift();
-                for (int absZoomShift = 1; absZoomShift <= maxZoomShift; absZoomShift++)
-                {
-                    const int underscaledZoom = static_cast<int>(zoomLevel) + absZoomShift;
-                    if (underscaledZoom > static_cast<int>(MaxZoomLevel) || absZoomShift > maxMissingDataUnderZoomShift)
-                    {
+                        allPresent = false;
                         break;
                     }
-
-                    const auto subTileIds = Utilities::getTileIdsUnderscaledByZoomShift(tileIdN, absZoomShift);
-                    bool atLeastOne = false;
-
-                    for (const auto& subId : constOf(subTileIds))
+                    auto meshInGPU = captureResourceInGPU(
+                        resourcesCollection,
+                        underscaledTileId,
+                        static_cast<ZoomLevel>(neededZoom));
+                    if (meshInGPU)
                     {
-                        std::shared_ptr<MapRendererBaseTiledResource> subResBase;
-                        CollectionSnapshot->obtainResource(subId, static_cast<ZoomLevel>(underscaledZoom), subResBase);
+                        resourcesInGPU.append(qMove(meshInGPU));
+                        count++;
+                    }
+                    else
+                    {
+                        allPresent = false;
+                        break;
+                    }
+                }
+                if (allPresent)
+                {
+                    for (auto tileIdx = 0; tileIdx < subtilesCount; tileIdx++)
+                    {
+                        const auto& underscaledTileId = *(pUnderscaledTileIdN++);
+                        occupySpace(underscaledTileId, neededZoom, presentTiles, occupiedSpace);
+                    }
+                    haveMatch = true;
+                    break;
+                }
+                else
+                {
+                    for (; count > 0; count--)
+                    {
+                        resourcesInGPU.removeLast();
+                    }
+                }
+                neededZoom--;
+            }
 
-                        const auto subRes = std::static_pointer_cast<MapRenderer3DObjectsResource>(subResBase);
-                        if (subRes && subRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
+            if (!haveMatch && !spaceAlreadyOccupied(tileIdN, zoomLevel, presentTiles, occupiedSpace))
+            {
+                // Try to obtain exact match resource
+                auto meshInGPU = captureResourceInGPU(
+                    resourcesCollection,
+                    tileIdN,
+                    zoomLevel);
+                if (meshInGPU)
+                {
+                    occupySpace(tileIdN, zoomLevel, presentTiles, occupiedSpace);
+                    resourcesInGPU.append(qMove(meshInGPU));
+                    haveMatch = true;
+                }
+            }
+            if (!haveMatch)
+            {
+                // Exact match was not found, so now try to look for overscaled/underscaled resources,
+                // giving preference to underscaled resources
+                for (int absZoomShift = 1; absZoomShift <= maxMissingDataZoomShift; absZoomShift++)
+                {
+                    // Look for underscaled first. Only full match is accepted
+                    const auto underscaledZoom = static_cast<int>(zoomLevel) + absZoomShift;
+                    if (underscaledZoom <= static_cast<int>(MaxZoomLevel))
+                    {
+                        const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
+                            tileIdN,
+                            absZoomShift);
+                        const auto subtilesCount = underscaledTileIdsN.size();
+
+                        bool atLeastOnePresent = false;
+                        auto pUnderscaledTileIdN = underscaledTileIdsN.constData();
+                        for (auto tileIdx = 0; tileIdx < subtilesCount; tileIdx++)
                         {
-                            for (const auto& resource : subRes->getRenderableBuildings().buildingResources)
+                            const auto& underscaledTileId = *(pUnderscaledTileIdN++);
+                            if (spaceAlreadyOccupied(underscaledTileId, underscaledZoom, presentTiles, occupiedSpace))
+                                continue;
+                            auto meshInGPU = captureResourceInGPU(
+                                resourcesCollection,
+                                underscaledTileId,
+                                static_cast<ZoomLevel>(underscaledZoom));
+                            if (meshInGPU)
                             {
-                                collectedResources.insert(resource);
+                                occupySpace(underscaledTileId, underscaledZoom, presentTiles, occupiedSpace);
+                                resourcesInGPU.append(qMove(meshInGPU));
+                                atLeastOnePresent = true;
                             }
-
-                            subRes->setState(MapRendererResourceState::Uploaded);
-                            collected = true;
                         }
+
+                        if (atLeastOnePresent)
+                            break;
                     }
 
-                    if (atLeastOne)
+                    // If underscaled was not found, look for overscaled (surely, if such zoom level exists at all)
+                    const auto overscaleZoom = static_cast<int>(zoomLevel) - absZoomShift;
+                    if (overscaleZoom >= static_cast<int>(MinZoomLevel))
                     {
-                        collected = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!collected)
-            {
-                const int maxZoomShift = currentState.map3DObjectsProvider->getMaxMissingDataZoomShift();
-                for (int absZoomShift = 1; absZoomShift <= maxZoomShift; absZoomShift++)
-                {
-                    const int overscaledZoom = static_cast<int>(zoomLevel) - absZoomShift;
-                    if (overscaledZoom < static_cast<int>(MinZoomLevel))
-                    {
-                        break;
-                    }
-
-                    const auto parentId = Utilities::getTileIdOverscaledByZoomShift(tileIdN, absZoomShift);
-                    std::shared_ptr<MapRendererBaseTiledResource> parentBase;
-
-                    CollectionSnapshot->obtainResource(parentId, static_cast<ZoomLevel>(overscaledZoom), parentBase);
-                    const auto parentRes = std::static_pointer_cast<MapRenderer3DObjectsResource>(parentBase);
-
-                    if (parentRes && parentRes->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
-                    {
-                        for (const auto& resource : parentRes->getRenderableBuildings().buildingResources)
+                        PointF texCoordsOffset;
+                        PointF texCoordsScale;
+                        const auto overscaledTileIdN = Utilities::getTileIdOverscaledByZoomShift(
+                            tileIdN,
+                            absZoomShift,
+                            &texCoordsOffset,
+                            &texCoordsScale);
+                        if (spaceAlreadyOccupied(overscaledTileIdN, overscaleZoom, presentTiles, occupiedSpace))
+                            continue;
+                        auto meshInGPU = captureResourceInGPU(
+                            resourcesCollection,
+                            overscaledTileIdN,
+                            static_cast<ZoomLevel>(overscaleZoom));
+                        if (meshInGPU)
                         {
-                            collectedResources.insert(resource);
+                            occupySpace(overscaledTileIdN, overscaleZoom, presentTiles, occupiedSpace);
+                            resourcesInGPU.append(qMove(meshInGPU));
+                            break;
                         }
-
-                        parentRes->setState(MapRendererResourceState::Uploaded);
-                        break;
                     }
-                }
-            }
-
-            if (!collected)
-            {
-                std::shared_ptr<MapRendererBaseTiledResource> tiledResource;
-                CollectionSnapshot->obtainResource(tileIdN, (ZoomLevel)zoomLevel, tiledResource);
-
-                const auto object3DResource = std::static_pointer_cast<MapRenderer3DObjectsResource>(tiledResource);
-                if (object3DResource && object3DResource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
-                {
-                    for (const auto& resource : object3DResource->getRenderableBuildings().buildingResources)
-                    {
-                        collectedResources.insert(resource);
-                    }
-
-                    object3DResource->setState(MapRendererResourceState::Uploaded);
-                    collected = true;
                 }
             }
         }
     }
 }
 
-MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDepth(QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& collectedResources)
+MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDepth()
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
 
     glUseProgram(_depthProgram.id);
     GL_CHECK_RESULT;
-    glUniformMatrix4fv(*_depthProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
+    glUniformMatrix4fv(*_depthProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE,
+        glm::value_ptr(internalState.mPerspectiveProjectionView));
     GL_CHECK_RESULT;
     glUniform4f(*_depthProgram.vs.param.resultScale, 1.0f, currentState.flip ? -1.0f : 1.0f, 1.0f, 1.0f);
     GL_CHECK_RESULT;
@@ -752,36 +653,38 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDe
 
     gpuAPI->useVAO(_depthVao);
 
-    for (const auto& resource : collectedResources)
+    for (const auto& resource : resourcesInGPU)
     {
         if (resource->indexBuffer && resource->indexBuffer->itemsCount > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(resource->vertexBuffer->refInGPU)));
+            glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(
+                resource->vertexBuffer->refInGPU)));
             GL_CHECK_RESULT;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(resource->indexBuffer->refInGPU)));
-            GL_CHECK_RESULT;
-
-            glVertexAttribIPointer(*_depthProgram.vs.in.location31, 2, GL_INT, sizeof(BuildingVertex),
-                                   reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, location31)));
-            GL_CHECK_RESULT;
-            glVertexAttribPointer(*_depthProgram.vs.in.height, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
-                                  reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, height)));
-            GL_CHECK_RESULT;
-            glVertexAttribPointer(*_depthProgram.vs.in.terrainHeight, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
-                                  reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, terrainHeight)));
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(
+                resource->indexBuffer->refInGPU)));
             GL_CHECK_RESULT;
 
-            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(resource->indexBuffer->itemsCount), GL_UNSIGNED_SHORT, 0);
+            glVertexAttribIPointer(*_depthProgram.vs.in.location31, 2, GL_INT,
+                sizeof(BuildingVertex), reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, location31)));
+            GL_CHECK_RESULT;
+            glVertexAttribPointer(*_depthProgram.vs.in.height, 1, GL_FLOAT, GL_FALSE,
+                sizeof(BuildingVertex), reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, height)));
+            GL_CHECK_RESULT;
+            glVertexAttribPointer(*_depthProgram.vs.in.terrainHeight, 1, GL_FLOAT, GL_FALSE,
+                sizeof(BuildingVertex), reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, terrainHeight)));
+            GL_CHECK_RESULT;
+
+            glDrawElements(
+                GL_TRIANGLES, static_cast<GLsizei>(resource->indexBuffer->itemsCount), GL_UNSIGNED_SHORT, 0);
             GL_CHECK_RESULT;
         }
     }
-
     gpuAPI->unuseVAO();
 
     return StageResult::Success;
 }
 
-MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderColor(QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& collectedResources)
+MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderColor()
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -808,7 +711,8 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
 
     glUseProgram(_program.id);
     GL_CHECK_RESULT;
-    glUniformMatrix4fv(*_program.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
+    glUniformMatrix4fv(*_program.vs.param.mPerspectiveProjectionView, 1, GL_FALSE,
+        glm::value_ptr(internalState.mPerspectiveProjectionView));
     GL_CHECK_RESULT;
     glUniform4f(*_program.vs.param.resultScale, 1.0f, currentState.flip ? -1.0f : 1.0f, 1.0f, 1.0f);
     GL_CHECK_RESULT;
@@ -834,97 +738,46 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
 
     gpuAPI->useVAO(_vao);
 
-    for (const auto& resource : collectedResources)
+    for (const auto& resource : resourcesInGPU)
     {
         if (resource->indexBuffer && resource->indexBuffer->itemsCount > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(resource->vertexBuffer->refInGPU)));
+            glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(
+                resource->vertexBuffer->refInGPU)));
             GL_CHECK_RESULT;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(resource->indexBuffer->refInGPU)));
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(
+                resource->indexBuffer->refInGPU)));
             GL_CHECK_RESULT;
 
             glVertexAttribIPointer(*_program.vs.in.location31, 2, GL_INT, sizeof(BuildingVertex),
-                                   reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, location31)));
+                                reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, location31)));
             GL_CHECK_RESULT;
             glVertexAttribPointer(*_program.vs.in.height, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
-                                  reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, height)));
+                                reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, height)));
             GL_CHECK_RESULT;
             glVertexAttribPointer(*_program.vs.in.terrainHeight, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
-                                  reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, terrainHeight)));
+                                reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, terrainHeight)));
             GL_CHECK_RESULT;
 
             glVertexAttribPointer(*_program.vs.in.normal, 3, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
-                                  reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, normal)));
+                                reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, normal)));
             GL_CHECK_RESULT;
             glVertexAttribPointer(*_program.vs.in.color, 3, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
-                                  reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, color)));
+                                reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, color)));
             GL_CHECK_RESULT;
 
-            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(resource->indexBuffer->itemsCount), GL_UNSIGNED_SHORT, 0);
+            glDrawElements(
+                GL_TRIANGLES, static_cast<GLsizei>(resource->indexBuffer->itemsCount), GL_UNSIGNED_SHORT, 0);
             GL_CHECK_RESULT;
         }
     }
-
     gpuAPI->unuseVAO();
 
     return StageResult::Success;
 }
 
-MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderOutline(QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& collectedResources)
-{
-    const auto gpuAPI = getGPUAPI();
-    const auto& internalState = getInternalState();
-
-    glUseProgram(_outlineProgram.id);
-    GL_CHECK_RESULT;
-    glUniformMatrix4fv(*_outlineProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
-    GL_CHECK_RESULT;
-    glUniform4f(*_outlineProgram.vs.param.resultScale, 1.0f, currentState.flip ? -1.0f : 1.0f, 1.0f, 1.0f);
-    GL_CHECK_RESULT;
-    glUniform2i(*_outlineProgram.vs.param.target31, currentState.target31.x, currentState.target31.y);
-    GL_CHECK_RESULT;
-    glUniform1i(*_outlineProgram.vs.param.zoomLevel, (int)currentState.zoomLevel);
-    GL_CHECK_RESULT;
-    glUniform1f(*_outlineProgram.vs.param.metersPerUnit, static_cast<float>(internalState.metersPerUnit));
-    GL_CHECK_RESULT;
-    glUniform1f(*_outlineProgram.vs.param.zScaleFactor, currentState.elevationConfiguration.zScaleFactor);
-    GL_CHECK_RESULT;
-
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    GL_CHECK_RESULT;
-
-    gpuAPI->useVAO(_outlineVao);
-
-    for (const auto& resource : collectedResources)
-    {
-        if (resource->outlineVertexBuffer && resource->outlineIndexBuffer)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(resource->outlineVertexBuffer->refInGPU)));
-            GL_CHECK_RESULT;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(resource->outlineIndexBuffer->refInGPU)));
-            GL_CHECK_RESULT;
-
-            glVertexAttribIPointer(*_outlineProgram.vs.in.location31, 2, GL_INT, sizeof(BuildingVertex),
-                                   reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, location31)));
-            GL_CHECK_RESULT;
-            glVertexAttribPointer(*_outlineProgram.vs.in.height, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
-                                  reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, height)));
-            GL_CHECK_RESULT;
-            glVertexAttribPointer(*_outlineProgram.vs.in.terrainHeight, 1, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
-                                  reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, terrainHeight)));
-            GL_CHECK_RESULT;
-
-            glDrawElements(GL_LINES, static_cast<GLsizei>(resource->outlineIndexBuffer->itemsCount), GL_UNSIGNED_SHORT, nullptr);
-            GL_CHECK_RESULT;
-        }
-    }
-
-    gpuAPI->unuseVAO();
-
-    return StageResult::Success;
-}
-
-MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const metric)
+MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
+    IMapRenderer_Metrics::Metric_renderFrame* const metric)
 {
     bool ok = true;
 
@@ -933,7 +786,6 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
         const auto init3DObjectsType = _init3DObjectsType;
         ok = ok && (init3DObjectsType != Init3DObjectsType::Objects3DDepth || initializeDepthProgram());
         ok = ok && (init3DObjectsType != Init3DObjectsType::Objects3DColor || initializeColorProgram());
-        ok = ok && (init3DObjectsType != Init3DObjectsType::Objects3DOutline || initializeOutlineProgram());
 
         if (!ok || _init3DObjectsType == Init3DObjectsType::Incomplete)
         {
@@ -951,19 +803,19 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
         return StageResult::Success;
     }
 
-    const bool debugEnabled = debugSettings && debugSettings->debugStageEnabled;
-    const bool debugDetailedInfo = debugEnabled && debugSettings->enableMap3dObjectsDebugInfo;
-    Stopwatch renderStopwatch(debugEnabled);
+    const float buildingsAlpha = renderer->get3DBuildingsAlpha();
+    const int detalizationLevel = renderer->get3DBuildingsDetalization();
 
-    QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>> collectedResources;
-    prepareDrawObjects(collectedResources);
+    resourcesInGPU.clear();
 
-    if (collectedResources.isEmpty())
+    getResourcesInGPU(resourcesCollection, detalizationLevel);
+
+    if (resourcesInGPU.isEmpty())
     {
         return StageResult::Success;
     }
 
-    const bool needsDepthPrepass = isDepthPrepassRequired();
+    const bool needsDepthPrepass = buildingsAlpha > 0.0 && buildingsAlpha < 1.0f;
 
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
@@ -983,7 +835,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
         glDisable(GL_BLEND);
         GL_CHECK_RESULT;
 
-        depthPrepassResult = renderDepth(collectedResources);
+        depthPrepassResult = renderDepth();
 
         glEnable(GL_BLEND);
         GL_CHECK_RESULT;
@@ -995,8 +847,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     GL_CHECK_RESULT;
 
-    const auto colorPassResult = renderColor(collectedResources);
-    const auto outlinePassResult = renderOutline(collectedResources);
+    const auto colorPassResult = renderColor();
 
     if (needsDepthPrepass)
     {
@@ -1007,50 +858,12 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(I
     glDisable(GL_CULL_FACE);
     GL_CHECK_RESULT;
 
-    if (debugEnabled)
-    {
-        const auto CollectionSnapshot = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection);
-        const float renderTime = renderStopwatch.elapsed() * 1000.0f;
-        size_t totalGpuMemoryBytes = 0;
-
-        QString debugString;
-
-        if (debugDetailedInfo)
-        {
-            for (const auto& resourceInfo : constOf(collectedResources))
-            {
-                const uint64_t tileTotalGpuMemoryBytes = resourceInfo->indexBuffer->itemsCount * sizeof(uint16_t)
-                    + resourceInfo->vertexBuffer->itemsCount * sizeof(BuildingVertex);
-                totalGpuMemoryBytes += tileTotalGpuMemoryBytes;
-
-                if (debugDetailedInfo)
-                {
-                    debugString += QString("\n3D_OBJECTS_DEBUG <<<<< Resource[%1x%2@%3]: GPU: %4 bytes, ObtainData: %5ms, UploadToGPU: %6ms")
-                        .arg(resourceInfo->tileId.x)
-                        .arg(resourceInfo->tileId.y)
-                        .arg(resourceInfo->zoom)
-                        .arg(tileTotalGpuMemoryBytes)
-                        .arg(resourceInfo->_performanceDebugInfo.obtainDataTimeMilliseconds, 0, 'f', 2)
-                        .arg(resourceInfo->_performanceDebugInfo.uploadToGpuTimeMilliseconds, 0, 'f', 2);
-                }
-            }
-        }
-        
-        const float totalGpuMemoryMB = static_cast<float>(totalGpuMemoryBytes) / (1024.0f * 1024.0f);
-        debugString += QString("3D_OBJECTS_DEBUG <<<<< RenderTime: %1ms, TilesDrawn: %2, TotalGpuMemory: %3 MB")
-            .arg(renderTime, 0, 'f', 2)
-            .arg(collectedResources.size())
-            .arg(totalGpuMemoryMB, 0, 'f', 3);
-
-        LogPrintf(LogSeverityLevel::Info, "%s", qPrintable(debugString));
-    }
-
     if (depthPrepassResult == StageResult::Fail || colorPassResult == StageResult::Fail)
     {
         return StageResult::Fail;
     }
 
-    if (depthPrepassResult == StageResult::Wait || colorPassResult == StageResult::Wait || outlinePassResult == StageResult::Wait)
+    if (depthPrepassResult == StageResult::Wait || colorPassResult == StageResult::Wait)
     {
         return StageResult::Wait;
     }
@@ -1088,17 +901,33 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::release(bool gpuContextLost)
         _depthProgram.id = 0;
     }
     
-    if (_outlineProgram.id)
-    {
-        glDeleteProgram(_outlineProgram.id);
-        GL_CHECK_RESULT;
-        _outlineProgram.id = 0;
-    }
     return true;
 }
 
-bool AtlasMapRendererMap3DObjectsStage_OpenGL::isDepthPrepassRequired() const
+std::shared_ptr<const GPUAPI::MeshInGPU> AtlasMapRendererMap3DObjectsStage_OpenGL::captureResourceInGPU(
+    const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection_,
+    TileId normalizedTileId,
+    ZoomLevel zoomLevel) const
 {
-    const float buildingAlpha = renderer->get3DBuildingsAlpha();
-    return buildingAlpha < 1.0f && buildingAlpha > 0.0;
+    const auto& resourcesCollection =
+        std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
+
+    // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
+    std::shared_ptr<MapRendererBaseTiledResource> resource_;
+    if (resourcesCollection->obtainResource(normalizedTileId, zoomLevel, resource_))
+    {
+        const auto resource = std::static_pointer_cast<MapRenderer3DObjectsResource>(resource_);
+
+        // Check state and obtain GPU resource
+        auto state = resource->getState();
+        if (state == MapRendererResourceState::Uploaded)
+        {
+            // Capture GPU resource
+            std::shared_ptr<const GPUAPI::MeshInGPU> meshInGPU;
+            resource->captureResourceInGPU(meshInGPU);
+            return meshInGPU;
+        }
+    }
+
+    return nullptr;
 }

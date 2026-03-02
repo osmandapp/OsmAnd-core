@@ -920,11 +920,14 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolToGPU(
     return false;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::uploadDataAsVertices(
-    const void* data,
-    const size_t dataSize,
-    const unsigned int vertexCount,
-    std::shared_ptr< const ArrayBufferInGPU >& outVertexBuffer,
+bool OsmAnd::GPUAPI_OpenGL::uploadDataAsMeshToGPU(
+    const void* vertices,
+    const size_t vertexSize,
+    const unsigned int verticesCount,
+    const void* indices,
+    const size_t indexSize,
+    const unsigned int indicesCount,
+    std::shared_ptr<const MeshInGPU>& meshInGPU,
     bool waitForGPU,
     volatile bool* gpuContextLost)
 {
@@ -935,53 +938,73 @@ bool OsmAnd::GPUAPI_OpenGL::uploadDataAsVertices(
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
 
-    GLuint vbo = 0;
-    glGenBuffers(1, &vbo);
+    // Create vertex buffer
+    GLuint vertexBuffer;
+    glGenBuffers(1, &vertexBuffer);
     GL_CHECK_RESULT;
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    // Bind it
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
     GL_CHECK_RESULT;
 
-    glBufferData(GL_ARRAY_BUFFER, dataSize, data, GL_STATIC_DRAW);
+    // Upload data
+    if (verticesCount > 0)
+    {
+        glBufferData(GL_ARRAY_BUFFER, verticesCount * vertexSize, vertices, GL_STATIC_DRAW);
+        GL_CHECK_RESULT;
+    }
+
+    // Unbind it
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 
-    outVertexBuffer = std::shared_ptr<const ArrayBufferInGPU>(new ArrayBufferInGPU(
+    // Create ArrayBuffer resource
+    const auto vertexBufferResource =
+        std::make_shared<ArrayBufferInGPU>(this, reinterpret_cast<RefInGPU>(vertexBuffer), verticesCount);
+
+    // Object may have no index buffer, so check if it needs to be created
+    std::shared_ptr<ElementArrayBufferInGPU> indexBufferResource;
+    if (indicesCount > 0)
+    {
+        // Create index buffer
+        GLuint indexBuffer;
+        glGenBuffers(1, &indexBuffer);
+        GL_CHECK_RESULT;
+
+        // Bind it
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+        GL_CHECK_RESULT;
+
+        // Upload data
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * indexSize, indices, GL_STATIC_DRAW);
+        GL_CHECK_RESULT;
+
+        // Unbind it
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        GL_CHECK_RESULT;
+
+        // Create ElementArrayBuffer resource
+        indexBufferResource.reset(new ElementArrayBufferInGPU(
+            this,
+            reinterpret_cast<RefInGPU>(indexBuffer),
+            indicesCount));
+    }
+    
+    // Create resource-in-GPU descriptor
+    const auto mesh = std::make_shared<MeshInGPU>(
         this,
-        reinterpret_cast<RefInGPU>(static_cast<uintptr_t>(vbo)),
-        vertexCount));
+        vertexBufferResource,
+        indexBufferResource,
+        std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(),
+        InvalidZoomLevel,
+        false,
+        false,
+        nullptr);
 
-    return true;
-}
+    if (waitForGPU)
+        waitUntilUploadIsComplete(gpuContextLost);
 
-bool OsmAnd::GPUAPI_OpenGL::uploadDataAsIndices(
-    const void* data,
-    const size_t dataSize,
-    const unsigned int indexCount,
-    std::shared_ptr< const ElementArrayBufferInGPU >& outIndexBuffer,
-    bool waitForGPU,
-    volatile bool* gpuContextLost)
-{
-    if (*gpuContextLost)
-        return false;
-
-    GL_CHECK_PRESENT(glGenBuffers);
-    GL_CHECK_PRESENT(glBindBuffer);
-    GL_CHECK_PRESENT(glBufferData);
-
-    GLuint ebo = 0;
-    glGenBuffers(1, &ebo);
-    GL_CHECK_RESULT;
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    GL_CHECK_RESULT;
-
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, dataSize, data, GL_STATIC_DRAW);
-    GL_CHECK_RESULT;
-
-    outIndexBuffer = std::shared_ptr<const ElementArrayBufferInGPU>(new ElementArrayBufferInGPU(
-        this,
-        reinterpret_cast<RefInGPU>(static_cast<uintptr_t>(ebo)),
-        indexCount));
+    meshInGPU = mesh;
 
     return true;
 }

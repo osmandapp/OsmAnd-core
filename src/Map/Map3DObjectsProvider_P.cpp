@@ -429,8 +429,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
         return;
     }
 
-    const bool show3DbuildingOutline = false;//_environment ? _environment->getShow3DBuildingOutline() : false;
-
     float levelHeight = getDefaultBuildingsLevelHeight();
 
     float height = getDefaultBuildingsHeight();
@@ -574,7 +572,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
     }
 
     int currentVertexOffset = buildings3D.vertices.size();
-    const int currentOutlineVertexOffset = buildings3D.outlineVertices.size();
     const int currentIndexOffset = buildings3D.indices.size();
 
     // Construct top side of the mesh
@@ -589,12 +586,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
 
         outerRing.push_back({p.x, p.y});
         buildings3D.vertices.append(v);
-        if (show3DbuildingOutline)
-        {
-            buildings3D.outlineVertices.append(v);
-            buildings3D.outlineIndices.append(static_cast<uint16_t>(currentOutlineVertexOffset + i));
-            buildings3D.outlineIndices.append(static_cast<uint16_t>(currentOutlineVertexOffset + next));
-        }
     }
 
     topPolygon.push_back(std::move(outerRing));
@@ -603,33 +594,12 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
     {
         std::vector<std::array<int32_t, 2>> innerRing;
 
-        int innerOutlineStart = 0;
-        if (show3DbuildingOutline)
-        {
-            innerOutlineStart = buildings3D.outlineVertices.size();
-        }
-
         for (const auto& p : innerPoly)
         {
             BuildingVertex v{glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec};
 
             innerRing.push_back({p.x, p.y});
             buildings3D.vertices.append(v);
-            if (show3DbuildingOutline)
-            {
-                buildings3D.outlineVertices.append(v);
-            }
-        }
-
-        if (show3DbuildingOutline)
-        {
-            const int innerOutlineCount = buildings3D.outlineVertices.size() - innerOutlineStart;
-            for (int i = 0; i < innerOutlineCount; ++i)
-            {
-                const int next = (i + 1) % innerOutlineCount;
-                buildings3D.outlineIndices.append(static_cast<uint16_t>(innerOutlineStart + i));
-                buildings3D.outlineIndices.append(static_cast<uint16_t>(innerOutlineStart + next));
-            }
         }
 
         topPolygon.push_back(std::move(innerRing));
@@ -737,7 +707,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
             minTile31,
             maxTile31,
             colorVec,
-            show3DbuildingOutline,
             passagePrimitives);
     }
 
@@ -835,7 +804,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
                 minTile31,
                 maxTile31,
                 colorVec,
-                show3DbuildingOutline,
                 passagePrimitives);
         }
     }
@@ -985,15 +953,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
             }
         }
     }
-
-    const int buildingVertexCount = buildings3D.vertices.size() - currentVertexOffset;
-    const int buildingIndexCount = buildings3D.indices.size() - currentIndexOffset;
-    const int outlineVertexCount = show3DbuildingOutline ? (buildings3D.outlineVertices.size() - currentOutlineVertexOffset) : 0;
-
-    buildings3D.buildingIDs.append(sourceObject->id.id);
-    buildings3D.vertexCounts.append(buildingVertexCount);
-    buildings3D.indexCounts.append(buildingIndexCount);
-    buildings3D.outlineVertexCounts.append(outlineVertexCount);
 }
 
 inline OsmAnd::BuildingVertex Map3DObjectsTiledProvider_P::getIntersection(
@@ -1296,7 +1255,6 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     const PointI& minTile31,
     const PointI& maxTile31,
     const glm::vec3& colorVec,
-    bool generateOutline,
     QList<PassagePrimitive*>& passagePrimitives) const
 {
     const uint32_t baseVertexOffset = buildings3D.vertices.size();
@@ -1368,25 +1326,6 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
             baseVertexOffset,
             minTile31,
             maxTile31);
-    }
-
-    if (generateOutline)
-    {
-        const uint16_t outlineBase = static_cast<uint16_t>(buildings3D.outlineVertices.size());
-
-        buildings3D.outlineVertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, baseTerrainHeight, edgeNormal, colorVec});
-        buildings3D.outlineVertices.append({glm::ivec2(point31_i.x,      point31_i.y),      height,    terrainHeight,    edgeNormal, colorVec});
-        buildings3D.outlineVertices.append({glm::ivec2(point31_next.x,   point31_next.y),   height,    terrainHeight,    edgeNormal, colorVec});
-        buildings3D.outlineVertices.append({glm::ivec2(point31_next.x,   point31_next.y),   minHeight, baseTerrainHeight, edgeNormal, colorVec});
-
-        buildings3D.outlineIndices.append(outlineBase + 0);
-        buildings3D.outlineIndices.append(outlineBase + 1);
-        buildings3D.outlineIndices.append(outlineBase + 2);
-        buildings3D.outlineIndices.append(outlineBase + 3);
-        buildings3D.outlineIndices.append(outlineBase + 0);
-        buildings3D.outlineIndices.append(outlineBase + 3);
-        buildings3D.outlineIndices.append(outlineBase + 1);
-        buildings3D.outlineIndices.append(outlineBase + 2);
     }
 }
 
