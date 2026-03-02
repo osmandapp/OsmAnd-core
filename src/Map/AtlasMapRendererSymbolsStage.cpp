@@ -41,7 +41,7 @@
 #include "Map/OpenGL/Utilities_OpenGL.h"
 #include "MapRendererPerformanceMetrics.h"
 
-# define MIN_ORDER_TO_DRAW_OVER_BUILDINGS 600000
+# define MIN_ORDER_TO_DRAW_BEHIND_BUILDINGS -600000
 
 # define UPDATE_INTERVAL_MS 1000.0f
 
@@ -629,6 +629,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                     && (mapSymbolsGroup->symbols.begin() == mapSymbolsGroup->symbols.end()
                         || !std::dynamic_pointer_cast<const Model3DMapSymbol>(mapSymbolsGroup->symbols.first())))
                     continue;
+
+                if (std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup))
+                {
+                    int qwe = 123;
+                }
 
                 const bool canSkip = !applyFiltering && !preRenderDenseSymbolsDepth
                     && !std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
@@ -1221,10 +1226,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck))
             addIntersectionDebugBox(plottedSymbol, ColorARGB::fromSkColor(SK_ColorGREEN).withAlpha(50));
 
-        if (plottedSymbol->order < MIN_ORDER_TO_DRAW_OVER_BUILDINGS)
-            outRenderableSymbolsBeforeBuildings.push_back(qMove(plottedSymbol));
-        else
+        if (plottedSymbol->order < MIN_ORDER_TO_DRAW_BEHIND_BUILDINGS)
             outRenderableSymbolsAfterBuildings.push_back(qMove(plottedSymbol));
+        else
+            outRenderableSymbolsBeforeBuildings.push_back(qMove(plottedSymbol));
     }
 
     if (metric)
