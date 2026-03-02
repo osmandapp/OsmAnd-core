@@ -118,38 +118,6 @@ OsmAnd::MapRendererResourcesManager::~MapRendererResourcesManager()
     renderer->resourcesAreInUse.unlock();
 }
 
-bool OsmAnd::MapRendererResourcesManager::uploadVerticesToGPU(
-    const void* data,
-    const size_t dataSize,
-    const unsigned int vertexCount,
-    std::shared_ptr<const GPUAPI::ArrayBufferInGPU>& outVertexBuffer,
-    const bool waitForGPU) const
-{
-    return renderer->gpuAPI->uploadDataAsVertices(
-        data,
-        dataSize,
-        vertexCount,
-        outVertexBuffer,
-        waitForGPU,
-        &(renderer->gpuContextIsLost));
-}
-
-bool OsmAnd::MapRendererResourcesManager::uploadIndicesToGPU(
-    const void* data,
-    const size_t dataSize,
-    const unsigned int indexCount,
-    std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU>& outIndexBuffer,
-    const bool waitForGPU) const
-{
-    return renderer->gpuAPI->uploadDataAsIndices(
-        data,
-        dataSize,
-        indexCount,
-        outIndexBuffer,
-        waitForGPU,
-        &(renderer->gpuContextIsLost));
-}
-
 bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
 {
     bool ok = true;
@@ -273,6 +241,22 @@ void OsmAnd::MapRendererResourcesManager::finishSymbolsUploadToGPU()
 {
     if (renderer->setupOptions.gpuWorkerThreadEnabled)
         renderer->gpuAPI->waitUntilUploadIsComplete(&(renderer->gpuContextIsLost));
+}
+
+bool OsmAnd::MapRendererResourcesManager::uploadTiled3DBuildingsToGPU(
+    const Buildings3D& buildings3D,
+    std::shared_ptr<const GPUAPI::MeshInGPU>& outMeshInGPU)
+{
+    return renderer->gpuAPI->uploadDataAsMeshToGPU(
+        buildings3D.vertices.constData(),
+        sizeof(BuildingVertex),
+        buildings3D.vertices.size(),
+        buildings3D.indices.constData(),
+        sizeof(uint16_t),
+        buildings3D.indices.size(),
+        outMeshInGPU,
+        renderer->setupOptions.gpuWorkerThreadEnabled,
+        &(renderer->gpuContextIsLost));
 }
 
 bool OsmAnd::MapRendererResourcesManager::adjustImageToConfiguration(
@@ -3778,195 +3762,3 @@ QVector<std::shared_ptr<const OsmAnd::Metric>> OsmAnd::MapRendererResourcesManag
     return allMetrics;
 }
 
-std::shared_ptr<OsmAnd::GPUAPI::MapRenderer3DBuildingGPUData> OsmAnd::MapRendererResourcesManager::find3DBuildingGPUData(ZoomLevel zoom, TileId tileId) const
-{
-    QMutexLocker locker(&_3DBuildingsDataMutex);
-    for (const auto& buildingData : constOf(_shared3DBuildings))
-    {
-        if (buildingData->zoom == zoom && buildingData->tileId == tileId)
-        {
-            return buildingData;
-        }
-    }
-    return nullptr;
-}
-
-void OsmAnd::MapRendererResourcesManager::release3DBuildingGPUData(const QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& resourcesToRelease)
-{
-    QMutexLocker locker(&_3DBuildingsDataMutex);
-
-    for (const auto& dataToRelease : constOf(resourcesToRelease))
-    {
-        for (int i = 0; i < _shared3DBuildings.size(); ++i)
-        {
-            auto& sharedData = _shared3DBuildings[i];
-            if (sharedData.get() == dataToRelease.get() ||
-                (sharedData->zoom == dataToRelease->zoom && sharedData->tileId == dataToRelease->tileId))
-            {
-                if (sharedData->referenceCount > 0)
-                {
-                    --sharedData->referenceCount;
-                }
-
-                if (sharedData->referenceCount <= 0)
-                {
-                    _shared3DBuildings.removeAt(i);
-                }
-                break;
-            }
-        }
-    }
-}
-
-std::shared_ptr<OsmAnd::GPUAPI::MapRenderer3DBuildingGPUData> OsmAnd::MapRendererResourcesManager::loadGPU3DBuildingData(ZoomLevel zoom, TileId tileId,
-    const Buildings3D& buildings3D, QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& outResources)
-{
-    QMutexLocker locker(&_3DBuildingsDataMutex);
-
-    QSet<uint64_t> uniqueBuildingIDs;
-    QVector<BuildingVertex> uniqueVertices;
-    QVector<uint16_t> uniqueIndices;
-    QVector<BuildingVertex> uniqueOutlineVertices;
-    QVector<uint16_t> uniqueOutlineIndices;
-    QVector<int> uniqueOutlineVertexCounts;
-
-    int vertexOffset = 0;
-    int indexOffset = 0;
-    int outlineVertexOffset = 0;
-    int outlineIndexOffset = 0;
-
-    // If existed resource contains needed building
-    // Add it ti outResources, increase referenceCount and dont load building to the GPU
-    for (int i = 0; i < buildings3D.buildingIDs.size(); ++i)
-    {
-        const uint64_t buildingID = buildings3D.buildingIDs[i];
-        const int vertexCount = buildings3D.vertexCounts[i];
-        const int indexCount = buildings3D.indexCounts[i];
-        const int outlineVertexCount = (i < buildings3D.outlineVertexCounts.size()) ? buildings3D.outlineVertexCounts[i] : 0;
-        const int outlineIndexCount = outlineVertexCount > 1 ? outlineVertexCount * 2 : 0;
-/* Buildings are cut by tiles, so they need to be provided for each occupied tile.
-        std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> duplicateData;
-        bool isDuplicate = false;
-        for (const auto& data : constOf(_shared3DBuildings))
-        {
-            for (const uint64_t sahredBuildingID : constOf(data->buildingIDs))
-            {
-                if (buildingID == sahredBuildingID)
-                {
-                    duplicateData = data;
-                    isDuplicate = true;
-                    continue;
-                }
-            }
-        }
-
-        if (isDuplicate)
-        {
-            if (!outResources.contains(duplicateData))
-            {
-                ++duplicateData->referenceCount;
-                outResources.insert(duplicateData);
-            }
-
-            vertexOffset += vertexCount;
-            indexOffset += indexCount;
-            outlineVertexOffset += outlineVertexCount;
-            outlineIndexOffset += outlineIndexCount;
-            continue;
-        }
-*/
-        uniqueBuildingIDs.insert(buildingID);
-
-        uint16_t currentVertexOffset = static_cast<uint16_t>(uniqueVertices.size());
-        for (int j = 0; j < vertexCount; ++j)
-        {
-            uniqueVertices.append(buildings3D.vertices[vertexOffset + j]);
-        }
-
-        for (int j = 0; j < indexCount; ++j)
-        {
-            uniqueIndices.append(static_cast<uint16_t>(buildings3D.indices[indexOffset + j] - vertexOffset + currentVertexOffset));
-        }
-
-        if (outlineVertexCount > 0)
-        {
-            uint16_t currentOutlineVertexOffset = static_cast<uint16_t>(uniqueOutlineVertices.size());
-
-            for (int j = 0; j < outlineVertexCount; ++j)
-            {
-                uniqueOutlineVertices.append(buildings3D.outlineVertices[outlineVertexOffset + j]);
-            }
-
-            for (int j = 0; j < outlineIndexCount; ++j)
-            {
-                const uint16_t srcIdx = buildings3D.outlineIndices[outlineIndexOffset + j];
-                uniqueOutlineIndices.append(static_cast<uint16_t>(srcIdx - outlineVertexOffset + currentOutlineVertexOffset));
-            }
-
-            uniqueOutlineVertexCounts.append(outlineVertexCount);
-        }
-
-        vertexOffset += vertexCount;
-        indexOffset += indexCount;
-        outlineVertexOffset += outlineVertexCount;
-        outlineIndexOffset += outlineIndexCount;
-    }
-
-    std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> buildingData;
-
-    if (!uniqueVertices.isEmpty())
-    {
-        buildingData = std::make_shared<GPUAPI::MapRenderer3DBuildingGPUData>();
-        buildingData->zoom = zoom;
-        buildingData->tileId = tileId;
-        buildingData->referenceCount = 1;
-        buildingData->buildingIDs = uniqueBuildingIDs;
-
-        const size_t vertexBufferSize = uniqueVertices.size() * sizeof(BuildingVertex);
-        const bool vertexUploadSuccess = uploadVerticesToGPU( uniqueVertices.constData(),
-            vertexBufferSize, uniqueVertices.size(), buildingData->vertexBuffer, false);
-
-        if (!vertexUploadSuccess)
-        {
-            return nullptr;
-        }
-
-        const size_t indexBufferSize = uniqueIndices.size() * sizeof(uint16_t);
-        const bool indexUploadSuccess = uploadIndicesToGPU(uniqueIndices.constData(),
-            indexBufferSize, uniqueIndices.size(), buildingData->indexBuffer, false);
-
-        if (!indexUploadSuccess)
-        {
-            return nullptr;
-        }
-
-        if (!uniqueOutlineVertices.isEmpty() && !uniqueOutlineIndices.isEmpty())
-        {
-            const size_t outlineVertexBufferSize = uniqueOutlineVertices.size() * sizeof(BuildingVertex);
-            const bool outlineVertexUploadSuccess = uploadVerticesToGPU(uniqueOutlineVertices.constData(),
-                outlineVertexBufferSize, uniqueOutlineVertices.size(), buildingData->outlineVertexBuffer, false);
-
-            if (!outlineVertexUploadSuccess)
-            {
-                return nullptr;
-            }
-
-            const size_t outlineIndexBufferSize = uniqueOutlineIndices.size() * sizeof(uint16_t);
-            const bool outlineIndexUploadSuccess = uploadIndicesToGPU(uniqueOutlineIndices.constData(),
-                outlineIndexBufferSize, uniqueOutlineIndices.size(), buildingData->outlineIndexBuffer, false);
-
-            if (!outlineIndexUploadSuccess)
-            {
-                return nullptr;
-            }
-
-            buildingData->outlineVertexCounts = uniqueOutlineVertexCounts;
-        }
-
-        _shared3DBuildings.append(buildingData);
-        outResources.insert(buildingData);
-    }
-
-    // Return only new unique data
-    return buildingData;
-}

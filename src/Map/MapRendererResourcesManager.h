@@ -149,13 +149,6 @@ namespace OsmAnd
         void batchUnpublishMapSymbols(
             const QList< PublishOrUnpublishMapSymbol >& mapSymbolsToUnublish);
 
-        QVector<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>> _shared3DBuildings;
-        mutable QMutex _3DBuildingsDataMutex;
-        void release3DBuildingGPUData(const QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& buildingResources);
-        std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> find3DBuildingGPUData(ZoomLevel zoom, TileId tileId) const;
-        std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData> loadGPU3DBuildingData(ZoomLevel zoom, TileId tileId,
-            const Buildings3D& buildings3D, QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& buildingResources);
-
         // Invalidated resources:
         QAtomicInt _invalidatedResourcesTypesMask;
         void invalidateAllResources();
@@ -275,19 +268,9 @@ namespace OsmAnd
         bool uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol,
             std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU,
             bool waitForGPU = true);
-        bool uploadVerticesToGPU(
-                const void* data,
-                const size_t dataSize,
-                const unsigned int vertexCount,
-                std::shared_ptr<const GPUAPI::ArrayBufferInGPU>& outVertexBuffer,
-                const bool waitForGPU = false) const;
-        bool uploadIndicesToGPU(
-                const void* data,
-                const size_t dataSize,
-                const unsigned int indexCount,
-                std::shared_ptr<const GPUAPI::ElementArrayBufferInGPU>& outIndexBuffer,
-                const bool waitForGPU = false) const;
         void finishSymbolsUploadToGPU();
+        bool uploadTiled3DBuildingsToGPU(const Buildings3D& buildings3D,
+            std::shared_ptr<const GPUAPI::MeshInGPU>& outMeshInGPU);
         bool adjustImageToConfiguration(
             const sk_sp<const SkImage>& input,
             sk_sp<SkImage>& output,

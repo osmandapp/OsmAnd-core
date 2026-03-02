@@ -23,12 +23,6 @@ namespace OsmAnd
     {
         QVector<BuildingVertex> vertices;
         QVector<uint16_t> indices;
-        QVector<uint64_t> buildingIDs;
-        QVector<int> vertexCounts;
-        QVector<int> indexCounts;
-        QVector<BuildingVertex> outlineVertices;
-        QVector<int> outlineVertexCounts;
-        QVector<uint16_t> outlineIndices;
     };
 }
 

@@ -13,6 +13,7 @@
 #include <OsmAndCore/Map/MapPrimitivesProvider.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
 #include <OsmAndCore/PointsAndAreas.h>
+#include "Map3DObjectsProvider.h"
 #include "MapRenderer3DObjects.h"
 
 namespace OsmAnd
@@ -21,18 +22,7 @@ namespace OsmAnd
 
     class MapRenderer3DObjectsResource : public MapRendererBaseTiledResource
     {
-    public:
-        struct RenderableBuildings
-        {
-            QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>> buildingResources;
-        };
-
-        ~MapRenderer3DObjectsResource() override;
-
-        const RenderableBuildings& getRenderableBuildings() const { return _renderableBuildings; }
-
-        friend class OsmAnd::MapRendererResourcesManager;
-
+    private:
     protected:
         MapRenderer3DObjectsResource(
             MapRendererResourcesManager* owner,
@@ -40,10 +30,8 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom);
 
-        std::shared_ptr<IMapTiledDataProvider::Data> _sourceData;
-
-        RenderableBuildings _renderableBuildings;
-        float _obtainDataTimeMilliseconds = 0;
+        std::shared_ptr<Map3DObjectsTiledProvider::Data> _sourceData;
+        std::shared_ptr<const GPUAPI::MeshInGPU> _meshInGPU;
 
         bool supportsObtainDataAsync() const override;
         bool obtainData(bool& dataAvailable, const std::shared_ptr<const IQueryController>& queryController) override;
@@ -56,8 +44,14 @@ namespace OsmAnd
         void lostDataInGPU() override;
         void releaseData() override;
 
-    private:
         bool getProvider(std::shared_ptr<IMapDataProvider>& provider) const;
+    public:
+        ~MapRenderer3DObjectsResource() override;
+
+        void captureResourceInGPU(std::shared_ptr<const GPUAPI::MeshInGPU>& meshInGPU) const;
+        mutable QAtomicInt resourceInGPULock;
+
+        friend class OsmAnd::MapRendererResourcesManager;
     };
 }
 

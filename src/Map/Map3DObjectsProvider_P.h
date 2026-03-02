@@ -141,7 +141,6 @@ namespace OsmAnd
             const PointI& minTile31,
             const PointI& maxTile31,
             const glm::vec3& colorVec,
-            bool generateOutline,
             QList<PassagePrimitive*>& passagePrimitives) const;
 
     protected:

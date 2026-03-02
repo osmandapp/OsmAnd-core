@@ -456,19 +456,14 @@ namespace OsmAnd
             bool waitForGPU,
             volatile bool* gpuContextLost) override;
 
-        bool uploadDataAsVertices(
-            const void* data,
-            const size_t dataSize,
-            const unsigned int vertexCount,
-            std::shared_ptr< const ArrayBufferInGPU >& outVertexBuffer,
-            bool waitForGPU,
-            volatile bool* gpuContextLost) override;
-
-        bool uploadDataAsIndices(
-            const void* data,
-            const size_t dataSize,
-            const unsigned int indexCount,
-            std::shared_ptr< const ElementArrayBufferInGPU >& outIndexBuffer,
+        bool uploadDataAsMeshToGPU(
+            const void* vertexData,
+            const size_t vertexSize,
+            const unsigned int verticesCount,
+            const void* indexData,
+            const size_t indexSize,
+            const unsigned int indicesCount,
+            std::shared_ptr<const MeshInGPU>& meshInGPU,
             bool waitForGPU,
             volatile bool* gpuContextLost) override;
 

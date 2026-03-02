@@ -8,7 +8,6 @@
 #include "Map3DObjectsProvider.h"
 #include "Utilities.h"
 #include "MapRenderer.h"
-#include "Stopwatch.h"
 #include <iostream>
 
 using namespace OsmAnd;
@@ -24,6 +23,7 @@ MapRenderer3DObjectsResource::MapRenderer3DObjectsResource(
 
 MapRenderer3DObjectsResource::~MapRenderer3DObjectsResource()
 {
+    safeUnlink();
 }
 
 bool MapRenderer3DObjectsResource::getProvider(std::shared_ptr<IMapDataProvider>& provider) const
@@ -56,8 +56,6 @@ bool MapRenderer3DObjectsResource::supportsObtainDataAsync() const
 
 bool MapRenderer3DObjectsResource::obtainData(bool& dataAvailable, const std::shared_ptr<const IQueryController>& queryController)
 {
-    Stopwatch stopwatch(true);
-    
     std::shared_ptr<IMapDataProvider> iProvider;
     if (!getProvider(iProvider))
     {
@@ -65,27 +63,22 @@ bool MapRenderer3DObjectsResource::obtainData(bool& dataAvailable, const std::sh
     }
 
     const auto provider = std::static_pointer_cast<IMapTiledDataProvider>(iProvider);
-    const auto mapState = resourcesManager->renderer->getMapState();
-    const auto visibleArea = Utilities::roundBoundingBox31(mapState.visibleBBox31, mapState.zoomLevel);
-    const auto currentTime = QDateTime::currentMSecsSinceEpoch();
 
+    // Obtain tile from provider
+    std::shared_ptr<IMapTiledDataProvider::Data> tile;
     IMapTiledDataProvider::Request request;
     request.tileId = tileId;
     request.zoom = zoom;
-    request.visibleArea31 = Utilities::getEnlargedVisibleArea(visibleArea);
-    request.areaTime = currentTime;
     request.queryController = queryController;
 
-    const bool requestSucceeded = provider->obtainTiledData(request, _sourceData);
-    if (!requestSucceeded || !_sourceData)
-    {
+    const bool requestSucceeded = provider->obtainTiledData(request, tile);
+    if (!requestSucceeded)
         return false;
-    }
+    dataAvailable = static_cast<bool>(tile);
 
-    const auto map3DTileData = std::dynamic_pointer_cast<Map3DObjectsTiledProvider::Data>(_sourceData);
-    dataAvailable = static_cast<bool>(map3DTileData);
-    
-    _obtainDataTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
+    // Store data
+    if (dataAvailable)
+        _sourceData = std::static_pointer_cast<Map3DObjectsTiledProvider::Data>(tile);
 
     return true;
 }
@@ -93,57 +86,74 @@ bool MapRenderer3DObjectsResource::obtainData(bool& dataAvailable, const std::sh
 void MapRenderer3DObjectsResource::obtainDataAsync(ObtainDataAsyncCallback callback,
     const std::shared_ptr<const IQueryController>& queryController, const bool cacheOnly)
 {
-    bool dataAvailable = false;
-    auto okSync = obtainData(dataAvailable, queryController);
-    if (callback) callback(okSync, dataAvailable);
+    std::shared_ptr<IMapDataProvider> iProvider;
+    if (!getProvider(iProvider))
+    {
+        callback(false, false);
+        return;
+    }
+
+    const auto provider = std::static_pointer_cast<IMapTiledDataProvider>(iProvider);
+
+    IMapTiledDataProvider::Request request;
+    request.tileId = tileId;
+    request.zoom = zoom;
+    request.queryController = queryController;
+    provider->obtainDataAsync(request,
+        [this, callback]
+        (const IMapDataProvider* const provider,
+            const bool requestSucceeded,
+            const std::shared_ptr<IMapDataProvider::Data>& data,
+            const std::shared_ptr<Metric>& metric)
+        {
+            const auto dataAvailable = static_cast<bool>(data);
+
+            // Store data
+            if (dataAvailable)
+                _sourceData = std::static_pointer_cast<Map3DObjectsTiledProvider::Data>(data);
+
+            callback(requestSucceeded, dataAvailable);
+        });
 }
 
 bool MapRenderer3DObjectsResource::uploadToGPU()
 {
-    Stopwatch stopwatch(true);
-    
-    if (!_sourceData)
-    {
+    auto sourceData = _sourceData;
+    if (!sourceData)
         return true;
-    }
 
-    _renderableBuildings.buildingResources.clear();
+    bool ok = resourcesManager->uploadTiled3DBuildingsToGPU(sourceData->buildings3D, _meshInGPU);
+    if (!ok)
+        return false;
 
-    const auto map3DTileData = std::dynamic_pointer_cast<Map3DObjectsTiledProvider::Data>(_sourceData);
-    if (!map3DTileData || map3DTileData->buildings3D.vertices.isEmpty() || map3DTileData->buildings3D.indices.isEmpty())
-    {
-        return true;
-    }
-
-    if (map3DTileData->buildings3D.buildingIDs.isEmpty())
-    {
-        return true;
-    }
-
-    auto newBuildingData = resourcesManager->loadGPU3DBuildingData(zoom, tileId, map3DTileData->buildings3D, _renderableBuildings.buildingResources);
-    if (newBuildingData)
-    {
-        newBuildingData->_performanceDebugInfo.uploadToGpuTimeMilliseconds = stopwatch.elapsed() * 1000.0f;
-        newBuildingData->_performanceDebugInfo.obtainDataTimeMilliseconds = _obtainDataTimeMilliseconds;
-    }
+    sourceData.reset();
 
     return true;
 }
 
+void MapRenderer3DObjectsResource::captureResourceInGPU(
+    std::shared_ptr<const OsmAnd::GPUAPI::MeshInGPU>& meshInGPU) const
+{
+    REPEAT_UNTIL(resourceInGPULock.testAndSetAcquire(0, 1));
+    meshInGPU = _meshInGPU;
+    resourceInGPULock.storeRelease(0);
+}
+
 void MapRenderer3DObjectsResource::unloadFromGPU()
 {
-    resourcesManager->release3DBuildingGPUData(_renderableBuildings.buildingResources);
-    _renderableBuildings.buildingResources.clear();
+    REPEAT_UNTIL(resourceInGPULock.testAndSetAcquire(0, 1));
+    _meshInGPU.reset();
+    resourceInGPULock.storeRelease(0);
 }
 
 void MapRenderer3DObjectsResource::lostDataInGPU()
 {
-    resourcesManager->release3DBuildingGPUData(_renderableBuildings.buildingResources);
-    _renderableBuildings.buildingResources.clear();
+    if (_meshInGPU)
+        _meshInGPU->lostRefInGPU();
+    _meshInGPU.reset();
 }
 
 void MapRenderer3DObjectsResource::releaseData()
 {
     _sourceData.reset();
 }
-

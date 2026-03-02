@@ -128,25 +128,6 @@ namespace OsmAnd
             const unsigned int itemsCount;
         };
 
-        struct MapRenderer3DBuildingGPUData
-        {
-            struct PerformanceDebugInfo
-            {
-                float obtainDataTimeMilliseconds;
-                float uploadToGpuTimeMilliseconds;
-            } _performanceDebugInfo;
-
-            QSet<uint64_t> buildingIDs;
-            std::shared_ptr<const ArrayBufferInGPU> vertexBuffer;
-            std::shared_ptr<const ElementArrayBufferInGPU> indexBuffer;
-            std::shared_ptr<const ArrayBufferInGPU> outlineVertexBuffer;
-            std::shared_ptr<const ElementArrayBufferInGPU> outlineIndexBuffer;
-            QVector<int> outlineVertexCounts;
-            ZoomLevel zoom;
-            TileId tileId;
-            int referenceCount;
-        };
-
         union AtlasTypeId
         {
             uint64_t id;
@@ -354,19 +335,14 @@ namespace OsmAnd
             bool waitForGPU,
             volatile bool* gpuContextLost) = 0;
 
-        virtual bool uploadDataAsVertices(
-            const void* data,
-            const size_t dataSize,
-            const unsigned int vertexCount,
-            std::shared_ptr< const ArrayBufferInGPU >& outVertexBuffer,
-            bool waitForGPU,
-            volatile bool* gpuContextLost) = 0;
-
-        virtual bool uploadDataAsIndices(
-            const void* data,
-            const size_t dataSize,
-            const unsigned int indexCount,
-            std::shared_ptr< const ElementArrayBufferInGPU >& outIndexBuffer,
+        virtual bool uploadDataAsMeshToGPU(
+            const void* vertexData,
+            const size_t vertexSize,
+            const unsigned int verticesCount,
+            const void* indexData,
+            const size_t indexSize,
+            const unsigned int indicesCount,
+            std::shared_ptr<const MeshInGPU>& meshInGPU,
             bool waitForGPU,
             volatile bool* gpuContextLost) = 0;
 

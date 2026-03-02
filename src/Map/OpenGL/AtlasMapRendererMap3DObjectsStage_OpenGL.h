@@ -23,7 +23,6 @@ namespace OsmAnd
     private:
         GLname _vao;
         GLname _depthVao;
-        GLname _outlineVao;
 
         Init3DObjectsType _init3DObjectsType;
 
@@ -62,17 +61,24 @@ namespace OsmAnd
                 } param;
             } vs;
         } _program;
-        Model3DProgram _outlineProgram;
         Model3DProgram _depthProgram;
 
-        bool initializeColorProgram();
-        bool initializeOutlineProgram();
-        bool initializeDepthProgram();
-        void prepareDrawObjects(QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& collectedResources);
-        StageResult renderDepth(QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& collectedResources);
-        StageResult renderColor(QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& collectedResources);
-        StageResult renderOutline(QSet<std::shared_ptr<GPUAPI::MapRenderer3DBuildingGPUData>>& collectedResources);
+        QList<std::shared_ptr<const GPUAPI::MeshInGPU>> resourcesInGPU;
 
+        bool initializeColorProgram();
+        bool initializeDepthProgram();
+        void occupySpace(TileId tileIdN, int zoomLevel,
+            QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const;
+        bool spaceAlreadyOccupied(TileId tileIdN, int zoomLevel,
+            QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const;
+        void getResourcesInGPU(
+            const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection, int detalizationLevel);
+        StageResult renderDepth();
+        StageResult renderColor();
+        std::shared_ptr<const GPUAPI::MeshInGPU> captureResourceInGPU(
+            const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
+            TileId normalizedTileId,
+            ZoomLevel zoomLevel) const;
     public:
         explicit AtlasMapRendererMap3DObjectsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer);
         ~AtlasMapRendererMap3DObjectsStage_OpenGL() override;
@@ -80,8 +86,6 @@ namespace OsmAnd
         bool initialize() override;
         StageResult render(IMapRenderer_Metrics::Metric_renderFrame* const metric) override;
         bool release(bool gpuContextLost) override;
-
-        bool isDepthPrepassRequired() const;
     };
 }
 
