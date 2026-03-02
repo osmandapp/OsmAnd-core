@@ -211,22 +211,19 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glEnable(GL_BLEND);
     GL_CHECK_RESULT;
 
-    // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
+    // Render map symbols
     if (!skip && !currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
     {
         // Set premultiplied alpha color blending
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
         Stopwatch symbolsStageStopwatch(metric != nullptr);
+        _symbolsStage->step = 0;
         const auto stageResult = _symbolsStage->render(metric);
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
         if (metric)
-        {
             metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
-            // Disable for now
-            //_symbolsStage->drawDebugMetricSymbol(metric);
-        }
 
         glDepthMask(GL_TRUE);
         GL_CHECK_RESULT;
@@ -254,7 +251,34 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
             skip = true;
     }
 
-    //TODO: render special fog object some day
+    // Render map symbols
+    if (!skip && !currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
+    {
+        // Set premultiplied alpha color blending
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+        Stopwatch symbolsStageStopwatch(metric != nullptr);
+        _symbolsStage->step = 1;
+        const auto stageResult = _symbolsStage->render(metric);
+        if (stageResult == MapRendererStage::StageResult::Fail)
+            ok = false;
+        if (metric)
+        {
+            metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
+            // Disable for now
+            //_symbolsStage->drawDebugMetricSymbol(metric);
+        }
+
+        glDepthMask(GL_TRUE);
+        GL_CHECK_RESULT;
+
+        if (!ok || stageResult == MapRendererStage::StageResult::Wait)
+            skip = true;
+    }
+
+    // Restore straight color blending
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GL_CHECK_RESULT;
 
     // Render debug stage
     if (!skip && currentDebugSettings->debugStageEnabled)
@@ -267,7 +291,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
         if (metric)
-            metric->elapsedTimeForDebugStage = debugStageStopwatch.elapsed();
+            metric->elapsedTimeForDebugStage += debugStageStopwatch.elapsed();
 
         glEnable(GL_DEPTH_TEST);
         GL_CHECK_RESULT;

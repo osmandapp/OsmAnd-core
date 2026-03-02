@@ -6,6 +6,7 @@
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QReadWriteLock>
+#include <QJsonArray>
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
@@ -46,6 +47,7 @@ namespace OsmAnd
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
             ScreenQuadTree::BBox visibleBBox;
             ScreenQuadTree::BBox intersectionBBox;
+            int order;
             float opacityFactor;
             int queryIndex;
         };
@@ -151,7 +153,8 @@ namespace OsmAnd
 
     private:
         bool obtainRenderableSymbols(
-            QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
+            QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbolsBeforeBuildings,
+            QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbolsAfterBuildings,
             ScreenQuadTree& outIntersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric,
             bool forceUpdate,
@@ -159,7 +162,8 @@ namespace OsmAnd
         bool obtainRenderableSymbols(
             const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
             const bool preRenderDenseSymbolsDepth,
-            QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
+            QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbolsBeforeBuildings,
+            QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbolsAfterBuildings,
             ScreenQuadTree& outIntersections,
             MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
@@ -472,8 +476,10 @@ namespace OsmAnd
             const QList< std::shared_ptr<const RenderableSymbol> >& input,
             QList<IMapRenderer::MapSymbolInformation>& output);
     protected:
-        QList< std::shared_ptr<const RenderableSymbol> > denseSymbols;
-        QList< std::shared_ptr<const RenderableSymbol> > renderableSymbols;
+        QList< std::shared_ptr<const RenderableSymbol> > denseSymbolsBeforeBuildings;
+        QList< std::shared_ptr<const RenderableSymbol> > denseSymbolsAfterBuildings;
+        QList< std::shared_ptr<const RenderableSymbol> > renderableSymbolsBeforeBuildings;
+        QList< std::shared_ptr<const RenderableSymbol> > renderableSymbolsAfterBuildings;
 
         void prepare(AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
 
@@ -486,6 +492,9 @@ namespace OsmAnd
         virtual ~AtlasMapRendererSymbolsStage();
 
         bool release(bool gpuContextLost) override;
+
+        int step;
+        QJsonArray jsonArray;
 
         void queryLastPreparedSymbolsAt(
             const PointI screenPoint,

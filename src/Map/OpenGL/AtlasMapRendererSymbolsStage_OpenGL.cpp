@@ -135,17 +135,21 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
 
     prepareSymbolsDrawing();
 
-    prepare(metric);
+    if (step == 0)
+        prepare(metric);
 
     // Resume drawing
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     GL_CHECK_RESULT;
 
     // Prepare JSON report
-    QJsonArray jsonArray;
     bool withJson = renderer->withJSON();
 
-    for (const auto& renderableSymbol : constOf(renderableSymbols))
+    if (withJson && step == 0)
+        jsonArray = QJsonArray();
+
+    const auto renderableSymbols = step == 0 ? &renderableSymbolsBeforeBuildings : &renderableSymbolsAfterBuildings;
+    for (const auto& renderableSymbol : constOf(*renderableSymbols))
     {
         if (const auto& renderableBillboardSymbol = std::dynamic_pointer_cast<const RenderableBillboardSymbol>(renderableSymbol))
         {
@@ -218,7 +222,7 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
         }
     }
 
-    if (withJson)
+    if (withJson && step > 0)
     {
         auto jsonDocument = new QJsonDocument();
         jsonDocument->setArray(jsonArray);
