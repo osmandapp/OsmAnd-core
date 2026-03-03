@@ -66,7 +66,7 @@ namespace OsmAnd
             MaxNumberOfTilesSuitable = 64,
             MaxNumberOfTilesToUseUnderscaledOnce = MaxNumberOfTilesSuitable >> 2,
             MaxNumberOfTilesToUseUnderscaledTwice = MaxNumberOfTilesToUseUnderscaledOnce >> 2,
-            MaxNumberOfTilesAllowed = 80,
+            MaxNumberOfTilesAllowed = 96,
             MaxNumberOfTilesUnderscaledOnce = MaxNumberOfTilesAllowed >> 2,
             MaxNumberOfTilesUnderscaledTwice = MaxNumberOfTilesUnderscaledOnce >> 2
         };
