@@ -67,7 +67,7 @@ void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
         }
 
         const auto& symbolsData = line->getArrowsOnPath();
-        int baseOrder = line->baseOrder - 100;
+        int baseOrder = -599000;
         int i = 0;
         for (const auto& symbolInfo : symbolsData)
         {
