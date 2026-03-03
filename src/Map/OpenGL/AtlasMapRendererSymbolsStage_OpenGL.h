@@ -194,7 +194,7 @@ namespace OsmAnd
 
         bool renderOnSurfaceSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-            AlphaChannelType &currentAlphaChannelType);
+            AlphaChannelType &currentAlphaChannelType, bool ignoreDepthBuffer);
 
         GLname _onSurfaceRasterSymbolVAO;
         GLname _onSurfaceRasterSymbolVBO;
@@ -294,7 +294,7 @@ namespace OsmAnd
         bool initializeOnSurfaceVector();
         bool renderOnSurfaceVectorSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-            AlphaChannelType &currentAlphaChannelType);
+            AlphaChannelType &currentAlphaChannelType, bool ignoreDepthBuffer);
         bool releaseOnSurfaceVector(bool gpuContextLost);
 
         // Terrain-related:

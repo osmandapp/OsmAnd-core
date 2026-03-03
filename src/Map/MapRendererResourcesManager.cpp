@@ -1060,13 +1060,14 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
 
     bool isMapLayer = resourceType == MapRendererResourceType::MapLayer;
     bool isElevationData = resourceType == MapRendererResourceType::ElevationData;
+    bool isMap3DObjects = resourceType == MapRendererResourceType::Map3DObjects;
     bool isSymbolData = resourceType == MapRendererResourceType::Symbols;
 
     std::shared_ptr<IMapDataProvider> provider_;
     obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(resourcesCollection.get()), provider_);
     const auto& tiledProvider = std::dynamic_pointer_cast<IMapTiledDataProvider>(provider_);
 
-    if (isMapLayer || isElevationData)
+    if (isMapLayer || isElevationData || isMap3DObjects)
     {
         if (tiledProvider)
         {
@@ -1136,7 +1137,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
     }
 
     // Request all other zoom levels that cover unavailable tile, in case all scaled tiles are not unavailable
-    if (isMapLayer || isElevationData)
+    if (isMapLayer || isElevationData || isMap3DObjects)
     {
         for (const auto& activeTileId : constOf(activeTiles))
         {
@@ -2356,7 +2357,8 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
             int maxMissingDataUnderZoomShift = MapRenderer::MaxMissingDataUnderZoomShift;
 
             if (tiledProvider && (resourcesType == MapRendererResourceType::MapLayer
-                || resourcesType == MapRendererResourceType::ElevationData))
+                || resourcesType == MapRendererResourceType::ElevationData
+                || resourcesType == MapRendererResourceType::Map3DObjects))
             {
                 minZoom = Utilities::clipZoomLevel(tiledProvider->getMinZoom());
                 maxZoom = Utilities::clipZoomLevel(tiledProvider->getMaxZoom());

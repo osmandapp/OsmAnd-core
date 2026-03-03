@@ -74,7 +74,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
                 if (gpuResource->isDenseObject)
                 {
                     Stopwatch renderOnSurfaceSymbolStopwatch(metric != nullptr);
-                    ok = ok && renderOnSurfaceVectorSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType);
+                    ok = ok && renderOnSurfaceVectorSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType, false);
                     if (metric)
                         metric->elapsedTimeForOnSurfaceSymbolsRendering += renderOnSurfaceSymbolStopwatch.elapsed();
                 }
@@ -135,19 +135,24 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
 
     prepareSymbolsDrawing();
 
-    prepare(metric);
+    if (step == 0)
+        prepare(metric);
 
     // Resume drawing
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     GL_CHECK_RESULT;
 
     // Prepare JSON report
-    QJsonArray jsonArray;
     bool withJson = renderer->withJSON();
 
-    for (const auto& renderableSymbol : constOf(renderableSymbols))
+    if (withJson && step == 0)
+        jsonArray = QJsonArray();
+
+    const auto renderableSymbols = step == 0 ? &renderableSymbolsBeforeBuildings : &renderableSymbolsAfterBuildings;
+    for (const auto& renderableSymbol : constOf(*renderableSymbols))
     {
-        if (const auto& renderableBillboardSymbol = std::dynamic_pointer_cast<const RenderableBillboardSymbol>(renderableSymbol))
+        if (const auto& renderableBillboardSymbol =
+            std::dynamic_pointer_cast<const RenderableBillboardSymbol>(renderableSymbol))
         {
             Stopwatch renderBillboardSymbolStopwatch(metric != nullptr);
             ok = ok && renderBillboardSymbol(renderableBillboardSymbol, currentAlphaChannelType);
@@ -169,7 +174,8 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
                 metric->billboardSymbolsRendered += 1;
             }
         }
-        else if (const auto& renderableOnPathSymbol = std::dynamic_pointer_cast<const RenderableOnPathSymbol>(renderableSymbol))
+        else if (const auto& renderableOnPathSymbol =
+            std::dynamic_pointer_cast<const RenderableOnPathSymbol>(renderableSymbol))
         {
             Stopwatch renderOnPathSymbolStopwatch(metric != nullptr);
             ok = ok && renderOnPathSymbol(renderableOnPathSymbol, currentAlphaChannelType);
@@ -195,7 +201,8 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
                 metric->onPathSymbolsRendered += 1;
             }
         }
-        else if (const auto& renderableModel3DSymbol = std::dynamic_pointer_cast<const RenderableModel3DSymbol>(renderableSymbol))
+        else if (const auto& renderableModel3DSymbol =
+            std::dynamic_pointer_cast<const RenderableModel3DSymbol>(renderableSymbol))
         {
             Stopwatch renderableModel3DSymbolStopwatch(metric != nullptr);
             ok = ok && _model3DSubstage->render(
@@ -206,10 +213,11 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
                 metric->model3DSymbolsRendered += 1;
             }
         }
-        else if (const auto& renderableOnSurfaceSymbol = std::dynamic_pointer_cast<const RenderableOnSurfaceSymbol>(renderableSymbol))
+        else if (const auto& renderableOnSurfaceSymbol =
+            std::dynamic_pointer_cast<const RenderableOnSurfaceSymbol>(renderableSymbol))
         {
             Stopwatch renderOnSurfaceSymbolStopwatch(metric != nullptr);
-            ok = ok && renderOnSurfaceSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType);
+            ok = ok && renderOnSurfaceSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType, step > 0);
             if (metric)
             {
                 metric->elapsedTimeForOnSurfaceSymbolsRendering += renderOnSurfaceSymbolStopwatch.elapsed();
@@ -218,7 +226,7 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
         }
     }
 
-    if (withJson)
+    if (withJson && step > 0)
     {
         auto jsonDocument = new QJsonDocument();
         jsonDocument->setArray(jsonArray);
@@ -265,7 +273,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-    AlphaChannelType &currentAlphaChannelType)
+    AlphaChannelType &currentAlphaChannelType, bool ignoreDepthBuffer)
 {
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
     {
@@ -277,7 +285,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     {
         return renderOnSurfaceVectorSymbol(
             renderable,
-            currentAlphaChannelType);
+            currentAlphaChannelType, ignoreDepthBuffer);
     }
 
     return false;
@@ -2678,7 +2686,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-    AlphaChannelType &currentAlphaChannelType)
+    AlphaChannelType &currentAlphaChannelType, bool ignoreDepthBuffer)
 {
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
@@ -2827,7 +2835,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     GL_CHECK_RESULT;
 
     // Perform <= depth test (regardless of elevation presence) if needed
-    glDepthFunc(gpuResource->isSeenThrough ? GL_ALWAYS : GL_LEQUAL);
+    glDepthFunc(ignoreDepthBuffer || gpuResource->isSeenThrough ? GL_ALWAYS : GL_LEQUAL);
     GL_CHECK_RESULT;
 
     // If symbol has no tiled parts - render it flat using single elevation value

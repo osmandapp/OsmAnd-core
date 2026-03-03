@@ -41,6 +41,8 @@
 #include "Map/OpenGL/Utilities_OpenGL.h"
 #include "MapRendererPerformanceMetrics.h"
 
+# define MIN_ORDER_TO_DRAW_BEHIND_BUILDINGS -600000
+
 # define UPDATE_INTERVAL_MS 1000.0f
 
 # define GRID_ITER_LIMIT 10
@@ -78,8 +80,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::release(bool gpuContextLost)
     }
 
     pLastAcceptedMapSymbolsByOrder->clear();
-    denseSymbols.clear();
-    renderableSymbols.clear();
+    denseSymbolsBeforeBuildings.clear();
+    denseSymbolsAfterBuildings.clear();
+    renderableSymbolsBeforeBuildings.clear();
+    renderableSymbolsAfterBuildings.clear();
     return true;
 }
 
@@ -113,7 +117,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
     isLongPrepareStage = forceUpdate || needUpdatedSymbols;
 
     ScreenQuadTree intersections;
-    if (!obtainRenderableSymbols(renderableSymbols, intersections, metric, forceUpdate, needUpdatedSymbols))
+    if (!obtainRenderableSymbols(renderableSymbolsBeforeBuildings, renderableSymbolsAfterBuildings,
+        intersections, metric, forceUpdate, needUpdatedSymbols))
     {
         // In case obtain failed due to lock, schedule another frame
         invalidateFrame();
@@ -127,7 +132,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
     Stopwatch preparedSymbolsPublishingStopwatch(metric != nullptr);
 
     ScreenQuadTree visibleSymbols(intersections.getRootArea(), intersections.maxDepth);
-    visibleSymbols.insertFrom(renderableSymbols,
+    visibleSymbols.insertFrom(renderableSymbolsBeforeBuildings,
+        []
+        (const std::shared_ptr<const RenderableSymbol>& item, ScreenQuadTree::BBox& outBbox) -> bool
+        {
+            outBbox = item->visibleBBox;
+            return true;
+        });
+    visibleSymbols.insertFrom(renderableSymbolsAfterBuildings,
         []
         (const std::shared_ptr<const RenderableSymbol>& item, ScreenQuadTree::BBox& outBbox) -> bool
         {
@@ -225,7 +237,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::queryLastVisibleSymbolsIn(
 #endif // !defined(OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE)
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
-    QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
+    QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbolsBeforeBuildings,
+    QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbolsAfterBuildings,
     ScreenQuadTree& outIntersections,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric,
     bool forceUpdate,
@@ -235,7 +248,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     
     if (!publishedMapSymbolsByOrderLock.tryLockForRead())
     {
-        preRender(denseSymbols, metric);
+        preRender(denseSymbolsBeforeBuildings, metric);
+        preRender(denseSymbolsAfterBuildings, metric);
         return false;
     }
 
@@ -244,12 +258,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     result = obtainRenderableSymbols(
             publishedMapSymbolsByOrder,
             true,
-            denseSymbols,
+            denseSymbolsBeforeBuildings,
+            denseSymbolsAfterBuildings,
             dummyIntersections,
             nullptr,
             metric);
 
-    preRender(denseSymbols, metric);
+    preRender(denseSymbolsBeforeBuildings, metric);
+    preRender(denseSymbolsAfterBuildings, metric);
     
     Stopwatch stopwatch(metric != nullptr);
     if (OsmAnd::isPerformanceMetricsEnabled())
@@ -268,7 +284,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         result = obtainRenderableSymbols(
             publishedMapSymbolsByOrder,
             false,
-            outRenderableSymbols,
+            outRenderableSymbolsBeforeBuildings,
+            outRenderableSymbolsAfterBuildings,
             outIntersections,
             pLastAcceptedMapSymbolsByOrder.get(),
             metric);
@@ -284,7 +301,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             _updatedSymbolsZoomLevel = currentState.zoomLevel;
 
             if (OsmAnd::isPerformanceMetricsEnabled())
-                OsmAnd::getPerformanceMetrics().intersectionFinish(static_cast<int>(outRenderableSymbols.size()));
+            {
+                OsmAnd::getPerformanceMetrics().intersectionFinish(static_cast<int>(
+                    outRenderableSymbolsBeforeBuildings.size() + outRenderableSymbolsAfterBuildings.size()));
+            }
         }
 
         if (metric)
@@ -392,7 +412,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         result = obtainRenderableSymbols(
             *pLastAcceptedMapSymbolsByOrder,
             false,
-            outRenderableSymbols,
+            outRenderableSymbolsBeforeBuildings,
+            outRenderableSymbolsAfterBuildings,
             outIntersections,
             filteredLastAcceptedMapSymbols,
             metric);
@@ -412,7 +433,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     result = obtainRenderableSymbols(
         *pLastAcceptedMapSymbolsByOrder,
         false,
-        outRenderableSymbols,
+        outRenderableSymbolsBeforeBuildings,
+        outRenderableSymbolsAfterBuildings,
         outIntersections,
         nullptr,
         metric);
@@ -425,7 +447,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
     const bool preRenderDenseSymbolsDepth,
-    QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
+    QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbolsBeforeBuildings,
+    QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbolsAfterBuildings,
     ScreenQuadTree& outIntersections,
     MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric)
@@ -607,6 +630,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         || !std::dynamic_pointer_cast<const Model3DMapSymbol>(mapSymbolsGroup->symbols.first())))
                     continue;
 
+                if (std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup))
+                {
+                    int qwe = 123;
+                }
+
                 const bool canSkip = !applyFiltering && !preRenderDenseSymbolsDepth
                     && !std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
                     && !std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
@@ -682,6 +710,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
                         if (renderableSymbol && plotSymbol(renderableSymbol, outIntersections, applyFiltering, metric))
                         {
+                            renderableSymbol->order = order;
+
                             // In case renderable symbol was obtained and accepted map symbols were requested,
                             // add this symbol to accepted
                             if (pOutAcceptedMapSymbolsByOrder)
@@ -751,6 +781,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
                         if (renderableSymbol && plotSymbol(renderableSymbol, outIntersections, applyFiltering, metric))
                         {
+                            renderableSymbol->order = order;
+
                             // In case renderable symbol was obtained and accepted map symbols were requested,
                             // add this symbol to accepted
                             if (pOutAcceptedMapSymbolsByOrder)
@@ -788,6 +820,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         // Collect renderable symbols for rendering
         for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(mapSymbolsByOrder)))
         {
+            const auto order = mapSymbolsByOrderEntry.key();
             const auto& mapSymbols = mapSymbolsByOrderEntry.value();
 
             // Iterate over all groups in proper order (proper order is maintained during publishing)
@@ -854,7 +887,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             metric);
 
                         if (renderableSymbol)
+                        {
+                            renderableSymbol->order = order;
                             renderables.push_back(SymbolRenderables(nullptr, renderableSymbol));
+                        }
                     }
                 }
 
@@ -892,7 +928,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             metric);
 
                         if (renderableSymbol)
+                        {
+                            renderableSymbol->order = order;
                             renderables.push_back(SymbolRenderables(&additionalGroupInstance, renderableSymbol));
+                        }
                     }
                 }
             }
@@ -1178,14 +1217,19 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     }
 
     // Publish the result
-    outRenderableSymbols.clear();
-    outRenderableSymbols.reserve(plottedSymbols.size());
+    outRenderableSymbolsBeforeBuildings.clear();
+    outRenderableSymbolsBeforeBuildings.reserve(plottedSymbols.size());
+    outRenderableSymbolsAfterBuildings.clear();
+    outRenderableSymbolsAfterBuildings.reserve(plottedSymbols.size());
     for (const auto& plottedSymbol : constOf(plottedSymbols))
     {
         if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck))
             addIntersectionDebugBox(plottedSymbol, ColorARGB::fromSkColor(SK_ColorGREEN).withAlpha(50));
 
-        outRenderableSymbols.push_back(qMove(plottedSymbol));
+        if (plottedSymbol->order < MIN_ORDER_TO_DRAW_BEHIND_BUILDINGS)
+            outRenderableSymbolsAfterBuildings.push_back(qMove(plottedSymbol));
+        else
+            outRenderableSymbolsBeforeBuildings.push_back(qMove(plottedSymbol));
     }
 
     if (metric)
