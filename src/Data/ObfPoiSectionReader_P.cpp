@@ -1166,7 +1166,9 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
             {
                 gpb::uint64 rawId;
                 cis->ReadVarint64(&rawId);
-                id = ObfObjectId::generateUniqueId(rawId, baseOffset, section);
+                ObfObjectId obfObjectId;
+                obfObjectId.id = rawId;
+                id = obfObjectId;
 
                 autogenerateId = false;
                 break;
