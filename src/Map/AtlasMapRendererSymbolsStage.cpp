@@ -630,11 +630,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         || !std::dynamic_pointer_cast<const Model3DMapSymbol>(mapSymbolsGroup->symbols.first())))
                     continue;
 
-                if (std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup))
-                {
-                    int qwe = 123;
-                }
-
                 const bool canSkip = !applyFiltering && !preRenderDenseSymbolsDepth
                     && !std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
                     && !std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)

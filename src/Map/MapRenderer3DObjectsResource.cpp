@@ -69,6 +69,11 @@ bool MapRenderer3DObjectsResource::obtainData(bool& dataAvailable, const std::sh
     IMapTiledDataProvider::Request request;
     request.tileId = tileId;
     request.zoom = zoom;
+    const auto mapState = resourcesManager->renderer->getMapState();
+    const auto visibleArea = Utilities::roundBoundingBox31(mapState.visibleBBox31, mapState.zoomLevel);
+    request.visibleArea31 = Utilities::getEnlargedVisibleArea(visibleArea);
+    const auto currentTime = QDateTime::currentMSecsSinceEpoch();
+    request.areaTime = currentTime;
     request.queryController = queryController;
 
     const bool requestSucceeded = provider->obtainTiledData(request, tile);
@@ -98,6 +103,12 @@ void MapRenderer3DObjectsResource::obtainDataAsync(ObtainDataAsyncCallback callb
     IMapTiledDataProvider::Request request;
     request.tileId = tileId;
     request.zoom = zoom;
+    const auto mapState = resourcesManager->renderer->getMapState();
+    const auto visibleArea = Utilities::roundBoundingBox31(mapState.visibleBBox31, mapState.zoomLevel);
+    request.visibleArea31 = Utilities::getEnlargedVisibleArea(visibleArea);
+    const auto currentTime = QDateTime::currentMSecsSinceEpoch();
+    request.areaTime = currentTime;
+    request.cacheOnly = cacheOnly;
     request.queryController = queryController;
     provider->obtainDataAsync(request,
         [this, callback]

@@ -131,7 +131,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
         return false;
     }
 
-    if (request.zoom < 16)
+    if (request.zoom < ZoomLevel16)
     {
         outTiledData = std::make_shared<Map3DObjectsTiledProvider::Data>(request.tileId, request.zoom, Buildings3D());
         return true;
@@ -141,6 +141,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
     tileRequest.tileId = request.tileId;
     tileRequest.zoom = request.zoom;
     tileRequest.visibleArea31 = request.visibleArea31;
+    tileRequest.areaTime = request.areaTime;
     tileRequest.queryController = request.queryController;
 
     std::shared_ptr<MapPrimitivesProvider::Data> tileData;
@@ -213,15 +214,15 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QSet<BuildingPrimitive>& build
             continue;
         }
 
-        if (building->containsTag(QLatin1String("role_outline"), true) ||
-            building->containsTag(QLatin1String("role_inner"), true) ||
-            building->containsTag(QLatin1String("role_outer"), true))
+        if (building->containsTag(QStringLiteral("role_outline"), true) ||
+            building->containsTag(QStringLiteral("role_inner"), true) ||
+            building->containsTag(QStringLiteral("role_outer"), true))
         {
             it = buildings.erase(it);
             continue;
         }
 
-        if (building->containsAttribute(QLatin1String("layer"), QLatin1String("-1"), true))
+        if (building->containsAttribute(QStringLiteral("layer"), QStringLiteral("-1"), true))
         {
             it = buildings.erase(it);
             continue;
@@ -301,9 +302,7 @@ void Map3DObjectsTiledProvider_P::collectFromPolyline(
 {
     const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(polylinePrimitive->sourceObject);
     if (!sourceObject || sourceObject->points31.isEmpty())
-    {
         return;
-    }
 
     if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polygon)
     {
@@ -313,11 +312,11 @@ void Map3DObjectsTiledProvider_P::collectFromPolyline(
 
         const bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
 
-        if (sourceObject->containsTag(QLatin1String("building")))
+        if (sourceObject->containsTag(QStringLiteral("building")))
         {
             insertOrUpdateBuilding(buildingPrimitive, outBuildings);
         }
-        else if (show3DbuildingParts && sourceObject->containsTag(QLatin1String("building:part")))
+        else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part")))
         {
             insertOrUpdateBuilding(buildingPrimitive, outBuildingParts);
         }
@@ -325,15 +324,15 @@ void Map3DObjectsTiledProvider_P::collectFromPolyline(
     else if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polyline)
     {
         if (sourceObject->points31.size() > 1
-            && sourceObject->containsAttribute(QLatin1String("tunnel"), QLatin1String("building_passage")))
+            && sourceObject->containsAttribute(QStringLiteral("tunnel"), QStringLiteral("building_passage"), true))
         {
             PassagePrimitive passagePrimitive;
             passagePrimitive.primitive = polylinePrimitive;
             passagePrimitive.startingPoint = sourceObject->points31.first();
             passagePrimitive.endingPoint = sourceObject->points31.last();
             passagePrimitive.centerPoint = passagePrimitive.startingPoint / 2 + passagePrimitive.endingPoint / 2;
-            const QString widthTag = QLatin1String("width");
-            const QString heightTag = QLatin1String("height");
+            const QString widthTag = QStringLiteral("width");
+            const QString heightTag = QStringLiteral("height");
             passagePrimitive.height =
                 Utilities::parseLength(sourceObject->getResolvedAttribute(QStringRef(&heightTag)), 2.5);
             const auto width = Utilities::parseLength(sourceObject->getResolvedAttribute(QStringRef(&widthTag)), 2.0);
@@ -365,11 +364,11 @@ void Map3DObjectsTiledProvider_P::collectFromPolygons(
 
     const bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
 
-    if (sourceObject->containsTag(QLatin1String("building")))
+    if (sourceObject->containsTag(QStringLiteral("building")))
     {
         insertOrUpdateBuilding(buildingPrimitive, outBuildings);
     }
-    else if (show3DbuildingParts && sourceObject->containsTag(QLatin1String("building:part")))
+    else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part")))
     {
         insertOrUpdateBuilding(buildingPrimitive, outBuildingParts);
     }

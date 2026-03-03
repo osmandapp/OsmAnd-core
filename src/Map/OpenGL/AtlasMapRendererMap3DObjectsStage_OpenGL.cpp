@@ -18,6 +18,8 @@
 #include "Stopwatch.h"
 #include "Logging.h"
 
+#define MIN_ZOOM 16
+
 using namespace OsmAnd;
 
 namespace
@@ -419,9 +421,11 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
 void AtlasMapRendererMap3DObjectsStage_OpenGL::occupySpace(TileId tileIdN, int zoomLevel,
     QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const
 {
+    if (zoomLevel < MIN_ZOOM)
+        return;
     presentTiles[zoomLevel].insert(tileIdN);
-    int zoomShift = zoomLevel;
-    for (int zoom = 0; zoom <= zoomLevel; zoom++)
+    int zoomShift = zoomLevel - MIN_ZOOM;
+    for (int zoom = MIN_ZOOM; zoom <= zoomLevel; zoom++)
     {
         occupiedSpace[zoom].insert(TileId::fromXY(tileIdN.x >> zoomShift, tileIdN.y >> zoomShift));
         zoomShift--;
@@ -431,6 +435,8 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::occupySpace(TileId tileIdN, int z
 bool AtlasMapRendererMap3DObjectsStage_OpenGL::spaceAlreadyOccupied(TileId tileIdN, int zoomLevel,
     QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const
 {
+    if (zoomLevel < MIN_ZOOM)
+        return true;
     if (presentTiles.isEmpty())
         return false;
     const auto startZoom = presentTiles.firstKey();
