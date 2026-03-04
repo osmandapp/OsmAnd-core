@@ -1167,9 +1167,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         }
         else
         {
-            if (toCamera.x > 1 && dirX > 0.0)
+            if (toCamera.x > 1 && dirX < 0.0)
                 toCamera.x -= 1 << zoomLevel;
-            else if (toCamera.x < -1 && dirX < 0.0)
+            else if (toCamera.x < -1 && dirX > 0.0)
                 toCamera.x += 1 << zoomLevel;
             if (toCamera.y > 1 && dirY < 0.0)
                 toCamera.y -= 1 << zoomLevel;
