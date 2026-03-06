@@ -1718,7 +1718,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         }
 
                         atLeastOneAdded = true;
-                        atLeastOneFlatVisibleFound = true;
+                        atLeastOneFlatVisibleFound = !lookForStrictlyVisible;
 
                         if (!lookForStrictlyVisible || (isVisible && (minHeight != 0.0 || maxHeight != 0.0)))
                         {
@@ -1939,9 +1939,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         else
         {
             // Use underscaled resources carefully in accordance to total number of visible tiles
-            const auto zoomDelta = qFloor(log2(qMax(1.0,
-                static_cast<double>(1u << state.surfaceZoomLevel) * static_cast<double>(state.surfaceVisualZoom)
-                / (static_cast<double>(1u << state.zoomLevel) * static_cast<double>(state.visualZoom)))));
+            const auto zoomDelta =
+                qMax(0, static_cast<int>(state.surfaceZoomLevel) - static_cast<int>(state.zoomLevel));
             zoomLevelOffset = qMin(zoomDelta, static_cast<int>(MaxMissingDataUnderZoomShift));
             if (zoomLevelOffset > 2 && internalState->visibleTilesCount > 1)
                 zoomLevelOffset = 2;
