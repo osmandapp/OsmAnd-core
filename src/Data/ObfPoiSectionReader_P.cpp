@@ -1091,6 +1091,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 amenity->values = detachedOf(intValues).unite(stringOrDataValues);
                 amenity->evaluateTypes();
                 amenity->tagGroups = qMove(tagGroupsAmenity);
+                amenity->regionName = section->name;
                 outAmenity = amenity;
                 return;
             }
