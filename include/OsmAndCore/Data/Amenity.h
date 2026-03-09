@@ -64,6 +64,7 @@ namespace OsmAnd
 
         QString type;
         QString subType;
+        QString regionName;
 
         void evaluateTypes();
         QList<DecodedCategory> getDecodedCategories() const;
