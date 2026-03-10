@@ -1939,9 +1939,15 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         else
         {
             // Use underscaled resources carefully in accordance to total number of visible tiles
-            const auto zoomDelta =
-                qMax(0, static_cast<int>(state.surfaceZoomLevel) - static_cast<int>(state.zoomLevel));
-            zoomLevelOffset = qMin(zoomDelta, static_cast<int>(MaxMissingDataUnderZoomShift));
+            auto zoomGap = qFloor(log2(qMax(1.0,
+                static_cast<double>(1u << state.surfaceZoomLevel) * static_cast<double>(state.surfaceVisualZoom)
+                / (static_cast<double>(1u << state.zoomLevel) * static_cast<double>(state.visualZoom)))));
+            zoomLevelOffset = qMin(zoomGap, static_cast<int>(MaxMissingDataUnderZoomShift));
+            if (_tileZoomLevel + _tileZoomLevelOffset - state.zoomLevel - zoomLevelOffset != 0)
+            {
+                zoomGap = qMax(0, static_cast<int>(state.surfaceZoomLevel) - static_cast<int>(state.zoomLevel));
+                zoomLevelOffset = qMin(zoomGap, static_cast<int>(MaxMissingDataUnderZoomShift));
+            }
             if (zoomLevelOffset > 2 && internalState->visibleTilesCount > 1)
                 zoomLevelOffset = 2;
             if (zoomLevelOffset > 1 && internalState->visibleTilesCount > MaxNumberOfTilesToUseUnderscaledTwice)
@@ -1952,7 +1958,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
             if (offsetDelta > 0)
             {
                 zoomLevelOffset = qMin(zoomLevelOffset + offsetDelta, static_cast<int>(MaxMissingDataUnderZoomShift));
-                zoomLevelOffset = qMin(zoomDelta, zoomLevelOffset);
+                zoomLevelOffset = qMin(zoomGap, zoomLevelOffset);
                 if (zoomLevelOffset > 2 && internalState->visibleTilesCount > 1)
                     zoomLevelOffset = 2;
                 if (zoomLevelOffset > 1 && internalState->visibleTilesCount > MaxNumberOfTilesUnderscaledTwice)
