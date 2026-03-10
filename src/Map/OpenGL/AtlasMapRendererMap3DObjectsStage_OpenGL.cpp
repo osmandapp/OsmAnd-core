@@ -18,8 +18,6 @@
 #include "Stopwatch.h"
 #include "Logging.h"
 
-#define MIN_ZOOM 16
-
 using namespace OsmAnd;
 
 namespace
@@ -418,14 +416,14 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
     return true;
 }
 
-void AtlasMapRendererMap3DObjectsStage_OpenGL::occupySpace(TileId tileIdN, int zoomLevel,
+void AtlasMapRendererMap3DObjectsStage_OpenGL::occupySpace(TileId tileIdN, int zoomLevel, int minZoomLevel,
     QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const
 {
-    if (zoomLevel < MIN_ZOOM)
+    if (zoomLevel < minZoomLevel)
         return;
     presentTiles[zoomLevel].insert(tileIdN);
-    int zoomShift = zoomLevel - MIN_ZOOM;
-    for (int zoom = MIN_ZOOM; zoom <= zoomLevel; zoom++)
+    int zoomShift = zoomLevel - minZoomLevel;
+    for (int zoom = minZoomLevel; zoom <= zoomLevel; zoom++)
     {
         occupiedSpace[zoom].insert(TileId::fromXY(tileIdN.x >> zoomShift, tileIdN.y >> zoomShift));
         zoomShift--;
@@ -435,8 +433,6 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::occupySpace(TileId tileIdN, int z
 bool AtlasMapRendererMap3DObjectsStage_OpenGL::spaceAlreadyOccupied(TileId tileIdN, int zoomLevel,
     QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const
 {
-    if (zoomLevel < MIN_ZOOM)
-        return true;
     if (presentTiles.isEmpty())
         return false;
     const auto startZoom = presentTiles.firstKey();
@@ -467,25 +463,28 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
 {
     const auto& internalState = getInternalState();
 
+    auto minZoomLevel = static_cast<int>(currentState.map3DObjectsProvider->getMinZoom());
     auto maxMissingDataZoomShift = currentState.map3DObjectsProvider->getMaxMissingDataZoomShift();
     auto maxMissingDataUnderZoomShift = currentState.map3DObjectsProvider->getMaxMissingDataUnderZoomShift();
 
     QMap<int, QSet<TileId>> presentTiles, occupiedSpace;
 
-    bool isNextDetailLevel = false;
+    bool isLessDetailedLevel = false;
     auto tilesBegin = internalState.visibleTiles.cbegin();
     for (auto itTiles = internalState.visibleTiles.cend(); itTiles != tilesBegin; itTiles--)
     {
-        if (isNextDetailLevel && detalizationLevel < 2)
+        if (isLessDetailedLevel && detalizationLevel < 2)
             break;
-        isNextDetailLevel = true;
         const auto& tilesEntry = itTiles - 1;
         const auto zoomLevel = tilesEntry.key();
         const auto& tiles = tilesEntry.value();
         const auto& citVisibleTilesSet = internalState.visibleTilesSet.constFind(zoomLevel);
         if (citVisibleTilesSet == internalState.visibleTilesSet.cend())
-            continue;
+            break;
 
+        // Try to obtain more detailed resource (of higher zoom level) if needed and possible
+        int detZoom = internalState.zoomLevelOffset == 0 ? zoomLevel : std::min(static_cast<int>(MaxZoomLevel),
+            zoomLevel + std::min(internalState.zoomLevelOffset, maxMissingDataUnderZoomShift));
         for (const auto& tileId : constOf(tiles))
         {
             const auto tileIdN = Utilities::normalizeTileId(tileId, zoomLevel);
@@ -494,13 +493,13 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
             if (!citVisibleTilesSet.value().contains(tileIdN))
                 continue;
 
-            // Try to obtain more detailed resource (of higher zoom level) if needed and possible
-            int neededZoom = internalState.zoomLevelOffset == 0 ? zoomLevel : std::min(static_cast<int>(MaxZoomLevel),
-                zoomLevel + std::min(internalState.zoomLevelOffset, maxMissingDataUnderZoomShift));
-            neededZoom = internalState.zoomLevelOffset != 0 || internalState.extraDetailedTiles.empty() ? neededZoom
+            int neededZoom = isLessDetailedLevel || internalState.zoomLevelOffset != 0
+                || internalState.extraDetailedTiles.empty() ? detZoom
                 : std::min(static_cast<int>(MaxZoomLevel), zoomLevel + std::min(1, maxMissingDataUnderZoomShift));
+            if (neededZoom != detZoom && !internalState.extraDetailedTiles.contains(tileIdN))
+                neededZoom = detZoom;
             bool haveMatch = false;
-            while (neededZoom > zoomLevel)
+            while (neededZoom > zoomLevel && neededZoom >= minZoomLevel)
             {
                 const int absZoomShift = neededZoom - zoomLevel;
                 const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
@@ -539,7 +538,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
                     for (auto tileIdx = 0; tileIdx < subtilesCount; tileIdx++)
                     {
                         const auto& underscaledTileId = *(pUnderscaledTileIdN++);
-                        occupySpace(underscaledTileId, neededZoom, presentTiles, occupiedSpace);
+                        occupySpace(underscaledTileId, neededZoom, minZoomLevel, presentTiles, occupiedSpace);
                     }
                     haveMatch = true;
                     break;
@@ -554,7 +553,8 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
                 neededZoom--;
             }
 
-            if (!haveMatch && !spaceAlreadyOccupied(tileIdN, zoomLevel, presentTiles, occupiedSpace))
+            if (!haveMatch && zoomLevel >= minZoomLevel
+                && !spaceAlreadyOccupied(tileIdN, zoomLevel, presentTiles, occupiedSpace))
             {
                 // Try to obtain exact match resource
                 auto meshInGPU = captureResourceInGPU(
@@ -563,7 +563,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
                     zoomLevel);
                 if (meshInGPU)
                 {
-                    occupySpace(tileIdN, zoomLevel, presentTiles, occupiedSpace);
+                    occupySpace(tileIdN, zoomLevel, minZoomLevel, presentTiles, occupiedSpace);
                     resourcesInGPU.append(qMove(meshInGPU));
                     haveMatch = true;
                 }
@@ -576,7 +576,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
                 {
                     // Look for underscaled first. Only full match is accepted
                     const auto underscaledZoom = static_cast<int>(zoomLevel) + absZoomShift;
-                    if (underscaledZoom <= static_cast<int>(MaxZoomLevel))
+                    if (underscaledZoom <= static_cast<int>(MaxZoomLevel) && zoomLevel >= minZoomLevel)
                     {
                         const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
                             tileIdN,
@@ -596,7 +596,8 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
                                 static_cast<ZoomLevel>(underscaledZoom));
                             if (meshInGPU)
                             {
-                                occupySpace(underscaledTileId, underscaledZoom, presentTiles, occupiedSpace);
+                                occupySpace(
+                                    underscaledTileId, underscaledZoom, minZoomLevel, presentTiles, occupiedSpace);
                                 resourcesInGPU.append(qMove(meshInGPU));
                                 atLeastOnePresent = true;
                             }
@@ -608,7 +609,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
 
                     // If underscaled was not found, look for overscaled (surely, if such zoom level exists at all)
                     const auto overscaleZoom = static_cast<int>(zoomLevel) - absZoomShift;
-                    if (overscaleZoom >= static_cast<int>(MinZoomLevel))
+                    if (overscaleZoom >= minZoomLevel)
                     {
                         PointF texCoordsOffset;
                         PointF texCoordsScale;
@@ -625,7 +626,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
                             static_cast<ZoomLevel>(overscaleZoom));
                         if (meshInGPU)
                         {
-                            occupySpace(overscaledTileIdN, overscaleZoom, presentTiles, occupiedSpace);
+                            occupySpace(overscaledTileIdN, overscaleZoom, minZoomLevel, presentTiles, occupiedSpace);
                             resourcesInGPU.append(qMove(meshInGPU));
                             break;
                         }
@@ -633,6 +634,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
                 }
             }
         }
+        isLessDetailedLevel = true;
     }
 }
 

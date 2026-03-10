@@ -34,6 +34,8 @@
 
 #define ENLARGE_QUERY_BBOX_METERS 100
 
+#define ENLARGE_QUERY_BBOX_METERS_FOR_BUILDINGS 2
+
 OsmAnd::ObfDataInterface::ObfDataInterface(const QList< std::shared_ptr<const ObfReader> >& obfReaders_)
     : obfReaders(obfReaders_)
 {
@@ -70,6 +72,23 @@ OsmAnd::AreaI OsmAnd::ObfDataInterface::getEnlargedForLiveUpdate(const OsmAnd::A
         // Fix showing deleted objects in live updates https://github.com/osmandapp/OsmAnd/issues/14920#issuecomment-1538488529
         const auto enlargeDeltaX = Utilities::metersToX31(ENLARGE_QUERY_BBOX_METERS);
         const auto enlargeDeltaY = Utilities::metersToY31(ENLARGE_QUERY_BBOX_METERS);
+        tileBBox31 = bbox31->getEnlargedBy(PointI(enlargeDeltaX, enlargeDeltaY));
+    }
+    else
+    {
+        tileBBox31 = *bbox31;
+    }
+    return tileBBox31;
+}
+
+OsmAnd::AreaI OsmAnd::ObfDataInterface::getEnlargedForBuildings(const OsmAnd::AreaI* const bbox31, ZoomLevel zoom)
+{
+    AreaI tileBBox31;
+    if (zoom >= OsmAnd::ZoomLevel16)
+    {
+        // Fix showing deleted objects in live updates https://github.com/osmandapp/OsmAnd/issues/14920#issuecomment-1538488529
+        const auto enlargeDeltaX = Utilities::metersToX31(ENLARGE_QUERY_BBOX_METERS_FOR_BUILDINGS);
+        const auto enlargeDeltaY = Utilities::metersToY31(ENLARGE_QUERY_BBOX_METERS_FOR_BUILDINGS);
         tileBBox31 = bbox31->getEnlargedBy(PointI(enlargeDeltaX, enlargeDeltaY));
     }
     else
@@ -326,7 +345,15 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
             return false;
 
         const auto& obfInfo = obfReader->obtainInfo();
-        const auto tileBBox31 = enlargeArea && obfInfo->isLiveUpdate ? getEnlargedForLiveUpdate(bbox31, zoom) : *bbox31;
+        auto tileBBox31 = *bbox31;
+        if (enlargeArea)
+        {
+            if (obfInfo->isLiveUpdate)
+                tileBBox31 = getEnlargedForLiveUpdate(bbox31, zoom);
+            else if (zoom >= ZoomLevel16)
+                tileBBox31 = getEnlargedForBuildings(bbox31, zoom);
+        }
+
         QFileInfo fileInfo(obfReader->obfFile->filePath);
         if (obfReader->obfFile->filePath.contains(QStringLiteral(".road")) && regularMapNames.contains(fileInfo.baseName()))
             continue;

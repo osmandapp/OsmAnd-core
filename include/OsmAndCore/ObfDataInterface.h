@@ -46,6 +46,7 @@ namespace OsmAnd
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         AreaI getEnlargedForLiveUpdate(const AreaI* const bbox31, const ZoomLevel zoom);
+        AreaI getEnlargedForBuildings(const AreaI* const bbox31, const ZoomLevel zoom);
 
         bool loadBinaryMapObjects(
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,

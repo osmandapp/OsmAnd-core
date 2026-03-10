@@ -35,6 +35,8 @@ namespace OsmAnd
             PointI startingPoint;
             PointI endingPoint;
             PointI centerPoint;
+            glm::dvec2 startingSegment;
+            glm::dvec2 endingSegment;
             float height;
             int halfWidth31;
             bool putStart;
@@ -60,7 +62,7 @@ namespace OsmAnd
 
         void processPrimitive(const BuildingPrimitive& primitive,
                               Buildings3D& buildings3D,
-                              const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData,
+                              const QHash<TileId, std::shared_ptr<IMapElevationDataProvider::Data>>& elevationData,
                               const TileId& tileId,
                               const ZoomLevel zoom,
                               QSet<PassagePrimitive>& buildingPassages) const;
@@ -119,9 +121,8 @@ namespace OsmAnd
 
         void accumulateElevationForPoint(
             const PointI& point31,
-            const TileId& tileId,
             ZoomLevel zoom,
-            const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData,
+            const QHash<TileId, std::shared_ptr<IMapElevationDataProvider::Data>>& elevationData,
             float& maxElevationMeters,
             float& minElevationMeters,
             bool& hasElevationSample) const;
