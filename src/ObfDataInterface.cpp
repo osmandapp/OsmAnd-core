@@ -1284,7 +1284,7 @@ bool OsmAnd::ObfDataInterface::searchTransportIndex(
         for (const auto& transportSection : constOf(obfInfo->transportSections))
         {
             if (transportSection->stopsLength == 0)
-                return false;
+                continue;
 
             if (queryController && queryController->isAborted())
                 return false;
