@@ -13,8 +13,11 @@
 
 #include "IMapTiledSymbolsProvider.h"
 
-// One meter possible inaccuracy of passage coordinates
-#define MAX_WALL_TOUCH_PASSAGE_INACCURACY 50
+// ~ Maximum allowed inaccuracy of passage coordinates
+#define PASSAGE_MAX_WALL_INACCURACY 50.0
+
+#define PASSAGE_DEFAULT_WIDTH 2.0
+#define PASSAGE_DEFAULT_HEIGHT 2.5
 
 using namespace OsmAnd;
 
@@ -96,8 +99,8 @@ Map3DObjectsTiledProvider_P::Map3DObjectsTiledProvider_P(
 
     std::vector<std::array<float, 2>> side = {
         {1.0f, 0.0f},
-        {1.0f, 1.0f},
-        {0.0f, 1.0f},
+        {1.0f, -1.0f},
+        {0.0f, -1.0f},
         {0.0f, 0.0f}
     };
 
@@ -111,7 +114,7 @@ Map3DObjectsTiledProvider_P::~Map3DObjectsTiledProvider_P()
 
 ZoomLevel Map3DObjectsTiledProvider_P::getMinZoom() const
 {
-    return _tiledProvider ? _tiledProvider->getMinZoom() : MinZoomLevel;
+    return ZoomLevel16;
 }
 
 ZoomLevel Map3DObjectsTiledProvider_P::getMaxZoom() const
@@ -127,15 +130,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
     Q_UNUSED(pOutMetric);
 
     if (!_tiledProvider)
-    {
         return false;
-    }
-
-    if (request.zoom < ZoomLevel16)
-    {
-        outTiledData = std::make_shared<Map3DObjectsTiledProvider::Data>(request.tileId, request.zoom, Buildings3D());
-        return true;
-    }
 
     MapPrimitivesProvider::Request tileRequest;
     tileRequest.tileId = request.tileId;
@@ -153,17 +148,6 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
     Buildings3D buildings3D;
     if (tileData && tileData->primitivisedObjects)
     {
-        std::shared_ptr<IMapElevationDataProvider::Data> elevationData;
-        if (_elevationProvider)
-        {
-            IMapElevationDataProvider::Request elevationRequest;
-            elevationRequest.tileId = request.tileId;
-            elevationRequest.zoom = request.zoom;
-            elevationRequest.queryController = request.queryController;
-
-            _elevationProvider->obtainElevationData(elevationRequest, elevationData, nullptr);
-        }
-
         QSet<BuildingPrimitive> buildings;
         QSet<BuildingPrimitive> buildingParts;
         QSet<PassagePrimitive> buildingPassages;
@@ -180,14 +164,56 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
 
         filterBuildings(buildings, buildingParts);
 
+        QHash<TileId, std::shared_ptr<IMapElevationDataProvider::Data>> elevationDataMap;
+        if (_elevationProvider)
+        {
+            AreaI commonBbox31;
+            commonBbox31.top() = INT32_MAX;
+            commonBbox31.left() = INT32_MAX;
+            for (const auto& buildingPart : buildingParts)
+            {
+                if (const auto& sourceObject =
+                    std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPart.primitive->sourceObject))
+                {
+                    commonBbox31.enlargeToInclude(sourceObject->bbox31);
+                }
+            }
+            for (const auto& building : buildings)
+            {
+                if (const auto& sourceObject =
+                    std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(building.primitive->sourceObject))
+                {
+                    commonBbox31.enlargeToInclude(sourceObject->bbox31);
+                }
+            }
+            int zoomShift = MaxZoomLevel - request.zoom;
+            const auto top = commonBbox31.top() >> zoomShift;
+            const auto left = commonBbox31.left() >> zoomShift;
+            const auto bottom = (commonBbox31.bottom() >> zoomShift) + 1;
+            const auto right = (commonBbox31.right() >> zoomShift) + 1;
+            for (int col = top; col < bottom; col++)
+            {
+                for (int row = left; row < right; row++)
+                {
+                    std::shared_ptr<IMapElevationDataProvider::Data> elevationData;
+                    IMapElevationDataProvider::Request elevationRequest;
+                    elevationRequest.tileId = TileId::fromXY(row, col);
+                    elevationRequest.zoom = request.zoom;
+                    elevationRequest.queryController = request.queryController;
+                    _elevationProvider->obtainElevationData(elevationRequest, elevationData, nullptr);
+                    elevationDataMap.insert(elevationRequest.tileId, elevationData);
+                }
+            }
+        }
+
         for (const auto& buildingPart : buildingParts)
         {
-            processPrimitive(buildingPart, buildings3D, elevationData, request.tileId, request.zoom, buildingPassages);
+            processPrimitive(buildingPart, buildings3D, elevationDataMap, request.tileId, request.zoom, buildingPassages);
         }
 
         for (const auto& building : buildings)
         {
-            processPrimitive(building, buildings3D, elevationData, request.tileId, request.zoom, buildingPassages);
+            processPrimitive(building, buildings3D, elevationDataMap, request.tileId, request.zoom, buildingPassages);
         }
     }
 
@@ -200,17 +226,16 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QSet<BuildingPrimitive>& build
 {
     const bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
     if (!show3DbuildingParts)
-    {
         return;
-    }
 
     for (auto it = buildings.begin(); it != buildings.end();)
     {
         const auto& buildingPrimitive = *it;
-        const auto& building = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPrimitive.primitive->sourceObject);
+        const auto& building =
+            std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPrimitive.primitive->sourceObject);
         if (!building)
         {
-            ++it;
+            it = buildings.erase(it);
             continue;
         }
 
@@ -233,7 +258,8 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QSet<BuildingPrimitive>& build
         for (auto it = buildingParts.begin(); it != buildingParts.end(); ++it)
         {
             const auto& buildingPartPrimitive = *it;
-            const auto& buildingPart = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPartPrimitive.primitive->sourceObject);
+            const auto& buildingPart =
+                std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPartPrimitive.primitive->sourceObject);
             if (buildingPart && building->bbox31.contains(buildingPart->bbox31))
             {
                 if (buildingPartPrimitive.polygonColor == 0)
@@ -254,13 +280,9 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QSet<BuildingPrimitive>& build
         }
 
         if (shouldRemove)
-        {
             it = buildings.erase(it);
-        }
         else
-        {
             ++it;
-        }
     }
 }
 
@@ -324,20 +346,27 @@ void Map3DObjectsTiledProvider_P::collectFromPolyline(
     else if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polyline)
     {
         if (sourceObject->points31.size() > 1
-            && sourceObject->containsAttribute(QStringLiteral("tunnel"), QStringLiteral("building_passage"), true))
+            && (sourceObject->containsAttribute(QStringLiteral("tunnel"), QStringLiteral("building_passage"))
+            || sourceObject->containsAttribute(QStringLiteral("tunnel"), QStringLiteral("building_passage"), true)))
         {
             PassagePrimitive passagePrimitive;
             passagePrimitive.primitive = polylinePrimitive;
             passagePrimitive.startingPoint = sourceObject->points31.first();
             passagePrimitive.endingPoint = sourceObject->points31.last();
             passagePrimitive.centerPoint = passagePrimitive.startingPoint / 2 + passagePrimitive.endingPoint / 2;
-            const QString widthTag = QStringLiteral("width");
-            const QString heightTag = QStringLiteral("height");
-            passagePrimitive.height =
-                Utilities::parseLength(sourceObject->getResolvedAttribute(QStringRef(&heightTag)), 2.5);
-            const auto width = Utilities::parseLength(sourceObject->getResolvedAttribute(QStringRef(&widthTag)), 2.0);
+            const auto startingSegment = sourceObject->points31[1] - passagePrimitive.startingPoint;
+            const auto endingSegment =
+                passagePrimitive.endingPoint - sourceObject->points31[sourceObject->points31.size() - 2];
+            passagePrimitive.endingSegment = glm::normalize(glm::dvec2(endingSegment.x, endingSegment.y));
+            passagePrimitive.startingSegment = glm::normalize(glm::dvec2(startingSegment.x, startingSegment.y));
+            const QString width = QStringLiteral("width");
+            const QString height = QStringLiteral("height");
+            passagePrimitive.height = Utilities::parseLength(sourceObject->getResolvedAttribute(QStringRef(&height)),
+                PASSAGE_DEFAULT_HEIGHT);
+            const auto widthValue = Utilities::parseLength(sourceObject->getResolvedAttribute(QStringRef(&width)),
+                PASSAGE_DEFAULT_WIDTH);
             passagePrimitive.halfWidth31 =
-                qRound(width / (2.0f * Utilities::getMetersPer31Coordinate(passagePrimitive.centerPoint)));
+                qRound(widthValue / (2.0f * Utilities::getMetersPer31Coordinate(passagePrimitive.centerPoint)));
             passagePrimitive.putStart = false;
             passagePrimitive.withStart = false;
             passagePrimitive.putEnd = false;
@@ -418,15 +447,14 @@ FColorARGB Map3DObjectsTiledProvider_P::getDefaultBuildingsColor() const
     return _environment ? _environment->get3DBuildingsColor() : FColorARGB(1.0f, 0.4f, 0.4f, 0.4f);
 }
 
-void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& primitive,
-    Buildings3D& buildings3D, const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData, const TileId& tileId,
+void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& primitive, Buildings3D& buildings3D,
+    const QHash<TileId, std::shared_ptr<IMapElevationDataProvider::Data>>& elevationDataMap, const TileId& tileId,
     const ZoomLevel zoom, QSet<PassagePrimitive>& buildingPassages) const
 {
-    const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(primitive.primitive->sourceObject);
+    const auto& sourceObject =
+        std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(primitive.primitive->sourceObject);
     if (!sourceObject)
-    {
         return;
-    }
 
     float levelHeight = getDefaultBuildingsLevelHeight();
 
@@ -502,15 +530,16 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
         minHeight = minLevels * levelHeight;
     }
 
-    if (elevationData)
+    if (!elevationDataMap.isEmpty())
     {
         float maxElevationMeters = 0.0f;
         float minElevationMeters = 0.0f;
         bool hasElevationSample = false;
 
-        for (const auto& p : constOf(sourceObject->points31))
+        for (const auto& point : constOf(sourceObject->points31))
         {
-            accumulateElevationForPoint(p, tileId, zoom, elevationData, maxElevationMeters, minElevationMeters, hasElevationSample);
+            accumulateElevationForPoint(
+                point, zoom, elevationDataMap, maxElevationMeters, minElevationMeters, hasElevationSample);
         }
 
         if (hasElevationSample)
@@ -538,12 +567,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
 
     // Reverse points if needed
     double area = Utilities::computeSignedArea(points31);
-    bool isClockwise = (area < 0.0);
-
-    if (isClockwise)
-    {
+    if (area >= 0.0)
         std::reverse(points31.begin(), points31.end());
-    }
 
     const int edgePointsCount = points31.size();
 
@@ -559,12 +584,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
 
             QVector<PointI> innerPoints = innerPolygon;
             double innerArea = Utilities::computeSignedArea(innerPoints);
-            bool innerIsClockwise = (innerArea >= 0.0);
-
-            if (innerIsClockwise)
-            {
+            if (innerArea < 0.0)
                 std::reverse(innerPoints.begin(), innerPoints.end());
-            }
 
             innerPolygons.append(innerPoints);
         }
@@ -617,175 +638,109 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
         maxTile31);
 
     // Construct walls of the mesh
-    for (int i = 0; i < edgePointsCount; ++i)
+    for (int polyIdx = -1; polyIdx < innerPolygons.size(); polyIdx++)
     {
-        const int next = (i + 1) % edgePointsCount;
-        const auto& point31_i = points31[i];
-        const auto& point31_next = points31[next];
-        const auto edgeNormal = calculateNormalFrom2Points(point31_i, point31_next);
+        const auto& points = polyIdx < 0 ? points31 : innerPolygons[polyIdx];
 
-        QList<PassagePrimitive*> passagePrimitives;
-        for (auto passage : passages)
+        int count = polyIdx < 0 ? edgePointsCount : points.size();
+        for (int i = 0; i < count; ++i)
         {
-            const auto side = glm::dvec2(point31_next.x - point31_i.x, point31_next.y - point31_i.y);
-            const auto sideLengthSqr = side.x * side.x + side.y * side.y;
-            const auto halfN = static_cast<double>(passage->halfWidth31) / qSqrt(sideLengthSqr);
-            if (!passage->putStart && !passage->withStart)
-            {
-                const auto distN = glm::dot(glm::dvec2(
-                    passage->startingPoint.x - point31_i.x,
-                    passage->startingPoint.y - point31_i.y), side) / sideLengthSqr;
-                if (distN > 0.0 && distN < 1.0 && distN > halfN && (1.0 - distN) > halfN)
-                {
-                    auto proj = side * distN;
-                    auto proj31 = PointI(qRound(proj.x), qRound(proj.y));
-                    const auto point31 = point31_i + proj31;
-                    if ((point31 - passage->startingPoint).norm() < MAX_WALL_TOUCH_PASSAGE_INACCURACY)
-                    {
-                        proj = side * halfN;
-                        proj31 = PointI(qRound(proj.x), qRound(proj.y));
-                        const auto pointLeft = point31 - proj31;
-                        passage->startBottomLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
-                            minHeight, baseTerrainHeight, edgeNormal, colorVec};
-                        passage->startTopLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
-                            passage->height, terrainHeight, edgeNormal, colorVec};
-                        const auto pointRight = point31 + proj31;
-                        passage->startBottomRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
-                            minHeight, baseTerrainHeight, edgeNormal, colorVec};
-                        passage->startTopRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
-                            passage->height, terrainHeight, edgeNormal, colorVec};
-                        passage->putStart = true;
-                        passage->withStart = true;
-                        passagePrimitives.append(passage);
-                        break;
-                    }
-                }
-            }
-            if (!passage->putEnd && !passage->withEnd)
-            {
-                const auto distN = glm::dot(glm::dvec2(
-                    passage->endingPoint.x - point31_i.x,
-                    passage->endingPoint.y - point31_i.y), side) / sideLengthSqr;
-                if (distN > 0.0 && distN < 1.0 && distN > halfN && (1.0 - distN) > halfN)
-                {
-                    auto proj = side * distN;
-                    auto proj31 = PointI(qRound(proj.x), qRound(proj.y));
-                    const auto point31 = point31_i + proj31;
-                    if ((point31 - passage->endingPoint).norm() < MAX_WALL_TOUCH_PASSAGE_INACCURACY)
-                    {
-                        proj = side * halfN;
-                        proj31 = PointI(qRound(proj.x), qRound(proj.y));
-                        const auto pointLeft = point31 - proj31;
-                        passage->endBottomLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
-                            minHeight, baseTerrainHeight, edgeNormal, colorVec};
-                        passage->endTopLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
-                            passage->height, terrainHeight, edgeNormal, colorVec};
-                        const auto pointRight = point31 + proj31;
-                        passage->endBottomRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
-                            minHeight, baseTerrainHeight, edgeNormal, colorVec};
-                        passage->endTopRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
-                            passage->height, terrainHeight, edgeNormal, colorVec};
-                        passage->putEnd = true;
-                        passage->withEnd = true;
-                        passagePrimitives.append(passage);
-                        break;
-                    }
-                }
-            }
-        }
-
-        generateBuildingWall(
-            buildings3D,
-            point31_i,
-            point31_next,
-            edgeNormal,
-            minHeight,
-            height,
-            baseTerrainHeight,
-            terrainHeight,
-            minTile31,
-            maxTile31,
-            colorVec,
-            passagePrimitives);
-    }
-
-    // Construct inner walls of the mesh
-    for (int polyIdx = 0; polyIdx < innerPolygons.size(); ++polyIdx)
-    {
-        const auto& innerPoly = innerPolygons[polyIdx];
-
-        for (int i = 0; i < innerPoly.size(); ++i)
-        {
-            const int next = (i + 1) % innerPoly.size();
-            const auto& point31_i = innerPoly[i];
-            const auto& point31_next = innerPoly[next];
+            const int next = (i + 1) % count;
+            const auto& point31_i = points[i];
+            const auto& point31_next = points[next];
             const auto edgeNormal = calculateNormalFrom2Points(point31_i, point31_next);
 
             QList<PassagePrimitive*> passagePrimitives;
-            for (auto passage : passages)
+            if (!passages.isEmpty())
             {
                 const auto side = glm::dvec2(point31_next.x - point31_i.x, point31_next.y - point31_i.y);
                 const auto sideLengthSqr = side.x * side.x + side.y * side.y;
-                const auto halfN = static_cast<double>(passage->halfWidth31) / qSqrt(sideLengthSqr);
-                if (!passage->putStart && !passage->withStart)
+                const auto sideLength = qSqrt(sideLengthSqr);
+                if (qFuzzyIsNull(sideLengthSqr))
+                    continue;
+                const auto sideN = side / sideLength;
+
+                for (auto passage : passages)
                 {
-                    const auto distN = glm::dot(glm::dvec2(
-                        passage->startingPoint.x - point31_i.x,
-                        passage->startingPoint.y - point31_i.y), side) / sideLengthSqr;
-                    if (distN > 0.0 && distN < 1.0 && distN > halfN && (1.0 - distN) > halfN)
+                    const auto halfN = static_cast<double>(passage->halfWidth31) / sideLength;
+                    const auto minGapN = halfN / 2.0;
+                    if (!passage->putStart && !passage->withStart)
                     {
-                        auto proj = side * distN;
-                        auto proj31 = PointI(qRound(proj.x), qRound(proj.y));
-                        const auto point31 = point31_i + proj31;
-                        if ((point31 - passage->startingPoint).norm() < MAX_WALL_TOUCH_PASSAGE_INACCURACY)
+                        const auto distN = glm::dot(glm::dvec2(
+                            passage->startingPoint.x - point31_i.x,
+                            passage->startingPoint.y - point31_i.y), side) / sideLengthSqr;
+                        if (distN > 0.0 && distN < 1.0 && distN > minGapN && 1.0 - distN > minGapN)
                         {
-                            proj = side * halfN;
-                            proj31 = PointI(qRound(proj.x), qRound(proj.y));
-                            const auto pointLeft = point31 - proj31;
-                            passage->startBottomLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
-                                minHeight, baseTerrainHeight, edgeNormal, colorVec};
-                            passage->startTopLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
-                                passage->height, terrainHeight, edgeNormal, colorVec};
-                            const auto pointRight = point31 + proj31;
-                            passage->startBottomRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
-                                minHeight, baseTerrainHeight, edgeNormal, colorVec};
-                            passage->startTopRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
-                                passage->height, terrainHeight, edgeNormal, colorVec};
-                            passage->putStart = true;
-                            passage->withStart = true;
-                            passagePrimitives.append(passage);
-                            break;
+                            const auto inaccuracy = glm::dot(glm::dvec2(sideN.y, -sideN.x), glm::dvec2(
+                                passage->startingSegment.x, passage->startingSegment.y)) * PASSAGE_MAX_WALL_INACCURACY;
+                            auto proj = side * distN;
+                            auto proj31 = PointI(qRound(proj.x), qRound(proj.y));
+                            const auto point31 = point31_i + proj31;
+                            const auto dist = (point31 - passage->startingPoint).norm();
+                            if (dist < inaccuracy)
+                            {
+                                const auto backDistance = distN > halfN ? halfN : minGapN;
+                                proj = side * backDistance;
+                                proj31 = PointI(qRound(proj.x), qRound(proj.y));
+                                const auto pointLeft = point31 - proj31;
+                                passage->startBottomLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
+                                    minHeight, baseTerrainHeight, edgeNormal, colorVec};
+                                passage->startTopLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
+                                    passage->height, terrainHeight, edgeNormal, colorVec};
+                                const auto forthDistance = 1.0 - distN > halfN ? halfN : minGapN;
+                                proj = side * forthDistance;
+                                proj31 = PointI(qRound(proj.x), qRound(proj.y));
+                                const auto pointRight = point31 + proj31;
+                                passage->startBottomRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
+                                    minHeight, baseTerrainHeight, edgeNormal, colorVec};
+                                passage->startTopRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
+                                    passage->height, terrainHeight, edgeNormal, colorVec};
+                                passage->startingPoint.x = qRound((distN - backDistance) * sideLength);
+                                passage->startingPoint.y = qRound((distN + forthDistance) * sideLength);
+                                passage->putStart = true;
+                                passage->withStart = true;
+                                passagePrimitives.append(passage);
+                                continue;
+                            }
                         }
                     }
-                }
-                if (!passage->putEnd && !passage->withEnd)
-                {
-                    const auto distN = glm::dot(glm::dvec2(
-                        passage->endingPoint.x - point31_i.x,
-                        passage->endingPoint.y - point31_i.y), side) / sideLengthSqr;
-                    if (distN > 0.0 && distN < 1.0 && distN > halfN && (1.0 - distN) > halfN)
+                    if (!passage->putEnd && !passage->withEnd)
                     {
-                        auto proj = side * distN;
-                        auto proj31 = PointI(qRound(proj.x), qRound(proj.y));
-                        const auto point31 = point31_i + proj31;
-                        if ((point31 - passage->endingPoint).norm() < MAX_WALL_TOUCH_PASSAGE_INACCURACY)
+                        const auto distN = glm::dot(glm::dvec2(
+                            passage->endingPoint.x - point31_i.x,
+                            passage->endingPoint.y - point31_i.y), side) / sideLengthSqr;
+                        if (distN > 0.0 && distN < 1.0 && distN > minGapN && 1.0 - distN > minGapN)
                         {
-                            proj = side * halfN;
-                            proj31 = PointI(qRound(proj.x), qRound(proj.y));
-                            const auto pointLeft = point31 - proj31;
-                            passage->endBottomLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
-                                minHeight, baseTerrainHeight, edgeNormal, colorVec};
-                            passage->endTopLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
-                                passage->height, terrainHeight, edgeNormal, colorVec};
-                            const auto pointRight = point31 + proj31;
-                            passage->endBottomRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
-                                minHeight, baseTerrainHeight, edgeNormal, colorVec};
-                            passage->endTopRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
-                                passage->height, terrainHeight, edgeNormal, colorVec};
-                            passage->putEnd = true;
-                            passage->withEnd = true;
-                            passagePrimitives.append(passage);
-                            break;
+                            const auto inaccuracy = glm::dot(glm::dvec2(-sideN.y, sideN.x), glm::dvec2(
+                                passage->endingSegment.x, passage->endingSegment.y)) * PASSAGE_MAX_WALL_INACCURACY;
+                            auto proj = side * distN;
+                            auto proj31 = PointI(qRound(proj.x), qRound(proj.y));
+                            const auto point31 = point31_i + proj31;
+                            const auto dist = (point31 - passage->endingPoint).norm();
+                            if (dist < inaccuracy)
+                            {
+                                const auto backDistance = distN > halfN ? halfN : minGapN;
+                                proj = side * backDistance;
+                                proj31 = PointI(qRound(proj.x), qRound(proj.y));
+                                const auto pointLeft = point31 - proj31;
+                                passage->endBottomLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
+                                    minHeight, baseTerrainHeight, edgeNormal, colorVec};
+                                passage->endTopLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
+                                    passage->height, terrainHeight, edgeNormal, colorVec};
+                                const auto forthDistance = 1.0 - distN > halfN ? halfN : minGapN;
+                                proj = side * forthDistance;
+                                proj31 = PointI(qRound(proj.x), qRound(proj.y));
+                                const auto pointRight = point31 + proj31;
+                                passage->endBottomRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
+                                    minHeight, baseTerrainHeight, edgeNormal, colorVec};
+                                passage->endTopRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
+                                    passage->height, terrainHeight, edgeNormal, colorVec};
+                                passage->endingPoint.x = qRound((distN - backDistance) * sideLength);
+                                passage->endingPoint.y = qRound((distN + forthDistance) * sideLength);
+                                passage->putEnd = true;
+                                passage->withEnd = true;
+                                passagePrimitives.append(passage);
+                            }
                         }
                     }
                 }
@@ -818,10 +773,17 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
         {
             uint32_t baseVertexOffset = buildings3D.vertices.size();
 
+            auto n = calculateNormalFrom2Points(
+                PointI(passage->startTopLeft.location31.x, passage->startTopLeft.location31.y),
+                PointI(passage->endTopRight.location31.x, passage->endTopRight.location31.y));
             buildings3D.vertices.append(passage->endBottomRight);
+            buildings3D.vertices.last().normal = n;
             buildings3D.vertices.append(passage->endTopRight);
+            buildings3D.vertices.last().normal = n;
             buildings3D.vertices.append(passage->startTopLeft);
+            buildings3D.vertices.last().normal = n;
             buildings3D.vertices.append(passage->startBottomLeft);
+            buildings3D.vertices.last().normal = n;
 
             cutMeshForTile(
                 fullSideIndices,
@@ -833,10 +795,17 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
 
             baseVertexOffset = buildings3D.vertices.size();
 
+            n = calculateNormalFrom2Points(
+                PointI(passage->endTopLeft.location31.x, passage->endTopLeft.location31.y),
+                PointI(passage->startTopRight.location31.x, passage->startTopRight.location31.y));
             buildings3D.vertices.append(passage->startBottomRight);
+            buildings3D.vertices.last().normal = n;
             buildings3D.vertices.append(passage->startTopRight);
+            buildings3D.vertices.last().normal = n;
             buildings3D.vertices.append(passage->endTopLeft);
+            buildings3D.vertices.last().normal = n;
             buildings3D.vertices.append(passage->endBottomLeft);
+            buildings3D.vertices.last().normal = n;
 
             cutMeshForTile(
                 fullSideIndices,
@@ -848,10 +817,15 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
 
             baseVertexOffset = buildings3D.vertices.size();
 
+            n = glm::vec3(0.0f, -1.0f, 0.0f);
             buildings3D.vertices.append(passage->endTopRight);
+            buildings3D.vertices.last().normal = n;
             buildings3D.vertices.append(passage->endTopLeft);
+            buildings3D.vertices.last().normal = n;
             buildings3D.vertices.append(passage->startTopRight);
+            buildings3D.vertices.last().normal = n;
             buildings3D.vertices.append(passage->startTopLeft);
+            buildings3D.vertices.last().normal = n;
 
             cutMeshForTile(
                 fullSideIndices,
@@ -902,10 +876,17 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
 
                 uint32_t baseVertexOffset = buildings3D.vertices.size();
 
+                auto n = calculateNormalFrom2Points(
+                    PointI(startTopLeft.location31.x, startTopLeft.location31.y),
+                    PointI(endTopLeft.location31.x, endTopLeft.location31.y));
                 buildings3D.vertices.append(endBottomLeft);
+                buildings3D.vertices.last().normal = n;
                 buildings3D.vertices.append(endTopLeft);
+                buildings3D.vertices.last().normal = n;
                 buildings3D.vertices.append(startTopLeft);
+                buildings3D.vertices.last().normal = n;
                 buildings3D.vertices.append(startBottomLeft);
+                buildings3D.vertices.last().normal = n;
 
                 cutMeshForTile(
                     fullSideIndices,
@@ -917,10 +898,17 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
 
                 baseVertexOffset = buildings3D.vertices.size();
 
+                n = calculateNormalFrom2Points(
+                    PointI(endTopRight.location31.x, endTopRight.location31.y),
+                    PointI(startTopRight.location31.x, startTopRight.location31.y));
                 buildings3D.vertices.append(startBottomRight);
+                buildings3D.vertices.last().normal = n;
                 buildings3D.vertices.append(startTopRight);
+                buildings3D.vertices.last().normal = n;
                 buildings3D.vertices.append(endTopRight);
+                buildings3D.vertices.last().normal = n;
                 buildings3D.vertices.append(endBottomRight);
+                buildings3D.vertices.last().normal = n;
 
                 cutMeshForTile(
                     fullSideIndices,
@@ -932,10 +920,15 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
 
                 baseVertexOffset = buildings3D.vertices.size();
 
+                n = glm::vec3(0.0f, -1.0f, 0.0f);
                 buildings3D.vertices.append(endTopLeft);
+                buildings3D.vertices.last().normal = n;
                 buildings3D.vertices.append(endTopRight);
+                buildings3D.vertices.last().normal = n;
                 buildings3D.vertices.append(startTopRight);
+                buildings3D.vertices.last().normal = n;
                 buildings3D.vertices.append(startTopLeft);
+                buildings3D.vertices.last().normal = n;
 
                 cutMeshForTile(
                     fullSideIndices,
@@ -1179,14 +1172,17 @@ void Map3DObjectsTiledProvider_P::cutMeshForTile(
 
 void Map3DObjectsTiledProvider_P::accumulateElevationForPoint(
     const PointI& point31,
-    const TileId& tileId,
     ZoomLevel zoom,
-    const std::shared_ptr<IMapElevationDataProvider::Data>& elevationData,
+    const QHash<TileId, std::shared_ptr<IMapElevationDataProvider::Data>>& elevationDataMap,
     float& maxElevationMeters,
     float& minElevationMeters,
     bool& hasElevationSample) const
 {
     const auto zoomLevelDelta = MaxZoomLevel - zoom;
+    const auto tileId = TileId::fromXY(point31.x >> zoomLevelDelta, point31.y >> zoomLevelDelta);
+    const auto& elevationData = elevationDataMap.value(tileId);
+    if (!elevationData)
+        return;
     const PointI tile31(tileId.x << zoomLevelDelta, tileId.y << zoomLevelDelta);
     const auto offsetInTile = point31 - tile31;
     const auto tileSize31 = 1u << zoomLevelDelta;
@@ -1231,13 +1227,9 @@ glm::vec3 Map3DObjectsTiledProvider_P::calculateNormalFrom2Points(PointI point31
     glm::vec3 n(-dz, 0.0f, dx);
     const float len = glm::length(n);
     if (len > 0.0f)
-    {
         n /= len;
-    }
     else
-    {
         n = glm::vec3(0.0f, 0.0f, 1.0f);
-    }
 
     return n;
 }
@@ -1270,40 +1262,71 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
         std::vector<std::array<int32_t, 2>> polygon;
 
         polygon.push_back({200, 0});
-        polygon.push_back({200, 100});
-        polygon.push_back({0, 100});
+        polygon.push_back({200, -100});
+        polygon.push_back({0, -100});
         polygon.push_back({0, 0});
 
-        int x = 10;
+        QMap<int, PassagePrimitive*> passages;
         for (auto passagePrimitive : passagePrimitives)
         {
             if (passagePrimitive->putStart)
             {
-                passagePrimitive->putStart = false;
-
-                // Should match the side order (counter-clockwise)
-                buildings3D.vertices.append(passagePrimitive->startBottomLeft);
-                buildings3D.vertices.append(passagePrimitive->startTopLeft);
-                buildings3D.vertices.append(passagePrimitive->startTopRight);
-                buildings3D.vertices.append(passagePrimitive->startBottomRight);
+                const auto center = (passagePrimitive->startingPoint.x + passagePrimitive->startingPoint.y) / 2;
+                passages.insert(center, passagePrimitive);
             }
             else if (passagePrimitive->putEnd)
             {
-                passagePrimitive->putEnd = false;
+                const auto center = (passagePrimitive->endingPoint.x + passagePrimitive->endingPoint.y) / 2;
+                passages.insert(center, passagePrimitive);
+            }
+        }
+        int x = 10;
+        int prevDistance = 0;
+        for (auto passage : passages)
+        {
+            bool withGate = false;
+            if (passage->putStart)
+            {
+                passage->putStart = false;
 
-                // Should match the side order (counter-clockwise)
-                buildings3D.vertices.append(passagePrimitive->endBottomLeft);
-                buildings3D.vertices.append(passagePrimitive->endTopLeft);
-                buildings3D.vertices.append(passagePrimitive->endTopRight);
-                buildings3D.vertices.append(passagePrimitive->endBottomRight);
+                if (passage->startingPoint.x > prevDistance)
+                {
+                    prevDistance = passage->startingPoint.y;
+
+                    // Should match the side order (counter-clockwise)
+                    buildings3D.vertices.append(passage->startBottomLeft);
+                    buildings3D.vertices.append(passage->startTopLeft);
+                    buildings3D.vertices.append(passage->startTopRight);
+                    buildings3D.vertices.append(passage->startBottomRight);
+                    withGate = true;
+                }
+            }
+            else if (passage->putEnd)
+            {
+                passage->putEnd = false;
+
+                if (passage->endingPoint.x > prevDistance)
+                {
+                    prevDistance = passage->endingPoint.y;
+
+                    // Should match the side order (counter-clockwise)
+                    buildings3D.vertices.append(passage->endBottomLeft);
+                    buildings3D.vertices.append(passage->endTopLeft);
+                    buildings3D.vertices.append(passage->endTopRight);
+                    buildings3D.vertices.append(passage->endBottomRight);
+                    withGate = true;
+                }
             }
 
-            polygon.push_back({x, 0});
-            polygon.push_back({x, 90});
-            x += 10;
-            polygon.push_back({x, 90});
-            polygon.push_back({x, 0});
-            x += 10;
+            if (withGate)
+            {
+                polygon.push_back({x, 0});
+                polygon.push_back({x, -90});
+                x += 10;
+                polygon.push_back({x, -90});
+                polygon.push_back({x, 0});
+                x += 10;
+            }
         }
 
         polygons.push_back(std::move(polygon));

@@ -67,7 +67,7 @@ namespace OsmAnd
 
         bool initializeColorProgram();
         bool initializeDepthProgram();
-        void occupySpace(TileId tileIdN, int zoomLevel,
+        void occupySpace(TileId tileIdN, int zoomLevel, int minZoomLevel,
             QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const;
         bool spaceAlreadyOccupied(TileId tileIdN, int zoomLevel,
             QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const;

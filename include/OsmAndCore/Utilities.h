@@ -31,10 +31,10 @@
 #include <OsmAndCore/Logging.h>
 
 // Most polylines width is under 50 meters
-#define MAX_ENLARGE_PRIMITIVIZED_AREA_METERS 50
-#define ENLARGE_PRIMITIVIZED_AREA_COEFF 0.2f
+#define MAX_ENLARGE_PRIMITIVIZED_AREA_METERS 50.0
+#define ENLARGE_PRIMITIVIZED_AREA_COEFF 0.2
 
-#define ENLARGE_VISIBLE_AREA_COEFF 0.5f
+#define ENLARGE_VISIBLE_AREA_COEFF 0.5
 
 namespace OsmAnd
 {

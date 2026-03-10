@@ -2929,8 +2929,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
                     // Look for underscaled first. Only full match is accepted.
                     // Don't replace tiles of absent zoom levels by the unserscaled ones
                     const auto underscaledZoom = static_cast<int>(zoomLevel) + absZoomShift;
-                    if (underscaledZoom >= minZoom && underscaledZoom <= maxZoom && absZoomShift <= maxUnderZoomShift &&
-                        zoomLevel >= minZoom)
+                    if (underscaledZoom <= maxZoom && absZoomShift <= maxUnderZoomShift && zoomLevel >= minZoom)
                     {
                         elevationZoom = static_cast<ZoomLevel>(underscaledZoom);
                         const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
@@ -3168,7 +3167,8 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
                     if (Q_LIKELY(!debugSettings->rasterLayersUnderscaleForbidden))
                     {
                         const auto underscaledZoom = static_cast<int>(zoomLevel) + absZoomShift;
-                        if (underscaledZoom <= static_cast<int>(MaxZoomLevel))
+                        if (underscaledZoom <= static_cast<int>(MaxZoomLevel)
+                            && absZoomShift <= maxMissingDataUnderZoomShift)
                         {
                             const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
                                 tileIdN,
