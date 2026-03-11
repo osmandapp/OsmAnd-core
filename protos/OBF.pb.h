@@ -67,6 +67,7 @@ class TransportStopExit;
 class TransportStopsTree;
 class OsmAndTransportIndex;
 class OsmAndPoiIndex;
+class OsmAndBloomFilterAlgorithm;
 class OsmAndPoiNameIndex;
 class OsmAndPoiNameIndex_OsmAndPoiNameIndexData;
 class OsmAndPoiNameIndexDataAtom;
@@ -3959,6 +3960,13 @@ class TransportRouteStop : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 name_en() const;
   inline void set_name_en(::google::protobuf::uint32 value);
 
+  // optional uint32 travelTime = 8;
+  inline bool has_traveltime() const;
+  inline void clear_traveltime();
+  static const int kTravelTimeFieldNumber = 8;
+  inline ::google::protobuf::uint32 traveltime() const;
+  inline void set_traveltime(::google::protobuf::uint32 value);
+
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.TransportRouteStop)
  private:
   inline void set_has_id();
@@ -3971,6 +3979,8 @@ class TransportRouteStop : public ::google::protobuf::Message {
   inline void clear_has_name();
   inline void set_has_name_en();
   inline void clear_has_name_en();
+  inline void set_has_traveltime();
+  inline void clear_has_traveltime();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -3979,9 +3989,10 @@ class TransportRouteStop : public ::google::protobuf::Message {
   ::google::protobuf::int32 dy_;
   ::google::protobuf::uint32 name_;
   ::google::protobuf::uint32 name_en_;
+  ::google::protobuf::uint32 traveltime_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -4728,6 +4739,103 @@ class OsmAndPoiIndex : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
+class OsmAndBloomFilterAlgorithm : public ::google::protobuf::Message {
+ public:
+  OsmAndBloomFilterAlgorithm();
+  virtual ~OsmAndBloomFilterAlgorithm();
+
+  OsmAndBloomFilterAlgorithm(const OsmAndBloomFilterAlgorithm& from);
+
+  inline OsmAndBloomFilterAlgorithm& operator=(const OsmAndBloomFilterAlgorithm& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const OsmAndBloomFilterAlgorithm& default_instance();
+
+  void Swap(OsmAndBloomFilterAlgorithm* other);
+
+  // implements Message ----------------------------------------------
+
+  OsmAndBloomFilterAlgorithm* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const OsmAndBloomFilterAlgorithm& from);
+  void MergeFrom(const OsmAndBloomFilterAlgorithm& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // required uint32 version = 1;
+  inline bool has_version() const;
+  inline void clear_version();
+  static const int kVersionFieldNumber = 1;
+  inline ::google::protobuf::uint32 version() const;
+  inline void set_version(::google::protobuf::uint32 value);
+
+  // optional bytes data = 4;
+  inline bool has_data() const;
+  inline void clear_data();
+  static const int kDataFieldNumber = 4;
+  inline const ::std::string& data() const;
+  inline void set_data(const ::std::string& value);
+  inline void set_data(const char* value);
+  inline void set_data(const void* value, size_t size);
+  inline ::std::string* mutable_data();
+  inline ::std::string* release_data();
+  inline void set_allocated_data(::std::string* data);
+
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndBloomFilterAlgorithm)
+ private:
+  inline void set_has_version();
+  inline void clear_has_version();
+  inline void set_has_data();
+  inline void clear_has_data();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::std::string* data_;
+  ::google::protobuf::uint32 version_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+
+  friend void  protobuf_AddDesc_OBF_2eproto();
+  friend void protobuf_AssignDesc_OBF_2eproto();
+  friend void protobuf_ShutdownFile_OBF_2eproto();
+
+  void InitAsDefaultInstance();
+  static OsmAndBloomFilterAlgorithm* default_instance_;
+};
+// -------------------------------------------------------------------
+
 class OsmAndPoiNameIndex_OsmAndPoiNameIndexData : public ::google::protobuf::Message {
  public:
   OsmAndPoiNameIndex_OsmAndPoiNameIndexData();
@@ -4869,6 +4977,18 @@ class OsmAndPoiNameIndex : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
+  // repeated .OsmAnd.OBF.OsmAndBloomFilterAlgorithm filters = 2;
+  inline int filters_size() const;
+  inline void clear_filters();
+  static const int kFiltersFieldNumber = 2;
+  inline const ::OsmAnd::OBF::OsmAndBloomFilterAlgorithm& filters(int index) const;
+  inline ::OsmAnd::OBF::OsmAndBloomFilterAlgorithm* mutable_filters(int index);
+  inline ::OsmAnd::OBF::OsmAndBloomFilterAlgorithm* add_filters();
+  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndBloomFilterAlgorithm >&
+      filters() const;
+  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndBloomFilterAlgorithm >*
+      mutable_filters();
+
   // required .OsmAnd.OBF.IndexedStringTable table = 3;
   inline bool has_table() const;
   inline void clear_table();
@@ -4897,11 +5017,12 @@ class OsmAndPoiNameIndex : public ::google::protobuf::Message {
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
+  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndBloomFilterAlgorithm > filters_;
   ::OsmAnd::OBF::IndexedStringTable* table_;
   ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData > data_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -4987,6 +5108,22 @@ class OsmAndPoiNameIndexDataAtom : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 y() const;
   inline void set_y(::google::protobuf::uint32 value);
 
+  // repeated bytes bloomIndex = 5;
+  inline int bloomindex_size() const;
+  inline void clear_bloomindex();
+  static const int kBloomIndexFieldNumber = 5;
+  inline const ::std::string& bloomindex(int index) const;
+  inline ::std::string* mutable_bloomindex(int index);
+  inline void set_bloomindex(int index, const ::std::string& value);
+  inline void set_bloomindex(int index, const char* value);
+  inline void set_bloomindex(int index, const void* value, size_t size);
+  inline ::std::string* add_bloomindex();
+  inline void add_bloomindex(const ::std::string& value);
+  inline void add_bloomindex(const char* value);
+  inline void add_bloomindex(const void* value, size_t size);
+  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& bloomindex() const;
+  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_bloomindex();
+
   // optional fixed32 shiftTo = 14;
   inline bool has_shiftto() const;
   inline void clear_shiftto();
@@ -5009,11 +5146,12 @@ class OsmAndPoiNameIndexDataAtom : public ::google::protobuf::Message {
 
   ::google::protobuf::uint32 zoom_;
   ::google::protobuf::uint32 x_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> bloomindex_;
   ::google::protobuf::uint32 y_;
   ::google::protobuf::uint32 shiftto_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -13356,6 +13494,28 @@ inline void TransportRouteStop::set_name_en(::google::protobuf::uint32 value) {
   name_en_ = value;
 }
 
+// optional uint32 travelTime = 8;
+inline bool TransportRouteStop::has_traveltime() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void TransportRouteStop::set_has_traveltime() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void TransportRouteStop::clear_has_traveltime() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void TransportRouteStop::clear_traveltime() {
+  traveltime_ = 0u;
+  clear_has_traveltime();
+}
+inline ::google::protobuf::uint32 TransportRouteStop::traveltime() const {
+  return traveltime_;
+}
+inline void TransportRouteStop::set_traveltime(::google::protobuf::uint32 value) {
+  set_has_traveltime();
+  traveltime_ = value;
+}
+
 // -------------------------------------------------------------------
 
 // TransportStop
@@ -14365,6 +14525,102 @@ OsmAndPoiIndex::mutable_poidata() {
 
 // -------------------------------------------------------------------
 
+// OsmAndBloomFilterAlgorithm
+
+// required uint32 version = 1;
+inline bool OsmAndBloomFilterAlgorithm::has_version() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void OsmAndBloomFilterAlgorithm::set_has_version() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void OsmAndBloomFilterAlgorithm::clear_has_version() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void OsmAndBloomFilterAlgorithm::clear_version() {
+  version_ = 0u;
+  clear_has_version();
+}
+inline ::google::protobuf::uint32 OsmAndBloomFilterAlgorithm::version() const {
+  return version_;
+}
+inline void OsmAndBloomFilterAlgorithm::set_version(::google::protobuf::uint32 value) {
+  set_has_version();
+  version_ = value;
+}
+
+// optional bytes data = 4;
+inline bool OsmAndBloomFilterAlgorithm::has_data() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void OsmAndBloomFilterAlgorithm::set_has_data() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void OsmAndBloomFilterAlgorithm::clear_has_data() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void OsmAndBloomFilterAlgorithm::clear_data() {
+  if (data_ != &::google::protobuf::internal::kEmptyString) {
+    data_->clear();
+  }
+  clear_has_data();
+}
+inline const ::std::string& OsmAndBloomFilterAlgorithm::data() const {
+  return *data_;
+}
+inline void OsmAndBloomFilterAlgorithm::set_data(const ::std::string& value) {
+  set_has_data();
+  if (data_ == &::google::protobuf::internal::kEmptyString) {
+    data_ = new ::std::string;
+  }
+  data_->assign(value);
+}
+inline void OsmAndBloomFilterAlgorithm::set_data(const char* value) {
+  set_has_data();
+  if (data_ == &::google::protobuf::internal::kEmptyString) {
+    data_ = new ::std::string;
+  }
+  data_->assign(value);
+}
+inline void OsmAndBloomFilterAlgorithm::set_data(const void* value, size_t size) {
+  set_has_data();
+  if (data_ == &::google::protobuf::internal::kEmptyString) {
+    data_ = new ::std::string;
+  }
+  data_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* OsmAndBloomFilterAlgorithm::mutable_data() {
+  set_has_data();
+  if (data_ == &::google::protobuf::internal::kEmptyString) {
+    data_ = new ::std::string;
+  }
+  return data_;
+}
+inline ::std::string* OsmAndBloomFilterAlgorithm::release_data() {
+  clear_has_data();
+  if (data_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = data_;
+    data_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void OsmAndBloomFilterAlgorithm::set_allocated_data(::std::string* data) {
+  if (data_ != &::google::protobuf::internal::kEmptyString) {
+    delete data_;
+  }
+  if (data) {
+    set_has_data();
+    data_ = data;
+  } else {
+    clear_has_data();
+    data_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
+// -------------------------------------------------------------------
+
 // OsmAndPoiNameIndex_OsmAndPoiNameIndexData
 
 // repeated .OsmAnd.OBF.OsmAndPoiNameIndexDataAtom atoms = 3;
@@ -14396,15 +14652,40 @@ OsmAndPoiNameIndex_OsmAndPoiNameIndexData::mutable_atoms() {
 
 // OsmAndPoiNameIndex
 
+// repeated .OsmAnd.OBF.OsmAndBloomFilterAlgorithm filters = 2;
+inline int OsmAndPoiNameIndex::filters_size() const {
+  return filters_.size();
+}
+inline void OsmAndPoiNameIndex::clear_filters() {
+  filters_.Clear();
+}
+inline const ::OsmAnd::OBF::OsmAndBloomFilterAlgorithm& OsmAndPoiNameIndex::filters(int index) const {
+  return filters_.Get(index);
+}
+inline ::OsmAnd::OBF::OsmAndBloomFilterAlgorithm* OsmAndPoiNameIndex::mutable_filters(int index) {
+  return filters_.Mutable(index);
+}
+inline ::OsmAnd::OBF::OsmAndBloomFilterAlgorithm* OsmAndPoiNameIndex::add_filters() {
+  return filters_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndBloomFilterAlgorithm >&
+OsmAndPoiNameIndex::filters() const {
+  return filters_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndBloomFilterAlgorithm >*
+OsmAndPoiNameIndex::mutable_filters() {
+  return &filters_;
+}
+
 // required .OsmAnd.OBF.IndexedStringTable table = 3;
 inline bool OsmAndPoiNameIndex::has_table() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
+  return (_has_bits_[0] & 0x00000002u) != 0;
 }
 inline void OsmAndPoiNameIndex::set_has_table() {
-  _has_bits_[0] |= 0x00000001u;
+  _has_bits_[0] |= 0x00000002u;
 }
 inline void OsmAndPoiNameIndex::clear_has_table() {
-  _has_bits_[0] &= ~0x00000001u;
+  _has_bits_[0] &= ~0x00000002u;
 }
 inline void OsmAndPoiNameIndex::clear_table() {
   if (table_ != NULL) table_->::OsmAnd::OBF::IndexedStringTable::Clear();
@@ -14529,15 +14810,59 @@ inline void OsmAndPoiNameIndexDataAtom::set_y(::google::protobuf::uint32 value) 
   y_ = value;
 }
 
+// repeated bytes bloomIndex = 5;
+inline int OsmAndPoiNameIndexDataAtom::bloomindex_size() const {
+  return bloomindex_.size();
+}
+inline void OsmAndPoiNameIndexDataAtom::clear_bloomindex() {
+  bloomindex_.Clear();
+}
+inline const ::std::string& OsmAndPoiNameIndexDataAtom::bloomindex(int index) const {
+  return bloomindex_.Get(index);
+}
+inline ::std::string* OsmAndPoiNameIndexDataAtom::mutable_bloomindex(int index) {
+  return bloomindex_.Mutable(index);
+}
+inline void OsmAndPoiNameIndexDataAtom::set_bloomindex(int index, const ::std::string& value) {
+  bloomindex_.Mutable(index)->assign(value);
+}
+inline void OsmAndPoiNameIndexDataAtom::set_bloomindex(int index, const char* value) {
+  bloomindex_.Mutable(index)->assign(value);
+}
+inline void OsmAndPoiNameIndexDataAtom::set_bloomindex(int index, const void* value, size_t size) {
+  bloomindex_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* OsmAndPoiNameIndexDataAtom::add_bloomindex() {
+  return bloomindex_.Add();
+}
+inline void OsmAndPoiNameIndexDataAtom::add_bloomindex(const ::std::string& value) {
+  bloomindex_.Add()->assign(value);
+}
+inline void OsmAndPoiNameIndexDataAtom::add_bloomindex(const char* value) {
+  bloomindex_.Add()->assign(value);
+}
+inline void OsmAndPoiNameIndexDataAtom::add_bloomindex(const void* value, size_t size) {
+  bloomindex_.Add()->assign(reinterpret_cast<const char*>(value), size);
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+OsmAndPoiNameIndexDataAtom::bloomindex() const {
+  return bloomindex_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+OsmAndPoiNameIndexDataAtom::mutable_bloomindex() {
+  return &bloomindex_;
+}
+
 // optional fixed32 shiftTo = 14;
 inline bool OsmAndPoiNameIndexDataAtom::has_shiftto() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
+  return (_has_bits_[0] & 0x00000010u) != 0;
 }
 inline void OsmAndPoiNameIndexDataAtom::set_has_shiftto() {
-  _has_bits_[0] |= 0x00000008u;
+  _has_bits_[0] |= 0x00000010u;
 }
 inline void OsmAndPoiNameIndexDataAtom::clear_has_shiftto() {
-  _has_bits_[0] &= ~0x00000008u;
+  _has_bits_[0] &= ~0x00000010u;
 }
 inline void OsmAndPoiNameIndexDataAtom::clear_shiftto() {
   shiftto_ = 0u;
