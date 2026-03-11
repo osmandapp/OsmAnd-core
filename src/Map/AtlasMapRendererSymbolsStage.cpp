@@ -41,7 +41,7 @@
 #include "Map/OpenGL/Utilities_OpenGL.h"
 #include "MapRendererPerformanceMetrics.h"
 
-# define MIN_ORDER_TO_DRAW_BEHIND_BUILDINGS -100000
+# define MIN_ORDER_TO_DRAW_BEHIND_BUILDINGS 1000000
 
 # define UPDATE_INTERVAL_MS 1000.0f
 

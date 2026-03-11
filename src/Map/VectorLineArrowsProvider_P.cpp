@@ -67,11 +67,15 @@ void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
         }
 
         const auto& symbolsData = line->getArrowsOnPath();
+/*
 #if defined(OSMAND_TARGET_OS_macosx) || defined(OSMAND_TARGET_OS_ios)
         int baseOrder = -206000;
 #else
         int baseOrder = -599000;
 #endif
+*/
+        int baseOrder = line->baseOrder - 100;
+
         int i = 0;
         for (const auto& symbolInfo : symbolsData)
         {
