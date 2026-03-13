@@ -104,7 +104,8 @@ namespace OsmAnd
             PointI64& fixedLocation, PointI64& currentLocation) const;
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureElevationDataResource(const MapRendererState& state,
             TileId normalizedTileId, ZoomLevel zoomLevel,
-            std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource = nullptr) const;
+            std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource = nullptr,
+            bool* isNotReady = nullptr) const;
         OsmAnd::ZoomLevel getElevationData(const MapRendererState& state,
             TileId normalizedTileId, ZoomLevel zoomLevel, PointF& offsetInTileN, bool noUnderscaled,
             std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource = nullptr) const;
