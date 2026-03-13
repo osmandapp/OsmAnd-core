@@ -1163,7 +1163,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         {
             toCamera.x = 0;
             toCamera.y = 0;
-            stage = 2;
+            stage = 3;
         }
         else
         {
@@ -1204,7 +1204,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         {
             shouldRepeat = false;
             bool atLeastOneAdded = false;
-            const bool testVert = isNotTopDownProjection && !lookForStrictlyVisible;
             for (const auto& setEntry : rangeOf(constOf(*procTiles)))
             {
                 const auto currentZoom = setEntry.key();
@@ -1216,6 +1215,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 const auto rShift = state.zoomLevel - realZoomLevel;
                 for (const auto& tileEntry : rangeOf(constOf(setEntry.value())))
                 {
+                    const bool testVert = isNotTopDownProjection && !lookForStrictlyVisible;
                     const auto tileId = tileEntry.key();
                     const auto tileState = tileEntry.value();
                     const auto tileIdN = Utilities::normalizeTileId(tileId, currentZoomLevel);
@@ -1226,11 +1226,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     const auto realTileIdN = state.flatEarth ? Utilities::normalizeTileId(TileId::fromXY(
                         ((tileIdN.x << rShift) - tileDelta.x) >> rShift,
                         ((tileIdN.y << rShift) - tileDelta.y) >> rShift), realZoomLevel) : tileIdN;
-                    getHeightLimits(state, realTileIdN, internalState->metersPerUnit,
+                    const bool shouldElevate = getHeightLimits(state, realTileIdN, internalState->metersPerUnit,
                         realZoomLevel, minHeightInWorld, maxHeightInWorld);
+                    const bool notElevated = minHeightInWorld == 0.0f && maxHeightInWorld == 0.0f;
                     topInWorld = takeTop ? qMax(maxHeightInWorld, topInWorld) : maxHeightInWorld;
-                    const auto minHeight = static_cast<double>(minHeightInWorld) / globeRadius;
-                    const auto maxHeight = static_cast<double>(topInWorld) / globeRadius;
+                    const auto minHeight = notElevated ? 0.0 : static_cast<double>(minHeightInWorld) / globeRadius;
+                    const auto maxHeight = notElevated ? 0.0 : static_cast<double>(topInWorld) / globeRadius;
                     const auto minD = minHeight + 1.0;
                     const auto maxD = maxHeight + 1.0;
                     PointI tile31(tileIdN.x << zoomShift, tileIdN.y << zoomShift);
@@ -1672,6 +1673,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     } while (false);
                     if (isVisible || isFlatVisible)
                     {
+                        // Don't mark not yet elevated tile as visible
+                        if (isVisible && takeTop && notElevated && shouldElevate)
+                        {
+                            isVisible = false;
+                            isFlatVisible = true;
+                        }
+
                         // Check distance of middle point of the super-tile:
                         // it should be considered visible instead if its central point is far enough
                         const bool oddX = tileIdN.x & 1 > 0;
@@ -1688,7 +1696,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                             continue;
                         }
                         TileVisibility visibility = isVisible ? Visible : VisibleFlat;
-                        if (isVisible && (minHeight != 0.0 || maxHeight != 0.0))
+                        const bool isTrulyVisible = isVisible && (minHeight != 0.0 || maxHeight != 0.0);
+                        if (isTrulyVisible)
                         {
                             internalState->maxElevation = qMax(internalState->maxElevation, maxHeightInWorld);
                             if (currentZoomLevel == zoomLevel)
@@ -1720,7 +1729,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         atLeastOneAdded = true;
                         atLeastOneFlatVisibleFound = !lookForStrictlyVisible;
 
-                        if (!lookForStrictlyVisible || (isVisible && (minHeight != 0.0 || maxHeight != 0.0)))
+                        if (!lookForStrictlyVisible || isTrulyVisible)
                         {
                             if (lookForStrictlyVisible)
                             {
@@ -1779,7 +1788,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 const auto dir = lookForStrictlyVisible ? -1.0 : 1.0;
                 const auto deltaX = dirX * dir;
                 const auto deltaY = dirY * dir;
-                if ((!atLeastOneAdded && atLeastOneFlatVisibleFound)
+                if ((!atLeastOneAdded && atLeastOneFlatVisibleFound && stage != 1 && stage != 2)
                     || (lookForStrictlyVisible && distanceFromTarget >= distanceLimit))
                 {
                     if (lookForStrictlyVisible)
@@ -1943,7 +1952,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 static_cast<double>(1u << state.surfaceZoomLevel) * static_cast<double>(state.surfaceVisualZoom)
                 / (static_cast<double>(1u << state.zoomLevel) * static_cast<double>(state.visualZoom)))));
             zoomLevelOffset = qMin(zoomGap, static_cast<int>(MaxMissingDataUnderZoomShift));
-            if (_tileZoomLevel + _tileZoomLevelOffset - state.zoomLevel - zoomLevelOffset != 0)
+            if (_tileZoomLevel + _tileZoomLevelOffset != state.zoomLevel + zoomLevelOffset)
             {
                 zoomGap = qMax(0, static_cast<int>(state.surfaceZoomLevel) - static_cast<int>(state.zoomLevel));
                 zoomLevelOffset = qMin(zoomGap, static_cast<int>(MaxMissingDataUnderZoomShift));
@@ -2338,47 +2347,94 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getHeightLimits(const MapRendererState& st
         return false;
 
     std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
-    if (captureElevationDataResource(state, tileId, zoomLevel, &elevationData))
+    bool isNotReady = false;
+    if (captureElevationDataResource(state, tileId, zoomLevel, &elevationData, &isNotReady))
     {
         if (state.flatEarth)
             getElevationDataLimits(state, elevationData, tileId, zoomLevel, minHeight, maxHeight);
         else
             getElevationDataLimits(state, elevationData, metersPerUnit, minHeight, maxHeight);
-        return true;
+        return false;
     }
 
-    const auto maxZoom = state.elevationDataProvider->getMaxZoom();
-    if (zoomLevel > maxZoom)
+    const auto absZoomShift = 1;
+    float minimum, maximum, minValue, maxValue;
+    if (zoomLevel < MaxZoomLevel && absZoomShift <= state.elevationDataProvider->getMaxMissingDataUnderZoomShift())
     {
-        // Look for overscaled if data for needed zoom level is unavailable
-        const auto zoomShift = zoomLevel - maxZoom;
-        if (zoomShift <= state.elevationDataProvider->getMaxMissingDataZoomShift())
+        // Look for underscaled if data for needed zoom level is unavailable
+        const auto underscaledZoom = static_cast<ZoomLevel>(zoomLevel + absZoomShift);
+        auto underscaledTileIdN = TileId::fromXY(tileId.x << absZoomShift, tileId.y << absZoomShift);
+        const int subCount = 1 << absZoomShift;
+        minimum = std::numeric_limits<float>::max();
+        maximum = std::numeric_limits<float>::lowest();
+        bool atLeastOnePresent = false;
+        for (int yShift = 0; yShift < subCount; yShift++)
         {
-            PointF texCoordsOffset;
-            PointF texCoordsScale;
-            const auto overscaledTileIdN = Utilities::getTileIdOverscaledByZoomShift(
-                tileId,
-                zoomShift,
-                &texCoordsOffset,
-                &texCoordsScale);
-            if (captureElevationDataResource(state, overscaledTileIdN, maxZoom, &elevationData))
+            for (int xShift = 0; xShift < subCount; xShift++)
             {
-                if (state.flatEarth)
+                if (captureElevationDataResource(
+                    state, underscaledTileIdN, underscaledZoom, &elevationData, &isNotReady))
                 {
-                    float minValue, maxValue;
-                    getElevationDataLimits(state, elevationData, overscaledTileIdN, maxZoom, minValue, maxValue);
-                    const auto scaleFactor = static_cast<float>(1 << zoomShift);
-                    minHeight = minValue * scaleFactor;
-                    maxHeight = maxValue * scaleFactor;
+                    if (state.flatEarth)
+                    {
+                        getElevationDataLimits(
+                            state, elevationData, underscaledTileIdN, underscaledZoom, minValue, maxValue);
+                    }
+                    else
+                        getElevationDataLimits(state, elevationData, metersPerUnit, minValue, maxValue);
+                    minimum = qMin(minimum, minValue);
+                    maximum = qMax(maximum, maxValue);
+                    atLeastOnePresent = true;
                 }
-                else
-                    getElevationDataLimits(state, elevationData, metersPerUnit, minHeight, maxHeight);
-                return true;
+                underscaledTileIdN.x++;
             }
+            underscaledTileIdN.y++;
+        }
+        if (atLeastOnePresent)
+        {
+            if (state.flatEarth)
+            {
+                const auto scaleFactor = static_cast<float>(subCount);
+                minHeight = minimum / scaleFactor;
+                maxHeight = maximum / scaleFactor;
+            }
+            else
+            {
+                minHeight = minimum;
+                maxHeight = maximum;
+            }
+            return false;
         }
     }
 
-    return false;
+    if (zoomLevel > minZoom && absZoomShift <= state.elevationDataProvider->getMaxMissingDataZoomShift())
+    {
+        // Look for overscaled if data for needed zoom level is unavailable
+        const auto overscaledZoom = static_cast<ZoomLevel>(zoomLevel - absZoomShift);
+        PointF texCoordsOffset;
+        PointF texCoordsScale;
+        const auto overscaledTileIdN = Utilities::getTileIdOverscaledByZoomShift(
+            tileId,
+            absZoomShift,
+            &texCoordsOffset,
+            &texCoordsScale);
+        if (captureElevationDataResource(state, overscaledTileIdN, overscaledZoom, &elevationData, &isNotReady))
+        {
+            if (state.flatEarth)
+            {
+                float minValue, maxValue;
+                getElevationDataLimits(state, elevationData, overscaledTileIdN, overscaledZoom, minValue, maxValue);
+                const auto scaleFactor = static_cast<float>(1 << absZoomShift);
+                minHeight = minValue * scaleFactor;
+                maxHeight = maxValue * scaleFactor;
+            }
+            else
+                getElevationDataLimits(state, elevationData, metersPerUnit, minHeight, maxHeight);
+            return false;
+        }
+    }
+
+    return isNotReady;
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalState& internalState,
@@ -2505,21 +2561,24 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNearestLocationFromScreenPoint(
 
 std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRenderer_OpenGL::captureElevationDataResource(
     const MapRendererState& state, TileId normalizedTileId, ZoomLevel zoomLevel,
-    std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource /*= nullptr*/) const
+    std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource /*= nullptr*/,
+    bool* isNotReady /* = nullptr */) const
 {
     if (!isRenderingInitialized() || !state.elevationDataProvider)
         return nullptr;
 
-    const auto& resourcesCollection_ = getResources().getCollectionSnapshot(MapRendererResourceType::ElevationData, state.elevationDataProvider);
+    const auto& resourcesCollection_ =
+        getResources().getCollectionSnapshot(MapRendererResourceType::ElevationData, state.elevationDataProvider);
 
     if (!resourcesCollection_)
         return nullptr;
 
-    const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
+    const auto& resourcesCollection =
+        std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
 
     // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
     std::shared_ptr<MapRendererBaseTiledResource> resource_;
-    if (resourcesCollection && resourcesCollection->obtainResource(normalizedTileId, zoomLevel, resource_))
+    if (resourcesCollection->obtainResource(normalizedTileId, zoomLevel, resource_))
     {
         const auto resource = std::static_pointer_cast<MapRendererElevationDataResource>(resource_);
 
@@ -2536,7 +2595,11 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRenderer_Op
 
             return gpuResource;
         }
+        if (isNotReady && state != MapRendererResourceState::Unavailable)
+            *isNotReady = true;
     }
+    else if (isNotReady)
+        *isNotReady = true;
 
     return nullptr;
 }
