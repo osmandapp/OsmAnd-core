@@ -2126,7 +2126,7 @@ bool OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
             continue;
         }
         else if (resource->type == MapRendererResourceType::ElevationData)
-            renderer->notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_DataProvider);
+            renderer->notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
 
         // Mark as uploaded/outdated
         if (resource->isOld)
