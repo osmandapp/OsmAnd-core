@@ -1163,7 +1163,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         {
             toCamera.x = 0;
             toCamera.y = 0;
-            stage = 2;
+            stage = 3;
         }
         else
         {
@@ -1182,8 +1182,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         const PointD tilesToTarget(toCamera);
         const auto distanceLimit = tilesToTarget.norm() - 1.0;
         bool lookForStrictlyVisible = distanceLimit > 0.0;
-        if (!lookForStrictlyVisible)
-            stage = 2;
         auto targetTileId = lookForStrictlyVisible ? camTileId : internalState->synthTileId;
         testTiles1[zoomLevel].insert(targetTileId, NotTestedYet);
         glm::dvec3 ITL, ITR, IBL, IBR, OTL, OTR, OBL, OBR;
@@ -1790,7 +1788,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 const auto dir = lookForStrictlyVisible ? -1.0 : 1.0;
                 const auto deltaX = dirX * dir;
                 const auto deltaY = dirY * dir;
-                if ((!atLeastOneAdded && atLeastOneFlatVisibleFound)
+                if ((!atLeastOneAdded && atLeastOneFlatVisibleFound && stage != 1 && stage != 2)
                     || (lookForStrictlyVisible && distanceFromTarget >= distanceLimit))
                 {
                     if (lookForStrictlyVisible)
