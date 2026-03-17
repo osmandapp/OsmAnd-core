@@ -43,6 +43,7 @@ namespace OsmAnd
         Symbols_Providers,
         Symbols_Configuration,
         Map3DObjects_Provider,
+        Map3DObjects_Configuration,
         WindowSize,
         Viewport,
         Flip,

@@ -27,6 +27,7 @@ namespace OsmAnd
         {
             std::shared_ptr<const MapPrimitiviser::Primitive> primitive;
             uint32_t polygonColor = 0;
+            mutable AreaI bbox31;
         };
 
         struct PassagePrimitive
@@ -58,26 +59,29 @@ namespace OsmAnd
         std::shared_ptr<MapPresentationEnvironment> _environment;
         const bool _useCustomColor;
         const FColorRGB _customColor;
+        QHash<TileId, FColorRGB> _objectColors;
+        mutable QReadWriteLock _objectColorsLock;
         std::shared_ptr<IMapElevationDataProvider> _elevationProvider;
 
         void processPrimitive(const BuildingPrimitive& primitive,
-                              Buildings3D& buildings3D,
-                              const QHash<TileId, std::shared_ptr<IMapElevationDataProvider::Data>>& elevationData,
-                              const TileId& tileId,
-                              const ZoomLevel zoom,
-                              QSet<PassagePrimitive>& buildingPassages) const;
+            Buildings3D& buildings3D,
+            const QHash<TileId, std::shared_ptr<IMapElevationDataProvider::Data>>& elevationData,
+            const TileId& tileId,
+            const ZoomLevel zoom,
+            const QSet<PassagePrimitive>& buildingPassages,
+            const QHash<TileId, FColorRGB>& objectColors) const;
 
         void collectFromPolyline(const std::shared_ptr<const MapPrimitiviser::Primitive>& polylinePrimitive,
-                                 QSet<BuildingPrimitive>& outBuildings,
-                                 QSet<BuildingPrimitive>& outBuildingParts,
-                                 QSet<PassagePrimitive>& outBuildingPassages) const;
+            QSet<BuildingPrimitive>& outBuildings,
+            QSet<BuildingPrimitive>& outBuildingParts,
+            QSet<PassagePrimitive>& outBuildingPassages) const;
 
         void collectFromPolygons(const std::shared_ptr<const MapPrimitiviser::Primitive>& polygonPrimitive,
-                                QSet<BuildingPrimitive>& outBuildings,
-                                QSet<BuildingPrimitive>& outBuildingParts) const;
+            QSet<BuildingPrimitive>& outBuildings,
+            QSet<BuildingPrimitive>& outBuildingParts) const;
 
         void filterBuildings(QSet<BuildingPrimitive>& buildings,
-                             QSet<BuildingPrimitive>& buildingParts) const;
+            QSet<BuildingPrimitive>& buildingParts) const;
 
         void insertOrUpdateBuilding(const BuildingPrimitive& primitive, QSet<BuildingPrimitive>& outCollection) const;
         void insertOrUpdatePassage(const PassagePrimitive& primitive, QSet<PassagePrimitive>& outCollection) const;
@@ -178,6 +182,9 @@ namespace OsmAnd
             std::shared_ptr<Metric>* const pOutMetric);
 
         void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationProvider);
+        void addObjectColor(const TileId& location31, const FColorRGB& color);
+        void removeObjectColor(const TileId& location31);
+        void removeAllObjectColors();
 
         friend class OsmAnd::Map3DObjectsTiledProvider;
 

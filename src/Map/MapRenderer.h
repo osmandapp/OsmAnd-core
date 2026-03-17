@@ -395,6 +395,9 @@ namespace OsmAnd
 
         virtual bool setMap3DObjectsProvider(const std::shared_ptr<IMapTiledDataProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool resetMap3DObjectsProvider(bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool add3DObjectColor(const PointI& location31, const FColorRGB& color) Q_DECL_OVERRIDE;
+        virtual bool remove3DObjectColor(const PointI& location31) Q_DECL_OVERRIDE;
+        virtual bool removeAll3DObjectColors() Q_DECL_OVERRIDE;
 
         virtual bool setGridConfiguration(const GridConfiguration& configuration, bool forcedUpdate = false) Q_DECL_OVERRIDE;
 

@@ -43,6 +43,9 @@ namespace OsmAnd
         virtual ZoomLevel getMaxZoom() const override;
 
         void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationProvider);
+        void addObjectColor(const TileId& location31, const FColorRGB& color);
+        void removeObjectColor(const TileId& location31);
+        void removeAllObjectColors();
 
         virtual bool obtainTiledData(
             const IMapTiledDataProvider::Request& request,

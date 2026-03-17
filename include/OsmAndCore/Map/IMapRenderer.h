@@ -123,6 +123,9 @@ namespace OsmAnd
 
         virtual bool setMap3DObjectsProvider(const std::shared_ptr<IMapTiledDataProvider>& provider, bool forcedUpdate = false) = 0;
         virtual bool resetMap3DObjectsProvider(bool forcedUpdate = false) = 0;
+        virtual bool add3DObjectColor(const PointI& location31, const FColorRGB& color) = 0;
+        virtual bool remove3DObjectColor(const PointI& location31) = 0;
+        virtual bool removeAll3DObjectColors() = 0;
 
         virtual bool setGridConfiguration(const GridConfiguration& configuration, bool forcedUpdate = false) = 0;
 

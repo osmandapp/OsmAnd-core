@@ -206,14 +206,24 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             }
         }
 
+        QHash<TileId, FColorRGB> colors;
+        {
+            QReadLocker scopedLocker(&_objectColorsLock);
+
+            colors = _objectColors;
+            colors.detach();
+        }
+
         for (const auto& buildingPart : buildingParts)
         {
-            processPrimitive(buildingPart, buildings3D, elevationDataMap, request.tileId, request.zoom, buildingPassages);
+            processPrimitive(
+                buildingPart, buildings3D, elevationDataMap, request.tileId, request.zoom, buildingPassages, colors);
         }
 
         for (const auto& building : buildings)
         {
-            processPrimitive(building, buildings3D, elevationDataMap, request.tileId, request.zoom, buildingPassages);
+            processPrimitive(
+                building, buildings3D, elevationDataMap, request.tileId, request.zoom, buildingPassages, colors);
         }
     }
 
@@ -255,18 +265,18 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QSet<BuildingPrimitive>& build
 
         bool shouldRemove = false;
         QVector<QPair<BuildingPrimitive, BuildingPrimitive>> itemsToModify;
-        for (auto it = buildingParts.begin(); it != buildingParts.end(); ++it)
+        for (auto& buildingPart : buildingParts)
         {
-            const auto& buildingPartPrimitive = *it;
-            const auto& buildingPart =
-                std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPartPrimitive.primitive->sourceObject);
-            if (buildingPart && building->bbox31.contains(buildingPart->bbox31))
+            const auto& part =
+                std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPart.primitive->sourceObject);
+            if (part && building->bbox31.contains(part->bbox31))
             {
-                if (buildingPartPrimitive.polygonColor == 0)
+                buildingPart.bbox31 = building->bbox31;
+                if (buildingPart.polygonColor == 0)
                 {
-                    BuildingPrimitive modifiedBuildingPart = buildingPartPrimitive;
+                    BuildingPrimitive modifiedBuildingPart = buildingPart;
                     modifiedBuildingPart.polygonColor = buildingPrimitive.polygonColor;
-                    itemsToModify.append(qMakePair(buildingPartPrimitive, modifiedBuildingPart));
+                    itemsToModify.append(qMakePair(buildingPart, modifiedBuildingPart));
                 }
 
                 shouldRemove = true;
@@ -282,7 +292,10 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QSet<BuildingPrimitive>& build
         if (shouldRemove)
             it = buildings.erase(it);
         else
+        {
+            buildingPrimitive.bbox31 = building->bbox31;
             ++it;
+        }
     }
 }
 
@@ -447,9 +460,14 @@ FColorARGB Map3DObjectsTiledProvider_P::getDefaultBuildingsColor() const
     return _environment ? _environment->get3DBuildingsColor() : FColorARGB(1.0f, 0.4f, 0.4f, 0.4f);
 }
 
-void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& primitive, Buildings3D& buildings3D,
-    const QHash<TileId, std::shared_ptr<IMapElevationDataProvider::Data>>& elevationDataMap, const TileId& tileId,
-    const ZoomLevel zoom, QSet<PassagePrimitive>& buildingPassages) const
+void Map3DObjectsTiledProvider_P::processPrimitive(
+    const BuildingPrimitive& primitive,
+    Buildings3D& buildings3D,
+    const QHash<TileId, std::shared_ptr<IMapElevationDataProvider::Data>>& elevationDataMap,
+    const TileId& tileId,
+    const ZoomLevel zoom,
+    const QSet<PassagePrimitive>& buildingPassages,
+    const QHash<TileId, FColorRGB>& objectColors) const
 {
     const auto& sourceObject =
         std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(primitive.primitive->sourceObject);
@@ -465,9 +483,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
 
     float levels = 0.0;
     float minLevels = 0.0;
-
-    auto color = _useCustomColor ? _customColor : FColorRGB(getUseDefaultBuildingsColor()
-        || primitive.polygonColor == 0 ? getDefaultBuildingsColor() : FColorARGB(primitive.polygonColor));
 
     bool heightFound = false;
     bool minHeightFound = false;
@@ -559,6 +574,18 @@ void Map3DObjectsTiledProvider_P::processPrimitive(const BuildingPrimitive& prim
             if (sourceObject->bbox31.contains(passagePrimitive.centerPoint))
                 passages.append(const_cast<PassagePrimitive*>(&passagePrimitive));
         }
+    }
+
+    auto color = _useCustomColor ? _customColor : FColorRGB(getUseDefaultBuildingsColor()
+        || primitive.polygonColor == 0 ? getDefaultBuildingsColor() : FColorARGB(primitive.polygonColor));
+
+    // Set an individual color to a particular (selected) building
+    auto end = objectColors.end();
+    for (auto it = objectColors.begin(); it != end; it++)
+    {
+        auto tileId = it.key();
+        if (primitive.bbox31.contains(PointI(tileId.x, tileId.y)))
+            color = it.value();
     }
 
     const glm::vec3 colorVec(color.r, color.g, color.b);
@@ -1214,9 +1241,31 @@ void Map3DObjectsTiledProvider_P::accumulateElevationForPoint(
     }
 }
 
-void Map3DObjectsTiledProvider_P::setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationProvider)
+void Map3DObjectsTiledProvider_P::setElevationDataProvider(
+    const std::shared_ptr<IMapElevationDataProvider>& elevationProvider)
 {
     _elevationProvider = elevationProvider;
+}
+
+void Map3DObjectsTiledProvider_P::addObjectColor(const TileId& location31, const FColorRGB& color)
+{
+    QWriteLocker scopedLocker(&_objectColorsLock);
+
+    _objectColors.insert(location31, color);
+}
+
+void Map3DObjectsTiledProvider_P::removeObjectColor(const TileId& location31)
+{
+    QWriteLocker scopedLocker(&_objectColorsLock);
+
+    _objectColors.remove(location31);
+}
+
+void Map3DObjectsTiledProvider_P::removeAllObjectColors()
+{
+    QWriteLocker scopedLocker(&_objectColorsLock);
+
+    _objectColors.clear();
 }
 
 glm::vec3 Map3DObjectsTiledProvider_P::calculateNormalFrom2Points(PointI point31_i, PointI point31_next) const
