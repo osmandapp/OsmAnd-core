@@ -874,6 +874,24 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.resetMap3DObjectsProvider();
     }
 
+    public final boolean add3DObjectColor(PointI location31, FColorRGB color) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.add3DObjectColor(location31, color);
+    }
+
+    public final boolean remove3DObjectColor(PointI location31) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.remove3DObjectColor(location31);
+    }
+
+    public final boolean removeAll3DObjectColors() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.removeAll3DObjectColors();
+    }
+
     public final boolean setElevationScaleFactor(float scaleFactor) {
         NativeCore.checkIfLoaded();
 

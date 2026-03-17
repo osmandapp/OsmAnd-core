@@ -72,8 +72,23 @@ void Map3DObjectsTiledProvider::obtainDataAsync(
     MapDataProviderHelpers::nonNaturalObtainDataAsync(shared_from_this(), request, callback, collectMetric);
 }
 
-void Map3DObjectsTiledProvider::setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationProvider)
+void Map3DObjectsTiledProvider::setElevationDataProvider(
+    const std::shared_ptr<IMapElevationDataProvider>& elevationProvider)
 {
     _p->setElevationDataProvider(elevationProvider);
 }
 
+void Map3DObjectsTiledProvider::addObjectColor(const TileId& location31, const FColorRGB& color)
+{
+    _p->addObjectColor(location31, color);
+}
+
+void Map3DObjectsTiledProvider::removeObjectColor(const TileId& location31)
+{
+    _p->removeObjectColor(location31);
+}
+
+void Map3DObjectsTiledProvider::removeAllObjectColors()
+{
+    _p->removeAllObjectColors();
+}

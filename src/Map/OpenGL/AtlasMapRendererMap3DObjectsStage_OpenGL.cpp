@@ -928,7 +928,16 @@ std::shared_ptr<const GPUAPI::MeshInGPU> AtlasMapRendererMap3DObjectsStage_OpenG
 
         // Check state and obtain GPU resource
         auto state = resource->getState();
-        if (state == MapRendererResourceState::Uploaded)
+        if (state == MapRendererResourceState::Uploaded
+            || state == MapRendererResourceState::PreparingRenew
+            || state == MapRendererResourceState::PreparedRenew
+            || state == MapRendererResourceState::Outdated
+            || state == MapRendererResourceState::Renewing
+            || state == MapRendererResourceState::Updating
+            || state == MapRendererResourceState::RequestedUpdate
+            || state == MapRendererResourceState::ProcessingUpdate
+            || state == MapRendererResourceState::ProcessingUpdateWhileRenewing
+            || state == MapRendererResourceState::UpdatingCancelledWhileBeingProcessed)
         {
             // Capture GPU resource
             std::shared_ptr<const GPUAPI::MeshInGPU> meshInGPU;

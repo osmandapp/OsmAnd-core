@@ -1660,6 +1660,54 @@ bool OsmAnd::MapRenderer::resetMap3DObjectsProvider(bool forcedUpdate /*= false*
     return true;
 }
 
+bool OsmAnd::MapRenderer::add3DObjectColor(const PointI& location31, const FColorRGB& color)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (_requestedState.map3DObjectsProvider)
+    {
+        const auto map3DObjectsProvider =
+            std::static_pointer_cast<Map3DObjectsTiledProvider>(_requestedState.map3DObjectsProvider);
+        map3DObjectsProvider->addObjectColor(TileId::fromXY(location31.x, location31.y), color);
+        notifyRequestedStateWasUpdated(MapRendererStateChange::Map3DObjects_Configuration);
+        return true;
+    }
+
+    return false;
+}
+
+bool OsmAnd::MapRenderer::remove3DObjectColor(const PointI& location31)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (_requestedState.map3DObjectsProvider)
+    {
+        const auto map3DObjectsProvider =
+            std::static_pointer_cast<Map3DObjectsTiledProvider>(_requestedState.map3DObjectsProvider);
+        map3DObjectsProvider->removeObjectColor(TileId::fromXY(location31.x, location31.y));
+        notifyRequestedStateWasUpdated(MapRendererStateChange::Map3DObjects_Configuration);
+        return true;
+    }
+
+    return false;
+}
+
+bool OsmAnd::MapRenderer::removeAll3DObjectColors()
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (_requestedState.map3DObjectsProvider)
+    {
+        const auto map3DObjectsProvider =
+            std::static_pointer_cast<Map3DObjectsTiledProvider>(_requestedState.map3DObjectsProvider);
+        map3DObjectsProvider->removeAllObjectColors();
+        notifyRequestedStateWasUpdated(MapRendererStateChange::Map3DObjects_Configuration);
+        return true;
+    }
+
+    return false;
+}
+
 bool OsmAnd::MapRenderer::setElevationConfiguration(
     const ElevationConfiguration& configuration,
     bool forcedUpdate /*= false*/)

@@ -347,10 +347,10 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
     bool isTimeChanged = updatedMask.isSet(MapRendererStateChange::DateTime);
     bool isPeriodChanged = updatedMask.isSet(MapRendererStateChange::TimePeriod);
     bool isDetailChanged = updatedMask.isSet(MapRendererStateChange::DetailLevel);
-    auto newState = isPeriodChanged || isDetailChanged ? MapRendererResourceState::Outdated
-        : MapRendererResourceState::PreparedRenew;
     if (isTimeChanged || isPeriodChanged || isDetailChanged)
     {
+        auto newState = isPeriodChanged || isDetailChanged ? MapRendererResourceState::Outdated
+            : MapRendererResourceState::PreparedRenew;
         if (isTimeChanged || isPeriodChanged)
         {
             QWriteLocker scopedLocker(&_tileDateTimeLock);
@@ -366,14 +366,13 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
         const auto& bindings = _bindings[mapLayerType];
 
         bool atLeastOneMarked = false;
-        bool needsResourcesUploadOrUnload = false;
         for (const auto& resourcesCollection : constOf(resourcesCollections))
         {
             if (!bindings.collectionsToProviders.contains(resourcesCollection))
                 continue;
 
             resourcesCollection->forEachResourceExecute(
-                [&atLeastOneMarked, &needsResourcesUploadOrUnload, isPeriodChanged, isDetailChanged, detailedZoom, newState]
+                [&atLeastOneMarked, isPeriodChanged, isDetailChanged, detailedZoom, newState]
                 (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel)
                 {
                     if (auto resource = std::dynamic_pointer_cast<MapRendererRasterMapLayerResource>(entry))
@@ -424,6 +423,57 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
             renderer->invalidateFrame();
         else if (atLeastOneMarked)
             requestResourcesUploadOrUnload();
+    }
+
+    if (updatedMask.isSet(MapRendererStateChange::Map3DObjects_Configuration))
+    {
+        auto newState = MapRendererResourceState::Outdated;
+
+        // Mark tile resources as needed to reupload in accordance to changed configuration
+        const auto mapLayerType = static_cast<int>(MapRendererResourceType::Map3DObjects);
+        const auto& resourcesCollections = _storageByType[mapLayerType];
+        const auto& bindings = _bindings[mapLayerType];
+
+        for (const auto& resourcesCollection : constOf(resourcesCollections))
+        {
+            if (!bindings.collectionsToProviders.contains(resourcesCollection))
+                continue;
+
+            resourcesCollection->forEachResourceExecute(
+                [newState]
+                (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel)
+                {
+                    if (auto resource = std::dynamic_pointer_cast<MapRenderer3DObjectsResource>(entry))
+                    {
+                        auto state = resource->getState();
+                        if (resource->setStateIf(MapRendererResourceState::Uploaded, newState))
+                        {
+                            LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Uploaded, newState);
+                        }
+                        else if (resource->setStateIf(MapRendererResourceState::PreparedRenew, newState))
+                        {
+                            LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::PreparedRenew, newState);
+                        }
+                        else if (state == MapRendererResourceState::ProcessingRequest
+                            || state == MapRendererResourceState::ProcessingUpdate
+                            || state == MapRendererResourceState::ProcessingUpdateWhileRenewing
+                            || state == MapRendererResourceState::Unavailable)
+                        {
+                            resource->markAsJunk();
+                        }
+                        else if (state == MapRendererResourceState::Ready
+                            || state == MapRendererResourceState::Uploading
+                            || state == MapRendererResourceState::Uploaded
+                            || state == MapRendererResourceState::IsBeingUsed
+                            || state == MapRendererResourceState::PreparedRenew
+                            || state == MapRendererResourceState::Renewing)
+                        {
+                            resource->markAsJunk();
+                        }
+                    }
+                });
+        }
+        renderer->invalidateFrame();
     }
 
     return true;
@@ -903,7 +953,8 @@ void OsmAnd::MapRendererResourcesManager::requestOutdatedResources(
         if (!resourcesCollection)
             continue;
 
-        if (resourcesCollection->type != MapRendererResourceType::MapLayer)
+        if (resourcesCollection->type != MapRendererResourceType::MapLayer
+            && resourcesCollection->type != MapRendererResourceType::Map3DObjects)
             continue;
 
         if (const auto tiledResourcesCollection =
