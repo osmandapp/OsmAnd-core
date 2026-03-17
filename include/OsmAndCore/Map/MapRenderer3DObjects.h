@@ -23,6 +23,7 @@ namespace OsmAnd
     {
         QVector<BuildingVertex> vertices;
         QVector<uint16_t> indices;
+        QVector<int32_t> parts;
     };
 }
 

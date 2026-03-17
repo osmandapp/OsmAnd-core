@@ -28,6 +28,7 @@ namespace OsmAnd
             std::shared_ptr<const MapPrimitiviser::Primitive> primitive;
             uint32_t polygonColor = 0;
             mutable AreaI bbox31;
+            mutable FColorRGB color;
         };
 
         struct PassagePrimitive
@@ -69,7 +70,8 @@ namespace OsmAnd
             const TileId& tileId,
             const ZoomLevel zoom,
             const QSet<PassagePrimitive>& buildingPassages,
-            const QHash<TileId, FColorRGB>& objectColors) const;
+            const QHash<TileId, FColorRGB>& objectColors,
+            QList<const BuildingPrimitive*>* primaryBuildings = nullptr) const;
 
         void collectFromPolyline(const std::shared_ptr<const MapPrimitiviser::Primitive>& polylinePrimitive,
             QSet<BuildingPrimitive>& outBuildings,

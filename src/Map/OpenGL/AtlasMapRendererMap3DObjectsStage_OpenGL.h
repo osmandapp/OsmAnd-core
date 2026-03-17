@@ -73,8 +73,8 @@ namespace OsmAnd
             QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const;
         void getResourcesInGPU(
             const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection, int detalizationLevel);
-        StageResult renderDepth();
-        StageResult renderColor();
+        StageResult renderDepth(bool primaryOnly);
+        StageResult renderColor(bool primaryOnly);
         std::shared_ptr<const GPUAPI::MeshInGPU> captureResourceInGPU(
             const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
             TileId normalizedTileId,

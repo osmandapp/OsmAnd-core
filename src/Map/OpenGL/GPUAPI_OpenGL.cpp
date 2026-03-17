@@ -927,6 +927,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadDataAsMeshToGPU(
     const void* indices,
     const size_t indexSize,
     const unsigned int indicesCount,
+    const QVector<int32_t>& parts,
     std::shared_ptr<const MeshInGPU>& meshInGPU,
     bool waitForGPU,
     volatile bool* gpuContextLost)
@@ -991,11 +992,17 @@ bool OsmAnd::GPUAPI_OpenGL::uploadDataAsMeshToGPU(
     }
     
     // Create resource-in-GPU descriptor
+    std::shared_ptr<std::vector<std::pair<TileId, int32_t>>> tileParts;
+    tileParts.reset(new std::vector<std::pair<TileId, int32_t>>());
+    for (auto& part : parts)
+    {
+        tileParts->emplace_back(TileId(), part);
+    }
     const auto mesh = std::make_shared<MeshInGPU>(
         this,
         vertexBufferResource,
         indexBufferResource,
-        std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(),
+        tileParts,
         InvalidZoomLevel,
         false,
         false,

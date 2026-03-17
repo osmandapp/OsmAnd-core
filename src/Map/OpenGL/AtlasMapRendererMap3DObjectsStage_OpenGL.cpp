@@ -638,7 +638,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
     }
 }
 
-MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDepth()
+MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDepth(bool primaryOnly)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -665,9 +665,25 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDe
     {
         if (resource->indexBuffer && resource->indexBuffer->itemsCount > 0)
         {
+            int startIndex = 0;
+            int indexCount = resource->indexBuffer->itemsCount;
+            if (resource->partSizes->size() > 0)
+            {
+                if (primaryOnly)
+                {
+                    startIndex = resource->partSizes->front().second;
+                    indexCount -= startIndex;
+                }
+                else
+                    indexCount = resource->partSizes->front().second;
+            }
+            else if (primaryOnly)
+                continue;
+
             glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(
                 resource->vertexBuffer->refInGPU)));
             GL_CHECK_RESULT;
+            auto asd = reinterpret_cast<uintptr_t>(resource->indexBuffer->refInGPU);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(
                 resource->indexBuffer->refInGPU)));
             GL_CHECK_RESULT;
@@ -682,8 +698,8 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDe
                 sizeof(BuildingVertex), reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, terrainHeight)));
             GL_CHECK_RESULT;
 
-            glDrawElements(
-                GL_TRIANGLES, static_cast<GLsizei>(resource->indexBuffer->itemsCount), GL_UNSIGNED_SHORT, 0);
+            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount),
+                GL_UNSIGNED_SHORT, (void*) (startIndex * sizeof(uint16_t)));
             GL_CHECK_RESULT;
         }
     }
@@ -692,7 +708,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDe
     return StageResult::Success;
 }
 
-MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderColor()
+MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderColor(bool primaryOnly)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -750,6 +766,21 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
     {
         if (resource->indexBuffer && resource->indexBuffer->itemsCount > 0)
         {
+            int startIndex = 0;
+            int indexCount = resource->indexBuffer->itemsCount;
+            if (resource->partSizes->size() > 0)
+            {
+                if (primaryOnly)
+                {
+                    startIndex = resource->partSizes->front().second;
+                    indexCount -= startIndex;
+                }
+                else
+                    indexCount = resource->partSizes->front().second;
+            }
+            else if (primaryOnly)
+                continue;
+
             glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(
                 resource->vertexBuffer->refInGPU)));
             GL_CHECK_RESULT;
@@ -774,8 +805,8 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
                                 reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, color)));
             GL_CHECK_RESULT;
 
-            glDrawElements(
-                GL_TRIANGLES, static_cast<GLsizei>(resource->indexBuffer->itemsCount), GL_UNSIGNED_SHORT, 0);
+            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount),
+                GL_UNSIGNED_SHORT, (void*) (startIndex * sizeof(uint16_t)));
             GL_CHECK_RESULT;
         }
     }
@@ -796,9 +827,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
         ok = ok && (init3DObjectsType != Init3DObjectsType::Objects3DColor || initializeColorProgram());
 
         if (!ok || _init3DObjectsType == Init3DObjectsType::Incomplete)
-        {
             return StageResult::Fail;
-        }
 
         return StageResult::Wait;
     }
@@ -807,9 +836,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
         std::static_pointer_cast<IMapDataProvider>(currentState.map3DObjectsProvider));
 
     if (!resourcesCollection)
-    {
         return StageResult::Success;
-    }
 
     const float buildingsAlpha = renderer->get3DBuildingsAlpha();
     const int detalizationLevel = renderer->get3DBuildingsDetalization();
@@ -835,6 +862,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     GL_CHECK_RESULT;
 
     StageResult depthPrepassResult = StageResult::Success;
+
     if (needsDepthPrepass)
     {
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -843,7 +871,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
         glDisable(GL_BLEND);
         GL_CHECK_RESULT;
 
-        depthPrepassResult = renderDepth();
+        depthPrepassResult = renderDepth(true);
 
         glEnable(GL_BLEND);
         GL_CHECK_RESULT;
@@ -855,7 +883,38 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     GL_CHECK_RESULT;
 
-    const auto colorPassResult = renderColor();
+    auto colorPassResult = renderColor(true);
+
+    if (needsDepthPrepass)
+    {
+        glDepthMask(GL_TRUE);
+        GL_CHECK_RESULT;
+    }
+
+    bool failed = depthPrepassResult == StageResult::Fail || colorPassResult == StageResult::Fail;
+
+    if (needsDepthPrepass && !failed)
+    {
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        GL_CHECK_RESULT;
+
+        glDisable(GL_BLEND);
+        GL_CHECK_RESULT;
+
+        depthPrepassResult = renderDepth(false);
+
+        glEnable(GL_BLEND);
+        GL_CHECK_RESULT;
+
+        glDepthMask(GL_FALSE);
+        GL_CHECK_RESULT;
+    }
+
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    GL_CHECK_RESULT;
+
+    if (!failed)
+        colorPassResult = renderColor(false);
 
     if (needsDepthPrepass)
     {

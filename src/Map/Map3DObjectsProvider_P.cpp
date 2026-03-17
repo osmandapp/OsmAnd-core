@@ -141,9 +141,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
 
     std::shared_ptr<MapPrimitivesProvider::Data> tileData;
     if (!_tiledProvider->obtainTiledPrimitives(tileRequest, tileData))
-    {
         return false;
-    }
 
     Buildings3D buildings3D;
     if (tileData && tileData->primitivisedObjects)
@@ -151,6 +149,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
         QSet<BuildingPrimitive> buildings;
         QSet<BuildingPrimitive> buildingParts;
         QSet<PassagePrimitive> buildingPassages;
+        QList<const BuildingPrimitive*> primaryBuildings;
 
         for (const auto& primitive : tileData->primitivisedObjects->polygons)
         {
@@ -216,14 +215,23 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
 
         for (const auto& buildingPart : buildingParts)
         {
-            processPrimitive(
-                buildingPart, buildings3D, elevationDataMap, request.tileId, request.zoom, buildingPassages, colors);
+            processPrimitive(buildingPart, buildings3D, elevationDataMap, request.tileId, request.zoom,
+                buildingPassages, colors, &primaryBuildings);
         }
 
         for (const auto& building : buildings)
         {
-            processPrimitive(
-                building, buildings3D, elevationDataMap, request.tileId, request.zoom, buildingPassages, colors);
+            processPrimitive(building, buildings3D, elevationDataMap, request.tileId, request.zoom,
+                buildingPassages, colors, &primaryBuildings);
+        }
+
+        if (!primaryBuildings.isEmpty())
+            buildings3D.parts.append(buildings3D.indices.size());
+
+        for (const auto& primaryBuilding : primaryBuildings)
+        {
+            processPrimitive(*primaryBuilding, buildings3D, elevationDataMap, request.tileId, request.zoom,
+                buildingPassages, colors);
         }
     }
 
@@ -467,12 +475,38 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     const TileId& tileId,
     const ZoomLevel zoom,
     const QSet<PassagePrimitive>& buildingPassages,
-    const QHash<TileId, FColorRGB>& objectColors) const
+    const QHash<TileId, FColorRGB>& objectColors,
+    QList<const BuildingPrimitive*>* primaryBuildings /* = nullptr */) const
 {
     const auto& sourceObject =
         std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(primitive.primitive->sourceObject);
     if (!sourceObject)
         return;
+
+    auto color = _useCustomColor ? _customColor : FColorRGB(getUseDefaultBuildingsColor()
+        || primitive.polygonColor == 0 ? getDefaultBuildingsColor() : FColorARGB(primitive.polygonColor));
+
+    // Set an individual color to a particular (selected) building
+    if (primaryBuildings)
+    {
+        // Keep selected buildings separately to draw them first
+        auto it = objectColors.begin();
+        auto end = objectColors.end();
+        for (; it != end; it++)
+        {
+            auto tileId = it.key();
+            if (primitive.bbox31.contains(PointI(tileId.x, tileId.y)))
+            {
+                primitive.color = it.value();
+                primaryBuildings->append(&primitive);
+                return;
+            }
+        }
+    }
+    else
+        color = primitive.color;
+
+    const glm::vec3 colorVec(color.r, color.g, color.b);
 
     float levelHeight = getDefaultBuildingsLevelHeight();
 
@@ -575,20 +609,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                 passages.append(const_cast<PassagePrimitive*>(&passagePrimitive));
         }
     }
-
-    auto color = _useCustomColor ? _customColor : FColorRGB(getUseDefaultBuildingsColor()
-        || primitive.polygonColor == 0 ? getDefaultBuildingsColor() : FColorARGB(primitive.polygonColor));
-
-    // Set an individual color to a particular (selected) building
-    auto end = objectColors.end();
-    for (auto it = objectColors.begin(); it != end; it++)
-    {
-        auto tileId = it.key();
-        if (primitive.bbox31.contains(PointI(tileId.x, tileId.y)))
-            color = it.value();
-    }
-
-    const glm::vec3 colorVec(color.r, color.g, color.b);
 
     QVector<PointI> points31 = sourceObject->points31;
 
