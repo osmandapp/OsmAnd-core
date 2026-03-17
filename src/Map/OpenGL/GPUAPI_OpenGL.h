@@ -463,6 +463,7 @@ namespace OsmAnd
             const void* indexData,
             const size_t indexSize,
             const unsigned int indicesCount,
+            const QVector<int32_t>& parts,
             std::shared_ptr<const MeshInGPU>& meshInGPU,
             bool waitForGPU,
             volatile bool* gpuContextLost) override;

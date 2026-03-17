@@ -254,6 +254,7 @@ bool OsmAnd::MapRendererResourcesManager::uploadTiled3DBuildingsToGPU(
         buildings3D.indices.constData(),
         sizeof(uint16_t),
         buildings3D.indices.size(),
+        buildings3D.parts,
         outMeshInGPU,
         renderer->setupOptions.gpuWorkerThreadEnabled,
         &(renderer->gpuContextIsLost));
