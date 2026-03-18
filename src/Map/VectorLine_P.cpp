@@ -100,10 +100,13 @@ void OsmAnd::VectorLine_P::setStartingDistance(const float distanceInMeters)
     if (_startingDistance != distanceInMeters)
     {
         const auto halfGap = getPointStepPx() * _metersPerPixel * 0.5;
-        bool changeArrows = qFloor(distanceInMeters / halfGap) != qFloor(_startingDistance / halfGap);
+        const bool hasValidHalfGap = halfGap > 0.0 && qIsFinite(halfGap);
+        const bool changeArrows = hasValidHalfGap
+            ? qFloor(distanceInMeters / halfGap) != qFloor(_startingDistance / halfGap)
+            : (_showArrows && owner->pathIcon != nullptr);
         _startingDistance = distanceInMeters;
         _hasUnappliedStartingDistance = true;
-        _hasUnappliedChanges = changeArrows;
+        _hasUnappliedChanges |= changeArrows;
     }
 }
 
@@ -1830,6 +1833,16 @@ bool OsmAnd::VectorLine_P::useSpecialArrow() const
 
 double OsmAnd::VectorLine_P::getPointStepPx() const
 {
+    if (_mapZoomLevel == InvalidZoomLevel
+        || _surfaceZoomLevel == InvalidZoomLevel
+        || !qIsFinite(_mapVisualZoom)
+        || !qIsFinite(_surfaceVisualZoom)
+        || qFuzzyIsNull(_mapVisualZoom)
+        || qFuzzyIsNull(_surfaceVisualZoom))
+    {
+        return 0.0;
+    }
+
     double result = static_cast<double>(1u << static_cast<int>(_mapZoomLevel)) * _mapVisualZoom
         / (static_cast<double>(1u << static_cast<int>(_surfaceZoomLevel)) * _surfaceVisualZoom);
     if (useSpecialArrow())
@@ -1840,13 +1853,18 @@ double OsmAnd::VectorLine_P::getPointStepPx() const
     }
     else
     {
-        result *= _pathIconStep > 0 ? _pathIconStep : _scaledPathIcon->height();
+        const auto pathIcon = _scaledPathIcon ? _scaledPathIcon : owner->pathIcon;
+        if (_pathIconStep <= 0 && !pathIcon)
+            return 0.0;
+
+        result *= _pathIconStep > 0 ? _pathIconStep : pathIcon->height();
     }
     return result;
 }
 
 sk_sp<const SkImage> OsmAnd::VectorLine_P::getPointImage() const
 {
-    return useSpecialArrow() ? owner->specialPathIcon : _scaledPathIcon;
+    return useSpecialArrow()
+        ? owner->specialPathIcon
+        : (_scaledPathIcon ? _scaledPathIcon : owner->pathIcon);
 }
-
