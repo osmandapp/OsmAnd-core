@@ -1163,7 +1163,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         {
             toCamera.x = 0;
             toCamera.y = 0;
-            stage = 3;
+            stage = 5;
         }
         else
         {
@@ -1788,7 +1788,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 const auto dir = lookForStrictlyVisible ? -1.0 : 1.0;
                 const auto deltaX = dirX * dir;
                 const auto deltaY = dirY * dir;
-                if ((!atLeastOneAdded && atLeastOneFlatVisibleFound && stage != 1 && stage != 2)
+                if ((!atLeastOneAdded && atLeastOneFlatVisibleFound && (stage < 1 || stage > 4))
                     || (lookForStrictlyVisible && distanceFromTarget >= distanceLimit))
                 {
                     if (lookForStrictlyVisible)
@@ -1833,17 +1833,25 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     const auto firstTileId = (*procTiles)[zoomLevel].begin().key();
                     double shiftX = deltaX;
                     double shiftY = deltaY;
-                    if (stage < 2 && distanceFromTarget == 0.0)
+                    if (stage < 4 && distanceFromTarget == 0.0)
                     {
-                        if (stage == 0)
+                        switch (stage)
                         {
-                            shiftX -= deltaY;
-                            shiftY += deltaX;
-                        }
-                        else if (stage == 1)
-                        {
-                            shiftX += deltaY;
-                            shiftY -= deltaX;
+                            case 0:
+                                shiftX -= deltaY;
+                                shiftY += deltaX;
+                                break;
+                            case 1:
+                                shiftX += deltaY;
+                                shiftY -= deltaX;
+                                break;
+                            case 2:
+                                shiftX = -deltaY;
+                                shiftY = deltaX;
+                                break;
+                            default:
+                                shiftX = deltaY;
+                                shiftY = -deltaX;
                         }
                         stage++;
                     }
@@ -1852,6 +1860,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         distanceFromTarget += 1.0;
                         shiftX = deltaX * distanceFromTarget;
                         shiftY = deltaY * distanceFromTarget;
+                        if (stage < 5)
+                            stage = 5;
                     }
                     auto nearTileId = TileId::fromXY(
                         qRound(static_cast<double>(targetTileId.x) + shiftX),
