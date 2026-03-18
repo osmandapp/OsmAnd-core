@@ -32,6 +32,8 @@ const Transliterator* g_pIcuAnyToLatinTransliterator = nullptr;
 const Transliterator* g_pIcuAccentsAndDiacriticsConverter = nullptr;
 const BreakIterator* g_pIcuLineBreakIterator = nullptr;
 const Collator* g_pIcuCollator = nullptr;
+QReadWriteLock icuResourcesLock;
+bool g_icuInitialized = false;
 
 QReadWriteLock collatorsLock;
 QHash<Qt::HANDLE, Collator*> collatorsMap;
@@ -47,6 +49,15 @@ inline TransliteratorPtr makeTransliteratorClone(const icu::Transliterator* src)
 // Thread-local caches
 thread_local TransliteratorPtr tl_anyToLatin(nullptr, [](icu::Transliterator* p) { delete p; });
 thread_local TransliteratorPtr tl_accentsConverter(nullptr, [](icu::Transliterator* p) { delete p; });
+
+inline bool ensureIcuInitializedLocked()
+{
+    if (g_icuInitialized)
+        return true;
+
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "ICU resources are not initialized.");
+    return false;
+}
 
 // Thread-safe and fast wrapper over Collator->clone() @alex-osm version
 const Collator* getThreadSafeCollator()
@@ -87,6 +98,8 @@ const Collator* getThreadSafeCollator()
 
 bool OsmAnd::ICU::initialize()
 {
+    QWriteLocker icuWriteLocker(&icuResourcesLock);
+
     // Initialize ICU
     UErrorCode icuError = U_ZERO_ERROR;
     g_IcuData = std::unique_ptr<QByteArray>(new QByteArray(
@@ -153,13 +166,26 @@ bool OsmAnd::ICU::initialize()
         collator->setStrength(Collator::PRIMARY);
         g_pIcuCollator = collator;
     }
+
+    g_icuInitialized = true;
     
     return true;
 }
 
 void OsmAnd::ICU::release()
 {
+    QWriteLocker icuWriteLocker(&icuResourcesLock);
+
+    g_icuInitialized = false;
+    tl_anyToLatin.reset();
+    tl_accentsConverter.reset();
+
     // Release resources:
+    {
+        QWriteLocker collatorsWriteLocker(&collatorsLock);
+        qDeleteAll(collatorsMap);
+        collatorsMap.clear();
+    }
 
     delete g_pIcuCollator;
     g_pIcuCollator = nullptr;
@@ -175,12 +201,15 @@ void OsmAnd::ICU::release()
 
     g_IcuData.reset();
 
-    // Release ICU
-    u_cleanup();
+    // Keep ICU runtime loaded during shutdown: worker threads may still destroy
+    // thread-local ICU objects after ReleaseCore() starts.
 }
 
 // Ensure thread-local transliterators are initialized
-inline bool initThreadLocalTransliterators() {
+inline bool initThreadLocalTransliteratorsLocked() {
+    if (!ensureIcuInitializedLocked())
+        return false;
+
     if (!tl_anyToLatin) {
         if (!g_pIcuAnyToLatinTransliterator) {
             OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Global Any-to-Latin transliterator not initialized.");
@@ -304,7 +333,8 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::transliterateToLatin(
     const bool keepAccentsAndDiacriticsInInput /*= true*/,
     const bool keepAccentsAndDiacriticsInOutput /*= true*/)
 {
-    if (!initThreadLocalTransliterators()) {
+    QReadLocker icuReadLocker(&icuResourcesLock);
+    if (!initThreadLocalTransliteratorsLocked()) {
         return input;
     }
 
@@ -338,6 +368,9 @@ OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(
     QVector<int> result;
     UErrorCode icuError = U_ZERO_ERROR;
     bool ok = true;
+    QReadLocker icuReadLocker(&icuResourcesLock);
+    if (!ensureIcuInitializedLocked() || g_pIcuLineBreakIterator == nullptr)
+        return (result << 0);
 
     // Create break iterator
     const auto pBreakIterator = g_pIcuLineBreakIterator->clone();
@@ -463,33 +496,14 @@ OSMAND_CORE_API QStringList OSMAND_CORE_CALL OsmAnd::ICU::wrapText(
 
 OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::stripAccentsAndDiacritics(const QString& input)
 {
-    QString output;
-    UErrorCode icuError = U_ZERO_ERROR;
-    bool ok = true;
-
-    const auto pIcuAccentsAndDiacriticsConverter = g_pIcuAccentsAndDiacriticsConverter->clone();
-    if (pIcuAccentsAndDiacriticsConverter == nullptr || U_FAILURE(icuError))
-    {
-        LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
-        if (pIcuAccentsAndDiacriticsConverter != nullptr)
-            delete pIcuAccentsAndDiacriticsConverter;
+    QReadLocker icuReadLocker(&icuResourcesLock);
+    if (!initThreadLocalTransliteratorsLocked() || !tl_accentsConverter)
         return input;
-    }
 
     // Remove accents and diacritics
     UnicodeString icuString(reinterpret_cast<const UChar*>(input.unicode()), input.length());
-    pIcuAccentsAndDiacriticsConverter->transliterate(icuString);
-    output = QString(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length());
-
-    if (pIcuAccentsAndDiacriticsConverter != nullptr)
-        delete pIcuAccentsAndDiacriticsConverter;
-
-    if (!ok)
-    {
-        LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
-        return input;
-    }
-    return output;
+    tl_accentsConverter->transliterate(icuString);
+    return QString(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length());
 }
 
 UnicodeString qStrToUniStr(QString input)
@@ -527,6 +541,9 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::ccontains(const QString& _bas
 {
     UErrorCode icuError = U_ZERO_ERROR;
     bool result = false;
+    QReadLocker icuReadLocker(&icuResourcesLock);
+    if (!ensureIcuInitializedLocked())
+        return false;
     const auto collator = getThreadSafeCollator();
     if (collator == nullptr || U_FAILURE(icuError))
     {
@@ -565,6 +582,9 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
 {
     UErrorCode icuError = U_ZERO_ERROR;
     bool result = false;
+    QReadLocker icuReadLocker(&icuResourcesLock);
+    if (!ensureIcuInitializedLocked())
+        return false;
     const auto collator = getThreadSafeCollator();
     if (collator == nullptr || U_FAILURE(icuError))
     {
@@ -647,6 +667,9 @@ OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::ICU::ccompare(const QString& _s1, c
 {
     UErrorCode icuError = U_ZERO_ERROR;
     int result = 0;
+    QReadLocker icuReadLocker(&icuResourcesLock);
+    if (!ensureIcuInitializedLocked())
+        return result;
     const auto collator = getThreadSafeCollator();
     if (collator == nullptr || U_FAILURE(icuError))
     {
