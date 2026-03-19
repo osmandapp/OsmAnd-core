@@ -1831,27 +1831,28 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 else
                 {
                     const auto firstTileId = (*procTiles)[zoomLevel].begin().key();
-                    double shiftX = deltaX;
-                    double shiftY = deltaY;
+                    double shiftX, shiftY;
                     if (stage < 4 && distanceFromTarget == 0.0)
                     {
+                        double dX = qRound(deltaX) * 0.7;
+                        double dY = qRound(deltaY) * 0.7;
                         switch (stage)
                         {
                             case 0:
-                                shiftX -= deltaY;
-                                shiftY += deltaX;
+                                shiftX = dX - dY;
+                                shiftY = dY + dX;
                                 break;
                             case 1:
-                                shiftX += deltaY;
-                                shiftY -= deltaX;
+                                shiftX = dX + dY;
+                                shiftY = dY - dX;
                                 break;
                             case 2:
-                                shiftX = -deltaY;
-                                shiftY = deltaX;
+                                shiftX = -dY;
+                                shiftY = dX;
                                 break;
                             default:
-                                shiftX = deltaY;
-                                shiftY = -deltaX;
+                                shiftX = dY;
+                                shiftY = -dX;
                         }
                         stage++;
                     }
