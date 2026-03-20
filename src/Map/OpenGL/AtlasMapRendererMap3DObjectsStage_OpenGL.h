@@ -50,16 +50,23 @@ namespace OsmAnd
                 {
                     GLlocation mPerspectiveProjectionView;
                     GLlocation resultScale;
-                    GLlocation alpha;
                     GLlocation target31;
                     GLlocation zoomLevel;
-                    GLlocation lightDirection;
-                    GLlocation ambient;
-                    GLlocation contrast;
                     GLlocation metersPerUnit;
                     GLlocation zScaleFactor;
                 } param;
             } vs;
+            // Vertex data
+            struct
+            {
+                // Params
+                struct
+                {
+                    GLlocation alpha;
+                    GLlocation cameraPosition;
+                    GLlocation lightDirection;
+                } param;
+            } fs;
         } _program;
         Model3DProgram _depthProgram;
 

@@ -41,13 +41,7 @@ namespace
             const int MAX_ZOOM_LEVEL = 31;
             const int MAX_TILE_NUMBER = (1 << MAX_ZOOM_LEVEL) - 1;
             const int MIDDLE_TILE_NUMBER = MAX_TILE_NUMBER / 2 + 1;
-
-            vec2 convert31toFloat(ivec2 point31, int zoomLevel)
-            {
-                float tileSize31 = float(1 << (MAX_ZOOM_LEVEL - zoomLevel));
-                return vec2(point31) / tileSize31;
-            }
-
+            
             ivec2 shortestVector31(ivec2 p0, ivec2 p1)
             {
                 ivec2 offset = p1 - p0;
@@ -68,22 +62,22 @@ namespace
             vec3 planeWorldCoordinates(ivec2 location31, ivec2 target31, int zoomLevel, float elevation)
             {
                 ivec2 offset31 = shortestVector31(target31, location31);
-                vec2 offsetFromTarget = convert31toFloat(offset31, zoomLevel) * TILE_SIZE_3D;
+                vec2 offsetFromTarget = vec2(offset31) * (TILE_SIZE_3D / float(1 << (MAX_ZOOM_LEVEL - zoomLevel)));
                 return vec3(offsetFromTarget.x, elevation, offsetFromTarget.y);
             }
 
             void main()
             {
-                float buildingHeight = in_vs_height / param_vs_metersPerUnit;
+                float vertexHeight = in_vs_height / param_vs_metersPerUnit;
                 float terrainElevation = in_vs_terrainHeight * param_vs_zScaleFactor / param_vs_metersPerUnit;
-                float elevation = terrainElevation + buildingHeight;
+                float elevation = terrainElevation + vertexHeight;
         
                 vec3 worldPos = planeWorldCoordinates(in_vs_location31, param_vs_target31, param_vs_zoomLevel, elevation);
+
+                %ColorCalculation%
                 
                 vec4 v = param_vs_mPerspectiveProjectionView * vec4(worldPos, 1.0);
                 gl_Position = v * param_vs_resultScale;
-                
-                %ColorCalculation%
             }
         )");
 }
@@ -117,32 +111,46 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
     {
         const QString colorInOutDeclaration = QString(R"(
             INPUT vec3 in_vs_normal;
-            INPUT vec3 in_vs_color;
-        
-            PARAM_OUTPUT vec4 v2f_color;
-        
-            uniform float param_vs_alpha;
-            uniform vec3 param_vs_lightDirection;
-            uniform float param_vs_ambient;
-            uniform float param_vs_contrast;
+            INPUT vec4 in_vs_color;
+
+            PARAM_OUTPUT highp float v2f_height;
+            PARAM_OUTPUT highp vec3 v2f_pointPosition;
+            PARAM_OUTPUT highp vec3 v2f_pointNormal;
+            PARAM_OUTPUT highp vec4 v2f_pointColor;
         )");
         const QString colorCalculation = QString(R"(
-            float ndotl = max(dot(in_vs_normal, -param_vs_lightDirection), 0.0);
-            ndotl = pow(ndotl, 1.0 / param_vs_contrast);
-            float diffuse = param_vs_ambient + (1.0 - param_vs_ambient) * ndotl;
-            v2f_color = vec4(in_vs_color * diffuse * (2.0 - param_vs_alpha), param_vs_alpha);
-    )");
+                v2f_height = in_vs_height;
+                v2f_pointPosition = worldPos;
+                v2f_pointNormal = in_vs_normal;
+                v2f_pointColor = in_vs_color;
+        )");
 
         auto vertexShader = vertexShaderBase;
         vertexShader.replace("%ColorInOutDeclaration%", colorInOutDeclaration);
         vertexShader.replace("%ColorCalculation%", colorCalculation);
 
         const QString fragmentShader = R"(
-            PARAM_INPUT vec4 v2f_color;
+            PARAM_INPUT highp float v2f_height;
+            PARAM_INPUT highp vec3 v2f_pointPosition;
+            PARAM_INPUT highp vec3 v2f_pointNormal;
+            PARAM_INPUT highp vec4 v2f_pointColor;
+            
+            uniform float param_fs_alpha;
+            uniform vec3 param_fs_cameraPosition;
+            uniform vec3 param_fs_lightDirection;
             
             void main()
             {
-                FRAGMENT_COLOR_OUTPUT = v2f_color;
+                vec3 v = normalize(param_fs_cameraPosition - v2f_pointPosition);
+                vec3 n = normalize(v2f_pointNormal);
+                vec3 r = reflect(param_fs_lightDirection, n);
+                float h = pow((clamp(dot(r, v), 0.5, 1.0) - 0.5) * 2.0, 3.0) * 0.2;
+                float d = clamp(dot(r, n), 0.0, 1.0) + 0.5;
+                d *= 0.8 + v2f_pointColor.a * 0.4;
+                d /= 1.0 + clamp(dot(param_fs_lightDirection, n), 0.0, 1.0);
+                d /= 1.0 + exp(-v2f_height * 0.05) * 0.3;
+                vec3 dc = clamp(v2f_pointColor.rgb * d, 0.0, 1.0);
+                FRAGMENT_COLOR_OUTPUT = vec4(mix(dc, vec3(1.0), h), param_fs_alpha);
             }
         )";
 
@@ -212,14 +220,13 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
     ok = ok && lookup->lookupLocation(_program.vs.in.color, "in_vs_color", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_program.vs.param.alpha, "param_vs_alpha", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.zoomLevel, "param_vs_zoomLevel", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_program.vs.param.lightDirection, "param_vs_lightDirection", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_program.vs.param.ambient, "param_vs_ambient", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_program.vs.param.contrast, "param_vs_contrast", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.metersPerUnit, "param_vs_metersPerUnit", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.zScaleFactor, "param_vs_zScaleFactor", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.fs.param.alpha, "param_fs_alpha", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.fs.param.cameraPosition, "param_fs_cameraPosition", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.fs.param.lightDirection, "param_fs_lightDirection", GlslVariableType::Uniform);
 
     if (!ok)
     {
@@ -724,10 +731,10 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
 //
 //    const glm::vec3 lightDir = glm::normalize(glm::vec3(sinAzimuth * cosZenith, -sinZenith, cosAzimuth * cosZenith));
 
-    const auto zenith = glm::radians(30.0);
+    const auto zenith = glm::radians(60.0);
     const auto cosZenith = qCos(zenith);
     const auto sinZenith = qSin(zenith);
-    const auto azimuth = M_PI - glm::radians(30.0);
+    const auto azimuth = glm::radians(45.0);
     const auto cosAzimuth = qCos(azimuth);
     const auto sinAzimuth = qSin(azimuth);
     
@@ -748,13 +755,14 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
     GL_CHECK_RESULT;
     glUniform1f(*_program.vs.param.zScaleFactor, currentState.elevationConfiguration.zScaleFactor);
     GL_CHECK_RESULT;
-    glUniform3f(*_program.vs.param.lightDirection, lightDir.x, lightDir.y, lightDir.z);
+    glUniform1f(*_program.fs.param.alpha, buildingAlpha);
     GL_CHECK_RESULT;
-    glUniform1f(*_program.vs.param.ambient, 0.2f);
+    glUniform3f(*_program.fs.param.cameraPosition,
+        internalState.worldCameraPosition.x,
+        internalState.worldCameraPosition.y,
+        internalState.worldCameraPosition.z);
     GL_CHECK_RESULT;
-    glUniform1f(*_program.vs.param.contrast, 1.5f);
-    GL_CHECK_RESULT;
-    glUniform1f(*_program.vs.param.alpha, buildingAlpha);
+    glUniform3f(*_program.fs.param.lightDirection, lightDir.x, lightDir.y, lightDir.z);
     GL_CHECK_RESULT;
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -801,7 +809,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
             glVertexAttribPointer(*_program.vs.in.normal, 3, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
                                 reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, normal)));
             GL_CHECK_RESULT;
-            glVertexAttribPointer(*_program.vs.in.color, 3, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+            glVertexAttribPointer(*_program.vs.in.color, 4, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
                                 reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, color)));
             GL_CHECK_RESULT;
 

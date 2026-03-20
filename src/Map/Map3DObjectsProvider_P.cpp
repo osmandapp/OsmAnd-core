@@ -506,7 +506,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     else
         color = primitive.color;
 
-    const glm::vec3 colorVec(color.r, color.g, color.b);
+    glm::vec4 colorVec(color.r, color.g, color.b, 0.0f);
 
     float levelHeight = getDefaultBuildingsLevelHeight();
 
@@ -695,6 +695,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             const int next = (i + 1) % count;
             const auto& point31_i = points[i];
             const auto& point31_next = points[next];
+            const auto centerPoint = (PointI64(point31_i) + PointI64(point31_next)) / 2;
             const auto edgeNormal = calculateNormalFrom2Points(point31_i, point31_next);
 
             QList<PassagePrimitive*> passagePrimitives;
@@ -792,6 +793,12 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                     }
                 }
             }
+
+            // Calculate pseudo-random value to produce slightly different colors for equally-lit walls
+            const auto location = static_cast<float>((centerPoint.x >> 12 ^ centerPoint.y >> 12) & 255) / 255.0f;
+            const auto direction = static_cast<float>((qAtan2(edgeNormal.z, edgeNormal.x) + M_PI) / (2.0 * M_PI));
+            const auto deviation = location + direction;
+            colorVec.a = deviation - qFloor(deviation);
 
             generateBuildingWall(
                 buildings3D,
@@ -1314,7 +1321,7 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     float terrainHeight,
     const PointI& minTile31,
     const PointI& maxTile31,
-    const glm::vec3& colorVec,
+    const glm::vec4& colorVec,
     QList<PassagePrimitive*>& passagePrimitives) const
 {
     const uint32_t baseVertexOffset = buildings3D.vertices.size();

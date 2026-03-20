@@ -147,7 +147,7 @@ namespace OsmAnd
             float terrainHeight,
             const PointI& minTile31,
             const PointI& maxTile31,
-            const glm::vec3& colorVec,
+            const glm::vec4& colorVec,
             QList<PassagePrimitive*>& passagePrimitives) const;
 
     protected:

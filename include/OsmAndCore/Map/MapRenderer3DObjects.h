@@ -16,7 +16,7 @@ namespace OsmAnd
         float height;
         float terrainHeight;
         glm::vec3 normal;
-        glm::vec3 color;
+        glm::vec4 color;
     };
 
     struct Buildings3D
