@@ -269,7 +269,10 @@ namespace OsmAnd
             std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU,
             bool waitForGPU = true);
         void finishSymbolsUploadToGPU();
-        bool uploadTiled3DBuildingsToGPU(const Buildings3D& buildings3D,
+        bool uploadTiled3DBuildingsToGPU(
+            const QVector<BuildingVertex>& vertices,
+            const QVector<uint16_t>& indices,
+            const QVector<int32_t>& parts,
             std::shared_ptr<const GPUAPI::MeshInGPU>& outMeshInGPU);
         bool adjustImageToConfiguration(
             const sk_sp<const SkImage>& input,

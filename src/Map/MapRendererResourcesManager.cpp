@@ -244,17 +244,19 @@ void OsmAnd::MapRendererResourcesManager::finishSymbolsUploadToGPU()
 }
 
 bool OsmAnd::MapRendererResourcesManager::uploadTiled3DBuildingsToGPU(
-    const Buildings3D& buildings3D,
+    const QVector<BuildingVertex>& vertices,
+    const QVector<uint16_t>& indices,
+    const QVector<int32_t>& parts,
     std::shared_ptr<const GPUAPI::MeshInGPU>& outMeshInGPU)
 {
     return renderer->gpuAPI->uploadDataAsMeshToGPU(
-        buildings3D.vertices.constData(),
+        vertices.constData(),
         sizeof(BuildingVertex),
-        buildings3D.vertices.size(),
-        buildings3D.indices.constData(),
+        vertices.size(),
+        indices.constData(),
         sizeof(uint16_t),
-        buildings3D.indices.size(),
-        buildings3D.parts,
+        indices.size(),
+        parts,
         outMeshInGPU,
         renderer->setupOptions.gpuWorkerThreadEnabled,
         &(renderer->gpuContextIsLost));

@@ -5,9 +5,12 @@
 
 using namespace OsmAnd;
 
-Map3DObjectsTiledProvider::Data::Data(const TileId tileId, const ZoomLevel zoom, Buildings3D&& buildings)
+Map3DObjectsTiledProvider::Data::Data(const TileId tileId, const ZoomLevel zoom,
+    QVector<BuildingVertex>& vertices_, QVector<uint16_t>& indices_, QVector<int32_t>& parts_)
     : IMapTiledDataProvider::Data(tileId, zoom)
-    , buildings3D(qMove(buildings))
+    , vertices(qMove(vertices_))
+    , indices(qMove(indices_))
+    , parts(qMove(parts_))
 {
 }
 

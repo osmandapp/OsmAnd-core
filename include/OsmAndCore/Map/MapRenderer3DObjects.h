@@ -18,13 +18,6 @@ namespace OsmAnd
         glm::vec3 normal;
         glm::vec4 color;
     };
-
-    struct Buildings3D
-    {
-        QVector<BuildingVertex> vertices;
-        QVector<uint16_t> indices;
-        QVector<int32_t> parts;
-    };
 }
 
 #endif // !defined(_OSMAND_CORE_MAP_RENDERER_3D_OBJECTS_H_)

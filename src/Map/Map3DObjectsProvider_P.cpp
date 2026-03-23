@@ -143,7 +143,9 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
     if (!_tiledProvider->obtainTiledPrimitives(tileRequest, tileData))
         return false;
 
-    Buildings3D buildings3D;
+    QVector<BuildingVertex> vertices;
+    QVector<uint16_t> indices;
+    QVector<int32_t> parts;
     if (tileData && tileData->primitivisedObjects)
     {
         QSet<BuildingPrimitive> buildings;
@@ -215,27 +217,28 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
 
         for (const auto& buildingPart : buildingParts)
         {
-            processPrimitive(buildingPart, buildings3D, elevationDataMap, request.tileId, request.zoom,
+            processPrimitive(buildingPart, vertices, indices, elevationDataMap, request.tileId, request.zoom,
                 buildingPassages, colors, &primaryBuildings);
         }
 
         for (const auto& building : buildings)
         {
-            processPrimitive(building, buildings3D, elevationDataMap, request.tileId, request.zoom,
+            processPrimitive(building, vertices, indices, elevationDataMap, request.tileId, request.zoom,
                 buildingPassages, colors, &primaryBuildings);
         }
 
         if (!primaryBuildings.isEmpty())
-            buildings3D.parts.append(buildings3D.indices.size());
+            parts.append(indices.size());
 
         for (const auto& primaryBuilding : primaryBuildings)
         {
-            processPrimitive(*primaryBuilding, buildings3D, elevationDataMap, request.tileId, request.zoom,
+            processPrimitive(*primaryBuilding, vertices, indices, elevationDataMap, request.tileId, request.zoom,
                 buildingPassages, colors);
         }
     }
 
-    outTiledData = std::make_shared<Map3DObjectsTiledProvider::Data>(request.tileId, request.zoom, qMove(buildings3D));
+    outTiledData =
+        std::make_shared<Map3DObjectsTiledProvider::Data>(request.tileId, request.zoom, vertices, indices, parts);
     return true;
 }
 
@@ -470,7 +473,8 @@ FColorARGB Map3DObjectsTiledProvider_P::getDefaultBuildingsColor() const
 
 void Map3DObjectsTiledProvider_P::processPrimitive(
     const BuildingPrimitive& primitive,
-    Buildings3D& buildings3D,
+    QVector<BuildingVertex>& vertices,
+    QVector<uint16_t>& indices,
     const QHash<TileId, std::shared_ptr<IMapElevationDataProvider::Data>>& elevationDataMap,
     const TileId& tileId,
     const ZoomLevel zoom,
@@ -610,6 +614,14 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         }
     }
 
+    // Calculate pseudo-random seed value to produce slightly different colors for equally-lit walls of building
+    const auto centerPoint = AreaI64(sourceObject->bbox31).center();
+    int b = (centerPoint.x ^ centerPoint.y) & 255;
+    b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+    b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+    b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+    colorVec.a = static_cast<float>(b) / 255.0f;
+
     QVector<PointI> points31 = sourceObject->points31;
 
     // Reverse points if needed
@@ -638,8 +650,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         }
     }
 
-    int currentVertexOffset = buildings3D.vertices.size();
-    const int currentIndexOffset = buildings3D.indices.size();
+    int currentVertexOffset = vertices.size();
+    const int currentIndexOffset = indices.size();
 
     // Construct top side of the mesh
     std::vector<std::vector<std::array<int32_t, 2>>> topPolygon;
@@ -652,7 +664,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         BuildingVertex v{glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec};
 
         outerRing.push_back({p.x, p.y});
-        buildings3D.vertices.append(v);
+        vertices.append(v);
     }
 
     topPolygon.push_back(std::move(outerRing));
@@ -666,7 +678,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             BuildingVertex v{glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec};
 
             innerRing.push_back({p.x, p.y});
-            buildings3D.vertices.append(v);
+            vertices.append(v);
         }
 
         topPolygon.push_back(std::move(innerRing));
@@ -678,8 +690,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
 
     cutMeshForTile(
         mapbox::earcut<uint16_t>(topPolygon),
-        buildings3D.vertices,
-        buildings3D.indices,
+        vertices,
+        indices,
         currentVertexOffset,
         minTile31,
         maxTile31);
@@ -794,14 +806,9 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                 }
             }
 
-            // Calculate pseudo-random value to produce slightly different colors for equally-lit walls
-            const auto location = static_cast<float>((centerPoint.x >> 12 ^ centerPoint.y >> 12) & 255) / 255.0f;
-            const auto direction = static_cast<float>((qAtan2(edgeNormal.z, edgeNormal.x) + M_PI) / (2.0 * M_PI));
-            const auto deviation = location + direction;
-            colorVec.a = deviation - qFloor(deviation);
-
             generateBuildingWall(
-                buildings3D,
+                vertices,
+                indices,
                 point31_i,
                 point31_next,
                 edgeNormal,
@@ -825,66 +832,66 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         int segCount = points31.size() - 1;
         if (segCount == 1)
         {
-            uint32_t baseVertexOffset = buildings3D.vertices.size();
+            uint32_t baseVertexOffset = vertices.size();
 
             auto n = calculateNormalFrom2Points(
                 PointI(passage->startTopLeft.location31.x, passage->startTopLeft.location31.y),
                 PointI(passage->endTopRight.location31.x, passage->endTopRight.location31.y));
-            buildings3D.vertices.append(passage->endBottomRight);
-            buildings3D.vertices.last().normal = n;
-            buildings3D.vertices.append(passage->endTopRight);
-            buildings3D.vertices.last().normal = n;
-            buildings3D.vertices.append(passage->startTopLeft);
-            buildings3D.vertices.last().normal = n;
-            buildings3D.vertices.append(passage->startBottomLeft);
-            buildings3D.vertices.last().normal = n;
+            vertices.append(passage->endBottomRight);
+            vertices.last().normal = n;
+            vertices.append(passage->endTopRight);
+            vertices.last().normal = n;
+            vertices.append(passage->startTopLeft);
+            vertices.last().normal = n;
+            vertices.append(passage->startBottomLeft);
+            vertices.last().normal = n;
 
             cutMeshForTile(
                 fullSideIndices,
-                buildings3D.vertices,
-                buildings3D.indices,
+                vertices,
+                indices,
                 baseVertexOffset,
                 minTile31,
                 maxTile31);
 
-            baseVertexOffset = buildings3D.vertices.size();
+            baseVertexOffset = vertices.size();
 
             n = calculateNormalFrom2Points(
                 PointI(passage->endTopLeft.location31.x, passage->endTopLeft.location31.y),
                 PointI(passage->startTopRight.location31.x, passage->startTopRight.location31.y));
-            buildings3D.vertices.append(passage->startBottomRight);
-            buildings3D.vertices.last().normal = n;
-            buildings3D.vertices.append(passage->startTopRight);
-            buildings3D.vertices.last().normal = n;
-            buildings3D.vertices.append(passage->endTopLeft);
-            buildings3D.vertices.last().normal = n;
-            buildings3D.vertices.append(passage->endBottomLeft);
-            buildings3D.vertices.last().normal = n;
+            vertices.append(passage->startBottomRight);
+            vertices.last().normal = n;
+            vertices.append(passage->startTopRight);
+            vertices.last().normal = n;
+            vertices.append(passage->endTopLeft);
+            vertices.last().normal = n;
+            vertices.append(passage->endBottomLeft);
+            vertices.last().normal = n;
 
             cutMeshForTile(
                 fullSideIndices,
-                buildings3D.vertices,
-                buildings3D.indices,
+                vertices,
+                indices,
                 baseVertexOffset,
                 minTile31,
                 maxTile31);
 
-            baseVertexOffset = buildings3D.vertices.size();
+            baseVertexOffset = vertices.size();
 
             n = glm::vec3(0.0f, -1.0f, 0.0f);
-            buildings3D.vertices.append(passage->endTopRight);
-            buildings3D.vertices.last().normal = n;
-            buildings3D.vertices.append(passage->endTopLeft);
-            buildings3D.vertices.last().normal = n;
-            buildings3D.vertices.append(passage->startTopRight);
-            buildings3D.vertices.last().normal = n;
-            buildings3D.vertices.append(passage->startTopLeft);
-            buildings3D.vertices.last().normal = n;
+            vertices.append(passage->endTopRight);
+            vertices.last().normal = n;
+            vertices.append(passage->endTopLeft);
+            vertices.last().normal = n;
+            vertices.append(passage->startTopRight);
+            vertices.last().normal = n;
+            vertices.append(passage->startTopLeft);
+            vertices.last().normal = n;
 
             cutMeshForTile(
                 fullSideIndices,
-                buildings3D.vertices,
-                buildings3D.indices,
+                vertices,
+                indices,
                 baseVertexOffset,
                 minTile31,
                 maxTile31);
@@ -928,66 +935,66 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                 }
 
 
-                uint32_t baseVertexOffset = buildings3D.vertices.size();
+                uint32_t baseVertexOffset = vertices.size();
 
                 auto n = calculateNormalFrom2Points(
                     PointI(startTopLeft.location31.x, startTopLeft.location31.y),
                     PointI(endTopLeft.location31.x, endTopLeft.location31.y));
-                buildings3D.vertices.append(endBottomLeft);
-                buildings3D.vertices.last().normal = n;
-                buildings3D.vertices.append(endTopLeft);
-                buildings3D.vertices.last().normal = n;
-                buildings3D.vertices.append(startTopLeft);
-                buildings3D.vertices.last().normal = n;
-                buildings3D.vertices.append(startBottomLeft);
-                buildings3D.vertices.last().normal = n;
+                vertices.append(endBottomLeft);
+                vertices.last().normal = n;
+                vertices.append(endTopLeft);
+                vertices.last().normal = n;
+                vertices.append(startTopLeft);
+                vertices.last().normal = n;
+                vertices.append(startBottomLeft);
+                vertices.last().normal = n;
 
                 cutMeshForTile(
                     fullSideIndices,
-                    buildings3D.vertices,
-                    buildings3D.indices,
+                    vertices,
+                    indices,
                     baseVertexOffset,
                     minTile31,
                     maxTile31);
 
-                baseVertexOffset = buildings3D.vertices.size();
+                baseVertexOffset = vertices.size();
 
                 n = calculateNormalFrom2Points(
                     PointI(endTopRight.location31.x, endTopRight.location31.y),
                     PointI(startTopRight.location31.x, startTopRight.location31.y));
-                buildings3D.vertices.append(startBottomRight);
-                buildings3D.vertices.last().normal = n;
-                buildings3D.vertices.append(startTopRight);
-                buildings3D.vertices.last().normal = n;
-                buildings3D.vertices.append(endTopRight);
-                buildings3D.vertices.last().normal = n;
-                buildings3D.vertices.append(endBottomRight);
-                buildings3D.vertices.last().normal = n;
+                vertices.append(startBottomRight);
+                vertices.last().normal = n;
+                vertices.append(startTopRight);
+                vertices.last().normal = n;
+                vertices.append(endTopRight);
+                vertices.last().normal = n;
+                vertices.append(endBottomRight);
+                vertices.last().normal = n;
 
                 cutMeshForTile(
                     fullSideIndices,
-                    buildings3D.vertices,
-                    buildings3D.indices,
+                    vertices,
+                    indices,
                     baseVertexOffset,
                     minTile31,
                     maxTile31);
 
-                baseVertexOffset = buildings3D.vertices.size();
+                baseVertexOffset = vertices.size();
 
                 n = glm::vec3(0.0f, -1.0f, 0.0f);
-                buildings3D.vertices.append(endTopLeft);
-                buildings3D.vertices.last().normal = n;
-                buildings3D.vertices.append(endTopRight);
-                buildings3D.vertices.last().normal = n;
-                buildings3D.vertices.append(startTopRight);
-                buildings3D.vertices.last().normal = n;
-                buildings3D.vertices.append(startTopLeft);
-                buildings3D.vertices.last().normal = n;
+                vertices.append(endTopLeft);
+                vertices.last().normal = n;
+                vertices.append(endTopRight);
+                vertices.last().normal = n;
+                vertices.append(startTopRight);
+                vertices.last().normal = n;
+                vertices.append(startTopLeft);
+                vertices.last().normal = n;
 
                 cutMeshForTile(
                     fullSideIndices,
-                    buildings3D.vertices,
-                    buildings3D.indices,
+                    vertices,
+                    indices,
                     baseVertexOffset,
                     minTile31,
                     maxTile31);
@@ -1311,7 +1318,8 @@ glm::vec3 Map3DObjectsTiledProvider_P::calculateNormalFrom2Points(PointI point31
 }
 
 void Map3DObjectsTiledProvider_P::generateBuildingWall(
-    Buildings3D& buildings3D,
+    QVector<BuildingVertex>& vertices,
+    QVector<uint16_t>& indices,
     const PointI& point31_i,
     const PointI& point31_next,
     const glm::vec3& edgeNormal,
@@ -1324,13 +1332,13 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     const glm::vec4& colorVec,
     QList<PassagePrimitive*>& passagePrimitives) const
 {
-    const uint32_t baseVertexOffset = buildings3D.vertices.size();
+    const uint32_t baseVertexOffset = vertices.size();
 
     // Should match the side order (counter-clockwise)
-    buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, baseTerrainHeight, edgeNormal, colorVec});
-    buildings3D.vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, terrainHeight, edgeNormal, colorVec});
-    buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, terrainHeight, edgeNormal, colorVec});
-    buildings3D.vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, baseTerrainHeight, edgeNormal, colorVec});
+    vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, baseTerrainHeight, edgeNormal, colorVec});
+    vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, terrainHeight, edgeNormal, colorVec});
+    vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, terrainHeight, edgeNormal, colorVec});
+    vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, baseTerrainHeight, edgeNormal, colorVec});
 
     if (!passagePrimitives.isEmpty())
     {
@@ -1370,10 +1378,10 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
                     prevDistance = passage->startingPoint.y;
 
                     // Should match the side order (counter-clockwise)
-                    buildings3D.vertices.append(passage->startBottomLeft);
-                    buildings3D.vertices.append(passage->startTopLeft);
-                    buildings3D.vertices.append(passage->startTopRight);
-                    buildings3D.vertices.append(passage->startBottomRight);
+                    vertices.append(passage->startBottomLeft);
+                    vertices.append(passage->startTopLeft);
+                    vertices.append(passage->startTopRight);
+                    vertices.append(passage->startBottomRight);
                     withGate = true;
                 }
             }
@@ -1386,10 +1394,10 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
                     prevDistance = passage->endingPoint.y;
 
                     // Should match the side order (counter-clockwise)
-                    buildings3D.vertices.append(passage->endBottomLeft);
-                    buildings3D.vertices.append(passage->endTopLeft);
-                    buildings3D.vertices.append(passage->endTopRight);
-                    buildings3D.vertices.append(passage->endBottomRight);
+                    vertices.append(passage->endBottomLeft);
+                    vertices.append(passage->endTopLeft);
+                    vertices.append(passage->endTopRight);
+                    vertices.append(passage->endBottomRight);
                     withGate = true;
                 }
             }
@@ -1409,8 +1417,8 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
 
         cutMeshForTile(
             mapbox::earcut<uint16_t>(polygons),
-            buildings3D.vertices,
-            buildings3D.indices,
+            vertices,
+            indices,
             baseVertexOffset,
             minTile31,
             maxTile31);
@@ -1419,8 +1427,8 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     {
         cutMeshForTile(
             fullSideIndices,
-            buildings3D.vertices,
-            buildings3D.indices,
+            vertices,
+            indices,
             baseVertexOffset,
             minTile31,
             maxTile31);

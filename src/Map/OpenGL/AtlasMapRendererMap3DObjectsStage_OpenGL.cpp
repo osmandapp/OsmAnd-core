@@ -145,10 +145,11 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
                 vec3 n = normalize(v2f_pointNormal);
                 vec3 r = reflect(param_fs_lightDirection, n);
                 float h = pow((clamp(dot(r, v), 0.5, 1.0) - 0.5) * 2.0, 3.0) * 0.2;
-                float d = clamp(dot(r, n), 0.0, 1.0) + 0.5;
-                d *= 0.8 + v2f_pointColor.a * 0.4;
-                d /= 1.0 + clamp(dot(param_fs_lightDirection, n), 0.0, 1.0);
-                d /= 1.0 + exp(-v2f_height * 0.05) * 0.3;
+                float a = floor(atan(n.z, n.x) * 2.0) * 0.5;
+                vec2 s = n.y > n.x && n.y > n.z ? vec2(0.0, 0.0) : vec2(sin(a), cos(a)) + v2f_pointColor.a;
+                float d = (dot(-param_fs_lightDirection, n) + 1.0) * 0.5 + 0.2;
+                d *= fract(sin(dot(s, vec2(12.9898, 78.233))) * 43758.5453) * 0.2 + 0.9;
+                d /= 1.0 + exp(-v2f_height * 0.05) * 0.25;
                 vec3 dc = clamp(v2f_pointColor.rgb * d, 0.0, 1.0);
                 FRAGMENT_COLOR_OUTPUT = vec4(mix(dc, vec3(1.0), h), param_fs_alpha);
             }

@@ -65,7 +65,8 @@ namespace OsmAnd
         std::shared_ptr<IMapElevationDataProvider> _elevationProvider;
 
         void processPrimitive(const BuildingPrimitive& primitive,
-            Buildings3D& buildings3D,
+            QVector<BuildingVertex>& vertices,
+            QVector<uint16_t>& indices,
             const QHash<TileId, std::shared_ptr<IMapElevationDataProvider::Data>>& elevationData,
             const TileId& tileId,
             const ZoomLevel zoom,
@@ -137,7 +138,8 @@ namespace OsmAnd
         uint32_t getPolygonColor(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive) const;
 
         void generateBuildingWall(
-            Buildings3D& buildings3D,
+            QVector<BuildingVertex>& vertices,
+            QVector<uint16_t>& indices,
             const PointI& point31_i,
             const PointI& point31_next,
             const glm::vec3& edgeNormal,
