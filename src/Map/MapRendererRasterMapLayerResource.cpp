@@ -83,6 +83,8 @@ bool OsmAnd::MapRendererRasterMapLayerResource::obtainData(
         return false;
     dataAvailable = static_cast<bool>(tiledData);
     
+    QWriteLocker scopedLocker(&_sourceDataLock);
+
     // Store data
     if (dataAvailable)
         _sourceData = std::static_pointer_cast<IRasterMapLayerProvider::Data>(tiledData);
@@ -157,6 +159,8 @@ void OsmAnd::MapRendererRasterMapLayerResource::obtainDataAsync(
                 }
                 if (const auto resourcesManager = weakManager.lock())
                 {
+                    QWriteLocker scopedLocker(&self->_sourceDataLock);
+
                     self->_sourceData = std::static_pointer_cast<IRasterMapLayerProvider::Data>(data);
 
                     // Convert data if such is present
@@ -178,7 +182,13 @@ void OsmAnd::MapRendererRasterMapLayerResource::obtainDataAsync(
 
 bool OsmAnd::MapRendererRasterMapLayerResource::uploadToGPU()
 {
-    auto sourceData = _sourceData;
+    std::shared_ptr<IRasterMapLayerProvider::Data> sourceData;
+    {
+        QReadLocker scopedLocker(&_sourceDataLock);
+
+        sourceData = _sourceData;
+    }
+
     if (!sourceData)
         return true;
 
@@ -190,7 +200,11 @@ bool OsmAnd::MapRendererRasterMapLayerResource::uploadToGPU()
     _retainableCacheMetadata = sourceData->retainableCacheMetadata;
     // Remove data in case it contains constant (single) raster image only
     if (sourceData->images.size() <= 1)
+    {
+        QWriteLocker scopedLocker(&_sourceDataLock);
+
         _sourceData.reset();
+    }
 
     return true;
 }
@@ -220,5 +234,8 @@ void OsmAnd::MapRendererRasterMapLayerResource::lostDataInGPU()
 void OsmAnd::MapRendererRasterMapLayerResource::releaseData()
 {
     _retainableCacheMetadata.reset();
+
+    QWriteLocker scopedLocker(&_sourceDataLock);
+
     _sourceData.reset();
 }

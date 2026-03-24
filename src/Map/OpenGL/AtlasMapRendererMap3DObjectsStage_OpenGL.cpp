@@ -142,7 +142,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
                 vec3 v = normalize(param_fs_cameraPosition - v2f_pointPosition);
                 vec3 n = normalize(v2f_pointNormal);
                 float a = atan(n.x, n.z);
-                vec2 p = v2f_sizes.zw + 10.0;
+                vec2 p = abs(v2f_sizes.zw) + 10.0;
                 vec2 g = (pow(v2f_sizes.xy, p) - pow(1.0 - v2f_sizes.xy, p)) * 0.4;
                 g.x = dot(-param_fs_lightDirection, n) < 0.0 ? -g.x : g.x;
                 bool top = abs(n.y) > abs(n.x) && abs(n.y) > abs(n.z);
@@ -152,7 +152,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
                 float qa = floor(a * 2.0) * 0.5;
                 vec2 s = top ? vec2(0.0, 0.0) : vec2(sin(qa), cos(qa)) + v2f_pointColor.a;
                 float d = (dot(-param_fs_lightDirection, n) + 1.0) * 0.5 + 0.25;
-                d *= fract(sin(dot(s, vec2(12.9898, 78.233))) * 43758.5453) * 0.2 + 0.9;
+                d *= v2f_sizes.z > 0.0 ? fract(sin(dot(s, vec2(12.9898, 78.233))) * 43758.5453) * 0.2 + 0.9 : 1.0;
                 d /= 1.0 + exp(-v2f_height * 0.05) * 0.25;
                 vec3 dc = clamp(v2f_pointColor.rgb * d, 0.0, 1.0);
                 FRAGMENT_COLOR_OUTPUT = vec4(mix(dc, vec3(1.0), h), param_fs_alpha);

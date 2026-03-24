@@ -13,8 +13,14 @@
 
 #include "IMapTiledSymbolsProvider.h"
 
-// ~ Maximum allowed inaccuracy of passage coordinates
-#define PASSAGE_MAX_WALL_INACCURACY 50.0
+// Minimum allowed distance between corners
+#define MIN_ALLOWED_SQR_DISTANCE 100.0 // ~20cm
+
+// Maximum allowed inaccuracy of passage coordinates
+#define PASSAGE_MAX_WALL_INACCURACY 50.0 // ~1m
+
+// Minimum cosine of the angle between adjacent walls that must be drawn seamlessly
+#define MIN_COSINE_CURVED_WALL 0.866 // ~30deg
 
 #define PASSAGE_DEFAULT_WIDTH 2.0
 #define PASSAGE_DEFAULT_HEIGHT 2.5
@@ -704,15 +710,44 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         const auto& points = polyIdx < 0 ? points31 : innerPolygons[polyIdx];
 
         int count = polyIdx < 0 ? edgePointsCount : points.size();
-        for (int i = 0; i < count; ++i)
+        glm::vec3 prevNormal, nextNormal;
+        bool prevCurved, nextCurved;
+        for (int i = 0; i < count + 1; i++)
         {
-            const int next = (i + 1) % count;
-            const auto& point31_i = points[i];
-            const auto& point31_next = points[next];
-            const auto edgeNormal = calculateNormalFrom2Points(point31_i, point31_next);
+            const auto& point31_i = points[i % count];
+            auto point31_next = points[(i + 1) % count];
+            auto point31_future = points[(i + 2) % count];
+            auto nextSide = glm::dvec2(point31_future.x - point31_next.x, point31_future.y - point31_next.y);
+            auto nextSideLengthSqr = nextSide.x * nextSide.x + nextSide.y * nextSide.y;
+            if (i > 0 && nextSideLengthSqr < MIN_ALLOWED_SQR_DISTANCE)
+            {
+                i++;
+                point31_next = points[(i + 1) % count];
+                point31_future = points[(i + 2) % count];
+                nextSide = glm::dvec2(point31_future.x - point31_next.x, point31_future.y - point31_next.y);
+                nextSideLengthSqr = nextSide.x * nextSide.x + nextSide.y * nextSide.y;
+            }
+            const auto nextSideN = nextSide / qSqrt(nextSideLengthSqr);
             const auto side = glm::dvec2(point31_next.x - point31_i.x, point31_next.y - point31_i.y);
             const auto sideLengthSqr = side.x * side.x + side.y * side.y;
             const auto sideLength = qSqrt(sideLengthSqr);
+            const auto sideN = side / sideLength;
+            prevCurved = nextCurved;
+            if (prevCurved)
+                prevNormal = nextNormal;
+            nextNormal = calculateNormalFrom2Points(point31_i, point31_next);
+            if (!prevCurved)
+                prevNormal = nextNormal;
+            nextCurved = glm::dot(sideN, nextSideN) >= MIN_COSINE_CURVED_WALL;
+            if (nextCurved)
+            {
+                const auto avgLine = glm::normalize(sideN + nextSideN);
+                nextNormal = glm::vec3(-avgLine.y, 0.0f, avgLine.x);
+            }
+
+            if (i == 0)
+                continue;
+
             const auto width31 = static_cast<float>(sideLength);
 
             QList<PassagePrimitive*> passagePrimitives;
@@ -720,7 +755,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             {
                 if (qFuzzyIsNull(sideLengthSqr))
                     continue;
-                const auto sideN = side / sideLength;
+
+                const auto hSize = prevCurved || nextCurved ? -width31 * 2.0f : width31;
                 const auto vSize = height - minHeight;
 
                 for (auto passage : passages)
@@ -747,24 +783,28 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                                 proj = side * backDistance;
                                 proj31 = PointI(qRound(proj.x), qRound(proj.y));
                                 const auto pointLeft = point31 - proj31;
-                                const auto leftN = distN - backDistance;
+                                const auto leftN = prevCurved ? 0.5f : static_cast<float>(distN - backDistance);
+                                const auto leftNormal = prevCurved ?
+                                    glm::normalize(prevNormal + (nextNormal - prevNormal) * leftN) : prevNormal;
                                 passage->startBottomLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
-                                    glm::vec4(leftN, 0.0f, width31, vSize),
-                                    glm::vec2(minHeight, baseTerrainHeight), edgeNormal, colorVec};
+                                    glm::vec4(leftN, 0.0f, hSize, vSize),
+                                    glm::vec2(minHeight, baseTerrainHeight), leftNormal, colorVec};
                                 passage->startTopLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
-                                    glm::vec4(leftN, vOffset, width31, vSize),
-                                    glm::vec2(passage->height, terrainHeight), edgeNormal, colorVec};
+                                    glm::vec4(leftN, vOffset, hSize, vSize),
+                                    glm::vec2(passage->height, terrainHeight), leftNormal, colorVec};
                                 const auto forthDistance = 1.0 - distN > halfN ? halfN : minGapN;
                                 proj = side * forthDistance;
                                 proj31 = PointI(qRound(proj.x), qRound(proj.y));
                                 const auto pointRight = point31 + proj31;
-                                const auto rightN = distN + forthDistance;
+                                const auto rightN = nextCurved ? 0.5f : static_cast<float>(distN + forthDistance);
+                                const auto rightNormal = nextCurved ?
+                                    glm::normalize(prevNormal + (nextNormal - prevNormal) * rightN) : nextNormal;
                                 passage->startBottomRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
-                                    glm::vec4(rightN, 0.0f, width31, vSize),
-                                    glm::vec2(minHeight, baseTerrainHeight), edgeNormal, colorVec};
+                                    glm::vec4(rightN, 0.0f, hSize, vSize),
+                                    glm::vec2(minHeight, baseTerrainHeight), rightNormal, colorVec};
                                 passage->startTopRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
-                                    glm::vec4(rightN, vOffset, width31, vSize),
-                                    glm::vec2(passage->height, terrainHeight), edgeNormal, colorVec};
+                                    glm::vec4(rightN, vOffset, hSize, vSize),
+                                    glm::vec2(passage->height, terrainHeight), rightNormal, colorVec};
                                 passage->startingPoint.x = qRound((distN - backDistance) * sideLength);
                                 passage->startingPoint.y = qRound((distN + forthDistance) * sideLength);
                                 passage->putStart = true;
@@ -794,24 +834,28 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                                 proj = side * backDistance;
                                 proj31 = PointI(qRound(proj.x), qRound(proj.y));
                                 const auto pointLeft = point31 - proj31;
-                                const auto leftN = distN - backDistance;
+                                const auto leftN = prevCurved ? 0.5f : static_cast<float>(distN - backDistance);
+                                const auto leftNormal = prevCurved ?
+                                    glm::normalize(prevNormal + (nextNormal - prevNormal) * leftN) : prevNormal;
                                 passage->endBottomLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
-                                    glm::vec4(leftN, 0.0f, width31, vSize),
-                                    glm::vec2(minHeight, baseTerrainHeight), edgeNormal, colorVec};
+                                    glm::vec4(leftN, 0.0f, hSize, vSize),
+                                    glm::vec2(minHeight, baseTerrainHeight), leftNormal, colorVec};
                                 passage->endTopLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
-                                    glm::vec4(leftN, vOffset, width31, vSize),
-                                    glm::vec2(passage->height, terrainHeight), edgeNormal, colorVec};
+                                    glm::vec4(leftN, vOffset, hSize, vSize),
+                                    glm::vec2(passage->height, terrainHeight), leftNormal, colorVec};
                                 const auto forthDistance = 1.0 - distN > halfN ? halfN : minGapN;
                                 proj = side * forthDistance;
                                 proj31 = PointI(qRound(proj.x), qRound(proj.y));
                                 const auto pointRight = point31 + proj31;
-                                const auto rightN = distN + forthDistance;
+                                const auto rightN = nextCurved ? 0.5f : static_cast<float>(distN + forthDistance);
+                                const auto rightNormal = nextCurved ?
+                                    glm::normalize(prevNormal + (nextNormal - prevNormal) * rightN) : nextNormal;
                                 passage->endBottomRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
-                                    glm::vec4(rightN, 0.0f, width31, vSize),
-                                    glm::vec2(minHeight, baseTerrainHeight), edgeNormal, colorVec};
+                                    glm::vec4(rightN, 0.0f, hSize, vSize),
+                                    glm::vec2(minHeight, baseTerrainHeight), rightNormal, colorVec};
                                 passage->endTopRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
-                                    glm::vec4(rightN, vOffset, width31, vSize),
-                                    glm::vec2(passage->height, terrainHeight), edgeNormal, colorVec};
+                                    glm::vec4(rightN, vOffset, hSize, vSize),
+                                    glm::vec2(passage->height, terrainHeight), rightNormal, colorVec};
                                 passage->endingPoint.x = qRound((distN - backDistance) * sideLength);
                                 passage->endingPoint.y = qRound((distN + forthDistance) * sideLength);
                                 passage->putEnd = true;
@@ -828,7 +872,10 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                 indices,
                 point31_i,
                 point31_next,
-                edgeNormal,
+                prevNormal,
+                nextNormal,
+                prevCurved,
+                nextCurved,
                 minHeight,
                 height,
                 baseTerrainHeight,
@@ -1032,16 +1079,16 @@ inline OsmAnd::BuildingVertex Map3DObjectsTiledProvider_P::getIntersection(
     BuildingVertex vertex = startVertex;
     vertex.location31.x += qRound(static_cast<double>(endVertex.location31.x - startVertex.location31.x) * range);
     vertex.location31.y += qRound(static_cast<double>(endVertex.location31.y - startVertex.location31.y) * range);
-    const auto factor = static_cast<float>(range);
+    vertex.sizes = glm::dvec4(vertex.sizes) + glm::dvec4(endVertex.sizes - startVertex.sizes) * range;
     if (startVertex.heights.x != 0.0f && endVertex.heights.x != 0.0f)
-        vertex.sizes = glm::dvec4(vertex.sizes) + glm::dvec4(endVertex.sizes - startVertex.sizes) * range;
+        vertex.heights = glm::dvec2(vertex.heights) + glm::dvec2(endVertex.heights - startVertex.heights) * range;
     else
     {
-        vertex.sizes.x += (endVertex.sizes.x - startVertex.sizes.x) * factor;
         vertex.sizes.y = 0.0f;
         vertex.heights.x = 0.0f;
         vertex.heights.y = startVertex.heights.x == 0.0f ? startVertex.heights.y : endVertex.heights.y;
     }
+    const auto factor = static_cast<float>(range);
     vertex.normal = glm::normalize(startVertex.normal + (endVertex.normal - startVertex.normal) * factor);
     vertex.color += (endVertex.color - startVertex.color) * factor;
     return vertex;
@@ -1342,7 +1389,10 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     QVector<uint16_t>& indices,
     const PointI& point31_i,
     const PointI& point31_next,
-    const glm::vec3& edgeNormal,
+    const glm::vec3& prevNormal,
+    const glm::vec3& nextNormal,
+    bool prevCurved,
+    bool nextCurved,
     float minHeight,
     float height,
     float baseTerrainHeight,
@@ -1356,15 +1406,20 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     const uint32_t baseVertexOffset = vertices.size();
 
     // Should match the side order (counter-clockwise)
+    const auto hSize = prevCurved || nextCurved ? -width31 * 2.0f : width31;
     const auto vSize = height - minHeight;
     vertices.append({glm::ivec2(point31_next.x, point31_next.y),
-        glm::vec4(1.0f, 0.0f, width31, vSize), glm::vec2(minHeight, baseTerrainHeight), edgeNormal, colorVec});
+        glm::vec4(nextCurved ? 0.5f : 1.0f, 0.0f, hSize, vSize),
+        glm::vec2(minHeight, baseTerrainHeight), nextNormal, colorVec});
     vertices.append({glm::ivec2(point31_next.x, point31_next.y),
-        glm::vec4(1.0f, 1.0f, width31, vSize), glm::vec2(height, terrainHeight), edgeNormal, colorVec});
+        glm::vec4(nextCurved ? 0.5f : 1.0f, 1.0f, hSize, vSize),
+        glm::vec2(height, terrainHeight), nextNormal, colorVec});
     vertices.append({glm::ivec2(point31_i.x, point31_i.y),
-        glm::vec4(0.0f, 1.0f, width31, vSize), glm::vec2(height, terrainHeight), edgeNormal, colorVec});
+        glm::vec4(prevCurved ? 0.5f : 0.0f, 1.0f, hSize, vSize),
+        glm::vec2(height, terrainHeight), prevNormal, colorVec});
     vertices.append({glm::ivec2(point31_i.x, point31_i.y),
-        glm::vec4(0.0f, 0.0f, width31, vSize), glm::vec2(minHeight, baseTerrainHeight), edgeNormal, colorVec});
+        glm::vec4(prevCurved ? 0.5f : 0.0f, 0.0f, hSize, vSize),
+        glm::vec2(minHeight, baseTerrainHeight), prevNormal, colorVec});
 
     if (!passagePrimitives.isEmpty())
     {

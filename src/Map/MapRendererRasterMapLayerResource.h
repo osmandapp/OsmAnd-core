@@ -29,6 +29,7 @@ namespace OsmAnd
             const ZoomLevel zoom);
 
         std::shared_ptr<IRasterMapLayerProvider::Data> _sourceData;
+        mutable QReadWriteLock _sourceDataLock;
         std::shared_ptr<const GPUAPI::ResourceInGPU> _resourceInGPU;
 
         virtual bool supportsObtainDataAsync() const Q_DECL_OVERRIDE;
