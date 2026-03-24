@@ -1684,8 +1684,8 @@ bool OsmAnd::MapRenderer::remove3DObjectColor(const PointI& location31)
     {
         const auto map3DObjectsProvider =
             std::static_pointer_cast<Map3DObjectsTiledProvider>(_requestedState.map3DObjectsProvider);
-        map3DObjectsProvider->removeObjectColor(TileId::fromXY(location31.x, location31.y));
-        notifyRequestedStateWasUpdated(MapRendererStateChange::Map3DObjects_Configuration);
+        if (map3DObjectsProvider->removeObjectColor(TileId::fromXY(location31.x, location31.y)))
+            notifyRequestedStateWasUpdated(MapRendererStateChange::Map3DObjects_Configuration);
         return true;
     }
 
@@ -1700,8 +1700,8 @@ bool OsmAnd::MapRenderer::removeAll3DObjectColors()
     {
         const auto map3DObjectsProvider =
             std::static_pointer_cast<Map3DObjectsTiledProvider>(_requestedState.map3DObjectsProvider);
-        map3DObjectsProvider->removeAllObjectColors();
-        notifyRequestedStateWasUpdated(MapRendererStateChange::Map3DObjects_Configuration);
+        if (map3DObjectsProvider->removeAllObjectColors())
+            notifyRequestedStateWasUpdated(MapRendererStateChange::Map3DObjects_Configuration);
         return true;
     }
 

@@ -13,8 +13,8 @@ namespace OsmAnd
     struct BuildingVertex
     {
         glm::ivec2 location31;
-        float height;
-        float terrainHeight;
+        glm::vec4 sizes;
+        glm::vec2 heights;
         glm::vec3 normal;
         glm::vec4 color;
     };

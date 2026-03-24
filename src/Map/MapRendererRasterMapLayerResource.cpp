@@ -190,7 +190,7 @@ bool OsmAnd::MapRendererRasterMapLayerResource::uploadToGPU()
     _retainableCacheMetadata = sourceData->retainableCacheMetadata;
     // Remove data in case it contains constant (single) raster image only
     if (sourceData->images.size() <= 1)
-        sourceData.reset();
+        _sourceData.reset();
 
     return true;
 }

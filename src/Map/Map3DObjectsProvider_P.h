@@ -147,6 +147,7 @@ namespace OsmAnd
             float height,
             float baseTerrainHeight,
             float terrainHeight,
+            float width31,
             const PointI& minTile31,
             const PointI& maxTile31,
             const glm::vec4& colorVec,
@@ -187,8 +188,8 @@ namespace OsmAnd
 
         void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationProvider);
         void addObjectColor(const TileId& location31, const FColorRGB& color);
-        void removeObjectColor(const TileId& location31);
-        void removeAllObjectColors();
+        bool removeObjectColor(const TileId& location31);
+        bool removeAllObjectColors();
 
         friend class OsmAnd::Map3DObjectsTiledProvider;
 

@@ -661,7 +661,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     {
         const int next = (i + 1) % edgePointsCount;
         const auto& p = points31[i];
-        BuildingVertex v{glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec};
+        BuildingVertex v{glm::ivec2(p.x, p.y),
+            glm::vec4(0.0f), glm::vec2(height, terrainHeight), glm::vec3(0.0f, 1.0f, 0.0f), colorVec};
 
         outerRing.push_back({p.x, p.y});
         vertices.append(v);
@@ -675,7 +676,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
 
         for (const auto& p : innerPoly)
         {
-            BuildingVertex v{glm::ivec2(p.x, p.y), height, terrainHeight, glm::vec3(0.0f, 1.0f, 0.0f), colorVec};
+            BuildingVertex v{glm::ivec2(p.x, p.y),
+                glm::vec4(0.0f), glm::vec2(height, terrainHeight), glm::vec3(0.0f, 1.0f, 0.0f), colorVec};
 
             innerRing.push_back({p.x, p.y});
             vertices.append(v);
@@ -707,18 +709,19 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             const int next = (i + 1) % count;
             const auto& point31_i = points[i];
             const auto& point31_next = points[next];
-            const auto centerPoint = (PointI64(point31_i) + PointI64(point31_next)) / 2;
             const auto edgeNormal = calculateNormalFrom2Points(point31_i, point31_next);
+            const auto side = glm::dvec2(point31_next.x - point31_i.x, point31_next.y - point31_i.y);
+            const auto sideLengthSqr = side.x * side.x + side.y * side.y;
+            const auto sideLength = qSqrt(sideLengthSqr);
+            const auto width31 = static_cast<float>(sideLength);
 
             QList<PassagePrimitive*> passagePrimitives;
             if (!passages.isEmpty())
             {
-                const auto side = glm::dvec2(point31_next.x - point31_i.x, point31_next.y - point31_i.y);
-                const auto sideLengthSqr = side.x * side.x + side.y * side.y;
-                const auto sideLength = qSqrt(sideLengthSqr);
                 if (qFuzzyIsNull(sideLengthSqr))
                     continue;
                 const auto sideN = side / sideLength;
+                const auto vSize = height - minHeight;
 
                 for (auto passage : passages)
                 {
@@ -739,22 +742,29 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                             const auto dist = (point31 - passage->startingPoint).norm();
                             if (dist < inaccuracy)
                             {
+                                const auto vOffset = passage->height / height;
                                 const auto backDistance = distN > halfN ? halfN : minGapN;
                                 proj = side * backDistance;
                                 proj31 = PointI(qRound(proj.x), qRound(proj.y));
                                 const auto pointLeft = point31 - proj31;
+                                const auto leftN = distN - backDistance;
                                 passage->startBottomLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
-                                    minHeight, baseTerrainHeight, edgeNormal, colorVec};
+                                    glm::vec4(leftN, 0.0f, width31, vSize),
+                                    glm::vec2(minHeight, baseTerrainHeight), edgeNormal, colorVec};
                                 passage->startTopLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
-                                    passage->height, terrainHeight, edgeNormal, colorVec};
+                                    glm::vec4(leftN, vOffset, width31, vSize),
+                                    glm::vec2(passage->height, terrainHeight), edgeNormal, colorVec};
                                 const auto forthDistance = 1.0 - distN > halfN ? halfN : minGapN;
                                 proj = side * forthDistance;
                                 proj31 = PointI(qRound(proj.x), qRound(proj.y));
                                 const auto pointRight = point31 + proj31;
+                                const auto rightN = distN + forthDistance;
                                 passage->startBottomRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
-                                    minHeight, baseTerrainHeight, edgeNormal, colorVec};
+                                    glm::vec4(rightN, 0.0f, width31, vSize),
+                                    glm::vec2(minHeight, baseTerrainHeight), edgeNormal, colorVec};
                                 passage->startTopRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
-                                    passage->height, terrainHeight, edgeNormal, colorVec};
+                                    glm::vec4(rightN, vOffset, width31, vSize),
+                                    glm::vec2(passage->height, terrainHeight), edgeNormal, colorVec};
                                 passage->startingPoint.x = qRound((distN - backDistance) * sideLength);
                                 passage->startingPoint.y = qRound((distN + forthDistance) * sideLength);
                                 passage->putStart = true;
@@ -779,22 +789,29 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                             const auto dist = (point31 - passage->endingPoint).norm();
                             if (dist < inaccuracy)
                             {
+                                const auto vOffset = passage->height / height;
                                 const auto backDistance = distN > halfN ? halfN : minGapN;
                                 proj = side * backDistance;
                                 proj31 = PointI(qRound(proj.x), qRound(proj.y));
                                 const auto pointLeft = point31 - proj31;
+                                const auto leftN = distN - backDistance;
                                 passage->endBottomLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
-                                    minHeight, baseTerrainHeight, edgeNormal, colorVec};
+                                    glm::vec4(leftN, 0.0f, width31, vSize),
+                                    glm::vec2(minHeight, baseTerrainHeight), edgeNormal, colorVec};
                                 passage->endTopLeft = BuildingVertex{glm::ivec2(pointLeft.x, pointLeft.y),
-                                    passage->height, terrainHeight, edgeNormal, colorVec};
+                                    glm::vec4(leftN, vOffset, width31, vSize),
+                                    glm::vec2(passage->height, terrainHeight), edgeNormal, colorVec};
                                 const auto forthDistance = 1.0 - distN > halfN ? halfN : minGapN;
                                 proj = side * forthDistance;
                                 proj31 = PointI(qRound(proj.x), qRound(proj.y));
                                 const auto pointRight = point31 + proj31;
+                                const auto rightN = distN + forthDistance;
                                 passage->endBottomRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
-                                    minHeight, baseTerrainHeight, edgeNormal, colorVec};
+                                    glm::vec4(rightN, 0.0f, width31, vSize),
+                                    glm::vec2(minHeight, baseTerrainHeight), edgeNormal, colorVec};
                                 passage->endTopRight = BuildingVertex{glm::ivec2(pointRight.x, pointRight.y),
-                                    passage->height, terrainHeight, edgeNormal, colorVec};
+                                    glm::vec4(rightN, vOffset, width31, vSize),
+                                    glm::vec2(passage->height, terrainHeight), edgeNormal, colorVec};
                                 passage->endingPoint.x = qRound((distN - backDistance) * sideLength);
                                 passage->endingPoint.y = qRound((distN + forthDistance) * sideLength);
                                 passage->putEnd = true;
@@ -816,6 +833,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                 height,
                 baseTerrainHeight,
                 terrainHeight,
+                width31,
                 minTile31,
                 maxTile31,
                 colorVec,
@@ -1014,19 +1032,16 @@ inline OsmAnd::BuildingVertex Map3DObjectsTiledProvider_P::getIntersection(
     BuildingVertex vertex = startVertex;
     vertex.location31.x += qRound(static_cast<double>(endVertex.location31.x - startVertex.location31.x) * range);
     vertex.location31.y += qRound(static_cast<double>(endVertex.location31.y - startVertex.location31.y) * range);
-    if (startVertex.height != 0.0f && endVertex.height != 0.0f)
-    {
-        vertex.height = static_cast<float>(static_cast<double>(vertex.height)
-            + static_cast<double>(endVertex.height - startVertex.height) * range);
-        vertex.terrainHeight = static_cast<float>(static_cast<double>(vertex.terrainHeight)
-            + static_cast<double>(endVertex.terrainHeight - startVertex.terrainHeight) * range);
-    }
+    const auto factor = static_cast<float>(range);
+    if (startVertex.heights.x != 0.0f && endVertex.heights.x != 0.0f)
+        vertex.sizes = glm::dvec4(vertex.sizes) + glm::dvec4(endVertex.sizes - startVertex.sizes) * range;
     else
     {
-        vertex.height = 0.0f;
-        vertex.terrainHeight = startVertex.height == 0.0f ? startVertex.terrainHeight : endVertex.terrainHeight;
+        vertex.sizes.x += (endVertex.sizes.x - startVertex.sizes.x) * factor;
+        vertex.sizes.y = 0.0f;
+        vertex.heights.x = 0.0f;
+        vertex.heights.y = startVertex.heights.x == 0.0f ? startVertex.heights.y : endVertex.heights.y;
     }
-    const auto factor = static_cast<float>(range);
     vertex.normal = glm::normalize(startVertex.normal + (endVertex.normal - startVertex.normal) * factor);
     vertex.color += (endVertex.color - startVertex.color) * factor;
     return vertex;
@@ -1044,7 +1059,7 @@ inline void Map3DObjectsTiledProvider_P::appendOneTriangle(
     const uint16_t bi,
     const uint16_t ci) const
 {
-    if (vertices[ai].height != 0.0f)
+    if (vertices[ai].heights.x != 0.0f)
     {
         vertices.append(
             getIntersection(vertices[bi], vertices[ai], static_cast<double>(max - bd) / static_cast<double>(ad - bd)));
@@ -1069,13 +1084,13 @@ inline void Map3DObjectsTiledProvider_P::appendTwoTriangles(
     const uint16_t ci) const
 {
     int count = 0;
-    if (vertices[ai].height != 0.0f || vertices[bi].height != 0.0f)
+    if (vertices[ai].heights.x != 0.0f || vertices[bi].heights.x != 0.0f)
     {
         vertices.append(
             getIntersection(vertices[bi], vertices[ai], static_cast<double>(max - bd) / static_cast<double>(ad - bd)));
         count++;
     }
-    if (vertices[ai].height != 0.0f || vertices[ci].height != 0.0f)
+    if (vertices[ai].heights.x != 0.0f || vertices[ci].heights.x != 0.0f)
     {
         vertices.append(
             getIntersection(vertices[ci], vertices[ai], static_cast<double>(max - cd) / static_cast<double>(ad - cd)));
@@ -1288,18 +1303,23 @@ void Map3DObjectsTiledProvider_P::addObjectColor(const TileId& location31, const
     _objectColors.insert(location31, color);
 }
 
-void Map3DObjectsTiledProvider_P::removeObjectColor(const TileId& location31)
+bool Map3DObjectsTiledProvider_P::removeObjectColor(const TileId& location31)
 {
     QWriteLocker scopedLocker(&_objectColorsLock);
 
-    _objectColors.remove(location31);
+    return _objectColors.remove(location31) > 0;
 }
 
-void Map3DObjectsTiledProvider_P::removeAllObjectColors()
+bool Map3DObjectsTiledProvider_P::removeAllObjectColors()
 {
     QWriteLocker scopedLocker(&_objectColorsLock);
 
+    if (_objectColors.isEmpty())
+        return false;
+
     _objectColors.clear();
+
+    return true;
 }
 
 glm::vec3 Map3DObjectsTiledProvider_P::calculateNormalFrom2Points(PointI point31_i, PointI point31_next) const
@@ -1327,6 +1347,7 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     float height,
     float baseTerrainHeight,
     float terrainHeight,
+    float width31,
     const PointI& minTile31,
     const PointI& maxTile31,
     const glm::vec4& colorVec,
@@ -1335,10 +1356,15 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     const uint32_t baseVertexOffset = vertices.size();
 
     // Should match the side order (counter-clockwise)
-    vertices.append({glm::ivec2(point31_next.x, point31_next.y), minHeight, baseTerrainHeight, edgeNormal, colorVec});
-    vertices.append({glm::ivec2(point31_next.x, point31_next.y), height, terrainHeight, edgeNormal, colorVec});
-    vertices.append({glm::ivec2(point31_i.x, point31_i.y), height, terrainHeight, edgeNormal, colorVec});
-    vertices.append({glm::ivec2(point31_i.x, point31_i.y), minHeight, baseTerrainHeight, edgeNormal, colorVec});
+    const auto vSize = height - minHeight;
+    vertices.append({glm::ivec2(point31_next.x, point31_next.y),
+        glm::vec4(1.0f, 0.0f, width31, vSize), glm::vec2(minHeight, baseTerrainHeight), edgeNormal, colorVec});
+    vertices.append({glm::ivec2(point31_next.x, point31_next.y),
+        glm::vec4(1.0f, 1.0f, width31, vSize), glm::vec2(height, terrainHeight), edgeNormal, colorVec});
+    vertices.append({glm::ivec2(point31_i.x, point31_i.y),
+        glm::vec4(0.0f, 1.0f, width31, vSize), glm::vec2(height, terrainHeight), edgeNormal, colorVec});
+    vertices.append({glm::ivec2(point31_i.x, point31_i.y),
+        glm::vec4(0.0f, 0.0f, width31, vSize), glm::vec2(minHeight, baseTerrainHeight), edgeNormal, colorVec});
 
     if (!passagePrimitives.isEmpty())
     {
