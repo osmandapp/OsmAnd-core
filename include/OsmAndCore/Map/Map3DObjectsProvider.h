@@ -47,8 +47,8 @@ namespace OsmAnd
 
         void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& elevationProvider);
         void addObjectColor(const TileId& location31, const FColorRGB& color);
-        void removeObjectColor(const TileId& location31);
-        void removeAllObjectColors();
+        bool removeObjectColor(const TileId& location31);
+        bool removeAllObjectColors();
 
         virtual bool obtainTiledData(
             const IMapTiledDataProvider::Request& request,

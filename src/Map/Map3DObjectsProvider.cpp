@@ -86,12 +86,12 @@ void Map3DObjectsTiledProvider::addObjectColor(const TileId& location31, const F
     _p->addObjectColor(location31, color);
 }
 
-void Map3DObjectsTiledProvider::removeObjectColor(const TileId& location31)
+bool Map3DObjectsTiledProvider::removeObjectColor(const TileId& location31)
 {
-    _p->removeObjectColor(location31);
+    return _p->removeObjectColor(location31);
 }
 
-void Map3DObjectsTiledProvider::removeAllObjectColors()
+bool Map3DObjectsTiledProvider::removeAllObjectColors()
 {
-    _p->removeAllObjectColors();
+    return _p->removeAllObjectColors();
 }

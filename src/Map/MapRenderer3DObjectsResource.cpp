@@ -83,7 +83,11 @@ bool MapRenderer3DObjectsResource::obtainData(bool& dataAvailable, const std::sh
 
     // Store data
     if (dataAvailable)
+    {
+        QWriteLocker scopedLocker(&_sourceDataLock);
+
         _sourceData = std::static_pointer_cast<Map3DObjectsTiledProvider::Data>(tile);
+    }
 
     return true;
 }
@@ -121,7 +125,11 @@ void MapRenderer3DObjectsResource::obtainDataAsync(ObtainDataAsyncCallback callb
 
             // Store data
             if (dataAvailable)
+            {
+                QWriteLocker scopedLocker(&_sourceDataLock);
+
                 _sourceData = std::static_pointer_cast<Map3DObjectsTiledProvider::Data>(data);
+            }
 
             callback(requestSucceeded, dataAvailable);
         });
@@ -129,7 +137,13 @@ void MapRenderer3DObjectsResource::obtainDataAsync(ObtainDataAsyncCallback callb
 
 bool MapRenderer3DObjectsResource::uploadToGPU()
 {
-    auto sourceData = _sourceData;
+    std::shared_ptr<Map3DObjectsTiledProvider::Data> sourceData;
+    {
+        QReadLocker scopedLocker(&_sourceDataLock);
+
+        sourceData = _sourceData;
+    }
+
     if (!sourceData)
         return true;
 
@@ -138,7 +152,9 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
     if (!ok)
         return false;
 
-    sourceData.reset();
+    QWriteLocker scopedLocker(&_sourceDataLock);
+
+    _sourceData.reset();
 
     return true;
 }
@@ -167,5 +183,7 @@ void MapRenderer3DObjectsResource::lostDataInGPU()
 
 void MapRenderer3DObjectsResource::releaseData()
 {
+    QWriteLocker scopedLocker(&_sourceDataLock);
+
     _sourceData.reset();
 }

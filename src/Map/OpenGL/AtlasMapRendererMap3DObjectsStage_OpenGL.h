@@ -39,8 +39,8 @@ namespace OsmAnd
                 struct
                 {
                     GLlocation location31;
-                    GLlocation height;
-                    GLlocation terrainHeight;
+                    GLlocation sizes;
+                    GLlocation heights;
                     GLlocation normal;
                     GLlocation color;
                 } in;

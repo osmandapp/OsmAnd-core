@@ -31,6 +31,7 @@ namespace OsmAnd
             const ZoomLevel zoom);
 
         std::shared_ptr<Map3DObjectsTiledProvider::Data> _sourceData;
+        mutable QReadWriteLock _sourceDataLock;
         std::shared_ptr<const GPUAPI::MeshInGPU> _meshInGPU;
 
         bool supportsObtainDataAsync() const override;
