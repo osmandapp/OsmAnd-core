@@ -710,6 +710,9 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         const auto& points = polyIdx < 0 ? points31 : innerPolygons[polyIdx];
 
         int count = polyIdx < 0 ? edgePointsCount : points.size();
+        if (count < 3)
+            continue;
+
         glm::vec3 prevNormal, nextNormal;
         bool prevCurved, nextCurved;
         for (int i = 0; i < count + 1; i++)
