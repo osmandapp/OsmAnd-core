@@ -714,7 +714,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             continue;
 
         glm::vec3 prevNormal, nextNormal;
-        bool prevCurved, nextCurved;
+        bool prevCurved = false;
+        bool nextCurved = false;
         for (int i = 0; i < count + 1; i++)
         {
             const auto& point31_i = points[i % count];
