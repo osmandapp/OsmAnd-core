@@ -30,6 +30,7 @@ namespace OsmAnd
 
         std::shared_ptr<IRasterMapLayerProvider::Data> _sourceData;
         mutable QReadWriteLock _sourceDataLock;
+        volatile bool withTimedImages;
         std::shared_ptr<const GPUAPI::ResourceInGPU> _resourceInGPU;
 
         virtual bool supportsObtainDataAsync() const Q_DECL_OVERRIDE;

@@ -382,7 +382,7 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
                     {
                         const auto dZoom = static_cast<ZoomLevel>(resource->detailedZoom.loadAcquire());
                         bool otherZoom = isDetailChanged && dZoom != InvalidZoomLevel && dZoom != detailedZoom;
-                        bool withTimedData = resource->_sourceData && resource->_sourceData->images.size() > 1;
+                        bool withTimedData = resource->withTimedImages;
                         auto state = resource->getState();
                         if (withTimedData && !isPeriodChanged
                             && (state == MapRendererResourceState::Uploading

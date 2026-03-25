@@ -11,6 +11,7 @@ OsmAnd::MapRendererRasterMapLayerResource::MapRendererRasterMapLayerResource(
     const ZoomLevel zoom_)
     : MapRendererBaseTiledResource(owner_, MapRendererResourceType::MapLayer, collection_, tileId_, zoom_)
     , detailedZoom(InvalidZoomLevel)
+    , withTimedImages(false)
 {
 }
 
@@ -97,7 +98,10 @@ bool OsmAnd::MapRendererRasterMapLayerResource::obtainData(
             image = resourcesManager->adjustImageToConfiguration(
                 image, _sourceData->alphaChannelPresence);
         }
+        withTimedImages = _sourceData->images.size() > 1;
     }
+    else
+        withTimedImages = false;
 
     return true;
 }
@@ -171,7 +175,10 @@ void OsmAnd::MapRendererRasterMapLayerResource::obtainDataAsync(
                             image = resourcesManager->adjustImageToConfiguration(
                                 image, self->_sourceData->alphaChannelPresence);
                         }
+                        self->withTimedImages = self->_sourceData->images.size() > 1;
                     }
+                    else
+                        self->withTimedImages = false;
                 }
                 else
                     return;
@@ -233,6 +240,8 @@ void OsmAnd::MapRendererRasterMapLayerResource::lostDataInGPU()
 
 void OsmAnd::MapRendererRasterMapLayerResource::releaseData()
 {
+    withTimedImages = false;
+
     _retainableCacheMetadata.reset();
 
     QWriteLocker scopedLocker(&_sourceDataLock);
