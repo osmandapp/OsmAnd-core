@@ -94,13 +94,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
             "                                                                                                                   ""\n"
             // Parameters: common data
             "uniform vec3 param_fs_cameraPosition;                                                                              ""\n"
+            "uniform vec3 param_fs_lightDirection;                                                                              ""\n"
             "                                                                                                                   ""\n"
             "void main()                                                                                                        ""\n"
             "{                                                                                                                  ""\n"
             "    vec3 v = normalize(param_fs_cameraPosition - v2f_pointPosition);                                               ""\n"
             "    vec3 n = normalize(v2f_pointNormal);                                                                           ""\n"
-            "    vec3 l = normalize(vec3(1.0, -1.0, 1.0));                                                                      ""\n"
-            "    vec3 r = reflect(l, n);                                                                                        ""\n"
+            "    vec3 r = reflect(param_fs_lightDirection, n);                                                                  ""\n"
             "    float h = pow((clamp(dot(r, v), 0.5, 1.0) - 0.5) * 2.0, 6.0) / 2.0;                                            ""\n"
             "    float d = clamp(dot(r, n), 0.0, 1.0) + 0.5;                                                                    ""\n"
             "    vec3 dc = clamp(v2f_pointColor.rgb * d, 0.0, 1.0);                                                             ""\n"
@@ -170,6 +170,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
     ok = ok && lookup->lookupLocation(_program.vs.param.mModel, "param_vs_mModel", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.positionInWorld, "param_vs_positionInWorld", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.cameraPosition, "param_fs_cameraPosition", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.fs.param.lightDirection, "param_fs_lightDirection", GlslVariableType::Uniform);
     if (!ok)
     {
         glDeleteProgram(_program.id);
@@ -224,6 +225,17 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStageModel3
             internalState.worldCameraPosition.x,
             internalState.worldCameraPosition.y,
             internalState.worldCameraPosition.z);
+        GL_CHECK_RESULT;
+
+        const auto zenith = glm::radians(currentState.elevationConfiguration.hillshadeSunAngle);
+        const auto azimuth = glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth);
+        const auto cosZenith = qCos(zenith);
+
+        // Set light direction
+        glUniform3f(_program.fs.param.lightDirection,
+            -qSin(azimuth) * cosZenith,
+            -qSin(zenith),
+            qCos(azimuth) * cosZenith);
         GL_CHECK_RESULT;
 
         // Just in case un-use any possibly used VAO

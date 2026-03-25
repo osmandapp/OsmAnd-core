@@ -721,23 +721,9 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
 
     float buildingAlpha = renderer->get3DBuildingsAlpha();
 
-//    const auto zenith = glm::radians(currentState.elevationConfiguration.hillshadeSunAngle);
-//    const auto cosZenith = qCos(zenith);
-//    const auto sinZenith = qSin(zenith);
-//    const auto azimuth = M_PI - glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth);
-//    const auto cosAzimuth = qCos(azimuth);
-//    const auto sinAzimuth = qSin(azimuth);
-//
-//    const glm::vec3 lightDir = glm::normalize(glm::vec3(sinAzimuth * cosZenith, -sinZenith, cosAzimuth * cosZenith));
-
-    const auto zenith = glm::radians(60.0);
+    const auto zenith = glm::radians(currentState.elevationConfiguration.hillshadeSunAngle);
+    const auto azimuth = glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth);
     const auto cosZenith = qCos(zenith);
-    const auto sinZenith = qSin(zenith);
-    const auto azimuth = glm::radians(45.0);
-    const auto cosAzimuth = qCos(azimuth);
-    const auto sinAzimuth = qSin(azimuth);
-    
-    const glm::vec3 lightDir = glm::normalize(glm::vec3(sinAzimuth * cosZenith, -sinZenith, cosAzimuth * cosZenith));
 
     glUseProgram(_program.id);
     GL_CHECK_RESULT;
@@ -761,7 +747,10 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
         internalState.worldCameraPosition.y,
         internalState.worldCameraPosition.z);
     GL_CHECK_RESULT;
-    glUniform3f(*_program.fs.param.lightDirection, lightDir.x, lightDir.y, lightDir.z);
+    glUniform3f(*_program.fs.param.lightDirection,
+        -qSin(azimuth) * cosZenith,
+        -qSin(zenith),
+        qCos(azimuth) * cosZenith);
     GL_CHECK_RESULT;
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

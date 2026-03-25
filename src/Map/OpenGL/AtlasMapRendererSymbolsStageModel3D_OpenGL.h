@@ -52,6 +52,7 @@ namespace OsmAnd
                 {
                     // Common data
                     GLlocation cameraPosition;
+                    GLlocation lightDirection;
                 } param;
             } fs;
         } _program;

@@ -1156,11 +1156,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "#endif                                                                                                             ""\n"
             "        float M_PI = 3.1415926535897932384626433832795;                                                            ""\n"
             "        float lsl = length(slopes);                                                                                ""\n"
-            "        vec2 sl = slopes * param_fs_hillshade.zw;                                                                  ""\n"
-            "        float hsLight = (param_fs_hillshade.x + sl.x - sl.y) / sqrt(1.0 + lsl * lsl) * (1.0 - atan(lsl) / M_PI);   ""\n"
+            "        vec2 sl = -param_fs_hillshade.xz * slopes;                                                                 ""\n"
+            "        float hsLight = (sl.x - sl.y - param_fs_hillshade.y) / sqrt(1.0 + lsl * lsl) * (1.0 - atan(lsl) / M_PI);   ""\n"
             "        float hsAlpha = hsLight < 0.7 ? (0.7 - hsLight) / 0.7 * 0.6 : (hsLight - 0.7) / 0.3 * 0.2;                 ""\n"
             "        vec4 hsColor = hsLight < 0.7 ? vec4(0.0, 0.0, 0.0, hsAlpha) : vec4(1.0, 1.0, 1.0, hsAlpha);                ""\n"
-            "        hsColor.a *= param_fs_hillshade.y;                                                                         ""\n"
+            "        hsColor.a *= param_fs_hillshade.w;                                                                         ""\n"
             "        mixColors(finalColor, hsColor);                                                                            ""\n"
             "    }                                                                                                              ""\n");
         fragmentShader.append(QStringLiteral(
@@ -2259,13 +2259,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     if (withHillshade)
     {
         const auto zenith = glm::radians(currentState.elevationConfiguration.hillshadeSunAngle);
+        const auto azimuth = glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth);
         const auto cosZenith = qCos(zenith);
-        const auto azimuth = M_PI - glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth);
         glUniform4f(program.fs.param.hillshade,
-            qSin(zenith),
-            currentState.elevationConfiguration.visualizationAlpha,
-            qSin(azimuth) * cosZenith,
-            qCos(azimuth) * cosZenith);
+            -qSin(azimuth) * cosZenith,
+            -qSin(zenith),
+            qCos(azimuth) * cosZenith,
+            currentState.elevationConfiguration.visualizationAlpha);
         GL_CHECK_RESULT;
     }
 
