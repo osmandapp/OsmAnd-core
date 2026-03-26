@@ -205,13 +205,6 @@ bool OsmAnd::MapRendererRasterMapLayerResource::uploadToGPU()
 
     // Since content was uploaded to GPU, it's safe to release it keeping retainable data
     _retainableCacheMetadata = sourceData->retainableCacheMetadata;
-    // Remove data in case it contains constant (single) raster image only
-    if (sourceData->images.size() <= 1)
-    {
-        QWriteLocker scopedLocker(&_sourceDataLock);
-
-        _sourceData.reset();
-    }
 
     return true;
 }
