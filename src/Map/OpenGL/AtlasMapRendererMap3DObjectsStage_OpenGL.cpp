@@ -145,7 +145,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
                 bool dark = dot(-param_fs_lightDirection, n) < 0.0;
                 float a = atan(n.x, n.z);
                 vec2 p = abs(v2f_sizes.zw) + 10.0;
-                vec2 g = (pow(v2f_sizes.xy, p) - pow(1.0 - v2f_sizes.xy, p)) * 0.4;
+                vec2 g = clamp(pow(v2f_sizes.xy, p) - pow(1.0 - v2f_sizes.xy, p), 0.0, 1.0) * 0.4;
                 g.x = dark ? -g.x : g.x;
                 n = top ? n : normalize(vec3(sin(a + g.x), sin(g.y), cos(a + g.x)));
                 vec3 r = reflect(param_fs_lightDirection, n);
