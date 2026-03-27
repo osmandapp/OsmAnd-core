@@ -11,6 +11,7 @@
 
 static const int kSkipTilesZoom = 13;
 static const int kSkipTileDivider = 16;
+static const int kTilePointsLimit = 25;
 
 OsmAnd::AmenitySymbolsProvider_P::AmenitySymbolsProvider_P(AmenitySymbolsProvider* owner_)
 : owner(owner_)
@@ -77,8 +78,14 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
     auto extendedTileBBox31 = tileBBox31.getEnlargedBy(stepY, stepX, stepY, stepX);
     QSet<uint32_t> skippedTiles;
     bool zoomFilter = request.zoom <= kSkipTilesZoom;
-    const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - request.zoom));
-    const auto from31toPixelsScale = static_cast<double>(owner->referenceTileSizeOnScreenInPixels) / tileSize31;
+    const auto hasMapStateScale = request.mapState.windowSize.x > 0 && request.mapState.windowSize.y > 0;
+    const auto scaleZoom = hasMapStateScale ? request.mapState.zoomLevel : request.zoom;
+    const auto tileSize31 = Utilities::getPowZoom(static_cast<float>(ZoomLevel::MaxZoomLevel - scaleZoom));
+    const auto tileOnScreenScale = hasMapStateScale
+        ? static_cast<double>(request.mapState.visualZoom) * qMax(1e-6, 1.0 + static_cast<double>(request.mapState.visualZoomShift))
+        : 1.0;
+    const auto from31toPixelsScale =
+        static_cast<double>(owner->referenceTileSizeOnScreenInPixels) * tileOnScreenScale / tileSize31;
     SymbolsQuadTree boundIntersections(AreaD(tileBBox31).getEnlargedBy(tileBBox31.width() / 2), 4);
 
     const auto dataInterface = owner->obfsCollection->obtainDataInterface(
@@ -87,15 +94,20 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         request.zoom,
         ObfDataTypesMask().set(ObfDataType::POI));
 
+    int pointsCount = 0;
+    
     QList< std::shared_ptr<MapSymbolsGroup> > mapSymbolsGroups;
     QSet<ObfObjectId> searchedIds;
     const float displayDensityFactor = owner->displayDensityFactor;
     const auto requestedZoom = request.zoom;
     const auto visitorFunction =
         [this, requestedZoom, displayDensityFactor, &mapSymbolsGroups, &searchedIds, &mapSymbolIntersectionClassesRegistry,
-         &extendedTileBBox31, &skippedTiles, zoomFilter, from31toPixelsScale, &boundIntersections, &tileBBox31]
+         &extendedTileBBox31, &skippedTiles, zoomFilter, from31toPixelsScale, &boundIntersections, &tileBBox31, &pointsCount]
         (const std::shared_ptr<const OsmAnd::Amenity>& amenity) -> bool
         {
+            if (pointsCount > kTilePointsLimit - 1)
+                return false;
+            
             if (owner->amentitiesFilter && !owner->amentitiesFilter(amenity))
             {
                 searchedIds << amenity->id;
@@ -126,6 +138,8 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
             if (!tileBBox31.contains(pos31))
                 return false;
 
+            pointsCount++;
+            
             int order = owner->baseOrder;
             if (intr)
             {
