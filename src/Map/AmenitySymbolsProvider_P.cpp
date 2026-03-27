@@ -9,6 +9,8 @@
 #include "Utilities.h"
 #include "MapSymbolIntersectionClassesRegistry.h"
 
+#include <algorithm>
+
 static const int kSkipTilesZoom = 13;
 static const int kSkipTileDivider = 16;
 static const int kTilePointsLimit = 25;
@@ -60,6 +62,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
     std::shared_ptr<Metric>* const pOutMetric)
 {
     const auto& request = MapDataProviderHelpers::castRequest<AmenitySymbolsProvider::Request>(request_);
+    const auto& queryController = request.queryController;
 
     if (pOutMetric)
         pOutMetric->reset();
@@ -72,12 +75,9 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
 
     auto& mapSymbolIntersectionClassesRegistry = MapSymbolIntersectionClassesRegistry::globalInstance();
     const auto tileBBox31 = Utilities::tileBoundingBox31(request.tileId, request.zoom);
-
     const auto stepX = tileBBox31.width() / 4;
     const auto stepY = tileBBox31.height() / 4;
     auto extendedTileBBox31 = tileBBox31.getEnlargedBy(stepY, stepX, stepY, stepX);
-    QSet<uint32_t> skippedTiles;
-    bool zoomFilter = request.zoom <= kSkipTilesZoom;
     const auto hasMapStateScale = request.mapState.windowSize.x > 0 && request.mapState.windowSize.y > 0;
     const auto scaleZoom = hasMapStateScale ? request.mapState.zoomLevel : request.zoom;
     const auto tileSize31 = Utilities::getPowZoom(static_cast<float>(ZoomLevel::MaxZoomLevel - scaleZoom));
@@ -86,104 +86,246 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         : 1.0;
     const auto from31toPixelsScale =
         static_cast<double>(owner->referenceTileSizeOnScreenInPixels) * tileOnScreenScale / tileSize31;
-    SymbolsQuadTree boundIntersections(AreaD(tileBBox31).getEnlargedBy(tileBBox31.width() / 2), 4);
+    const float displayDensityFactor = owner->displayDensityFactor;
+    const auto requestedZoom = request.zoom;
+    const auto applyTravelEloSorting = owner->categoriesFilter.isSet()
+        && owner->categoriesFilter.getValuePtrOrNullptr()->contains(QStringLiteral("osmwiki"));
+    const auto createSymbolsGroups =
+        [this,
+         queryController,
+         requestedZoom,
+         displayDensityFactor,
+         from31toPixelsScale,
+         &tileBBox31,
+         &mapSymbolIntersectionClassesRegistry]
+        (const QList<std::shared_ptr<const Amenity>>& amenities,
+         QList<std::shared_ptr<MapSymbolsGroup>>& outMapSymbolsGroups) -> bool
+        {
+            SymbolsQuadTree boundIntersections(AreaD(tileBBox31).getEnlargedBy(tileBBox31.width() / 2), 4);
 
+            for (const auto& amenity : constOf(amenities))
+            {
+                if (queryController && queryController->isAborted())
+                    return false;
+
+                auto icon = owner->amenityIconProvider->getIcon(amenity, ZoomLevel16, false);
+                if (!icon)
+                    continue;
+
+                const auto pos31 = amenity->position31;
+                const auto iconSize31 = icon->dimensions().width() / from31toPixelsScale;
+                const auto intersectsWithOtherSymbols =
+                    intersects(boundIntersections, pos31.x, pos31.y, iconSize31, iconSize31);
+
+                int order = owner->baseOrder;
+                if (intersectsWithOtherSymbols)
+                {
+                    icon = owner->amenityIconProvider->getIcon(amenity, ZoomLevel10, false);
+                    order += 2;
+                }
+
+                const auto mapSymbolsGroup = std::make_shared<AmenitySymbolsGroup>(amenity);
+
+                const auto mapSymbol = std::make_shared<BillboardRasterMapSymbol>(mapSymbolsGroup);
+                mapSymbol->subsection = owner->subsection;
+                mapSymbol->order = order;
+                mapSymbol->image = icon;
+                mapSymbol->size = PointI(icon->width(), icon->height());
+                mapSymbol->languageId = LanguageId::Invariant;
+                mapSymbol->position31 = pos31;
+                mapSymbolsGroup->symbols.push_back(mapSymbol);
+
+                outMapSymbolsGroups.push_back(mapSymbolsGroup);
+
+                const auto caption = owner->amenityIconProvider->getCaption(amenity, requestedZoom);
+                if (!intersectsWithOtherSymbols && !caption.isEmpty())
+                {
+                    const auto textStyle = owner->amenityIconProvider->getCaptionStyle(amenity, requestedZoom);
+                    const auto textImage = textRasterizer->rasterize(caption, textStyle);
+                    if (textImage)
+                    {
+                        const auto mapSymbolCaption = std::make_shared<BillboardRasterMapSymbol>(mapSymbolsGroup);
+                        mapSymbolCaption->subsection = owner->subsection;
+                        mapSymbolCaption->order = order + 1;
+                        mapSymbolCaption->image = textImage;
+                        mapSymbolCaption->contentClass = OsmAnd::MapSymbol::ContentClass::Caption;
+                        mapSymbolCaption->intersectsWithClasses.insert(
+                            mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(QStringLiteral("text_layer_caption")));
+                        mapSymbolCaption->setOffset(
+                            PointI(0, icon->height() / 2 + textImage->height() / 2 + 2 * displayDensityFactor));
+                        mapSymbolCaption->size = PointI(textImage->width(), textImage->height());
+                        mapSymbolCaption->languageId = LanguageId::Invariant;
+                        mapSymbolCaption->position31 = pos31;
+                        mapSymbolsGroup->symbols.push_back(mapSymbolCaption);
+                    }
+                }
+            }
+
+            return true;
+        };
+
+    const auto createDataFromAmenities =
+        [this, &request, &createSymbolsGroups]
+        (const QList<std::shared_ptr<const Amenity>>& amenities,
+         const std::shared_ptr<TileEntry>& tileEntry,
+         std::shared_ptr<AmenitySymbolsProvider::Data>& outTiledData) -> bool
+        {
+            QList<std::shared_ptr<MapSymbolsGroup>> mapSymbolsGroups;
+            if (!createSymbolsGroups(amenities, mapSymbolsGroups))
+                return false;
+
+            outTiledData.reset(new AmenitySymbolsProvider::Data(
+                request.tileId,
+                request.zoom,
+                mapSymbolsGroups,
+                tileEntry ? new RetainableCacheMetadata(tileEntry) : nullptr));
+            return true;
+        };
+
+    QList<std::shared_ptr<const Amenity>> cachedAmenities;
+    if (owner->cache->obtainAmenities(request.tileId, request.zoom, cachedAmenities))
+    {
+        std::shared_ptr<AmenitySymbolsProvider::Data> cachedData;
+        if (!createDataFromAmenities(cachedAmenities, nullptr, cachedData))
+            return false;
+
+        outData = cachedData;
+        return true;
+    }
+
+    if (queryController && queryController->isAborted())
+        return false;
+
+    const auto empty =
+        []
+        (const std::shared_ptr<TileEntry>& entry) -> bool
+        {
+            return !entry->dataWeakRef.lock();
+        };
+
+    std::shared_ptr<TileEntry> tileEntry;
+    for (;;)
+    {
+        _tileReferences.obtainOrAllocateEntry(tileEntry, request.tileId, request.zoom,
+            []
+            (const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
+            {
+                return new TileEntry(collection, tileId, zoom);
+            });
+
+        if (tileEntry->setStateIf(TileState::Undefined, TileState::Loading))
+            break;
+
+        if (tileEntry->getState() == TileState::Loading)
+        {
+            QReadLocker scopedLocker(&tileEntry->loadedConditionLock);
+            while (tileEntry->getState() == TileState::Loading)
+                REPEAT_UNTIL(tileEntry->loadedCondition.wait(&tileEntry->loadedConditionLock));
+        }
+
+        if (owner->cacheSize > 0)
+        {
+            if (owner->cache->obtainAmenities(request.tileId, request.zoom, cachedAmenities))
+            {
+                std::shared_ptr<AmenitySymbolsProvider::Data> cachedData;
+                if (!createDataFromAmenities(cachedAmenities, nullptr, cachedData))
+                    return false;
+
+                outData = cachedData;
+                return true;
+            }
+
+            _tileReferences.removeEntry(request.tileId, request.zoom, empty);
+            tileEntry.reset();
+
+            if (queryController && queryController->isAborted())
+                return false;
+
+            continue;
+        }
+
+        if (!tileEntry->dataIsPresent)
+        {
+            outData.reset();
+            return true;
+        }
+
+        outData = tileEntry->dataWeakRef.lock();
+        if (outData)
+            return true;
+
+        _tileReferences.removeEntry(request.tileId, request.zoom, empty);
+        tileEntry.reset();
+
+        if (queryController && queryController->isAborted())
+            return false;
+    }
+
+    if (queryController && queryController->isAborted())
+    {
+        tileEntry->setState(TileState::Cancelled);
+        {
+            QWriteLocker scopedLocker(&tileEntry->loadedConditionLock);
+            tileEntry->loadedCondition.wakeAll();
+        }
+        _tileReferences.removeEntry(request.tileId, request.zoom, empty);
+        tileEntry.reset();
+        return false;
+    }
+
+    QSet<uint32_t> skippedTiles;
+    QSet<ObfObjectId> searchedIds;
+    const bool zoomFilter = request.zoom <= kSkipTilesZoom;
     const auto dataInterface = owner->obfsCollection->obtainDataInterface(
         &extendedTileBBox31,
         request.zoom,
         request.zoom,
         ObfDataTypesMask().set(ObfDataType::POI));
 
-    int pointsCount = 0;
-    
-    QList< std::shared_ptr<MapSymbolsGroup> > mapSymbolsGroups;
-    QSet<ObfObjectId> searchedIds;
-    const float displayDensityFactor = owner->displayDensityFactor;
-    const auto requestedZoom = request.zoom;
     const auto visitorFunction =
-        [this, requestedZoom, displayDensityFactor, &mapSymbolsGroups, &searchedIds, &mapSymbolIntersectionClassesRegistry,
-         &extendedTileBBox31, &skippedTiles, zoomFilter, from31toPixelsScale, &boundIntersections, &tileBBox31, &pointsCount]
-        (const std::shared_ptr<const OsmAnd::Amenity>& amenity) -> bool
+        [this,
+         queryController,
+         zoomFilter,
+         &extendedTileBBox31,
+         &tileBBox31,
+         &skippedTiles,
+         &searchedIds,
+         &cachedAmenities]
+        (const std::shared_ptr<const Amenity>& amenity) -> bool
         {
-            if (pointsCount > kTilePointsLimit - 1)
+            if (queryController && queryController->isAborted())
                 return false;
-            
+
             if (owner->amentitiesFilter && !owner->amentitiesFilter(amenity))
             {
                 searchedIds << amenity->id;
                 return false;
             }
-            
+
             if (searchedIds.contains(amenity->id))
                 return false;
-            
+
             const auto pos31 = amenity->position31;
             if (zoomFilter)
             {
-                const auto tileId = getTileId(extendedTileBBox31, pos31);
-                if (!skippedTiles.contains(tileId))
-                    skippedTiles.insert(tileId);
+                const auto skipTileId = getTileId(extendedTileBBox31, pos31);
+                if (!skippedTiles.contains(skipTileId))
+                    skippedTiles.insert(skipTileId);
                 else
                     return false;
             }
-            
-            searchedIds << amenity->id;
-            auto icon = owner->amenityIconProvider->getIcon(amenity, ZoomLevel16, false);
-            if (!icon)
-                return false;
 
-            const auto iconSize31 = icon->dimensions().width() / from31toPixelsScale;
-            bool intr = intersects(boundIntersections, pos31.x, pos31.y, iconSize31, iconSize31);
-            
             if (!tileBBox31.contains(pos31))
                 return false;
 
-            pointsCount++;
-            
-            int order = owner->baseOrder;
-            if (intr)
-            {
-                icon = owner->amenityIconProvider->getIcon(amenity, ZoomLevel10, false);
-                order += 2;
-            }
-            
-            const auto mapSymbolsGroup = std::make_shared<AmenitySymbolsGroup>(amenity);
+            if (!owner->amenityIconProvider->getIcon(amenity, ZoomLevel16, false))
+                return false;
 
-            const auto mapSymbol = std::make_shared<BillboardRasterMapSymbol>(mapSymbolsGroup);
-            mapSymbol->subsection = owner->subsection;
-            mapSymbol->order = order;
-            mapSymbol->image = icon;
-            mapSymbol->size = PointI(icon->width(), icon->height());
-            mapSymbol->languageId = LanguageId::Invariant;
-            mapSymbol->position31 = pos31;
-            mapSymbolsGroup->symbols.push_back(mapSymbol);
-
-            mapSymbolsGroups.push_back(mapSymbolsGroup);
-
-            const auto caption = owner->amenityIconProvider->getCaption(amenity, requestedZoom);
-            if (!intr && !caption.isEmpty())
-            {
-                const auto textStyle = owner->amenityIconProvider->getCaptionStyle(amenity, requestedZoom);
-                const auto textImage = textRasterizer->rasterize(caption, textStyle);
-                if (textImage)
-                {
-                    const auto mapSymbolCaption = std::make_shared<BillboardRasterMapSymbol>(mapSymbolsGroup);
-                    mapSymbolCaption->subsection = owner->subsection;
-                    mapSymbolCaption->order = order + 1;
-                    mapSymbolCaption->image = textImage;
-                    mapSymbolCaption->contentClass = OsmAnd::MapSymbol::ContentClass::Caption;
-                    mapSymbolCaption->intersectsWithClasses.insert(
-                        mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(QStringLiteral("text_layer_caption")));
-                    mapSymbolCaption->setOffset(PointI(0, icon->height() / 2 + textImage->height() / 2 + 2 * displayDensityFactor));
-                    mapSymbolCaption->size = PointI(textImage->width(), textImage->height());
-                    mapSymbolCaption->languageId = LanguageId::Invariant;
-                    mapSymbolCaption->position31 = pos31;
-                    mapSymbolsGroup->symbols.push_back(mapSymbolCaption);
-                }
-            }
-            
+            searchedIds << amenity->id;
+            cachedAmenities.push_back(amenity);
             return true;
         };
+
     dataInterface->loadAmenities(
         nullptr,
         &extendedTileBBox31,
@@ -194,11 +336,85 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         visitorFunction,
         nullptr);
 
-    outData.reset(new AmenitySymbolsProvider::Data(
-        request.tileId,
-        request.zoom,
-        mapSymbolsGroups));
+    if (queryController && queryController->isAborted())
+    {
+        tileEntry->setState(TileState::Cancelled);
+        {
+            QWriteLocker scopedLocker(&tileEntry->loadedConditionLock);
+            tileEntry->loadedCondition.wakeAll();
+        }
+        _tileReferences.removeEntry(request.tileId, request.zoom, empty);
+        tileEntry.reset();
+        return false;
+    }
+
+    std::stable_sort(cachedAmenities.begin(), cachedAmenities.end(),
+        [applyTravelEloSorting]
+        (const std::shared_ptr<const Amenity>& left, const std::shared_ptr<const Amenity>& right) -> bool
+        {
+            if (applyTravelEloSorting)
+            {
+                const auto leftTravelElo = left->getDecodedValue(QStringLiteral("travel_elo"));
+                const auto rightTravelElo = right->getDecodedValue(QStringLiteral("travel_elo"));
+
+                const auto leftHasTravelElo = !leftTravelElo.isEmpty();
+                const auto rightHasTravelElo = !rightTravelElo.isEmpty();
+                if (leftHasTravelElo != rightHasTravelElo)
+                    return leftHasTravelElo;
+
+                if (leftHasTravelElo)
+                {
+                    bool leftParsed = false;
+                    bool rightParsed = false;
+                    const auto leftTravelEloValue = leftTravelElo.toDouble(&leftParsed);
+                    const auto rightTravelEloValue = rightTravelElo.toDouble(&rightParsed);
+
+                    if (leftParsed != rightParsed)
+                        return leftParsed;
+                    if (leftParsed && rightParsed && leftTravelEloValue != rightTravelEloValue)
+                        return leftTravelEloValue > rightTravelEloValue;
+                }
+            }
+
+            return static_cast<int64_t>(left->id.id) < static_cast<int64_t>(right->id.id);
+        });
+
+    while (cachedAmenities.size() > kTilePointsLimit)
+        cachedAmenities.removeLast();
+
+    if (owner->cacheSize > 0)
+        owner->cache->put(request.tileId, request.zoom, cachedAmenities);
+
+    std::shared_ptr<AmenitySymbolsProvider::Data> newData;
+    if (!createDataFromAmenities(cachedAmenities, owner->cacheSize == 0 ? tileEntry : nullptr, newData))
+    {
+        tileEntry->setState(TileState::Cancelled);
+        {
+            QWriteLocker scopedLocker(&tileEntry->loadedConditionLock);
+            tileEntry->loadedCondition.wakeAll();
+        }
+        _tileReferences.removeEntry(request.tileId, request.zoom, empty);
+        tileEntry.reset();
+        return false;
+    }
+
+    outData = newData;
+
+    tileEntry->dataIsPresent = true;
+    tileEntry->dataWeakRef = owner->cacheSize == 0 ? newData : std::weak_ptr<AmenitySymbolsProvider::Data>();
+    tileEntry->setState(TileState::Loaded);
+    {
+        QWriteLocker scopedLocker(&tileEntry->loadedConditionLock);
+        tileEntry->loadedCondition.wakeAll();
+    }
+
     return true;
+}
+
+OsmAnd::AmenitySymbolsProvider_P::RetainableCacheMetadata::RetainableCacheMetadata(
+    const std::shared_ptr<TileEntry>& tileEntry)
+    : tileEntryWeakRef(tileEntry)
+{
 }
 
 OsmAnd::AmenitySymbolsProvider_P::RetainableCacheMetadata::RetainableCacheMetadata()
@@ -207,4 +423,9 @@ OsmAnd::AmenitySymbolsProvider_P::RetainableCacheMetadata::RetainableCacheMetada
 
 OsmAnd::AmenitySymbolsProvider_P::RetainableCacheMetadata::~RetainableCacheMetadata()
 {
+    if (const auto tileEntry = tileEntryWeakRef.lock())
+    {
+        if (const auto link = tileEntry->link.lock())
+            link->collection.removeEntry(tileEntry->tileId, tileEntry->zoom);
+    }
 }

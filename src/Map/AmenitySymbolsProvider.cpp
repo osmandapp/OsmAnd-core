@@ -11,7 +11,8 @@ OsmAnd::AmenitySymbolsProvider::AmenitySymbolsProvider(
     const QHash<QString, QStringList>* const categoriesFilter_ /*= nullptr*/,
     const ObfPoiSectionReader::VisitorFunction amentitiesFilter_ /*= nullptr*/,
     const std::shared_ptr<IAmenityIconProvider>& amenityIconProvider_ /*= std::make_shared<CoreResourcesAmenityIconProvider>()*/,
-    const int baseOrder_ /*= 10000*/)
+    const int baseOrder_ /*= 10000*/,
+    const uint32_t cacheSize_ /*= 0*/)
     : _p(new AmenitySymbolsProvider_P(this))
     , obfsCollection(obfsCollection_)
     , displayDensityFactor(displayDensityFactor_)
@@ -20,6 +21,8 @@ OsmAnd::AmenitySymbolsProvider::AmenitySymbolsProvider(
     , amentitiesFilter(amentitiesFilter_)
     , amenityIconProvider(amenityIconProvider_)
     , baseOrder(baseOrder_)
+    , cacheSize(cacheSize_)
+    , cache(std::make_shared<Cache>(cacheSize_))
 {
 }
 
@@ -81,6 +84,162 @@ OsmAnd::AmenitySymbolsProvider::Data::Data(
 OsmAnd::AmenitySymbolsProvider::Data::~Data()
 {
     release();
+}
+
+OsmAnd::AmenitySymbolsProvider::Cache::Entry::Entry()
+{
+}
+
+OsmAnd::AmenitySymbolsProvider::Cache::Entry::Entry(const QList<std::shared_ptr<const Amenity>>& amenities_)
+    : amenities(amenities_)
+{
+}
+
+OsmAnd::AmenitySymbolsProvider::Cache::Cache(const uint32_t capacity_)
+    : _nextGeneration(0)
+    , capacity(capacity_)
+{
+}
+
+OsmAnd::AmenitySymbolsProvider::Cache::~Cache()
+{
+}
+
+uint32_t OsmAnd::AmenitySymbolsProvider::Cache::getSize() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    uint32_t size = 0;
+    for (const auto& storage : constOf(_storage))
+        size += static_cast<uint32_t>(storage.size());
+    return size;
+}
+
+bool OsmAnd::AmenitySymbolsProvider::Cache::contains(const TileId tileId, const ZoomLevel zoom) const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    const auto& storage = _storage[zoom];
+    return storage.contains(tileId);
+}
+
+bool OsmAnd::AmenitySymbolsProvider::Cache::obtainEntry(
+    const TileId tileId,
+    const ZoomLevel zoom,
+    Entry& outEntry)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    auto& storage = _storage[zoom];
+    auto itEntry = storage.find(tileId);
+    if (itEntry == storage.end())
+        return false;
+
+    auto& cacheEntry = itEntry.value();
+    cacheEntry.generation = ++_nextGeneration;
+    _lru.push_back({ tileId, zoom, cacheEntry.generation });
+    outEntry = Entry(cacheEntry.amenities);
+    return true;
+}
+
+bool OsmAnd::AmenitySymbolsProvider::Cache::obtainAmenities(
+    const TileId tileId,
+    const ZoomLevel zoom,
+    QList<std::shared_ptr<const Amenity>>& outAmenities)
+{
+    Entry entry;
+    if (!obtainEntry(tileId, zoom, entry))
+        return false;
+
+    outAmenities = entry.amenities;
+    return true;
+}
+
+void OsmAnd::AmenitySymbolsProvider::Cache::put(
+    const TileId tileId,
+    const ZoomLevel zoom,
+    const QList<std::shared_ptr<const Amenity>>& amenities)
+{
+    if (capacity == 0)
+        return;
+
+    QWriteLocker scopedLocker(&_lock);
+
+    auto& storage = _storage[zoom];
+    auto& entry = storage[tileId];
+    entry.amenities = amenities;
+    entry.generation = ++_nextGeneration;
+    _lru.push_back({ tileId, zoom, entry.generation });
+
+    shrinkToCapacityUnlocked();
+}
+
+void OsmAnd::AmenitySymbolsProvider::Cache::remove(const TileId tileId, const ZoomLevel zoom)
+{
+    QWriteLocker scopedLocker(&_lock);
+    removeEntryUnlocked(tileId, zoom);
+}
+
+void OsmAnd::AmenitySymbolsProvider::Cache::clear()
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    for (auto& storage : _storage)
+        storage.clear();
+    _lru.clear();
+}
+
+void OsmAnd::AmenitySymbolsProvider::Cache::removeEntryUnlocked(const TileId tileId, const ZoomLevel zoom)
+{
+    auto& storage = _storage[zoom];
+    auto itEntry = storage.find(tileId);
+    if (itEntry == storage.end())
+        return;
+
+    storage.erase(itEntry);
+}
+
+void OsmAnd::AmenitySymbolsProvider::Cache::shrinkToCapacityUnlocked()
+{
+    uint32_t size = 0;
+    for (const auto& storage : constOf(_storage))
+        size += static_cast<uint32_t>(storage.size());
+
+    while (size > capacity && !_lru.isEmpty())
+    {
+        const auto lruEntry = _lru.front();
+        _lru.pop_front();
+
+        auto& storage = _storage[lruEntry.zoom];
+        const auto itEntry = storage.find(lruEntry.tileId);
+        if (itEntry == storage.end())
+            continue;
+        if (itEntry.value().generation != lruEntry.generation)
+            continue;
+
+        storage.erase(itEntry);
+        --size;
+    }
+
+    if (capacity == 0)
+        _lru.clear();
+    else if (static_cast<uint32_t>(_lru.size()) > size * 2u + capacity)
+    {
+        QList<LruEntry> compactedLru;
+        compactedLru.reserve(static_cast<int>(size));
+        for (const auto& lruEntry : constOf(_lru))
+        {
+            const auto& storage = _storage[lruEntry.zoom];
+            const auto itEntry = storage.constFind(lruEntry.tileId);
+            if (itEntry == storage.cend())
+                continue;
+            if (itEntry.value().generation != lruEntry.generation)
+                continue;
+
+            compactedLru.push_back(lruEntry);
+        }
+        _lru.swap(compactedLru);
+    }
 }
 
 OsmAnd::AmenitySymbolsProvider::AmenitySymbolsGroup::AmenitySymbolsGroup(
