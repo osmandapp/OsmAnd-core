@@ -37,6 +37,8 @@ namespace OsmAnd
             PointI startingPoint;
             PointI endingPoint;
             PointI centerPoint;
+            PointI gapStartingPoint;
+            PointI gapEndingPoint;
             glm::dvec2 startingSegment;
             glm::dvec2 endingSegment;
             float height;
@@ -45,6 +47,9 @@ namespace OsmAnd
             bool putEnd;
             bool withStart;
             bool withEnd;
+            bool preStart;
+            bool preEnd;
+            bool useWide;
             BuildingVertex startBottomLeft;
             BuildingVertex startTopLeft;
             BuildingVertex startTopRight;
