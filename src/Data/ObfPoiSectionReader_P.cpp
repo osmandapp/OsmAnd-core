@@ -1004,6 +1004,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     return;
 
                 QList<QString> additionalNames;
+                int travelElo = -1;
 
                 auto itStringOrDataValue = mutableIteratorOf(stringOrDataValues);
                 while (itStringOrDataValue.hasNext())
@@ -1028,6 +1029,15 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     else if (tag == QLatin1String("brand"))
                     {
                         localizedNames.insert(tag, entry.value().toString());
+                        continue;
+                    }
+                    else if (tag == QLatin1String("travel_elo"))
+                    {
+                        bool ok = false;
+                        travelElo = entry.value().toInt(&ok);
+                        if (!ok)
+                            travelElo = -1;
+                        
                         continue;
                     }
                 }
@@ -1092,6 +1102,9 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 amenity->evaluateTypes();
                 amenity->tagGroups = qMove(tagGroupsAmenity);
                 amenity->regionName = section->name;
+                if (travelElo != -1)
+                    amenity->travelElo = travelElo;
+                
                 outAmenity = amenity;
                 return;
             }

@@ -9,6 +9,7 @@
 OsmAnd::Amenity::Amenity(const std::shared_ptr<const ObfPoiSectionInfo>& obfSection_)
     : obfSection(obfSection_)
     , id(ObfObjectId::invalidId())
+    , travelElo(-1)
 {
 }
 

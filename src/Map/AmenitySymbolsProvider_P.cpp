@@ -9,8 +9,6 @@
 #include "Utilities.h"
 #include "MapSymbolIntersectionClassesRegistry.h"
 #include "ObfPoiSectionInfo.h"
-#include "zlibUtilities.h"
-
 #include <algorithm>
 
 static const int kSkipTilesZoom = 13;
@@ -24,8 +22,6 @@ static const QString kRouteTrack = QStringLiteral("route_track");
 static const QString kRoutesPrefix = QStringLiteral("routes_");
 static const QString kRouteBboxRadius = QStringLiteral("route_bbox_radius");
 static const QString kRouteId = QStringLiteral("route_id");
-static const QString kTravelElo = QStringLiteral("travel_elo");
-
 OsmAnd::AmenitySymbolsProvider_P::AmenitySymbolsProvider_P(AmenitySymbolsProvider* owner_)
 : owner(owner_)
 , textRasterizer(TextRasterizer::getDefault())
@@ -86,6 +82,12 @@ namespace
         AmenityCacheEntry entry;
         entry.amenity = amenity;
         entry.isRouteArticle = amenity->subType == kRouteArticlePoint || amenity->subType == kRouteArticle;
+        if (includeTravelElo && amenity->travelElo >= 0)
+        {
+            entry.hasTravelElo = true;
+            entry.travelEloParsed = true;
+            entry.travelEloValue = amenity->travelElo;
+        }
 
         const auto hasRouteTrackSubtype = amenity->subType.startsWith(kRoutesPrefix) || amenity->subType == kRouteTrack;
         const auto sectionSubtypes = amenity->obfSection->getSubtypes();
@@ -107,38 +109,6 @@ namespace
                     hasGeometry = true;
                 else if (subtype->tagName == kRouteId)
                     hasRouteId = true;
-            }
-
-            if (includeTravelElo && subtype->tagName == kTravelElo)
-            {
-                const auto& value = valueEntry.value();
-                switch (value.type())
-                {
-                    case QVariant::Int:
-                    case QVariant::UInt:
-                        entry.hasTravelElo = true;
-                        entry.travelEloParsed = true;
-                        entry.travelEloValue = value.toDouble();
-                        break;
-                    case QVariant::String:
-                    {
-                        const auto travelElo = value.toString();
-                        entry.hasTravelElo = !travelElo.isEmpty();
-                        if (entry.hasTravelElo)
-                            entry.travelEloValue = travelElo.toDouble(&entry.travelEloParsed);
-                        break;
-                    }
-                    case QVariant::ByteArray:
-                    {
-                        const auto travelElo = QString::fromUtf8(OsmAnd::zlibUtilities::gzipDecompress(value.toByteArray()));
-                        entry.hasTravelElo = !travelElo.isEmpty();
-                        if (entry.hasTravelElo)
-                            entry.travelEloValue = travelElo.toDouble(&entry.travelEloParsed);
-                        break;
-                    }
-                    default:
-                        break;
-                }
             }
 
             if ((!hasRouteTrackSubtype || (hasGeometry && hasRouteId)) && (!includeTravelElo || entry.hasTravelElo))
@@ -435,9 +405,6 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
             }
 
             if (!tileBBox31.contains(pos31))
-                return false;
-
-            if (!owner->amenityIconProvider->getIcon(amenity, ZoomLevel16, false))
                 return false;
 
             searchedIds << amenity->id;
