@@ -8,12 +8,23 @@
 #include "SkiaUtilities.h"
 #include "Utilities.h"
 #include "MapSymbolIntersectionClassesRegistry.h"
+#include "ObfPoiSectionInfo.h"
+#include "zlibUtilities.h"
 
 #include <algorithm>
 
 static const int kSkipTilesZoom = 13;
 static const int kSkipTileDivider = 16;
 static const int kTilePointsLimit = 25;
+static const int kStartZoom = 5;
+static const int kStartZoomRouteTrack = 11;
+static const QString kRouteArticle = QStringLiteral("route_article");
+static const QString kRouteArticlePoint = QStringLiteral("route_article_point");
+static const QString kRouteTrack = QStringLiteral("route_track");
+static const QString kRoutesPrefix = QStringLiteral("routes_");
+static const QString kRouteBboxRadius = QStringLiteral("route_bbox_radius");
+static const QString kRouteId = QStringLiteral("route_id");
+static const QString kTravelElo = QStringLiteral("travel_elo");
 
 OsmAnd::AmenitySymbolsProvider_P::AmenitySymbolsProvider_P(AmenitySymbolsProvider* owner_)
 : owner(owner_)
@@ -54,6 +65,103 @@ bool OsmAnd::AmenitySymbolsProvider_P::intersects(SymbolsQuadTree& boundIntersec
 
     boundIntersections.insert(visibleRect, visibleRect);
     return false;
+}
+
+namespace
+{
+    struct AmenityCacheEntry
+    {
+        std::shared_ptr<const OsmAnd::Amenity> amenity;
+        bool isRouteArticle = false;
+        bool isRouteTrack = false;
+        bool hasTravelElo = false;
+        bool travelEloParsed = false;
+        double travelEloValue = 0.0;
+    };
+
+    AmenityCacheEntry extractAmenityCacheEntry(
+        const std::shared_ptr<const OsmAnd::Amenity>& amenity,
+        const bool includeTravelElo)
+    {
+        AmenityCacheEntry entry;
+        entry.amenity = amenity;
+        entry.isRouteArticle = amenity->subType == kRouteArticlePoint || amenity->subType == kRouteArticle;
+
+        const auto hasRouteTrackSubtype = amenity->subType.startsWith(kRoutesPrefix) || amenity->subType == kRouteTrack;
+        const auto sectionSubtypes = amenity->obfSection->getSubtypes();
+        if (!sectionSubtypes)
+            return entry;
+
+        auto hasGeometry = false;
+        auto hasRouteId = false;
+        for (const auto& valueEntry : OsmAnd::rangeOf(OsmAnd::constOf(amenity->values)))
+        {
+            const auto subtypeIndex = valueEntry.key();
+            if (subtypeIndex >= sectionSubtypes->subtypes.size())
+                continue;
+
+            const auto& subtype = sectionSubtypes->subtypes[subtypeIndex];
+            if (hasRouteTrackSubtype)
+            {
+                if (subtype->tagName == kRouteBboxRadius)
+                    hasGeometry = true;
+                else if (subtype->tagName == kRouteId)
+                    hasRouteId = true;
+            }
+
+            if (includeTravelElo && subtype->tagName == kTravelElo)
+            {
+                const auto& value = valueEntry.value();
+                switch (value.type())
+                {
+                    case QVariant::Int:
+                    case QVariant::UInt:
+                        entry.hasTravelElo = true;
+                        entry.travelEloParsed = true;
+                        entry.travelEloValue = value.toDouble();
+                        break;
+                    case QVariant::String:
+                    {
+                        const auto travelElo = value.toString();
+                        entry.hasTravelElo = !travelElo.isEmpty();
+                        if (entry.hasTravelElo)
+                            entry.travelEloValue = travelElo.toDouble(&entry.travelEloParsed);
+                        break;
+                    }
+                    case QVariant::ByteArray:
+                    {
+                        const auto travelElo = QString::fromUtf8(OsmAnd::zlibUtilities::gzipDecompress(value.toByteArray()));
+                        entry.hasTravelElo = !travelElo.isEmpty();
+                        if (entry.hasTravelElo)
+                            entry.travelEloValue = travelElo.toDouble(&entry.travelEloParsed);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            }
+
+            if ((!hasRouteTrackSubtype || (hasGeometry && hasRouteId)) && (!includeTravelElo || entry.hasTravelElo))
+                break;
+        }
+
+        entry.isRouteTrack = hasRouteTrackSubtype && hasGeometry && hasRouteId;
+        return entry;
+    }
+
+    bool shouldDraw(const AmenityCacheEntry& entry, const OsmAnd::ZoomLevel zoom)
+    {
+        if (entry.isRouteArticle)
+            return zoom >= kStartZoom;
+        if (entry.isRouteTrack)
+            return zoom >= kStartZoomRouteTrack;
+        return zoom >= kStartZoom;
+    }
+}
+
+bool OsmAnd::AmenitySymbolsProvider_P::shouldDraw(const std::shared_ptr<const Amenity>& amenity, const ZoomLevel zoom) const
+{
+    return ::shouldDraw(extractAmenityCacheEntry(amenity, false), zoom);
 }
 
 bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
@@ -282,15 +390,19 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         request.zoom,
         ObfDataTypesMask().set(ObfDataType::POI));
 
+    QList<AmenityCacheEntry> cachedAmenityEntries;
     const auto visitorFunction =
         [this,
          queryController,
+         requestedZoom,
+         applyTravelEloSorting,
          zoomFilter,
          &extendedTileBBox31,
          &tileBBox31,
          &skippedTiles,
          &searchedIds,
-         &cachedAmenities]
+         &cachedAmenities,
+         &cachedAmenityEntries]
         (const std::shared_ptr<const Amenity>& amenity) -> bool
         {
             if (queryController && queryController->isAborted())
@@ -304,6 +416,13 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
 
             if (searchedIds.contains(amenity->id))
                 return false;
+
+            const auto entry = extractAmenityCacheEntry(amenity, applyTravelEloSorting);
+            if (!::shouldDraw(entry, requestedZoom))
+            {
+                searchedIds << amenity->id;
+                return false;
+            }
 
             const auto pos31 = amenity->position31;
             if (zoomFilter)
@@ -323,6 +442,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
 
             searchedIds << amenity->id;
             cachedAmenities.push_back(amenity);
+            cachedAmenityEntries.push_back(entry);
             return true;
         };
 
@@ -348,36 +468,29 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         return false;
     }
 
-    std::stable_sort(cachedAmenities.begin(), cachedAmenities.end(),
+    std::stable_sort(cachedAmenityEntries.begin(), cachedAmenityEntries.end(),
         [applyTravelEloSorting]
-        (const std::shared_ptr<const Amenity>& left, const std::shared_ptr<const Amenity>& right) -> bool
+        (const AmenityCacheEntry& left, const AmenityCacheEntry& right) -> bool
         {
             if (applyTravelEloSorting)
             {
-                const auto leftTravelElo = left->getDecodedValue(QStringLiteral("travel_elo"));
-                const auto rightTravelElo = right->getDecodedValue(QStringLiteral("travel_elo"));
+                if (left.hasTravelElo != right.hasTravelElo)
+                    return left.hasTravelElo;
 
-                const auto leftHasTravelElo = !leftTravelElo.isEmpty();
-                const auto rightHasTravelElo = !rightTravelElo.isEmpty();
-                if (leftHasTravelElo != rightHasTravelElo)
-                    return leftHasTravelElo;
-
-                if (leftHasTravelElo)
+                if (left.hasTravelElo)
                 {
-                    bool leftParsed = false;
-                    bool rightParsed = false;
-                    const auto leftTravelEloValue = leftTravelElo.toDouble(&leftParsed);
-                    const auto rightTravelEloValue = rightTravelElo.toDouble(&rightParsed);
-
-                    if (leftParsed != rightParsed)
-                        return leftParsed;
-                    if (leftParsed && rightParsed && leftTravelEloValue != rightTravelEloValue)
-                        return leftTravelEloValue > rightTravelEloValue;
+                    if (left.travelEloParsed != right.travelEloParsed)
+                        return left.travelEloParsed;
+                    if (left.travelEloParsed && right.travelEloParsed && left.travelEloValue != right.travelEloValue)
+                        return left.travelEloValue > right.travelEloValue;
                 }
             }
 
-            return static_cast<int64_t>(left->id.id) < static_cast<int64_t>(right->id.id);
+            return static_cast<int64_t>(left.amenity->id.id) < static_cast<int64_t>(right.amenity->id.id);
         });
+
+    for (auto i = 0; i < cachedAmenities.size(); i++)
+        cachedAmenities[i] = cachedAmenityEntries[i].amenity;
 
     while (cachedAmenities.size() > kTilePointsLimit)
         cachedAmenities.removeLast();

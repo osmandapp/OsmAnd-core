@@ -69,6 +69,7 @@ namespace OsmAnd
         uint32_t getTileId(const AreaI& tileBBox31, const PointI& point);
         AreaD calculateRect(double x, double y, double width, double height);
         bool intersects(SymbolsQuadTree& boundIntersections, double x, double y, double width, double height);
+        bool shouldDraw(const std::shared_ptr<const Amenity>& amenity, const ZoomLevel zoom) const;
     protected:
         AmenitySymbolsProvider_P(AmenitySymbolsProvider* owner);
 
