@@ -846,6 +846,12 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
 
     for (;;)
     {
+        if (queryController && queryController->isAborted())
+        {
+            cis->Skip(cis->BytesUntilLimit());
+            return atLeastOneAccepted;
+        }
+        
         const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
