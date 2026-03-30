@@ -194,7 +194,7 @@ namespace OsmAnd
 
         bool renderOnSurfaceSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-            AlphaChannelType &currentAlphaChannelType, bool ignoreDepthBuffer);
+            AlphaChannelType &currentAlphaChannelType);
 
         GLname _onSurfaceRasterSymbolVAO;
         GLname _onSurfaceRasterSymbolVBO;
@@ -294,7 +294,7 @@ namespace OsmAnd
         bool initializeOnSurfaceVector();
         bool renderOnSurfaceVectorSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-            AlphaChannelType &currentAlphaChannelType, bool ignoreDepthBuffer);
+            AlphaChannelType &currentAlphaChannelType);
         bool releaseOnSurfaceVector(bool gpuContextLost);
 
         // Terrain-related:
@@ -369,6 +369,10 @@ namespace OsmAnd
 
         bool initialize() override;
         bool preRender(QList< std::shared_ptr<const RenderableSymbol> >& preRenderableSymbols,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) override;
+        bool preRenderWithVolume(
+            QList< std::shared_ptr<const RenderableSymbol> >& denseSymbolsBeforeBuildings,
+            QList< std::shared_ptr<const RenderableSymbol> >& denseSymbolsAfterBuildings,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) override;
         MapRendererStage::StageResult render(IMapRenderer_Metrics::Metric_renderFrame* metric) override;
         bool release(bool gpuContextLost) override;

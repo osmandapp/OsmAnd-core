@@ -288,6 +288,10 @@ namespace OsmAnd
         // Terrain-related:
         virtual bool preRender(QList< std::shared_ptr<const RenderableSymbol> >& preRenderableSymbols,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) = 0;
+        virtual bool preRenderWithVolume(
+            QList< std::shared_ptr<const RenderableSymbol> >& denseSymbolsBeforeBuildings,
+            QList< std::shared_ptr<const RenderableSymbol> >& denseSymbolsAfterBuildings,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) = 0;
         virtual void clearTerrainVisibilityFiltering() = 0;
         virtual int startTerrainVisibilityFiltering(
             const PointF& pointOnScreen,
