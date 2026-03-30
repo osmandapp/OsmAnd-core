@@ -1856,8 +1856,8 @@ public abstract class MapRendererView extends FrameLayout {
     private static final int GREEN_SIZE = 8;
     private static final int BLUE_SIZE = 8;
     private static final int ALPHA_SIZE = 0;
-    private static final int DEPTH_SIZE = 16;
-    private static final int STENCIL_SIZE = 0;
+    private static final int DEPTH_SIZE = 24;
+    private static final int STENCIL_SIZE = 8;
 
     private static boolean msaaEnabled = false;
 
@@ -1959,10 +1959,7 @@ public abstract class MapRendererView extends FrameLayout {
             EGLConfig bestMSAA4xConfig = null;
             EGLConfig bestOtherMSAAConfig = null;
             EGLConfig bestNonMSAAConfig = null;
-            int maxMSAA4xDepth = -1;
-            int maxOtherMSAADepth = -1;
             int maxOtherMSAASamples = -1;
-            int maxNonMSAADepth = -1;
 
             for (EGLConfig config : configs) {
                 int depth = findConfigAttrib(egl, display, config, EGL10.EGL_DEPTH_SIZE, 0);
@@ -1985,24 +1982,16 @@ public abstract class MapRendererView extends FrameLayout {
                 if (sampleBuffers == 1 && samples >= 2) {
                     if (samples == 4) {
                         // Prefer 4x MSAA
-                        if (depth >= maxMSAA4xDepth) {
-                            bestMSAA4xConfig = config;
-                            maxMSAA4xDepth = depth;
-                        }
+                        bestMSAA4xConfig = config;
                     } else {
                         // Other MSAA levels
-                        if (samples > maxOtherMSAASamples ||
-                            (samples == maxOtherMSAASamples && depth >= maxOtherMSAADepth)) {
+                        if (samples > maxOtherMSAASamples) {
                             bestOtherMSAAConfig = config;
-                            maxOtherMSAADepth = depth;
                             maxOtherMSAASamples = samples;
                         }
                     }
                 } else if (sampleBuffers == 0) {
-                    if (depth >= maxNonMSAADepth) {
-                        bestNonMSAAConfig = config;
-                        maxNonMSAADepth = depth;
-                    }
+                    bestNonMSAAConfig = config;
                 }
             }
 

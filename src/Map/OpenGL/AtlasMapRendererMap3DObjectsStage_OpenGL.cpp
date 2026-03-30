@@ -850,6 +850,9 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
 
     const bool needsDepthPrepass = buildingsAlpha > 0.0 && buildingsAlpha < 1.0f;
 
+    // Only draw where the stencil value is NOT 1 to make certain important symbols could be clearly seen through
+    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
     glDepthMask(GL_TRUE);
@@ -922,6 +925,9 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
 
     glDisable(GL_CULL_FACE);
     GL_CHECK_RESULT;
+
+    // Disable testing stencil buffer
+    glStencilFunc(GL_ALWAYS, 0, 0xFF);
 
     if (depthPrepassResult == StageResult::Fail || colorPassResult == StageResult::Fail)
     {

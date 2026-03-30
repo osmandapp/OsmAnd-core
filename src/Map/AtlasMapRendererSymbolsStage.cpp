@@ -248,8 +248,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     
     if (!publishedMapSymbolsByOrderLock.tryLockForRead())
     {
-        preRender(denseSymbolsBeforeBuildings, metric);
-        preRender(denseSymbolsAfterBuildings, metric);
+        preRenderWithVolume(denseSymbolsBeforeBuildings, denseSymbolsAfterBuildings, metric);
         return false;
     }
 
@@ -264,8 +263,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             nullptr,
             metric);
 
-    preRender(denseSymbolsBeforeBuildings, metric);
-    preRender(denseSymbolsAfterBuildings, metric);
+    preRenderWithVolume(denseSymbolsBeforeBuildings, denseSymbolsAfterBuildings, metric);
     
     Stopwatch stopwatch(metric != nullptr);
     if (OsmAnd::isPerformanceMetricsEnabled())

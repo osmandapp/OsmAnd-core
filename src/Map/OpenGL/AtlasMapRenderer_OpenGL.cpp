@@ -137,9 +137,18 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glClearColor(currentState.backgroundColor.r, currentState.backgroundColor.g, currentState.backgroundColor.b, 1.0f);
     GL_CHECK_RESULT;
 
-    // Clear buffers
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Turn on stencil test because certain far volumetric symbols might need to be drawn in front of buildings
+    glEnable(GL_STENCIL_TEST);
     GL_CHECK_RESULT;
+    glStencilMask(0xFF);
+    GL_CHECK_RESULT;
+
+    // Clear buffers
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    GL_CHECK_RESULT;
+
+    // Turn off writing to stencil buffer for now
+    glStencilMask(0x00);
 
     // Unbind any textures from texture samplers
     for (int samplerIndex = 0; samplerIndex < gpuAPI->maxTextureUnitsCombined; samplerIndex++)
