@@ -66,6 +66,8 @@ namespace OsmAnd
         QString subType;
         QString regionName;
         int travelElo;
+        QList<DecodedCategory> decodedCategoriesOverride;
+        QHash<QString, QString> decodedValuesOverride;
 
         void evaluateTypes();
         QList<DecodedCategory> getDecodedCategories() const;

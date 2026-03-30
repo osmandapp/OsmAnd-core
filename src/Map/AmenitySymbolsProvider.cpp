@@ -12,7 +12,8 @@ OsmAnd::AmenitySymbolsProvider::AmenitySymbolsProvider(
     const ObfPoiSectionReader::VisitorFunction amentitiesFilter_ /*= nullptr*/,
     const std::shared_ptr<IAmenityIconProvider>& amenityIconProvider_ /*= std::make_shared<CoreResourcesAmenityIconProvider>()*/,
     const int baseOrder_ /*= 10000*/,
-    const uint32_t cacheSize_ /*= 0*/)
+    const uint32_t cacheSize_ /*= 0*/,
+    const ExternalAmenitiesProvider externalAmenitiesProvider_ /*= nullptr*/)
     : _p(new AmenitySymbolsProvider_P(this))
     , obfsCollection(obfsCollection_)
     , displayDensityFactor(displayDensityFactor_)
@@ -23,6 +24,7 @@ OsmAnd::AmenitySymbolsProvider::AmenitySymbolsProvider(
     , baseOrder(baseOrder_)
     , cacheSize(cacheSize_)
     , cache(std::make_shared<Cache>(cacheSize_))
+    , externalAmenitiesProvider(externalAmenitiesProvider_)
 {
 }
 

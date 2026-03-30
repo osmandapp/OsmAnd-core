@@ -10,6 +10,7 @@
 #include <QHash>
 #include <QReadWriteLock>
 #include <QList>
+#include <QMutex>
 #include <QWaitCondition>
 #include <QVector>
 #include "restore_internal_warnings.h"
@@ -66,10 +67,34 @@ namespace OsmAnd
         };
         mutable TiledEntriesCollection<TileEntry> _tileReferences;
 
+        enum class ExternalAmenitiesState
+        {
+            Undefined = -1,
+            Loading,
+            Ready,
+            Failed
+        };
+        struct ExternalAmenitiesScreenState
+        {
+            QMutex mutex;
+            QWaitCondition waitCondition;
+            uint64_t generation = 0;
+            ZoomLevel zoom = InvalidZoomLevel;
+            AreaI visibleBBox31;
+            PointI center31;
+            ExternalAmenitiesState state = ExternalAmenitiesState::Undefined;
+            bool loadingDispatched = false;
+            QList<std::shared_ptr<const Amenity>> amenities;
+        };
+        ExternalAmenitiesScreenState _externalAmenitiesScreenState;
+
         uint32_t getTileId(const AreaI& tileBBox31, const PointI& point);
         AreaD calculateRect(double x, double y, double width, double height);
         bool intersects(SymbolsQuadTree& boundIntersections, double x, double y, double width, double height);
         bool shouldDraw(const std::shared_ptr<const Amenity>& amenity, const ZoomLevel zoom) const;
+        bool hasExternalAmenitiesProvider() const;
+        AreaI getExternalAmenitiesVisibleBBox31(const IMapTiledSymbolsProvider::Request& request) const;
+        void invalidateExternalAmenitiesTiles();
     protected:
         AmenitySymbolsProvider_P(AmenitySymbolsProvider* owner);
 

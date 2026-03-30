@@ -120,6 +120,17 @@ namespace OsmAnd
             virtual QString toString() const;
         };
 
+        struct OSMAND_CORE_API ExternalAmenitiesRequest
+        {
+            AreaI visibleBBox31;
+            ZoomLevel zoom = InvalidZoomLevel;
+            PointI center31;
+            std::function<bool()> isCancelled;
+        };
+        typedef std::function<bool(
+            const ExternalAmenitiesRequest& request,
+            QList<std::shared_ptr<const Amenity>>& outAmenities)> ExternalAmenitiesProvider;
+
     private:
         PrivateImplementation<AmenitySymbolsProvider_P> _p;
     protected:
@@ -132,7 +143,8 @@ namespace OsmAnd
             const ObfPoiSectionReader::VisitorFunction amentitiesFilter = nullptr,
             const std::shared_ptr<IAmenityIconProvider>& amenityIconProvider = std::make_shared<CoreResourcesAmenityIconProvider>(),
             const int baseOrder = 10000,
-            const uint32_t cacheSize = 0);
+            const uint32_t cacheSize = 0,
+            const ExternalAmenitiesProvider externalAmenitiesProvider = nullptr);
         virtual ~AmenitySymbolsProvider();
 
         int subsection;
@@ -147,6 +159,7 @@ namespace OsmAnd
         const int baseOrder;
         const uint32_t cacheSize;
         const std::shared_ptr<Cache> cache;
+        const ExternalAmenitiesProvider externalAmenitiesProvider;
 
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
