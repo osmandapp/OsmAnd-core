@@ -89,6 +89,11 @@ QList<OsmAnd::Amenity::DecodedValue> OsmAnd::Amenity::getDecodedValues() const
         for (const auto& decodedValueEntry : rangeOf(constOf(decodedValuesOverride)))
         {
             DecodedValue decodedValue;
+            const auto declaration = std::make_shared<ObfPoiSectionSubtype>();
+            declaration->tagName = decodedValueEntry.key();
+            declaration->name = decodedValueEntry.key();
+            declaration->isText = true;
+            decodedValue.declaration = declaration;
             decodedValue.value = decodedValueEntry.value();
             result.push_back(decodedValue);
         }
