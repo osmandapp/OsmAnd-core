@@ -389,51 +389,51 @@ public abstract class MapRendererView extends FrameLayout {
      */
     protected abstract IMapRenderer createMapRendererInstance();
 
-public Bitmap getBitmap() {
-    // Fast return to avoid deep nesting
-    if (isSuspended || _byteBuffer == null) {
-        return null;
-    }
+	public Bitmap getBitmap() {
+		// Fast return to avoid deep nesting
+		if (isSuspended || _byteBuffer == null) {
+			return null;
+		}
 
-    // Lazy initialization of the source bitmap
-    if (_resultBitmap == null) {
-        _resultBitmap = Bitmap.createBitmap(_windowWidth, _windowHeight, Bitmap.Config.ARGB_8888);
-    }
+		// Lazy initialization of the source bitmap, or recreate if dimensions changed
+		if (_resultBitmap == null || _resultBitmap.getWidth() != _windowWidth || _resultBitmap.getHeight() != _windowHeight) {
+			_resultBitmap = Bitmap.createBitmap(_windowWidth, _windowHeight, Bitmap.Config.ARGB_8888);
+		}
 
-    boolean newlyRendered = false;
+		boolean newlyRendered = false;
 
-    if (_renderingResultIsReady) {
-        synchronized (_byteBuffer) {
-            // Double check inside the monitor lock
-            if (_renderingResultIsReady) {
-                _byteBuffer.rewind();
-                _resultBitmap.copyPixelsFromBuffer(_byteBuffer);
-                _renderingResultIsReady = false;
-                newlyRendered = true;
-            }
-        }
-    }
+		if (_renderingResultIsReady) {
+			synchronized (_byteBuffer) {
+				// Double check inside the monitor lock
+				if (_renderingResultIsReady) {
+					_byteBuffer.rewind();
+					_resultBitmap.copyPixelsFromBuffer(_byteBuffer);
+					_renderingResultIsReady = false;
+					newlyRendered = true;
+				}
+			}
+		}
 
-    // Only process the flip if a new frame was just copied
-    if (newlyRendered && _frameReadingMode) {
-        // Initialize flip resources once to prevent memory churn
-        if (_flippedBitmap == null) {
-            _flippedBitmap = Bitmap.createBitmap(_windowWidth, _windowHeight, Bitmap.Config.ARGB_8888);
-            _flipCanvas = new Canvas(_flippedBitmap);
-            
-            _flipMatrix = new Matrix();
-            _flipMatrix.setScale(1.0f, -1.0f);
-            // Translate the image back into the positive view space after flipping
-            _flipMatrix.postTranslate(0, _windowHeight);
-        }
-        
-        // Draw the raw bitmap onto the flipped bitmap using the matrix
-        _flipCanvas.drawBitmap(_resultBitmap, _flipMatrix, null);
-    }
+		// Only process the flip if a new frame was just copied
+		if (newlyRendered && _frameReadingMode) {
+			// Initialize flip resources once to prevent memory churn, or recreate if dimensions changed
+			if (_flippedBitmap == null || _flippedBitmap.getWidth() != _windowWidth || _flippedBitmap.getHeight() != _windowHeight) {
+				_flippedBitmap = Bitmap.createBitmap(_windowWidth, _windowHeight, Bitmap.Config.ARGB_8888);
+				_flipCanvas = new Canvas(_flippedBitmap);
 
-    // Return the appropriate bitmap based on the mode
-    return _frameReadingMode ? _flippedBitmap : _resultBitmap;
-}
+				_flipMatrix = new Matrix();
+				_flipMatrix.setScale(1.0f, -1.0f);
+				// Translate the image back into the positive view space after flipping
+				_flipMatrix.postTranslate(0, _windowHeight);
+			}
+
+			// Draw the raw bitmap onto the flipped bitmap using the matrix
+			_flipCanvas.drawBitmap(_resultBitmap, _flipMatrix, null);
+		}
+
+		// Return the appropriate bitmap based on the mode
+		return _frameReadingMode ? _flippedBitmap : _resultBitmap;
+	}
 
     public synchronized IMapRenderer suspendRenderer() {
         Log.v(TAG, "suspendRenderer()");
