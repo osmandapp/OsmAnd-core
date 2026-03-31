@@ -120,16 +120,16 @@ namespace OsmAnd
             virtual QString toString() const;
         };
 
-        struct OSMAND_CORE_API ExternalAmenitiesRequest
+        struct OSMAND_CORE_API ExternalAmenitiesResponse
         {
-            AreaI visibleBBox31;
-            ZoomLevel zoom = InvalidZoomLevel;
-            PointI center31;
-            std::function<bool()> isCancelled;
+            QList<std::shared_ptr<const Amenity>> amenities;
+            std::function<bool()> isOutdated;
         };
         typedef std::function<bool(
-            const ExternalAmenitiesRequest& request,
-            QList<std::shared_ptr<const Amenity>>& outAmenities)> ExternalAmenitiesProvider;
+            const TileId tileId,
+            const ZoomLevel zoom,
+            const std::function<bool()>& isCancelled,
+            ExternalAmenitiesResponse& outResponse)> ExternalAmenitiesProvider;
 
     private:
         PrivateImplementation<AmenitySymbolsProvider_P> _p;
@@ -160,6 +160,8 @@ namespace OsmAnd
         const uint32_t cacheSize;
         const std::shared_ptr<Cache> cache;
         const ExternalAmenitiesProvider externalAmenitiesProvider;
+
+        void invalidateTiles();
 
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;

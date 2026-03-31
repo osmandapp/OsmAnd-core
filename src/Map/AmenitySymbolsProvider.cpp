@@ -32,6 +32,11 @@ OsmAnd::AmenitySymbolsProvider::~AmenitySymbolsProvider()
 {
 }
 
+void OsmAnd::AmenitySymbolsProvider::invalidateTiles()
+{
+    _p->invalidateTiles();
+}
+
 OsmAnd::ZoomLevel OsmAnd::AmenitySymbolsProvider::getMinZoom() const
 {
     return ZoomLevel6;

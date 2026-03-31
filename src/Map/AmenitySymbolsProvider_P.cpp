@@ -22,7 +22,6 @@ static const QString kRouteTrack = QStringLiteral("route_track");
 static const QString kRoutesPrefix = QStringLiteral("routes_");
 static const QString kRouteBboxRadius = QStringLiteral("route_bbox_radius");
 static const QString kRouteId = QStringLiteral("route_id");
-static const unsigned long kExternalAmenitiesWaitIntervalMs = 50;
 OsmAnd::AmenitySymbolsProvider_P::AmenitySymbolsProvider_P(AmenitySymbolsProvider* owner_)
 : owner(owner_)
 , textRasterizer(TextRasterizer::getDefault())
@@ -66,15 +65,6 @@ bool OsmAnd::AmenitySymbolsProvider_P::intersects(SymbolsQuadTree& boundIntersec
 
 namespace
 {
-    enum class ExternalAmenitiesLoadOutcome
-    {
-        Disabled = -1,
-        Ready,
-        Failed,
-        Superseded,
-        Cancelled
-    };
-
     struct AmenityCacheEntry
     {
         std::shared_ptr<const OsmAnd::Amenity> amenity;
@@ -176,24 +166,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::shouldDraw(const std::shared_ptr<const Am
     return ::shouldDraw(extractAmenityCacheEntry(amenity, false), zoom);
 }
 
-bool OsmAnd::AmenitySymbolsProvider_P::hasExternalAmenitiesProvider() const
-{
-    return static_cast<bool>(owner->externalAmenitiesProvider);
-}
-
-OsmAnd::AreaI OsmAnd::AmenitySymbolsProvider_P::getExternalAmenitiesVisibleBBox31(
-    const IMapTiledSymbolsProvider::Request& request) const
-{
-    const auto& visibleBBox31 = request.mapState.visibleBBox31;
-    if (visibleBBox31.width() <= 0 || visibleBBox31.height() <= 0)
-        return AreaI();
-
-    const auto halfWidth = qMax(1, visibleBBox31.width() / 2);
-    const auto halfHeight = qMax(1, visibleBBox31.height() / 2);
-    return visibleBBox31.getEnlargedBy(halfHeight, halfWidth, halfHeight, halfWidth);
-}
-
-void OsmAnd::AmenitySymbolsProvider_P::invalidateExternalAmenitiesTiles()
+void OsmAnd::AmenitySymbolsProvider_P::invalidateTiles()
 {
     owner->cache->clear();
 
@@ -246,61 +219,23 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
     const auto requestedZoom = request.zoom;
     const auto applyTravelEloSorting = owner->categoriesFilter.isSet()
         && owner->categoriesFilter.getValuePtrOrNullptr()->contains(QStringLiteral("osmwiki"));
-    struct ExternalAmenitiesContext
-    {
-        bool enabled = false;
-        uint64_t generation = 0;
-        AmenitySymbolsProvider::ExternalAmenitiesRequest request;
-    };
-    ExternalAmenitiesContext externalAmenitiesContext;
-    if (hasExternalAmenitiesProvider())
-    {
-        const auto& rawVisibleBBox31 = request.mapState.visibleBBox31;
-        const auto externalVisibleBBox31 = getExternalAmenitiesVisibleBBox31(request);
-        if (rawVisibleBBox31.width() > 0 && rawVisibleBBox31.height() > 0
-            && externalVisibleBBox31.width() > 0 && externalVisibleBBox31.height() > 0)
+    AmenitySymbolsProvider::ExternalAmenitiesResponse externalAmenitiesResponse;
+    const auto isCancelled =
+        [queryController]() -> bool
         {
-            uint64_t generation = 0;
-            AmenitySymbolsProvider::ExternalAmenitiesRequest externalRequest;
-            {
-                QMutexLocker scopedLocker(&_externalAmenitiesScreenState.mutex);
-
-                const auto canReuseGeneration =
-                    _externalAmenitiesScreenState.generation > 0
-                    && _externalAmenitiesScreenState.zoom == request.zoom
-                    && _externalAmenitiesScreenState.visibleBBox31.contains(rawVisibleBBox31);
-                if (!canReuseGeneration)
-                {
-                    ++_externalAmenitiesScreenState.generation;
-                    _externalAmenitiesScreenState.zoom = request.zoom;
-                    _externalAmenitiesScreenState.visibleBBox31 = externalVisibleBBox31;
-                    _externalAmenitiesScreenState.center31 = rawVisibleBBox31.center();
-                    _externalAmenitiesScreenState.state = ExternalAmenitiesState::Loading;
-                    _externalAmenitiesScreenState.loadingDispatched = false;
-                    _externalAmenitiesScreenState.amenities.clear();
-                    _externalAmenitiesScreenState.waitCondition.wakeAll();
-                    invalidateExternalAmenitiesTiles();
-                }
-
-                generation = _externalAmenitiesScreenState.generation;
-                externalRequest.visibleBBox31 = _externalAmenitiesScreenState.visibleBBox31;
-                externalRequest.zoom = _externalAmenitiesScreenState.zoom;
-                externalRequest.center31 = _externalAmenitiesScreenState.center31;
-            }
-
-            externalRequest.isCancelled =
-                [this, queryController, generation]() -> bool
-                {
-                    if (queryController && queryController->isAborted())
-                        return true;
-
-                    QMutexLocker scopedLocker(&_externalAmenitiesScreenState.mutex);
-                    return _externalAmenitiesScreenState.generation != generation;
-                };
-
-            externalAmenitiesContext.enabled = true;
-            externalAmenitiesContext.generation = generation;
-            externalAmenitiesContext.request = externalRequest;
+            return queryController && queryController->isAborted();
+        };
+    const auto isExternalAmenitiesResponseOutdated =
+        [&externalAmenitiesResponse]() -> bool
+        {
+            return externalAmenitiesResponse.isOutdated && externalAmenitiesResponse.isOutdated();
+        };
+    if (owner->externalAmenitiesProvider)
+    {
+        if (!owner->externalAmenitiesProvider(request.tileId, request.zoom, isCancelled, externalAmenitiesResponse))
+        {
+            outData.reset();
+            return false;
         }
     }
     const auto createSymbolsGroups =
@@ -396,7 +331,8 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         };
 
     QList<std::shared_ptr<const Amenity>> cachedAmenities;
-    if (owner->cache->obtainAmenities(request.tileId, request.zoom, cachedAmenities))
+    if (!isExternalAmenitiesResponseOutdated()
+        && owner->cache->obtainAmenities(request.tileId, request.zoom, cachedAmenities))
     {
         std::shared_ptr<AmenitySymbolsProvider::Data> cachedData;
         if (!createDataFromAmenities(cachedAmenities, nullptr, cachedData))
@@ -426,95 +362,6 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
                 {
                     return entry == tileEntry;
                 });
-        };
-    const auto resolveExternalAmenities =
-        [this, &queryController]
-        (const ExternalAmenitiesContext& context,
-         QList<std::shared_ptr<const Amenity>>& outAmenities) -> ExternalAmenitiesLoadOutcome
-        {
-            if (!context.enabled)
-                return ExternalAmenitiesLoadOutcome::Disabled;
-
-            for (;;)
-            {
-                AmenitySymbolsProvider::ExternalAmenitiesRequest externalRequest;
-                bool shouldLoad = false;
-                {
-                    QMutexLocker scopedLocker(&_externalAmenitiesScreenState.mutex);
-                    if (_externalAmenitiesScreenState.generation != context.generation)
-                        return ExternalAmenitiesLoadOutcome::Superseded;
-
-                    switch (_externalAmenitiesScreenState.state)
-                    {
-                        case ExternalAmenitiesState::Ready:
-                            outAmenities = _externalAmenitiesScreenState.amenities;
-                            return ExternalAmenitiesLoadOutcome::Ready;
-                        case ExternalAmenitiesState::Failed:
-                            return ExternalAmenitiesLoadOutcome::Failed;
-                        case ExternalAmenitiesState::Loading:
-                        case ExternalAmenitiesState::Undefined:
-                            if (!_externalAmenitiesScreenState.loadingDispatched)
-                            {
-                                _externalAmenitiesScreenState.state = ExternalAmenitiesState::Loading;
-                                _externalAmenitiesScreenState.loadingDispatched = true;
-                                externalRequest = context.request;
-                                shouldLoad = true;
-                            }
-                            else
-                            {
-                                if (queryController && queryController->isAborted())
-                                    return ExternalAmenitiesLoadOutcome::Cancelled;
-
-                                _externalAmenitiesScreenState.waitCondition.wait(
-                                    &_externalAmenitiesScreenState.mutex,
-                                    kExternalAmenitiesWaitIntervalMs);
-                            }
-                            break;
-                    }
-                }
-
-                if (!shouldLoad)
-                    continue;
-
-                QList<std::shared_ptr<const Amenity>> loadedAmenities;
-                const auto loaded = owner->externalAmenitiesProvider(externalRequest, loadedAmenities);
-
-                QMutexLocker scopedLocker(&_externalAmenitiesScreenState.mutex);
-                if (_externalAmenitiesScreenState.generation != context.generation)
-                    return ExternalAmenitiesLoadOutcome::Superseded;
-
-                if (queryController && queryController->isAborted())
-                {
-                    _externalAmenitiesScreenState.loadingDispatched = false;
-                    _externalAmenitiesScreenState.waitCondition.wakeAll();
-                    return ExternalAmenitiesLoadOutcome::Cancelled;
-                }
-
-                _externalAmenitiesScreenState.loadingDispatched = false;
-                if (loaded)
-                {
-                    _externalAmenitiesScreenState.state = ExternalAmenitiesState::Ready;
-                    _externalAmenitiesScreenState.amenities = loadedAmenities;
-                    _externalAmenitiesScreenState.waitCondition.wakeAll();
-                    outAmenities = loadedAmenities;
-                    return ExternalAmenitiesLoadOutcome::Ready;
-                }
-
-                _externalAmenitiesScreenState.state = ExternalAmenitiesState::Failed;
-                _externalAmenitiesScreenState.amenities.clear();
-                _externalAmenitiesScreenState.waitCondition.wakeAll();
-                return ExternalAmenitiesLoadOutcome::Failed;
-            }
-        };
-    const auto isExternalGenerationCurrent =
-        [this]
-        (const ExternalAmenitiesContext& context) -> bool
-        {
-            if (!context.enabled)
-                return true;
-
-            QMutexLocker scopedLocker(&_externalAmenitiesScreenState.mutex);
-            return _externalAmenitiesScreenState.generation == context.generation;
         };
 
     std::shared_ptr<TileEntry> tileEntry;
@@ -605,7 +452,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         request.zoom,
         ObfDataTypesMask().set(ObfDataType::POI));
 
-    const auto tryAppendAmenityEntry =
+    const auto processAmenityEntry =
         [this,
          queryController,
          requestedZoom,
@@ -657,13 +504,13 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         };
     QList<AmenityCacheEntry> offlineAmenityEntries;
     const auto visitorFunction =
-        [&tryAppendAmenityEntry,
+        [&processAmenityEntry,
          &offlineSkippedTiles,
          &offlineSearchedIds,
          &offlineAmenityEntries]
         (const std::shared_ptr<const Amenity>& amenity) -> bool
         {
-            return tryAppendAmenityEntry(amenity, offlineSkippedTiles, offlineSearchedIds, offlineAmenityEntries);
+            return processAmenityEntry(amenity, offlineSkippedTiles, offlineSearchedIds, offlineAmenityEntries);
         };
 
     dataInterface->loadAmenities(
@@ -683,22 +530,15 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         return false;
     }
 
-    QList<AmenityCacheEntry> onlineAmenityEntries;
-    QList<std::shared_ptr<const Amenity>> externalAmenities;
-    const auto externalOutcome = resolveExternalAmenities(externalAmenitiesContext, externalAmenities);
-    if (externalOutcome == ExternalAmenitiesLoadOutcome::Cancelled)
+    QList<AmenityCacheEntry> externalAmenityEntries;
+    const auto externalAmenitiesResponseIsOutdated = isExternalAmenitiesResponseOutdated();
+    if (!externalAmenitiesResponseIsOutdated)
     {
-        cancelTileLoading(tileEntry);
-        tileEntry.reset();
-        return false;
-    }
-    if (externalOutcome == ExternalAmenitiesLoadOutcome::Ready)
-    {
-        QSet<uint32_t> onlineSkippedTiles;
+        QSet<uint32_t> externalSkippedTiles;
         QSet<uint64_t> onlineSearchedIds;
-        for (const auto& amenity : constOf(externalAmenities))
+        for (const auto& amenity : constOf(externalAmenitiesResponse.amenities))
         {
-            if (!tryAppendAmenityEntry(amenity, onlineSkippedTiles, onlineSearchedIds, onlineAmenityEntries))
+            if (!processAmenityEntry(amenity, externalSkippedTiles, onlineSearchedIds, externalAmenityEntries))
             {
                 cancelTileLoading(tileEntry);
                 tileEntry.reset();
@@ -709,8 +549,8 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
 
     QList<AmenityCacheEntry> cachedAmenityEntries;
     QSet<uint64_t> cachedAmenityIds;
-    cachedAmenityEntries.reserve(onlineAmenityEntries.size() + offlineAmenityEntries.size());
-    for (const auto& amenityEntry : constOf(onlineAmenityEntries))
+    cachedAmenityEntries.reserve(externalAmenityEntries.size() + offlineAmenityEntries.size());
+    for (const auto& amenityEntry : constOf(externalAmenityEntries))
     {
         cachedAmenityEntries.push_back(amenityEntry);
         cachedAmenityIds.insert(static_cast<uint64_t>(amenityEntry.amenity->id.id));
@@ -754,7 +594,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
     while (cachedAmenities.size() > kTilePointsLimit)
         cachedAmenities.removeLast();
 
-    if (owner->cacheSize > 0 && isExternalGenerationCurrent(externalAmenitiesContext))
+    if (owner->cacheSize > 0 && !isExternalAmenitiesResponseOutdated())
         owner->cache->put(request.tileId, request.zoom, cachedAmenities);
 
     std::shared_ptr<AmenitySymbolsProvider::Data> newData;
