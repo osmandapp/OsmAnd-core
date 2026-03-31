@@ -2,6 +2,7 @@ package net.osmand.core.android;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.os.Bundle;
 import android.util.AttributeSet;
