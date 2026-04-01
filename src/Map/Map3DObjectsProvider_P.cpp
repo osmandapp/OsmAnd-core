@@ -372,7 +372,7 @@ void Map3DObjectsTiledProvider_P::collectFromPolyline(
         {
             buildingPrimitive.keepParent = true;
             if (sourceObject->containsCaptionTag(QStringLiteral("building:colour"))
-                || sourceObject->containsCaptionTag(QStringLiteral("building:material")))
+                || sourceObject->containsAttribute(QStringLiteral("building:material"), QString::null, true))
                 buildingPrimitive.keepParent = false;
             insertOrUpdateBuilding(buildingPrimitive, outBuildingParts);
         }
@@ -441,7 +441,7 @@ void Map3DObjectsTiledProvider_P::collectFromPolygons(
     {
         buildingPrimitive.keepParent = true;
         if (sourceObject->containsCaptionTag(QStringLiteral("building:colour"))
-            || sourceObject->containsCaptionTag(QStringLiteral("building:material")))
+            || sourceObject->containsAttribute(QStringLiteral("building:material"), QString::null, true))
             buildingPrimitive.keepParent = false;
         insertOrUpdateBuilding(buildingPrimitive, outBuildingParts);
     }
