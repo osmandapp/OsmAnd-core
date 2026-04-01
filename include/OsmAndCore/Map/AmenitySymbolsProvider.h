@@ -78,6 +78,7 @@ namespace OsmAnd
             std::array<QHash<TileId, CacheEntry>, ZoomLevelsCount> _storage;
             QList<LruEntry> _lru;
             uint64_t _nextGeneration;
+            std::function<void()> _dataChangedHandler;
 
             void removeEntryUnlocked(const TileId tileId, const ZoomLevel zoom);
             void shrinkToCapacityUnlocked();
@@ -101,6 +102,8 @@ namespace OsmAnd
                 const QList<std::shared_ptr<const Amenity>>& amenities);
             void remove(const TileId tileId, const ZoomLevel zoom);
             void clear();
+
+            void setDataChangedHandler(const std::function<void()>& handler);
         };
 
         class OSMAND_CORE_API AmenitySymbolsGroup : public MapSymbolsGroup

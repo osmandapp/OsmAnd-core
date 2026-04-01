@@ -112,6 +112,12 @@ OsmAnd::AmenitySymbolsProvider::Cache::~Cache()
 {
 }
 
+void OsmAnd::AmenitySymbolsProvider::Cache::setDataChangedHandler(const std::function<void()>& handler)
+{
+    QWriteLocker scopedLocker(&_lock);
+    _dataChangedHandler = handler;
+}
+
 uint32_t OsmAnd::AmenitySymbolsProvider::Cache::getSize() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -170,30 +176,51 @@ void OsmAnd::AmenitySymbolsProvider::Cache::put(
     if (capacity == 0)
         return;
 
-    QWriteLocker scopedLocker(&_lock);
+    std::function<void()> handler;
+    {
+        QWriteLocker scopedLocker(&_lock);
 
-    auto& storage = _storage[zoom];
-    auto& entry = storage[tileId];
-    entry.amenities = amenities;
-    entry.generation = ++_nextGeneration;
-    _lru.push_back({ tileId, zoom, entry.generation });
+        auto& storage = _storage[zoom];
+        auto& entry = storage[tileId];
+        entry.amenities = amenities;
+        entry.generation = ++_nextGeneration;
+        _lru.push_back({ tileId, zoom, entry.generation });
 
-    shrinkToCapacityUnlocked();
+        shrinkToCapacityUnlocked();
+        handler = _dataChangedHandler;
+    }
+    
+    if (handler)
+        handler();
 }
 
 void OsmAnd::AmenitySymbolsProvider::Cache::remove(const TileId tileId, const ZoomLevel zoom)
 {
-    QWriteLocker scopedLocker(&_lock);
-    removeEntryUnlocked(tileId, zoom);
+    std::function<void()> handler;
+    {
+        QWriteLocker scopedLocker(&_lock);
+        removeEntryUnlocked(tileId, zoom);
+        handler = _dataChangedHandler;
+    }
+    
+    if (handler)
+        handler();
 }
 
 void OsmAnd::AmenitySymbolsProvider::Cache::clear()
 {
-    QWriteLocker scopedLocker(&_lock);
+    std::function<void()> handler;
+    {
+        QWriteLocker scopedLocker(&_lock);
 
-    for (auto& storage : _storage)
-        storage.clear();
-    _lru.clear();
+        for (auto& storage : _storage)
+            storage.clear();
+        _lru.clear();
+        handler = _dataChangedHandler;
+    }
+    
+    if (handler)
+        handler();
 }
 
 void OsmAnd::AmenitySymbolsProvider::Cache::removeEntryUnlocked(const TileId tileId, const ZoomLevel zoom)
