@@ -155,6 +155,7 @@ namespace OsmAnd
         // Attributes
         QVector< uint32_t > attributeIds;
         QVector< uint32_t > additionalAttributeIds;
+        bool containsCaptionTag(const QString& tagName) const;
         bool containsAttribute(const uint32_t attributeId, const bool checkAdditional = false) const;
         bool containsAttribute(const QString& tag, const QString& value, const bool checkAdditional = false) const;
         bool containsAttribute(
