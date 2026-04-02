@@ -126,7 +126,6 @@ namespace OsmAnd
         struct OSMAND_CORE_API ExternalAmenitiesResponse
         {
             QList<std::shared_ptr<const Amenity>> amenities;
-            std::function<bool()> isOutdated;
         };
         typedef std::function<bool(
             const TileId tileId,

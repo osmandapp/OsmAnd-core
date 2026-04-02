@@ -70,9 +70,6 @@ namespace
         std::shared_ptr<const OsmAnd::Amenity> amenity;
         bool isRouteArticle = false;
         bool isRouteTrack = false;
-        bool hasTravelElo = false;
-        bool travelEloParsed = false;
-        double travelEloValue = 0.0;
     };
 
     bool hasNonEmptyAmenityValue(const QVariant& value)
@@ -131,19 +128,11 @@ namespace
         return false;
     }
 
-    AmenityCacheEntry extractAmenityCacheEntry(
-        const std::shared_ptr<const OsmAnd::Amenity>& amenity,
-        const bool includeTravelElo)
+    AmenityCacheEntry extractAmenityCacheEntry(const std::shared_ptr<const OsmAnd::Amenity>& amenity)
     {
         AmenityCacheEntry entry;
         entry.amenity = amenity;
         entry.isRouteArticle = amenity->subType == kRouteArticlePoint || amenity->subType == kRouteArticle;
-        if (includeTravelElo && amenity->travelElo >= 0)
-        {
-            entry.hasTravelElo = true;
-            entry.travelEloParsed = true;
-            entry.travelEloValue = amenity->travelElo;
-        }
 
         const auto hasRouteTrackSubtype = amenity->subType.startsWith(kRoutesPrefix) || amenity->subType == kRouteTrack;
         if (hasRouteTrackSubtype)
@@ -163,7 +152,7 @@ namespace
 
 bool OsmAnd::AmenitySymbolsProvider_P::shouldDraw(const std::shared_ptr<const Amenity>& amenity, const ZoomLevel zoom) const
 {
-    return ::shouldDraw(extractAmenityCacheEntry(amenity, false), zoom);
+    return ::shouldDraw(extractAmenityCacheEntry(amenity), zoom);
 }
 
 void OsmAnd::AmenitySymbolsProvider_P::invalidateTiles()
@@ -217,18 +206,11 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         static_cast<double>(owner->referenceTileSizeOnScreenInPixels) * tileOnScreenScale / tileSize31;
     const float displayDensityFactor = owner->displayDensityFactor;
     const auto requestedZoom = request.zoom;
-    const auto applyTravelEloSorting = owner->categoriesFilter.isSet()
-        && owner->categoriesFilter.getValuePtrOrNullptr()->contains(QStringLiteral("osmwiki"));
     AmenitySymbolsProvider::ExternalAmenitiesResponse externalAmenitiesResponse;
     const auto isCancelled =
         [queryController]() -> bool
         {
             return queryController && queryController->isAborted();
-        };
-    const auto isExternalAmenitiesResponseOutdated =
-        [&externalAmenitiesResponse]() -> bool
-        {
-            return externalAmenitiesResponse.isOutdated && externalAmenitiesResponse.isOutdated();
         };
     if (owner->externalAmenitiesProvider)
     {
@@ -331,8 +313,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         };
 
     QList<std::shared_ptr<const Amenity>> cachedAmenities;
-    if (!isExternalAmenitiesResponseOutdated()
-        && owner->cache->obtainAmenities(request.tileId, request.zoom, cachedAmenities))
+    if (owner->cache->obtainAmenities(request.tileId, request.zoom, cachedAmenities))
     {
         std::shared_ptr<AmenitySymbolsProvider::Data> cachedData;
         if (!createDataFromAmenities(cachedAmenities, nullptr, cachedData))
@@ -456,7 +437,6 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         [this,
          queryController,
          requestedZoom,
-         applyTravelEloSorting,
          zoomFilter,
          &extendedTileBBox31,
          &tileBBox31]
@@ -478,7 +458,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
             if (searchedIds.contains(amenityId))
                 return true;
 
-            const auto entry = extractAmenityCacheEntry(amenity, applyTravelEloSorting);
+            const auto entry = extractAmenityCacheEntry(amenity);
             if (!::shouldDraw(entry, requestedZoom))
             {
                 searchedIds.insert(amenityId);
@@ -531,14 +511,12 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
     }
 
     QList<AmenityCacheEntry> externalAmenityEntries;
-    const auto externalAmenitiesResponseIsOutdated = isExternalAmenitiesResponseOutdated();
-    if (!externalAmenitiesResponseIsOutdated)
     {
-        QSet<uint32_t> externalSkippedTiles;
-        QSet<uint64_t> onlineSearchedIds;
+        QSet<uint32_t> skippedTiles;
+        QSet<uint64_t> searchedIds;
         for (const auto& amenity : constOf(externalAmenitiesResponse.amenities))
         {
-            if (!processAmenityEntry(amenity, externalSkippedTiles, onlineSearchedIds, externalAmenityEntries))
+            if (!processAmenityEntry(amenity, skippedTiles, searchedIds, externalAmenityEntries))
             {
                 cancelTileLoading(tileEntry);
                 tileEntry.reset();
@@ -565,27 +543,6 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         cachedAmenityIds.insert(amenityId);
     }
 
-    std::stable_sort(cachedAmenityEntries.begin(), cachedAmenityEntries.end(),
-        [applyTravelEloSorting]
-        (const AmenityCacheEntry& left, const AmenityCacheEntry& right) -> bool
-        {
-            if (applyTravelEloSorting)
-            {
-                if (left.hasTravelElo != right.hasTravelElo)
-                    return left.hasTravelElo;
-
-                if (left.hasTravelElo)
-                {
-                    if (left.travelEloParsed != right.travelEloParsed)
-                        return left.travelEloParsed;
-                    if (left.travelEloParsed && right.travelEloParsed && left.travelEloValue != right.travelEloValue)
-                        return left.travelEloValue > right.travelEloValue;
-                }
-            }
-
-            return static_cast<int64_t>(left.amenity->id.id) < static_cast<int64_t>(right.amenity->id.id);
-        });
-
     cachedAmenities.clear();
     cachedAmenities.reserve(cachedAmenityEntries.size());
     for (const auto& amenityEntry : constOf(cachedAmenityEntries))
@@ -594,7 +551,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
     while (cachedAmenities.size() > kTilePointsLimit)
         cachedAmenities.removeLast();
 
-    if (owner->cacheSize > 0 && !isExternalAmenitiesResponseOutdated())
+    if (owner->cacheSize > 0)
         owner->cache->put(request.tileId, request.zoom, cachedAmenities);
 
     std::shared_ptr<AmenitySymbolsProvider::Data> newData;
