@@ -348,13 +348,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 || ((isMapSymbolGroup
                     || std::dynamic_pointer_cast<const AmenitySymbolsProvider::AmenitySymbolsGroup>(mapSymbolsGroup))
                     && !mapSymbolsGroup->symbols.isEmpty()
-                    && (subsections.contains(mapSymbolsGroup->symbols.first()->subsection)
+                    && (std::dynamic_pointer_cast<const Model3DMapSymbol>(mapSymbolsGroup->symbols.first())
+                        || subsections.contains(mapSymbolsGroup->symbols.first()->subsection)
                         || mapSymbolsGroup->symbols.first()->updateAfterCreated)))
             {
                 if (isMapSymbolGroup)
-                {
                     mapSymbolsGroup->symbols.first()->updateAfterCreated = false;
-                }
                 acceptedMapSymbols[mapSymbolsGroup] = mapSymbolsFromGroup;
             }
         }
@@ -373,7 +372,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 || ((std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
                     || std::dynamic_pointer_cast<const AmenitySymbolsProvider::AmenitySymbolsGroup>(mapSymbolsGroup))
                     && !mapSymbolsGroup->symbols.isEmpty()
-                    && subsections.contains(mapSymbolsGroup->symbols.first()->subsection)))
+                    && (subsections.contains(mapSymbolsGroup->symbols.first()->subsection)
+                        || std::dynamic_pointer_cast<const Model3DMapSymbol>(mapSymbolsGroup->symbols.first()))))
             {
                 itSymbols = mapSymbols.erase(itSymbols);
             }
