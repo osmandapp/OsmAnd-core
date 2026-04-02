@@ -26,6 +26,7 @@ namespace OsmAnd
         struct BuildingPrimitive
         {
             std::shared_ptr<const MapPrimitiviser::Primitive> primitive;
+            bool keepParent;
             uint32_t polygonColor = 0;
             mutable AreaI bbox31;
             mutable FColorRGB color;

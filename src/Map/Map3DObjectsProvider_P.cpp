@@ -20,7 +20,7 @@
 #define PASSAGE_MAX_WALL_GAP 50.0 // ~1m
 
 // Minimum cosine of the angle between adjacent walls that must be drawn seamlessly
-#define MIN_COSINE_CURVED_WALL 0.866 // ~30deg
+#define MIN_COSINE_CURVED_WALL 0.760 // ~40deg
 
 #define PASSAGE_DEFAULT_WIDTH 6.0f
 #define PASSAGE_DEFAULT_HEIGHT 6.0f
@@ -295,8 +295,7 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QSet<BuildingPrimitive>& build
                     modifiedBuildingPart.polygonColor = buildingPrimitive.polygonColor;
                     itemsToModify.append(qMakePair(buildingPart, modifiedBuildingPart));
                 }
-
-                shouldRemove = true;
+                shouldRemove = !buildingPart.keepParent;
             }
         }
 
@@ -361,15 +360,20 @@ void Map3DObjectsTiledProvider_P::collectFromPolyline(
         BuildingPrimitive buildingPrimitive;
         buildingPrimitive.primitive = polylinePrimitive;
         buildingPrimitive.polygonColor = getPolygonColor(buildingPrimitive.primitive);
+        buildingPrimitive.bbox31 = sourceObject->bbox31;
 
         const bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
 
         if (sourceObject->containsTag(QStringLiteral("building")))
-        {
             insertOrUpdateBuilding(buildingPrimitive, outBuildings);
-        }
-        else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part")))
+        else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part"))
+            && (sourceObject->containsCaptionTag(QStringLiteral("height"))
+                || sourceObject->containsCaptionTag(QStringLiteral("building:levels"))))
         {
+            buildingPrimitive.keepParent = true;
+            if (sourceObject->containsCaptionTag(QStringLiteral("building:colour"))
+                || sourceObject->containsAttribute(QStringLiteral("building:material"), QString::null, true))
+                buildingPrimitive.keepParent = false;
             insertOrUpdateBuilding(buildingPrimitive, outBuildingParts);
         }
     }
@@ -389,8 +393,8 @@ void Map3DObjectsTiledProvider_P::collectFromPolyline(
                 passagePrimitive.endingPoint - sourceObject->points31[sourceObject->points31.size() - 2];
             passagePrimitive.endingSegment = glm::normalize(glm::dvec2(endingSegment.x, endingSegment.y));
             passagePrimitive.startingSegment = glm::normalize(glm::dvec2(startingSegment.x, startingSegment.y));
-            const QString width = QStringLiteral("width");
-            const QString height = QStringLiteral("height");
+            const auto width = QStringLiteral("width");
+            const auto height = QStringLiteral("height");
             passagePrimitive.height = Utilities::parseLength(sourceObject->getResolvedAttribute(QStringRef(&height)),
                 PASSAGE_DEFAULT_HEIGHT);
             const auto widthValue = Utilities::parseLength(sourceObject->getResolvedAttribute(QStringRef(&width)),
@@ -416,6 +420,7 @@ void Map3DObjectsTiledProvider_P::collectFromPolygons(
 {
     BuildingPrimitive buildingPrimitive;
     buildingPrimitive.primitive = polygonPrimitive;
+    buildingPrimitive.keepParent = false;
     buildingPrimitive.polygonColor = getPolygonColor(buildingPrimitive.primitive);
 
     const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(polygonPrimitive->sourceObject);
@@ -424,14 +429,20 @@ void Map3DObjectsTiledProvider_P::collectFromPolygons(
         return;
     }
 
+    buildingPrimitive.bbox31 = sourceObject->bbox31;
+
     const bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
 
     if (sourceObject->containsTag(QStringLiteral("building")))
-    {
         insertOrUpdateBuilding(buildingPrimitive, outBuildings);
-    }
-    else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part")))
+    else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part"))
+        && (sourceObject->containsCaptionTag(QStringLiteral("height"))
+            || sourceObject->containsCaptionTag(QStringLiteral("building:levels"))))
     {
+        buildingPrimitive.keepParent = true;
+        if (sourceObject->containsCaptionTag(QStringLiteral("building:colour"))
+            || sourceObject->containsAttribute(QStringLiteral("building:material"), QString::null, true))
+            buildingPrimitive.keepParent = false;
         insertOrUpdateBuilding(buildingPrimitive, outBuildingParts);
     }
 }
