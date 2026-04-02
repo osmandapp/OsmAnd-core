@@ -32,6 +32,25 @@ OsmAnd::AmenitySymbolsProvider_P::~AmenitySymbolsProvider_P()
 {
 }
 
+void OsmAnd::AmenitySymbolsProvider_P::setDataObtainedHandler(
+    const std::function<void(const TileId tileId, const ZoomLevel zoom)>& handler)
+{
+    QWriteLocker scopedLocker(&_dataObtainedHandlerLock);
+    _dataObtainedHandler = handler;
+}
+
+void OsmAnd::AmenitySymbolsProvider_P::notifyDataObtained(const TileId tileId, const ZoomLevel zoom)
+{
+    std::function<void(const TileId tileId, const ZoomLevel zoom)> handler;
+    {
+        QReadLocker scopedLocker(&_dataObtainedHandlerLock);
+        handler = _dataObtainedHandler;
+    }
+
+    if (handler)
+        handler(tileId, zoom);
+}
+
 uint32_t OsmAnd::AmenitySymbolsProvider_P::getTileId(const AreaI& bbox31, const PointI& point)
 {
     const auto divX = bbox31.width() / kSkipTileDivider;

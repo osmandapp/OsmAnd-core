@@ -36,6 +36,8 @@ namespace OsmAnd
 
     private:
         std::shared_ptr<const TextRasterizer> textRasterizer;
+        mutable QReadWriteLock _dataObtainedHandlerLock;
+        std::function<void(const TileId tileId, const ZoomLevel zoom)> _dataObtainedHandler;
 
         enum class TileState
         {
@@ -70,6 +72,9 @@ namespace OsmAnd
         AreaD calculateRect(double x, double y, double width, double height);
         bool intersects(SymbolsQuadTree& boundIntersections, double x, double y, double width, double height);
         bool shouldDraw(const std::shared_ptr<const Amenity>& amenity, const ZoomLevel zoom) const;
+        void setDataObtainedHandler(
+            const std::function<void(const TileId tileId, const ZoomLevel zoom)>& handler);
+        void notifyDataObtained(const TileId tileId, const ZoomLevel zoom);
     protected:
         AmenitySymbolsProvider_P(AmenitySymbolsProvider* owner);
 

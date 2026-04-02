@@ -37,6 +37,12 @@ void OsmAnd::AmenitySymbolsProvider::invalidateTiles()
     _p->invalidateTiles();
 }
 
+void OsmAnd::AmenitySymbolsProvider::setDataObtainedHandler(
+    const std::function<void(const TileId tileId, const ZoomLevel zoom)>& handler)
+{
+    _p->setDataObtainedHandler(handler);
+}
+
 OsmAnd::ZoomLevel OsmAnd::AmenitySymbolsProvider::getMinZoom() const
 {
     return ZoomLevel6;
@@ -63,10 +69,22 @@ bool OsmAnd::AmenitySymbolsProvider::obtainData(
     std::shared_ptr<IMapDataProvider::Data>& outData,
     std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
-    return _p->obtainData(request, outData, pOutMetric);
+    const auto requestSucceeded = _p->obtainData(request, outData, pOutMetric);
+    if (requestSucceeded && outData)
+    {
+        const auto& tiledRequest = MapDataProviderHelpers::castRequest<AmenitySymbolsProvider::Request>(request);
+        _p->notifyDataObtained(tiledRequest.tileId, tiledRequest.zoom);
+    }
+
+    return requestSucceeded;
 }
 
 bool OsmAnd::AmenitySymbolsProvider::supportsNaturalObtainDataAsync() const
+{
+    return true;
+}
+
+bool OsmAnd::AmenitySymbolsProvider::waitForLoading() const
 {
     return false;
 }

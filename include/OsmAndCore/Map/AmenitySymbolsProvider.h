@@ -164,6 +164,8 @@ namespace OsmAnd
         const ExternalAmenitiesProvider externalAmenitiesProvider;
 
         void invalidateTiles();
+        void setDataObtainedHandler(
+            const std::function<void(const TileId tileId, const ZoomLevel zoom)>& handler);
 
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
@@ -181,6 +183,8 @@ namespace OsmAnd
             const IMapDataProvider::Request& request,
             const IMapDataProvider::ObtainDataAsyncCallback callback,
             const bool collectMetric = false) Q_DECL_OVERRIDE;
+
+        virtual bool waitForLoading() const Q_DECL_OVERRIDE;
     };
 }
 
