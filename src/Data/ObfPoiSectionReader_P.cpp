@@ -1031,11 +1031,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                         localizedNames.insert(tag, entry.value().toString());
                         itStringOrDataValue.remove();
                     }
-                    else if (tag == QLatin1String("brand"))
-                    {
-                        localizedNames.insert(tag, entry.value().toString());
-                        continue;
-                    }
                     else if (tag == QLatin1String("travel_elo"))
                     {
                         bool ok = false;
