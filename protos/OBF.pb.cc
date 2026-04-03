@@ -118,9 +118,6 @@ const ::google::protobuf::internal::GeneratedMessageReflection*
 const ::google::protobuf::Descriptor* OsmAndPoiIndex_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   OsmAndPoiIndex_reflection_ = NULL;
-const ::google::protobuf::Descriptor* OsmAndBloomFilterAlgorithm_descriptor_ = NULL;
-const ::google::protobuf::internal::GeneratedMessageReflection*
-  OsmAndBloomFilterAlgorithm_reflection_ = NULL;
 const ::google::protobuf::Descriptor* OsmAndPoiNameIndex_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   OsmAndPoiNameIndex_reflection_ = NULL;
@@ -841,25 +838,8 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndPoiIndex));
-  OsmAndBloomFilterAlgorithm_descriptor_ = file->message_type(27);
-  static const int OsmAndBloomFilterAlgorithm_offsets_[2] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndBloomFilterAlgorithm, version_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndBloomFilterAlgorithm, data_),
-  };
-  OsmAndBloomFilterAlgorithm_reflection_ =
-    new ::google::protobuf::internal::GeneratedMessageReflection(
-      OsmAndBloomFilterAlgorithm_descriptor_,
-      OsmAndBloomFilterAlgorithm::default_instance_,
-      OsmAndBloomFilterAlgorithm_offsets_,
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndBloomFilterAlgorithm, _has_bits_[0]),
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndBloomFilterAlgorithm, _unknown_fields_),
-      -1,
-      ::google::protobuf::DescriptorPool::generated_pool(),
-      ::google::protobuf::MessageFactory::generated_factory(),
-      sizeof(OsmAndBloomFilterAlgorithm));
-  OsmAndPoiNameIndex_descriptor_ = file->message_type(28);
-  static const int OsmAndPoiNameIndex_offsets_[3] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiNameIndex, filters_),
+  OsmAndPoiNameIndex_descriptor_ = file->message_type(27);
+  static const int OsmAndPoiNameIndex_offsets_[2] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiNameIndex, table_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiNameIndex, data_),
   };
@@ -875,7 +855,8 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndPoiNameIndex));
   OsmAndPoiNameIndex_OsmAndPoiNameIndexData_descriptor_ = OsmAndPoiNameIndex_descriptor_->nested_type(0);
-  static const int OsmAndPoiNameIndex_OsmAndPoiNameIndexData_offsets_[1] = {
+  static const int OsmAndPoiNameIndex_OsmAndPoiNameIndexData_offsets_[2] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiNameIndex_OsmAndPoiNameIndexData, suffixesdictionary_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiNameIndex_OsmAndPoiNameIndexData, atoms_),
   };
   OsmAndPoiNameIndex_OsmAndPoiNameIndexData_reflection_ =
@@ -889,12 +870,12 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndPoiNameIndex_OsmAndPoiNameIndexData));
-  OsmAndPoiNameIndexDataAtom_descriptor_ = file->message_type(29);
+  OsmAndPoiNameIndexDataAtom_descriptor_ = file->message_type(28);
   static const int OsmAndPoiNameIndexDataAtom_offsets_[5] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiNameIndexDataAtom, zoom_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiNameIndexDataAtom, x_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiNameIndexDataAtom, y_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiNameIndexDataAtom, bloomindex_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiNameIndexDataAtom, suffixesbitset_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiNameIndexDataAtom, shiftto_),
   };
   OsmAndPoiNameIndexDataAtom_reflection_ =
@@ -908,7 +889,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndPoiNameIndexDataAtom));
-  OsmAndCategoryTable_descriptor_ = file->message_type(30);
+  OsmAndCategoryTable_descriptor_ = file->message_type(29);
   static const int OsmAndCategoryTable_offsets_[2] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndCategoryTable, category_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndCategoryTable, subcategories_),
@@ -924,7 +905,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndCategoryTable));
-  OsmAndSubtypesTable_descriptor_ = file->message_type(31);
+  OsmAndSubtypesTable_descriptor_ = file->message_type(30);
   static const int OsmAndSubtypesTable_offsets_[1] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndSubtypesTable, subtypes_),
   };
@@ -939,7 +920,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndSubtypesTable));
-  OsmAndPoiSubtype_descriptor_ = file->message_type(32);
+  OsmAndPoiSubtype_descriptor_ = file->message_type(31);
   static const int OsmAndPoiSubtype_offsets_[6] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiSubtype, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiSubtype, tagname_),
@@ -959,7 +940,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndPoiSubtype));
-  OsmAndPoiTagGroup_descriptor_ = file->message_type(33);
+  OsmAndPoiTagGroup_descriptor_ = file->message_type(32);
   static const int OsmAndPoiTagGroup_offsets_[2] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiTagGroup, id_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiTagGroup, tagvalues_),
@@ -975,7 +956,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndPoiTagGroup));
-  OsmAndPoiTagGroups_descriptor_ = file->message_type(34);
+  OsmAndPoiTagGroups_descriptor_ = file->message_type(33);
   static const int OsmAndPoiTagGroups_offsets_[2] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiTagGroups, ids_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiTagGroups, groups_),
@@ -991,7 +972,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndPoiTagGroups));
-  OsmAndPoiBox_descriptor_ = file->message_type(35);
+  OsmAndPoiBox_descriptor_ = file->message_type(34);
   static const int OsmAndPoiBox_offsets_[7] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiBox, zoom_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiBox, left_),
@@ -1012,7 +993,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndPoiBox));
-  OsmAndPoiCategories_descriptor_ = file->message_type(36);
+  OsmAndPoiCategories_descriptor_ = file->message_type(35);
   static const int OsmAndPoiCategories_offsets_[2] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiCategories, categories_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiCategories, subcategories_),
@@ -1028,7 +1009,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndPoiCategories));
-  OsmAndPoiBoxData_descriptor_ = file->message_type(37);
+  OsmAndPoiBoxData_descriptor_ = file->message_type(36);
   static const int OsmAndPoiBoxData_offsets_[4] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiBoxData, zoom_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiBoxData, x_),
@@ -1046,7 +1027,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndPoiBoxData));
-  OsmAndPoiBoxDataAtom_descriptor_ = file->message_type(38);
+  OsmAndPoiBoxDataAtom_descriptor_ = file->message_type(37);
   static const int OsmAndPoiBoxDataAtom_offsets_[15] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiBoxDataAtom, dx_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiBoxDataAtom, dy_),
@@ -1075,7 +1056,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndPoiBoxDataAtom));
-  IdTable_descriptor_ = file->message_type(39);
+  IdTable_descriptor_ = file->message_type(38);
   static const int IdTable_offsets_[1] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(IdTable, routeid_),
   };
@@ -1090,7 +1071,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(IdTable));
-  RestrictionData_descriptor_ = file->message_type(40);
+  RestrictionData_descriptor_ = file->message_type(39);
   static const int RestrictionData_offsets_[4] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RestrictionData, type_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RestrictionData, from_),
@@ -1108,7 +1089,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(RestrictionData));
-  RouteData_descriptor_ = file->message_type(41);
+  RouteData_descriptor_ = file->message_type(40);
   static const int RouteData_offsets_[6] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RouteData, points_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RouteData, pointtypes_),
@@ -1128,7 +1109,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(RouteData));
-  OsmAndRoutingIndex_descriptor_ = file->message_type(42);
+  OsmAndRoutingIndex_descriptor_ = file->message_type(41);
   static const int OsmAndRoutingIndex_offsets_[5] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndRoutingIndex, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndRoutingIndex, rules_),
@@ -1202,7 +1183,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndRoutingIndex_RouteDataBlock));
-  OsmAndHHRoutingIndex_descriptor_ = file->message_type(43);
+  OsmAndHHRoutingIndex_descriptor_ = file->message_type(42);
   static const int OsmAndHHRoutingIndex_offsets_[6] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndHHRoutingIndex, edition_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndHHRoutingIndex, profile_),
@@ -1303,7 +1284,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndHHRoutingIndex_HHRoutePointSegments));
-  OsmAndOwner_descriptor_ = file->message_type(44);
+  OsmAndOwner_descriptor_ = file->message_type(43);
   static const int OsmAndOwner_offsets_[4] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndOwner, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndOwner, resource_),
@@ -1397,8 +1378,6 @@ void protobuf_RegisterTypes(const ::std::string&) {
     OsmAndTransportIndex_descriptor_, &OsmAndTransportIndex::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     OsmAndPoiIndex_descriptor_, &OsmAndPoiIndex::default_instance());
-  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
-    OsmAndBloomFilterAlgorithm_descriptor_, &OsmAndBloomFilterAlgorithm::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     OsmAndPoiNameIndex_descriptor_, &OsmAndPoiNameIndex::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
@@ -1518,8 +1497,6 @@ void protobuf_ShutdownFile_OBF_2eproto() {
   delete OsmAndTransportIndex_reflection_;
   delete OsmAndPoiIndex::default_instance_;
   delete OsmAndPoiIndex_reflection_;
-  delete OsmAndBloomFilterAlgorithm::default_instance_;
-  delete OsmAndBloomFilterAlgorithm_reflection_;
   delete OsmAndPoiNameIndex::default_instance_;
   delete OsmAndPoiNameIndex_reflection_;
   delete OsmAndPoiNameIndex_OsmAndPoiNameIndexData::default_instance_;
@@ -1720,98 +1697,96 @@ void protobuf_AddDesc_OBF_2eproto() {
     "esTable\030\005 \001(\0132\037.OsmAnd.OBF.OsmAndSubtype"
     "sTable\022\'\n\005boxes\030\006 \003(\0132\030.OsmAnd.OBF.OsmAn"
     "dPoiBox\022-\n\007poiData\030\t \003(\0132\034.OsmAnd.OBF.Os"
-    "mAndPoiBoxData\";\n\032OsmAndBloomFilterAlgor"
-    "ithm\022\017\n\007version\030\001 \002(\r\022\014\n\004data\030\004 \001(\014\"\222\002\n\022"
-    "OsmAndPoiNameIndex\0227\n\007filters\030\002 \003(\0132&.Os"
-    "mAnd.OBF.OsmAndBloomFilterAlgorithm\022-\n\005t"
-    "able\030\003 \002(\0132\036.OsmAnd.OBF.IndexedStringTab"
-    "le\022C\n\004data\030\005 \003(\01325.OsmAnd.OBF.OsmAndPoiN"
-    "ameIndex.OsmAndPoiNameIndexData\032O\n\026OsmAn"
-    "dPoiNameIndexData\0225\n\005atoms\030\003 \003(\0132&.OsmAn"
-    "d.OBF.OsmAndPoiNameIndexDataAtom\"e\n\032OsmA"
-    "ndPoiNameIndexDataAtom\022\014\n\004zoom\030\002 \001(\r\022\t\n\001"
-    "x\030\003 \001(\r\022\t\n\001y\030\004 \001(\r\022\022\n\nbloomIndex\030\005 \003(\014\022\017"
-    "\n\007shiftTo\030\016 \001(\007\">\n\023OsmAndCategoryTable\022\020"
-    "\n\010category\030\001 \002(\t\022\025\n\rsubcategories\030\003 \003(\t\""
-    "E\n\023OsmAndSubtypesTable\022.\n\010subtypes\030\004 \003(\013"
-    "2\034.OsmAnd.OBF.OsmAndPoiSubtype\"\205\001\n\020OsmAn"
-    "dPoiSubtype\022\014\n\004name\030\001 \002(\t\022\017\n\007tagname\030\002 \001"
-    "(\t\022\016\n\006isText\030\003 \002(\010\022\021\n\tfrequency\030\005 \001(\r\022\031\n"
-    "\021subtypeValuesSize\030\006 \001(\r\022\024\n\014subtypeValue"
-    "\030\010 \003(\t\"2\n\021OsmAndPoiTagGroup\022\n\n\002id\030\001 \002(\r\022"
-    "\021\n\ttagValues\030\005 \003(\t\"T\n\022OsmAndPoiTagGroups"
-    "\022\017\n\003ids\030\002 \003(\rB\002\020\001\022-\n\006groups\030\005 \003(\0132\035.OsmA"
-    "nd.OBF.OsmAndPoiTagGroup\"\340\001\n\014OsmAndPoiBo"
-    "x\022\014\n\004zoom\030\001 \002(\r\022\014\n\004left\030\002 \002(\021\022\013\n\003top\030\003 \002"
-    "(\021\0223\n\ncategories\030\004 \001(\0132\037.OsmAnd.OBF.OsmA"
-    "ndPoiCategories\0221\n\ttagGroups\030\010 \001(\0132\036.Osm"
-    "And.OBF.OsmAndPoiTagGroups\022*\n\010subBoxes\030\n"
-    " \003(\0132\030.OsmAnd.OBF.OsmAndPoiBox\022\023\n\013shiftT"
-    "oData\030\016 \001(\007\"@\n\023OsmAndPoiCategories\022\022\n\nca"
-    "tegories\030\003 \003(\r\022\025\n\rsubcategories\030\005 \003(\r\"i\n"
-    "\020OsmAndPoiBoxData\022\014\n\004zoom\030\001 \001(\r\022\t\n\001x\030\002 \001"
-    "(\r\022\t\n\001y\030\003 \001(\r\0221\n\007poiData\030\005 \003(\0132 .OsmAnd."
-    "OBF.OsmAndPoiBoxDataAtom\"\234\002\n\024OsmAndPoiBo"
-    "xDataAtom\022\n\n\002dx\030\002 \002(\021\022\n\n\002dy\030\003 \002(\021\022\022\n\ncat"
-    "egories\030\004 \003(\r\022\025\n\rsubcategories\030\005 \003(\r\022\014\n\004"
-    "name\030\006 \001(\t\022\016\n\006nameEn\030\007 \001(\t\022\n\n\002id\030\010 \001(\004\022\024"
-    "\n\014openingHours\030\n \001(\t\022\014\n\004site\030\013 \001(\t\022\r\n\005ph"
-    "one\030\014 \001(\t\022\014\n\004note\030\r \001(\t\022\026\n\016textCategorie"
-    "s\030\016 \003(\r\022\022\n\ntextValues\030\017 \003(\t\022\023\n\013precision"
-    "XY\030\020 \001(\005\022\025\n\ttagGroups\030\021 \003(\rB\002\020\001\"\032\n\007IdTab"
-    "le\022\017\n\007routeId\030\001 \003(\022\"F\n\017RestrictionData\022\014"
-    "\n\004type\030\001 \002(\005\022\014\n\004from\030\002 \002(\005\022\n\n\002to\030\003 \002(\005\022\013"
-    "\n\003via\030\004 \001(\005\"x\n\tRouteData\022\016\n\006points\030\001 \002(\014"
-    "\022\022\n\npointTypes\030\004 \001(\014\022\022\n\npointNames\030\005 \001(\014"
-    "\022\r\n\005types\030\007 \002(\014\022\017\n\007routeId\030\014 \002(\005\022\023\n\013stri"
-    "ngNames\030\016 \001(\014\"\304\005\n\022OsmAndRoutingIndex\022\014\n\004"
-    "name\030\001 \002(\t\022\?\n\005rules\030\002 \003(\01320.OsmAnd.OBF.O"
-    "smAndRoutingIndex.RouteEncodingRule\022>\n\tr"
-    "ootBoxes\030\003 \003(\0132+.OsmAnd.OBF.OsmAndRoutin"
-    "gIndex.RouteDataBox\022A\n\014basemapBoxes\030\004 \003("
-    "\0132+.OsmAnd.OBF.OsmAndRoutingIndex.RouteD"
-    "ataBox\022=\n\006blocks\030\005 \003(\0132-.OsmAnd.OBF.OsmA"
-    "ndRoutingIndex.RouteDataBlock\032;\n\021RouteEn"
-    "codingRule\022\013\n\003tag\030\003 \002(\t\022\r\n\005value\030\005 \002(\t\022\n"
-    "\n\002id\030\007 \001(\r\032\231\001\n\014RouteDataBox\022\014\n\004left\030\001 \002("
-    "\021\022\r\n\005right\030\002 \002(\021\022\013\n\003top\030\003 \002(\021\022\016\n\006bottom\030"
-    "\004 \002(\021\022\023\n\013shiftToData\030\005 \001(\007\022:\n\005boxes\030\007 \003("
-    "\0132+.OsmAnd.OBF.OsmAndRoutingIndex.RouteD"
-    "ataBox\032\303\001\n\016RouteDataBlock\022$\n\007idTable\030\005 \001"
-    "(\0132\023.OsmAnd.OBF.IdTable\022*\n\013dataObjects\030\006"
-    " \003(\0132\025.OsmAnd.OBF.RouteData\0221\n\014restricti"
-    "ons\030\007 \003(\0132\033.OsmAnd.OBF.RestrictionData\022,"
-    "\n\013stringTable\030\010 \001(\0132\027.OsmAnd.OBF.StringT"
-    "able\"\231\010\n\024OsmAndHHRoutingIndex\022\017\n\007edition"
-    "\030\001 \002(\003\022\017\n\007profile\030\002 \002(\t\022\025\n\rprofileParams"
-    "\030\003 \003(\t\022/\n\016tagValuesTable\030\004 \001(\0132\027.OsmAnd."
-    "OBF.StringTable\022E\n\npointBoxes\030\005 \002(\01321.Os"
-    "mAnd.OBF.OsmAndHHRoutingIndex.HHRoutePoi"
-    "ntsBox\022L\n\rpointSegments\030\006 \003(\01325.OsmAnd.O"
-    "BF.OsmAndHHRoutingIndex.HHRouteBlockSegm"
-    "ents\032\324\001\n\020HHRoutePointsBox\022\014\n\004left\030\002 \002(\021\022"
-    "\r\n\005right\030\003 \002(\021\022\013\n\003top\030\004 \002(\021\022\016\n\006bottom\030\005 "
-    "\002(\021\022@\n\005boxes\030\006 \003(\01321.OsmAnd.OBF.OsmAndHH"
-    "RoutingIndex.HHRoutePointsBox\022D\n\006points\030"
-    "\007 \003(\01324.OsmAnd.OBF.OsmAndHHRoutingIndex."
-    "HHRouteNetworkPoint\032\366\001\n\023HHRouteNetworkPo"
-    "int\022\n\n\002id\030\001 \002(\005\022\n\n\002dx\030\002 \002(\021\022\n\n\002dy\030\003 \002(\021\022"
-    "\020\n\010globalId\030\004 \002(\005\022\016\n\006roadId\030\005 \002(\003\022\031\n\021roa"
-    "dStartEndIndex\030\006 \002(\005\022\021\n\tclusterId\030\007 \001(\005\022"
-    "\023\n\013dualPointId\030\010 \001(\005\022\025\n\rdualClusterId\030\t "
-    "\001(\005\022\022\n\nprofileIds\030\n \003(\005\022\022\n\npartialInd\030\013 "
-    "\001(\005\022\027\n\013tagValueIds\030\014 \003(\005B\002\020\001\032\360\001\n\024HHRoute"
-    "BlockSegments\022\024\n\014idRangeStart\030\001 \002(\005\022\025\n\ri"
-    "dRangeLength\030\002 \002(\005\022\021\n\tprofileId\030\003 \001(\005\022J\n"
-    "\013innerBlocks\030\006 \003(\01325.OsmAnd.OBF.OsmAndHH"
-    "RoutingIndex.HHRouteBlockSegments\022L\n\rpoi"
-    "ntSegments\030\004 \003(\01325.OsmAnd.OBF.OsmAndHHRo"
-    "utingIndex.HHRoutePointSegments\032\?\n\024HHRou"
-    "tePointSegments\022\022\n\nsegmentsIn\030\002 \002(\014\022\023\n\013s"
-    "egmentsOut\030\003 \002(\014\"T\n\013OsmAndOwner\022\014\n\004name\030"
-    "\001 \002(\t\022\020\n\010resource\030\002 \001(\t\022\023\n\013description\030\003"
-    " \001(\t\022\020\n\010pluginid\030\004 \001(\tB\036\n\021net.osmand.bin"
-    "aryB\tOsmandOdb", 9294);
+    "mAndPoiBoxData\"\365\001\n\022OsmAndPoiNameIndex\022-\n"
+    "\005table\030\003 \002(\0132\036.OsmAnd.OBF.IndexedStringT"
+    "able\022C\n\004data\030\005 \003(\01325.OsmAnd.OBF.OsmAndPo"
+    "iNameIndex.OsmAndPoiNameIndexData\032k\n\026Osm"
+    "AndPoiNameIndexData\022\032\n\022suffixesDictionar"
+    "y\030\002 \003(\t\0225\n\005atoms\030\003 \003(\0132&.OsmAnd.OBF.OsmA"
+    "ndPoiNameIndexDataAtom\"i\n\032OsmAndPoiNameI"
+    "ndexDataAtom\022\014\n\004zoom\030\002 \001(\r\022\t\n\001x\030\003 \001(\r\022\t\n"
+    "\001y\030\004 \001(\r\022\026\n\016suffixesBitset\030\006 \003(\r\022\017\n\007shif"
+    "tTo\030\016 \001(\007\">\n\023OsmAndCategoryTable\022\020\n\010cate"
+    "gory\030\001 \002(\t\022\025\n\rsubcategories\030\003 \003(\t\"E\n\023Osm"
+    "AndSubtypesTable\022.\n\010subtypes\030\004 \003(\0132\034.Osm"
+    "And.OBF.OsmAndPoiSubtype\"\205\001\n\020OsmAndPoiSu"
+    "btype\022\014\n\004name\030\001 \002(\t\022\017\n\007tagname\030\002 \001(\t\022\016\n\006"
+    "isText\030\003 \002(\010\022\021\n\tfrequency\030\005 \001(\r\022\031\n\021subty"
+    "peValuesSize\030\006 \001(\r\022\024\n\014subtypeValue\030\010 \003(\t"
+    "\"2\n\021OsmAndPoiTagGroup\022\n\n\002id\030\001 \002(\r\022\021\n\ttag"
+    "Values\030\005 \003(\t\"T\n\022OsmAndPoiTagGroups\022\017\n\003id"
+    "s\030\002 \003(\rB\002\020\001\022-\n\006groups\030\005 \003(\0132\035.OsmAnd.OBF"
+    ".OsmAndPoiTagGroup\"\340\001\n\014OsmAndPoiBox\022\014\n\004z"
+    "oom\030\001 \002(\r\022\014\n\004left\030\002 \002(\021\022\013\n\003top\030\003 \002(\021\0223\n\n"
+    "categories\030\004 \001(\0132\037.OsmAnd.OBF.OsmAndPoiC"
+    "ategories\0221\n\ttagGroups\030\010 \001(\0132\036.OsmAnd.OB"
+    "F.OsmAndPoiTagGroups\022*\n\010subBoxes\030\n \003(\0132\030"
+    ".OsmAnd.OBF.OsmAndPoiBox\022\023\n\013shiftToData\030"
+    "\016 \001(\007\"@\n\023OsmAndPoiCategories\022\022\n\ncategori"
+    "es\030\003 \003(\r\022\025\n\rsubcategories\030\005 \003(\r\"i\n\020OsmAn"
+    "dPoiBoxData\022\014\n\004zoom\030\001 \001(\r\022\t\n\001x\030\002 \001(\r\022\t\n\001"
+    "y\030\003 \001(\r\0221\n\007poiData\030\005 \003(\0132 .OsmAnd.OBF.Os"
+    "mAndPoiBoxDataAtom\"\234\002\n\024OsmAndPoiBoxDataA"
+    "tom\022\n\n\002dx\030\002 \002(\021\022\n\n\002dy\030\003 \002(\021\022\022\n\ncategorie"
+    "s\030\004 \003(\r\022\025\n\rsubcategories\030\005 \003(\r\022\014\n\004name\030\006"
+    " \001(\t\022\016\n\006nameEn\030\007 \001(\t\022\n\n\002id\030\010 \001(\004\022\024\n\014open"
+    "ingHours\030\n \001(\t\022\014\n\004site\030\013 \001(\t\022\r\n\005phone\030\014 "
+    "\001(\t\022\014\n\004note\030\r \001(\t\022\026\n\016textCategories\030\016 \003("
+    "\r\022\022\n\ntextValues\030\017 \003(\t\022\023\n\013precisionXY\030\020 \001"
+    "(\005\022\025\n\ttagGroups\030\021 \003(\rB\002\020\001\"\032\n\007IdTable\022\017\n\007"
+    "routeId\030\001 \003(\022\"F\n\017RestrictionData\022\014\n\004type"
+    "\030\001 \002(\005\022\014\n\004from\030\002 \002(\005\022\n\n\002to\030\003 \002(\005\022\013\n\003via\030"
+    "\004 \001(\005\"x\n\tRouteData\022\016\n\006points\030\001 \002(\014\022\022\n\npo"
+    "intTypes\030\004 \001(\014\022\022\n\npointNames\030\005 \001(\014\022\r\n\005ty"
+    "pes\030\007 \002(\014\022\017\n\007routeId\030\014 \002(\005\022\023\n\013stringName"
+    "s\030\016 \001(\014\"\304\005\n\022OsmAndRoutingIndex\022\014\n\004name\030\001"
+    " \002(\t\022\?\n\005rules\030\002 \003(\01320.OsmAnd.OBF.OsmAndR"
+    "outingIndex.RouteEncodingRule\022>\n\trootBox"
+    "es\030\003 \003(\0132+.OsmAnd.OBF.OsmAndRoutingIndex"
+    ".RouteDataBox\022A\n\014basemapBoxes\030\004 \003(\0132+.Os"
+    "mAnd.OBF.OsmAndRoutingIndex.RouteDataBox"
+    "\022=\n\006blocks\030\005 \003(\0132-.OsmAnd.OBF.OsmAndRout"
+    "ingIndex.RouteDataBlock\032;\n\021RouteEncoding"
+    "Rule\022\013\n\003tag\030\003 \002(\t\022\r\n\005value\030\005 \002(\t\022\n\n\002id\030\007"
+    " \001(\r\032\231\001\n\014RouteDataBox\022\014\n\004left\030\001 \002(\021\022\r\n\005r"
+    "ight\030\002 \002(\021\022\013\n\003top\030\003 \002(\021\022\016\n\006bottom\030\004 \002(\021\022"
+    "\023\n\013shiftToData\030\005 \001(\007\022:\n\005boxes\030\007 \003(\0132+.Os"
+    "mAnd.OBF.OsmAndRoutingIndex.RouteDataBox"
+    "\032\303\001\n\016RouteDataBlock\022$\n\007idTable\030\005 \001(\0132\023.O"
+    "smAnd.OBF.IdTable\022*\n\013dataObjects\030\006 \003(\0132\025"
+    ".OsmAnd.OBF.RouteData\0221\n\014restrictions\030\007 "
+    "\003(\0132\033.OsmAnd.OBF.RestrictionData\022,\n\013stri"
+    "ngTable\030\010 \001(\0132\027.OsmAnd.OBF.StringTable\"\231"
+    "\010\n\024OsmAndHHRoutingIndex\022\017\n\007edition\030\001 \002(\003"
+    "\022\017\n\007profile\030\002 \002(\t\022\025\n\rprofileParams\030\003 \003(\t"
+    "\022/\n\016tagValuesTable\030\004 \001(\0132\027.OsmAnd.OBF.St"
+    "ringTable\022E\n\npointBoxes\030\005 \002(\01321.OsmAnd.O"
+    "BF.OsmAndHHRoutingIndex.HHRoutePointsBox"
+    "\022L\n\rpointSegments\030\006 \003(\01325.OsmAnd.OBF.Osm"
+    "AndHHRoutingIndex.HHRouteBlockSegments\032\324"
+    "\001\n\020HHRoutePointsBox\022\014\n\004left\030\002 \002(\021\022\r\n\005rig"
+    "ht\030\003 \002(\021\022\013\n\003top\030\004 \002(\021\022\016\n\006bottom\030\005 \002(\021\022@\n"
+    "\005boxes\030\006 \003(\01321.OsmAnd.OBF.OsmAndHHRoutin"
+    "gIndex.HHRoutePointsBox\022D\n\006points\030\007 \003(\0132"
+    "4.OsmAnd.OBF.OsmAndHHRoutingIndex.HHRout"
+    "eNetworkPoint\032\366\001\n\023HHRouteNetworkPoint\022\n\n"
+    "\002id\030\001 \002(\005\022\n\n\002dx\030\002 \002(\021\022\n\n\002dy\030\003 \002(\021\022\020\n\010glo"
+    "balId\030\004 \002(\005\022\016\n\006roadId\030\005 \002(\003\022\031\n\021roadStart"
+    "EndIndex\030\006 \002(\005\022\021\n\tclusterId\030\007 \001(\005\022\023\n\013dua"
+    "lPointId\030\010 \001(\005\022\025\n\rdualClusterId\030\t \001(\005\022\022\n"
+    "\nprofileIds\030\n \003(\005\022\022\n\npartialInd\030\013 \001(\005\022\027\n"
+    "\013tagValueIds\030\014 \003(\005B\002\020\001\032\360\001\n\024HHRouteBlockS"
+    "egments\022\024\n\014idRangeStart\030\001 \002(\005\022\025\n\ridRange"
+    "Length\030\002 \002(\005\022\021\n\tprofileId\030\003 \001(\005\022J\n\013inner"
+    "Blocks\030\006 \003(\01325.OsmAnd.OBF.OsmAndHHRoutin"
+    "gIndex.HHRouteBlockSegments\022L\n\rpointSegm"
+    "ents\030\004 \003(\01325.OsmAnd.OBF.OsmAndHHRoutingI"
+    "ndex.HHRoutePointSegments\032\?\n\024HHRoutePoin"
+    "tSegments\022\022\n\nsegmentsIn\030\002 \002(\014\022\023\n\013segment"
+    "sOut\030\003 \002(\014\"T\n\013OsmAndOwner\022\014\n\004name\030\001 \002(\t\022"
+    "\020\n\010resource\030\002 \001(\t\022\023\n\013description\030\003 \001(\t\022\020"
+    "\n\010pluginid\030\004 \001(\tB\036\n\021net.osmand.binaryB\tO"
+    "smandOdb", 9208);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "OBF.proto", &protobuf_RegisterTypes);
   OsmAndStructure::default_instance_ = new OsmAndStructure();
@@ -1846,7 +1821,6 @@ void protobuf_AddDesc_OBF_2eproto() {
   TransportStopsTree::default_instance_ = new TransportStopsTree();
   OsmAndTransportIndex::default_instance_ = new OsmAndTransportIndex();
   OsmAndPoiIndex::default_instance_ = new OsmAndPoiIndex();
-  OsmAndBloomFilterAlgorithm::default_instance_ = new OsmAndBloomFilterAlgorithm();
   OsmAndPoiNameIndex::default_instance_ = new OsmAndPoiNameIndex();
   OsmAndPoiNameIndex_OsmAndPoiNameIndexData::default_instance_ = new OsmAndPoiNameIndex_OsmAndPoiNameIndexData();
   OsmAndPoiNameIndexDataAtom::default_instance_ = new OsmAndPoiNameIndexDataAtom();
@@ -1904,7 +1878,6 @@ void protobuf_AddDesc_OBF_2eproto() {
   TransportStopsTree::default_instance_->InitAsDefaultInstance();
   OsmAndTransportIndex::default_instance_->InitAsDefaultInstance();
   OsmAndPoiIndex::default_instance_->InitAsDefaultInstance();
-  OsmAndBloomFilterAlgorithm::default_instance_->InitAsDefaultInstance();
   OsmAndPoiNameIndex::default_instance_->InitAsDefaultInstance();
   OsmAndPoiNameIndex_OsmAndPoiNameIndexData::default_instance_->InitAsDefaultInstance();
   OsmAndPoiNameIndexDataAtom::default_instance_->InitAsDefaultInstance();
@@ -15684,263 +15657,7 @@ void OsmAndPoiIndex::Swap(OsmAndPoiIndex* other) {
 // ===================================================================
 
 #ifndef _MSC_VER
-const int OsmAndBloomFilterAlgorithm::kVersionFieldNumber;
-const int OsmAndBloomFilterAlgorithm::kDataFieldNumber;
-#endif  // !_MSC_VER
-
-OsmAndBloomFilterAlgorithm::OsmAndBloomFilterAlgorithm()
-  : ::google::protobuf::Message() {
-  SharedCtor();
-}
-
-void OsmAndBloomFilterAlgorithm::InitAsDefaultInstance() {
-}
-
-OsmAndBloomFilterAlgorithm::OsmAndBloomFilterAlgorithm(const OsmAndBloomFilterAlgorithm& from)
-  : ::google::protobuf::Message() {
-  SharedCtor();
-  MergeFrom(from);
-}
-
-void OsmAndBloomFilterAlgorithm::SharedCtor() {
-  _cached_size_ = 0;
-  version_ = 0u;
-  data_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
-  ::memset(_has_bits_, 0, sizeof(_has_bits_));
-}
-
-OsmAndBloomFilterAlgorithm::~OsmAndBloomFilterAlgorithm() {
-  SharedDtor();
-}
-
-void OsmAndBloomFilterAlgorithm::SharedDtor() {
-  if (data_ != &::google::protobuf::internal::kEmptyString) {
-    delete data_;
-  }
-  if (this != default_instance_) {
-  }
-}
-
-void OsmAndBloomFilterAlgorithm::SetCachedSize(int size) const {
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
-}
-const ::google::protobuf::Descriptor* OsmAndBloomFilterAlgorithm::descriptor() {
-  protobuf_AssignDescriptorsOnce();
-  return OsmAndBloomFilterAlgorithm_descriptor_;
-}
-
-const OsmAndBloomFilterAlgorithm& OsmAndBloomFilterAlgorithm::default_instance() {
-  if (default_instance_ == NULL) protobuf_AddDesc_OBF_2eproto();
-  return *default_instance_;
-}
-
-OsmAndBloomFilterAlgorithm* OsmAndBloomFilterAlgorithm::default_instance_ = NULL;
-
-OsmAndBloomFilterAlgorithm* OsmAndBloomFilterAlgorithm::New() const {
-  return new OsmAndBloomFilterAlgorithm;
-}
-
-void OsmAndBloomFilterAlgorithm::Clear() {
-  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    version_ = 0u;
-    if (has_data()) {
-      if (data_ != &::google::protobuf::internal::kEmptyString) {
-        data_->clear();
-      }
-    }
-  }
-  ::memset(_has_bits_, 0, sizeof(_has_bits_));
-  mutable_unknown_fields()->Clear();
-}
-
-bool OsmAndBloomFilterAlgorithm::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
-  ::google::protobuf::uint32 tag;
-  while ((tag = input->ReadTag()) != 0) {
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // required uint32 version = 1;
-      case 1: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &version_)));
-          set_has_version();
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(34)) goto parse_data;
-        break;
-      }
-
-      // optional bytes data = 4;
-      case 4: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_data:
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_data()));
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectAtEnd()) return true;
-        break;
-      }
-
-      default: {
-      handle_uninterpreted:
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          return true;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, mutable_unknown_fields()));
-        break;
-      }
-    }
-  }
-  return true;
-#undef DO_
-}
-
-void OsmAndBloomFilterAlgorithm::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // required uint32 version = 1;
-  if (has_version()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->version(), output);
-  }
-
-  // optional bytes data = 4;
-  if (has_data()) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytes(
-      4, this->data(), output);
-  }
-
-  if (!unknown_fields().empty()) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        unknown_fields(), output);
-  }
-}
-
-::google::protobuf::uint8* OsmAndBloomFilterAlgorithm::SerializeWithCachedSizesToArray(
-    ::google::protobuf::uint8* target) const {
-  // required uint32 version = 1;
-  if (has_version()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->version(), target);
-  }
-
-  // optional bytes data = 4;
-  if (has_data()) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        4, this->data(), target);
-  }
-
-  if (!unknown_fields().empty()) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        unknown_fields(), target);
-  }
-  return target;
-}
-
-int OsmAndBloomFilterAlgorithm::ByteSize() const {
-  int total_size = 0;
-
-  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // required uint32 version = 1;
-    if (has_version()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->version());
-    }
-
-    // optional bytes data = 4;
-    if (has_data()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->data());
-    }
-
-  }
-  if (!unknown_fields().empty()) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        unknown_fields());
-  }
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = total_size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
-  return total_size;
-}
-
-void OsmAndBloomFilterAlgorithm::MergeFrom(const ::google::protobuf::Message& from) {
-  GOOGLE_CHECK_NE(&from, this);
-  const OsmAndBloomFilterAlgorithm* source =
-    ::google::protobuf::internal::dynamic_cast_if_available<const OsmAndBloomFilterAlgorithm*>(
-      &from);
-  if (source == NULL) {
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-    MergeFrom(*source);
-  }
-}
-
-void OsmAndBloomFilterAlgorithm::MergeFrom(const OsmAndBloomFilterAlgorithm& from) {
-  GOOGLE_CHECK_NE(&from, this);
-  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from.has_version()) {
-      set_version(from.version());
-    }
-    if (from.has_data()) {
-      set_data(from.data());
-    }
-  }
-  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
-}
-
-void OsmAndBloomFilterAlgorithm::CopyFrom(const ::google::protobuf::Message& from) {
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-void OsmAndBloomFilterAlgorithm::CopyFrom(const OsmAndBloomFilterAlgorithm& from) {
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-bool OsmAndBloomFilterAlgorithm::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000001) != 0x00000001) return false;
-
-  return true;
-}
-
-void OsmAndBloomFilterAlgorithm::Swap(OsmAndBloomFilterAlgorithm* other) {
-  if (other != this) {
-    std::swap(version_, other->version_);
-    std::swap(data_, other->data_);
-    std::swap(_has_bits_[0], other->_has_bits_[0]);
-    _unknown_fields_.Swap(&other->_unknown_fields_);
-    std::swap(_cached_size_, other->_cached_size_);
-  }
-}
-
-::google::protobuf::Metadata OsmAndBloomFilterAlgorithm::GetMetadata() const {
-  protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::Metadata metadata;
-  metadata.descriptor = OsmAndBloomFilterAlgorithm_descriptor_;
-  metadata.reflection = OsmAndBloomFilterAlgorithm_reflection_;
-  return metadata;
-}
-
-
-// ===================================================================
-
-#ifndef _MSC_VER
+const int OsmAndPoiNameIndex_OsmAndPoiNameIndexData::kSuffixesDictionaryFieldNumber;
 const int OsmAndPoiNameIndex_OsmAndPoiNameIndexData::kAtomsFieldNumber;
 #endif  // !_MSC_VER
 
@@ -15994,6 +15711,7 @@ OsmAndPoiNameIndex_OsmAndPoiNameIndexData* OsmAndPoiNameIndex_OsmAndPoiNameIndex
 }
 
 void OsmAndPoiNameIndex_OsmAndPoiNameIndexData::Clear() {
+  suffixesdictionary_.Clear();
   atoms_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -16005,6 +15723,25 @@ bool OsmAndPoiNameIndex_OsmAndPoiNameIndexData::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // repeated string suffixesDictionary = 2;
+      case 2: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_suffixesDictionary:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_suffixesdictionary()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->suffixesdictionary(this->suffixesdictionary_size() - 1).data(),
+            this->suffixesdictionary(this->suffixesdictionary_size() - 1).length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(18)) goto parse_suffixesDictionary;
+        if (input->ExpectTag(26)) goto parse_atoms;
+        break;
+      }
+
       // repeated .OsmAnd.OBF.OsmAndPoiNameIndexDataAtom atoms = 3;
       case 3: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -16038,6 +15775,15 @@ bool OsmAndPoiNameIndex_OsmAndPoiNameIndexData::MergePartialFromCodedStream(
 
 void OsmAndPoiNameIndex_OsmAndPoiNameIndexData::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
+  // repeated string suffixesDictionary = 2;
+  for (int i = 0; i < this->suffixesdictionary_size(); i++) {
+  ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+    this->suffixesdictionary(i).data(), this->suffixesdictionary(i).length(),
+    ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      2, this->suffixesdictionary(i), output);
+  }
+
   // repeated .OsmAnd.OBF.OsmAndPoiNameIndexDataAtom atoms = 3;
   for (int i = 0; i < this->atoms_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
@@ -16052,6 +15798,15 @@ void OsmAndPoiNameIndex_OsmAndPoiNameIndexData::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* OsmAndPoiNameIndex_OsmAndPoiNameIndexData::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
+  // repeated string suffixesDictionary = 2;
+  for (int i = 0; i < this->suffixesdictionary_size(); i++) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->suffixesdictionary(i).data(), this->suffixesdictionary(i).length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteStringToArray(2, this->suffixesdictionary(i), target);
+  }
+
   // repeated .OsmAnd.OBF.OsmAndPoiNameIndexDataAtom atoms = 3;
   for (int i = 0; i < this->atoms_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
@@ -16068,6 +15823,13 @@ void OsmAndPoiNameIndex_OsmAndPoiNameIndexData::SerializeWithCachedSizes(
 
 int OsmAndPoiNameIndex_OsmAndPoiNameIndexData::ByteSize() const {
   int total_size = 0;
+
+  // repeated string suffixesDictionary = 2;
+  total_size += 1 * this->suffixesdictionary_size();
+  for (int i = 0; i < this->suffixesdictionary_size(); i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->suffixesdictionary(i));
+  }
 
   // repeated .OsmAnd.OBF.OsmAndPoiNameIndexDataAtom atoms = 3;
   total_size += 1 * this->atoms_size();
@@ -16102,6 +15864,7 @@ void OsmAndPoiNameIndex_OsmAndPoiNameIndexData::MergeFrom(const ::google::protob
 
 void OsmAndPoiNameIndex_OsmAndPoiNameIndexData::MergeFrom(const OsmAndPoiNameIndex_OsmAndPoiNameIndexData& from) {
   GOOGLE_CHECK_NE(&from, this);
+  suffixesdictionary_.MergeFrom(from.suffixesdictionary_);
   atoms_.MergeFrom(from.atoms_);
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -16125,6 +15888,7 @@ bool OsmAndPoiNameIndex_OsmAndPoiNameIndexData::IsInitialized() const {
 
 void OsmAndPoiNameIndex_OsmAndPoiNameIndexData::Swap(OsmAndPoiNameIndex_OsmAndPoiNameIndexData* other) {
   if (other != this) {
+    suffixesdictionary_.Swap(&other->suffixesdictionary_);
     atoms_.Swap(&other->atoms_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
@@ -16144,7 +15908,6 @@ void OsmAndPoiNameIndex_OsmAndPoiNameIndexData::Swap(OsmAndPoiNameIndex_OsmAndPo
 // -------------------------------------------------------------------
 
 #ifndef _MSC_VER
-const int OsmAndPoiNameIndex::kFiltersFieldNumber;
 const int OsmAndPoiNameIndex::kTableFieldNumber;
 const int OsmAndPoiNameIndex::kDataFieldNumber;
 #endif  // !_MSC_VER
@@ -16202,12 +15965,11 @@ OsmAndPoiNameIndex* OsmAndPoiNameIndex::New() const {
 }
 
 void OsmAndPoiNameIndex::Clear() {
-  if (_has_bits_[1 / 32] & (0xffu << (1 % 32))) {
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (has_table()) {
       if (table_ != NULL) table_->::OsmAnd::OBF::IndexedStringTable::Clear();
     }
   }
-  filters_.Clear();
   data_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -16219,26 +15981,10 @@ bool OsmAndPoiNameIndex::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // repeated .OsmAnd.OBF.OsmAndBloomFilterAlgorithm filters = 2;
-      case 2: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_filters:
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-                input, add_filters()));
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(18)) goto parse_filters;
-        if (input->ExpectTag(26)) goto parse_table;
-        break;
-      }
-
       // required .OsmAnd.OBF.IndexedStringTable table = 3;
       case 3: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_table:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                input, mutable_table()));
         } else {
@@ -16281,12 +16027,6 @@ bool OsmAndPoiNameIndex::MergePartialFromCodedStream(
 
 void OsmAndPoiNameIndex::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // repeated .OsmAnd.OBF.OsmAndBloomFilterAlgorithm filters = 2;
-  for (int i = 0; i < this->filters_size(); i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      2, this->filters(i), output);
-  }
-
   // required .OsmAnd.OBF.IndexedStringTable table = 3;
   if (has_table()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
@@ -16307,13 +16047,6 @@ void OsmAndPoiNameIndex::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* OsmAndPoiNameIndex::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // repeated .OsmAnd.OBF.OsmAndBloomFilterAlgorithm filters = 2;
-  for (int i = 0; i < this->filters_size(); i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      WriteMessageNoVirtualToArray(
-        2, this->filters(i), target);
-  }
-
   // required .OsmAnd.OBF.IndexedStringTable table = 3;
   if (has_table()) {
     target = ::google::protobuf::internal::WireFormatLite::
@@ -16338,7 +16071,7 @@ void OsmAndPoiNameIndex::SerializeWithCachedSizes(
 int OsmAndPoiNameIndex::ByteSize() const {
   int total_size = 0;
 
-  if (_has_bits_[1 / 32] & (0xffu << (1 % 32))) {
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     // required .OsmAnd.OBF.IndexedStringTable table = 3;
     if (has_table()) {
       total_size += 1 +
@@ -16347,14 +16080,6 @@ int OsmAndPoiNameIndex::ByteSize() const {
     }
 
   }
-  // repeated .OsmAnd.OBF.OsmAndBloomFilterAlgorithm filters = 2;
-  total_size += 1 * this->filters_size();
-  for (int i = 0; i < this->filters_size(); i++) {
-    total_size +=
-      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        this->filters(i));
-  }
-
   // repeated .OsmAnd.OBF.OsmAndPoiNameIndex.OsmAndPoiNameIndexData data = 5;
   total_size += 1 * this->data_size();
   for (int i = 0; i < this->data_size(); i++) {
@@ -16388,9 +16113,8 @@ void OsmAndPoiNameIndex::MergeFrom(const ::google::protobuf::Message& from) {
 
 void OsmAndPoiNameIndex::MergeFrom(const OsmAndPoiNameIndex& from) {
   GOOGLE_CHECK_NE(&from, this);
-  filters_.MergeFrom(from.filters_);
   data_.MergeFrom(from.data_);
-  if (from._has_bits_[1 / 32] & (0xffu << (1 % 32))) {
+  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_table()) {
       mutable_table()->::OsmAnd::OBF::IndexedStringTable::MergeFrom(from.table());
     }
@@ -16411,17 +16135,13 @@ void OsmAndPoiNameIndex::CopyFrom(const OsmAndPoiNameIndex& from) {
 }
 
 bool OsmAndPoiNameIndex::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000002) != 0x00000002) return false;
+  if ((_has_bits_[0] & 0x00000001) != 0x00000001) return false;
 
-  for (int i = 0; i < filters_size(); i++) {
-    if (!this->filters(i).IsInitialized()) return false;
-  }
   return true;
 }
 
 void OsmAndPoiNameIndex::Swap(OsmAndPoiNameIndex* other) {
   if (other != this) {
-    filters_.Swap(&other->filters_);
     std::swap(table_, other->table_);
     data_.Swap(&other->data_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
@@ -16445,7 +16165,7 @@ void OsmAndPoiNameIndex::Swap(OsmAndPoiNameIndex* other) {
 const int OsmAndPoiNameIndexDataAtom::kZoomFieldNumber;
 const int OsmAndPoiNameIndexDataAtom::kXFieldNumber;
 const int OsmAndPoiNameIndexDataAtom::kYFieldNumber;
-const int OsmAndPoiNameIndexDataAtom::kBloomIndexFieldNumber;
+const int OsmAndPoiNameIndexDataAtom::kSuffixesBitsetFieldNumber;
 const int OsmAndPoiNameIndexDataAtom::kShiftToFieldNumber;
 #endif  // !_MSC_VER
 
@@ -16509,7 +16229,7 @@ void OsmAndPoiNameIndexDataAtom::Clear() {
     y_ = 0u;
     shiftto_ = 0u;
   }
-  bloomindex_.Clear();
+  suffixesbitset_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -16563,21 +16283,28 @@ bool OsmAndPoiNameIndexDataAtom::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(42)) goto parse_bloomIndex;
+        if (input->ExpectTag(48)) goto parse_suffixesBitset;
         break;
       }
 
-      // repeated bytes bloomIndex = 5;
-      case 5: {
+      // repeated uint32 suffixesBitset = 6;
+      case 6: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_bloomIndex:
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->add_bloomindex()));
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_suffixesBitset:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 48, input, this->mutable_suffixesbitset())));
+        } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
+                   == ::google::protobuf::internal::WireFormatLite::
+                      WIRETYPE_LENGTH_DELIMITED) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_suffixesbitset())));
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(42)) goto parse_bloomIndex;
+        if (input->ExpectTag(48)) goto parse_suffixesBitset;
         if (input->ExpectTag(117)) goto parse_shiftTo;
         break;
       }
@@ -16631,10 +16358,10 @@ void OsmAndPoiNameIndexDataAtom::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(4, this->y(), output);
   }
 
-  // repeated bytes bloomIndex = 5;
-  for (int i = 0; i < this->bloomindex_size(); i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytes(
-      5, this->bloomindex(i), output);
+  // repeated uint32 suffixesBitset = 6;
+  for (int i = 0; i < this->suffixesbitset_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(
+      6, this->suffixesbitset(i), output);
   }
 
   // optional fixed32 shiftTo = 14;
@@ -16665,10 +16392,10 @@ void OsmAndPoiNameIndexDataAtom::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(4, this->y(), target);
   }
 
-  // repeated bytes bloomIndex = 5;
-  for (int i = 0; i < this->bloomindex_size(); i++) {
+  // repeated uint32 suffixesBitset = 6;
+  for (int i = 0; i < this->suffixesbitset_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
-      WriteBytesToArray(5, this->bloomindex(i), target);
+      WriteUInt32ToArray(6, this->suffixesbitset(i), target);
   }
 
   // optional fixed32 shiftTo = 14;
@@ -16714,11 +16441,14 @@ int OsmAndPoiNameIndexDataAtom::ByteSize() const {
     }
 
   }
-  // repeated bytes bloomIndex = 5;
-  total_size += 1 * this->bloomindex_size();
-  for (int i = 0; i < this->bloomindex_size(); i++) {
-    total_size += ::google::protobuf::internal::WireFormatLite::BytesSize(
-      this->bloomindex(i));
+  // repeated uint32 suffixesBitset = 6;
+  {
+    int data_size = 0;
+    for (int i = 0; i < this->suffixesbitset_size(); i++) {
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        UInt32Size(this->suffixesbitset(i));
+    }
+    total_size += 1 * this->suffixesbitset_size() + data_size;
   }
 
   if (!unknown_fields().empty()) {
@@ -16746,7 +16476,7 @@ void OsmAndPoiNameIndexDataAtom::MergeFrom(const ::google::protobuf::Message& fr
 
 void OsmAndPoiNameIndexDataAtom::MergeFrom(const OsmAndPoiNameIndexDataAtom& from) {
   GOOGLE_CHECK_NE(&from, this);
-  bloomindex_.MergeFrom(from.bloomindex_);
+  suffixesbitset_.MergeFrom(from.suffixesbitset_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_zoom()) {
       set_zoom(from.zoom());
@@ -16786,7 +16516,7 @@ void OsmAndPoiNameIndexDataAtom::Swap(OsmAndPoiNameIndexDataAtom* other) {
     std::swap(zoom_, other->zoom_);
     std::swap(x_, other->x_);
     std::swap(y_, other->y_);
-    bloomindex_.Swap(&other->bloomindex_);
+    suffixesbitset_.Swap(&other->suffixesbitset_);
     std::swap(shiftto_, other->shiftto_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
