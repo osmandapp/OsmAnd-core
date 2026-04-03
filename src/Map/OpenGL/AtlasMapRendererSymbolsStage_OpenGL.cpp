@@ -55,12 +55,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
     QList< std::shared_ptr<const RenderableSymbol> >& preRenderableSymbols,
     AtlasMapRenderer_Metrics::Metric_renderFrame* metric)
 {
-    if (_initSymbolType != InitSymbolType::Complete)
-        return false;
-
     bool ok = true;
 
     auto currentAlphaChannelType = AlphaChannelType::Straight;
+
+    bool with3DObjects = false;
+    if (currentState.map3DObjectsProvider)
+        with3DObjects = true;
 
     for (const auto& renderableSymbol : constOf(preRenderableSymbols))
     {
@@ -71,13 +72,19 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
             {
                 const auto& gpuResource =
                     std::static_pointer_cast<const GPUAPI::MeshInGPU>(renderableOnSurfaceSymbol->gpuResource);
+
+                // Don't reserve holes in 3D buildings for dense symbols just draw them at their places
                 if (gpuResource->isDenseObject)
-                {
-                    Stopwatch renderOnSurfaceSymbolStopwatch(metric != nullptr);
-                    ok = ok && renderOnSurfaceVectorSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType, false);
-                    if (metric)
-                        metric->elapsedTimeForOnSurfaceSymbolsRendering += renderOnSurfaceSymbolStopwatch.elapsed();
-                }
+                    glStencilMask(0x00);
+                else if (with3DObjects)
+                    glStencilMask(0xFF);
+                else
+                    continue;
+
+                Stopwatch renderOnSurfaceSymbolStopwatch(metric != nullptr);
+                ok = ok && renderOnSurfaceVectorSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType);
+                if (metric)
+                    metric->elapsedTimeForOnSurfaceSymbolsRendering += renderOnSurfaceSymbolStopwatch.elapsed();
             }
         }
         else if (const auto& renderableModel3DSymbol =
@@ -85,24 +92,42 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
         {
             if (std::dynamic_pointer_cast<const Model3DMapSymbol>(renderableModel3DSymbol->mapSymbol))
             {
-                const auto& gpuResource =
-                    std::static_pointer_cast<const GPUAPI::MeshInGPU>(renderableModel3DSymbol->gpuResource);
-                if (gpuResource->isDenseObject)
-                {
-                    Stopwatch renderableModel3DSymbolStopwatch(metric != nullptr);
-                    ok = ok && _model3DSubstage->render(
-                        renderableModel3DSymbol, currentAlphaChannelType) == MapRendererStage::StageResult::Success;
-                    if (metric)
-                        metric->elapsedTimeForModel3DSymbolsRendering += renderableModel3DSymbolStopwatch.elapsed();
-                }
+                Stopwatch renderableModel3DSymbolStopwatch(metric != nullptr);
+                glStencilMask(0xFF);
+                ok = ok && _model3DSubstage->render(
+                    renderableModel3DSymbol, currentAlphaChannelType) == MapRendererStage::StageResult::Success;
+                if (metric)
+                    metric->elapsedTimeForModel3DSymbolsRendering += renderableModel3DSymbolStopwatch.elapsed();
             }
         }
     }
+
+    return ok;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRenderWithVolume(
+    QList< std::shared_ptr<const RenderableSymbol> >& denseSymbolsBeforeBuildings,
+    QList< std::shared_ptr<const RenderableSymbol> >& denseSymbolsAfterBuildings,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* metric)
+{
+    if (_initSymbolType != InitSymbolType::Complete)
+        return false;
 
     // Disable actual drawing for symbol preparation phase
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     GL_CHECK_RESULT;
 
+    // Always pass and write '1' into the stencil buffer to make holes in 3D buildings thereafter
+    glStencilFunc(GL_ALWAYS, 1, 0xFF); 
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    bool ok = preRender(denseSymbolsBeforeBuildings, metric) && preRender(denseSymbolsAfterBuildings, metric);
+
+    // Disable testing and modifying stencil buffer
+    glStencilFunc(GL_ALWAYS, 0, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glStencilMask(0x00);
+    
     return ok;
 }
 
@@ -217,7 +242,7 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
             std::dynamic_pointer_cast<const RenderableOnSurfaceSymbol>(renderableSymbol))
         {
             Stopwatch renderOnSurfaceSymbolStopwatch(metric != nullptr);
-            ok = ok && renderOnSurfaceSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType, step > 0);
+            ok = ok && renderOnSurfaceSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType);
             if (metric)
             {
                 metric->elapsedTimeForOnSurfaceSymbolsRendering += renderOnSurfaceSymbolStopwatch.elapsed();
@@ -273,7 +298,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-    AlphaChannelType &currentAlphaChannelType, bool ignoreDepthBuffer)
+    AlphaChannelType &currentAlphaChannelType)
 {
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
     {
@@ -285,7 +310,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     {
         return renderOnSurfaceVectorSymbol(
             renderable,
-            currentAlphaChannelType, ignoreDepthBuffer);
+            currentAlphaChannelType);
     }
 
     return false;
@@ -2686,7 +2711,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-    AlphaChannelType &currentAlphaChannelType, bool ignoreDepthBuffer)
+    AlphaChannelType &currentAlphaChannelType)
 {
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
@@ -2835,7 +2860,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     GL_CHECK_RESULT;
 
     // Perform <= depth test (regardless of elevation presence) if needed
-    glDepthFunc(ignoreDepthBuffer || gpuResource->isSeenThrough ? GL_ALWAYS : GL_LEQUAL);
+    glDepthFunc(gpuResource->isSeenThrough ? GL_ALWAYS : GL_LEQUAL);
     GL_CHECK_RESULT;
 
     // If symbol has no tiled parts - render it flat using single elevation value
@@ -3223,8 +3248,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         GL_CHECK_RESULT;
 
         // Cancel possible enabled depth buffer writing
-        glDepthMask(GL_FALSE);
-        GL_CHECK_RESULT;
+        if (gpuResource->isDenseObject)
+        {
+            glDepthMask(GL_FALSE);
+            GL_CHECK_RESULT;
+        }
     }
 
     // Disable depth buffer offset for other symbols

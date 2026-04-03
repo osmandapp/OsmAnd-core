@@ -26,6 +26,7 @@ namespace OsmAnd
         struct BuildingPrimitive
         {
             std::shared_ptr<const MapPrimitiviser::Primitive> primitive;
+            bool keepParent;
             uint32_t polygonColor = 0;
             mutable AreaI bbox31;
             mutable FColorRGB color;
@@ -37,6 +38,8 @@ namespace OsmAnd
             PointI startingPoint;
             PointI endingPoint;
             PointI centerPoint;
+            PointI gapStartingPoint;
+            PointI gapEndingPoint;
             glm::dvec2 startingSegment;
             glm::dvec2 endingSegment;
             float height;
@@ -45,6 +48,9 @@ namespace OsmAnd
             bool putEnd;
             bool withStart;
             bool withEnd;
+            bool preStart;
+            bool preEnd;
+            bool useWide;
             BuildingVertex startBottomLeft;
             BuildingVertex startTopLeft;
             BuildingVertex startTopRight;

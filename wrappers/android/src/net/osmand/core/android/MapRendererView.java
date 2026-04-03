@@ -2,6 +2,7 @@ package net.osmand.core.android;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.os.Bundle;
 import android.util.AttributeSet;
@@ -85,7 +86,9 @@ public abstract class MapRendererView extends FrameLayout {
      * Optional bitmap for offscreen rendering
      */
     private Bitmap _resultBitmap;
-
+    private Bitmap _flippedBitmap = null;
+    private Canvas _flipCanvas = null;
+    private Matrix _flipMatrix = null;
     /**
      * Offscreen rendering result is ready
      */
@@ -386,28 +389,51 @@ public abstract class MapRendererView extends FrameLayout {
      */
     protected abstract IMapRenderer createMapRendererInstance();
 
-    public Bitmap getBitmap() {
-        if (!isSuspended && _byteBuffer != null) {
-            if (_resultBitmap == null) {
-                _resultBitmap = Bitmap.createBitmap(_windowWidth, _windowHeight, Bitmap.Config.ARGB_8888);
-            }
-            if (_renderingResultIsReady) {
-                synchronized (_byteBuffer) {
-                    _byteBuffer.rewind();
-                    _resultBitmap.copyPixelsFromBuffer(_byteBuffer);
-                    _renderingResultIsReady = false;
-                }
-                if (_frameReadingMode) {
-                    Matrix matrix = new Matrix();
-                    matrix.preScale(1.0f, -1.0f);
-                    _resultBitmap = Bitmap.createBitmap(_resultBitmap, 0, 0, _windowWidth, _windowHeight, matrix, true);
-                }
-            }
-            return _resultBitmap;
-        }
-        else
-            return null;
-    }
+	public Bitmap getBitmap() {
+		// Fast return to avoid deep nesting
+		if (isSuspended || _byteBuffer == null) {
+			return null;
+		}
+
+		// Lazy initialization of the source bitmap, or recreate if dimensions changed
+		if (_resultBitmap == null || _resultBitmap.getWidth() != _windowWidth || _resultBitmap.getHeight() != _windowHeight) {
+			_resultBitmap = Bitmap.createBitmap(_windowWidth, _windowHeight, Bitmap.Config.ARGB_8888);
+		}
+
+		boolean newlyRendered = false;
+
+		if (_renderingResultIsReady) {
+			synchronized (_byteBuffer) {
+				// Double check inside the monitor lock
+				if (_renderingResultIsReady) {
+					_byteBuffer.rewind();
+					_resultBitmap.copyPixelsFromBuffer(_byteBuffer);
+					_renderingResultIsReady = false;
+					newlyRendered = true;
+				}
+			}
+		}
+
+		// Only process the flip if a new frame was just copied
+		if (newlyRendered && _frameReadingMode) {
+			// Initialize flip resources once to prevent memory churn, or recreate if dimensions changed
+			if (_flippedBitmap == null || _flippedBitmap.getWidth() != _windowWidth || _flippedBitmap.getHeight() != _windowHeight) {
+				_flippedBitmap = Bitmap.createBitmap(_windowWidth, _windowHeight, Bitmap.Config.ARGB_8888);
+				_flipCanvas = new Canvas(_flippedBitmap);
+
+				_flipMatrix = new Matrix();
+				_flipMatrix.setScale(1.0f, -1.0f);
+				// Translate the image back into the positive view space after flipping
+				_flipMatrix.postTranslate(0, _windowHeight);
+			}
+
+			// Draw the raw bitmap onto the flipped bitmap using the matrix
+			_flipCanvas.drawBitmap(_resultBitmap, _flipMatrix, null);
+		}
+
+		// Return the appropriate bitmap based on the mode
+		return _frameReadingMode ? _flippedBitmap : _resultBitmap;
+	}
 
     public synchronized IMapRenderer suspendRenderer() {
         Log.v(TAG, "suspendRenderer()");
@@ -1856,8 +1882,8 @@ public abstract class MapRendererView extends FrameLayout {
     private static final int GREEN_SIZE = 8;
     private static final int BLUE_SIZE = 8;
     private static final int ALPHA_SIZE = 0;
-    private static final int DEPTH_SIZE = 16;
-    private static final int STENCIL_SIZE = 0;
+    private static final int DEPTH_SIZE = 24;
+    private static final int STENCIL_SIZE = 8;
 
     private static boolean msaaEnabled = false;
 
@@ -1959,10 +1985,7 @@ public abstract class MapRendererView extends FrameLayout {
             EGLConfig bestMSAA4xConfig = null;
             EGLConfig bestOtherMSAAConfig = null;
             EGLConfig bestNonMSAAConfig = null;
-            int maxMSAA4xDepth = -1;
-            int maxOtherMSAADepth = -1;
             int maxOtherMSAASamples = -1;
-            int maxNonMSAADepth = -1;
 
             for (EGLConfig config : configs) {
                 int depth = findConfigAttrib(egl, display, config, EGL10.EGL_DEPTH_SIZE, 0);
@@ -1985,24 +2008,16 @@ public abstract class MapRendererView extends FrameLayout {
                 if (sampleBuffers == 1 && samples >= 2) {
                     if (samples == 4) {
                         // Prefer 4x MSAA
-                        if (depth >= maxMSAA4xDepth) {
-                            bestMSAA4xConfig = config;
-                            maxMSAA4xDepth = depth;
-                        }
+                        bestMSAA4xConfig = config;
                     } else {
                         // Other MSAA levels
-                        if (samples > maxOtherMSAASamples ||
-                            (samples == maxOtherMSAASamples && depth >= maxOtherMSAADepth)) {
+                        if (samples > maxOtherMSAASamples) {
                             bestOtherMSAAConfig = config;
-                            maxOtherMSAADepth = depth;
                             maxOtherMSAASamples = samples;
                         }
                     }
                 } else if (sampleBuffers == 0) {
-                    if (depth >= maxNonMSAADepth) {
-                        bestNonMSAAConfig = config;
-                        maxNonMSAADepth = depth;
-                    }
+                    bestNonMSAAConfig = config;
                 }
             }
 

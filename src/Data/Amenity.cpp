@@ -9,6 +9,7 @@
 OsmAnd::Amenity::Amenity(const std::shared_ptr<const ObfPoiSectionInfo>& obfSection_)
     : obfSection(obfSection_)
     , id(ObfObjectId::invalidId())
+    , travelElo(-1)
 {
 }
 
@@ -31,7 +32,12 @@ void OsmAnd::Amenity::evaluateTypes()
 
 QList<OsmAnd::Amenity::DecodedCategory> OsmAnd::Amenity::getDecodedCategories() const
 {
+    if (!decodedCategoriesOverride.isEmpty())
+        return decodedCategoriesOverride;
+
     QList<DecodedCategory> result;
+    if (!obfSection)
+        return result;
 
     const auto sectionCategories = obfSection->getCategories();
     if (!sectionCategories)
@@ -77,7 +83,26 @@ QList<OsmAnd::Amenity::DecodedCategory> OsmAnd::Amenity::getDecodedCategories() 
 
 QList<OsmAnd::Amenity::DecodedValue> OsmAnd::Amenity::getDecodedValues() const
 {
+    if (!decodedValuesOverride.isEmpty())
+    {
+        QList<DecodedValue> result;
+        for (const auto& decodedValueEntry : rangeOf(constOf(decodedValuesOverride)))
+        {
+            DecodedValue decodedValue;
+            const auto declaration = std::make_shared<ObfPoiSectionSubtype>();
+            declaration->tagName = decodedValueEntry.key();
+            declaration->name = decodedValueEntry.key();
+            declaration->isText = true;
+            decodedValue.declaration = declaration;
+            decodedValue.value = decodedValueEntry.value();
+            result.push_back(decodedValue);
+        }
+        return result;
+    }
+
     QList<DecodedValue> result;
+    if (!obfSection)
+        return result;
 
     const auto sectionSubtypes = obfSection->getSubtypes();
     if (!sectionSubtypes)
@@ -135,8 +160,13 @@ QList<OsmAnd::Amenity::DecodedValue> OsmAnd::Amenity::getDecodedValues() const
 
 QHash<QString, QString> OsmAnd::Amenity::getDecodedValuesHash() const
 {
+    if (!decodedValuesOverride.isEmpty())
+        return decodedValuesOverride;
+
     QHash<QString, QString> result;
-    
+    if (!obfSection)
+        return result;
+
     const auto sectionSubtypes = obfSection->getSubtypes();
     if (!sectionSubtypes)
         return result;
@@ -193,6 +223,12 @@ QHash<QString, QString> OsmAnd::Amenity::getDecodedValuesHash() const
 
 QString OsmAnd::Amenity::getDecodedValue(const QString& key) const
 {
+    const auto decodedValueIt = decodedValuesOverride.constFind(key);
+    if (decodedValueIt != decodedValuesOverride.cend())
+        return decodedValueIt.value();
+    if (!obfSection)
+        return QString();
+
     const auto sectionSubtypes = obfSection->getSubtypes();
     if (!sectionSubtypes)
         return QString();

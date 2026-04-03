@@ -2,11 +2,14 @@
 #define _OSMAND_CORE_AMENITY_SYMBOLS_PROVIDER_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <array>
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <QHash>
 #include <QList>
+#include <QReadWriteLock>
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
@@ -45,6 +48,64 @@ namespace OsmAnd
             virtual ~Data();
         };
 
+        class OSMAND_CORE_API Cache Q_DECL_FINAL
+        {
+            Q_DISABLE_COPY_AND_MOVE(Cache);
+
+        public:
+            struct OSMAND_CORE_API Entry
+            {
+                Entry();
+                Entry(const QList<std::shared_ptr<const Amenity>>& amenities);
+
+                QList<std::shared_ptr<const Amenity>> amenities;
+            };
+
+        private:
+            struct LruEntry
+            {
+                TileId tileId;
+                ZoomLevel zoom;
+                uint64_t generation;
+            };
+            struct CacheEntry
+            {
+                QList<std::shared_ptr<const Amenity>> amenities;
+                uint64_t generation;
+            };
+
+            mutable QReadWriteLock _lock;
+            std::array<QHash<TileId, CacheEntry>, ZoomLevelsCount> _storage;
+            QList<LruEntry> _lru;
+            uint64_t _nextGeneration;
+            std::function<void()> _dataChangedHandler;
+
+            void removeEntryUnlocked(const TileId tileId, const ZoomLevel zoom);
+            void shrinkToCapacityUnlocked();
+
+        public:
+            explicit Cache(const uint32_t capacity);
+            virtual ~Cache();
+
+            const uint32_t capacity;
+
+            uint32_t getSize() const;
+            bool contains(const TileId tileId, const ZoomLevel zoom) const;
+            bool obtainEntry(const TileId tileId, const ZoomLevel zoom, Entry& outEntry);
+            bool obtainAmenities(
+                const TileId tileId,
+                const ZoomLevel zoom,
+                QList<std::shared_ptr<const Amenity>>& outAmenities);
+            void put(
+                const TileId tileId,
+                const ZoomLevel zoom,
+                const QList<std::shared_ptr<const Amenity>>& amenities);
+            void remove(const TileId tileId, const ZoomLevel zoom);
+            void clear();
+
+            void setDataChangedHandler(const std::function<void()>& handler);
+        };
+
         class OSMAND_CORE_API AmenitySymbolsGroup : public MapSymbolsGroup
         {
             Q_DISABLE_COPY_AND_MOVE(AmenitySymbolsGroup);
@@ -62,6 +123,16 @@ namespace OsmAnd
             virtual QString toString() const;
         };
 
+        struct OSMAND_CORE_API ExternalAmenitiesResponse
+        {
+            QList<std::shared_ptr<const Amenity>> amenities;
+        };
+        typedef std::function<bool(
+            const TileId tileId,
+            const ZoomLevel zoom,
+            const std::function<bool()>& isCancelled,
+            ExternalAmenitiesResponse& outResponse)> ExternalAmenitiesProvider;
+
     private:
         PrivateImplementation<AmenitySymbolsProvider_P> _p;
     protected:
@@ -73,7 +144,9 @@ namespace OsmAnd
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction amentitiesFilter = nullptr,
             const std::shared_ptr<IAmenityIconProvider>& amenityIconProvider = std::make_shared<CoreResourcesAmenityIconProvider>(),
-            const int baseOrder = 10000);
+            const int baseOrder = 10000,
+            const uint32_t cacheSize = 0,
+            const ExternalAmenitiesProvider externalAmenitiesProvider = nullptr);
         virtual ~AmenitySymbolsProvider();
 
         int subsection;
@@ -86,6 +159,13 @@ namespace OsmAnd
         const ObfPoiSectionReader::VisitorFunction amentitiesFilter;
         const std::shared_ptr<IAmenityIconProvider> amenityIconProvider;
         const int baseOrder;
+        const uint32_t cacheSize;
+        const std::shared_ptr<Cache> cache;
+        const ExternalAmenitiesProvider externalAmenitiesProvider;
+
+        void invalidateTiles();
+        void setDataObtainedHandler(
+            const std::function<void(const TileId tileId, const ZoomLevel zoom)>& handler);
 
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
@@ -103,6 +183,8 @@ namespace OsmAnd
             const IMapDataProvider::Request& request,
             const IMapDataProvider::ObtainDataAsyncCallback callback,
             const bool collectMetric = false) Q_DECL_OVERRIDE;
+
+        virtual bool waitForLoading() const Q_DECL_OVERRIDE;
     };
 }
 
