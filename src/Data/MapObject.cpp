@@ -346,6 +346,19 @@ bool OsmAnd::MapObject::updateVisibleArea(const AreaI& nextArea, int64_t nextAre
     return result;
 }
 
+bool OsmAnd::MapObject::containsCaptionTag(const QString& tagName) const
+{
+    const QString nullstr = QString::null;
+    const auto citTagsGroup = attributeMapping->encodeMap.constFind(QStringRef(&tagName));
+    if (citTagsGroup != attributeMapping->encodeMap.cend())
+    {
+        const auto citTag = citTagsGroup->constFind(QStringRef(&nullstr));
+        if (citTag != citTagsGroup->cend() && captions.contains(*citTag))
+            return true;
+    }
+    return false;
+}
+
 bool OsmAnd::MapObject::containsAttribute(const uint32_t attributeId, const bool checkAdditional /*= false*/) const
 {
     return (checkAdditional ? additionalAttributeIds : attributeIds).contains(attributeId);

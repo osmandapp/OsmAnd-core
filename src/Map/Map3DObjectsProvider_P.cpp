@@ -20,7 +20,7 @@
 #define PASSAGE_MAX_WALL_GAP 50.0 // ~1m
 
 // Minimum cosine of the angle between adjacent walls that must be drawn seamlessly
-#define MIN_COSINE_CURVED_WALL 0.866 // ~30deg
+#define MIN_COSINE_CURVED_WALL 0.76 // ~40deg
 
 #define PASSAGE_DEFAULT_WIDTH 6.0f
 #define PASSAGE_DEFAULT_HEIGHT 6.0f
@@ -295,8 +295,7 @@ void Map3DObjectsTiledProvider_P::filterBuildings(QSet<BuildingPrimitive>& build
                     modifiedBuildingPart.polygonColor = buildingPrimitive.polygonColor;
                     itemsToModify.append(qMakePair(buildingPart, modifiedBuildingPart));
                 }
-
-                shouldRemove = true;
+                shouldRemove = !buildingPart.keepParent;
             }
         }
 
@@ -361,15 +360,20 @@ void Map3DObjectsTiledProvider_P::collectFromPolyline(
         BuildingPrimitive buildingPrimitive;
         buildingPrimitive.primitive = polylinePrimitive;
         buildingPrimitive.polygonColor = getPolygonColor(buildingPrimitive.primitive);
+        buildingPrimitive.bbox31 = sourceObject->bbox31;
 
         const bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
 
         if (sourceObject->containsTag(QStringLiteral("building")))
-        {
             insertOrUpdateBuilding(buildingPrimitive, outBuildings);
-        }
-        else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part")))
+        else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part"))
+            && (sourceObject->containsCaptionTag(QStringLiteral("height"))
+                || sourceObject->containsCaptionTag(QStringLiteral("building:levels"))))
         {
+            buildingPrimitive.keepParent = true;
+            if (sourceObject->containsCaptionTag(QStringLiteral("building:colour"))
+                || sourceObject->containsAttribute(QStringLiteral("building:material"), QString::null, true))
+                buildingPrimitive.keepParent = false;
             insertOrUpdateBuilding(buildingPrimitive, outBuildingParts);
         }
     }
@@ -389,8 +393,8 @@ void Map3DObjectsTiledProvider_P::collectFromPolyline(
                 passagePrimitive.endingPoint - sourceObject->points31[sourceObject->points31.size() - 2];
             passagePrimitive.endingSegment = glm::normalize(glm::dvec2(endingSegment.x, endingSegment.y));
             passagePrimitive.startingSegment = glm::normalize(glm::dvec2(startingSegment.x, startingSegment.y));
-            const QString width = QStringLiteral("width");
-            const QString height = QStringLiteral("height");
+            const auto width = QStringLiteral("width");
+            const auto height = QStringLiteral("height");
             passagePrimitive.height = Utilities::parseLength(sourceObject->getResolvedAttribute(QStringRef(&height)),
                 PASSAGE_DEFAULT_HEIGHT);
             const auto widthValue = Utilities::parseLength(sourceObject->getResolvedAttribute(QStringRef(&width)),
@@ -416,6 +420,7 @@ void Map3DObjectsTiledProvider_P::collectFromPolygons(
 {
     BuildingPrimitive buildingPrimitive;
     buildingPrimitive.primitive = polygonPrimitive;
+    buildingPrimitive.keepParent = false;
     buildingPrimitive.polygonColor = getPolygonColor(buildingPrimitive.primitive);
 
     const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(polygonPrimitive->sourceObject);
@@ -424,14 +429,20 @@ void Map3DObjectsTiledProvider_P::collectFromPolygons(
         return;
     }
 
+    buildingPrimitive.bbox31 = sourceObject->bbox31;
+
     const bool show3DbuildingParts = _environment ? _environment->getShow3DBuildingParts() : false;
 
     if (sourceObject->containsTag(QStringLiteral("building")))
-    {
         insertOrUpdateBuilding(buildingPrimitive, outBuildings);
-    }
-    else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part")))
+    else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part"))
+        && (sourceObject->containsCaptionTag(QStringLiteral("height"))
+            || sourceObject->containsCaptionTag(QStringLiteral("building:levels"))))
     {
+        buildingPrimitive.keepParent = true;
+        if (sourceObject->containsCaptionTag(QStringLiteral("building:colour"))
+            || sourceObject->containsAttribute(QStringLiteral("building:material"), QString::null, true))
+            buildingPrimitive.keepParent = false;
         insertOrUpdateBuilding(buildingPrimitive, outBuildingParts);
     }
 }
@@ -495,31 +506,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(primitive.primitive->sourceObject);
     if (!sourceObject)
         return;
-
-    auto color = _useCustomColor ? _customColor : FColorRGB(getUseDefaultBuildingsColor()
-        || primitive.polygonColor == 0 ? getDefaultBuildingsColor() : FColorARGB(primitive.polygonColor));
-
-    // Set an individual color to a particular (selected) building
-    if (primaryBuildings)
-    {
-        // Keep selected buildings separately to draw them first
-        auto it = objectColors.begin();
-        auto end = objectColors.end();
-        for (; it != end; it++)
-        {
-            auto tileId = it.key();
-            if (primitive.bbox31.contains(PointI(tileId.x, tileId.y)))
-            {
-                primitive.color = it.value();
-                primaryBuildings->append(&primitive);
-                return;
-            }
-        }
-    }
-    else
-        color = primitive.color;
-
-    glm::vec4 colorVec(color.r, color.g, color.b, 0.0f);
 
     float levelHeight = getDefaultBuildingsLevelHeight();
 
@@ -610,6 +596,52 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             baseTerrainHeight = minElevationMeters;
         }
     }
+
+    auto color = _useCustomColor ? _customColor : FColorRGB(getUseDefaultBuildingsColor()
+        || primitive.polygonColor == 0 ? getDefaultBuildingsColor() : FColorARGB(primitive.polygonColor));
+
+    // Set an individual color to a particular (selected) building
+    if (primaryBuildings)
+    {
+        // Keep selected buildings separately to draw them first
+        auto end = objectColors.end();
+        for (auto it = objectColors.begin(); it != end; it++)
+        {
+            auto tileId = it.key();
+            const PointI location31(tileId.x, tileId.y);
+            if (primitive.bbox31.contains(location31))
+            {
+                if (Utilities::contains(sourceObject->points31, location31))
+                {
+                    bool inside = true;
+                    if (!sourceObject->innerPolygonsPoints31.isEmpty())
+                    {
+                        for (const auto& innerPolygon : constOf(sourceObject->innerPolygonsPoints31))
+                        {
+                            if (innerPolygon.isEmpty())
+                                continue;
+
+                            if (Utilities::contains(innerPolygon, location31))
+                            {
+                                inside = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (inside)
+                    {
+                        primitive.color = it.value();
+                        primaryBuildings->append(&primitive);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    else
+        color = primitive.color;
+
+    glm::vec4 colorVec(color.r, color.g, color.b, 0.0f);
 
     QList<PassagePrimitive*> passages;
     if (minHeight > 0.0f)
