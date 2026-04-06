@@ -36,6 +36,7 @@ namespace OsmAnd
 
         QList<std::shared_ptr<const Street>> streets;
         std::vector<int32_t> bbox31; // unused
+        QStringList getOtherNames(bool transliterate) const;
     };
 }
 

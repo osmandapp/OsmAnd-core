@@ -976,8 +976,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
 
     const auto subtypes = section->_p->_subtypes;
 
-    ObfObjectId id;
-    bool autogenerateId = true;
+    ObfObjectId id = ObfObjectId::invalidId();
     std::shared_ptr<Amenity> amenity;
     PointI position31;
     QString nativeName;
@@ -1031,11 +1030,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     {
                         localizedNames.insert(tag, entry.value().toString());
                         itStringOrDataValue.remove();
-                    }
-                    else if (tag == QLatin1String("brand"))
-                    {
-                        localizedNames.insert(tag, entry.value().toString());
-                        continue;
                     }
                     else if (tag == QLatin1String("travel_elo"))
                     {
@@ -1100,10 +1094,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 }
                 amenity->position31 = position31;
                 amenity->categories = qMove(categories);
-                if (autogenerateId)
-                    amenity->id = ObfObjectId::generateUniqueId(baseOffset, section);
-                else
-                    amenity->id = id;
+                amenity->id = id;
                 amenity->values = detachedOf(intValues).unite(stringOrDataValues);
                 amenity->evaluateTypes();
                 amenity->tagGroups = qMove(tagGroupsAmenity);
@@ -1189,8 +1180,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 ObfObjectId obfObjectId;
                 obfObjectId.id = rawId;
                 id = obfObjectId;
-
-                autogenerateId = false;
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kTextCategoriesFieldNumber:

@@ -74,7 +74,7 @@ float OsmAnd::Building::evaluateInterpolation(const QString& hno) const
 
 bool OsmAnd::Building::belongsToInterpolation(const QString& hno) const
 {
-    return evaluateInterpolation(hno) >= 0;
+    return evaluateInterpolation(hno) > 0;
 }
 
 QString OsmAnd::Building::getInterpolationName(double coeff) const
