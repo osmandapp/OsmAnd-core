@@ -27,12 +27,13 @@ namespace OsmAnd
         struct Data : public IMapTiledDataProvider::Data
         {
             Data(const TileId tileId, const ZoomLevel zoom,
-                QVector<BuildingVertex>& vertices, QVector<uint16_t>& indices, QVector<int32_t>& parts);
+                QVector<BuildingVertex>& vertices, QVector<uint16_t>& indices, QVector<int32_t>& parts, bool isDense);
             virtual ~Data();
 
             QVector<BuildingVertex> vertices;
             QVector<uint16_t> indices;
             QVector<int32_t> parts;
+            bool isDense;
         };
 
         explicit Map3DObjectsTiledProvider(

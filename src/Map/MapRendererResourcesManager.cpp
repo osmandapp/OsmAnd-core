@@ -247,6 +247,7 @@ bool OsmAnd::MapRendererResourcesManager::uploadTiled3DBuildingsToGPU(
     const QVector<BuildingVertex>& vertices,
     const QVector<uint16_t>& indices,
     const QVector<int32_t>& parts,
+    const bool isDense,
     std::shared_ptr<const GPUAPI::MeshInGPU>& outMeshInGPU)
 {
     return renderer->gpuAPI->uploadDataAsMeshToGPU(
@@ -257,6 +258,7 @@ bool OsmAnd::MapRendererResourcesManager::uploadTiled3DBuildingsToGPU(
         sizeof(uint16_t),
         indices.size(),
         parts,
+        isDense,
         outMeshInGPU,
         renderer->setupOptions.gpuWorkerThreadEnabled,
         &(renderer->gpuContextIsLost));

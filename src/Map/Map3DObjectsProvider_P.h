@@ -26,7 +26,6 @@ namespace OsmAnd
         struct BuildingPrimitive
         {
             std::shared_ptr<const MapPrimitiviser::Primitive> primitive;
-            bool keepParent;
             uint32_t polygonColor = 0;
             mutable AreaI bbox31;
             mutable FColorRGB color;
@@ -81,11 +80,13 @@ namespace OsmAnd
             QList<const BuildingPrimitive*>* primaryBuildings = nullptr) const;
 
         void collectFromPolyline(const std::shared_ptr<const MapPrimitiviser::Primitive>& polylinePrimitive,
+            const bool show3DbuildingParts,
             QSet<BuildingPrimitive>& outBuildings,
             QSet<BuildingPrimitive>& outBuildingParts,
             QSet<PassagePrimitive>& outBuildingPassages) const;
 
         void collectFromPolygons(const std::shared_ptr<const MapPrimitiviser::Primitive>& polygonPrimitive,
+            const bool show3DbuildingParts,
             QSet<BuildingPrimitive>& outBuildings,
             QSet<BuildingPrimitive>& outBuildingParts) const;
 

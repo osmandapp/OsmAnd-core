@@ -22,6 +22,7 @@ namespace OsmAnd
 
     private:
         GLname _vao;
+        GLname _colorVao;
         GLname _depthVao;
 
         Init3DObjectsType _init3DObjectsType;
@@ -68,19 +69,22 @@ namespace OsmAnd
                 } param;
             } fs;
         } _program;
+        Model3DProgram _colorProgram;
         Model3DProgram _depthProgram;
 
         QList<std::shared_ptr<const GPUAPI::MeshInGPU>> resourcesInGPU;
 
+        bool initializeSimpleProgram();
         bool initializeColorProgram();
         bool initializeDepthProgram();
         void occupySpace(TileId tileIdN, int zoomLevel, int minZoomLevel,
             QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const;
         bool spaceAlreadyOccupied(TileId tileIdN, int zoomLevel,
             QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const;
-        void getResourcesInGPU(
-            const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection, int detalizationLevel);
+        void getResourcesInGPU(const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
+            const int viewableDetalizationLevel, bool& highDetalizationLevel);
         StageResult renderDepth(bool primaryOnly);
+        StageResult renderSimple(bool primaryOnly);
         StageResult renderColor(bool primaryOnly);
         std::shared_ptr<const GPUAPI::MeshInGPU> captureResourceInGPU(
             const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,

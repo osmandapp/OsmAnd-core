@@ -84,7 +84,7 @@ AtlasMapRendererMap3DObjectsStage_OpenGL::~AtlasMapRendererMap3DObjectsStage_Ope
 {
 }
 
-bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
+bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeSimpleProgram()
 {
     const auto nextInit3DobjectsType = static_cast<Init3DObjectsType>(static_cast<int>(_init3DObjectsType) + 1);
     _init3DObjectsType = Init3DObjectsType::Incomplete;
@@ -104,22 +104,16 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
         const QString colorInOutDeclaration = QString(R"(
             INPUT vec3 in_vs_normal;
             INPUT vec4 in_vs_color;
-            INPUT vec4 in_vs_sizes;
 
-            PARAM_OUTPUT highp vec3 v2f_pointPosition;
             PARAM_OUTPUT highp vec3 v2f_pointNormal;
             PARAM_OUTPUT highp vec4 v2f_pointColor;
-            PARAM_OUTPUT highp vec4 v2f_sizes;
-            PARAM_OUTPUT highp float v2f_height;
         )");
         const QString colorCalculation = QString(R"(
-                v2f_sizes = in_vs_sizes;
-                v2f_sizes.z = in_vs_sizes.z * tileFactor;
-                v2f_sizes.w = in_vs_sizes.w / param_vs_metersPerUnit;
-                v2f_height = in_vs_heights.x;
-                v2f_pointPosition = worldPos;
                 v2f_pointNormal = in_vs_normal;
-                v2f_pointColor = in_vs_color;
+                vec3 color = in_vs_color.rgb;
+                float b = dot(color, vec3(0.2126, 0.7152, 0.0722)) / 0.2;
+                color = b > 1.0 ? color : (b > 0.0 ? color / b : vec3(0.2));
+                v2f_pointColor = vec4(clamp(color, 0.0, 1.0), in_vs_color.a);
         )");
 
         auto vertexShader = vertexShaderBase;
@@ -127,37 +121,19 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
         vertexShader.replace("%ColorCalculation%", colorCalculation);
 
         const QString fragmentShader = R"(
-            PARAM_INPUT highp vec3 v2f_pointPosition;
             PARAM_INPUT highp vec3 v2f_pointNormal;
             PARAM_INPUT highp vec4 v2f_pointColor;
-            PARAM_INPUT highp vec4 v2f_sizes;
-            PARAM_INPUT highp float v2f_height;
             
             uniform float param_fs_alpha;
-            uniform vec3 param_fs_cameraPosition;
             uniform vec3 param_fs_lightDirection;
             
             void main()
             {
-                vec3 v = normalize(param_fs_cameraPosition - v2f_pointPosition);
                 vec3 n = normalize(v2f_pointNormal);
-                bool top = abs(n.y) > abs(n.x) && abs(n.y) > abs(n.z);
-                bool dark = dot(-param_fs_lightDirection, n) < 0.0;
-                float a = atan(n.x, n.z);
-                vec2 p = abs(v2f_sizes.zw) + 10.0;
-                vec2 g = clamp(pow(v2f_sizes.xy, p) - pow(1.0 - v2f_sizes.xy, p), 0.0, 1.0) * 0.4;
-                g.x = dark ? -g.x : g.x;
-                n = top ? n : normalize(vec3(sin(a + g.x), sin(g.y), cos(a + g.x)));
-                vec3 r = reflect(param_fs_lightDirection, n);
-                float h = pow((clamp(dot(r, v), 0.5, 1.0) - 0.5) * 2.0, 3.0) * 0.2;
-                float qa = floor(a * 2.0) * 0.5;
-                vec2 s = top ? vec2(0.0, 0.0) : vec2(sin(qa), cos(qa)) + v2f_pointColor.a;
-                float d = (dot(-param_fs_lightDirection, n) + 1.0) * 0.5 + 0.25;
-                d *= !top && v2f_sizes.z > 0.0 ? fract(sin(dot(s, vec2(12.9898, 78.233))) * 43758.5453) * 0.1 + 0.95 : 1.0;
-                d /= 1.0 + exp(-v2f_height * 0.05) * 0.2;
-                d *= 1.0 + pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 3.0) * 0.2;
-                vec3 dc = clamp(v2f_pointColor.rgb * d, 0.0, 1.0);
-                FRAGMENT_COLOR_OUTPUT = vec4(mix(dc, vec3(1.0), h), param_fs_alpha);
+                float d = dot(-param_fs_lightDirection, n);
+                d = ((d < 0.0 ? -(d * d) : d * d) + 1.0) * 0.5 + 0.1;
+                vec3 color = v2f_pointColor.rgb * d;
+                FRAGMENT_COLOR_OUTPUT = vec4(clamp(color, 0.0, 1.0), param_fs_alpha);
             }
         )";
 
@@ -182,7 +158,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
             const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
             if (vsId == 0)
             {
-                LogPrintf(LogSeverityLevel::Error, "Failed to compile Map3DObjects vertex shader");
+                LogPrintf(LogSeverityLevel::Error, "Failed to compile Map3DObjects simple vertex shader");
                 return false;
             }
 
@@ -192,7 +168,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
                 glDeleteShader(vsId);
                 GL_CHECK_RESULT;
 
-                LogPrintf(LogSeverityLevel::Error, "Failed to compile Map3DObjects fragment shader");
+                LogPrintf(LogSeverityLevel::Error, "Failed to compile Map3DObjects simple fragment shader");
                 return false;
             }
 
@@ -214,7 +190,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
     if (!_program.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to link Map3DObjects shader program");
+            "Failed to link Map3DObjects simple shader program");
         return false;
     }
 
@@ -224,7 +200,6 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
     ok = ok && lookup->lookupLocation(_program.vs.in.heights, "in_vs_heights", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.in.normal, "in_vs_normal", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.in.color, "in_vs_color", GlslVariableType::In);
-    ok = ok && lookup->lookupLocation(_program.vs.in.sizes, "in_vs_sizes", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
@@ -232,7 +207,6 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
     ok = ok && lookup->lookupLocation(_program.vs.param.metersPerUnit, "param_vs_metersPerUnit", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.zScaleFactor, "param_vs_zScaleFactor", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.alpha, "param_fs_alpha", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_program.fs.param.cameraPosition, "param_fs_cameraPosition", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.lightDirection, "param_fs_lightDirection", GlslVariableType::Uniform);
 
     if (!ok)
@@ -243,7 +217,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
         _program.id.reset();
 
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to find variable in Map3DObjects shader program");
+            "Failed to find variable in Map3DObjects simple shader program");
         return false;
     }
 
@@ -255,14 +229,202 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
         GL_CHECK_RESULT;
         glEnableVertexAttribArray(*_program.vs.in.heights);
         GL_CHECK_RESULT;
-        glEnableVertexAttribArray(*_program.vs.in.sizes);
-        GL_CHECK_RESULT;
         glEnableVertexAttribArray(*_program.vs.in.normal);
         GL_CHECK_RESULT;
         glEnableVertexAttribArray(*_program.vs.in.color);
         GL_CHECK_RESULT;
         
         gpuAPI->initializeVAO(_vao);
+        gpuAPI->unuseVAO();
+    }
+
+    _init3DObjectsType = nextInit3DobjectsType;
+    return true;
+}
+
+bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
+{
+    const auto nextInit3DobjectsType = static_cast<Init3DObjectsType>(static_cast<int>(_init3DObjectsType) + 1);
+    _init3DObjectsType = Init3DObjectsType::Incomplete;
+
+    const auto gpuAPI = getGPUAPI();
+    
+    QHash<QString, GPUAPI_OpenGL::GlslProgramVariable> variablesMap;
+    _colorProgram.id = 0;
+
+    if (!_colorProgram.binaryCache.isEmpty())
+    {
+        _colorProgram.id = gpuAPI->linkProgram(
+            0, nullptr, _colorProgram.binaryCache, _colorProgram.cacheFormat, true, &variablesMap);
+    }
+
+    if (!_colorProgram.id.isValid())
+    {
+        const QString colorInOutDeclaration = QString(R"(
+            INPUT vec3 in_vs_normal;
+            INPUT vec4 in_vs_color;
+            INPUT vec4 in_vs_sizes;
+
+            PARAM_OUTPUT highp vec3 v2f_pointPosition;
+            PARAM_OUTPUT highp vec3 v2f_pointNormal;
+            PARAM_OUTPUT highp vec4 v2f_pointColor;
+            PARAM_OUTPUT highp vec4 v2f_sizes;
+            PARAM_OUTPUT highp float v2f_height;
+        )");
+        const QString colorCalculation = QString(R"(
+                v2f_sizes = in_vs_sizes;
+                v2f_sizes.z = in_vs_sizes.z * tileFactor;
+                v2f_sizes.w = in_vs_sizes.w / param_vs_metersPerUnit;
+                v2f_height = in_vs_heights.x;
+                v2f_pointPosition = worldPos;
+                v2f_pointNormal = in_vs_normal;
+                vec3 color = in_vs_color.rgb;
+                float b = dot(color, vec3(0.2126, 0.7152, 0.0722)) / 0.2;
+                color = b > 1.0 ? color : (b > 0.0 ? color / b : vec3(0.2));
+                v2f_pointColor = vec4(clamp(color, 0.0, 1.0), in_vs_color.a);
+        )");
+
+        auto vertexShader = vertexShaderBase;
+        vertexShader.replace("%ColorInOutDeclaration%", colorInOutDeclaration);
+        vertexShader.replace("%ColorCalculation%", colorCalculation);
+
+        const QString fragmentShader = R"(
+            PARAM_INPUT highp vec3 v2f_pointPosition;
+            PARAM_INPUT highp vec3 v2f_pointNormal;
+            PARAM_INPUT highp vec4 v2f_pointColor;
+            PARAM_INPUT highp vec4 v2f_sizes;
+            PARAM_INPUT highp float v2f_height;
+            
+            uniform float param_fs_alpha;
+            uniform vec3 param_fs_cameraPosition;
+            uniform vec3 param_fs_lightDirection;
+            
+            void main()
+            {
+                vec3 v = normalize(param_fs_cameraPosition - v2f_pointPosition);
+                vec3 n = normalize(v2f_pointNormal);
+                bool top = abs(n.y) > abs(n.x) && abs(n.y) > abs(n.z);
+                float a = atan(n.x, n.z);
+                vec2 p = abs(v2f_sizes.zw) + 10.0;
+                vec2 g = clamp(pow(v2f_sizes.xy, p) - pow(1.0 - v2f_sizes.xy, p), 0.0, 1.0) * 0.4;
+                g.x = dot(-param_fs_lightDirection, n) < 0.0 ? -g.x : g.x;
+                n = top ? n : normalize(vec3(sin(a + g.x), sin(g.y), cos(a + g.x)));
+                vec3 r = reflect(param_fs_lightDirection, n);
+                float h = pow((clamp(dot(r, v), 0.5, 1.0) - 0.5) * 2.0, 3.0) * 0.2;
+                float qa = floor(a * 2.0) * 0.5;
+                vec2 s = top ? vec2(0.0, 0.0) : vec2(sin(qa), cos(qa)) + v2f_pointColor.a;
+                float d = dot(-param_fs_lightDirection, n);
+                d = ((d < 0.0 ? -(d * d) : d * d) + 1.0) * 0.5 + 0.1;
+                d *= !top && v2f_sizes.z > 0.0 ? fract(sin(dot(s, vec2(12.9898, 78.233))) * 43758.5453) * 0.14 + 0.93 : 1.0;
+                d /= 1.0 + exp(-v2f_height * 0.05) * 0.2;
+                d *= 1.0 + pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 3.0) * 0.2;
+                vec3 color = mix(v2f_pointColor.rgb * d, vec3(1.0), h);
+                FRAGMENT_COLOR_OUTPUT = vec4(clamp(color, 0.0, 1.0), param_fs_alpha);
+            }
+        )";
+
+        auto preprocessedVertexShader = vertexShader;
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+
+        auto preprocessedFragmentShader = fragmentShader;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+
+        _colorProgram.binaryCache = gpuAPI->readProgramBinary(preprocessedVertexShader,
+            preprocessedFragmentShader, setupOptions.pathToOpenGLShadersCache, _colorProgram.cacheFormat);
+
+        if (!_colorProgram.binaryCache.isEmpty())
+        {
+            _colorProgram.id = gpuAPI->linkProgram(
+                0, nullptr, _colorProgram.binaryCache, _colorProgram.cacheFormat, true, &variablesMap);
+        }
+        if (_colorProgram.binaryCache.isEmpty() || !_colorProgram.id.isValid())
+        {
+            const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+            if (vsId == 0)
+            {
+                LogPrintf(LogSeverityLevel::Error, "Failed to compile Map3DObjects color vertex shader");
+                return false;
+            }
+
+            const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+            if (fsId == 0)
+            {
+                glDeleteShader(vsId);
+                GL_CHECK_RESULT;
+
+                LogPrintf(LogSeverityLevel::Error, "Failed to compile Map3DObjects color fragment shader");
+                return false;
+            }
+
+            const GLuint shaders[] = { vsId, fsId };
+            _colorProgram.id = gpuAPI->linkProgram(
+                2, shaders, _colorProgram.binaryCache, _colorProgram.cacheFormat, true, &variablesMap);
+            if (_colorProgram.id.isValid() && !_colorProgram.binaryCache.isEmpty())
+            {
+                gpuAPI->writeProgramBinary(
+                    preprocessedVertexShader,
+                    preprocessedFragmentShader,
+                    setupOptions.pathToOpenGLShadersCache,
+                    _colorProgram.binaryCache,
+                    _colorProgram.cacheFormat);
+            }
+        }
+    }
+
+    if (!_colorProgram.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link Map3DObjects color shader program");
+        return false;
+    }
+
+    const auto lookup = gpuAPI->obtainVariablesLookupContext(_colorProgram.id, variablesMap);
+    bool ok = true;
+    ok = ok && lookup->lookupLocation(_colorProgram.vs.in.location31, "in_vs_location31", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_colorProgram.vs.in.heights, "in_vs_heights", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_colorProgram.vs.in.normal, "in_vs_normal", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_colorProgram.vs.in.color, "in_vs_color", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_colorProgram.vs.in.sizes, "in_vs_sizes", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_colorProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_colorProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_colorProgram.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_colorProgram.vs.param.zoomLevel, "param_vs_zoomLevel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_colorProgram.vs.param.metersPerUnit, "param_vs_metersPerUnit", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_colorProgram.vs.param.zScaleFactor, "param_vs_zScaleFactor", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_colorProgram.fs.param.alpha, "param_fs_alpha", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_colorProgram.fs.param.cameraPosition, "param_fs_cameraPosition", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_colorProgram.fs.param.lightDirection, "param_fs_lightDirection", GlslVariableType::Uniform);
+
+    if (!ok)
+    {
+        glDeleteProgram(_colorProgram.id);
+        GL_CHECK_RESULT;
+
+        _colorProgram.id.reset();
+
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find variable in Map3DObjects color shader program");
+        return false;
+    }
+
+    if (_colorVao.isValid())
+    {
+        gpuAPI->useVAO(_colorVao);
+        
+        glEnableVertexAttribArray(*_colorProgram.vs.in.location31);
+        GL_CHECK_RESULT;
+        glEnableVertexAttribArray(*_colorProgram.vs.in.heights);
+        GL_CHECK_RESULT;
+        glEnableVertexAttribArray(*_colorProgram.vs.in.sizes);
+        GL_CHECK_RESULT;
+        glEnableVertexAttribArray(*_colorProgram.vs.in.normal);
+        GL_CHECK_RESULT;
+        glEnableVertexAttribArray(*_colorProgram.vs.in.color);
+        GL_CHECK_RESULT;
+        
+        gpuAPI->initializeVAO(_colorVao);
         gpuAPI->unuseVAO();
     }
 
@@ -417,10 +579,10 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
     GL_CHECK_PRESENT(glBindTexture);
 
     _vao = gpuAPI->allocateUninitializedVAO();
-    gpuAPI->initializeVAO(_vao);
     
+    _colorVao = gpuAPI->allocateUninitializedVAO();
+
     _depthVao = gpuAPI->allocateUninitializedVAO();
-    gpuAPI->initializeVAO(_depthVao);
 
     _init3DObjectsType = Init3DObjectsType::Objects3DDepth;
 
@@ -470,7 +632,9 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::spaceAlreadyOccupied(TileId tileI
 }
 
 void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
-    const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection, int detalizationLevel)
+    const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
+    const int viewableDetalizationLevel,
+    bool& highDetalizationLevel)
 {
     const auto& internalState = getInternalState();
 
@@ -484,7 +648,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
     auto tilesBegin = internalState.visibleTiles.cbegin();
     for (auto itTiles = internalState.visibleTiles.cend(); itTiles != tilesBegin; itTiles--)
     {
-        if (isLessDetailedLevel && detalizationLevel < 2)
+        if (isLessDetailedLevel && viewableDetalizationLevel < 2)
             break;
         const auto& tilesEntry = itTiles - 1;
         const auto zoomLevel = tilesEntry.key();
@@ -535,6 +699,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
                         static_cast<ZoomLevel>(neededZoom));
                     if (meshInGPU)
                     {
+                        highDetalizationLevel = highDetalizationLevel || meshInGPU->isDenseObject;
                         resourcesInGPU.append(qMove(meshInGPU));
                         count++;
                     }
@@ -575,6 +740,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
                 if (meshInGPU)
                 {
                     occupySpace(tileIdN, zoomLevel, minZoomLevel, presentTiles, occupiedSpace);
+                    highDetalizationLevel = highDetalizationLevel || meshInGPU->isDenseObject;
                     resourcesInGPU.append(qMove(meshInGPU));
                     haveMatch = true;
                 }
@@ -609,6 +775,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
                             {
                                 occupySpace(
                                     underscaledTileId, underscaledZoom, minZoomLevel, presentTiles, occupiedSpace);
+                                highDetalizationLevel = highDetalizationLevel || meshInGPU->isDenseObject;
                                 resourcesInGPU.append(qMove(meshInGPU));
                                 atLeastOnePresent = true;
                             }
@@ -638,6 +805,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
                         if (meshInGPU)
                         {
                             occupySpace(overscaledTileIdN, overscaleZoom, minZoomLevel, presentTiles, occupiedSpace);
+                            highDetalizationLevel = highDetalizationLevel || meshInGPU->isDenseObject;
                             resourcesInGPU.append(qMove(meshInGPU));
                             break;
                         }
@@ -716,7 +884,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDe
     return StageResult::Success;
 }
 
-MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderColor(bool primaryOnly)
+MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderSimple(bool primaryOnly)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -743,11 +911,6 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
     glUniform1f(*_program.vs.param.zScaleFactor, currentState.elevationConfiguration.zScaleFactor);
     GL_CHECK_RESULT;
     glUniform1f(*_program.fs.param.alpha, buildingAlpha);
-    GL_CHECK_RESULT;
-    glUniform3f(*_program.fs.param.cameraPosition,
-        internalState.worldCameraPosition.x,
-        internalState.worldCameraPosition.y,
-        internalState.worldCameraPosition.z);
     GL_CHECK_RESULT;
     glUniform3f(*_program.fs.param.lightDirection,
         -qSin(azimuth) * cosZenith,
@@ -799,7 +962,101 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
             glVertexAttribPointer(*_program.vs.in.color, 4, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
                 reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, color)));
             GL_CHECK_RESULT;
-            glVertexAttribPointer(*_program.vs.in.sizes, 4, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+
+            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount),
+                GL_UNSIGNED_SHORT, (void*) (startIndex * sizeof(uint16_t)));
+            GL_CHECK_RESULT;
+        }
+    }
+    gpuAPI->unuseVAO();
+
+    return StageResult::Success;
+}
+
+MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderColor(bool primaryOnly)
+{
+    const auto gpuAPI = getGPUAPI();
+    const auto& internalState = getInternalState();
+
+    float buildingAlpha = renderer->get3DBuildingsAlpha();
+
+    const auto zenith = glm::radians(currentState.elevationConfiguration.hillshadeSunAngle);
+    const auto azimuth = glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth);
+    const auto cosZenith = qCos(zenith);
+
+    glUseProgram(_colorProgram.id);
+    GL_CHECK_RESULT;
+    glUniformMatrix4fv(*_colorProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE,
+        glm::value_ptr(internalState.mPerspectiveProjectionView));
+    GL_CHECK_RESULT;
+    glUniform4f(*_colorProgram.vs.param.resultScale, 1.0f, currentState.flip ? -1.0f : 1.0f, 1.0f, 1.0f);
+    GL_CHECK_RESULT;
+    glUniform2i(*_colorProgram.vs.param.target31, currentState.target31.x, currentState.target31.y);
+    GL_CHECK_RESULT;
+    glUniform1i(*_colorProgram.vs.param.zoomLevel, (int)currentState.zoomLevel);
+    GL_CHECK_RESULT;
+    glUniform1f(*_colorProgram.vs.param.metersPerUnit, static_cast<float>(internalState.metersPerUnit));
+    GL_CHECK_RESULT;
+    glUniform1f(*_colorProgram.vs.param.zScaleFactor, currentState.elevationConfiguration.zScaleFactor);
+    GL_CHECK_RESULT;
+    glUniform1f(*_colorProgram.fs.param.alpha, buildingAlpha);
+    GL_CHECK_RESULT;
+    glUniform3f(*_colorProgram.fs.param.cameraPosition,
+        internalState.worldCameraPosition.x,
+        internalState.worldCameraPosition.y,
+        internalState.worldCameraPosition.z);
+    GL_CHECK_RESULT;
+    glUniform3f(*_colorProgram.fs.param.lightDirection,
+        -qSin(azimuth) * cosZenith,
+        -qSin(zenith),
+        qCos(azimuth) * cosZenith);
+    GL_CHECK_RESULT;
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GL_CHECK_RESULT;
+
+    gpuAPI->useVAO(_colorVao);
+
+    for (const auto& resource : resourcesInGPU)
+    {
+        if (resource->indexBuffer && resource->indexBuffer->itemsCount > 0)
+        {
+            int startIndex = 0;
+            int indexCount = resource->indexBuffer->itemsCount;
+            if (resource->partSizes->size() > 0)
+            {
+                if (primaryOnly)
+                {
+                    startIndex = resource->partSizes->front().second;
+                    indexCount -= startIndex;
+                }
+                else
+                    indexCount = resource->partSizes->front().second;
+            }
+            else if (primaryOnly)
+                continue;
+
+            glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(
+                resource->vertexBuffer->refInGPU)));
+            GL_CHECK_RESULT;
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(
+                resource->indexBuffer->refInGPU)));
+            GL_CHECK_RESULT;
+
+            glVertexAttribIPointer(*_colorProgram.vs.in.location31, 2, GL_INT, sizeof(BuildingVertex),
+                reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, location31)));
+            GL_CHECK_RESULT;
+            glVertexAttribPointer(*_colorProgram.vs.in.heights, 2, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+                reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, heights)));
+            GL_CHECK_RESULT;
+
+            glVertexAttribPointer(*_colorProgram.vs.in.normal, 3, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+                reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, normal)));
+            GL_CHECK_RESULT;
+            glVertexAttribPointer(*_colorProgram.vs.in.color, 4, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+                reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, color)));
+            GL_CHECK_RESULT;
+            glVertexAttribPointer(*_colorProgram.vs.in.sizes, 4, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
                 reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, sizes)));
             GL_CHECK_RESULT;
 
@@ -822,6 +1079,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     {
         const auto init3DObjectsType = _init3DObjectsType;
         ok = ok && (init3DObjectsType != Init3DObjectsType::Objects3DDepth || initializeDepthProgram());
+        ok = ok && (init3DObjectsType != Init3DObjectsType::Objects3DSimple || initializeSimpleProgram());
         ok = ok && (init3DObjectsType != Init3DObjectsType::Objects3DColor || initializeColorProgram());
 
         if (!ok || _init3DObjectsType == Init3DObjectsType::Incomplete)
@@ -837,11 +1095,12 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
         return StageResult::Success;
 
     const float buildingsAlpha = renderer->get3DBuildingsAlpha();
-    const int detalizationLevel = renderer->get3DBuildingsDetalization();
+    const int viewableDetalizationLevel = renderer->get3DBuildingsDetalization();
+    bool highDetalizationLevel = false;
 
     resourcesInGPU.clear();
 
-    getResourcesInGPU(resourcesCollection, detalizationLevel);
+    getResourcesInGPU(resourcesCollection, viewableDetalizationLevel, highDetalizationLevel);
 
     if (resourcesInGPU.isEmpty())
     {
@@ -884,7 +1143,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     GL_CHECK_RESULT;
 
-    auto colorPassResult = renderColor(true);
+    auto colorPassResult = highDetalizationLevel ? renderColor(true) : renderSimple(true);
 
     if (needsDepthPrepass)
     {
@@ -915,7 +1174,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     GL_CHECK_RESULT;
 
     if (!failed)
-        colorPassResult = renderColor(false);
+        colorPassResult = highDetalizationLevel ? renderColor(false) : renderSimple(false);
 
     if (needsDepthPrepass)
     {
@@ -951,7 +1210,13 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::release(bool gpuContextLost)
         gpuAPI->releaseVAO(_vao, gpuContextLost);
         _vao.reset();
     }
-    
+
+    if (_colorVao.isValid())
+    {
+        gpuAPI->releaseVAO(_colorVao, gpuContextLost);
+        _colorVao.reset();
+    }
+
     if (_depthVao.isValid())
     {
         gpuAPI->releaseVAO(_depthVao, gpuContextLost);
@@ -963,6 +1228,13 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::release(bool gpuContextLost)
         glDeleteProgram(_program.id);
         GL_CHECK_RESULT;
         _program.id = 0;
+    }
+
+    if (_colorProgram.id)
+    {
+        glDeleteProgram(_colorProgram.id);
+        GL_CHECK_RESULT;
+        _colorProgram.id = 0;
     }
 
     if (_depthProgram.id)
