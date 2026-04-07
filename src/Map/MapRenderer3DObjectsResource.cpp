@@ -148,7 +148,7 @@ bool MapRenderer3DObjectsResource::uploadToGPU()
         return true;
 
     bool ok = resourcesManager->uploadTiled3DBuildingsToGPU(
-        sourceData->vertices, sourceData->indices, sourceData->parts, _meshInGPU);
+        sourceData->vertices, sourceData->indices, sourceData->parts, sourceData->isDense, _meshInGPU);
     if (!ok)
         return false;
 

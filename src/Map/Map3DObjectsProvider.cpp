@@ -6,11 +6,12 @@
 using namespace OsmAnd;
 
 Map3DObjectsTiledProvider::Data::Data(const TileId tileId, const ZoomLevel zoom,
-    QVector<BuildingVertex>& vertices_, QVector<uint16_t>& indices_, QVector<int32_t>& parts_)
+    QVector<BuildingVertex>& vertices_, QVector<uint16_t>& indices_, QVector<int32_t>& parts_, bool isDense_)
     : IMapTiledDataProvider::Data(tileId, zoom)
     , vertices(qMove(vertices_))
     , indices(qMove(indices_))
     , parts(qMove(parts_))
+    , isDense(isDense_)
 {
 }
 
