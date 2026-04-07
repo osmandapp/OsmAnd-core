@@ -70,6 +70,7 @@ namespace OsmAnd
         enum class Init3DObjectsType : int
         {
             Objects3DDepth,
+            Objects3DSimple,
             Objects3DColor,
             Complete,
             Incomplete

@@ -273,6 +273,7 @@ namespace OsmAnd
             const QVector<BuildingVertex>& vertices,
             const QVector<uint16_t>& indices,
             const QVector<int32_t>& parts,
+            const bool isDense,
             std::shared_ptr<const GPUAPI::MeshInGPU>& outMeshInGPU);
         bool adjustImageToConfiguration(
             const sk_sp<const SkImage>& input,
