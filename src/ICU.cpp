@@ -39,7 +39,7 @@ bool g_icuInitialized = false;
 
 QReadWriteLock collatorsLock;
 QHash<Qt::HANDLE, Collator*> collatorsMap;
-static uint8_t s_isUnsafeChar[65536] = {0};
+static std::bitset<65536> s_isUnsafeChar;
 
 // RAII wrapper for ICU Transliterator
 using TransliteratorPtr = std::unique_ptr<icu::Transliterator, void(*)(icu::Transliterator*)>;
@@ -104,17 +104,21 @@ void initializeCharFilter()
     UErrorCode status = U_ZERO_ERROR;
     const Normalizer2* nfd = Normalizer2::getNFDInstance(status);
 
+    if (U_FAILURE(status) || !nfd)
+        return;
+
+    s_isUnsafeChar.reset();
     for (int32_t i = 0; i < 65536; ++i)
     {
         UChar32 c = (UChar32)i;
         // Diacritics symbols range
         if (c >= 0x0300 && c <= 0x036F)
         {
-            s_isUnsafeChar[i] = 1;
+            s_isUnsafeChar.set(i);
         }
         else if (!nfd->isNormalized(UnicodeString(c), status))
         {
-            s_isUnsafeChar[i] = 1;
+            s_isUnsafeChar.set(i);
         }
     }
 }
@@ -550,7 +554,7 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::stripDiacritics(const QStr
     bool needsProcessing = false;
     for (int i = 0; i < len; ++i) {
         ushort c = input.at(i).unicode();
-        if (s_isUnsafeChar[c])
+        if (s_isUnsafeChar.test(c))
         {
             needsProcessing = true;
             break;
