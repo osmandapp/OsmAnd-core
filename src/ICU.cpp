@@ -111,8 +111,9 @@ void initializeCharFilter()
     for (int32_t i = 0; i < 65536; ++i)
     {
         UChar32 c = (UChar32)i;
-        // Diacritics symbols range
-        if (c >= 0x0300 && c <= 0x036F)
+        int8_t type = u_charType(c);
+        bool isCombining = (type == U_NON_SPACING_MARK || type == U_COMBINING_SPACING_MARK || type == U_ENCLOSING_MARK);
+        if (isCombining)
         {
             s_isUnsafeChar.set(i);
         }
@@ -577,9 +578,12 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::stripDiacritics(const QStr
         return input;
 
     UnicodeString result;
-    for (int32_t i = 0; i < decomposed.length(); ++i) {
+    for (int32_t i = 0; i < decomposed.length(); ) {
         UChar32 c = decomposed.char32At(i);
-        if (c < 0x0300 || c > 0x036F) {
+        i += U16_LENGTH(c);
+        int8_t type = u_charType(c);
+        if (type != U_NON_SPACING_MARK && type != U_COMBINING_SPACING_MARK && type != U_ENCLOSING_MARK)
+        {
             result.append(c);
         }
     }
