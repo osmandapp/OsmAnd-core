@@ -22,6 +22,7 @@
 #include <unicode/translit.h>
 #include <unicode/brkiter.h>
 #include <unicode/coll.h>
+#include <unicode/normalizer2.h>
 #include "restore_internal_warnings.h"
 
 #include "CoreResourcesEmbeddedBundle.h"
@@ -31,12 +32,14 @@ std::unique_ptr<QByteArray> g_IcuData;
 const Transliterator* g_pIcuAnyToLatinTransliterator = nullptr;
 const Transliterator* g_pIcuAccentsAndDiacriticsConverter = nullptr;
 const BreakIterator* g_pIcuLineBreakIterator = nullptr;
+const Normalizer2* g_pIcuNFDNormalizer = nullptr;
 const Collator* g_pIcuCollator = nullptr;
 QReadWriteLock icuResourcesLock;
 bool g_icuInitialized = false;
 
 QReadWriteLock collatorsLock;
 QHash<Qt::HANDLE, Collator*> collatorsMap;
+static uint8_t s_isUnsafeChar[65536] = {0};
 
 // RAII wrapper for ICU Transliterator
 using TransliteratorPtr = std::unique_ptr<icu::Transliterator, void(*)(icu::Transliterator*)>;
@@ -96,6 +99,26 @@ const Collator* getThreadSafeCollator()
     return nullptr;
 }
 
+void initializeCharFilter()
+{
+    UErrorCode status = U_ZERO_ERROR;
+    const Normalizer2* nfd = Normalizer2::getNFDInstance(status);
+
+    for (int32_t i = 0; i < 65536; ++i)
+    {
+        UChar32 c = (UChar32)i;
+        // Diacritics symbols range
+        if (c >= 0x0300 && c <= 0x036F)
+        {
+            s_isUnsafeChar[i] = 1;
+        }
+        else if (!nfd->isNormalized(UnicodeString(c), status))
+        {
+            s_isUnsafeChar[i] = 1;
+        }
+    }
+}
+
 bool OsmAnd::ICU::initialize()
 {
     QWriteLocker icuWriteLocker(&icuResourcesLock);
@@ -141,7 +164,15 @@ bool OsmAnd::ICU::initialize()
         LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU line break iterator: %d", icuError);
         return false;
     }
-    
+
+    icuError = U_ZERO_ERROR;
+    g_pIcuNFDNormalizer = Normalizer2::getNFDInstance(icuError);
+    if (U_FAILURE(icuError))
+    {
+        LogPrintf(LogSeverityLevel::Error, "Failed to get NFD Normalizer: %d", icuError);
+    }
+    initializeCharFilter();
+
     Collator *collator = nullptr;
     icuError = U_ZERO_ERROR;
     Locale locale = Locale::getDefault();
@@ -192,7 +223,10 @@ void OsmAnd::ICU::release()
 
     delete g_pIcuAccentsAndDiacriticsConverter;
     g_pIcuAccentsAndDiacriticsConverter = nullptr;
-    
+
+    delete g_pIcuNFDNormalizer;
+    g_pIcuNFDNormalizer = nullptr;
+
     delete g_pIcuAnyToLatinTransliterator;
     g_pIcuAnyToLatinTransliterator = nullptr;
 
@@ -496,6 +530,7 @@ OSMAND_CORE_API QStringList OSMAND_CORE_CALL OsmAnd::ICU::wrapText(
 
 OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::stripAccentsAndDiacritics(const QString& input)
 {
+    // WARNING ! Very slow. Use only for single call
     QReadLocker icuReadLocker(&icuResourcesLock);
     if (!initThreadLocalTransliteratorsLocked() || !tl_accentsConverter)
         return input;
@@ -504,6 +539,48 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::stripAccentsAndDiacritics(
     UnicodeString icuString(reinterpret_cast<const UChar*>(input.unicode()), input.length());
     tl_accentsConverter->transliterate(icuString);
     return QString(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length());
+}
+
+OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::stripDiacritics(const QString& input)
+{
+    if (input.isEmpty())
+        return input;
+
+    const int len = input.length();
+    bool needsProcessing = false;
+    for (int i = 0; i < len; ++i) {
+        ushort c = input.at(i).unicode();
+        if (s_isUnsafeChar[c])
+        {
+            needsProcessing = true;
+            break;
+        }
+    }
+
+    if (!needsProcessing)
+    {
+        return input;
+    }
+
+    QReadLocker icuReadLocker(&icuResourcesLock);
+    if (!g_icuInitialized || !g_pIcuNFDNormalizer)
+        return input;
+
+    UErrorCode status = U_ZERO_ERROR;
+    UnicodeString source(reinterpret_cast<const UChar*>(input.unicode()), input.length());
+    UnicodeString decomposed = g_pIcuNFDNormalizer->normalize(source, status);
+    if (U_FAILURE(status))
+        return input;
+
+    UnicodeString result;
+    for (int32_t i = 0; i < decomposed.length(); ++i) {
+        UChar32 c = decomposed.char32At(i);
+        if (c < 0x0300 || c > 0x036F) {
+            result.append(c);
+        }
+    }
+    QString t = QString::fromUtf16(reinterpret_cast<const ushort*>(result.getTerminatedBuffer()), result.length());
+    return t;
 }
 
 UnicodeString qStrToUniStr(QString input)
