@@ -25,6 +25,7 @@
 #include "QMainThreadTaskHost.h"
 #include "QMainThreadTaskEvent.h"
 #include "SKIA_private.h"
+#include "ICU.h"
 #include "ICU_private.h"
 #include "EmbeddedTypefaceFinder_internal.h"
 #include "TextRasterizer_internal.h"
@@ -143,6 +144,12 @@ OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::InitializeCore(
         return 0;
     if (!ICU::initialize())
         return 0;
+
+#ifndef NDEBUG
+    ICU::testStripDiacritics();
+    ICU::testStripDiacriticsPerformance();
+#endif
+    
     (void)QLocale::system(); // This will initialize system locale, since it fails to initialize concurrently
     EmbeddedTypefaceFinder_initialize();
     TextRasterizer_initialize();

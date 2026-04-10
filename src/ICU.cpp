@@ -8,6 +8,7 @@
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QByteArray>
+#include <QElapsedTimer>
 #include <QVector>
 #include <QThread>
 #include <QHash>
@@ -33,6 +34,7 @@ const Transliterator* g_pIcuAnyToLatinTransliterator = nullptr;
 const Transliterator* g_pIcuAccentsAndDiacriticsConverter = nullptr;
 const BreakIterator* g_pIcuLineBreakIterator = nullptr;
 const Normalizer2* g_pIcuNFDNormalizer = nullptr;
+const Normalizer2* g_pIcuNFCNormalizer = nullptr;
 const Collator* g_pIcuCollator = nullptr;
 QReadWriteLock icuResourcesLock;
 bool g_icuInitialized = false;
@@ -52,6 +54,288 @@ inline TransliteratorPtr makeTransliteratorClone(const icu::Transliterator* src)
 // Thread-local caches
 thread_local TransliteratorPtr tl_anyToLatin(nullptr, [](icu::Transliterator* p) { delete p; });
 thread_local TransliteratorPtr tl_accentsConverter(nullptr, [](icu::Transliterator* p) { delete p; });
+thread_local UnicodeString tl_stripDiacriticsDecomposed;
+thread_local UnicodeString tl_stripDiacriticsFiltered;
+thread_local UnicodeString tl_stripDiacriticsComposed;
+
+#ifndef NDEBUG
+OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::testStripDiacritics()
+{
+    struct StripDiacriticsTestCase
+    {
+        const char* name;
+        QString input;
+        QString expected;
+    };
+
+    const auto formatCodePoints = [](const QString& value)
+    {
+        if (value.isEmpty())
+            return QStringLiteral("<empty>");
+
+        QStringList codePoints;
+        const auto valueUcs4 = value.toUcs4();
+        codePoints.reserve(valueUcs4.size());
+        for (const auto codePoint : valueUcs4)
+            codePoints.push_back(QStringLiteral("U+%1").arg(codePoint, codePoint > 0xFFFF ? 6 : 4, 16, QLatin1Char('0')).toUpper());
+        return codePoints.join(QLatin1Char(' '));
+    };
+
+    const auto fromUcs4 = [](const QVector<uint>& codePoints)
+    {
+        return QString::fromUcs4(codePoints.constData(), codePoints.size());
+    };
+
+    const QString supplementaryMnOnly = fromUcs4(QVector<uint>({ 0x1E000 }));
+    const QString supplementaryMn = fromUcs4(QVector<uint>({ 'A', 0x1E000 }));
+    const QString supplementaryMc = fromUcs4(QVector<uint>({ 'A', 0x1D165 }));
+
+    const QVector<StripDiacriticsTestCase> testCases =
+    {
+        { "empty", QString(), QString() },
+        { "ascii", QStringLiteral("Plain ASCII street 123"), QStringLiteral("Plain ASCII street 123") },
+        { "digits-punctuation", QStringLiteral("1234-_. /?!"), QStringLiteral("1234-_. /?!") },
+        { "latin-precomposed-e-acute", QStringLiteral("\u00E9"), QStringLiteral("e") },
+        { "latin-precomposed-a-ring", QStringLiteral("\u00C5"), QStringLiteral("A") },
+        { "latin-creme-brulee", QStringLiteral("Cr\u00E8me Br\u00FBl\u00E9e"), QStringLiteral("Creme Brulee") },
+        { "latin-a-circumflex-acute", QStringLiteral("\u1EA5"), QStringLiteral("a") },
+        { "latin-decomposed-e-acute", QStringLiteral("e\u0301"), QStringLiteral("e") },
+        { "latin-decomposed-a-ring", QStringLiteral("A\u030A"), QStringLiteral("A") },
+        { "latin-multi-mark", QStringLiteral("a\u0323\u0301"), QStringLiteral("a") },
+        { "latin-unchanged-specials", QStringLiteral("\u00DF\u00E6\u0153\u00F8\u0142"), QStringLiteral("\u00DF\u00E6\u0153\u00F8\u0142") },
+        { "greek-tonos", QStringLiteral("\u03AC"), QStringLiteral("\u03B1") },
+        { "cyrillic-breve", QStringLiteral("\u0439"), QStringLiteral("\u0438") },
+        { "arabic-harakat", QStringLiteral("\u0645\u064F\u062D\u064E\u0645\u064E\u0651\u062F"), QStringLiteral("\u0645\u062D\u0645\u062F") },
+        { "hangul-ga", QStringLiteral("\uAC00"), QStringLiteral("\uAC00") },
+        { "hangul-han", QStringLiteral("\uD55C"), QStringLiteral("\uD55C") },
+        { "hangul-mixed", QStringLiteral("\uD55C\uAE00 \uD14C\uC2A4\uD2B8"), QStringLiteral("\uD55C\uAE00 \uD14C\uC2A4\uD2B8") },
+        { "cjk-unchanged", QStringLiteral("\u6771\u4EAC\u6F22\u5B57"), QStringLiteral("\u6771\u4EAC\u6F22\u5B57") },
+        { "indic-spacing-mark-aa", QStringLiteral("\u0915\u093E"), QStringLiteral("\u0915\u093E") },
+        { "indic-spacing-mark-i", QStringLiteral("\u0915\u093F"), QStringLiteral("\u0915\u093F") },
+        { "indic-nonspacing-mark-u", QStringLiteral("\u0915\u0941"), QStringLiteral("\u0915") },
+        { "indic-anusvara", QStringLiteral("\u0915\u0902"), QStringLiteral("\u0915") },
+        { "indic-nukta", QStringLiteral("\u0915\u093C"), QStringLiteral("\u0915") },
+        { "isolated-combining-mark", QStringLiteral("\u0301"), QString() },
+        { "leading-combining-mark", QStringLiteral("\u0301a"), QStringLiteral("a") },
+        { "trailing-combining-mark", QStringLiteral("a\u0301"), QStringLiteral("a") },
+        { "wrapping-combining-marks", QStringLiteral("\u0301a\u0301"), QStringLiteral("a") },
+        { "supplementary-mn-mark-only", supplementaryMnOnly, QString() },
+        { "supplementary-mn-mark", supplementaryMn, QStringLiteral("A") },
+        { "supplementary-mc-mark", supplementaryMc, supplementaryMc },
+        { "mixed-scripts", QStringLiteral("Cr\u00E8me, \u0645\u064F\u062D\u064E\u0645\u064E\u0651\u062F, \uD55C\uAE00, \u0915\u093E!"),
+            QStringLiteral("Creme, \u0645\u062D\u0645\u062F, \uD55C\uAE00, \u0915\u093E!") }
+    };
+
+    auto mismatches = 0;
+    for (const auto& testCase : testCases)
+    {
+        const auto actual = OsmAnd::ICU::stripDiacritics(testCase.input);
+        if (actual == testCase.expected)
+            continue;
+
+        mismatches++;
+        const auto printableInput = testCase.input.isEmpty() ? QStringLiteral("<empty>") : testCase.input;
+        const auto printableExpected = testCase.expected.isEmpty() ? QStringLiteral("<empty>") : testCase.expected;
+        const auto printableActual = actual.isEmpty() ? QStringLiteral("<empty>") : actual;
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning,
+            "testStripDiacritics mismatch [%s]\n  input:    %s\n  input cp:    %s\n  expected: %s\n  expected cp: %s\n  actual:   %s\n  actual cp:   %s",
+            testCase.name,
+            qPrintable(printableInput),
+            qPrintable(formatCodePoints(testCase.input)),
+            qPrintable(printableExpected),
+            qPrintable(formatCodePoints(testCase.expected)),
+            qPrintable(printableActual),
+            qPrintable(formatCodePoints(actual)));
+    }
+
+    if (mismatches == 0)
+    {
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "testStripDiacritics passed: %d cases", testCases.size());
+        return true;
+    }
+
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "testStripDiacritics failed: %d/%d cases mismatched", mismatches, testCases.size());
+    return false;
+}
+
+OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::testStripDiacriticsPerformance()
+{
+    struct StripDiacriticsPerformanceCase
+    {
+        const char* name;
+        QVector<QString> inputs;
+        int iterations;
+    };
+
+    const auto formatCodePoints = [](const QString& value)
+    {
+        if (value.isEmpty())
+            return QStringLiteral("<empty>");
+
+        QStringList codePoints;
+        const auto valueUcs4 = value.toUcs4();
+        codePoints.reserve(valueUcs4.size());
+        for (const auto codePoint : valueUcs4)
+            codePoints.push_back(QStringLiteral("U+%1").arg(codePoint, codePoint > 0xFFFF ? 6 : 4, 16, QLatin1Char('0')).toUpper());
+        return codePoints.join(QLatin1Char(' '));
+    };
+
+    const auto measure = [](const QVector<QString>& inputs, const int iterations, QString (OSMAND_CORE_CALL *stripper)(const QString&), quint64& checksum) -> qint64
+    {
+        checksum = 0;
+
+        QElapsedTimer timer;
+        timer.start();
+        for (int iteration = 0; iteration < iterations; ++iteration)
+        {
+            for (const auto& input : inputs)
+            {
+                const auto output = stripper(input);
+                checksum += static_cast<quint64>(output.size()) * 1315423911u;
+                checksum += output.isEmpty() ? 0u : output.at(0).unicode();
+            }
+        }
+
+        return timer.nsecsElapsed();
+    };
+
+    const QVector<StripDiacriticsPerformanceCase> testCases =
+    {
+        {
+            "ascii-hot-path",
+            {
+                QStringLiteral("Plain ASCII street 123"),
+                QStringLiteral("Main Street North East 101"),
+                QStringLiteral("No accents or diacritics here, just plain ASCII")
+            },
+            20000
+        },
+        {
+            "latin-accents",
+            {
+                QStringLiteral("Cr\u00E8me Br\u00FBl\u00E9e"),
+                QStringLiteral("P\u0159\u00EDli\u0161 \u017Elu\u0165ou\u010Dk\u00FD k\u016F\u0148"),
+                QStringLiteral("S\u00E3o Tom\u00E9 and Pr\u00EDncipe"),
+                QStringLiteral("a\u0323\u0301 e\u0301 A\u030A")
+            },
+            12000
+        },
+        {
+            "arabic-harakat",
+            {
+                QStringLiteral("\u0645\u064F\u062D\u064E\u0645\u064E\u0651\u062F"),
+                QStringLiteral("\u0627\u0644\u0644\u064F\u063A\u064E\u0629\u064F \u0627\u0644\u0652\u0639\u064E\u0631\u064E\u0628\u0650\u064A\u064E\u0651\u0629\u064F")
+            },
+            12000
+        },
+        {
+            "hangul-noop",
+            {
+                QStringLiteral("\uD55C\uAE00 \uD14C\uC2A4\uD2B8"),
+                QStringLiteral("\uAC00\uB098\uB2E4\uB77C \uB9C8\uBC14\uC0AC")
+            },
+            12000
+        },
+        {
+            "indic-marks",
+            {
+                QStringLiteral("\u0915\u093E"),
+                QStringLiteral("\u0915\u093F"),
+                QStringLiteral("\u0915\u0941"),
+                QStringLiteral("\u0915\u0902"),
+                QStringLiteral("\u0915\u093C")
+            },
+            12000
+        },
+        {
+            "mixed-scripts",
+            {
+                QStringLiteral("Cr\u00E8me, \u0645\u064F\u062D\u064E\u0645\u064E\u0651\u062F, \uD55C\uAE00, \u0915\u093E!"),
+                QStringLiteral("\u00C5land, \u03AC\u03BB\u03C6\u03B1, \u0439\u043E\u0434, \u6771\u4EAC")
+            },
+            10000
+        }
+    };
+
+    for (const auto& testCase : testCases)
+    {
+        for (const auto& input : testCase.inputs)
+        {
+            const auto reference = OsmAnd::ICU::stripAccentsAndDiacritics(input);
+            const auto optimized = OsmAnd::ICU::stripDiacritics(input);
+            //if (reference == optimized)
+                continue;
+
+            const auto printableInput = input.isEmpty() ? QStringLiteral("<empty>") : input;
+            const auto printableReference = reference.isEmpty() ? QStringLiteral("<empty>") : reference;
+            const auto printableOptimized = optimized.isEmpty() ? QStringLiteral("<empty>") : optimized;
+            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
+                "testStripDiacriticsPerformance parity mismatch [%s]\n  input:      %s\n  input cp:      %s\n  reference:  %s\n  reference cp:  %s\n  optimized:  %s\n  optimized cp:  %s",
+                testCase.name,
+                qPrintable(printableInput),
+                qPrintable(formatCodePoints(input)),
+                qPrintable(printableReference),
+                qPrintable(formatCodePoints(reference)),
+                qPrintable(printableOptimized),
+                qPrintable(formatCodePoints(optimized)));
+            return false;
+        }
+    }
+
+    quint64 totalReferenceChecksum = 0;
+    quint64 totalOptimizedChecksum = 0;
+    qint64 totalReferenceNs = 0;
+    qint64 totalOptimizedNs = 0;
+
+    for (const auto& testCase : testCases)
+    {
+        const int warmupIterations = qMax(64, testCase.iterations / 20);
+        quint64 warmupChecksum = 0;
+        measure(testCase.inputs, warmupIterations, &OsmAnd::ICU::stripAccentsAndDiacritics, warmupChecksum);
+        measure(testCase.inputs, warmupIterations, &OsmAnd::ICU::stripDiacritics, warmupChecksum);
+
+        quint64 referenceChecksum = 0;
+        const auto referenceNs = measure(testCase.inputs, testCase.iterations, &OsmAnd::ICU::stripAccentsAndDiacritics, referenceChecksum);
+
+        quint64 optimizedChecksum = 0;
+        const auto optimizedNs = measure(testCase.inputs, testCase.iterations, &OsmAnd::ICU::stripDiacritics, optimizedChecksum);
+
+        const auto callsCount = static_cast<quint64>(testCase.iterations) * static_cast<quint64>(testCase.inputs.size());
+        const auto referencePerCallNs = callsCount > 0 ? static_cast<double>(referenceNs) / static_cast<double>(callsCount) : 0.0;
+        const auto optimizedPerCallNs = callsCount > 0 ? static_cast<double>(optimizedNs) / static_cast<double>(callsCount) : 0.0;
+        const auto speedup = optimizedNs > 0 ? static_cast<double>(referenceNs) / static_cast<double>(optimizedNs) : 0.0;
+
+        totalReferenceChecksum += referenceChecksum;
+        totalOptimizedChecksum += optimizedChecksum;
+        totalReferenceNs += referenceNs;
+        totalOptimizedNs += optimizedNs;
+
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
+            "testStripDiacriticsPerformance [%s]: calls=%llu, reference=%.3f ms (%.1f ns/call), optimized=%.3f ms (%.1f ns/call), speedup=%.2fx, checksum=%llu/%llu",
+            testCase.name,
+            static_cast<unsigned long long>(callsCount),
+            static_cast<double>(referenceNs) / 1000000.0,
+            referencePerCallNs,
+            static_cast<double>(optimizedNs) / 1000000.0,
+            optimizedPerCallNs,
+            speedup,
+            static_cast<unsigned long long>(referenceChecksum),
+            static_cast<unsigned long long>(optimizedChecksum));
+    }
+
+    const auto totalSpeedup = totalOptimizedNs > 0 ? static_cast<double>(totalReferenceNs) / static_cast<double>(totalOptimizedNs) : 0.0;
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
+        "testStripDiacriticsPerformance completed: %d cases, reference=%.3f ms, optimized=%.3f ms, total speedup=%.2fx, checksum=%llu/%llu",
+        testCases.size(),
+        static_cast<double>(totalReferenceNs) / 1000000.0,
+        static_cast<double>(totalOptimizedNs) / 1000000.0,
+        totalSpeedup,
+        static_cast<unsigned long long>(totalReferenceChecksum),
+        static_cast<unsigned long long>(totalOptimizedChecksum));
+
+    return true;
+}
+#endif
 
 inline bool ensureIcuInitializedLocked()
 {
@@ -101,25 +385,33 @@ const Collator* getThreadSafeCollator()
 
 void initializeCharFilter()
 {
-    UErrorCode status = U_ZERO_ERROR;
-    const Normalizer2* nfd = Normalizer2::getNFDInstance(status);
-
-    if (U_FAILURE(status) || !nfd)
+    if (g_pIcuNFDNormalizer == nullptr)
         return;
 
     s_isUnsafeChar.reset();
     for (int32_t i = 0; i < 65536; ++i)
     {
-        UChar32 c = (UChar32)i;
-        int8_t type = u_charType(c);
-        bool isCombining = (type == U_NON_SPACING_MARK || type == U_COMBINING_SPACING_MARK || type == U_ENCLOSING_MARK);
-        if (isCombining)
+        if (QChar::category(i) == QChar::Mark_NonSpacing)
         {
             s_isUnsafeChar.set(i);
+            continue;
         }
-        else if (!nfd->isNormalized(UnicodeString(c), status))
+
+        UErrorCode status = U_ZERO_ERROR;
+        UnicodeString decomposed;
+        g_pIcuNFDNormalizer->normalize(UnicodeString(static_cast<UChar32>(i)), decomposed, status);
+        if (U_FAILURE(status))
+            continue;
+
+        for (int32_t offset = 0; offset < decomposed.length();)
         {
-            s_isUnsafeChar.set(i);
+            const auto codePoint = decomposed.char32At(offset);
+            offset += U16_LENGTH(codePoint);
+            if (QChar::category(static_cast<uint>(codePoint)) == QChar::Mark_NonSpacing)
+            {
+                s_isUnsafeChar.set(i);
+                break;
+            }
         }
     }
 }
@@ -175,7 +467,17 @@ bool OsmAnd::ICU::initialize()
     if (U_FAILURE(icuError))
     {
         LogPrintf(LogSeverityLevel::Error, "Failed to get NFD Normalizer: %d", icuError);
+        return false;
     }
+
+    icuError = U_ZERO_ERROR;
+    g_pIcuNFCNormalizer = Normalizer2::getNFCInstance(icuError);
+    if (U_FAILURE(icuError))
+    {
+        LogPrintf(LogSeverityLevel::Error, "Failed to get NFC Normalizer: %d", icuError);
+        return false;
+    }
+
     initializeCharFilter();
 
     Collator *collator = nullptr;
@@ -229,8 +531,8 @@ void OsmAnd::ICU::release()
     delete g_pIcuAccentsAndDiacriticsConverter;
     g_pIcuAccentsAndDiacriticsConverter = nullptr;
 
-    delete g_pIcuNFDNormalizer;
     g_pIcuNFDNormalizer = nullptr;
+    g_pIcuNFCNormalizer = nullptr;
 
     delete g_pIcuAnyToLatinTransliterator;
     g_pIcuAnyToLatinTransliterator = nullptr;
@@ -553,13 +855,25 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::stripDiacritics(const QStr
 
     const int len = input.length();
     bool needsProcessing = false;
-    for (int i = 0; i < len; ++i) {
-        ushort c = input.at(i).unicode();
-        if (s_isUnsafeChar.test(c))
+    for (int i = 0; i < len; )
+    {
+        const auto currentChar = input.at(i);
+        uint codePoint = currentChar.unicode();
+        int step = 1;
+        if (currentChar.isHighSurrogate() && i + 1 < len && input.at(i + 1).isLowSurrogate())
+        {
+            codePoint = QChar::surrogateToUcs4(currentChar, input.at(i + 1));
+            step = 2;
+        }
+
+        if ((codePoint <= 0xFFFF && s_isUnsafeChar.test(codePoint)) ||
+            (codePoint > 0xFFFF && QChar::category(codePoint) == QChar::Mark_NonSpacing))
         {
             needsProcessing = true;
             break;
         }
+
+        i += step;
     }
 
     if (!needsProcessing)
@@ -568,27 +882,32 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::stripDiacritics(const QStr
     }
 
     QReadLocker icuReadLocker(&icuResourcesLock);
-    if (!g_icuInitialized || !g_pIcuNFDNormalizer)
+    if (!g_icuInitialized || !g_pIcuNFDNormalizer || !g_pIcuNFCNormalizer)
         return input;
 
     UErrorCode status = U_ZERO_ERROR;
     UnicodeString source(reinterpret_cast<const UChar*>(input.unicode()), input.length());
-    UnicodeString decomposed = g_pIcuNFDNormalizer->normalize(source, status);
+    tl_stripDiacriticsDecomposed.remove();
+    g_pIcuNFDNormalizer->normalize(source, tl_stripDiacriticsDecomposed, status);
     if (U_FAILURE(status))
         return input;
 
-    UnicodeString result;
-    for (int32_t i = 0; i < decomposed.length(); ) {
-        UChar32 c = decomposed.char32At(i);
-        i += U16_LENGTH(c);
-        int8_t type = u_charType(c);
-        if (type != U_NON_SPACING_MARK && type != U_COMBINING_SPACING_MARK && type != U_ENCLOSING_MARK)
-        {
-            result.append(c);
-        }
+    tl_stripDiacriticsFiltered.remove();
+    for (int32_t i = 0; i < tl_stripDiacriticsDecomposed.length(); )
+    {
+        const auto codePoint = tl_stripDiacriticsDecomposed.char32At(i);
+        i += U16_LENGTH(codePoint);
+        if (QChar::category(static_cast<uint>(codePoint)) != QChar::Mark_NonSpacing)
+            tl_stripDiacriticsFiltered.append(codePoint);
     }
-    QString t = QString::fromUtf16(reinterpret_cast<const ushort*>(result.getTerminatedBuffer()), result.length());
-    return t;
+
+    status = U_ZERO_ERROR;
+    tl_stripDiacriticsComposed.remove();
+    g_pIcuNFCNormalizer->normalize(tl_stripDiacriticsFiltered, tl_stripDiacriticsComposed, status);
+    if (U_FAILURE(status))
+        return input;
+
+    return QString(reinterpret_cast<const QChar*>(tl_stripDiacriticsComposed.getBuffer()), tl_stripDiacriticsComposed.length());
 }
 
 UnicodeString qStrToUniStr(QString input)

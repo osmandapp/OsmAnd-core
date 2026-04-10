@@ -38,6 +38,10 @@ namespace OsmAnd
         OSMAND_CORE_API bool OSMAND_CORE_CALL cstartsWith(const QString& _searchInParam, const QString& _theStart,
                                 bool checkBeginning, bool checkSpaces, bool equals);
         OSMAND_CORE_API int OSMAND_CORE_CALL ccompare(const QString& _base, const QString& _part);
+#ifndef NDEBUG
+        OSMAND_CORE_API bool OSMAND_CORE_CALL testStripDiacritics();
+        OSMAND_CORE_API bool OSMAND_CORE_CALL testStripDiacriticsPerformance();
+#endif
     }
 }
 
