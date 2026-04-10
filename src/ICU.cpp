@@ -22,6 +22,7 @@
 #include <unicode/translit.h>
 #include <unicode/brkiter.h>
 #include <unicode/coll.h>
+#include <unicode/normalizer2.h>
 #include "restore_internal_warnings.h"
 
 #include "CoreResourcesEmbeddedBundle.h"
@@ -31,12 +32,15 @@ std::unique_ptr<QByteArray> g_IcuData;
 const Transliterator* g_pIcuAnyToLatinTransliterator = nullptr;
 const Transliterator* g_pIcuAccentsAndDiacriticsConverter = nullptr;
 const BreakIterator* g_pIcuLineBreakIterator = nullptr;
+const Normalizer2* g_pIcuNFDNormalizer = nullptr;
+const Normalizer2* g_pIcuNFCNormalizer = nullptr;
 const Collator* g_pIcuCollator = nullptr;
 QReadWriteLock icuResourcesLock;
 bool g_icuInitialized = false;
 
 QReadWriteLock collatorsLock;
 QHash<Qt::HANDLE, Collator*> collatorsMap;
+static std::bitset<65536> s_isUnsafeChar;
 
 // RAII wrapper for ICU Transliterator
 using TransliteratorPtr = std::unique_ptr<icu::Transliterator, void(*)(icu::Transliterator*)>;
@@ -49,6 +53,9 @@ inline TransliteratorPtr makeTransliteratorClone(const icu::Transliterator* src)
 // Thread-local caches
 thread_local TransliteratorPtr tl_anyToLatin(nullptr, [](icu::Transliterator* p) { delete p; });
 thread_local TransliteratorPtr tl_accentsConverter(nullptr, [](icu::Transliterator* p) { delete p; });
+thread_local UnicodeString tl_stripDiacriticsDecomposed;
+thread_local UnicodeString tl_stripDiacriticsFiltered;
+thread_local UnicodeString tl_stripDiacriticsComposed;
 
 inline bool ensureIcuInitializedLocked()
 {
@@ -96,6 +103,39 @@ const Collator* getThreadSafeCollator()
     return nullptr;
 }
 
+void initializeCharFilter()
+{
+    if (g_pIcuNFDNormalizer == nullptr)
+        return;
+
+    s_isUnsafeChar.reset();
+    for (int32_t i = 0; i < 65536; ++i)
+    {
+        if (QChar::category(i) == QChar::Mark_NonSpacing)
+        {
+            s_isUnsafeChar.set(i);
+            continue;
+        }
+
+        UErrorCode status = U_ZERO_ERROR;
+        UnicodeString decomposed;
+        g_pIcuNFDNormalizer->normalize(UnicodeString(static_cast<UChar32>(i)), decomposed, status);
+        if (U_FAILURE(status))
+            continue;
+
+        for (int32_t offset = 0; offset < decomposed.length();)
+        {
+            const auto codePoint = decomposed.char32At(offset);
+            offset += U16_LENGTH(codePoint);
+            if (QChar::category(static_cast<uint>(codePoint)) == QChar::Mark_NonSpacing)
+            {
+                s_isUnsafeChar.set(i);
+                break;
+            }
+        }
+    }
+}
+
 bool OsmAnd::ICU::initialize()
 {
     QWriteLocker icuWriteLocker(&icuResourcesLock);
@@ -141,7 +181,25 @@ bool OsmAnd::ICU::initialize()
         LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU line break iterator: %d", icuError);
         return false;
     }
-    
+
+    icuError = U_ZERO_ERROR;
+    g_pIcuNFDNormalizer = Normalizer2::getNFDInstance(icuError);
+    if (U_FAILURE(icuError))
+    {
+        LogPrintf(LogSeverityLevel::Error, "Failed to get NFD Normalizer: %d", icuError);
+        return false;
+    }
+
+    icuError = U_ZERO_ERROR;
+    g_pIcuNFCNormalizer = Normalizer2::getNFCInstance(icuError);
+    if (U_FAILURE(icuError))
+    {
+        LogPrintf(LogSeverityLevel::Error, "Failed to get NFC Normalizer: %d", icuError);
+        return false;
+    }
+
+    initializeCharFilter();
+
     Collator *collator = nullptr;
     icuError = U_ZERO_ERROR;
     Locale locale = Locale::getDefault();
@@ -192,7 +250,10 @@ void OsmAnd::ICU::release()
 
     delete g_pIcuAccentsAndDiacriticsConverter;
     g_pIcuAccentsAndDiacriticsConverter = nullptr;
-    
+
+    g_pIcuNFDNormalizer = nullptr;
+    g_pIcuNFCNormalizer = nullptr;
+
     delete g_pIcuAnyToLatinTransliterator;
     g_pIcuAnyToLatinTransliterator = nullptr;
 
@@ -496,6 +557,7 @@ OSMAND_CORE_API QStringList OSMAND_CORE_CALL OsmAnd::ICU::wrapText(
 
 OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::stripAccentsAndDiacritics(const QString& input)
 {
+    // WARNING ! Very slow. Use only for single call
     QReadLocker icuReadLocker(&icuResourcesLock);
     if (!initThreadLocalTransliteratorsLocked() || !tl_accentsConverter)
         return input;
@@ -504,6 +566,68 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::stripAccentsAndDiacritics(
     UnicodeString icuString(reinterpret_cast<const UChar*>(input.unicode()), input.length());
     tl_accentsConverter->transliterate(icuString);
     return QString(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length());
+}
+
+OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::stripDiacritics(const QString& input)
+{
+    if (input.isEmpty())
+        return input;
+
+    const int len = input.length();
+    bool needsProcessing = false;
+    for (int i = 0; i < len; )
+    {
+        const auto currentChar = input.at(i);
+        uint codePoint = currentChar.unicode();
+        int step = 1;
+        if (currentChar.isHighSurrogate() && i + 1 < len && input.at(i + 1).isLowSurrogate())
+        {
+            codePoint = QChar::surrogateToUcs4(currentChar, input.at(i + 1));
+            step = 2;
+        }
+
+        if ((codePoint <= 0xFFFF && s_isUnsafeChar.test(codePoint)) ||
+            (codePoint > 0xFFFF && QChar::category(codePoint) == QChar::Mark_NonSpacing))
+        {
+            needsProcessing = true;
+            break;
+        }
+
+        i += step;
+    }
+
+    if (!needsProcessing)
+    {
+        return input;
+    }
+
+    QReadLocker icuReadLocker(&icuResourcesLock);
+    if (!g_icuInitialized || !g_pIcuNFDNormalizer || !g_pIcuNFCNormalizer)
+        return input;
+
+    UErrorCode status = U_ZERO_ERROR;
+    UnicodeString source(reinterpret_cast<const UChar*>(input.unicode()), input.length());
+    tl_stripDiacriticsDecomposed.remove();
+    g_pIcuNFDNormalizer->normalize(source, tl_stripDiacriticsDecomposed, status);
+    if (U_FAILURE(status))
+        return input;
+
+    tl_stripDiacriticsFiltered.remove();
+    for (int32_t i = 0; i < tl_stripDiacriticsDecomposed.length(); )
+    {
+        const auto codePoint = tl_stripDiacriticsDecomposed.char32At(i);
+        i += U16_LENGTH(codePoint);
+        if (QChar::category(static_cast<uint>(codePoint)) != QChar::Mark_NonSpacing)
+            tl_stripDiacriticsFiltered.append(codePoint);
+    }
+
+    status = U_ZERO_ERROR;
+    tl_stripDiacriticsComposed.remove();
+    g_pIcuNFCNormalizer->normalize(tl_stripDiacriticsFiltered, tl_stripDiacriticsComposed, status);
+    if (U_FAILURE(status))
+        return input;
+
+    return QString(reinterpret_cast<const QChar*>(tl_stripDiacriticsComposed.getBuffer()), tl_stripDiacriticsComposed.length());
 }
 
 UnicodeString qStrToUniStr(QString input)

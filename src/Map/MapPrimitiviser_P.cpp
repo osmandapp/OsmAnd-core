@@ -1951,10 +1951,10 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     if (hasNativeName && hasLocalizedName)
     {
         assert(citNativeName != citCaptionsEnd);
-        const auto pureNativeName = ICU::stripAccentsAndDiacritics(citNativeName.value());
+        const auto pureNativeName = ICU::stripDiacritics(citNativeName.value());
 
         assert(citLocalizedName != citCaptionsEnd);
-        const auto pureLocalizedName = ICU::stripAccentsAndDiacritics(citLocalizedName.value());
+        const auto pureLocalizedName = ICU::stripDiacritics(citLocalizedName.value());
 
         if (pureNativeName.compare(pureLocalizedName, Qt::CaseInsensitive) == 0)
         {
