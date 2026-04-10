@@ -145,11 +145,6 @@ OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::InitializeCore(
     if (!ICU::initialize())
         return 0;
 
-#ifndef NDEBUG
-    ICU::testStripDiacritics();
-    ICU::testStripDiacriticsPerformance();
-#endif
-    
     (void)QLocale::system(); // This will initialize system locale, since it fails to initialize concurrently
     EmbeddedTypefaceFinder_initialize();
     TextRasterizer_initialize();
