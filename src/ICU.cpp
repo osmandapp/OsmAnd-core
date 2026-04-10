@@ -8,7 +8,6 @@
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QByteArray>
-#include <QElapsedTimer>
 #include <QVector>
 #include <QThread>
 #include <QHash>
