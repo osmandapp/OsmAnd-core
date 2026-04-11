@@ -84,7 +84,8 @@ bool OsmAnd::MapTiledCollectionProvider::intersects(
 QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> OsmAnd::MapTiledCollectionProvider::buildMapSymbolsGroups(
     const TileId tileId,
     const ZoomLevel zoom,
-    double scale)
+    double scale,
+    const MapTiledCollectionProvider::Request& request)
 {
     QReadLocker scopedLocker(&_lock);
 
@@ -108,13 +109,19 @@ QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> OsmAnd::MapTiledCollectionProvid
 
     const auto& points31 = getPoints31();
     const auto& hiddenPoints31 = getHiddenPoints();
-    const auto& tilePoints = getTilePoints(tileId, zoom);
+    const auto& tilePoints = getTilePoints(tileId, zoom, request);
     
+    if (request.queryController && request.queryController->isAborted())
+        return QList<std::shared_ptr<MapSymbolsGroup>>();
+
     int pointsCount = points31.count();
     int tilePointsCount = tilePoints.count();
 
     for (int i = 0; i < pointsCount + tilePointsCount; i++)
     {
+        if (request.queryController && request.queryController->isAborted())
+            return QList<std::shared_ptr<MapSymbolsGroup>>();
+
         int it = i - pointsCount;
         const auto& data = it >=0 && tilePointsCount > it ? tilePoints[it] : nullptr;
         if (i >= pointsCount && !data)
@@ -204,7 +211,13 @@ bool OsmAnd::MapTiledCollectionProvider::obtainData(
 
     QReadLocker scopedLocker(&_lock);
     
-    const auto mapSymbolsGroups = buildMapSymbolsGroups(tileId, zoom, getScale());
+    const auto mapSymbolsGroups = buildMapSymbolsGroups(tileId, zoom, getScale(), request);
+    if (request.queryController && request.queryController->isAborted())
+    {
+        outData.reset();
+        return false;
+    }
+
     outData.reset(new Data(tileId, zoom, mapSymbolsGroups));
     return true;
 }
