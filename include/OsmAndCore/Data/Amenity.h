@@ -16,6 +16,7 @@
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
+#include <OsmAndCore/Data/CommonImpl.h>
 
 namespace OsmAnd
 {
@@ -81,6 +82,7 @@ namespace OsmAnd
         QString getName(const QString lang, bool transliterate) const;
         QString getCityFromTagGroups(const QString & lang) const;
         static bool isNameLangTag(const QString & tag);
+        QStringList getOtherNames(bool transliterate, QString localeName) const;
     };
 }
 
