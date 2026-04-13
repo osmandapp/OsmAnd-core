@@ -13,6 +13,9 @@
 
 #include "IMapTiledSymbolsProvider.h"
 
+// Coordinate precision when filter out buildings by parts inside
+#define MAX_COORDINATE_DELTA 30 // ~60cm
+
 // Minimum allowed distance between corners
 #define MIN_ALLOWED_SQR_DISTANCE 100.0 // ~20cm
 
@@ -171,7 +174,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             collectFromPolyline(primitive, show3DbuildingParts, buildings, buildingParts, buildingPassages);
         }
 
-        if (show3DbuildingParts)
+        if (show3DbuildingParts && !buildings.isEmpty() && !buildingParts.isEmpty())
             filterBuildings(buildings, buildingParts);
 
         QHash<TileId, std::shared_ptr<IMapElevationDataProvider::Data>> elevationDataMap;
@@ -251,67 +254,61 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
     return true;
 }
 
+bool Map3DObjectsTiledProvider_P::isVisibleBuildingPart(const std::shared_ptr<const OsmAnd::ObfMapObject>& part) const
+{
+    bool result = part->containsCaptionTag(QStringLiteral("height"))
+        || part->containsTag(QStringLiteral("building:material"), true);
+
+    return result;
+}
+
 void Map3DObjectsTiledProvider_P::filterBuildings(
     QSet<BuildingPrimitive>& buildings,
     QSet<BuildingPrimitive>& buildingParts) const
 {
+    const int64_t maxDelta = MAX_COORDINATE_DELTA;
+    const int64_t maxInt = INT32_MAX;
+    for (auto& building : buildings)
+    {
+        if (const auto& buildingSource =
+            std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(building.primitive->sourceObject))
+        {
+            bool isOutline = buildingSource->containsTag(QStringLiteral("role_outline"), true);
+            const AreaI buildingArea(
+                building.bbox31.top() - MAX_COORDINATE_DELTA,
+                building.bbox31.left() - MAX_COORDINATE_DELTA,
+                static_cast<int>(qMin(maxDelta + building.bbox31.bottom(), maxInt)),
+                static_cast<int>(qMin(maxDelta + building.bbox31.right(), maxInt)));
+            for (auto& buildingPart : buildingParts)
+            {
+                const auto& buildingPartSource =
+                    std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPart.primitive->sourceObject);
+                if (buildingArea.contains(buildingPartSource->bbox31) && Utilities::includes(
+                    buildingSource->points31, buildingPartSource->points31, MAX_COORDINATE_DELTA))
+                {
+                    buildingPart.bbox31.enlargeToInclude(buildingSource->bbox31);
+                    buildingPart.parentSourceObject = buildingSource;
+                    if (building.polygonColor != 0)
+                        buildingPart.polygonColor = building.polygonColor;
+                    isOutline = true;
+                }
+            }
+            if (isOutline
+                && (!buildingSource->containsAttribute(QStringLiteral("building:part"), QStringLiteral("yes"), true)
+                || !buildingSource->innerPolygonsPoints31.isEmpty()
+                || buildingSource->containsTag(QStringLiteral("role_outer"), true)
+                || buildingSource->containsTag(QStringLiteral("role_inner"), true)))
+                building.outline = true;
+        }
+    }
     for (auto it = buildings.begin(); it != buildings.end();)
     {
-        const auto& buildingPrimitive = *it;
-        const auto& building =
-            std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPrimitive.primitive->sourceObject);
-        if (!building)
+        if (it->outline)
         {
             it = buildings.erase(it);
             continue;
         }
-
-        if (building->containsTag(QStringLiteral("role_outline"), true) ||
-            building->containsTag(QStringLiteral("role_inner"), true) ||
-            building->containsTag(QStringLiteral("role_outer"), true))
-        {
-            it = buildings.erase(it);
-            continue;
-        }
-
-        if (building->containsAttribute(QStringLiteral("layer"), QStringLiteral("-1"), true))
-        {
-            it = buildings.erase(it);
-            continue;
-        }
-
-        bool shouldRemove = false;
-        QVector<QPair<BuildingPrimitive, BuildingPrimitive>> itemsToModify;
-        for (auto& buildingPart : buildingParts)
-        {
-            const auto& part =
-                std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPart.primitive->sourceObject);
-            if (part && building->bbox31.contains(part->bbox31))
-            {
-                buildingPart.bbox31 = building->bbox31;
-                if (buildingPart.polygonColor == 0)
-                {
-                    BuildingPrimitive modifiedBuildingPart = buildingPart;
-                    modifiedBuildingPart.polygonColor = buildingPrimitive.polygonColor;
-                    itemsToModify.append(qMakePair(buildingPart, modifiedBuildingPart));
-                }
-                shouldRemove = true;
-            }
-        }
-
-        for (const auto& pair : itemsToModify)
-        {
-            buildingParts.remove(pair.first);
-            buildingParts.insert(pair.second);
-        }
-
-        if (shouldRemove)
-            it = buildings.erase(it);
-        else
-        {
-            buildingPrimitive.bbox31 = building->bbox31;
-            ++it;
-        }
+        it++;
     }
 }
 
@@ -353,58 +350,60 @@ void Map3DObjectsTiledProvider_P::collectFromPolyline(
     QSet<PassagePrimitive>& outBuildingPassages) const
 {
     const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(polylinePrimitive->sourceObject);
-    if (!sourceObject || sourceObject->points31.isEmpty())
+    if (!sourceObject || sourceObject->points31.size() < 2)
         return;
 
-    if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polygon)
+    if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polygon && sourceObject->points31.size() > 2)
     {
         BuildingPrimitive buildingPrimitive;
         buildingPrimitive.primitive = polylinePrimitive;
         buildingPrimitive.polygonColor = getPolygonColor(buildingPrimitive.primitive);
         buildingPrimitive.bbox31 = sourceObject->bbox31;
+        buildingPrimitive.outline = false;
 
         if (sourceObject->containsTag(QStringLiteral("building")))
-            insertOrUpdateBuilding(buildingPrimitive, outBuildings);
+        {
+            const auto layer = QStringLiteral("layer");
+            const auto layerValue = sourceObject->getResolvedAttribute(QStringRef(&layer));
+            if (!layerValue.startsWith(QLatin1Char('-')))
+                insertOrUpdateBuilding(buildingPrimitive, outBuildings);
+        }
         else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part")))
         {
-            if (sourceObject->containsCaptionTag(QStringLiteral("height"))
-                || sourceObject->containsAttribute(QStringLiteral("building:material"), QString::null, true))
+            if (isVisibleBuildingPart(sourceObject))
                 insertOrUpdateBuilding(buildingPrimitive, outBuildingParts);
         }
     }
-    else if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polyline)
+    else if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polyline
+        && (sourceObject->containsAttribute(QStringLiteral("tunnel"), QStringLiteral("building_passage"))
+        || sourceObject->containsAttribute(QStringLiteral("tunnel"), QStringLiteral("building_passage"), true)))
     {
-        if (sourceObject->points31.size() > 1
-            && (sourceObject->containsAttribute(QStringLiteral("tunnel"), QStringLiteral("building_passage"))
-            || sourceObject->containsAttribute(QStringLiteral("tunnel"), QStringLiteral("building_passage"), true)))
-        {
-            PassagePrimitive passagePrimitive;
-            passagePrimitive.primitive = polylinePrimitive;
-            passagePrimitive.startingPoint = sourceObject->points31.first();
-            passagePrimitive.endingPoint = sourceObject->points31.last();
-            passagePrimitive.centerPoint = passagePrimitive.startingPoint / 2 + passagePrimitive.endingPoint / 2;
-            const auto startingSegment = sourceObject->points31[1] - passagePrimitive.startingPoint;
-            const auto endingSegment =
-                passagePrimitive.endingPoint - sourceObject->points31[sourceObject->points31.size() - 2];
-            passagePrimitive.endingSegment = glm::normalize(glm::dvec2(endingSegment.x, endingSegment.y));
-            passagePrimitive.startingSegment = glm::normalize(glm::dvec2(startingSegment.x, startingSegment.y));
-            const auto width = QStringLiteral("width");
-            const auto height = QStringLiteral("height");
-            passagePrimitive.height = Utilities::parseLength(sourceObject->getResolvedAttribute(QStringRef(&height)),
-                PASSAGE_DEFAULT_HEIGHT);
-            const auto widthValue = Utilities::parseLength(sourceObject->getResolvedAttribute(QStringRef(&width)),
-                PASSAGE_DEFAULT_WIDTH);
-            passagePrimitive.halfWidth31 =
-                qRound(widthValue / (2.0f * Utilities::getMetersPer31Coordinate(passagePrimitive.centerPoint)));
-            passagePrimitive.putStart = false;
-            passagePrimitive.putEnd = false;
-            passagePrimitive.withStart = false;
-            passagePrimitive.withEnd = false;
-            passagePrimitive.preStart = false;
-            passagePrimitive.preEnd = false;
-            passagePrimitive.useWide = true;
-            insertOrUpdatePassage(passagePrimitive, outBuildingPassages);
-        }
+        PassagePrimitive passagePrimitive;
+        passagePrimitive.primitive = polylinePrimitive;
+        passagePrimitive.startingPoint = sourceObject->points31.first();
+        passagePrimitive.endingPoint = sourceObject->points31.last();
+        passagePrimitive.centerPoint = passagePrimitive.startingPoint / 2 + passagePrimitive.endingPoint / 2;
+        const auto startingSegment = sourceObject->points31[1] - passagePrimitive.startingPoint;
+        const auto endingSegment =
+            passagePrimitive.endingPoint - sourceObject->points31[sourceObject->points31.size() - 2];
+        passagePrimitive.endingSegment = glm::normalize(glm::dvec2(endingSegment.x, endingSegment.y));
+        passagePrimitive.startingSegment = glm::normalize(glm::dvec2(startingSegment.x, startingSegment.y));
+        const auto width = QStringLiteral("width");
+        const auto height = QStringLiteral("height");
+        passagePrimitive.height = Utilities::parseLength(sourceObject->getResolvedAttribute(QStringRef(&height)),
+            PASSAGE_DEFAULT_HEIGHT);
+        const auto widthValue = Utilities::parseLength(sourceObject->getResolvedAttribute(QStringRef(&width)),
+            PASSAGE_DEFAULT_WIDTH);
+        passagePrimitive.halfWidth31 =
+            qRound(widthValue / (2.0f * Utilities::getMetersPer31Coordinate(passagePrimitive.centerPoint)));
+        passagePrimitive.putStart = false;
+        passagePrimitive.putEnd = false;
+        passagePrimitive.withStart = false;
+        passagePrimitive.withEnd = false;
+        passagePrimitive.preStart = false;
+        passagePrimitive.preEnd = false;
+        passagePrimitive.useWide = true;
+        insertOrUpdatePassage(passagePrimitive, outBuildingPassages);
     }
 }
 
@@ -414,24 +413,26 @@ void Map3DObjectsTiledProvider_P::collectFromPolygons(
     QSet<BuildingPrimitive>& outBuildings,
     QSet<BuildingPrimitive>& outBuildingParts) const
 {
+    const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(polygonPrimitive->sourceObject);
+    if (!sourceObject || sourceObject->points31.size() < 3)
+        return;
+
     BuildingPrimitive buildingPrimitive;
     buildingPrimitive.primitive = polygonPrimitive;
     buildingPrimitive.polygonColor = getPolygonColor(buildingPrimitive.primitive);
-
-    const auto& sourceObject = std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(polygonPrimitive->sourceObject);
-    if (!sourceObject || sourceObject->points31.isEmpty())
-    {
-        return;
-    }
-
     buildingPrimitive.bbox31 = sourceObject->bbox31;
+    buildingPrimitive.outline = false;
 
     if (sourceObject->containsTag(QStringLiteral("building")))
-        insertOrUpdateBuilding(buildingPrimitive, outBuildings);
+    {
+        const auto layer = QStringLiteral("layer");
+        const auto layerValue = sourceObject->getResolvedAttribute(QStringRef(&layer));
+        if (!layerValue.startsWith(QLatin1Char('-')))
+            insertOrUpdateBuilding(buildingPrimitive, outBuildings);
+    }
     else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part")))
     {
-        if (sourceObject->containsCaptionTag(QStringLiteral("height"))
-            || sourceObject->containsAttribute(QStringLiteral("building:material"), QString::null, true))
+        if (isVisibleBuildingPart(sourceObject))
             insertOrUpdateBuilding(buildingPrimitive, outBuildingParts);
     }
 }
@@ -592,6 +593,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     // Set an individual color to a particular (selected) building
     if (primaryBuildings)
     {
+        const auto& source = primitive.parentSourceObject ? primitive.parentSourceObject : sourceObject;
         // Keep selected buildings separately to draw them first
         auto end = objectColors.end();
         for (auto it = objectColors.begin(); it != end; it++)
@@ -600,17 +602,17 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             const PointI location31(tileId.x, tileId.y);
             if (primitive.bbox31.contains(location31))
             {
-                if (Utilities::contains(sourceObject->points31, location31))
+                if (Utilities::includes(source->points31, location31))
                 {
                     bool inside = true;
-                    if (!sourceObject->innerPolygonsPoints31.isEmpty())
+                    if (!source->innerPolygonsPoints31.isEmpty())
                     {
-                        for (const auto& innerPolygon : constOf(sourceObject->innerPolygonsPoints31))
+                        for (const auto& innerPolygon : constOf(source->innerPolygonsPoints31))
                         {
                             if (innerPolygon.isEmpty())
                                 continue;
 
-                            if (Utilities::contains(innerPolygon, location31))
+                            if (Utilities::includes(innerPolygon, location31))
                             {
                                 inside = false;
                                 break;
@@ -717,8 +719,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     }
 
     const auto zoomLevelDelta = MaxZoomLevel - zoom;
-    const PointI minTile31(tileId.x << zoomLevelDelta, tileId.y << zoomLevelDelta);
-    const PointI maxTile31((tileId.x + 1) << zoomLevelDelta, (tileId.y + 1) << zoomLevelDelta);
+    const PointD minTile31(tileId.x << zoomLevelDelta, tileId.y << zoomLevelDelta);
+    const PointD maxTile31((tileId.x + 1) << zoomLevelDelta, (tileId.y + 1) << zoomLevelDelta);
 
     cutMeshForTile(
         mapbox::earcut<uint16_t>(topPolygon),
@@ -1153,11 +1155,29 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
 }
 
 inline OsmAnd::BuildingVertex Map3DObjectsTiledProvider_P::getIntersection(
-    const BuildingVertex& startVertex, const BuildingVertex& endVertex, double range) const
+    const BuildingVertex& startVertex,
+    const BuildingVertex& endVertex,
+    const double range,
+    const uint16_t index /* = 0 */,
+    const uint16_t startIndex /* = 0 */,
+    const uint16_t endIndex /* = 0 */,
+    QHash<uint16_t, PointD>* coords /* = nullptr */) const
 {
     BuildingVertex vertex = startVertex;
-    vertex.location31.x += qRound(static_cast<double>(endVertex.location31.x - startVertex.location31.x) * range);
-    vertex.location31.y += qRound(static_cast<double>(endVertex.location31.y - startVertex.location31.y) * range);
+    if (coords)
+    {
+        auto startPoint = coords->value(startIndex, PointD(startVertex.location31));
+        auto endPoint = coords->value(endIndex, PointD(endVertex.location31));
+        auto location31(startPoint + (endPoint - startPoint) * range);
+        coords->insert(index, location31);
+        vertex.location31.x = qRound(location31.x);
+        vertex.location31.y = qRound(location31.y);
+    }
+    else
+    {
+        vertex.location31.x += qRound(static_cast<double>(endVertex.location31.x - startVertex.location31.x) * range);
+        vertex.location31.y += qRound(static_cast<double>(endVertex.location31.y - startVertex.location31.y) * range);
+    }
     vertex.sizes = glm::dvec4(vertex.sizes) + glm::dvec4(endVertex.sizes - startVertex.sizes) * range;
     if (startVertex.heights.x != 0.0f && endVertex.heights.x != 0.0f)
         vertex.heights = glm::dvec2(vertex.heights) + glm::dvec2(endVertex.heights - startVertex.heights) * range;
@@ -1176,23 +1196,22 @@ inline OsmAnd::BuildingVertex Map3DObjectsTiledProvider_P::getIntersection(
 inline void Map3DObjectsTiledProvider_P::appendOneTriangle(
     QVector<BuildingVertex>& vertices,
     QVector<uint16_t>& outIndices,
+    QHash<uint16_t, PointD>& coords,
     uint16_t& index,
-    const int max,
-    const int ad,
-    const int bd,
-    const int cd,
+    const double max,
+    const double ad,
+    const double bd,
+    const double cd,
     const uint16_t ai,
     const uint16_t bi,
     const uint16_t ci) const
 {
     if (vertices[ai].heights.x != 0.0f)
     {
-        vertices.append(
-            getIntersection(vertices[bi], vertices[ai], static_cast<double>(max - bd) / static_cast<double>(ad - bd)));
-        vertices.append(
-            getIntersection(vertices[ci], vertices[ai], static_cast<double>(max - cd) / static_cast<double>(ad - cd)));
         outIndices.append(ai);
+        vertices.append(getIntersection(vertices[bi], vertices[ai], (max - bd) / (ad - bd), index, bi, ai, &coords));
         outIndices.append(index++);
+        vertices.append(getIntersection(vertices[ci], vertices[ai], (max - cd) / (ad - cd), index, ci, ai, &coords));
         outIndices.append(index++);
     }
 }
@@ -1200,11 +1219,12 @@ inline void Map3DObjectsTiledProvider_P::appendOneTriangle(
 inline void Map3DObjectsTiledProvider_P::appendTwoTriangles(
     QVector<BuildingVertex>& vertices,
     QVector<uint16_t>& outIndices,
+    QHash<uint16_t, PointD>& coords,
     uint16_t& index,
-    const int max,
-    const int ad,
-    const int bd,
-    const int cd,
+    const double max,
+    const double ad,
+    const double bd,
+    const double cd,
     const uint16_t ai,
     const uint16_t bi,
     const uint16_t ci) const
@@ -1212,14 +1232,13 @@ inline void Map3DObjectsTiledProvider_P::appendTwoTriangles(
     int count = 0;
     if (vertices[ai].heights.x != 0.0f || vertices[bi].heights.x != 0.0f)
     {
-        vertices.append(
-            getIntersection(vertices[bi], vertices[ai], static_cast<double>(max - bd) / static_cast<double>(ad - bd)));
+        vertices.append(getIntersection(vertices[bi], vertices[ai], (max - bd) / (ad - bd), index, bi, ai, &coords));
         count++;
     }
     if (vertices[ai].heights.x != 0.0f || vertices[ci].heights.x != 0.0f)
     {
-        vertices.append(
-            getIntersection(vertices[ci], vertices[ai], static_cast<double>(max - cd) / static_cast<double>(ad - cd)));
+        const auto nextIdx = index + count;
+        vertices.append(getIntersection(vertices[ci], vertices[ai], (max - cd) / (ad - cd), nextIdx, ci, ai, &coords));
         count++;
     }
     if (count > 0)
@@ -1237,138 +1256,114 @@ inline void Map3DObjectsTiledProvider_P::appendTwoTriangles(
     }
 }
 
-void Map3DObjectsTiledProvider_P::cutMeshForTile(
-    const std::vector<uint16_t>& indices,
+inline void Map3DObjectsTiledProvider_P::cutMeshAlongMaxEdge(
+    const QVector<uint16_t>& indices,
     QVector<BuildingVertex>& vertices,
+    uint16_t& index,
     QVector<uint16_t>& outIndices,
+    QHash<uint16_t, PointD>& coords,
     const uint16_t offset,
-    const PointI& minTile31,
-    const PointI& maxTile31) const
+    const double maxValue,
+    const bool getY) const
 {
-    QVector<uint16_t> tmpIndices;
-    auto index = static_cast<uint16_t>(vertices.size());
     auto count = indices.size();
     for (int i = 0; i < count; i += 3)
     {
         const auto ai = indices[i] + offset;
         const auto bi = indices[i + 1] + offset;
         const auto ci = indices[i + 2] + offset;
-        const auto& a = vertices[ai].location31;
-        const auto& b = vertices[bi].location31;
-        const auto& c = vertices[ci].location31;
-        if (a.x > maxTile31.x && b.x > maxTile31.x && c.x > maxTile31.x)
+        PointD point = coords.value(ai, PointD(vertices[ai].location31));
+        const auto a = getY ? point.y : point.x;
+        point = coords.value(bi, PointD(vertices[bi].location31));
+        const auto b = getY ? point.y : point.x;
+        point = coords.value(ci, PointD(vertices[ci].location31));
+        const auto c = getY ? point.y : point.x;
+        if (a > maxValue && b > maxValue && c > maxValue)
             continue;
-        if (a.x <= maxTile31.x && b.x <= maxTile31.x && c.x <= maxTile31.x)
-        {
-            tmpIndices.append(ai);
-            tmpIndices.append(bi);
-            tmpIndices.append(ci);
-        }
-        else if (b.x <= maxTile31.x && c.x <= maxTile31.x)
-            appendTwoTriangles(vertices, tmpIndices, index, maxTile31.x, a.x, b.x, c.x, ai, bi, ci);
-        else if (a.x <= maxTile31.x && c.x <= maxTile31.x)
-            appendTwoTriangles(vertices, tmpIndices, index, maxTile31.x, b.x, c.x, a.x, bi, ci, ai);
-        else if (a.x <= maxTile31.x && b.x <= maxTile31.x)
-            appendTwoTriangles(vertices, tmpIndices, index, maxTile31.x, c.x, a.x, b.x, ci, ai, bi);
-        else if (a.x <= maxTile31.x)
-            appendOneTriangle(vertices, tmpIndices, index, maxTile31.x, a.x, b.x, c.x, ai, bi, ci);
-        else if (b.x <= maxTile31.x)
-            appendOneTriangle(vertices, tmpIndices, index, maxTile31.x, b.x, c.x, a.x, bi, ci, ai);
-        else
-            appendOneTriangle(vertices, tmpIndices, index, maxTile31.x, c.x, a.x, b.x, ci, ai, bi);
-    }
-    QVector<uint16_t> midIndices;
-    count = tmpIndices.size();
-    for (int i = 0; i < count; i += 3)
-    {
-        const auto ai = tmpIndices[i];
-        const auto bi = tmpIndices[i + 1];
-        const auto ci = tmpIndices[i + 2];
-        const auto& a = vertices[ai].location31;
-        const auto& b = vertices[bi].location31;
-        const auto& c = vertices[ci].location31;
-        if (a.x < minTile31.x && b.x < minTile31.x && c.x < minTile31.x)
-            continue;
-        if (a.x >= minTile31.x && b.x >= minTile31.x && c.x >= minTile31.x)
-        {
-            midIndices.append(ai);
-            midIndices.append(bi);
-            midIndices.append(ci);
-        }
-        else if (b.x >= minTile31.x && c.x >= minTile31.x)
-            appendTwoTriangles(vertices, midIndices, index, minTile31.x, a.x, b.x, c.x, ai, bi, ci);
-        else if (a.x >= minTile31.x && c.x >= minTile31.x)
-            appendTwoTriangles(vertices, midIndices, index, minTile31.x, b.x, c.x, a.x, bi, ci, ai);
-        else if (a.x >= minTile31.x && b.x >= minTile31.x)
-            appendTwoTriangles(vertices, midIndices, index, minTile31.x, c.x, a.x, b.x, ci, ai, bi);
-        else if (a.x >= minTile31.x)
-            appendOneTriangle(vertices, midIndices, index, minTile31.x, a.x, b.x, c.x, ai, bi, ci);
-        else if (b.x >= minTile31.x)
-            appendOneTriangle(vertices, midIndices, index, minTile31.x, b.x, c.x, a.x, bi, ci, ai);
-        else
-            appendOneTriangle(vertices, midIndices, index, minTile31.x, c.x, a.x, b.x, ci, ai, bi);
-    }
-    tmpIndices.clear();
-    count = midIndices.size();
-    for (int i = 0; i < count; i += 3)
-    {
-        const auto ai = midIndices[i];
-        const auto bi = midIndices[i + 1];
-        const auto ci = midIndices[i + 2];
-        const auto& a = vertices[ai].location31;
-        const auto& b = vertices[bi].location31;
-        const auto& c = vertices[ci].location31;
-        if (a.y > maxTile31.y && b.y > maxTile31.y && c.y > maxTile31.y)
-            continue;
-        if (a.y <= maxTile31.y && b.y <= maxTile31.y && c.y <= maxTile31.y)
-        {
-            tmpIndices.append(ai);
-            tmpIndices.append(bi);
-            tmpIndices.append(ci);
-        }
-        else if (b.y <= maxTile31.y && c.y <= maxTile31.y)
-            appendTwoTriangles(vertices, tmpIndices, index, maxTile31.y, a.y, b.y, c.y, ai, bi, ci);
-        else if (a.y <= maxTile31.y && c.y <= maxTile31.y)
-            appendTwoTriangles(vertices, tmpIndices, index, maxTile31.y, b.y, c.y, a.y, bi, ci, ai);
-        else if (a.y <= maxTile31.y && b.y <= maxTile31.y)
-            appendTwoTriangles(vertices, tmpIndices, index, maxTile31.y, c.y, a.y, b.y, ci, ai, bi);
-        else if (a.y <= maxTile31.y)
-            appendOneTriangle(vertices, tmpIndices, index, maxTile31.y, a.y, b.y, c.y, ai, bi, ci);
-        else if (b.y <= maxTile31.y)
-            appendOneTriangle(vertices, tmpIndices, index, maxTile31.y, b.y, c.y, a.y, bi, ci, ai);
-        else
-            appendOneTriangle(vertices, tmpIndices, index, maxTile31.y, c.y, a.y, b.y, ci, ai, bi);
-    }
-    count = tmpIndices.size();
-    for (int i = 0; i < count; i += 3)
-    {
-        const auto ai = tmpIndices[i];
-        const auto bi = tmpIndices[i + 1];
-        const auto ci = tmpIndices[i + 2];
-        const auto& a = vertices[ai].location31;
-        const auto& b = vertices[bi].location31;
-        const auto& c = vertices[ci].location31;
-        if (a.y < minTile31.y && b.y < minTile31.y && c.y < minTile31.y)
-            continue;
-        if (a.y >= minTile31.y && b.y >= minTile31.y && c.y >= minTile31.y)
+        if (a <= maxValue && b <= maxValue && c <= maxValue)
         {
             outIndices.append(ai);
             outIndices.append(bi);
             outIndices.append(ci);
         }
-        else if (b.y >= minTile31.y && c.y >= minTile31.y)
-            appendTwoTriangles(vertices, outIndices, index, minTile31.y, a.y, b.y, c.y, ai, bi, ci);
-        else if (a.y >= minTile31.y && c.y >= minTile31.y)
-            appendTwoTriangles(vertices, outIndices, index, minTile31.y, b.y, c.y, a.y, bi, ci, ai);
-        else if (a.y >= minTile31.y && b.y >= minTile31.y)
-            appendTwoTriangles(vertices, outIndices, index, minTile31.y, c.y, a.y, b.y, ci, ai, bi);
-        else if (a.y >= minTile31.y)
-            appendOneTriangle(vertices, outIndices, index, minTile31.y, a.y, b.y, c.y, ai, bi, ci);
-        else if (b.y >= minTile31.y)
-            appendOneTriangle(vertices, outIndices, index, minTile31.y, b.y, c.y, a.y, bi, ci, ai);
+        else if (b <= maxValue && c <= maxValue)
+            appendTwoTriangles(vertices, outIndices, coords, index, maxValue, a, b, c, ai, bi, ci);
+        else if (a <= maxValue && c <= maxValue)
+            appendTwoTriangles(vertices, outIndices, coords, index, maxValue, b, c, a, bi, ci, ai);
+        else if (a <= maxValue && b <= maxValue)
+            appendTwoTriangles(vertices, outIndices, coords, index, maxValue, c, a, b, ci, ai, bi);
+        else if (a <= maxValue)
+            appendOneTriangle(vertices, outIndices, coords, index, maxValue, a, b, c, ai, bi, ci);
+        else if (b <= maxValue)
+            appendOneTriangle(vertices, outIndices, coords, index, maxValue, b, c, a, bi, ci, ai);
         else
-            appendOneTriangle(vertices, outIndices, index, minTile31.y, c.y, a.y, b.y, ci, ai, bi);
+            appendOneTriangle(vertices, outIndices, coords, index, maxValue, c, a, b, ci, ai, bi);
     }
+}
+
+inline void Map3DObjectsTiledProvider_P::cutMeshAlongMinEdge(
+    const QVector<uint16_t>& indices,
+    QVector<BuildingVertex>& vertices,
+    uint16_t& index,
+    QVector<uint16_t>& outIndices,
+    QHash<uint16_t, PointD>& coords,
+    const uint16_t offset,
+    const double minValue,
+    const bool getY) const
+{
+    auto count = indices.size();
+    for (int i = 0; i < count; i += 3)
+    {
+        const auto ai = indices[i] + offset;
+        const auto bi = indices[i + 1] + offset;
+        const auto ci = indices[i + 2] + offset;
+        PointD point = coords.value(ai, PointD(vertices[ai].location31));
+        const auto a = getY ? point.y : point.x;
+        point = coords.value(bi, PointD(vertices[bi].location31));
+        const auto b = getY ? point.y : point.x;
+        point = coords.value(ci, PointD(vertices[ci].location31));
+        const auto c = getY ? point.y : point.x;
+        if (a < minValue && b < minValue && c < minValue)
+            continue;
+        if (a >= minValue && b >= minValue && c >= minValue)
+        {
+            outIndices.append(ai);
+            outIndices.append(bi);
+            outIndices.append(ci);
+        }
+        else if (b >= minValue && c >= minValue)
+            appendTwoTriangles(vertices, outIndices, coords, index, minValue, a, b, c, ai, bi, ci);
+        else if (a >= minValue && c >= minValue)
+            appendTwoTriangles(vertices, outIndices, coords, index, minValue, b, c, a, bi, ci, ai);
+        else if (a >= minValue && b >= minValue)
+            appendTwoTriangles(vertices, outIndices, coords, index, minValue, c, a, b, ci, ai, bi);
+        else if (a >= minValue)
+            appendOneTriangle(vertices, outIndices, coords, index, minValue, a, b, c, ai, bi, ci);
+        else if (b >= minValue)
+            appendOneTriangle(vertices, outIndices, coords, index, minValue, b, c, a, bi, ci, ai);
+        else
+            appendOneTriangle(vertices, outIndices, coords, index, minValue, c, a, b, ci, ai, bi);
+    }
+}
+
+void Map3DObjectsTiledProvider_P::cutMeshForTile(
+    const std::vector<uint16_t>& indices,
+    QVector<BuildingVertex>& vertices,
+    QVector<uint16_t>& outIndices,
+    const uint16_t offset,
+    const PointD& minTile31,
+    const PointD& maxTile31) const
+{
+    QVector<uint16_t> tmpIndices(indices.begin(), indices.end());
+    auto index = static_cast<uint16_t>(vertices.size());
+    QVector<uint16_t> midIndices;
+    QHash<uint16_t, PointD> midCoords;
+    cutMeshAlongMaxEdge(tmpIndices, vertices, index, midIndices, midCoords, offset, maxTile31.x, false);
+    tmpIndices.clear();
+    cutMeshAlongMinEdge(midIndices, vertices, index, tmpIndices, midCoords, 0, minTile31.x, false);
+    midIndices.clear();
+    cutMeshAlongMaxEdge(tmpIndices, vertices, index, midIndices, midCoords, 0, maxTile31.y, true);
+    cutMeshAlongMinEdge(midIndices, vertices, index, outIndices, midCoords, 0, minTile31.y, true);
 }
 
 
@@ -1477,8 +1472,8 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     float baseTerrainHeight,
     float terrainHeight,
     float width31,
-    const PointI& minTile31,
-    const PointI& maxTile31,
+    const PointD& minTile31,
+    const PointD& maxTile31,
     const glm::vec4& colorVec,
     QList<PassagePrimitive*>& passagePrimitives) const
 {

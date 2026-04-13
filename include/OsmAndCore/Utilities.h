@@ -1663,6 +1663,174 @@ namespace OsmAnd
                     .arg(color)));
         }
         
+        inline static bool includes(const QVector<PointI>& polygon, const PointI& point)
+        {
+            if (polygon.size() < 3)
+                return false;
+            int count = 0;
+            auto* prev = &polygon.last();
+            for (auto& node : polygon)
+            {
+                if (node == *prev)
+                    continue;
+                if (point == *prev)
+                    return true;
+                int32_t x;
+                if (point.y == prev->y)
+                {
+                    if (node.y == prev->y)
+                    {
+                        if (point.x == node.x)
+                            return true;
+                        const auto xmin = qMin(prev->x, node.x);
+                        const auto xmax = qMax(prev->x, node.x);
+                        if (point.x < xmin)
+                            x = xmin;
+                        else if (point.x > xmax)
+                            x = xmax;
+                        else
+                            return true;
+                    }
+                    else
+                        x = prev->x;
+                }
+                else if (point.y != node.y && point.y >= qMin(prev->y, node.y) && point.y <= qMax(prev->y, node.y))
+                {
+                    x = prev->x + qRound(static_cast<double>(point.y - prev->y)
+                        / static_cast<double>(node.y - prev->y) * static_cast<double>(node.x - prev->x));
+                }
+                else
+                {
+                    prev = &node;
+                    continue;
+                }
+                if (x == point.x)
+                    return true;
+                if (x < point.x)
+                    count++;
+                prev = &node;
+            }
+            if ((count & 1) == 0)
+                return false;
+            return true;
+        }
+
+        inline static bool includes(const QVector<PointI>& polygon, const QVector<PointI>& points, int precision = 0)
+        {
+            if (polygon.size() < 3 || points.isEmpty())
+                return false;
+            for (auto& point : points)
+            {
+                int countX = 0;
+                int countY = 0;
+                auto* prev = &polygon.last();
+                for (auto& node : polygon)
+                {
+                    if (node == *prev)
+                        continue;
+                    if (point == *prev)
+                    {
+                        countX = 1;
+                        countY = 1;
+                        break;
+                    }
+
+                    int32_t x, y;
+
+                    if (point.y == prev->y)
+                    {
+                        if (node.y == prev->y)
+                        {
+                            if (point.x == node.x)
+                            {
+                                countX = 1;
+                                break;                                
+                            }
+                            const auto xmin = qMin(prev->x, node.x);
+                            const auto xmax = qMax(prev->x, node.x);
+                            if (point.x < xmin)
+                                x = xmin;
+                            else if (point.x > xmax)
+                                x = xmax;
+                            else
+                            {
+                                countX = 1;
+                                break;
+                            }
+                        }
+                        else
+                            x = prev->x;
+                    }
+                    else if (point.y != node.y && point.y >= qMin(prev->y, node.y) && point.y <= qMax(prev->y, node.y))
+                    {
+                        x = prev->x + qRound(static_cast<double>(point.y - prev->y)
+                            / static_cast<double>(node.y - prev->y) * static_cast<double>(node.x - prev->x));
+                    }
+                    else
+                        x = -1;
+
+                    if (x >= 0)
+                    {
+                        if (abs(x - point.x) <= precision)
+                        {
+                            countX = 1;
+                            break;
+                        }
+                        if (x < point.x)
+                            countX++;
+                    }
+
+                    if (point.x == prev->x)
+                    {
+                        if (node.x == prev->x)
+                        {
+                            if (point.y == node.y)
+                            {
+                                countY = 1;
+                                break;                                
+                            }
+                            const auto ymin = qMin(prev->y, node.y);
+                            const auto ymax = qMax(prev->y, node.y);
+                            if (point.y < ymin)
+                                y = ymin;
+                            else if (point.y > ymax)
+                                y = ymax;
+                            else
+                            {
+                                countY = 1;
+                                break;
+                            }
+                        }
+                        else
+                            y = prev->y;
+                    }
+                    else if (point.x != node.x && point.x >= qMin(prev->x, node.x) && point.x <= qMax(prev->x, node.x))
+                    {
+                        y = prev->y + qRound(static_cast<double>(point.x - prev->x)
+                            / static_cast<double>(node.x - prev->x) * static_cast<double>(node.y - prev->y));
+                    }
+                    else
+                        y = -1;
+
+                    if (y >= 0)
+                    {
+                        if (abs(y - point.y) <= precision)
+                        {
+                            countY = 1;
+                            break;
+                        }
+                        if (y < point.y)
+                            countY++;
+                    }
+
+                    prev = &node;
+                }
+                if ((countX & 1) == 0 && (countY & 1) == 0)
+                    return false;
+            }
+            return true;
+        }
+
         inline static bool contains(const QVector<PointI> &polygon, const PointI &point) {
             return countIntersections(polygon, point) % 2 == 1;
         }
