@@ -49,7 +49,7 @@ namespace OsmAnd
             uint32_t getTileId(const AreaI& tileBBox31, const PointI& point);
             AreaD calculateRect(double x, double y, double width, double height);
             bool intersects(CollectionQuadTree& boundIntersections, double x, double y, double width, double height);
-            QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> buildMapSymbolsGroups(const TileId tileId, const ZoomLevel zoom, double scale, const MapTiledCollectionProvider::Request& request);
+            QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> buildMapSymbolsGroups(const TileId tileId, const ZoomLevel zoom, double scale);
         
         protected:
             MapTiledCollectionProvider();
@@ -68,7 +68,7 @@ namespace OsmAnd
             virtual SingleSkImage getImageBitmap(const int index, bool isFullSize = true) const = 0;
             virtual QString getCaption(const int index) const = 0;
 
-            virtual QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>> getTilePoints(const OsmAnd::TileId& tileId, const OsmAnd::ZoomLevel zoom, const SWIG_CLARIFY(MapTiledCollectionProvider, Request)& request) const = 0;
+            virtual QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>> getTilePoints(const OsmAnd::TileId& tileId, const OsmAnd::ZoomLevel zoom) const = 0;
 
             virtual OsmAnd::MapMarker::PinIconVerticalAlignment getPinIconVerticalAlignment() const;
             virtual OsmAnd::MapMarker::PinIconHorisontalAlignment getPinIconHorisontalAlignment() const;
@@ -130,8 +130,7 @@ namespace OsmAnd
             QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>>,
             getTilePoints,
             const OsmAnd::TileId& tileId,
-            const OsmAnd::ZoomLevel zoom,
-            const SWIG_CLARIFY(MapTiledCollectionProvider, Request)& request);
+            const OsmAnd::ZoomLevel zoom);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             OsmAnd::MapMarker::PinIconVerticalAlignment,
             getPinIconVerticalAlignment);
