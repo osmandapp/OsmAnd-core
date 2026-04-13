@@ -72,6 +72,7 @@ namespace OsmAnd
     public:
         static const OsmRouteType* getByTag(const QString& tag);
         static const OsmRouteType* getByRenderingPropertyAttr(const QString& renderingPropertyAttr);
+        static const QList<const OsmRouteType*>& getAllValues();
 
         inline bool operator == (const OsmRouteType& other) const
         {

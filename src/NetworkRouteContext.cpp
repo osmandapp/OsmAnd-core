@@ -196,6 +196,11 @@ const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::getByRenderingPropertyAttr(con
     return nullptr;
 }
 
+const QList<const OsmAnd::OsmRouteType*>& OsmAnd::OsmRouteType::getAllValues()
+{
+    return VALUES;
+}
+
 void OsmAnd::NetworkRouteKey::addTag(const QString& key, const QString& value)
 {
     QString val = value.isEmpty() ? QStringLiteral("") : NetworkRouteContext::ROUTE_KEY_VALUE_SEPARATOR + value;
