@@ -12,6 +12,7 @@
 #include <OsmAndCore/Common.h>
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
+#include <OsmAndCore/Data/CommonImpl.h>
 
 namespace OsmAnd
 {
@@ -53,6 +54,8 @@ namespace OsmAnd
         PointI position31;
         QString nativeName;
         QHash<QString, QString> localizedNames;
+        QStringList getOtherNames(bool transliterate) const;
+        QStringList getOtherNames(bool transliterate, QString localeName) const;
     };
 }
 
