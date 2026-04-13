@@ -382,3 +382,8 @@ bool OsmAnd::Amenity::isCityTypeAccept(const QString & type) const
         return false;
     return type != QStringLiteral("district") && type != QStringLiteral("neighbourhood") && type != QStringLiteral("borough");
 }
+
+QStringList OsmAnd::Amenity::getOtherNames(bool transliterate, QString localeName) const
+{
+    return OsmAnd::getOtherNamesImpl(*this, transliterate, localeName);
+}
