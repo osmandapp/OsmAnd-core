@@ -1662,7 +1662,8 @@ namespace OsmAnd
                     .arg(name)
                     .arg(color)));
         }
-        
+
+        // Check if point is not outside the polygon
         inline static bool includes(const QVector<PointI>& polygon, const PointI& point)
         {
             if (polygon.size() < 3)
@@ -1715,6 +1716,7 @@ namespace OsmAnd
             return true;
         }
 
+        // Check if point is located inside or not far outside the polygon
         inline static bool includes(const QVector<PointI>& polygon, const QVector<PointI>& points, int precision = 0)
         {
             if (polygon.size() < 3 || points.isEmpty())
