@@ -1716,7 +1716,7 @@ namespace OsmAnd
             return true;
         }
 
-        // Check if point is located inside or not far outside the polygon
+        // Check if all points are located inside or not far outside the polygon
         inline static bool includes(const QVector<PointI>& polygon, const QVector<PointI>& points, int precision = 0)
         {
             if (polygon.size() < 3 || points.isEmpty())
