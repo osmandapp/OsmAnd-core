@@ -6,12 +6,8 @@
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QMutex>
-#include <QSet>
-#include <QHash>
-#include <QMap>
 #include <QString>
 #include <QAtomicInt>
-#include <QReadWriteLock>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
@@ -40,8 +36,6 @@ namespace OsmAnd
         mutable std::shared_ptr<ObfPoiSectionSubtypes> _topIndexSubtypes;
         mutable QAtomicInt _subtypesLoaded;
         mutable QMutex _subtypesLoadMutex;
-        mutable QHash<uint32_t, QList<QPair<QString, QString>>> _tagGroups;
-        mutable QReadWriteLock _tagGroupsLock;
     public:
         virtual ~ObfPoiSectionInfo_P();
 
@@ -49,8 +43,6 @@ namespace OsmAnd
 
         std::shared_ptr<const ObfPoiSectionCategories> getCategories() const;
         std::shared_ptr<const ObfPoiSectionSubtypes> getSubtypes() const;
-        void addTagGroups(QHash<uint32_t, QList<QPair<QString, QString>>> & tagGroups) const;
-        QList<QPair<QString, QString>> getTagValues(uint32_t id) const;
 
     friend class OsmAnd::ObfPoiSectionInfo;
     friend class OsmAnd::ObfPoiSectionReader_P;

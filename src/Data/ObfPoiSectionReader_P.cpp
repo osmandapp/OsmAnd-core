@@ -404,6 +404,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
     const auto cis = reader.getCodedInputStream().get();
 
     QMap<uint32_t, uint64_t> dataBoxesOffsetsMap;
+    TagGroupsMap tagGroups;
     std::shared_ptr<QSet<uint64_t>> tilesToSkip = nullptr;
     if (zoomFilter >= 0 && zoomFilter < 16) {
         tilesToSkip = std::make_shared<QSet<uint64_t>>();
@@ -440,7 +441,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                     tileFilter,
                     zoomFilter,
                     categoriesFilter,
-                    poiAdditionalFilter);
+                    poiAdditionalFilter,
+                    tagGroups);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -489,7 +491,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                         categoriesFilter,
                         poiAdditionalFilter,
                         visitor,
-                        queryController);
+                        queryController,
+                        tagGroups);
 
                     if (tilesToSkip && zoomFilter != InvalidZoomLevel && atLeastOneAccepted)
                         tilesToSkip->insert(tileValue);
@@ -524,7 +527,8 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
     const TileAcceptorFunction tileFilter,
     const ZoomLevel zoomFilter,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
-    const QPair<int, int>* poiAdditionalFilter)
+    const QPair<int, int>* poiAdditionalFilter,
+    TagGroupsMap& tagGroups)
 {
     const auto cis = reader.getCodedInputStream().get();
 
@@ -610,9 +614,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                 gpb::uint32 tagGroupLength;
                 cis->ReadVarint32(&tagGroupLength);
                 const auto old = cis->PushLimit(tagGroupLength);
-                QHash<uint32_t, QList<QPair<QString, QString>>> localTagGroups;
-                readTagGroups(reader, localTagGroups);
-                section->addTagGroups(localTagGroups);
+                readTagGroups(reader, tagGroups);
                 cis->PopLimit(old);
                 break;
             }
@@ -633,7 +635,8 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                     tileFilter,
                     zoomFilter,
                     categoriesFilter,
-                    poiAdditionalFilter);
+                    poiAdditionalFilter,
+                    tagGroups);
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
 
                 cis->PopLimit(oldLimit);
@@ -693,7 +696,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::readTagGroups(const ObfReader_P& reader, QHash<uint32_t, QList<QPair<QString, QString>>> & tagGroups)
+void OsmAnd::ObfPoiSectionReader_P::readTagGroups(const ObfReader_P& reader, TagGroupsMap& tagGroups)
 {
     const auto cis = reader.getCodedInputStream().get();
     for (;;)
@@ -719,7 +722,7 @@ void OsmAnd::ObfPoiSectionReader_P::readTagGroups(const ObfReader_P& reader, QHa
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::readTagGroup(const ObfReader_P& reader, QHash<uint32_t, QList<QPair<QString, QString>>> & tagGroups)
+void OsmAnd::ObfPoiSectionReader_P::readTagGroup(const ObfReader_P& reader, TagGroupsMap& tagGroups)
 {
     const auto cis = reader.getCodedInputStream().get();
     QList<QString> tagValues;
@@ -834,7 +837,8 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
     const QPair<int, int>* poiAdditionalFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
-    const std::shared_ptr<const IQueryController>& queryController)
+    const std::shared_ptr<const IQueryController>& queryController,
+    const TagGroupsMap& tagGroups)
 {
     const auto cis = reader.getCodedInputStream().get();
 
@@ -910,7 +914,8 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
                     bbox31,
                     categoriesFilter,
                     poiAdditionalFilter,
-                    queryController);
+                    queryController,
+                    tagGroups);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -969,7 +974,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     const AreaI* const bbox31,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
     const QPair<int, int>* poiAdditionalFilter,
-    const std::shared_ptr<const IQueryController>& queryController)
+    const std::shared_ptr<const IQueryController>& queryController,
+    const TagGroupsMap& tagGroups)
 {
     const auto cis = reader.getCodedInputStream().get();
     const auto baseOffset = cis->CurrentPosition();
@@ -1269,15 +1275,10 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 {
                     uint32_t tagGroupId;
                     cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&tagGroupId));
-                    auto list = section->getTagValues(tagGroupId);
-                    if (list.size() > 0)
+                    const auto itTagGroup = tagGroups.constFind(tagGroupId);
+                    if (itTagGroup != tagGroups.cend() && !itTagGroup.value().isEmpty())
                     {
-                        tagGroupsAmenity.insert(tagGroupId, list);
-                    }
-                    else
-                    {
-//                        OsmAnd::LogPrintf(LogSeverityLevel::Error, "Couldn't read tag groups for amenity %s %.4f %.4f",
-//                                          qPrintable(nativeName), Utilities::get31LatitudeY(position31.y), Utilities::get31LongitudeX(position31.x));
+                        tagGroupsAmenity.insert(tagGroupId, itTagGroup.value());
                     }
                 }
                 cis->PopLimit(old);
@@ -1308,6 +1309,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
     QMap<uint32_t, uint32_t> dataBoxesOffsetsSet;
     QList<int> nameIndexCoordinates;
     QMap<uint32_t, uint64_t> dataBoxesOffsetsMap;
+    TagGroupsMap tagGroups;
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -1354,7 +1356,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                     tileFilter,
                     MinZoomLevel,
                     nullptr,
-                    nullptr);
+                    nullptr,
+                    tagGroups);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -1405,7 +1408,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                         categoriesFilter,
                         poiAdditionalFilter,
                         visitor,
-                        queryController);
+                        queryController,
+                        tagGroups);
 
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
                     cis->PopLimit(oldLimit);
