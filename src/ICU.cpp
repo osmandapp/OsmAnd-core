@@ -23,6 +23,7 @@
 #include <unicode/brkiter.h>
 #include <unicode/coll.h>
 #include <unicode/normalizer2.h>
+#include <bitset>
 #include "restore_internal_warnings.h"
 
 #include "CoreResourcesEmbeddedBundle.h"
