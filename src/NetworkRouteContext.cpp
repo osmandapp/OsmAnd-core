@@ -196,9 +196,20 @@ const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::getByRenderingPropertyAttr(con
     return nullptr;
 }
 
-const QList<const OsmAnd::OsmRouteType*>& OsmAnd::OsmRouteType::getAllValues()
+bool OsmAnd::OsmRouteType::containsUnwantedOsmRouteTags(const QString& key, const QString& value)
 {
-    return VALUES;
+    if (value.isEmpty())
+        return true;
+
+    for (const auto routeType : VALUES)
+    {
+        if (key.startsWith(routeType->name + QStringLiteral("_"))
+            || key.startsWith(QStringLiteral("route_") + routeType->name))
+        {
+            return true; // hiking_*, route_hiking, route_hiking_*, etc.
+        }
+    }
+    return false;
 }
 
 void OsmAnd::NetworkRouteKey::addTag(const QString& key, const QString& value)
