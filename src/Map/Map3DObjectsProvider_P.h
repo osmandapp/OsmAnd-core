@@ -26,9 +26,11 @@ namespace OsmAnd
         struct BuildingPrimitive
         {
             std::shared_ptr<const MapPrimitiviser::Primitive> primitive;
-            uint32_t polygonColor = 0;
+            mutable std::shared_ptr<const OsmAnd::ObfMapObject> parentSourceObject;
+            mutable uint32_t polygonColor;
             mutable AreaI bbox31;
             mutable FColorRGB color;
+            mutable bool outline;
         };
 
         struct PassagePrimitive
@@ -90,6 +92,7 @@ namespace OsmAnd
             QSet<BuildingPrimitive>& outBuildings,
             QSet<BuildingPrimitive>& outBuildingParts) const;
 
+        bool isVisibleBuildingPart(const std::shared_ptr<const OsmAnd::ObfMapObject>& part) const;
         void filterBuildings(QSet<BuildingPrimitive>& buildings,
             QSet<BuildingPrimitive>& buildingParts) const;
 
@@ -99,39 +102,68 @@ namespace OsmAnd
         inline BuildingVertex getIntersection(
             const BuildingVertex& startVertex,
             const BuildingVertex& endVertex,
-            double range) const;
+            const double range,
+            const int startIndex = 0,
+            const int endIndex = 0,
+            QVector<PointD>* vertices = nullptr) const;
 
         inline void appendOneTriangle(
             QVector<BuildingVertex>& vertices,
             QVector<uint16_t>& outIndices,
+            QVector<PointD>& coords,
             uint16_t& index,
-            const int max,
-            const int ad,
-            const int bd,
-            const int cd,
-            const uint16_t ai,
-            const uint16_t bi,
-            const uint16_t ci) const;
+            const double max,
+            const double ad,
+            const double bd,
+            const double cd,
+            const int ai,
+            const int bi,
+            const int ci,
+            const int offset) const;
 
         inline void appendTwoTriangles(
             QVector<BuildingVertex>& vertices,
             QVector<uint16_t>& outIndices,
+            QVector<PointD>& coords,
             uint16_t& index,
-            const int max,
-            const int ad,
-            const int bd,
-            const int cd,
-            const uint16_t ai,
-            const uint16_t bi,
-            const uint16_t ci) const;
+            const double max,
+            const double ad,
+            const double bd,
+            const double cd,
+            const int ai,
+            const int bi,
+            const int ci,
+            const int offset) const;
+
+        template <typename T>
+        void cutMeshAlongMaxEdge(
+            const T& indices,
+            QVector<BuildingVertex>& vertices,
+            uint16_t& index,
+            QVector<uint16_t>& outIndices,
+            QVector<PointD>& coords,
+            const uint16_t baseOffset,
+            const int offset,
+            const double maxValue,
+            const bool getY) const;
+
+        void cutMeshAlongMinEdge(
+            const QVector<uint16_t>& indices,
+            QVector<BuildingVertex>& vertices,
+            uint16_t& index,
+            QVector<uint16_t>& outIndices,
+            QVector<PointD>& coords,
+            const int offset,
+            const double minValue,
+            const bool getY) const;
 
         void cutMeshForTile(
             const std::vector<uint16_t>& indices,
             QVector<BuildingVertex>& vertices,
             QVector<uint16_t>& outIndices,
-            const uint16_t offset,
-            const PointI& minTile31,
-            const PointI& maxTile31) const;
+            const uint16_t baseOffset,
+            const PointD& minTile31,
+            const PointD& maxTile31) const;
 
         void accumulateElevationForPoint(
             const PointI& point31,
@@ -158,8 +190,8 @@ namespace OsmAnd
             float baseTerrainHeight,
             float terrainHeight,
             float width31,
-            const PointI& minTile31,
-            const PointI& maxTile31,
+            const PointD& minTile31,
+            const PointD& maxTile31,
             const glm::vec4& colorVec,
             QList<PassagePrimitive*>& passagePrimitives) const;
 
