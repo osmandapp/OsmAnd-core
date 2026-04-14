@@ -294,7 +294,8 @@ void Map3DObjectsTiledProvider_P::filterBuildings(
                 }
             }
             if (isOutline
-                && (!buildingSource->containsAttribute(QStringLiteral("building:part"), QStringLiteral("yes"), true)
+                && (!buildingSource->containsTag(QStringLiteral("building:part"))
+                || buildingSource->containsAttribute(QStringLiteral("building:part"), QStringLiteral("no"))
                 || !buildingSource->innerPolygonsPoints31.isEmpty()
                 || buildingSource->containsTag(QStringLiteral("role_outer"), true)
                 || buildingSource->containsTag(QStringLiteral("role_inner"), true)))
