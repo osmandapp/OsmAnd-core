@@ -34,3 +34,13 @@ QString OsmAnd::Address::getName(const QString lang, bool transliterate) const
     else
         return name;
 }
+
+QStringList OsmAnd::Address::getOtherNames(bool transliterate) const
+{
+    return getOtherNames(transliterate, QStringLiteral(""));
+}
+
+QStringList OsmAnd::Address::getOtherNames(bool transliterate, QString localeName) const
+{
+    return OsmAnd::getOtherNamesImpl(*this, transliterate, localeName);
+}
