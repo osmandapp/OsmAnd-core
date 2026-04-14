@@ -1158,10 +1158,9 @@ inline OsmAnd::BuildingVertex Map3DObjectsTiledProvider_P::getIntersection(
     const BuildingVertex& startVertex,
     const BuildingVertex& endVertex,
     const double range,
-    const uint16_t index /* = 0 */,
-    const uint16_t startIndex /* = 0 */,
-    const uint16_t endIndex /* = 0 */,
-    QHash<uint16_t, PointD>* coords /* = nullptr */) const
+    const int startIndex /* = 0 */,
+    const int endIndex /* = 0 */,
+    QVector<PointD>* coords /* = nullptr */) const
 {
     BuildingVertex vertex = startVertex;
     if (coords)
@@ -1169,7 +1168,7 @@ inline OsmAnd::BuildingVertex Map3DObjectsTiledProvider_P::getIntersection(
         auto startPoint = coords->value(startIndex, PointD(startVertex.location31));
         auto endPoint = coords->value(endIndex, PointD(endVertex.location31));
         auto location31(startPoint + (endPoint - startPoint) * range);
-        coords->insert(index, location31);
+        coords->append(location31);
         vertex.location31.x = qRound(location31.x);
         vertex.location31.y = qRound(location31.y);
     }
@@ -1196,22 +1195,25 @@ inline OsmAnd::BuildingVertex Map3DObjectsTiledProvider_P::getIntersection(
 inline void Map3DObjectsTiledProvider_P::appendOneTriangle(
     QVector<BuildingVertex>& vertices,
     QVector<uint16_t>& outIndices,
-    QHash<uint16_t, PointD>& coords,
+    QVector<PointD>& coords,
     uint16_t& index,
     const double max,
     const double ad,
     const double bd,
     const double cd,
-    const uint16_t ai,
-    const uint16_t bi,
-    const uint16_t ci) const
+    const int ai,
+    const int bi,
+    const int ci,
+    const int offset) const
 {
     if (vertices[ai].heights.x != 0.0f)
     {
         outIndices.append(ai);
-        vertices.append(getIntersection(vertices[bi], vertices[ai], (max - bd) / (ad - bd), index, bi, ai, &coords));
+        vertices.append(getIntersection(
+            vertices[bi], vertices[ai], (max - bd) / (ad - bd), bi - offset, ai - offset, &coords));
         outIndices.append(index++);
-        vertices.append(getIntersection(vertices[ci], vertices[ai], (max - cd) / (ad - cd), index, ci, ai, &coords));
+        vertices.append(getIntersection(
+            vertices[ci], vertices[ai], (max - cd) / (ad - cd), ci - offset, ai - offset, &coords));
         outIndices.append(index++);
     }
 }
@@ -1219,26 +1221,28 @@ inline void Map3DObjectsTiledProvider_P::appendOneTriangle(
 inline void Map3DObjectsTiledProvider_P::appendTwoTriangles(
     QVector<BuildingVertex>& vertices,
     QVector<uint16_t>& outIndices,
-    QHash<uint16_t, PointD>& coords,
+    QVector<PointD>& coords,
     uint16_t& index,
     const double max,
     const double ad,
     const double bd,
     const double cd,
-    const uint16_t ai,
-    const uint16_t bi,
-    const uint16_t ci) const
+    const int ai,
+    const int bi,
+    const int ci,
+    const int offset) const
 {
     int count = 0;
     if (vertices[ai].heights.x != 0.0f || vertices[bi].heights.x != 0.0f)
     {
-        vertices.append(getIntersection(vertices[bi], vertices[ai], (max - bd) / (ad - bd), index, bi, ai, &coords));
+        vertices.append(getIntersection(
+            vertices[bi], vertices[ai], (max - bd) / (ad - bd), bi - offset, ai - offset, &coords));
         count++;
     }
     if (vertices[ai].heights.x != 0.0f || vertices[ci].heights.x != 0.0f)
     {
-        const auto nextIdx = index + count;
-        vertices.append(getIntersection(vertices[ci], vertices[ai], (max - cd) / (ad - cd), nextIdx, ci, ai, &coords));
+        vertices.append(getIntersection(
+            vertices[ci], vertices[ai], (max - cd) / (ad - cd), ci - offset, ai - offset, &coords));
         count++;
     }
     if (count > 0)
@@ -1256,93 +1260,117 @@ inline void Map3DObjectsTiledProvider_P::appendTwoTriangles(
     }
 }
 
-inline void Map3DObjectsTiledProvider_P::cutMeshAlongMaxEdge(
-    const QVector<uint16_t>& indices,
+template <typename T>
+void Map3DObjectsTiledProvider_P::cutMeshAlongMaxEdge(
+    const T& indices,
     QVector<BuildingVertex>& vertices,
     uint16_t& index,
     QVector<uint16_t>& outIndices,
-    QHash<uint16_t, PointD>& coords,
-    const uint16_t offset,
+    QVector<PointD>& coords,
+    const uint16_t baseOffset,
+    const int offset,
     const double maxValue,
     const bool getY) const
 {
     auto count = indices.size();
     for (int i = 0; i < count; i += 3)
     {
-        const auto ai = indices[i] + offset;
-        const auto bi = indices[i + 1] + offset;
-        const auto ci = indices[i + 2] + offset;
-        PointD point = coords.value(ai, PointD(vertices[ai].location31));
+        const int ai = indices[i] + baseOffset;
+        const int bi = indices[i + 1] + baseOffset;
+        const int ci = indices[i + 2] + baseOffset;
+        PointD point = coords.value(ai - offset, PointD(vertices[ai].location31));
         const auto a = getY ? point.y : point.x;
-        point = coords.value(bi, PointD(vertices[bi].location31));
+        point = coords.value(bi - offset, PointD(vertices[bi].location31));
         const auto b = getY ? point.y : point.x;
-        point = coords.value(ci, PointD(vertices[ci].location31));
+        point = coords.value(ci - offset, PointD(vertices[ci].location31));
         const auto c = getY ? point.y : point.x;
         if (a > maxValue && b > maxValue && c > maxValue)
             continue;
         if (a <= maxValue && b <= maxValue && c <= maxValue)
         {
-            outIndices.append(ai);
-            outIndices.append(bi);
-            outIndices.append(ci);
+            outIndices.append(static_cast<uint16_t>(ai));
+            outIndices.append(static_cast<uint16_t>(bi));
+            outIndices.append(static_cast<uint16_t>(ci));
         }
         else if (b <= maxValue && c <= maxValue)
-            appendTwoTriangles(vertices, outIndices, coords, index, maxValue, a, b, c, ai, bi, ci);
+            appendTwoTriangles(vertices, outIndices, coords, index, maxValue, a, b, c, ai, bi, ci, offset);
         else if (a <= maxValue && c <= maxValue)
-            appendTwoTriangles(vertices, outIndices, coords, index, maxValue, b, c, a, bi, ci, ai);
+            appendTwoTriangles(vertices, outIndices, coords, index, maxValue, b, c, a, bi, ci, ai, offset);
         else if (a <= maxValue && b <= maxValue)
-            appendTwoTriangles(vertices, outIndices, coords, index, maxValue, c, a, b, ci, ai, bi);
+            appendTwoTriangles(vertices, outIndices, coords, index, maxValue, c, a, b, ci, ai, bi, offset);
         else if (a <= maxValue)
-            appendOneTriangle(vertices, outIndices, coords, index, maxValue, a, b, c, ai, bi, ci);
+            appendOneTriangle(vertices, outIndices, coords, index, maxValue, a, b, c, ai, bi, ci, offset);
         else if (b <= maxValue)
-            appendOneTriangle(vertices, outIndices, coords, index, maxValue, b, c, a, bi, ci, ai);
+            appendOneTriangle(vertices, outIndices, coords, index, maxValue, b, c, a, bi, ci, ai, offset);
         else
-            appendOneTriangle(vertices, outIndices, coords, index, maxValue, c, a, b, ci, ai, bi);
+            appendOneTriangle(vertices, outIndices, coords, index, maxValue, c, a, b, ci, ai, bi, offset);
     }
 }
 
-inline void Map3DObjectsTiledProvider_P::cutMeshAlongMinEdge(
+template void Map3DObjectsTiledProvider_P::cutMeshAlongMaxEdge<std::vector<uint16_t>>(
+    const std::vector<uint16_t>&,
+    QVector<BuildingVertex>&,
+    uint16_t&,
+    QVector<uint16_t>&,
+    QVector<PointD>&,
+    const uint16_t,
+    const int,
+    const double,
+    const bool) const;
+
+template void Map3DObjectsTiledProvider_P::cutMeshAlongMaxEdge<QVector<uint16_t>>(
+    const QVector<uint16_t>&,
+    QVector<BuildingVertex>&,
+    uint16_t&,
+    QVector<uint16_t>&,
+    QVector<PointD>&,
+    const uint16_t,
+    const int,
+    const double,
+    const bool) const;
+
+void Map3DObjectsTiledProvider_P::cutMeshAlongMinEdge(
     const QVector<uint16_t>& indices,
     QVector<BuildingVertex>& vertices,
     uint16_t& index,
     QVector<uint16_t>& outIndices,
-    QHash<uint16_t, PointD>& coords,
-    const uint16_t offset,
+    QVector<PointD>& coords,
+    const int offset,
     const double minValue,
     const bool getY) const
 {
     auto count = indices.size();
     for (int i = 0; i < count; i += 3)
     {
-        const auto ai = indices[i] + offset;
-        const auto bi = indices[i + 1] + offset;
-        const auto ci = indices[i + 2] + offset;
-        PointD point = coords.value(ai, PointD(vertices[ai].location31));
+        const int ai = indices[i];
+        const int bi = indices[i + 1];
+        const int ci = indices[i + 2];
+        PointD point = coords.value(ai - offset, PointD(vertices[ai].location31));
         const auto a = getY ? point.y : point.x;
-        point = coords.value(bi, PointD(vertices[bi].location31));
+        point = coords.value(bi - offset, PointD(vertices[bi].location31));
         const auto b = getY ? point.y : point.x;
-        point = coords.value(ci, PointD(vertices[ci].location31));
+        point = coords.value(ci - offset, PointD(vertices[ci].location31));
         const auto c = getY ? point.y : point.x;
         if (a < minValue && b < minValue && c < minValue)
             continue;
         if (a >= minValue && b >= minValue && c >= minValue)
         {
-            outIndices.append(ai);
-            outIndices.append(bi);
-            outIndices.append(ci);
+            outIndices.append(static_cast<uint16_t>(ai));
+            outIndices.append(static_cast<uint16_t>(bi));
+            outIndices.append(static_cast<uint16_t>(ci));
         }
         else if (b >= minValue && c >= minValue)
-            appendTwoTriangles(vertices, outIndices, coords, index, minValue, a, b, c, ai, bi, ci);
+            appendTwoTriangles(vertices, outIndices, coords, index, minValue, a, b, c, ai, bi, ci, offset);
         else if (a >= minValue && c >= minValue)
-            appendTwoTriangles(vertices, outIndices, coords, index, minValue, b, c, a, bi, ci, ai);
+            appendTwoTriangles(vertices, outIndices, coords, index, minValue, b, c, a, bi, ci, ai, offset);
         else if (a >= minValue && b >= minValue)
-            appendTwoTriangles(vertices, outIndices, coords, index, minValue, c, a, b, ci, ai, bi);
+            appendTwoTriangles(vertices, outIndices, coords, index, minValue, c, a, b, ci, ai, bi, offset);
         else if (a >= minValue)
-            appendOneTriangle(vertices, outIndices, coords, index, minValue, a, b, c, ai, bi, ci);
+            appendOneTriangle(vertices, outIndices, coords, index, minValue, a, b, c, ai, bi, ci, offset);
         else if (b >= minValue)
-            appendOneTriangle(vertices, outIndices, coords, index, minValue, b, c, a, bi, ci, ai);
+            appendOneTriangle(vertices, outIndices, coords, index, minValue, b, c, a, bi, ci, ai, offset);
         else
-            appendOneTriangle(vertices, outIndices, coords, index, minValue, c, a, b, ci, ai, bi);
+            appendOneTriangle(vertices, outIndices, coords, index, minValue, c, a, b, ci, ai, bi, offset);
     }
 }
 
@@ -1350,20 +1378,20 @@ void Map3DObjectsTiledProvider_P::cutMeshForTile(
     const std::vector<uint16_t>& indices,
     QVector<BuildingVertex>& vertices,
     QVector<uint16_t>& outIndices,
-    const uint16_t offset,
+    const uint16_t baseOffset,
     const PointD& minTile31,
     const PointD& maxTile31) const
 {
-    QVector<uint16_t> tmpIndices(indices.begin(), indices.end());
     auto index = static_cast<uint16_t>(vertices.size());
-    QVector<uint16_t> midIndices;
-    QHash<uint16_t, PointD> midCoords;
-    cutMeshAlongMaxEdge(tmpIndices, vertices, index, midIndices, midCoords, offset, maxTile31.x, false);
+    QVector<uint16_t> tmpIndices, midIndices;
+    QVector<PointD> midCoords;
+    int offset = index;
+    cutMeshAlongMaxEdge(indices, vertices, index, midIndices, midCoords, baseOffset, offset, maxTile31.x, false);
     tmpIndices.clear();
-    cutMeshAlongMinEdge(midIndices, vertices, index, tmpIndices, midCoords, 0, minTile31.x, false);
+    cutMeshAlongMinEdge(midIndices, vertices, index, tmpIndices, midCoords, offset, minTile31.x, false);
     midIndices.clear();
-    cutMeshAlongMaxEdge(tmpIndices, vertices, index, midIndices, midCoords, 0, maxTile31.y, true);
-    cutMeshAlongMinEdge(midIndices, vertices, index, outIndices, midCoords, 0, minTile31.y, true);
+    cutMeshAlongMaxEdge(tmpIndices, vertices, index, midIndices, midCoords, 0, offset, maxTile31.y, true);
+    cutMeshAlongMinEdge(midIndices, vertices, index, outIndices, midCoords, offset, minTile31.y, true);
 }
 
 

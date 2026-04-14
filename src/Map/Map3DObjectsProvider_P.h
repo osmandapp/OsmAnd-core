@@ -103,54 +103,57 @@ namespace OsmAnd
             const BuildingVertex& startVertex,
             const BuildingVertex& endVertex,
             const double range,
-            const uint16_t index = 0,
-            const uint16_t startIndex = 0,
-            const uint16_t endIndex = 0,
-            QHash<uint16_t, PointD>* vertices = nullptr) const;
+            const int startIndex = 0,
+            const int endIndex = 0,
+            QVector<PointD>* vertices = nullptr) const;
 
         inline void appendOneTriangle(
             QVector<BuildingVertex>& vertices,
             QVector<uint16_t>& outIndices,
-            QHash<uint16_t, PointD>& coords,
+            QVector<PointD>& coords,
             uint16_t& index,
             const double max,
             const double ad,
             const double bd,
             const double cd,
-            const uint16_t ai,
-            const uint16_t bi,
-            const uint16_t ci) const;
+            const int ai,
+            const int bi,
+            const int ci,
+            const int offset) const;
 
         inline void appendTwoTriangles(
             QVector<BuildingVertex>& vertices,
             QVector<uint16_t>& outIndices,
-            QHash<uint16_t, PointD>& coords,
+            QVector<PointD>& coords,
             uint16_t& index,
             const double max,
             const double ad,
             const double bd,
             const double cd,
-            const uint16_t ai,
-            const uint16_t bi,
-            const uint16_t ci) const;
+            const int ai,
+            const int bi,
+            const int ci,
+            const int offset) const;
 
-        inline void cutMeshAlongMaxEdge(
-            const QVector<uint16_t>& indices,
+        template <typename T>
+        void cutMeshAlongMaxEdge(
+            const T& indices,
             QVector<BuildingVertex>& vertices,
             uint16_t& index,
             QVector<uint16_t>& outIndices,
-            QHash<uint16_t, PointD>& coords,
-            const uint16_t offset,
+            QVector<PointD>& coords,
+            const uint16_t baseOffset,
+            const int offset,
             const double maxValue,
             const bool getY) const;
 
-        inline void cutMeshAlongMinEdge(
+        void cutMeshAlongMinEdge(
             const QVector<uint16_t>& indices,
             QVector<BuildingVertex>& vertices,
             uint16_t& index,
             QVector<uint16_t>& outIndices,
-            QHash<uint16_t, PointD>& coords,
-            const uint16_t offset,
+            QVector<PointD>& coords,
+            const int offset,
             const double minValue,
             const bool getY) const;
 
@@ -158,7 +161,7 @@ namespace OsmAnd
             const std::vector<uint16_t>& indices,
             QVector<BuildingVertex>& vertices,
             QVector<uint16_t>& outIndices,
-            const uint16_t offset,
+            const uint16_t baseOffset,
             const PointD& minTile31,
             const PointD& maxTile31) const;
 
