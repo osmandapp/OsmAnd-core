@@ -6,6 +6,7 @@
 
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
+#include <QHash>
 #include <QMap>
 #include "restore_internal_warnings.h"
 
@@ -29,6 +30,8 @@ namespace OsmAnd
         typedef ObfPoiSectionReader::VisitorFunction VisitorFunction;
 
     private:
+        typedef QHash<uint32_t, QList<QPair<QString, QString>>> TagGroupsMap;
+
         ObfPoiSectionReader_P();
         ~ObfPoiSectionReader_P();
     protected:
@@ -87,7 +90,8 @@ namespace OsmAnd
             const TileAcceptorFunction tileFilter,
             const ZoomLevel zoomFilter,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
-            const QPair<int, int>* poiAdditionalFilter);
+            const QPair<int, int>* poiAdditionalFilter,
+            TagGroupsMap& tagGroups);
         static bool scanTileForMatchingCategories(
             const ObfReader_P& reader,
             const QSet<ObfPoiCategoryId>& categories,
@@ -145,7 +149,8 @@ namespace OsmAnd
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const QPair<int, int>* poiAdditionalFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
-            const std::shared_ptr<const IQueryController>& queryController);
+            const std::shared_ptr<const IQueryController>& queryController,
+            const TagGroupsMap& tagGroups);
         static void readAmenity(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
@@ -156,9 +161,10 @@ namespace OsmAnd
             const AreaI* const bbox31,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const QPair<int, int>* poiAdditionalFilter,
-            const std::shared_ptr<const IQueryController>& queryController);
-        static void readTagGroups(const ObfReader_P& reader, QHash<uint32_t, QList<QPair<QString, QString>>> & tagGroups);
-        static void readTagGroup(const ObfReader_P& reader, QHash<uint32_t, QList<QPair<QString, QString>>> & tagGroups);
+            const std::shared_ptr<const IQueryController>& queryController,
+            const TagGroupsMap& tagGroups);
+        static void readTagGroups(const ObfReader_P& reader, TagGroupsMap& tagGroups);
+        static void readTagGroup(const ObfReader_P& reader, TagGroupsMap& tagGroups);
     public:
         static void loadCategories(
             const ObfReader_P& reader,

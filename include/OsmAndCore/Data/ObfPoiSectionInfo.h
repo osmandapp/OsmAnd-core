@@ -96,8 +96,6 @@ namespace OsmAnd
         
         std::shared_ptr<const ObfPoiSectionCategories> getCategories() const;
         std::shared_ptr<const ObfPoiSectionSubtypes> getSubtypes() const;
-        void addTagGroups(QHash<uint32_t, QList<QPair<QString, QString>>> & tagGroups) const;
-        QList<QPair<QString, QString>> getTagValues(uint32_t id) const;
 
     friend class OsmAnd::ObfPoiSectionReader_P;
     };
