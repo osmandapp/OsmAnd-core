@@ -174,7 +174,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             collectFromPolyline(primitive, show3DbuildingParts, buildings, buildingParts, buildingPassages);
         }
 
-        if (show3DbuildingParts && !buildings.isEmpty() && !buildingParts.isEmpty())
+        if (show3DbuildingParts && !buildings.isEmpty())
             filterBuildings(buildings, buildingParts);
 
         QHash<TileId, std::shared_ptr<IMapElevationDataProvider::Data>> elevationDataMap;
@@ -185,6 +185,8 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             commonBbox31.left() = INT32_MAX;
             for (const auto& buildingPart : buildingParts)
             {
+                if (buildingPart.hidden)
+                    continue;
                 if (const auto& sourceObject =
                     std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(buildingPart.primitive->sourceObject))
                 {
@@ -193,6 +195,8 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             }
             for (const auto& building : buildings)
             {
+                if (building.hidden)
+                    continue;
                 if (const auto& sourceObject =
                     std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(building.primitive->sourceObject))
                 {
@@ -229,12 +233,16 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
 
         for (const auto& buildingPart : buildingParts)
         {
+            if (buildingPart.hidden)
+                continue;
             processPrimitive(buildingPart, vertices, indices, elevationDataMap, request.tileId, request.zoom,
                 buildingPassages, colors, &primaryBuildings);
         }
 
         for (const auto& building : buildings)
         {
+            if (building.hidden)
+                continue;
             processPrimitive(building, vertices, indices, elevationDataMap, request.tileId, request.zoom,
                 buildingPassages, colors, &primaryBuildings);
         }
@@ -273,6 +281,7 @@ void Map3DObjectsTiledProvider_P::filterBuildings(
         if (const auto& buildingSource =
             std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(building.primitive->sourceObject))
         {
+            bool isHidden = false;
             bool isOutline = buildingSource->containsTag(QStringLiteral("role_outline"), true);
             const AreaI buildingArea(
                 building.bbox31.top() - MAX_COORDINATE_DELTA,
@@ -290,26 +299,20 @@ void Map3DObjectsTiledProvider_P::filterBuildings(
                     buildingPart.parentSourceObject = buildingSource;
                     if (building.polygonColor != 0)
                         buildingPart.polygonColor = building.polygonColor;
-                    isOutline = true;
+                    if (isOutline)
+                        buildingPart.hidden = false;
+                    else if (!buildingPart.hidden)
+                        isHidden = true;
                 }
             }
-            if (isOutline
+            if ((isOutline || isHidden)
                 && (!buildingSource->containsTag(QStringLiteral("building:part"))
                 || buildingSource->containsAttribute(QStringLiteral("building:part"), QStringLiteral("no"))
                 || !buildingSource->innerPolygonsPoints31.isEmpty()
                 || buildingSource->containsTag(QStringLiteral("role_outer"), true)
                 || buildingSource->containsTag(QStringLiteral("role_inner"), true)))
-                building.outline = true;
+                building.hidden = true;
         }
-    }
-    for (auto it = buildings.begin(); it != buildings.end();)
-    {
-        if (it->outline)
-        {
-            it = buildings.erase(it);
-            continue;
-        }
-        it++;
     }
 }
 
@@ -360,7 +363,7 @@ void Map3DObjectsTiledProvider_P::collectFromPolyline(
         buildingPrimitive.primitive = polylinePrimitive;
         buildingPrimitive.polygonColor = getPolygonColor(buildingPrimitive.primitive);
         buildingPrimitive.bbox31 = sourceObject->bbox31;
-        buildingPrimitive.outline = false;
+        buildingPrimitive.hidden = false;
 
         if (sourceObject->containsTag(QStringLiteral("building")))
         {
@@ -371,8 +374,8 @@ void Map3DObjectsTiledProvider_P::collectFromPolyline(
         }
         else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part")))
         {
-            if (isVisibleBuildingPart(sourceObject))
-                insertOrUpdateBuilding(buildingPrimitive, outBuildingParts);
+            buildingPrimitive.hidden = !isVisibleBuildingPart(sourceObject);
+            insertOrUpdateBuilding(buildingPrimitive, outBuildingParts);
         }
     }
     else if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polyline
@@ -422,7 +425,7 @@ void Map3DObjectsTiledProvider_P::collectFromPolygons(
     buildingPrimitive.primitive = polygonPrimitive;
     buildingPrimitive.polygonColor = getPolygonColor(buildingPrimitive.primitive);
     buildingPrimitive.bbox31 = sourceObject->bbox31;
-    buildingPrimitive.outline = false;
+    buildingPrimitive.hidden = false;
 
     if (sourceObject->containsTag(QStringLiteral("building")))
     {
@@ -433,8 +436,8 @@ void Map3DObjectsTiledProvider_P::collectFromPolygons(
     }
     else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part")))
     {
-        if (isVisibleBuildingPart(sourceObject))
-            insertOrUpdateBuilding(buildingPrimitive, outBuildingParts);
+        buildingPrimitive.hidden = !isVisibleBuildingPart(sourceObject);
+        insertOrUpdateBuilding(buildingPrimitive, outBuildingParts);
     }
 }
 
@@ -516,7 +519,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     for (const auto& captionAttributeId : constOf(sourceObject->captionsOrder))
     {
         const auto& caption = constOf(sourceObject->captions)[captionAttributeId];
-        const QString& captionTag = sourceObject->attributeMapping->decodeMap[captionAttributeId].tag;
+        const auto& captionTag = sourceObject->attributeMapping->decodeMap[captionAttributeId].tag;
 
         if (!heightFound && captionTag == QStringLiteral("height"))
         {

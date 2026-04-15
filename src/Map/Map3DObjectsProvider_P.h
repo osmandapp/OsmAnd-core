@@ -30,7 +30,7 @@ namespace OsmAnd
             mutable uint32_t polygonColor;
             mutable AreaI bbox31;
             mutable FColorRGB color;
-            mutable bool outline;
+            mutable bool hidden;
         };
 
         struct PassagePrimitive
