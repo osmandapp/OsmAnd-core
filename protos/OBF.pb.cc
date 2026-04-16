@@ -452,7 +452,8 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndAddressNameIndexData));
   OsmAndAddressNameIndexData_AddressNameIndexData_descriptor_ = OsmAndAddressNameIndexData_descriptor_->nested_type(0);
-  static const int OsmAndAddressNameIndexData_AddressNameIndexData_offsets_[1] = {
+  static const int OsmAndAddressNameIndexData_AddressNameIndexData_offsets_[2] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndAddressNameIndexData_AddressNameIndexData, suffixesdictionary_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndAddressNameIndexData_AddressNameIndexData, atom_),
   };
   OsmAndAddressNameIndexData_AddressNameIndexData_reflection_ =
@@ -467,10 +468,11 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndAddressNameIndexData_AddressNameIndexData));
   AddressNameIndexDataAtom_descriptor_ = file->message_type(9);
-  static const int AddressNameIndexDataAtom_offsets_[6] = {
+  static const int AddressNameIndexDataAtom_offsets_[7] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AddressNameIndexDataAtom, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AddressNameIndexDataAtom, nameen_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AddressNameIndexDataAtom, type_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AddressNameIndexDataAtom, suffixesbitset_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AddressNameIndexDataAtom, shifttoindex_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AddressNameIndexDataAtom, shifttocityindex_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AddressNameIndexDataAtom, xy16_),
@@ -1609,184 +1611,185 @@ void protobuf_AddDesc_OBF_2eproto() {
     "d.OBF.CityIndex\022*\n\006blocks\030\007 \003(\0132\032.OsmAnd"
     ".OBF.CityBlockIndex\"<\n\nCitiesType\022\021\n\rCit"
     "iesOrTowns\020\001\022\r\n\tPostcodes\020\002\022\014\n\010Villages\020"
-    "\003\"\342\001\n\032OsmAndAddressNameIndexData\022-\n\005tabl"
+    "\003\"\376\001\n\032OsmAndAddressNameIndexData\022-\n\005tabl"
     "e\030\004 \002(\0132\036.OsmAnd.OBF.IndexedStringTable\022"
     "I\n\004atom\030\007 \003(\0132;.OsmAnd.OBF.OsmAndAddress"
-    "NameIndexData.AddressNameIndexData\032J\n\024Ad"
-    "dressNameIndexData\0222\n\004atom\030\004 \003(\0132$.OsmAn"
-    "d.OBF.AddressNameIndexDataAtom\"\204\001\n\030Addre"
-    "ssNameIndexDataAtom\022\014\n\004name\030\001 \001(\t\022\016\n\006nam"
-    "eEn\030\002 \001(\t\022\014\n\004type\030\003 \002(\r\022\024\n\014shiftToIndex\030"
-    "\005 \003(\005\022\030\n\020shiftToCityIndex\030\006 \003(\005\022\014\n\004xy16\030"
-    "\007 \003(\r\"\302\001\n\tCityIndex\022\021\n\tcity_type\030\001 \001(\r\022\014"
-    "\n\004name\030\002 \002(\t\022\017\n\007name_en\030\003 \001(\t\022\n\n\002id\030\004 \001("
-    "\004\022\t\n\001x\030\005 \002(\r\022\t\n\001y\030\006 \002(\r\022\027\n\017attributeTagI"
-    "ds\030\007 \003(\r\022\027\n\017attributeValues\030\010 \003(\t\022\035\n\025shi"
-    "ftToCityBlockIndex\030\n \001(\007\022\020\n\010boundary\030\014 \001"
-    "(\014\"\202\001\n\016CityBlockIndex\022\030\n\020shiftToCityInde"
-    "x\030\004 \001(\007\022,\n\tbuildings\030\n \003(\0132\031.OsmAnd.OBF."
-    "BuildingIndex\022(\n\007streets\030\014 \003(\0132\027.OsmAnd."
-    "OBF.StreetIndex\"\345\001\n\013StreetIndex\022\014\n\004name\030"
-    "\001 \002(\t\022\017\n\007name_en\030\002 \001(\t\022\t\n\001x\030\003 \002(\021\022\t\n\001y\030\004"
-    " \002(\021\0225\n\rintersections\030\005 \003(\0132\036.OsmAnd.OBF"
-    ".StreetIntersection\022\n\n\002id\030\006 \001(\004\022\027\n\017attri"
-    "buteTagIds\030\007 \003(\r\022\027\n\017attributeValues\030\010 \003("
-    "\t\022,\n\tbuildings\030\014 \003(\0132\031.OsmAnd.OBF.Buildi"
-    "ngIndex\"\221\001\n\022StreetIntersection\022\014\n\004name\030\002"
-    " \002(\t\022\017\n\007name_en\030\003 \001(\t\022\024\n\014intersectedX\030\004 "
-    "\002(\021\022\024\n\014intersectedY\030\005 \002(\021\022\027\n\017attributeTa"
-    "gIds\030\007 \003(\r\022\027\n\017attributeValues\030\010 \003(\t\"\230\002\n\r"
-    "BuildingIndex\022\014\n\004name\030\001 \002(\t\022\017\n\007name_en\030\002"
-    " \001(\t\022\r\n\005name2\030\003 \001(\t\022\020\n\010name_en2\030\004 \001(\t\022\025\n"
-    "\rinterpolation\030\005 \001(\021\022\t\n\001x\030\007 \002(\021\022\t\n\001y\030\010 \002"
-    "(\021\022\n\n\002x2\030\t \001(\021\022\n\n\002y2\030\n \001(\021\022\n\n\002id\030\r \001(\004\022\020"
-    "\n\010postcode\030\016 \001(\t\022\027\n\017attributeTagIds\030\017 \003("
-    "\r\022\027\n\017attributeValues\030\020 \003(\t\022\030\n\020attributeT"
-    "agIds2\030\021 \003(\r\022\030\n\020attributeValues2\030\022 \003(\t\"="
-    "\n\017TransportRoutes\022*\n\006routes\030\006 \003(\0132\032.OsmA"
-    "nd.OBF.TransportRoute\"\371\002\n\016TransportRoute"
-    "\022\n\n\002id\030\001 \002(\004\022\014\n\004type\030\003 \001(\r\022\020\n\010operator\030\004"
-    " \001(\r\022\013\n\003ref\030\005 \001(\t\022\014\n\004name\030\006 \001(\r\022\017\n\007name_"
-    "en\030\007 \001(\r\022\020\n\010distance\030\010 \001(\r\022\r\n\005color\030\t \001("
-    "\r\0223\n\013directStops\030\017 \003(\0132\036.OsmAnd.OBF.Tran"
-    "sportRouteStop\0224\n\014reverseStops\030\020 \003(\0132\036.O"
-    "smAnd.OBF.TransportRouteStop\022\020\n\010geometry"
-    "\030\021 \001(\014\0228\n\014scheduleTrip\030\022 \003(\0132\".OsmAnd.OB"
-    "F.TransportRouteSchedule\022\027\n\017attributeTag"
-    "Ids\030\023 \003(\r\022\036\n\026attributeTextTagValues\030\024 \003("
-    "\014\"Q\n\031IncompleteTransportRoutes\0224\n\006routes"
-    "\030\006 \003(\0132$.OsmAnd.OBF.IncompleteTransportR"
-    "oute\"{\n\030IncompleteTransportRoute\022\n\n\002id\030\001"
-    " \002(\004\022\014\n\004type\030\003 \001(\r\022\020\n\010operator\030\004 \001(\r\022\013\n\003"
-    "ref\030\005 \001(\r\022\020\n\010routeRef\030\007 \002(\r\022\024\n\014missingSt"
-    "ops\030\010 \003(\r\"\244\001\n\026TransportRouteSchedule\022\030\n\020"
-    "avgStopIntervals\030\001 \001(\014\022\030\n\020avgWaitInterva"
-    "ls\030\002 \001(\014\022\025\n\rtripIntervals\030\003 \001(\014\022\?\n\nexcep"
-    "tions\030\010 \003(\0132+.OsmAnd.OBF.TransportRouteS"
-    "cheduleException\"\313\001\n\037TransportRouteSched"
-    "uleException\022\023\n\013tripIndexes\030\001 \003(\r\022\023\n\013sto"
-    "pIndexes\030\002 \003(\r\022\021\n\tavailable\030\003 \001(\010\022\024\n\014del"
-    "ayArrival\030\005 \003(\r\022\031\n\021deltaWaitInterval\030\006 \003"
-    "(\005\022\034\n\024dayOfWeekRestriction\030\007 \003(\r\022\034\n\024dayO"
-    "fYearRestriction\030\010 \003(\r\"k\n\022TransportRoute"
-    "Stop\022\n\n\002id\030\001 \002(\022\022\n\n\002dx\030\002 \002(\021\022\n\n\002dy\030\003 \002(\021"
-    "\022\014\n\004name\030\006 \002(\r\022\017\n\007name_en\030\007 \001(\r\022\022\n\ntrave"
-    "lTime\030\010 \001(\r\"\332\001\n\rTransportStop\022\n\n\002dx\030\001 \002("
-    "\021\022\n\n\002dy\030\002 \002(\021\022\n\n\002id\030\005 \002(\022\022\014\n\004name\030\006 \002(\r\022"
-    "\017\n\007name_en\030\007 \001(\r\022\033\n\023additionalNamePairs\030"
-    "\010 \001(\014\022,\n\005exits\030\t \003(\0132\035.OsmAnd.OBF.Transp"
-    "ortStopExit\022\016\n\006routes\030\020 \003(\r\022\030\n\020deletedRo"
-    "utesIds\030\024 \003(\004\022\021\n\troutesIds\030\026 \003(\004\"8\n\021Tran"
-    "sportStopExit\022\n\n\002dx\030\001 \002(\021\022\n\n\002dy\030\002 \002(\021\022\013\n"
-    "\003ref\030\003 \002(\r\"\272\001\n\022TransportStopsTree\022\014\n\004lef"
+    "NameIndexData.AddressNameIndexData\032f\n\024Ad"
+    "dressNameIndexData\022\032\n\022suffixesDictionary"
+    "\030\002 \003(\t\0222\n\004atom\030\004 \003(\0132$.OsmAnd.OBF.Addres"
+    "sNameIndexDataAtom\"\234\001\n\030AddressNameIndexD"
+    "ataAtom\022\014\n\004name\030\001 \001(\t\022\016\n\006nameEn\030\002 \001(\t\022\014\n"
+    "\004type\030\003 \002(\r\022\026\n\016suffixesBitset\030\004 \003(\r\022\024\n\014s"
+    "hiftToIndex\030\005 \003(\005\022\030\n\020shiftToCityIndex\030\006 "
+    "\003(\005\022\014\n\004xy16\030\007 \003(\r\"\302\001\n\tCityIndex\022\021\n\tcity_"
+    "type\030\001 \001(\r\022\014\n\004name\030\002 \002(\t\022\017\n\007name_en\030\003 \001("
+    "\t\022\n\n\002id\030\004 \001(\004\022\t\n\001x\030\005 \002(\r\022\t\n\001y\030\006 \002(\r\022\027\n\017a"
+    "ttributeTagIds\030\007 \003(\r\022\027\n\017attributeValues\030"
+    "\010 \003(\t\022\035\n\025shiftToCityBlockIndex\030\n \001(\007\022\020\n\010"
+    "boundary\030\014 \001(\014\"\202\001\n\016CityBlockIndex\022\030\n\020shi"
+    "ftToCityIndex\030\004 \001(\007\022,\n\tbuildings\030\n \003(\0132\031"
+    ".OsmAnd.OBF.BuildingIndex\022(\n\007streets\030\014 \003"
+    "(\0132\027.OsmAnd.OBF.StreetIndex\"\345\001\n\013StreetIn"
+    "dex\022\014\n\004name\030\001 \002(\t\022\017\n\007name_en\030\002 \001(\t\022\t\n\001x\030"
+    "\003 \002(\021\022\t\n\001y\030\004 \002(\021\0225\n\rintersections\030\005 \003(\0132"
+    "\036.OsmAnd.OBF.StreetIntersection\022\n\n\002id\030\006 "
+    "\001(\004\022\027\n\017attributeTagIds\030\007 \003(\r\022\027\n\017attribut"
+    "eValues\030\010 \003(\t\022,\n\tbuildings\030\014 \003(\0132\031.OsmAn"
+    "d.OBF.BuildingIndex\"\221\001\n\022StreetIntersecti"
+    "on\022\014\n\004name\030\002 \002(\t\022\017\n\007name_en\030\003 \001(\t\022\024\n\014int"
+    "ersectedX\030\004 \002(\021\022\024\n\014intersectedY\030\005 \002(\021\022\027\n"
+    "\017attributeTagIds\030\007 \003(\r\022\027\n\017attributeValue"
+    "s\030\010 \003(\t\"\230\002\n\rBuildingIndex\022\014\n\004name\030\001 \002(\t\022"
+    "\017\n\007name_en\030\002 \001(\t\022\r\n\005name2\030\003 \001(\t\022\020\n\010name_"
+    "en2\030\004 \001(\t\022\025\n\rinterpolation\030\005 \001(\021\022\t\n\001x\030\007 "
+    "\002(\021\022\t\n\001y\030\010 \002(\021\022\n\n\002x2\030\t \001(\021\022\n\n\002y2\030\n \001(\021\022\n"
+    "\n\002id\030\r \001(\004\022\020\n\010postcode\030\016 \001(\t\022\027\n\017attribut"
+    "eTagIds\030\017 \003(\r\022\027\n\017attributeValues\030\020 \003(\t\022\030"
+    "\n\020attributeTagIds2\030\021 \003(\r\022\030\n\020attributeVal"
+    "ues2\030\022 \003(\t\"=\n\017TransportRoutes\022*\n\006routes\030"
+    "\006 \003(\0132\032.OsmAnd.OBF.TransportRoute\"\371\002\n\016Tr"
+    "ansportRoute\022\n\n\002id\030\001 \002(\004\022\014\n\004type\030\003 \001(\r\022\020"
+    "\n\010operator\030\004 \001(\r\022\013\n\003ref\030\005 \001(\t\022\014\n\004name\030\006 "
+    "\001(\r\022\017\n\007name_en\030\007 \001(\r\022\020\n\010distance\030\010 \001(\r\022\r"
+    "\n\005color\030\t \001(\r\0223\n\013directStops\030\017 \003(\0132\036.Osm"
+    "And.OBF.TransportRouteStop\0224\n\014reverseSto"
+    "ps\030\020 \003(\0132\036.OsmAnd.OBF.TransportRouteStop"
+    "\022\020\n\010geometry\030\021 \001(\014\0228\n\014scheduleTrip\030\022 \003(\013"
+    "2\".OsmAnd.OBF.TransportRouteSchedule\022\027\n\017"
+    "attributeTagIds\030\023 \003(\r\022\036\n\026attributeTextTa"
+    "gValues\030\024 \003(\014\"Q\n\031IncompleteTransportRout"
+    "es\0224\n\006routes\030\006 \003(\0132$.OsmAnd.OBF.Incomple"
+    "teTransportRoute\"{\n\030IncompleteTransportR"
+    "oute\022\n\n\002id\030\001 \002(\004\022\014\n\004type\030\003 \001(\r\022\020\n\010operat"
+    "or\030\004 \001(\r\022\013\n\003ref\030\005 \001(\r\022\020\n\010routeRef\030\007 \002(\r\022"
+    "\024\n\014missingStops\030\010 \003(\r\"\244\001\n\026TransportRoute"
+    "Schedule\022\030\n\020avgStopIntervals\030\001 \001(\014\022\030\n\020av"
+    "gWaitIntervals\030\002 \001(\014\022\025\n\rtripIntervals\030\003 "
+    "\001(\014\022\?\n\nexceptions\030\010 \003(\0132+.OsmAnd.OBF.Tra"
+    "nsportRouteScheduleException\"\313\001\n\037Transpo"
+    "rtRouteScheduleException\022\023\n\013tripIndexes\030"
+    "\001 \003(\r\022\023\n\013stopIndexes\030\002 \003(\r\022\021\n\tavailable\030"
+    "\003 \001(\010\022\024\n\014delayArrival\030\005 \003(\r\022\031\n\021deltaWait"
+    "Interval\030\006 \003(\005\022\034\n\024dayOfWeekRestriction\030\007"
+    " \003(\r\022\034\n\024dayOfYearRestriction\030\010 \003(\r\"k\n\022Tr"
+    "ansportRouteStop\022\n\n\002id\030\001 \002(\022\022\n\n\002dx\030\002 \002(\021"
+    "\022\n\n\002dy\030\003 \002(\021\022\014\n\004name\030\006 \002(\r\022\017\n\007name_en\030\007 "
+    "\001(\r\022\022\n\ntravelTime\030\010 \001(\r\"\332\001\n\rTransportSto"
+    "p\022\n\n\002dx\030\001 \002(\021\022\n\n\002dy\030\002 \002(\021\022\n\n\002id\030\005 \002(\022\022\014\n"
+    "\004name\030\006 \002(\r\022\017\n\007name_en\030\007 \001(\r\022\033\n\023addition"
+    "alNamePairs\030\010 \001(\014\022,\n\005exits\030\t \003(\0132\035.OsmAn"
+    "d.OBF.TransportStopExit\022\016\n\006routes\030\020 \003(\r\022"
+    "\030\n\020deletedRoutesIds\030\024 \003(\004\022\021\n\troutesIds\030\026"
+    " \003(\004\"8\n\021TransportStopExit\022\n\n\002dx\030\001 \002(\021\022\n\n"
+    "\002dy\030\002 \002(\021\022\013\n\003ref\030\003 \002(\r\"\272\001\n\022TransportStop"
+    "sTree\022\014\n\004left\030\001 \002(\021\022\r\n\005right\030\002 \002(\021\022\013\n\003to"
+    "p\030\003 \002(\021\022\016\n\006bottom\030\004 \002(\021\0220\n\010subtrees\030\007 \003("
+    "\0132\036.OsmAnd.OBF.TransportStopsTree\022(\n\005lea"
+    "fs\030\010 \003(\0132\031.OsmAnd.OBF.TransportStop\022\016\n\006b"
+    "aseId\030\020 \001(\004\"\357\001\n\024OsmAndTransportIndex\022\014\n\004"
+    "name\030\001 \001(\t\022+\n\006routes\030\003 \001(\0132\033.OsmAnd.OBF."
+    "TransportRoutes\022-\n\005stops\030\006 \001(\0132\036.OsmAnd."
+    "OBF.TransportStopsTree\022\?\n\020incompleteRout"
+    "es\030\010 \001(\0132%.OsmAnd.OBF.IncompleteTranspor"
+    "tRoutes\022,\n\013stringTable\030\t \002(\0132\027.OsmAnd.OB"
+    "F.StringTable\"\312\002\n\016OsmAndPoiIndex\022\014\n\004name"
+    "\030\001 \002(\t\022-\n\nboundaries\030\002 \002(\0132\031.OsmAnd.OBF."
+    "OsmAndTileBox\0228\n\017categoriesTable\030\003 \003(\0132\037"
+    ".OsmAnd.OBF.OsmAndCategoryTable\0221\n\tnameI"
+    "ndex\030\004 \001(\0132\036.OsmAnd.OBF.OsmAndPoiNameInd"
+    "ex\0226\n\rsubtypesTable\030\005 \001(\0132\037.OsmAnd.OBF.O"
+    "smAndSubtypesTable\022\'\n\005boxes\030\006 \003(\0132\030.OsmA"
+    "nd.OBF.OsmAndPoiBox\022-\n\007poiData\030\t \003(\0132\034.O"
+    "smAnd.OBF.OsmAndPoiBoxData\"\365\001\n\022OsmAndPoi"
+    "NameIndex\022-\n\005table\030\003 \002(\0132\036.OsmAnd.OBF.In"
+    "dexedStringTable\022C\n\004data\030\005 \003(\01325.OsmAnd."
+    "OBF.OsmAndPoiNameIndex.OsmAndPoiNameInde"
+    "xData\032k\n\026OsmAndPoiNameIndexData\022\032\n\022suffi"
+    "xesDictionary\030\002 \003(\t\0225\n\005atoms\030\003 \003(\0132&.Osm"
+    "And.OBF.OsmAndPoiNameIndexDataAtom\"i\n\032Os"
+    "mAndPoiNameIndexDataAtom\022\014\n\004zoom\030\002 \001(\r\022\t"
+    "\n\001x\030\003 \001(\r\022\t\n\001y\030\004 \001(\r\022\026\n\016suffixesBitset\030\006"
+    " \003(\r\022\017\n\007shiftTo\030\016 \001(\007\">\n\023OsmAndCategoryT"
+    "able\022\020\n\010category\030\001 \002(\t\022\025\n\rsubcategories\030"
+    "\003 \003(\t\"E\n\023OsmAndSubtypesTable\022.\n\010subtypes"
+    "\030\004 \003(\0132\034.OsmAnd.OBF.OsmAndPoiSubtype\"\205\001\n"
+    "\020OsmAndPoiSubtype\022\014\n\004name\030\001 \002(\t\022\017\n\007tagna"
+    "me\030\002 \001(\t\022\016\n\006isText\030\003 \002(\010\022\021\n\tfrequency\030\005 "
+    "\001(\r\022\031\n\021subtypeValuesSize\030\006 \001(\r\022\024\n\014subtyp"
+    "eValue\030\010 \003(\t\"2\n\021OsmAndPoiTagGroup\022\n\n\002id\030"
+    "\001 \002(\r\022\021\n\ttagValues\030\005 \003(\t\"T\n\022OsmAndPoiTag"
+    "Groups\022\017\n\003ids\030\002 \003(\rB\002\020\001\022-\n\006groups\030\005 \003(\0132"
+    "\035.OsmAnd.OBF.OsmAndPoiTagGroup\"\340\001\n\014OsmAn"
+    "dPoiBox\022\014\n\004zoom\030\001 \002(\r\022\014\n\004left\030\002 \002(\021\022\013\n\003t"
+    "op\030\003 \002(\021\0223\n\ncategories\030\004 \001(\0132\037.OsmAnd.OB"
+    "F.OsmAndPoiCategories\0221\n\ttagGroups\030\010 \001(\013"
+    "2\036.OsmAnd.OBF.OsmAndPoiTagGroups\022*\n\010subB"
+    "oxes\030\n \003(\0132\030.OsmAnd.OBF.OsmAndPoiBox\022\023\n\013"
+    "shiftToData\030\016 \001(\007\"@\n\023OsmAndPoiCategories"
+    "\022\022\n\ncategories\030\003 \003(\r\022\025\n\rsubcategories\030\005 "
+    "\003(\r\"i\n\020OsmAndPoiBoxData\022\014\n\004zoom\030\001 \001(\r\022\t\n"
+    "\001x\030\002 \001(\r\022\t\n\001y\030\003 \001(\r\0221\n\007poiData\030\005 \003(\0132 .O"
+    "smAnd.OBF.OsmAndPoiBoxDataAtom\"\234\002\n\024OsmAn"
+    "dPoiBoxDataAtom\022\n\n\002dx\030\002 \002(\021\022\n\n\002dy\030\003 \002(\021\022"
+    "\022\n\ncategories\030\004 \003(\r\022\025\n\rsubcategories\030\005 \003"
+    "(\r\022\014\n\004name\030\006 \001(\t\022\016\n\006nameEn\030\007 \001(\t\022\n\n\002id\030\010"
+    " \001(\004\022\024\n\014openingHours\030\n \001(\t\022\014\n\004site\030\013 \001(\t"
+    "\022\r\n\005phone\030\014 \001(\t\022\014\n\004note\030\r \001(\t\022\026\n\016textCat"
+    "egories\030\016 \003(\r\022\022\n\ntextValues\030\017 \003(\t\022\023\n\013pre"
+    "cisionXY\030\020 \001(\005\022\025\n\ttagGroups\030\021 \003(\rB\002\020\001\"\032\n"
+    "\007IdTable\022\017\n\007routeId\030\001 \003(\022\"F\n\017Restriction"
+    "Data\022\014\n\004type\030\001 \002(\005\022\014\n\004from\030\002 \002(\005\022\n\n\002to\030\003"
+    " \002(\005\022\013\n\003via\030\004 \001(\005\"x\n\tRouteData\022\016\n\006points"
+    "\030\001 \002(\014\022\022\n\npointTypes\030\004 \001(\014\022\022\n\npointNames"
+    "\030\005 \001(\014\022\r\n\005types\030\007 \002(\014\022\017\n\007routeId\030\014 \002(\005\022\023"
+    "\n\013stringNames\030\016 \001(\014\"\304\005\n\022OsmAndRoutingInd"
+    "ex\022\014\n\004name\030\001 \002(\t\022\?\n\005rules\030\002 \003(\01320.OsmAnd"
+    ".OBF.OsmAndRoutingIndex.RouteEncodingRul"
+    "e\022>\n\trootBoxes\030\003 \003(\0132+.OsmAnd.OBF.OsmAnd"
+    "RoutingIndex.RouteDataBox\022A\n\014basemapBoxe"
+    "s\030\004 \003(\0132+.OsmAnd.OBF.OsmAndRoutingIndex."
+    "RouteDataBox\022=\n\006blocks\030\005 \003(\0132-.OsmAnd.OB"
+    "F.OsmAndRoutingIndex.RouteDataBlock\032;\n\021R"
+    "outeEncodingRule\022\013\n\003tag\030\003 \002(\t\022\r\n\005value\030\005"
+    " \002(\t\022\n\n\002id\030\007 \001(\r\032\231\001\n\014RouteDataBox\022\014\n\004lef"
     "t\030\001 \002(\021\022\r\n\005right\030\002 \002(\021\022\013\n\003top\030\003 \002(\021\022\016\n\006b"
-    "ottom\030\004 \002(\021\0220\n\010subtrees\030\007 \003(\0132\036.OsmAnd.O"
-    "BF.TransportStopsTree\022(\n\005leafs\030\010 \003(\0132\031.O"
-    "smAnd.OBF.TransportStop\022\016\n\006baseId\030\020 \001(\004\""
-    "\357\001\n\024OsmAndTransportIndex\022\014\n\004name\030\001 \001(\t\022+"
-    "\n\006routes\030\003 \001(\0132\033.OsmAnd.OBF.TransportRou"
-    "tes\022-\n\005stops\030\006 \001(\0132\036.OsmAnd.OBF.Transpor"
-    "tStopsTree\022\?\n\020incompleteRoutes\030\010 \001(\0132%.O"
-    "smAnd.OBF.IncompleteTransportRoutes\022,\n\013s"
-    "tringTable\030\t \002(\0132\027.OsmAnd.OBF.StringTabl"
-    "e\"\312\002\n\016OsmAndPoiIndex\022\014\n\004name\030\001 \002(\t\022-\n\nbo"
-    "undaries\030\002 \002(\0132\031.OsmAnd.OBF.OsmAndTileBo"
-    "x\0228\n\017categoriesTable\030\003 \003(\0132\037.OsmAnd.OBF."
-    "OsmAndCategoryTable\0221\n\tnameIndex\030\004 \001(\0132\036"
-    ".OsmAnd.OBF.OsmAndPoiNameIndex\0226\n\rsubtyp"
-    "esTable\030\005 \001(\0132\037.OsmAnd.OBF.OsmAndSubtype"
-    "sTable\022\'\n\005boxes\030\006 \003(\0132\030.OsmAnd.OBF.OsmAn"
-    "dPoiBox\022-\n\007poiData\030\t \003(\0132\034.OsmAnd.OBF.Os"
-    "mAndPoiBoxData\"\365\001\n\022OsmAndPoiNameIndex\022-\n"
-    "\005table\030\003 \002(\0132\036.OsmAnd.OBF.IndexedStringT"
-    "able\022C\n\004data\030\005 \003(\01325.OsmAnd.OBF.OsmAndPo"
-    "iNameIndex.OsmAndPoiNameIndexData\032k\n\026Osm"
-    "AndPoiNameIndexData\022\032\n\022suffixesDictionar"
-    "y\030\002 \003(\t\0225\n\005atoms\030\003 \003(\0132&.OsmAnd.OBF.OsmA"
-    "ndPoiNameIndexDataAtom\"i\n\032OsmAndPoiNameI"
-    "ndexDataAtom\022\014\n\004zoom\030\002 \001(\r\022\t\n\001x\030\003 \001(\r\022\t\n"
-    "\001y\030\004 \001(\r\022\026\n\016suffixesBitset\030\006 \003(\r\022\017\n\007shif"
-    "tTo\030\016 \001(\007\">\n\023OsmAndCategoryTable\022\020\n\010cate"
-    "gory\030\001 \002(\t\022\025\n\rsubcategories\030\003 \003(\t\"E\n\023Osm"
-    "AndSubtypesTable\022.\n\010subtypes\030\004 \003(\0132\034.Osm"
-    "And.OBF.OsmAndPoiSubtype\"\205\001\n\020OsmAndPoiSu"
-    "btype\022\014\n\004name\030\001 \002(\t\022\017\n\007tagname\030\002 \001(\t\022\016\n\006"
-    "isText\030\003 \002(\010\022\021\n\tfrequency\030\005 \001(\r\022\031\n\021subty"
-    "peValuesSize\030\006 \001(\r\022\024\n\014subtypeValue\030\010 \003(\t"
-    "\"2\n\021OsmAndPoiTagGroup\022\n\n\002id\030\001 \002(\r\022\021\n\ttag"
-    "Values\030\005 \003(\t\"T\n\022OsmAndPoiTagGroups\022\017\n\003id"
-    "s\030\002 \003(\rB\002\020\001\022-\n\006groups\030\005 \003(\0132\035.OsmAnd.OBF"
-    ".OsmAndPoiTagGroup\"\340\001\n\014OsmAndPoiBox\022\014\n\004z"
-    "oom\030\001 \002(\r\022\014\n\004left\030\002 \002(\021\022\013\n\003top\030\003 \002(\021\0223\n\n"
-    "categories\030\004 \001(\0132\037.OsmAnd.OBF.OsmAndPoiC"
-    "ategories\0221\n\ttagGroups\030\010 \001(\0132\036.OsmAnd.OB"
-    "F.OsmAndPoiTagGroups\022*\n\010subBoxes\030\n \003(\0132\030"
-    ".OsmAnd.OBF.OsmAndPoiBox\022\023\n\013shiftToData\030"
-    "\016 \001(\007\"@\n\023OsmAndPoiCategories\022\022\n\ncategori"
-    "es\030\003 \003(\r\022\025\n\rsubcategories\030\005 \003(\r\"i\n\020OsmAn"
-    "dPoiBoxData\022\014\n\004zoom\030\001 \001(\r\022\t\n\001x\030\002 \001(\r\022\t\n\001"
-    "y\030\003 \001(\r\0221\n\007poiData\030\005 \003(\0132 .OsmAnd.OBF.Os"
-    "mAndPoiBoxDataAtom\"\234\002\n\024OsmAndPoiBoxDataA"
-    "tom\022\n\n\002dx\030\002 \002(\021\022\n\n\002dy\030\003 \002(\021\022\022\n\ncategorie"
-    "s\030\004 \003(\r\022\025\n\rsubcategories\030\005 \003(\r\022\014\n\004name\030\006"
-    " \001(\t\022\016\n\006nameEn\030\007 \001(\t\022\n\n\002id\030\010 \001(\004\022\024\n\014open"
-    "ingHours\030\n \001(\t\022\014\n\004site\030\013 \001(\t\022\r\n\005phone\030\014 "
-    "\001(\t\022\014\n\004note\030\r \001(\t\022\026\n\016textCategories\030\016 \003("
-    "\r\022\022\n\ntextValues\030\017 \003(\t\022\023\n\013precisionXY\030\020 \001"
-    "(\005\022\025\n\ttagGroups\030\021 \003(\rB\002\020\001\"\032\n\007IdTable\022\017\n\007"
-    "routeId\030\001 \003(\022\"F\n\017RestrictionData\022\014\n\004type"
-    "\030\001 \002(\005\022\014\n\004from\030\002 \002(\005\022\n\n\002to\030\003 \002(\005\022\013\n\003via\030"
-    "\004 \001(\005\"x\n\tRouteData\022\016\n\006points\030\001 \002(\014\022\022\n\npo"
-    "intTypes\030\004 \001(\014\022\022\n\npointNames\030\005 \001(\014\022\r\n\005ty"
-    "pes\030\007 \002(\014\022\017\n\007routeId\030\014 \002(\005\022\023\n\013stringName"
-    "s\030\016 \001(\014\"\304\005\n\022OsmAndRoutingIndex\022\014\n\004name\030\001"
-    " \002(\t\022\?\n\005rules\030\002 \003(\01320.OsmAnd.OBF.OsmAndR"
-    "outingIndex.RouteEncodingRule\022>\n\trootBox"
-    "es\030\003 \003(\0132+.OsmAnd.OBF.OsmAndRoutingIndex"
-    ".RouteDataBox\022A\n\014basemapBoxes\030\004 \003(\0132+.Os"
-    "mAnd.OBF.OsmAndRoutingIndex.RouteDataBox"
-    "\022=\n\006blocks\030\005 \003(\0132-.OsmAnd.OBF.OsmAndRout"
-    "ingIndex.RouteDataBlock\032;\n\021RouteEncoding"
-    "Rule\022\013\n\003tag\030\003 \002(\t\022\r\n\005value\030\005 \002(\t\022\n\n\002id\030\007"
-    " \001(\r\032\231\001\n\014RouteDataBox\022\014\n\004left\030\001 \002(\021\022\r\n\005r"
-    "ight\030\002 \002(\021\022\013\n\003top\030\003 \002(\021\022\016\n\006bottom\030\004 \002(\021\022"
-    "\023\n\013shiftToData\030\005 \001(\007\022:\n\005boxes\030\007 \003(\0132+.Os"
-    "mAnd.OBF.OsmAndRoutingIndex.RouteDataBox"
-    "\032\303\001\n\016RouteDataBlock\022$\n\007idTable\030\005 \001(\0132\023.O"
-    "smAnd.OBF.IdTable\022*\n\013dataObjects\030\006 \003(\0132\025"
-    ".OsmAnd.OBF.RouteData\0221\n\014restrictions\030\007 "
-    "\003(\0132\033.OsmAnd.OBF.RestrictionData\022,\n\013stri"
-    "ngTable\030\010 \001(\0132\027.OsmAnd.OBF.StringTable\"\231"
-    "\010\n\024OsmAndHHRoutingIndex\022\017\n\007edition\030\001 \002(\003"
-    "\022\017\n\007profile\030\002 \002(\t\022\025\n\rprofileParams\030\003 \003(\t"
-    "\022/\n\016tagValuesTable\030\004 \001(\0132\027.OsmAnd.OBF.St"
-    "ringTable\022E\n\npointBoxes\030\005 \002(\01321.OsmAnd.O"
-    "BF.OsmAndHHRoutingIndex.HHRoutePointsBox"
-    "\022L\n\rpointSegments\030\006 \003(\01325.OsmAnd.OBF.Osm"
-    "AndHHRoutingIndex.HHRouteBlockSegments\032\324"
-    "\001\n\020HHRoutePointsBox\022\014\n\004left\030\002 \002(\021\022\r\n\005rig"
-    "ht\030\003 \002(\021\022\013\n\003top\030\004 \002(\021\022\016\n\006bottom\030\005 \002(\021\022@\n"
-    "\005boxes\030\006 \003(\01321.OsmAnd.OBF.OsmAndHHRoutin"
-    "gIndex.HHRoutePointsBox\022D\n\006points\030\007 \003(\0132"
-    "4.OsmAnd.OBF.OsmAndHHRoutingIndex.HHRout"
-    "eNetworkPoint\032\366\001\n\023HHRouteNetworkPoint\022\n\n"
-    "\002id\030\001 \002(\005\022\n\n\002dx\030\002 \002(\021\022\n\n\002dy\030\003 \002(\021\022\020\n\010glo"
-    "balId\030\004 \002(\005\022\016\n\006roadId\030\005 \002(\003\022\031\n\021roadStart"
-    "EndIndex\030\006 \002(\005\022\021\n\tclusterId\030\007 \001(\005\022\023\n\013dua"
-    "lPointId\030\010 \001(\005\022\025\n\rdualClusterId\030\t \001(\005\022\022\n"
-    "\nprofileIds\030\n \003(\005\022\022\n\npartialInd\030\013 \001(\005\022\027\n"
-    "\013tagValueIds\030\014 \003(\005B\002\020\001\032\360\001\n\024HHRouteBlockS"
-    "egments\022\024\n\014idRangeStart\030\001 \002(\005\022\025\n\ridRange"
-    "Length\030\002 \002(\005\022\021\n\tprofileId\030\003 \001(\005\022J\n\013inner"
-    "Blocks\030\006 \003(\01325.OsmAnd.OBF.OsmAndHHRoutin"
-    "gIndex.HHRouteBlockSegments\022L\n\rpointSegm"
-    "ents\030\004 \003(\01325.OsmAnd.OBF.OsmAndHHRoutingI"
-    "ndex.HHRoutePointSegments\032\?\n\024HHRoutePoin"
-    "tSegments\022\022\n\nsegmentsIn\030\002 \002(\014\022\023\n\013segment"
-    "sOut\030\003 \002(\014\"T\n\013OsmAndOwner\022\014\n\004name\030\001 \002(\t\022"
-    "\020\n\010resource\030\002 \001(\t\022\023\n\013description\030\003 \001(\t\022\020"
-    "\n\010pluginid\030\004 \001(\tB\036\n\021net.osmand.binaryB\tO"
-    "smandOdb", 9208);
+    "ottom\030\004 \002(\021\022\023\n\013shiftToData\030\005 \001(\007\022:\n\005boxe"
+    "s\030\007 \003(\0132+.OsmAnd.OBF.OsmAndRoutingIndex."
+    "RouteDataBox\032\303\001\n\016RouteDataBlock\022$\n\007idTab"
+    "le\030\005 \001(\0132\023.OsmAnd.OBF.IdTable\022*\n\013dataObj"
+    "ects\030\006 \003(\0132\025.OsmAnd.OBF.RouteData\0221\n\014res"
+    "trictions\030\007 \003(\0132\033.OsmAnd.OBF.Restriction"
+    "Data\022,\n\013stringTable\030\010 \001(\0132\027.OsmAnd.OBF.S"
+    "tringTable\"\231\010\n\024OsmAndHHRoutingIndex\022\017\n\007e"
+    "dition\030\001 \002(\003\022\017\n\007profile\030\002 \002(\t\022\025\n\rprofile"
+    "Params\030\003 \003(\t\022/\n\016tagValuesTable\030\004 \001(\0132\027.O"
+    "smAnd.OBF.StringTable\022E\n\npointBoxes\030\005 \002("
+    "\01321.OsmAnd.OBF.OsmAndHHRoutingIndex.HHRo"
+    "utePointsBox\022L\n\rpointSegments\030\006 \003(\01325.Os"
+    "mAnd.OBF.OsmAndHHRoutingIndex.HHRouteBlo"
+    "ckSegments\032\324\001\n\020HHRoutePointsBox\022\014\n\004left\030"
+    "\002 \002(\021\022\r\n\005right\030\003 \002(\021\022\013\n\003top\030\004 \002(\021\022\016\n\006bot"
+    "tom\030\005 \002(\021\022@\n\005boxes\030\006 \003(\01321.OsmAnd.OBF.Os"
+    "mAndHHRoutingIndex.HHRoutePointsBox\022D\n\006p"
+    "oints\030\007 \003(\01324.OsmAnd.OBF.OsmAndHHRouting"
+    "Index.HHRouteNetworkPoint\032\366\001\n\023HHRouteNet"
+    "workPoint\022\n\n\002id\030\001 \002(\005\022\n\n\002dx\030\002 \002(\021\022\n\n\002dy\030"
+    "\003 \002(\021\022\020\n\010globalId\030\004 \002(\005\022\016\n\006roadId\030\005 \002(\003\022"
+    "\031\n\021roadStartEndIndex\030\006 \002(\005\022\021\n\tclusterId\030"
+    "\007 \001(\005\022\023\n\013dualPointId\030\010 \001(\005\022\025\n\rdualCluste"
+    "rId\030\t \001(\005\022\022\n\nprofileIds\030\n \003(\005\022\022\n\npartial"
+    "Ind\030\013 \001(\005\022\027\n\013tagValueIds\030\014 \003(\005B\002\020\001\032\360\001\n\024H"
+    "HRouteBlockSegments\022\024\n\014idRangeStart\030\001 \002("
+    "\005\022\025\n\ridRangeLength\030\002 \002(\005\022\021\n\tprofileId\030\003 "
+    "\001(\005\022J\n\013innerBlocks\030\006 \003(\01325.OsmAnd.OBF.Os"
+    "mAndHHRoutingIndex.HHRouteBlockSegments\022"
+    "L\n\rpointSegments\030\004 \003(\01325.OsmAnd.OBF.OsmA"
+    "ndHHRoutingIndex.HHRoutePointSegments\032\?\n"
+    "\024HHRoutePointSegments\022\022\n\nsegmentsIn\030\002 \002("
+    "\014\022\023\n\013segmentsOut\030\003 \002(\014\"T\n\013OsmAndOwner\022\014\n"
+    "\004name\030\001 \002(\t\022\020\n\010resource\030\002 \001(\t\022\023\n\013descrip"
+    "tion\030\003 \001(\t\022\020\n\010pluginid\030\004 \001(\tB\036\n\021net.osma"
+    "nd.binaryB\tOsmandOdb", 9260);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "OBF.proto", &protobuf_RegisterTypes);
   OsmAndStructure::default_instance_ = new OsmAndStructure();
@@ -6749,6 +6752,7 @@ void OsmAndAddressIndex::Swap(OsmAndAddressIndex* other) {
 // ===================================================================
 
 #ifndef _MSC_VER
+const int OsmAndAddressNameIndexData_AddressNameIndexData::kSuffixesDictionaryFieldNumber;
 const int OsmAndAddressNameIndexData_AddressNameIndexData::kAtomFieldNumber;
 #endif  // !_MSC_VER
 
@@ -6802,6 +6806,7 @@ OsmAndAddressNameIndexData_AddressNameIndexData* OsmAndAddressNameIndexData_Addr
 }
 
 void OsmAndAddressNameIndexData_AddressNameIndexData::Clear() {
+  suffixesdictionary_.Clear();
   atom_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -6813,6 +6818,25 @@ bool OsmAndAddressNameIndexData_AddressNameIndexData::MergePartialFromCodedStrea
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // repeated string suffixesDictionary = 2;
+      case 2: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_suffixesDictionary:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_suffixesdictionary()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->suffixesdictionary(this->suffixesdictionary_size() - 1).data(),
+            this->suffixesdictionary(this->suffixesdictionary_size() - 1).length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(18)) goto parse_suffixesDictionary;
+        if (input->ExpectTag(34)) goto parse_atom;
+        break;
+      }
+
       // repeated .OsmAnd.OBF.AddressNameIndexDataAtom atom = 4;
       case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -6846,6 +6870,15 @@ bool OsmAndAddressNameIndexData_AddressNameIndexData::MergePartialFromCodedStrea
 
 void OsmAndAddressNameIndexData_AddressNameIndexData::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
+  // repeated string suffixesDictionary = 2;
+  for (int i = 0; i < this->suffixesdictionary_size(); i++) {
+  ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+    this->suffixesdictionary(i).data(), this->suffixesdictionary(i).length(),
+    ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      2, this->suffixesdictionary(i), output);
+  }
+
   // repeated .OsmAnd.OBF.AddressNameIndexDataAtom atom = 4;
   for (int i = 0; i < this->atom_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
@@ -6860,6 +6893,15 @@ void OsmAndAddressNameIndexData_AddressNameIndexData::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* OsmAndAddressNameIndexData_AddressNameIndexData::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
+  // repeated string suffixesDictionary = 2;
+  for (int i = 0; i < this->suffixesdictionary_size(); i++) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->suffixesdictionary(i).data(), this->suffixesdictionary(i).length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteStringToArray(2, this->suffixesdictionary(i), target);
+  }
+
   // repeated .OsmAnd.OBF.AddressNameIndexDataAtom atom = 4;
   for (int i = 0; i < this->atom_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
@@ -6876,6 +6918,13 @@ void OsmAndAddressNameIndexData_AddressNameIndexData::SerializeWithCachedSizes(
 
 int OsmAndAddressNameIndexData_AddressNameIndexData::ByteSize() const {
   int total_size = 0;
+
+  // repeated string suffixesDictionary = 2;
+  total_size += 1 * this->suffixesdictionary_size();
+  for (int i = 0; i < this->suffixesdictionary_size(); i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->suffixesdictionary(i));
+  }
 
   // repeated .OsmAnd.OBF.AddressNameIndexDataAtom atom = 4;
   total_size += 1 * this->atom_size();
@@ -6910,6 +6959,7 @@ void OsmAndAddressNameIndexData_AddressNameIndexData::MergeFrom(const ::google::
 
 void OsmAndAddressNameIndexData_AddressNameIndexData::MergeFrom(const OsmAndAddressNameIndexData_AddressNameIndexData& from) {
   GOOGLE_CHECK_NE(&from, this);
+  suffixesdictionary_.MergeFrom(from.suffixesdictionary_);
   atom_.MergeFrom(from.atom_);
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -6936,6 +6986,7 @@ bool OsmAndAddressNameIndexData_AddressNameIndexData::IsInitialized() const {
 
 void OsmAndAddressNameIndexData_AddressNameIndexData::Swap(OsmAndAddressNameIndexData_AddressNameIndexData* other) {
   if (other != this) {
+    suffixesdictionary_.Swap(&other->suffixesdictionary_);
     atom_.Swap(&other->atom_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
@@ -7215,6 +7266,7 @@ void OsmAndAddressNameIndexData::Swap(OsmAndAddressNameIndexData* other) {
 const int AddressNameIndexDataAtom::kNameFieldNumber;
 const int AddressNameIndexDataAtom::kNameEnFieldNumber;
 const int AddressNameIndexDataAtom::kTypeFieldNumber;
+const int AddressNameIndexDataAtom::kSuffixesBitsetFieldNumber;
 const int AddressNameIndexDataAtom::kShiftToIndexFieldNumber;
 const int AddressNameIndexDataAtom::kShiftToCityIndexFieldNumber;
 const int AddressNameIndexDataAtom::kXy16FieldNumber;
@@ -7292,6 +7344,7 @@ void AddressNameIndexDataAtom::Clear() {
     }
     type_ = 0u;
   }
+  suffixesbitset_.Clear();
   shifttoindex_.Clear();
   shifttocityindex_.Clear();
   xy16_.Clear();
@@ -7350,6 +7403,28 @@ bool AddressNameIndexDataAtom::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(32)) goto parse_suffixesBitset;
+        break;
+      }
+
+      // repeated uint32 suffixesBitset = 4;
+      case 4: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_suffixesBitset:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 32, input, this->mutable_suffixesbitset())));
+        } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
+                   == ::google::protobuf::internal::WireFormatLite::
+                      WIRETYPE_LENGTH_DELIMITED) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_suffixesbitset())));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(32)) goto parse_suffixesBitset;
         if (input->ExpectTag(40)) goto parse_shiftToIndex;
         break;
       }
@@ -7461,6 +7536,12 @@ void AddressNameIndexDataAtom::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(3, this->type(), output);
   }
 
+  // repeated uint32 suffixesBitset = 4;
+  for (int i = 0; i < this->suffixesbitset_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(
+      4, this->suffixesbitset(i), output);
+  }
+
   // repeated int32 shiftToIndex = 5;
   for (int i = 0; i < this->shifttoindex_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(
@@ -7510,6 +7591,12 @@ void AddressNameIndexDataAtom::SerializeWithCachedSizes(
   // required uint32 type = 3;
   if (has_type()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(3, this->type(), target);
+  }
+
+  // repeated uint32 suffixesBitset = 4;
+  for (int i = 0; i < this->suffixesbitset_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteUInt32ToArray(4, this->suffixesbitset(i), target);
   }
 
   // repeated int32 shiftToIndex = 5;
@@ -7563,6 +7650,16 @@ int AddressNameIndexDataAtom::ByteSize() const {
     }
 
   }
+  // repeated uint32 suffixesBitset = 4;
+  {
+    int data_size = 0;
+    for (int i = 0; i < this->suffixesbitset_size(); i++) {
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        UInt32Size(this->suffixesbitset(i));
+    }
+    total_size += 1 * this->suffixesbitset_size() + data_size;
+  }
+
   // repeated int32 shiftToIndex = 5;
   {
     int data_size = 0;
@@ -7618,6 +7715,7 @@ void AddressNameIndexDataAtom::MergeFrom(const ::google::protobuf::Message& from
 
 void AddressNameIndexDataAtom::MergeFrom(const AddressNameIndexDataAtom& from) {
   GOOGLE_CHECK_NE(&from, this);
+  suffixesbitset_.MergeFrom(from.suffixesbitset_);
   shifttoindex_.MergeFrom(from.shifttoindex_);
   shifttocityindex_.MergeFrom(from.shifttocityindex_);
   xy16_.MergeFrom(from.xy16_);
@@ -7658,6 +7756,7 @@ void AddressNameIndexDataAtom::Swap(AddressNameIndexDataAtom* other) {
     std::swap(name_, other->name_);
     std::swap(nameen_, other->nameen_);
     std::swap(type_, other->type_);
+    suffixesbitset_.Swap(&other->suffixesbitset_);
     shifttoindex_.Swap(&other->shifttoindex_);
     shifttocityindex_.Swap(&other->shifttocityindex_);
     xy16_.Swap(&other->xy16_);

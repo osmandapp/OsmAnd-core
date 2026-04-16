@@ -1841,6 +1841,22 @@ class OsmAndAddressNameIndexData_AddressNameIndexData : public ::google::protobu
 
   // accessors -------------------------------------------------------
 
+  // repeated string suffixesDictionary = 2;
+  inline int suffixesdictionary_size() const;
+  inline void clear_suffixesdictionary();
+  static const int kSuffixesDictionaryFieldNumber = 2;
+  inline const ::std::string& suffixesdictionary(int index) const;
+  inline ::std::string* mutable_suffixesdictionary(int index);
+  inline void set_suffixesdictionary(int index, const ::std::string& value);
+  inline void set_suffixesdictionary(int index, const char* value);
+  inline void set_suffixesdictionary(int index, const char* value, size_t size);
+  inline ::std::string* add_suffixesdictionary();
+  inline void add_suffixesdictionary(const ::std::string& value);
+  inline void add_suffixesdictionary(const char* value);
+  inline void add_suffixesdictionary(const char* value, size_t size);
+  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& suffixesdictionary() const;
+  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_suffixesdictionary();
+
   // repeated .OsmAnd.OBF.AddressNameIndexDataAtom atom = 4;
   inline int atom_size() const;
   inline void clear_atom();
@@ -1858,10 +1874,11 @@ class OsmAndAddressNameIndexData_AddressNameIndexData : public ::google::protobu
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
+  ::google::protobuf::RepeatedPtrField< ::std::string> suffixesdictionary_;
   ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::AddressNameIndexDataAtom > atom_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -2056,6 +2073,18 @@ class AddressNameIndexDataAtom : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 type() const;
   inline void set_type(::google::protobuf::uint32 value);
 
+  // repeated uint32 suffixesBitset = 4;
+  inline int suffixesbitset_size() const;
+  inline void clear_suffixesbitset();
+  static const int kSuffixesBitsetFieldNumber = 4;
+  inline ::google::protobuf::uint32 suffixesbitset(int index) const;
+  inline void set_suffixesbitset(int index, ::google::protobuf::uint32 value);
+  inline void add_suffixesbitset(::google::protobuf::uint32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      suffixesbitset() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_suffixesbitset();
+
   // repeated int32 shiftToIndex = 5;
   inline int shifttoindex_size() const;
   inline void clear_shifttoindex();
@@ -2105,13 +2134,14 @@ class AddressNameIndexDataAtom : public ::google::protobuf::Message {
 
   ::std::string* name_;
   ::std::string* nameen_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > suffixesbitset_;
   ::google::protobuf::RepeatedField< ::google::protobuf::int32 > shifttoindex_;
   ::google::protobuf::RepeatedField< ::google::protobuf::int32 > shifttocityindex_;
   ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > xy16_;
   ::google::protobuf::uint32 type_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(7 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -10216,6 +10246,50 @@ inline void OsmAndAddressIndex::set_allocated_nameindex(::OsmAnd::OBF::OsmAndAdd
 
 // OsmAndAddressNameIndexData_AddressNameIndexData
 
+// repeated string suffixesDictionary = 2;
+inline int OsmAndAddressNameIndexData_AddressNameIndexData::suffixesdictionary_size() const {
+  return suffixesdictionary_.size();
+}
+inline void OsmAndAddressNameIndexData_AddressNameIndexData::clear_suffixesdictionary() {
+  suffixesdictionary_.Clear();
+}
+inline const ::std::string& OsmAndAddressNameIndexData_AddressNameIndexData::suffixesdictionary(int index) const {
+  return suffixesdictionary_.Get(index);
+}
+inline ::std::string* OsmAndAddressNameIndexData_AddressNameIndexData::mutable_suffixesdictionary(int index) {
+  return suffixesdictionary_.Mutable(index);
+}
+inline void OsmAndAddressNameIndexData_AddressNameIndexData::set_suffixesdictionary(int index, const ::std::string& value) {
+  suffixesdictionary_.Mutable(index)->assign(value);
+}
+inline void OsmAndAddressNameIndexData_AddressNameIndexData::set_suffixesdictionary(int index, const char* value) {
+  suffixesdictionary_.Mutable(index)->assign(value);
+}
+inline void OsmAndAddressNameIndexData_AddressNameIndexData::set_suffixesdictionary(int index, const char* value, size_t size) {
+  suffixesdictionary_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* OsmAndAddressNameIndexData_AddressNameIndexData::add_suffixesdictionary() {
+  return suffixesdictionary_.Add();
+}
+inline void OsmAndAddressNameIndexData_AddressNameIndexData::add_suffixesdictionary(const ::std::string& value) {
+  suffixesdictionary_.Add()->assign(value);
+}
+inline void OsmAndAddressNameIndexData_AddressNameIndexData::add_suffixesdictionary(const char* value) {
+  suffixesdictionary_.Add()->assign(value);
+}
+inline void OsmAndAddressNameIndexData_AddressNameIndexData::add_suffixesdictionary(const char* value, size_t size) {
+  suffixesdictionary_.Add()->assign(reinterpret_cast<const char*>(value), size);
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+OsmAndAddressNameIndexData_AddressNameIndexData::suffixesdictionary() const {
+  return suffixesdictionary_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+OsmAndAddressNameIndexData_AddressNameIndexData::mutable_suffixesdictionary() {
+  return &suffixesdictionary_;
+}
+
 // repeated .OsmAnd.OBF.AddressNameIndexDataAtom atom = 4;
 inline int OsmAndAddressNameIndexData_AddressNameIndexData::atom_size() const {
   return atom_.size();
@@ -10472,6 +10546,31 @@ inline ::google::protobuf::uint32 AddressNameIndexDataAtom::type() const {
 inline void AddressNameIndexDataAtom::set_type(::google::protobuf::uint32 value) {
   set_has_type();
   type_ = value;
+}
+
+// repeated uint32 suffixesBitset = 4;
+inline int AddressNameIndexDataAtom::suffixesbitset_size() const {
+  return suffixesbitset_.size();
+}
+inline void AddressNameIndexDataAtom::clear_suffixesbitset() {
+  suffixesbitset_.Clear();
+}
+inline ::google::protobuf::uint32 AddressNameIndexDataAtom::suffixesbitset(int index) const {
+  return suffixesbitset_.Get(index);
+}
+inline void AddressNameIndexDataAtom::set_suffixesbitset(int index, ::google::protobuf::uint32 value) {
+  suffixesbitset_.Set(index, value);
+}
+inline void AddressNameIndexDataAtom::add_suffixesbitset(::google::protobuf::uint32 value) {
+  suffixesbitset_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+AddressNameIndexDataAtom::suffixesbitset() const {
+  return suffixesbitset_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+AddressNameIndexDataAtom::mutable_suffixesbitset() {
+  return &suffixesbitset_;
 }
 
 // repeated int32 shiftToIndex = 5;
