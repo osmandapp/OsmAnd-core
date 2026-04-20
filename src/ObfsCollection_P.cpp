@@ -233,7 +233,7 @@ void OsmAnd::ObfsCollection_P::collectSources() const
                 // If this source is not live udpate, other sources in this group are not as well
                 break;
 
-            const auto& obfFileBaseName = QString(obfFileName).replace(liveUpdateSourceRegex, QLatin1String(""));
+            const auto obfFileBaseName = QString(obfFileName).replace(liveUpdateSourceRegex, QLatin1String(""));
 
             // Remove live update source if it has no standard source to update
             if (!collectedStandardSourcesBasenames.contains(obfFileBaseName))
@@ -280,6 +280,8 @@ bool OsmAnd::ObfsCollection_P::hasDirectory(const QDir& dir)
 
 OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection_P::getOriginIdByName(const QDir& dir)
 {
+    QReadLocker scopedLocker(&_sourcesOriginsLock);
+
     auto originId = -1;
     for(const auto& itEntry : rangeOf(constOf(_sourcesOrigins)))
     {

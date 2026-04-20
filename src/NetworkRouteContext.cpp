@@ -250,16 +250,13 @@ QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::getRouteKeys(const QHa
 
 bool OsmAnd::NetworkRouteKey::containsUnclickableRouteTags(const QHash<QString, QString>& tags)
 {
-    for (const auto routeType : VALUES)
+    if (tags.contains(QStringLiteral("highway")) &&
+        (tags.contains(QStringLiteral("route_road")) ||
+         tags.contains(QStringLiteral("route_road_1"))))
     {
-        if (routeType->renderingPropertyAttr.isEmpty() &&
-            (tags.contains(QStringLiteral("route_") + routeType->name)
-                || tags.contains(QStringLiteral("route_") + routeType->name + QStringLiteral("_1"))))
-        {
-            return true;
-        }
+        return true; // avoid road shields but allow click on bus/tram/train/railway
     }
-    return "." == tags.value(QStringLiteral("shield_stub_name"));
+    return "." == tags.value(QStringLiteral("shield_stub_name")); // avoid double-click on empty shields (v1 only)
 }
 
 QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::getRouteKeys(const std::shared_ptr<const Road> &road)
