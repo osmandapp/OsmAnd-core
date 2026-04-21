@@ -36,7 +36,7 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererSta
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
             resource->captureResourceInGPU(gpuResource);
             if (pOutSource) {
-                *pOutSource = resource->sourceData;
+                *pOutSource = resource->getSourceData();
             }
 
             return gpuResource;

@@ -27,6 +27,7 @@ namespace OsmAnd
             TileId tileId,
             ZoomLevel zoom);
 
+        mutable QReadWriteLock _sourceDataLock;
         std::shared_ptr<IMapElevationDataProvider::Data> _sourceData;
         std::shared_ptr<const GPUAPI::ResourceInGPU> _resourceInGPU;
 
@@ -43,9 +44,8 @@ namespace OsmAnd
     public:
         ~MapRendererElevationDataResource() override;
 
-        const std::shared_ptr<IMapElevationDataProvider::Data>& sourceData;
-
         void captureResourceInGPU(std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU) const;
+        std::shared_ptr<IMapElevationDataProvider::Data> getSourceData() const;
         mutable QAtomicInt resourceInGPULock;
 
     friend class OsmAnd::MapRendererResourcesManager;
