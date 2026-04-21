@@ -18,6 +18,8 @@
 #include "Stopwatch.h"
 #include "Logging.h"
 
+#define BUILDINGS_FADE_ANIMATION_PERIOD 500
+
 using namespace OsmAnd;
 
 namespace
@@ -77,6 +79,10 @@ namespace
 AtlasMapRendererMap3DObjectsStage_OpenGL::AtlasMapRendererMap3DObjectsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer)
     : AtlasMapRendererMap3DObjectsStage(renderer)
     , AtlasMapRendererStageHelper_OpenGL(this)
+    , actualTiles(&_firstTiles)
+    , actualSpace(&_firstSpace)
+    , oldTiles(&_secondTiles)
+    , oldSpace(&_secondSpace)
 {
 }
 
@@ -296,6 +302,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
             PARAM_INPUT highp float v2f_height;
             
             uniform float param_fs_alpha;
+            uniform float param_fs_fadeHeight;
             uniform vec3 param_fs_cameraPosition;
             uniform vec3 param_fs_lightDirection;
             
@@ -319,7 +326,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
                 d /= 1.0 + exp(-v2f_height * 0.05) * 0.2;
                 d *= 1.0 + pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 3.0) * 0.2;
                 vec3 color = mix(v2f_pointColor.rgb * d, vec3(1.0), h);
-                FRAGMENT_COLOR_OUTPUT = vec4(clamp(color, 0.0, 1.0), param_fs_alpha);
+                float alpha = param_fs_alpha * min(param_fs_fadeHeight / v2f_height, 1.0);
+                FRAGMENT_COLOR_OUTPUT = vec4(clamp(color, 0.0, 1.0), alpha);
             }
         )";
 
@@ -394,6 +402,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
     ok = ok && lookup->lookupLocation(_colorProgram.vs.param.metersPerUnit, "param_vs_metersPerUnit", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_colorProgram.vs.param.zScaleFactor, "param_vs_zScaleFactor", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_colorProgram.fs.param.alpha, "param_fs_alpha", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_colorProgram.fs.param.fadeHeight, "param_fs_fadeHeight", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_colorProgram.fs.param.cameraPosition, "param_fs_cameraPosition", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_colorProgram.fs.param.lightDirection, "param_fs_lightDirection", GlslVariableType::Uniform);
 
@@ -604,28 +613,30 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::occupySpace(TileId tileIdN, int z
 }
 
 bool AtlasMapRendererMap3DObjectsStage_OpenGL::spaceAlreadyOccupied(TileId tileIdN, int zoomLevel,
-    QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const
+    QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace, bool* exact /* = nullptr */) const
 {
     if (presentTiles.isEmpty())
         return false;
     const auto startZoom = presentTiles.firstKey();
     if (zoomLevel < startZoom)
         return false;
-    int zoomShift = zoomLevel - startZoom + 1;
-    for (int zoom = startZoom; zoom <= zoomLevel; zoom++)
+    int zoomShift = 0;
+    for (int zoom = zoomLevel; zoom >= startZoom; zoom--)
     {
-        zoomShift--;
-        if (!presentTiles.contains(zoom))
-            continue;
-        if (presentTiles[zoom].contains(TileId::fromXY(tileIdN.x >> zoomShift, tileIdN.y >> zoomShift)))
+        if (presentTiles.contains(zoom)
+            && presentTiles[zoom].contains(TileId::fromXY(tileIdN.x >> zoomShift, tileIdN.y >> zoomShift)))
+        {
+            if (exact && zoom == zoomLevel)
+                *exact = true;
             return true;
+        }
+        zoomShift++;
     }
     const auto endZoom = occupiedSpace.lastKey();
     for (int zoom = zoomLevel; zoom <= endZoom; zoom++)
     {
         if (occupiedSpace[zoom].contains(tileIdN))
             return true;
-        zoomShift--;
     }
 
     return false;
@@ -634,7 +645,9 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::spaceAlreadyOccupied(TileId tileI
 void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
     const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
     const int viewableDetalizationLevel,
-    bool& highDetalizationLevel)
+    bool& highDetalizationLevel,
+    const int64_t appearTime,
+    bool& shouldInvalidateFrame)
 {
     const auto& internalState = getInternalState();
 
@@ -700,6 +713,16 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
                     if (meshInGPU)
                     {
                         highDetalizationLevel = highDetalizationLevel || meshInGPU->isDenseObject;
+                        if (meshInGPU->creationTime > appearTime)
+                        {
+                            bool exact = false;
+                            if (spaceAlreadyOccupied(underscaledTileId, neededZoom, *oldTiles, *oldSpace, &exact)
+                                && !exact)
+                                meshInGPU->creationTime = appearTime;
+                            else
+                                shouldInvalidateFrame = true;
+                        }
+                        occupySpace(underscaledTileId, neededZoom, minZoomLevel, *actualTiles, *actualSpace);
                         resourcesInGPU.append(qMove(meshInGPU));
                         count++;
                     }
@@ -741,6 +764,16 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
                 {
                     occupySpace(tileIdN, zoomLevel, minZoomLevel, presentTiles, occupiedSpace);
                     highDetalizationLevel = highDetalizationLevel || meshInGPU->isDenseObject;
+                    if (meshInGPU->creationTime > appearTime)
+                    {
+                        bool exact = false;
+                        if (spaceAlreadyOccupied(
+                            tileIdN, zoomLevel, *oldTiles, *oldSpace, &exact) && !exact)
+                            meshInGPU->creationTime = appearTime;
+                        else
+                            shouldInvalidateFrame = true;
+                    }
+                    occupySpace(tileIdN, zoomLevel, minZoomLevel, *actualTiles, *actualSpace);
                     resourcesInGPU.append(qMove(meshInGPU));
                     haveMatch = true;
                 }
@@ -776,6 +809,17 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
                                 occupySpace(
                                     underscaledTileId, underscaledZoom, minZoomLevel, presentTiles, occupiedSpace);
                                 highDetalizationLevel = highDetalizationLevel || meshInGPU->isDenseObject;
+                                if (meshInGPU->creationTime > appearTime)
+                                {
+                                    bool exact = false;
+                                    if (spaceAlreadyOccupied(
+                                        underscaledTileId, underscaledZoom, *oldTiles, *oldSpace, &exact) && !exact)
+                                        meshInGPU->creationTime = appearTime;
+                                    else
+                                        shouldInvalidateFrame = true;
+                                }
+                                occupySpace(
+                                    underscaledTileId, underscaledZoom, minZoomLevel, *actualTiles, *actualSpace);
                                 resourcesInGPU.append(qMove(meshInGPU));
                                 atLeastOnePresent = true;
                             }
@@ -806,6 +850,16 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
                         {
                             occupySpace(overscaledTileIdN, overscaleZoom, minZoomLevel, presentTiles, occupiedSpace);
                             highDetalizationLevel = highDetalizationLevel || meshInGPU->isDenseObject;
+                            if (meshInGPU->creationTime > appearTime)
+                            {
+                                bool exact = false;
+                                if (spaceAlreadyOccupied(
+                                    overscaledTileIdN, overscaleZoom, *oldTiles, *oldSpace, &exact) && !exact)
+                                    meshInGPU->creationTime = appearTime;
+                                else
+                                    shouldInvalidateFrame = true;
+                            }
+                            occupySpace(overscaledTileIdN, overscaleZoom, minZoomLevel, *actualTiles, *actualSpace);
                             resourcesInGPU.append(qMove(meshInGPU));
                             break;
                         }
@@ -973,7 +1027,8 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderSi
     return StageResult::Success;
 }
 
-MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderColor(bool primaryOnly)
+MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderColor(
+    bool primaryOnly, int64_t currentTime)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -1060,6 +1115,11 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
                 reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, sizes)));
             GL_CHECK_RESULT;
 
+            const auto fadeHeight = qMin(10000.0, exp(10.0
+                * static_cast<double>(currentTime - resource->creationTime) / BUILDINGS_FADE_ANIMATION_PERIOD) - 1.0);
+            glUniform1f(*_colorProgram.fs.param.fadeHeight, static_cast<float>(fadeHeight));
+            GL_CHECK_RESULT;
+
             glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount),
                 GL_UNSIGNED_SHORT, (void*) (startIndex * sizeof(uint16_t)));
             GL_CHECK_RESULT;
@@ -1097,15 +1157,43 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     const float buildingsAlpha = renderer->get3DBuildingsAlpha();
     const int viewableDetalizationLevel = renderer->get3DBuildingsDetalization();
     bool highDetalizationLevel = false;
+    bool shouldInvalidateFrame = false;
 
     resourcesInGPU.clear();
 
-    getResourcesInGPU(resourcesCollection, viewableDetalizationLevel, highDetalizationLevel);
+    const int64_t currentTime = QDateTime::currentMSecsSinceEpoch();
+
+    actualTiles->clear();
+    actualSpace->clear();
+    getResourcesInGPU(
+        resourcesCollection,
+        viewableDetalizationLevel,
+        highDetalizationLevel,
+        currentTime - BUILDINGS_FADE_ANIMATION_PERIOD,
+        shouldInvalidateFrame);
+
+    if (actualTiles == &_firstTiles)
+    {
+        actualTiles = &_secondTiles;
+        actualSpace = &_secondSpace;
+        oldTiles = &_firstTiles;
+        oldSpace = &_firstSpace;
+    }
+    else
+    {
+        actualTiles = &_firstTiles;
+        actualSpace = &_firstSpace;
+        oldTiles = &_secondTiles;
+        oldSpace = &_secondSpace;
+    }
 
     if (resourcesInGPU.isEmpty())
     {
         return StageResult::Success;
     }
+
+    if (shouldInvalidateFrame)
+        invalidateFrame();
 
     const bool needsDepthPrepass = buildingsAlpha > 0.0 && buildingsAlpha < 1.0f;
 
@@ -1143,7 +1231,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     GL_CHECK_RESULT;
 
-    auto colorPassResult = highDetalizationLevel ? renderColor(true) : renderSimple(true);
+    auto colorPassResult = highDetalizationLevel ? renderColor(true, currentTime) : renderSimple(true);
 
     if (needsDepthPrepass)
     {
@@ -1174,7 +1262,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     GL_CHECK_RESULT;
 
     if (!failed)
-        colorPassResult = highDetalizationLevel ? renderColor(false) : renderSimple(false);
+        colorPassResult = highDetalizationLevel ? renderColor(false, currentTime) : renderSimple(false);
 
     if (needsDepthPrepass)
     {
