@@ -64,6 +64,7 @@ namespace OsmAnd
                 struct
                 {
                     GLlocation alpha;
+                    GLlocation fadeHeight;
                     GLlocation cameraPosition;
                     GLlocation lightDirection;
                 } param;
@@ -73,19 +74,28 @@ namespace OsmAnd
         Model3DProgram _depthProgram;
 
         QList<std::shared_ptr<const GPUAPI::MeshInGPU>> resourcesInGPU;
+        QMap<int, QSet<TileId>> _firstTiles;
+        QMap<int, QSet<TileId>> _firstSpace;
+        QMap<int, QSet<TileId>> _secondTiles;
+        QMap<int, QSet<TileId>> _secondSpace;
+        QMap<int, QSet<TileId>>* actualTiles;
+        QMap<int, QSet<TileId>>* actualSpace;
+        QMap<int, QSet<TileId>>* oldTiles;
+        QMap<int, QSet<TileId>>* oldSpace;
 
         bool initializeSimpleProgram();
         bool initializeColorProgram();
         bool initializeDepthProgram();
         void occupySpace(TileId tileIdN, int zoomLevel, int minZoomLevel,
             QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const;
-        bool spaceAlreadyOccupied(TileId tileIdN, int zoomLevel,
-            QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const;
+        bool spaceAlreadyOccupied(TileId tileIdN, int zoomLevel, QMap<int, QSet<TileId>>& presentTiles,
+            QMap<int, QSet<TileId>>& occupiedSpace, bool* exact = nullptr) const;
         void getResourcesInGPU(const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
-            const int viewableDetalizationLevel, bool& highDetalizationLevel);
+            const int viewableDetalizationLevel, bool& highDetalizationLevel,
+            const int64_t appearTime, bool& shouldInvalidateFrame);
         StageResult renderDepth(bool primaryOnly);
         StageResult renderSimple(bool primaryOnly);
-        StageResult renderColor(bool primaryOnly);
+        StageResult renderColor(bool primaryOnly, int64_t currentTime);
         std::shared_ptr<const GPUAPI::MeshInGPU> captureResourceInGPU(
             const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
             TileId normalizedTileId,

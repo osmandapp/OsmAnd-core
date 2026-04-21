@@ -286,6 +286,7 @@ namespace OsmAnd
             const PointI* position31;
             const bool isDenseObject;
             const bool isSeenThrough;
+            mutable int64_t creationTime;
 
             void lostRefInGPU() const override;
         };

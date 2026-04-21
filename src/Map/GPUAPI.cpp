@@ -383,6 +383,7 @@ OsmAnd::GPUAPI::MeshInGPU::MeshInGPU(
     , zoomLevel(zoomLevel_)
     , isDenseObject(isDenseObject_)
     , isSeenThrough(isSeenThrough_)
+    , creationTime(QDateTime::currentMSecsSinceEpoch())
     , position31(position31_)
 {
 }
