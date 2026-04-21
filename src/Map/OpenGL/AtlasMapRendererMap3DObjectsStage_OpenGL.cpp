@@ -673,6 +673,9 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
         // Try to obtain more detailed resource (of higher zoom level) if needed and possible
         int detZoom = internalState.zoomLevelOffset == 0 ? zoomLevel : std::min(static_cast<int>(MaxZoomLevel),
             zoomLevel + std::min(internalState.zoomLevelOffset, maxMissingDataUnderZoomShift));
+        int risenZoom = isLessDetailedLevel || internalState.zoomLevelOffset != 0
+            || internalState.extraDetailedTiles.empty() ? detZoom
+            : std::min(static_cast<int>(MaxZoomLevel), zoomLevel + std::min(1, maxMissingDataUnderZoomShift));
         for (const auto& tileId : constOf(tiles))
         {
             const auto tileIdN = Utilities::normalizeTileId(tileId, zoomLevel);
@@ -681,9 +684,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
             if (!citVisibleTilesSet.value().contains(tileIdN))
                 continue;
 
-            int neededZoom = isLessDetailedLevel || internalState.zoomLevelOffset != 0
-                || internalState.extraDetailedTiles.empty() ? detZoom
-                : std::min(static_cast<int>(MaxZoomLevel), zoomLevel + std::min(1, maxMissingDataUnderZoomShift));
+            int neededZoom = risenZoom;
             if (neededZoom != detZoom && !internalState.extraDetailedTiles.contains(tileIdN))
                 neededZoom = detZoom;
             bool haveMatch = false;

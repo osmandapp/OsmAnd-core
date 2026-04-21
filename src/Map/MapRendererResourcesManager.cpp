@@ -2715,7 +2715,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     if (isCustomVisibility && (activeZoom < minVisibleZoom || activeZoom > maxVisibleZoom))
                         continue;
 
-                    if (isMapLayer || isElevationData || (isMap3DObjects && activeZoom >= minZoom))
+                    if ((isMapLayer || isElevationData || isMap3DObjects) && neededZoomForTile >= minZoom)
                     {
                         if (activeZoom < minZoom)
                         {
