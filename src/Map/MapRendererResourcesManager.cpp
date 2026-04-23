@@ -3117,6 +3117,10 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
                         MapRendererResourceState::ProcessingRequest,
                         MapRendererResourceState::RequestCanceledWhileBeingProcessed);
 
+                    // Cancel the task
+                    assert(entry->_cancelRequestCallback != nullptr);
+                    entry->_cancelRequestCallback();
+
                     containedUnprocessableResources = true;
 
                     return false;
