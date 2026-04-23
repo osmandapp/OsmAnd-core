@@ -152,8 +152,6 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
         return false;
     }
 
-    // Store data
-    _sourceData = tile;
     dataAvailable = static_cast<bool>(tile);
 
     // Process data
@@ -161,10 +159,13 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
         return true;
 
     // Convert data
-    for (const auto& symbolsGroup : constOf(_sourceData->symbolsGroups))
+    for (const auto& symbolsGroup : constOf(tile->symbolsGroups))
     {
         for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
         {
+            if (queryController && queryController->isAborted())
+                return false;
+
             const auto rasterMapSymbol = std::dynamic_pointer_cast<RasterMapSymbol>(mapSymbol);
             if (!rasterMapSymbol)
                 continue;
@@ -174,6 +175,10 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
                 AlphaChannelPresence::Present);
         }
     }
+
+    // Store data
+    _sourceData = tile;
+
     // Move referenced shared groups
     _referencedSharedGroupsResources = referencedSharedGroupsResources;
 
@@ -458,8 +463,6 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
                 return;
             }
 
-            // Store data
-            self->_sourceData = tile;
             const bool dataAvailable = static_cast<bool>(tile);
 
             // Process data
@@ -476,10 +479,16 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
             if (const auto resourcesManager = weakManager.lock())
             {
                 // Convert data
-                for (const auto& symbolsGroup : constOf(self->_sourceData->symbolsGroups))
+                for (const auto& symbolsGroup : constOf(tile->symbolsGroups))
                 {
                     for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
                     {
+                        if (queryController && queryController->isAborted())
+                        {
+                            callback(false, false);
+                            return;
+                        }
+
                         const auto rasterMapSymbol = std::dynamic_pointer_cast<RasterMapSymbol>(mapSymbol);
                         if (!rasterMapSymbol)
                             continue;
@@ -492,6 +501,9 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
             }
             else
                 return;
+
+            // Store data
+            self->_sourceData = tile;
 
             // Move referenced shared groups
             self->_referencedSharedGroupsResources = referencedSharedGroupsResources;
