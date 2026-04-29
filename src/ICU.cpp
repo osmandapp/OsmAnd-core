@@ -809,3 +809,13 @@ OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::ICU::ccompare(const QString& _s1, c
     }
     return result;
 }
+
+OSMAND_CORE_API QString OSMAND_CORE_CALL toNFC(const QString& s)
+{
+    if (!g_pIcuNFCNormalizer)
+        return s;
+    UErrorCode status = U_ZERO_ERROR;
+    UnicodeString input = qStrToUniStr(s);
+    UnicodeString output = g_pIcuNFCNormalizer->normalize(input, status);
+    return QString(reinterpret_cast<const QChar*>(output.getBuffer()), output.length());
+}
