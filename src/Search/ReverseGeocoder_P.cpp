@@ -22,7 +22,7 @@ const float THRESHOLD_MULTIPLIER_SKIP_STREETS_AFTER = 5;
 const float STOP_SEARCHING_STREET_WITH_MULTIPLIER_RADIUS = 250;
 const float STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS = 400;
 
-const float DISTANCE_STREET_FROM_CLOSEST_WITH_SAME_NAME = 1000;
+const float DISTANCE_STREET_FROM_CLOSEST_WITH_SAME_NAME = 7500;
 const float DISTANCE_STREET_NAME_PROXIMITY_BY_NAME = 15000;
 
 const float THRESHOLD_MULTIPLIER_SKIP_BUILDINGS_AFTER = 1.5f;
@@ -81,6 +81,12 @@ void addWord(QStringList &ls, QString word, bool addCommonWords)
 
 QStringList prepareStreetName(const QString &s, bool addCommonWords)
 {
+
+    // TODO migrate to future SearchAlgorithms.splitAndNormalize()
+    // Java method uses SearchAlgorithms, which is not implemented here.
+    // splitAndNormalize() does better split for strings with digits+dash.
+    // It mostly does not affect results thanks to "undashed" matchStreetName()
+
     QStringList ls;
     int beginning = 0;
     for (int i = 1; i < s.length(); i++)
@@ -108,20 +114,46 @@ QStringList prepareStreetName(const QString &s, bool addCommonWords)
         QString lastWord = s.mid(beginning, s.length() - beginning);
         addWord(ls, lastWord, addCommonWords);
     }
-    std::sort(ls.begin(), ls.end(), [](const QString& a, const QString& b) {
-        return (a.length() != b.length()) ? (a.length() > b.length()) : (a > b);
-    });
     return ls;
 }
 
-QString extractMainWord(const QStringList &streetNamesUsed)
+bool matchStreetName(const QString& s1, const QString& s2, bool matchWithCommonWords)
 {
-    QString mainWord = "";
-    for (QString word : streetNamesUsed)
-        if (word.length() > mainWord.length())
-            mainWord = word;
+    if (s1.isEmpty() || s2.isEmpty())
+        return false;
+    if (s1 == s2)
+        return true;
 
-    return mainWord;
+    const auto undashed1 = QString(s1).replace(QLatin1Char('-'), QLatin1Char(' '));
+    const auto undashed2 = QString(s2).replace(QLatin1Char('-'), QLatin1Char(' '));
+
+    auto s1words = prepareStreetName(undashed1, false);
+    auto s2words = prepareStreetName(undashed2, false);
+    std::sort(s1words.begin(), s1words.end());
+    std::sort(s2words.begin(), s2words.end());
+    if (s1words == s2words)
+        return true;
+
+    if (matchWithCommonWords)
+    {
+        s1words = prepareStreetName(undashed1, true);
+        s2words = prepareStreetName(undashed2, true);
+        std::sort(s1words.begin(), s1words.end());
+        std::sort(s2words.begin(), s2words.end());
+        return s1words == s2words;
+    }
+
+    return false;
+}
+
+QString extractLongestWord(const QStringList &streetNamesUsed)
+{
+    QString longestWord = "";
+    for (QString word : streetNamesUsed)
+        if (word.length() > longestWord.length())
+            longestWord = word;
+
+    return longestWord;
 }
 
 QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::ReverseGeocoder_P::justifyReverseGeocodingSearch(
@@ -131,18 +163,27 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
     QVector<std::shared_ptr<ResultEntry>> streetList;
     QVector<std::shared_ptr<const ResultEntry>> result;
 
+    auto streetNamesUsed = prepareStreetName(road->streetName, false);
+
     bool addCommonWords = false;
-    auto streetNamesUsed = prepareStreetName(road->streetName, addCommonWords);
-    if (streetNamesUsed.size() == 0)
+    for (const auto& word : streetNamesUsed)
+    {
+        if (OsmAnd::CommonWords::isNumber2Letters(word))
+        {
+            addCommonWords = true;
+            break;
+        }
+    }
+    if (streetNamesUsed.isEmpty() || addCommonWords)
     {
         addCommonWords = true;
-        streetNamesUsed = prepareStreetName(road->streetName, addCommonWords);
+        streetNamesUsed = prepareStreetName(road->streetName, true);
     }
     if (!streetNamesUsed.isEmpty())
     {
-        QString mainWord = extractMainWord(streetNamesUsed);
+        QString longestWord = extractLongestWord(streetNamesUsed);
         OsmAnd::AddressesByNameSearch::Criteria criteria;
-        criteria.name = mainWord;
+        criteria.name = longestWord;
         criteria.includeStreets = true;
         criteria.strictMatch = true;
         criteria.streetGroupTypesMask = ObfAddressStreetGroupTypesMask().set(ObfAddressStreetGroupType::CityOrTown);
@@ -156,7 +197,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
             {
                 auto const& street = std::static_pointer_cast<const OsmAnd::Street>(address);
                 
-                if (prepareStreetName(street->nativeName, addCommonWords) == streetNamesUsed)
+                if (matchStreetName(road->streetName, street->nativeName, addCommonWords))
                 {
                     if (road->searchPoint31().isSet())
                     {

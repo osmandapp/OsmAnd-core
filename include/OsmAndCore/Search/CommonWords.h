@@ -1316,6 +1316,11 @@ namespace OsmAnd
                 return count;
         }
 
+        static inline bool isNumber2Letters(const QString& name)
+        {
+            return !name.isEmpty() && name.front().isDigit() && letters(name) < 2;
+        }
+
         static inline int getCommonGeocoding(const QString name)
         {
             auto it = COMMON_WORDS().find(name);
