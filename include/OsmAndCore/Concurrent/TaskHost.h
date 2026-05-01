@@ -35,6 +35,9 @@ namespace OsmAnd
                 Bridge(const OwnerPtr& owner);
                 ~Bridge();
 
+                bool isOwnerBeingDestructed() const;
+                void requestCancellation() const;
+                void waitUntilAllTasksAreReleased() const;
                 void onOwnerIsBeingDestructed() const;
 
                 friend class OsmAnd::Concurrent::HostedTask;
@@ -45,9 +48,12 @@ namespace OsmAnd
             QList< HostedTask* > _hostedTasks;
             mutable QReadWriteLock _hostedTasksLock;
             QWaitCondition _unlockedCondition;
-            volatile bool _ownerIsBeingDestructed;
+            QAtomicInt _ownerIsBeingDestructed;
 
             TaskHost(const OwnerPtr& ownerPtr);
+            bool isOwnerBeingDestructed() const;
+            void requestCancellation();
+            void waitUntilAllTasksAreReleased();
             void onOwnerIsBeingDestructed();
         public:
             ~TaskHost();

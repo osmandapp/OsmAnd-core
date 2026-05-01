@@ -10,19 +10,20 @@ OsmAnd::Concurrent::HostedTask::HostedTask(
     , _lockedOwner(nullptr)
     , lockedOwner(_lockedOwner)
 {
-    // Ensure that owner is not being destructed
-    if (_host->_ownerIsBeingDestructed)
-    {
-        requestCancellation();
-        return;
-    }
-
     // When task is created, during it's lifetime task host must exist
     {
         QWriteLocker scopedLocker(&_host->_hostedTasksLock);
+
+        // Ensure that owner is not being destructed
+        if (_host->_ownerIsBeingDestructed.loadAcquire() != 0)
+        {
+            requestCancellation();
+            return;
+        }
+
         _host->_hostedTasks.push_back(this);
+        _lockedOwner = _host->_ownerPtr;
     }
-    _lockedOwner = _host->_ownerPtr;
 }
 
 OsmAnd::Concurrent::HostedTask::~HostedTask()
@@ -38,7 +39,7 @@ OsmAnd::Concurrent::HostedTask::~HostedTask()
 void OsmAnd::Concurrent::HostedTask::run()
 {
     // Do nothing if owner is being destructed
-    if (_host->_ownerIsBeingDestructed)
+    if (_host->_ownerIsBeingDestructed.loadAcquire() != 0)
         requestCancellation();
 
     // Execute task itself

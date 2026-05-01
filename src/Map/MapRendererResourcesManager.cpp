@@ -64,6 +64,7 @@
 OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* const owner_)
     : _taskHostBridge(this)
     , _resourcesRequestWorkerPool(Concurrent::WorkerPool::Order::LIFO)
+    , _resourcesRequestTasksCounter(0)
     , _workerThreadIsAlive(false)
     , _workerThreadId(nullptr)
     , _workerThread(new Concurrent::Thread(std::bind(&MapRendererResourcesManager::workerThreadProcedure, this)))
@@ -93,6 +94,8 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
 
 OsmAnd::MapRendererResourcesManager::~MapRendererResourcesManager()
 {
+    shutdownRequests();
+
     // Check all resources are released
     for (auto& resourcesCollections : _storageByType)
     {
@@ -105,16 +108,6 @@ OsmAnd::MapRendererResourcesManager::~MapRendererResourcesManager()
         resourcesCollections.clear();
     }
 
-    // Stop worker thread
-    _workerThreadIsAlive = false;
-    {
-        QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
-        _workerThreadWakeup.wakeAll();
-    }
-    REPEAT_UNTIL(_workerThread->wait());
-
-    // Wait for all tasks to complete
-    _taskHostBridge.onOwnerIsBeingDestructed();
     renderer->resourcesAreInUse.unlock();
 }
 
@@ -1326,6 +1319,9 @@ void OsmAnd::MapRendererResourcesManager::requestNeededKeyedResources(
 void OsmAnd::MapRendererResourcesManager::requestNeededResource(
     const std::shared_ptr<MapRendererBaseResource>& resource, ZoomLevel detailedZoom /* = InvalidZoomLevel */)
 {
+    if (_taskHostBridge.isOwnerBeingDestructed())
+        return;
+
     auto resourceState = resource->getState();
 
     // Check detailed zoom level of present resource
@@ -1485,6 +1481,11 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
     {
         // Create async-task that will obtain needed resource data
         const auto asyncTask = new ResourceRequestTask(resource, _taskHostBridge);
+        if (!asyncTask->manager)
+        {
+            delete asyncTask;
+            return;
+        }
         const auto weakAsyncTaskCancellator = asyncTask->obtainCancellator();
 
         // Register resource as requested
@@ -3084,8 +3085,10 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
 
                 // When resources are released, it's a termination process, so all entries have to be removed.
                 // This limits set of possible states of the entries to:
+                // - Requesting
                 // - Requested
                 // - ProcessingRequest
+                // - Updating
                 // - RequestedUpdate
                 // - ProcessingUpdate
                 // - ProcessingUpdateWhileRenewing
@@ -3110,6 +3113,16 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
 
                     return true;
                 }
+                else if (entry->setStateIf(MapRendererResourceState::Requesting,
+                    MapRendererResourceState::JustBeforeDeath))
+                {
+                    LOG_RESOURCE_STATE_CHANGE(
+                        entry,
+                        MapRendererResourceState::Requesting,
+                        MapRendererResourceState::JustBeforeDeath);
+
+                    return true;
+                }
                 else if (entry->setStateIf(MapRendererResourceState::ProcessingRequest, MapRendererResourceState::RequestCanceledWhileBeingProcessed))
                 {
                     LOG_RESOURCE_STATE_CHANGE(
@@ -3121,6 +3134,26 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
                     assert(entry->_cancelRequestCallback != nullptr);
                     entry->_cancelRequestCallback();
 
+                    containedUnprocessableResources = true;
+
+                    return false;
+                }
+                else if (entry->setStateIf(MapRendererResourceState::Updating,
+                    MapRendererResourceState::UnloadPending))
+                {
+                    LOG_RESOURCE_STATE_CHANGE(
+                        entry,
+                        MapRendererResourceState::Updating,
+                        MapRendererResourceState::UnloadPending);
+
+                    // In case context was lost, it's impossible to unload anything, so just remove the resource
+                    if (gpuContextLost)
+                    {
+                        entry->lostDataInGPU();
+                        return true;
+                    }
+
+                    needsResourcesUploadOrUnload = true;
                     containedUnprocessableResources = true;
 
                     return false;
@@ -3384,13 +3417,39 @@ void OsmAnd::MapRendererResourcesManager::requestResourcesUploadOrUnload()
     renderer->requestResourcesUploadOrUnload();
 }
 
-void OsmAnd::MapRendererResourcesManager::releaseAllResources(bool gpuContextLost)
+void OsmAnd::MapRendererResourcesManager::shutdownRequests()
 {
-    QWriteLocker scopedLocker(&_resourcesStoragesLock);
+    _workerThreadIsAlive = false;
+    {
+        QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
+        _workerThreadWakeup.wakeAll();
+    }
+    REPEAT_UNTIL(_workerThread->wait());
+
+    _taskHostBridge.requestCancellation();
+
+    const auto pendingTasksCount = _resourcesRequestTasksCounter.loadAcquire();
+    if (pendingTasksCount > 0)
+    {
+        LogPrintf(LogSeverityLevel::Warning,
+            "MapRendererResourcesManager %p is shutting down with %d resource request task(s)",
+            this,
+            pendingTasksCount);
+    }
 
     _requestedResourcesTasks.clear();
     _resourcesRequestWorkerPool.dequeueAll();
     _resourcesRequestWorkerPool.waitForDone();
+
+    _taskHostBridge.waitUntilAllTasksAreReleased();
+}
+
+void OsmAnd::MapRendererResourcesManager::releaseAllResources(bool gpuContextLost)
+{
+    shutdownRequests();
+
+    QWriteLocker scopedLocker(&_resourcesStoragesLock);
+
     // Release all resources
     for (const auto& resourcesCollections : _storageByType)
     {
@@ -3687,16 +3746,21 @@ OsmAnd::MapRendererResourcesManager::ResourceRequestTask::ResourceRequestTask(
     , manager(reinterpret_cast<MapRendererResourcesManager*>(lockedOwner))
     , requestedResource(requestedResource_)
 {
-    manager->_resourcesRequestTasksCounter.fetchAndAddOrdered(1);
+    if (manager)
+        manager->_resourcesRequestTasksCounter.fetchAndAddOrdered(1);
 }
 
 OsmAnd::MapRendererResourcesManager::ResourceRequestTask::~ResourceRequestTask()
 {
-    manager->_resourcesRequestTasksCounter.fetchAndSubOrdered(1);
+    if (manager)
+        manager->_resourcesRequestTasksCounter.fetchAndSubOrdered(1);
 }
 
 void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::execute()
 {
+    if (!manager)
+        return;
+
     if (!manager->beginResourceRequestProcessing(requestedResource))
         return;
 
@@ -3721,7 +3785,7 @@ void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::execute()
 
 void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::postExecute(const bool wasCancelled)
 {
-    if (wasCancelled)
+    if (wasCancelled && manager)
         manager->processResourceRequestCancellation(requestedResource);
 }
 
@@ -3821,4 +3885,3 @@ QVector<std::shared_ptr<const OsmAnd::Metric>> OsmAnd::MapRendererResourcesManag
 
     return allMetrics;
 }
-
