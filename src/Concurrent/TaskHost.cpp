@@ -16,8 +16,6 @@ void OsmAnd::Concurrent::TaskHost::onOwnerIsBeingDestructed()
 {
     QReadLocker scopedLocker(&_hostedTasksLock);
 
-    int taskCount;
-
     // Mark that owner is being destructed
     _ownerIsBeingDestructed.storeRelease(1);
 
@@ -25,15 +23,9 @@ void OsmAnd::Concurrent::TaskHost::onOwnerIsBeingDestructed()
     for (const auto& task : constOf(_hostedTasks))
         task->requestCancellation();
 
-    taskCount = _hostedTasks.size();        
-
     // Hold until all tasks are released
-    while (taskCount > 0)
-    {
-        taskCount = _hostedTasks.size();
-        if (taskCount > 0)
-            _unlockedCondition.wait(&_hostedTasksLock, 100);
-    }
+    REPEAT_UNTIL(_hostedTasks.size() == 0)
+        _unlockedCondition.wait(&_hostedTasksLock, 100);
 }
 
 OsmAnd::Concurrent::TaskHost::Bridge::Bridge(const OwnerPtr& owner)
