@@ -131,7 +131,7 @@ bool matchStreetName(const QString& s1, const QString& s2, bool matchWithCommonW
     auto s2words = prepareStreetName(undashed2, false);
     std::sort(s1words.begin(), s1words.end());
     std::sort(s2words.begin(), s2words.end());
-    if (s1words == s2words)
+    if (!s1words.isEmpty() && s1words == s2words)
         return true;
 
     if (matchWithCommonWords)
@@ -140,7 +140,7 @@ bool matchStreetName(const QString& s1, const QString& s2, bool matchWithCommonW
         s2words = prepareStreetName(undashed2, true);
         std::sort(s1words.begin(), s1words.end());
         std::sort(s2words.begin(), s2words.end());
-        return s1words == s2words;
+        return !s1words.isEmpty() && s1words == s2words;
     }
 
     return false;
