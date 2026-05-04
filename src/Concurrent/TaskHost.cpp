@@ -24,7 +24,7 @@ void OsmAnd::Concurrent::TaskHost::onOwnerIsBeingDestructed()
         task->requestCancellation();
 
     // Hold until all tasks are released
-    REPEAT_UNTIL(_hostedTasks.size() == 0)
+    while (_hostedTasks.size() > 0)
         _unlockedCondition.wait(&_hostedTasksLock, 100);
 }
 

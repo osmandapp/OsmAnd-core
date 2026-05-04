@@ -3386,11 +3386,12 @@ void OsmAnd::MapRendererResourcesManager::requestResourcesUploadOrUnload()
 
 void OsmAnd::MapRendererResourcesManager::releaseAllResources(bool gpuContextLost)
 {
-    QWriteLocker scopedLocker(&_resourcesStoragesLock);
-
     _requestedResourcesTasks.clear();
     _resourcesRequestWorkerPool.dequeueAll();
     _resourcesRequestWorkerPool.waitForDone();
+
+    QWriteLocker scopedLocker(&_resourcesStoragesLock);
+
     // Release all resources
     for (const auto& resourcesCollections : _storageByType)
     {
