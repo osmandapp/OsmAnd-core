@@ -219,7 +219,7 @@ bool OsmAnd::Concurrent::WorkerPool_P::waitForDoneNoLock(const int msecs) const
     if (msecs < 0)
     {
         while (activeThreadCountNoLock() != 0 || !_queue.isEmpty())
-            REPEAT_UNTIL(_threadFreed.wait(&_mutex));
+            _threadFreed.wait(&_mutex, 100);
     }
     else
     {
