@@ -1,6 +1,7 @@
 #ifndef _OSMAND_CORE_SEARCH_ALGORITHMS_H
 #define _OSMAND_CORE_SEARCH_ALGORITHMS_H
 
+#include "ICU.h"
 #include <QString>
 #include <QStringList>
 #include <QVector>

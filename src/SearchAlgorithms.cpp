@@ -3,7 +3,6 @@
 #include <unicode/utext.h>
 #include <QChar>
 #include <QSet>
-#include "ICU.h"
 #include "ArabicNormalizer.h"
 
 QStringList OsmAnd::SearchAlgorithms::splitAndNormalize(const QString& query) {
