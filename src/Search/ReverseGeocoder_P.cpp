@@ -318,20 +318,20 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
 {
     QVector<std::shared_ptr<const ResultEntry>> result{};
     auto searchPoint31 = Utilities::convertLatLonTo31(searchPoint);
-    auto roads = roadLocator->findNearestRoads(searchPoint31, STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS * 2, OsmAnd::RoutingDataLevel::Detailed,
-                                               [this]
-                                               (const std::shared_ptr<const OsmAnd::Road>& road) -> bool
-                                               {
-                                                   return !road->captions.isEmpty();
-                                               });
+    const auto roadFilter =
+        [](const std::shared_ptr<const OsmAnd::Road>& road) -> bool
+        {
+            const bool isTransportStop =
+                road->containsAttribute(QStringLiteral("railway"), QStringLiteral("platform")) ||
+                road->containsAttribute(QStringLiteral("public_transport"), QStringLiteral("platform"));
+            return !road->captions.isEmpty() && !isTransportStop;
+        };
+    auto roads = roadLocator->findNearestRoads(searchPoint31, STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS * 2,
+                                               OsmAnd::RoutingDataLevel::Detailed, roadFilter);
     if (roads.isEmpty())
-        roads = roadLocator->findNearestRoads(searchPoint31, STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS * 10, OsmAnd::RoutingDataLevel::Detailed,
-                                              [this]
-                                              (const std::shared_ptr<const OsmAnd::Road>& road) -> bool
-                                              {
-                                                  return !road->captions.isEmpty();
-                                              });
-    
+        roads = roadLocator->findNearestRoads(searchPoint31, STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS * 10,
+                                              OsmAnd::RoutingDataLevel::Detailed, roadFilter);
+
     double distSquare = 0;
     QSet<ObfObjectId> set{};
     QSet<QString> streetNames{};
