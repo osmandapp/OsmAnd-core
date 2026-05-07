@@ -450,21 +450,13 @@ void OsmAnd::ObfAddressSectionReader_P::readStreet(
             case OBF::StreetIndex::kXFieldNumber:
             {
                 const auto d24 = ObfReaderUtilities::readSInt32(cis);
-                position31.x = streetGroup->position31.x;
-                if (d24 > 0)
-                    position31.x += (static_cast<uint32_t>(d24) << 7);
-                else if (d24 < 0)
-                    position31.x -= (static_cast<uint32_t>(-d24) << 7);
+                position31.x = ((streetGroup->position31.x >> 7) + d24) << 7;
                 break;
             }
             case OBF::StreetIndex::kYFieldNumber:
             {
                 const auto d24 = ObfReaderUtilities::readSInt32(cis);
-                position31.y = streetGroup->position31.y;
-                if (d24 > 0)
-                    position31.y += (static_cast<uint32_t>(d24) << 7);
-                else if (d24 < 0)
-                    position31.y -= (static_cast<uint32_t>(-d24) << 7);
+                position31.y = ((streetGroup->position31.y >> 7) + d24) << 7;
                 break;
             }
             case OBF::StreetIndex::kIdFieldNumber:
