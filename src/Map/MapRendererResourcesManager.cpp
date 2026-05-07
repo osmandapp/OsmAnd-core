@@ -2715,7 +2715,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     if (isCustomVisibility && (activeZoom < minVisibleZoom || activeZoom > maxVisibleZoom))
                         continue;
 
-                    if (isMapLayer || isElevationData || isMap3DObjects)
+                    if (isMapLayer || (isElevationData || isMap3DObjects) && neededZoomForTile >= minZoom)
                     {
                         if (activeZoom < minZoom)
                         {
@@ -3117,6 +3117,10 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
                         MapRendererResourceState::ProcessingRequest,
                         MapRendererResourceState::RequestCanceledWhileBeingProcessed);
 
+                    // Cancel the task
+                    assert(entry->_cancelRequestCallback != nullptr);
+                    entry->_cancelRequestCallback();
+
                     containedUnprocessableResources = true;
 
                     return false;
@@ -3382,11 +3386,12 @@ void OsmAnd::MapRendererResourcesManager::requestResourcesUploadOrUnload()
 
 void OsmAnd::MapRendererResourcesManager::releaseAllResources(bool gpuContextLost)
 {
-    QWriteLocker scopedLocker(&_resourcesStoragesLock);
-
     _requestedResourcesTasks.clear();
     _resourcesRequestWorkerPool.dequeueAll();
     _resourcesRequestWorkerPool.waitForDone();
+
+    QWriteLocker scopedLocker(&_resourcesStoragesLock);
+
     // Release all resources
     for (const auto& resourcesCollections : _storageByType)
     {

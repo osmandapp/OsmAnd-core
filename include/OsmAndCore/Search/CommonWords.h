@@ -10,6 +10,7 @@
 #include <QtGlobal>
 #include <QString>
 #include <QList>
+#include <QSet>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
@@ -1261,6 +1262,12 @@ namespace OsmAnd
         }();
         return dictionary;
     }
+
+    inline static QSet<QString>& REGION_NAMES()
+    {
+        static QSet<QString> regionNames;
+        return regionNames;
+    }
     
     union CommonWords
     {
@@ -1291,16 +1298,20 @@ namespace OsmAnd
             
             auto it = COMMON_WORDS().find(name);
             // higher means better for search
-            if (it == COMMON_WORDS().end())
+            if (it != COMMON_WORDS().end())
             {
-                int fq = getFrequentlyUsed(name);
-                if (fq != -1)
-                {
-                    return COMMON_WORDS().size() + fq;
-                }
-                return -1;
+                return *it;
             }
-            return *it;
+            if (REGION_NAMES().contains(name))
+            {
+                return COMMON_WORDS().size();
+            }
+            int fq = getFrequentlyUsed(name);
+            if (fq != -1)
+            {
+                return COMMON_WORDS().size() + fq + 1;
+            }
+            return -1;
         }
         
         static int letters(const QString &s)
@@ -1316,23 +1327,28 @@ namespace OsmAnd
                 return count;
         }
 
+        static inline bool isNumber2Letters(const QString& name)
+        {
+            return !name.isEmpty() && name.front().isDigit() && letters(name) < 2;
+        }
+
         static inline int getCommonGeocoding(const QString name)
         {
             auto it = COMMON_WORDS().find(name);
-            if (it == COMMON_WORDS().end())
+            if (it != COMMON_WORDS().end())
             {
-                return -1;
+                return *it;
             }
-            return *it;
+            if (name.length() > 2 && REGION_NAMES().contains(name))
+            {
+                return COMMON_WORDS().size();
+            }
+            return -1;
         }
         
         static inline void addRegionName(const QString & regionName)
         {
-            auto it = COMMON_WORDS().find(regionName.toLower());
-            if (it == COMMON_WORDS().end())
-            {
-                COMMON_WORDS().insert(regionName.toLower(), COMMON_WORDS().size());
-            }
+            REGION_NAMES().insert(regionName.toLower());
         }
         
         static inline void insertCommonWord(const QString name, int index)

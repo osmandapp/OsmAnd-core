@@ -49,7 +49,8 @@ namespace OsmAnd
             uint32_t getTileId(const AreaI& tileBBox31, const PointI& point);
             AreaD calculateRect(double x, double y, double width, double height);
             bool intersects(CollectionQuadTree& boundIntersections, double x, double y, double width, double height);
-            QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> buildMapSymbolsGroups(const TileId tileId, const ZoomLevel zoom, double scale);
+            QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> buildMapSymbolsGroups(const TileId tileId,
+                const ZoomLevel zoom, double scale, const std::shared_ptr<const IQueryController>& queryController);
         
         protected:
             MapTiledCollectionProvider();

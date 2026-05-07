@@ -1118,7 +1118,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
             case ResourceType::RoadMapRegion:
                 // '[region]_2.obf.zip' -> '[region].road.obf'
                 resourceId = QString(name)
-                    .remove(QLatin1String("_2.obf.zip"))
+                    .remove(QLatin1String("_2.road.obf.zip"))
                     .toLower()
                     .append(QLatin1String(".road.obf"));
                 downloadUrl =

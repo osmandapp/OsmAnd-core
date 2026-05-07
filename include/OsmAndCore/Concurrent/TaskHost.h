@@ -45,7 +45,7 @@ namespace OsmAnd
             QList< HostedTask* > _hostedTasks;
             mutable QReadWriteLock _hostedTasksLock;
             QWaitCondition _unlockedCondition;
-            volatile bool _ownerIsBeingDestructed;
+            QAtomicInt _ownerIsBeingDestructed;
 
             TaskHost(const OwnerPtr& ownerPtr);
             void onOwnerIsBeingDestructed();

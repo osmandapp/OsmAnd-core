@@ -9,7 +9,6 @@ OsmAnd::MapRendererElevationDataResource::MapRendererElevationDataResource(
     const TileId tileId_,
     const ZoomLevel zoom_)
     : MapRendererBaseTiledResource(owner_, MapRendererResourceType::ElevationData, collection_, tileId_, zoom_)
-    , sourceData(_sourceData)
 {
 }
 
@@ -66,7 +65,11 @@ bool OsmAnd::MapRendererElevationDataResource::obtainData(
 
     // Store data
     if (dataAvailable)
+    {
+        QWriteLocker scopedLocker(&_sourceDataLock);
+
         _sourceData = std::static_pointer_cast<IMapElevationDataProvider::Data>(tile);
+    }
 
     return true;
 }
@@ -108,7 +111,11 @@ void OsmAnd::MapRendererElevationDataResource::obtainDataAsync(
 
             // Store data
             if (dataAvailable)
+            {
+                QWriteLocker scopedLocker(&_sourceDataLock);
+
                 _sourceData = std::static_pointer_cast<IMapElevationDataProvider::Data>(data);
+            }
 
             callback(requestSucceeded, dataAvailable);
         });
@@ -116,7 +123,14 @@ void OsmAnd::MapRendererElevationDataResource::obtainDataAsync(
 
 bool OsmAnd::MapRendererElevationDataResource::uploadToGPU()
 {
-    bool ok = resourcesManager->uploadTiledDataToGPU(_sourceData, _resourceInGPU);
+    std::shared_ptr<IMapElevationDataProvider::Data> sourceData;
+    {
+        QReadLocker scopedLocker(&_sourceDataLock);
+
+        sourceData = _sourceData;
+    }
+
+    bool ok = resourcesManager->uploadTiledDataToGPU(sourceData, _resourceInGPU);
     if (!ok)
         return false;
 
@@ -131,6 +145,14 @@ void OsmAnd::MapRendererElevationDataResource::captureResourceInGPU(
     REPEAT_UNTIL(resourceInGPULock.testAndSetAcquire(0, 1));
     resourceInGPU = _resourceInGPU;
     resourceInGPULock.storeRelease(0);
+}
+
+std::shared_ptr<OsmAnd::IMapElevationDataProvider::Data>
+    OsmAnd::MapRendererElevationDataResource::getSourceData() const
+{
+    QReadLocker scopedLocker(&_sourceDataLock);
+
+    return _sourceData;
 }
 
 void OsmAnd::MapRendererElevationDataResource::unloadFromGPU()
@@ -149,5 +171,7 @@ void OsmAnd::MapRendererElevationDataResource::lostDataInGPU()
 
 void OsmAnd::MapRendererElevationDataResource::releaseData()
 {
+    QWriteLocker scopedLocker(&_sourceDataLock);
+
     _sourceData.reset();
 }
