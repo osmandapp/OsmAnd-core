@@ -55,14 +55,14 @@ double OsmAnd::ReverseGeocoder::ResultEntry::getDistance() const
 {
     if (dist == -1 && searchPoint.isSet())
     {
-        if (building == nullptr && point != nullptr)
+        if (connectionPoint.isSet())
+        {
+            dist = Utilities::distance(connectionPoint, searchPoint);
+        }
+        else if (building == nullptr && point != nullptr)
         {
             // Need distance between searchPoint and nearest RouteSegmentPoint here, to approximate distance from neareest named road
             dist = sqrt(point->distSquare);
-        }
-        else if (connectionPoint.isSet())
-        {
-            dist = Utilities::distance(connectionPoint, searchPoint);
         }
     }
     return dist;
