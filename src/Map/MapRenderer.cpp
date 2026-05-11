@@ -53,7 +53,7 @@ OsmAnd::MapRenderer::MapRenderer(
 	, _targetIsElevated(false)
     , _gpuWorkerThreadId(nullptr)
     , _gpuWorkerThreadIsAlive(false)
-    , _gpuWorkerIsSuspended(false)
+    , _gpuWorkerIsSuspended(0)
     , _renderThreadId(nullptr)
     , _currentDebugSettings(baseDebugSettings_->createCopy())
     , _currentDebugSettingsAsConst(_currentDebugSettings)
@@ -262,7 +262,9 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
         if (!_gpuWorkerThreadIsAlive)
             break;
 
-        if (!_gpuWorkerIsSuspended)
+        QMutexLocker scopedLocker(&_gpuWorkerThreadActiveMutex);
+
+        if (_gpuWorkerIsSuspended.loadAcquire() < 1)
             processGpuWorker();
     }
 
@@ -457,7 +459,7 @@ bool OsmAnd::MapRenderer::postInitializeRendering()
     _isRenderingInitialized = true;
 
     // GPU worker should not be suspended initially
-    _gpuWorkerIsSuspended = false;
+    _gpuWorkerIsSuspended.storeRelease(0);
 
     // Start GPU worker (if it exists)
     if (_gpuWorkerThread)
@@ -503,8 +505,13 @@ bool OsmAnd::MapRenderer::preUpdate(IMapRenderer_Metrics::Metric_update* const m
 bool OsmAnd::MapRenderer::doUpdate(IMapRenderer_Metrics::Metric_update* const metric)
 {
     // If GPU worker thread is not enabled, upload resource to GPU from render thread.
-    if (!_gpuWorkerThread && !_gpuWorkerIsSuspended)
-        processGpuWorker();
+    if (!_gpuWorkerThread)
+    {
+        QMutexLocker scopedLocker(&_gpuWorkerThreadActiveMutex);
+
+        if (_gpuWorkerIsSuspended.loadAcquire() < 1)
+            processGpuWorker();
+    }
 
     // Process render thread dispatcher
     Stopwatch renderThreadDispatcherStopwatch(metric != nullptr);
@@ -847,7 +854,11 @@ bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
     _resources->releaseAllResources(gpuContextLost);
 
     // GPU worker should not be suspended afterwards
-    _gpuWorkerIsSuspended = false;
+    {
+        QMutexLocker scopedLocker(&_gpuWorkerThreadActiveMutex);
+
+        _gpuWorkerIsSuspended.storeRelease(0);
+    }
 
     // Stop GPU worker if it exists
     if (_gpuWorkerThread)
@@ -944,37 +955,32 @@ QString OsmAnd::MapRenderer::getNotIdleReason() const
     return notIdleReasons.join(QLatin1String("; "));
 }
 
-bool OsmAnd::MapRenderer::isGpuWorkerPaused() const
-{
-    return _gpuWorkerIsSuspended;
-}
-
 bool OsmAnd::MapRenderer::suspendGpuWorker()
 {
-    if (_gpuWorkerIsSuspended)
+    QMutexLocker scopedLocker(&_gpuWorkerThreadActiveMutex);
+
+    if (_gpuWorkerIsSuspended.loadAcquire() > 0)
         return false;
 
-    _gpuWorkerIsSuspended = true;
+    _gpuWorkerIsSuspended.storeRelease(1);
 
     return true;
 }
 
 bool OsmAnd::MapRenderer::resumeGpuWorker()
 {
-    if (!_gpuWorkerIsSuspended)
+    if (_gpuWorkerIsSuspended.loadAcquire() < 1)
         return false;
+
+    _gpuWorkerIsSuspended.storeRelease(0);
 
     if (_gpuWorkerThread)
     {
         QMutexLocker scopedLocker(&_gpuWorkerThreadWakeupMutex);
-        _gpuWorkerIsSuspended = false;
         _gpuWorkerThreadWakeup.wakeAll();
     }
     else
-    {
-        _gpuWorkerIsSuspended = false;
         invalidateFrame();
-    }
 
     return true;
 }
