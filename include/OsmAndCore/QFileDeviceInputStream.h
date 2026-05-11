@@ -38,6 +38,15 @@ namespace OsmAnd
         //! Pointer to mapped memory
         uint8_t* _mappedMemory;
 
+        //! Fallback buffer used when memory mapping is unavailable
+        uint8_t* _fallbackBuffer;
+
+        //! Fallback buffer capacity
+        size_t _fallbackBufferCapacity;
+
+        //! Should try memory mapping?
+        bool _useMapping;
+
         //! Memory window size
         const size_t _memoryWindowSize;
 
@@ -52,6 +61,8 @@ namespace OsmAnd
 
         //! Should close on destruction?
         bool _closeOnDestruction;
+
+        bool readFromFile(const void** data, int* size, const qint64 position, const size_t sizeToRead);
     protected:
     public:
         QFileDeviceInputStream(
