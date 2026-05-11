@@ -1,10 +1,21 @@
 #include "QFileDeviceInputStream.h"
 
+#include <algorithm>
+#include <new>
+
 #include "Logging.h"
 
 namespace OsmAnd
 {
     namespace gpb = google::protobuf;
+}
+
+namespace
+{
+    enum
+    {
+        FallbackBufferSize = 64 * 1024, // 64Kb
+    };
 }
 
 OsmAnd::QFileDeviceInputStream::QFileDeviceInputStream(
@@ -13,6 +24,9 @@ OsmAnd::QFileDeviceInputStream::QFileDeviceInputStream(
     : _file(file_)
     , _fileSize(_file->size())
     , _mappedMemory(nullptr)
+    , _fallbackBuffer(nullptr)
+    , _fallbackBufferCapacity(0)
+    , _useMapping(true)
     , _memoryWindowSize(memoryWindowSize_)
     , _currentPosition(0)
     , _wasInitiallyOpened(_file->isOpen())
@@ -51,6 +65,51 @@ OsmAnd::QFileDeviceInputStream::~QFileDeviceInputStream()
     // If file was opened during work, close it
     if (_closeOnDestruction && _file->isOpen())
         _file->close();
+
+    delete[] _fallbackBuffer;
+}
+
+bool OsmAnd::QFileDeviceInputStream::readFromFile(
+    const void** data,
+    int* size,
+    const qint64 position,
+    const size_t sizeToRead)
+{
+    *data = nullptr;
+    *size = 0;
+
+    try
+    {
+        const auto fallbackSize = std::min<size_t>(sizeToRead, FallbackBufferSize);
+        if (Q_UNLIKELY(fallbackSize == 0))
+            return false;
+
+        if (_fallbackBufferCapacity < fallbackSize)
+        {
+            uint8_t* newBuffer = new(std::nothrow) uint8_t[fallbackSize];
+            if (!newBuffer)
+                return false;
+
+            delete[] _fallbackBuffer;
+            _fallbackBuffer = newBuffer;
+            _fallbackBufferCapacity = fallbackSize;
+        }
+
+        if (!_file->seek(position))
+            return false;
+
+        const auto bytesRead = _file->read(reinterpret_cast<char*>(_fallbackBuffer), fallbackSize);
+        if (bytesRead <= 0)
+            return false;
+
+        *data = _fallbackBuffer;
+        *size = static_cast<int>(bytesRead);
+        return true;
+    }
+    catch (...)
+    {
+        return false;
+    }
 }
 
 bool OsmAnd::QFileDeviceInputStream::Next(const void** data, int* size)
@@ -93,35 +152,63 @@ bool OsmAnd::QFileDeviceInputStream::Next(const void** data, int* size)
             _closeOnDestruction = true;
         }
     }
-
-    // Map new portion of data
-    auto mappedSize = _memoryWindowSize;
-    if (_currentPosition + mappedSize >= _fileSize)
-        mappedSize = _fileSize - _currentPosition;
-    _mappedMemory = _file->map(_currentPosition, mappedSize);
-
-    // Check if memory was mapped successfully
-    if (Q_UNLIKELY(!_mappedMemory))
+    if (Q_UNLIKELY(!_file->isOpen()))
     {
-        LogPrintf(LogSeverityLevel::Warning,
-            "Failed to map %" PRIu64 " bytes starting at %" PRIi64 " offset from '%s' (handle 0x%08x) into memory: (%d) %s",
-            static_cast<uint64_t>(mappedSize),
-            _currentPosition,
-            qPrintable(file->fileName()),
-            file->handle(),
-            static_cast<int>(file->error()),
-            qPrintable(file->errorString()));
-
         *data = nullptr;
         *size = 0;
         return false;
     }
-    
-    _currentPosition += mappedSize;
 
-    *data = _mappedMemory;
-    *size = mappedSize;
-    return true;
+    // Map new portion of data
+    const auto mappedSize = std::min(_memoryWindowSize, static_cast<size_t>(_fileSize - _currentPosition));
+    if (_useMapping)
+    {
+        try
+        {
+            _mappedMemory = _file->map(_currentPosition, mappedSize);
+        }
+        catch (...)
+        {
+            _mappedMemory = nullptr;
+        }
+    }
+
+    // Check if memory was mapped successfully
+    if (Q_LIKELY(_mappedMemory))
+    {
+        _currentPosition += mappedSize;
+
+        *data = _mappedMemory;
+        *size = static_cast<int>(mappedSize);
+        return true;
+    }
+
+    if (_useMapping)
+    {
+        _useMapping = false;
+        LogPrintf(LogSeverityLevel::Warning,
+            "Failed to map %" PRIu64 " bytes starting at %" PRIi64 " offset (handle 0x%08x); using buffered reads",
+            static_cast<uint64_t>(mappedSize),
+            _currentPosition,
+            file->handle());
+    }
+
+    const auto readPosition = _currentPosition;
+    if (readFromFile(data, size, readPosition, mappedSize))
+    {
+        _currentPosition += *size;
+        return true;
+    }
+
+    LogPrintf(LogSeverityLevel::Warning,
+        "Failed to read %" PRIu64 " bytes starting at %" PRIi64 " offset after memory mapping failed (handle 0x%08x)",
+        static_cast<uint64_t>(mappedSize),
+        readPosition,
+        file->handle());
+
+    *data = nullptr;
+    *size = 0;
+    return false;
 }
 
 void OsmAnd::QFileDeviceInputStream::BackUp(int count)
