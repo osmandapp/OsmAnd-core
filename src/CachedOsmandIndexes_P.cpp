@@ -410,7 +410,7 @@ void OsmAnd::CachedOsmandIndexes_P::readFromFile(const QString& filePath, int ve
     }
     gpb::io::FileInputStream input(fileDescriptor);
     gpb::io::CodedInputStream cis(&input);
-    cis.SetTotalBytesLimit(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+    cis.SetTotalBytesLimit(std::numeric_limits<int>::max(), -1);
 
     Stopwatch totalStopwatch(true);
 
@@ -448,4 +448,3 @@ void OsmAnd::CachedOsmandIndexes_P::writeToFile(const QString& filePath)
             OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Cache file could not be serialized: %s", qPrintable(filePath));
     }
 }
-

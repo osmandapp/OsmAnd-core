@@ -46,7 +46,7 @@ std::shared_ptr<const OsmAnd::MvtReader::Tile> OsmAnd::MvtReader_P::parseTile(co
         zcis = new QIODeviceInputStream(input);
     
     const auto cis = new ::google::protobuf::io::CodedInputStream(zcis);
-    cis->SetTotalBytesLimit(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+    cis->SetTotalBytesLimit(std::numeric_limits<int>::max(), -1);
     
     bool res = tile.MergeFromCodedStream(cis);
     delete cis;
@@ -292,4 +292,3 @@ std::shared_ptr<OsmAnd::MvtReader::Geometry> OsmAnd::MvtReader_P::readLineString
         return std::make_shared<OsmAnd::MvtReader::MultiLineString>(geoms);
 }
     
-
