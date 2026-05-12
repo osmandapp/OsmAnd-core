@@ -618,8 +618,6 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::spaceAlreadyOccupied(TileId tileI
     if (presentTiles.isEmpty())
         return false;
     const auto startZoom = presentTiles.firstKey();
-    if (zoomLevel < startZoom)
-        return false;
     int zoomShift = 0;
     for (int zoom = zoomLevel; zoom >= startZoom; zoom--)
     {
@@ -632,8 +630,10 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::spaceAlreadyOccupied(TileId tileI
         }
         zoomShift++;
     }
+    if (occupiedSpace.isEmpty())
+        return false;
     const auto endZoom = occupiedSpace.lastKey();
-    for (int zoom = zoomLevel; zoom <= endZoom; zoom++)
+    for (int zoom = std::max(zoomLevel, occupiedSpace.firstKey()); zoom <= endZoom; zoom++)
     {
         if (occupiedSpace[zoom].contains(tileIdN))
             return true;
