@@ -83,7 +83,7 @@ bool OsmAnd::ObfReader_P::open()
 
     // Create coded input stream wrapper
     const auto cis = new gpb::io::CodedInputStream(zcis);
-    cis->SetTotalBytesLimit(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+    cis->SetTotalBytesLimit(std::numeric_limits<int>::max(), -1);
     _codedInputStream.reset(cis);
 
 #if OSMAND_TRACE_OBF_READERS
