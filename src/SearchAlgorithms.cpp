@@ -5,6 +5,8 @@
 #include <QSet>
 #include "ArabicNormalizer.h"
 
+const QString OsmAnd::SearchAlgorithms::EMPTY_SUFFIX_DICTIONARY_SENTINEL = QStringLiteral("\uE100");
+
 QStringList OsmAnd::SearchAlgorithms::splitAndNormalize(const QString& query) {
     QString normalizedQuery = canonicalizePunctuation(query);
     QStringList queryTokens;
@@ -214,12 +216,10 @@ bool OsmAnd::SearchAlgorithms::isTokenCharacter(const QString& value, int index,
             nextIsNumber = QChar::isNumber(nextCp);
         }
 
-        // Перевірка попереднього символу (аналог Java offsetByCodePoints(index, -1))
         bool prevIsNumber = false;
         if (index > 0) {
             int prevIndex = index - 1;
             uint32_t prevCp = value.at(prevIndex).unicode();
-            // Якщо ми потрапили на low surrogate, значить символ перед ним — high surrogate
             if (QChar::isLowSurrogate(prevCp) && prevIndex > 0) {
                 char16_t high = value.at(prevIndex - 1).unicode();
                 if (QChar::isHighSurrogate(high)) {
@@ -234,8 +234,6 @@ bool OsmAnd::SearchAlgorithms::isTokenCharacter(const QString& value, int index,
             return true;
     }
 
-    // Перевірка на діакритичні знаки (Combining Marks)
-    // Працює тільки якщо токен уже розпочався
     if (tokenAlreadyStarted) {
         QChar::Category cat = QChar::category(cp);
         if (cat == QChar::Mark_NonSpacing ||
@@ -269,10 +267,10 @@ QString OsmAnd::SearchAlgorithms::nameIndexDecodeDictionarySuffix(const QString&
         }
 
         QString suffixRemainder = encodedSuffix.mid(QChar::requiresSurrogates(marker) ? 2 : 1);
-        return ICU::toNFC(previousSuffix.left(prefixEndOffset) + suffixRemainder);
+        return OsmAnd::ICU::toNFC(previousSuffix.left(prefixEndOffset) + suffixRemainder);
     }
 
-    return ICU::toNFC(decodeRawSuffix(encodedSuffix));
+    return OsmAnd::ICU::toNFC(decodeRawSuffix(encodedSuffix));
 }
 
 QString OsmAnd::SearchAlgorithms::decodeRawSuffix(const QString& encodedSuffix)

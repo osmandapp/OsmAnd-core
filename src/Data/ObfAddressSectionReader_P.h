@@ -12,6 +12,7 @@
 #include "ObfAddressSectionReader.h"
 #include "ObfAddressSectionInfo.h"
 #include <OsmAndCore/CollatorStringMatcher.h>
+#include "QueryToken.h"
 
 namespace OsmAnd
 {
@@ -152,7 +153,8 @@ namespace OsmAnd
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
             const bool includeStreets,
             const bool strictMatch,
-            const std::shared_ptr<const IQueryController>& queryController);
+            const std::shared_ptr<const IQueryController>& queryController,
+            const StringMatcherMode matcherMode);
         static void readNameIndexData(
             const ObfReader_P& reader,
             const uint32_t baseOffset,
@@ -160,7 +162,9 @@ namespace OsmAnd
             const AreaI* const bbox31,
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
             const bool includeStreets,
-            const std::shared_ptr<const IQueryController>& queryController);
+            const std::shared_ptr<const IQueryController>& queryController,
+            QueryToken* queryToken,
+            const uint32_t currentLoffset);
         static void readNameIndexDataAtom(
             const ObfReader_P& reader,
             const uint32_t baseOffset,
@@ -168,7 +172,8 @@ namespace OsmAnd
             const AreaI* const bbox31,
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
             const bool includeStreets,
-            const std::shared_ptr<const IQueryController>& queryController);
+            const std::shared_ptr<const IQueryController>& queryController,
+            const std::unique_ptr<QueryToken::SuffixMask>& suffixMask);
     public:
         static void loadStreetGroups(
             const ObfReader_P& reader,

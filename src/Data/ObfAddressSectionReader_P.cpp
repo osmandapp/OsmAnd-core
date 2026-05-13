@@ -21,6 +21,8 @@
 #include "Utilities.h"
 #include "DataCommonTypes.h"
 #include "Logging.h"
+#include "QueryToken.h"
+#include "SearchAlgorithms.h"
 
 OsmAnd::ObfAddressSectionReader_P::ObfAddressSectionReader_P()
 {
@@ -933,7 +935,8 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                     streetGroupTypesFilter,
                     includeStreets,
                     strictMatch,
-                    queryController);
+                    queryController,
+                    matcherMode);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -1131,12 +1134,14 @@ void OsmAnd::ObfAddressSectionReader_P::scanNameIndex(
     const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
     const bool includeStreets,
     const bool strictMatch,
-    const std::shared_ptr<const IQueryController>& queryController)
+    const std::shared_ptr<const IQueryController>& queryController,
+    const StringMatcherMode matcherMode)
 {
     const auto cis = reader.getCodedInputStream().get();
 
     uint32_t baseOffset;
-    QVector<uint32_t> intermediateOffsets;
+    QVector<uint32_t> loffsets;
+    QueryToken * queryToken = nullptr;
 
     for (;;)
     {
@@ -1144,6 +1149,7 @@ void OsmAnd::ObfAddressSectionReader_P::scanNameIndex(
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
+                delete queryToken;
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return;
 
@@ -1154,22 +1160,34 @@ void OsmAnd::ObfAddressSectionReader_P::scanNameIndex(
                 baseOffset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                ObfReaderUtilities::scanIndexedStringTable(cis, query, intermediateOffsets, strictMatch);
+                //ObfReaderUtilities::scanIndexedStringTable(cis, query, intermediateOffsets, strictMatch);
+                QList<OsmAnd::QueryToken::Prefix> prefixCandidates = ObfReaderUtilities::readIndexedStringTablePrefixes(cis, {query}).at(0);
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
 
+                queryToken = new QueryToken(query, matcherMode, prefixCandidates);
+                QSet<int> uniqueOffsets;
+                for (const QueryToken::Prefix & prefix : queryToken->prefixes)
+                {
+                    int offset = prefix.offset;
+                    if (!uniqueOffsets.contains(offset)) {
+                        uniqueOffsets.insert(offset);
+                        loffsets.append(offset);
+                    }
+                }
                 cis->PopLimit(oldLimit);
 
-                if (intermediateOffsets.isEmpty())
+                if (loffsets.isEmpty())
                 {
                     cis->Skip(cis->BytesUntilLimit());
+                    delete queryToken;
                     return;
                 }
                 break;
             }
             case OBF::OsmAndAddressNameIndexData::kAtomFieldNumber:
             {
-                std::sort(intermediateOffsets);
-                for (const auto& intermediateOffset : constOf(intermediateOffsets))
+                std::sort(loffsets);
+                for (const uint32_t& intermediateOffset : constOf(loffsets))
                 {
                     const auto offset = baseOffset + intermediateOffset; 
                     cis->Seek(offset);
@@ -1185,12 +1203,15 @@ void OsmAnd::ObfAddressSectionReader_P::scanNameIndex(
                         bbox31,
                         streetGroupTypesFilter,
                         includeStreets,
-                        queryController);
+                        queryController,
+                        queryToken,
+                        intermediateOffset);
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
 
                     cis->PopLimit(oldLimit);
                 }
                 cis->Skip(cis->BytesUntilLimit());
+                delete queryToken;
                 return;
             }
             default:
@@ -1207,9 +1228,30 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexData(
     const AreaI* const bbox31,
     const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
     const bool includeStreets,
-    const std::shared_ptr<const IQueryController>& queryController)
+    const std::shared_ptr<const IQueryController>& queryController,
+    QueryToken* queryToken,
+    const uint32_t currentLoffset)
 {
     const auto cis = reader.getCodedInputStream().get();
+    QStringList suffixDictionary;
+    bool suffixDictionaryInitialized = false;
+    QueryToken::Prefix* matchedPrefix = nullptr;
+    if (queryToken)
+    {
+        for (auto& prefix : queryToken->prefixes)
+        {
+            if (prefix.offset == currentLoffset)
+            {
+                matchedPrefix = &prefix;
+                break;
+            }
+        }
+    }
+    std::unique_ptr<QueryToken::SuffixMask> suffixMask = nullptr;
+    if (queryToken && matchedPrefix)
+    {
+        suffixMask = std::make_unique<QueryToken::SuffixMask>(*matchedPrefix, queryToken);
+    }
 
     for (;;)
     {
@@ -1223,6 +1265,11 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexData(
                 return;
             case OBF::OsmAndAddressNameIndexData_AddressNameIndexData::kAtomFieldNumber:
             {
+                if (!suffixDictionaryInitialized && suffixMask != nullptr)
+                {
+                    suffixMask->setDictionary(suffixDictionary);
+                    suffixDictionaryInitialized = true;
+                }
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 const auto oldLimit = cis->PushLimit(length);
@@ -1234,10 +1281,25 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexData(
                     bbox31,
                     streetGroupTypesFilter,
                     includeStreets,
-                    queryController);
+                    queryController,
+                    suffixMask
+                );
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
 
                 cis->PopLimit(oldLimit);
+                break;
+            }
+            case OBF::OsmAndAddressNameIndexData_AddressNameIndexData::kSuffixesDictionaryFieldNumber:
+            {
+                QString encodedSuffix;
+                ObfReaderUtilities::readQString(cis, encodedSuffix);
+
+                if (encodedSuffix != SearchAlgorithms::EMPTY_SUFFIX_DICTIONARY_SENTINEL)
+                {
+                    QString previousSuffix = suffixDictionary.isEmpty() ? QString() : suffixDictionary.last();
+                    QString decodedSuffix = SearchAlgorithms::nameIndexDecodeDictionarySuffix(previousSuffix, encodedSuffix);
+                    suffixDictionary.append(decodedSuffix);
+                }
                 break;
             }
             default:
@@ -1254,13 +1316,16 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
     const AreaI* const bbox31,
     const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
     const bool includeStreets,
-    const std::shared_ptr<const IQueryController>& queryController)
+    const std::shared_ptr<const IQueryController>& queryController,
+    const std::unique_ptr<QueryToken::SuffixMask>& suffixMask)
 {
     const auto cis = reader.getCodedInputStream().get();
 
     AddressReference addressReference;
     bool add = true;
-    
+    bool matched = suffixMask != nullptr && suffixMask->shouldPassThrough();
+    int maskIndex = 0;
+
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -1268,7 +1333,7 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
         {
             case 0:
             {
-                if (!add || !ObfReaderUtilities::reachedDataEnd(cis) || addressReference.addressType == AddressNameIndexDataAtomType::Count)
+                if (!add || !matched || !ObfReaderUtilities::reachedDataEnd(cis) || addressReference.addressType == AddressNameIndexDataAtomType::Count)
                     return;
 
                 if (addressReference.cityIndexOffset != 0)
@@ -1335,6 +1400,17 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
                 int x = (xy16 >> 16) << 15;
                 int y = (xy16 & ((1 << 16) - 1)) << 15;
                 add = !bbox31 || bbox31->contains(x, y);
+                break;
+            }
+            case OBF::AddressNameIndexDataAtom::kSuffixesBitsetFieldNumber:
+            {
+                gpb::uint32 mask;
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&mask));
+                if (!matched && suffixMask != nullptr && suffixMask->isMatched(maskIndex, mask))
+                {
+                    matched = true;
+                }
+                maskIndex++;
                 break;
             }
             default:

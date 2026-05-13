@@ -13,6 +13,7 @@ namespace OsmAnd
         static constexpr char16_t SUFFIX_DICT_MARKER_RAW_ESCAPE = u'\uE000';
         static constexpr int SUFFIX_DICT_MARKER_BASE = 0xE100;
         static constexpr int SUFFIX_DICT_MARKER_MAX = 0xF8FF;
+        static const QString EMPTY_SUFFIX_DICTIONARY_SENTINEL;
 
         static QStringList splitAndNormalize(const QString& query);
         static QString canonicalizePunctuation(QString s);

@@ -810,7 +810,7 @@ OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::ICU::ccompare(const QString& _s1, c
     return result;
 }
 
-OSMAND_CORE_API QString OSMAND_CORE_CALL toNFC(const QString& s)
+OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::toNFC(const QString& s)
 {
     if (!g_pIcuNFCNormalizer)
         return s;

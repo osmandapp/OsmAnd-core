@@ -25,7 +25,16 @@ OsmAnd::QueryToken::QueryToken(const QString& query,
 
 void OsmAnd::QueryToken::SuffixMask::setDictionary(const QStringList& suffixDictionary)
 {
-    if (prefix.key.isNull() || suffixDictionary.isEmpty() || parent.query.isNull())
+    if (prefix.key.isNull() || suffixDictionary.isEmpty())
+    {
+        return;
+    }
+    if (suffixDictionary.size() == 1 && suffixDictionary.at(0).isEmpty())
+    {
+        passThrough = !parent->query.isNull() && CollatorStringMatcher::cmatches(prefix.key, parent->query, parent->matcherMode);
+        return;
+    }
+    if (parent->query.isNull())
     {
         return;
     }
@@ -45,7 +54,7 @@ void OsmAnd::QueryToken::SuffixMask::addSuffix(int index, const QString& suffix)
 
     QString fullKey = prefix.key + suffix;
 
-    if (CollatorStringMatcher::cmatches(fullKey, parent.query, parent.matcherMode))
+    if (CollatorStringMatcher::cmatches(fullKey, parent->query, parent->matcherMode))
     {
         int intWordIndex = index >> 5; // index / 32
         while (masks.size() <= intWordIndex)
@@ -56,4 +65,9 @@ void OsmAnd::QueryToken::SuffixMask::addSuffix(int index, const QString& suffix)
         int wordMask = 1 << bitOffset;
         masks[intWordIndex] |= wordMask;
     }
+}
+
+bool OsmAnd::QueryToken::SuffixMask::isMatched(int maskIndex, uint32_t mask) const
+{
+    return !masks.isEmpty() && maskIndex < masks.size() && (masks.at(maskIndex) & mask) != 0;
 }
