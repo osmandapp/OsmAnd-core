@@ -624,3 +624,65 @@ bool OsmAnd::GridConfiguration::isValid() const
         || secondaryProjection == Projection::MGRS
         || secondaryProjection == Projection::Mercator);
 }
+
+OsmAnd::CoordinateTransformer::CoordinateTransformer(const QString& projResourcesPath, int epsg_number)
+{
+    forwardTransform = nullptr;
+    backwardTransform = nullptr;
+
+    auto projSearchPath = projResourcesPath.toUtf8();
+    const char* projPaths[] = { projSearchPath.constData(), NULL };
+    OSRSetPROJSearchPaths(projPaths);
+
+    auto res = source_crs.importFromEPSG(4326);
+    if (res != OGRERR_NONE)
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to create source GDAL CRS.");
+        return;
+    }
+    source_crs.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    
+    res = target_crs.importFromEPSG(epsg_number);
+    if (res != OGRERR_NONE)
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to create target GDAL CRS.");
+        return;
+    }
+    target_crs.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+    forwardTransform = OGRCreateCoordinateTransformation(&source_crs, &target_crs);
+    if (!forwardTransform)
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to create forward GDAL transformation.");
+        return;
+    }
+
+    backwardTransform = OGRCreateCoordinateTransformation(&target_crs, &source_crs);
+    if (!backwardTransform)
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to create backward GDAL transformation.");
+        return;
+    }
+}
+
+OsmAnd::CoordinateTransformer::~CoordinateTransformer()
+{
+    if (forwardTransform)
+        OGRCoordinateTransformation::DestroyCT(forwardTransform);
+    if (backwardTransform)
+        OGRCoordinateTransformation::DestroyCT(backwardTransform);
+}
+
+bool OsmAnd::CoordinateTransformer::fromLonLat(PointD& location)
+{
+    if (forwardTransform)
+        return forwardTransform->Transform(1, &location.x, &location.y);
+    return false;
+}
+
+bool OsmAnd::CoordinateTransformer::toLonLat(PointD& location)
+{
+    if (backwardTransform)
+        return backwardTransform->Transform(1, &location.x, &location.y);
+    return false;
+}

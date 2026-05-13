@@ -3,6 +3,8 @@
 
 #include <OsmAndCore/stdlib_common.h>
 
+#include <ogr_spatialref.h>
+
 #include <OsmAndCore/QtExtensions.h>
 
 #include <OsmAndCore.h>
@@ -573,6 +575,21 @@ namespace OsmAnd
                 secondaryMinZoomLevel != r.secondaryMinZoomLevel ||
                 secondaryMaxZoomLevel != r.secondaryMaxZoomLevel;
         }
+    };
+
+    struct OSMAND_CORE_API CoordinateTransformer Q_DECL_FINAL
+    {
+        private:
+            OGRSpatialReference source_crs;
+            OGRSpatialReference target_crs;
+            OGRCoordinateTransformation* forwardTransform;
+            OGRCoordinateTransformation* backwardTransform;
+        public:
+            CoordinateTransformer(const QString& projResourcesPath, int epsg_number);
+            ~CoordinateTransformer();
+
+            bool fromLonLat(PointD& location);
+            bool toLonLat(PointD& location);
     };
 }
 
