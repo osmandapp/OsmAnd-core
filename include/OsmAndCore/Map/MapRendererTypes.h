@@ -3,8 +3,6 @@
 
 #include <OsmAndCore/stdlib_common.h>
 
-#include <ogr_spatialref.h>
-
 #include <OsmAndCore/QtExtensions.h>
 
 #include <OsmAndCore.h>
@@ -16,6 +14,8 @@
 
 namespace OsmAnd
 {
+    class CoordinateTransformer_P;
+
     struct OSMAND_CORE_API MapLayerConfiguration Q_DECL_FINAL
     {
         MapLayerConfiguration();
@@ -580,10 +580,7 @@ namespace OsmAnd
     struct OSMAND_CORE_API CoordinateTransformer Q_DECL_FINAL
     {
         private:
-            OGRSpatialReference source_crs;
-            OGRSpatialReference target_crs;
-            OGRCoordinateTransformation* forwardTransform;
-            OGRCoordinateTransformation* backwardTransform;
+            std::unique_ptr<CoordinateTransformer_P> _p;
         public:
             CoordinateTransformer(const QString& projResourcesPath, int epsg_number);
             ~CoordinateTransformer();

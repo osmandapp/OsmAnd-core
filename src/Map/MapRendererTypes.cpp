@@ -1,6 +1,8 @@
 #include "MapRendererTypes.h"
 #include "MapRendererTypes_private.h"
 
+#include <ogr_spatialref.h>
+
 OsmAnd::MapLayerConfiguration::MapLayerConfiguration()
     : opacityFactor(1.0f)
 {
@@ -625,11 +627,26 @@ bool OsmAnd::GridConfiguration::isValid() const
         || secondaryProjection == Projection::Mercator);
 }
 
-OsmAnd::CoordinateTransformer::CoordinateTransformer(const QString& projResourcesPath, int epsg_number)
+class OsmAnd::CoordinateTransformer_P Q_DECL_FINAL
 {
-    forwardTransform = nullptr;
-    backwardTransform = nullptr;
+private:
+    OGRSpatialReference source_crs;
+    OGRSpatialReference target_crs;
+    OGRCoordinateTransformation* forwardTransform;
+    OGRCoordinateTransformation* backwardTransform;
 
+public:
+    CoordinateTransformer_P(const QString& projResourcesPath, int epsg_number);
+    ~CoordinateTransformer_P();
+
+    bool fromLonLat(PointD& location);
+    bool toLonLat(PointD& location);
+};
+
+OsmAnd::CoordinateTransformer_P::CoordinateTransformer_P(const QString& projResourcesPath, int epsg_number)
+    : forwardTransform(nullptr)
+    , backwardTransform(nullptr)
+{
     auto projSearchPath = projResourcesPath.toUtf8();
     const char* projPaths[] = { projSearchPath.constData(), NULL };
     OSRSetPROJSearchPaths(projPaths);
@@ -665,7 +682,7 @@ OsmAnd::CoordinateTransformer::CoordinateTransformer(const QString& projResource
     }
 }
 
-OsmAnd::CoordinateTransformer::~CoordinateTransformer()
+OsmAnd::CoordinateTransformer_P::~CoordinateTransformer_P()
 {
     if (forwardTransform)
         OGRCoordinateTransformation::DestroyCT(forwardTransform);
@@ -673,16 +690,33 @@ OsmAnd::CoordinateTransformer::~CoordinateTransformer()
         OGRCoordinateTransformation::DestroyCT(backwardTransform);
 }
 
-bool OsmAnd::CoordinateTransformer::fromLonLat(PointD& location)
+bool OsmAnd::CoordinateTransformer_P::fromLonLat(PointD& location)
 {
     if (forwardTransform)
         return forwardTransform->Transform(1, &location.x, &location.y);
     return false;
 }
 
-bool OsmAnd::CoordinateTransformer::toLonLat(PointD& location)
+bool OsmAnd::CoordinateTransformer_P::toLonLat(PointD& location)
 {
     if (backwardTransform)
         return backwardTransform->Transform(1, &location.x, &location.y);
     return false;
+}
+
+OsmAnd::CoordinateTransformer::CoordinateTransformer(const QString& projResourcesPath, int epsg_number)
+    : _p(new CoordinateTransformer_P(projResourcesPath, epsg_number))
+{
+}
+
+OsmAnd::CoordinateTransformer::~CoordinateTransformer() = default;
+
+bool OsmAnd::CoordinateTransformer::fromLonLat(PointD& location)
+{
+    return _p->fromLonLat(location);
+}
+
+bool OsmAnd::CoordinateTransformer::toLonLat(PointD& location)
+{
+    return _p->toLonLat(location);
 }
