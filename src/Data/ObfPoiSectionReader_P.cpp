@@ -21,6 +21,7 @@
 #include "CollatorStringMatcher.h"
 #include <Logging.h>
 #include <OsmAndCore/ICU.h>
+#include "SearchAlgorithms.h"
 
 const int BUCKET_SEARCH_BY_NAME = 5;
 const int BASE_POI_SHIFT = 7;
@@ -1303,7 +1304,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
     const QPair<int, int>* poiAdditionalFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController,
-    const bool strictMatch)
+    const bool strictMatch,
+    const StringMatcherMode matcherMode)
 {
     const auto cis = reader.getCodedInputStream().get();
     QMap<uint32_t, uint32_t> dataBoxesOffsetsSet;
@@ -1326,7 +1328,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                 const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                scanNameIndex(
+                readPoiNameIndex(
                     reader,
                     query,
                     dataBoxesOffsetsSet,
@@ -1335,7 +1337,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                     tileFilter,
                     strictMatch,
                     section,
-                    nameIndexCoordinates);
+                    nameIndexCoordinates,
+                    matcherMode);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -1430,7 +1433,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
+void OsmAnd::ObfPoiSectionReader_P::readPoiNameIndex(
     const ObfReader_P& reader,
     const QString& query,
     QMap<uint32_t, uint32_t>& outDataOffsets,
@@ -1439,12 +1442,15 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
     const TileAcceptorFunction tileFilter,
     const bool strictMatch,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
-    QList<int>& nameIndexCoordinates)
+    QList<int>& nameIndexCoordinates,
+    const StringMatcherMode matcherMode)
 {
     const auto cis = reader.getCodedInputStream().get();
 
     uint32_t baseOffset;
-    QVector<uint32_t> intermediateOffsets;
+    QList<QMap<uint32_t, uint32_t>> listOfSepOffsets;
+    QStringList queries = OsmAnd::SearchAlgorithms::splitAndNormalize(query);
+    QList<QueryToken> queryTokens;
 
     for (;;)
     {
@@ -1460,41 +1466,88 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 baseOffset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
-
-                ObfReaderUtilities::scanIndexedStringTable(cis, query, intermediateOffsets, strictMatch);
+                QList<QList<OsmAnd::QueryToken::Prefix>> prefixCandidates = ObfReaderUtilities::readIndexedStringTablePrefixes(cis, queries);
+                queryTokens.reserve(queries.size());
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
-
-                cis->PopLimit(oldLimit);
-
-                if (intermediateOffsets.isEmpty())
+                for (int i = 0; i < queries.size(); i++)
                 {
-                    cis->Skip(cis->BytesUntilLimit());
-                    return;
+                    QueryToken queryToken(queries.at(i), matcherMode, prefixCandidates.at(i));
+                    queryTokens.append(queryToken);
                 }
+                cis->PopLimit(oldLimit);
                 break;
             }
             case OBF::OsmAndPoiNameIndex::kDataFieldNumber:
             {
-                std::sort(intermediateOffsets);
-                for (const auto& intermediateOffset : constOf(intermediateOffsets))
+                if (!queryTokens.isEmpty())
                 {
-                    cis->Seek(baseOffset + intermediateOffset);
+                    for (const QueryToken & tokenMatch : queryTokens)
+                    {
+                        QMap<uint32_t, uint32_t> offsetMap;
+                        for (const QueryToken::Prefix& prefix : tokenMatch.prefixes)
+                        {
+                            cis->Seek(prefix.offset + baseOffset);
+                            gpb::uint32 length;
+                            cis->ReadVarint32(&length);
+                            const auto oldLimit = cis->PushLimit(length);
+                            readPoiNameIndexData(
+                                reader,
+                                offsetMap,
+                                xy31,
+                                bbox31,
+                                tileFilter,
+                                section,
+                                tokenMatch,
+                                prefix);
+                            ObfReaderUtilities::ensureAllDataWasRead(cis);
+                            cis->PopLimit(oldLimit);
 
-                    gpb::uint32 length;
-                    cis->ReadVarint32(&length);
-                    const auto oldLimit = cis->PushLimit(length);
-
-                    readNameIndexData(
-                        reader,
-                        outDataOffsets,
-                        xy31,
-                        bbox31, 
-                        tileFilter,
-                        section,
-                        nameIndexCoordinates);
-                    ObfReaderUtilities::ensureAllDataWasRead(cis);
-
-                    cis->PopLimit(oldLimit);
+//                            if (req.isCancelled()) {
+//                                codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
+//                                req.endSubSearchStats(subStart, BinaryMapIndexReaderStats.BinaryMapIndexReaderApiName.POI_BY_NAME,
+//                                        BinaryMapIndexReaderStats.BinaryMapIndexReaderSubApiName.POI_NAME_REFERENCES,
+//                                        map.getFile().getName(), codedIS.getBytesCounter() - bytes);
+//                                return offsets;
+//                            }
+                        }
+                        listOfSepOffsets.append(offsetMap);
+                    }
+                }
+                if (!listOfSepOffsets.isEmpty())
+                {
+                    if (matcherMode == StringMatcherMode::MULTISEARCH)
+                    {
+                        for (const auto& m : listOfSepOffsets)
+                        {
+                            for (auto it = m.begin(); it != m.end(); ++it) {
+                                outDataOffsets.insert(it.key(), it.value());
+                            }
+                        }
+                    }
+                    else
+                    {
+                        const QMap<uint32_t, uint32_t>& firstMap = listOfSepOffsets.at(0);
+                        for (auto it = firstMap.constBegin(); it != firstMap.constEnd(); ++it)
+                        {
+                            outDataOffsets.insert(it.key(), it.value());
+                        }
+                        for (int j = 1; j < listOfSepOffsets.size(); ++j)
+                        {
+                            const auto& mp = listOfSepOffsets.at(j);
+                            auto it = outDataOffsets.begin();
+                            while (it != outDataOffsets.end())
+                            {
+                                if (!mp.contains(it.key()))
+                                {
+                                    it = outDataOffsets.erase(it);
+                                }
+                                else
+                                {
+                                    ++it;
+                                }
+                            }
+                        }
+                    }
                 }
                 cis->Skip(cis->BytesUntilLimit());
                 return;
@@ -1506,17 +1559,20 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::readNameIndexData(
+void OsmAnd::ObfPoiSectionReader_P::readPoiNameIndexData(
     const ObfReader_P& reader,
     QMap<uint32_t, uint32_t>& outDataOffsets,
     const PointI* const xy31,
     const AreaI* const bbox31,
     const TileAcceptorFunction tileFilter,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
-    QList<int>& nameIndexCoordinates)
+    const QueryToken token,
+    const QueryToken::Prefix prefix)
 {
     const auto cis = reader.getCodedInputStream().get();
-
+    QStringList suffixDictionary;
+    QueryToken::SuffixMask mask(prefix, &token);
+    bool suffixDictionaryInitialized = false;
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -1527,20 +1583,38 @@ void OsmAnd::ObfPoiSectionReader_P::readNameIndexData(
                     return;
 
                 return;
+            case OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData::kSuffixesDictionaryFieldNumber:
+            {
+                QString encodedSuffix;
+                ObfReaderUtilities::readQString(cis, encodedSuffix);
+                if (SearchAlgorithms::EMPTY_SUFFIX_DICTIONARY_SENTINEL == encodedSuffix)
+                {
+                    break;
+                }
+                QString prevSuffix = suffixDictionary.empty() ? QString() : suffixDictionary.at(suffixDictionary.size() - 1);
+                QString entry = SearchAlgorithms::nameIndexDecodeDictionarySuffix(prevSuffix, encodedSuffix);
+                suffixDictionary.append(entry);
+                break;
+            }
             case OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData::kAtomsFieldNumber:
             {
+                if (!suffixDictionaryInitialized)
+                {
+                    mask.setDictionary(suffixDictionary);
+                    suffixDictionaryInitialized = true;
+                }
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 const auto oldLimit = cis->PushLimit(length);
 
-                readNameIndexDataAtom(
+                readPoiNameIndexDataAtom(
                     reader,
                     outDataOffsets,
                     xy31,
                     bbox31,
                     tileFilter,
                     section,
-                    nameIndexCoordinates);
+                    mask);
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
 
                 cis->PopLimit(oldLimit);
@@ -1553,41 +1627,31 @@ void OsmAnd::ObfPoiSectionReader_P::readNameIndexData(
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::readNameIndexDataAtom(
+void OsmAnd::ObfPoiSectionReader_P::readPoiNameIndexDataAtom(
     const ObfReader_P& reader,
     QMap<uint32_t, uint32_t>& outDataOffsets,
     const PointI* const xy31,
     const AreaI* const bbox31,
     const TileAcceptorFunction tileFilter,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
-    QList<int>& nameIndexCoordinates)
+    const QueryToken::SuffixMask & suffixMask)
 {
     const auto cis = reader.getCodedInputStream().get();
     auto tileId = TileId::zero();
     auto zoom = MinZoomLevel;
 
+    bool matched = suffixMask.shouldPassThrough();
+    int maskIndex = 0;
+    uint32_t shift = UINT_MAX;
     for (;;)
     {
         const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
-                if (!ObfReaderUtilities::reachedDataEnd(cis))
-                    return;
-
-                return;
-            case OBF::OsmAndPoiNameIndexDataAtom::kXFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&tileId.x));
-                break;
-            case OBF::OsmAndPoiNameIndexDataAtom::kYFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&tileId.y));
-                break;
-            case OBF::OsmAndPoiNameIndexDataAtom::kZoomFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&zoom));
-                break;
-            case OBF::OsmAndPoiNameIndexDataAtom::kShiftToFieldNumber:
             {
-                const auto dataOffset = ObfReaderUtilities::readBigEndianInt(cis);
+                if (!ObfReaderUtilities::reachedDataEnd(cis) || !matched || shift == UINT_MAX)
+                    return;
 
                 bool accept = true;
 
@@ -1607,8 +1671,39 @@ void OsmAnd::ObfPoiSectionReader_P::readNameIndexDataAtom(
                 {
                     if (xy31)
                         d = qAbs(xy31->x - position31.x) + qAbs(xy31->y - position31.y);
-                    outDataOffsets.insert(dataOffset, d);
+                    outDataOffsets.insert(shift, d);
                 }
+
+                return;
+            }
+            case OBF::OsmAndPoiNameIndexDataAtom::kXFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&tileId.x));
+                break;
+            case OBF::OsmAndPoiNameIndexDataAtom::kYFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&tileId.y));
+                break;
+            case OBF::OsmAndPoiNameIndexDataAtom::kZoomFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&zoom));
+                break;
+            case OBF::OsmAndPoiNameIndexDataAtom::kShiftToFieldNumber:
+            {
+                shift = ObfReaderUtilities::readBigEndianInt(cis);
+                if (!matched)
+                {
+                    cis->Skip(cis->BytesUntilLimit());
+                    return;
+                }
+                break;
+            }
+            case OBF::OsmAndPoiNameIndexDataAtom::kSuffixesBitsetFieldNumber:
+            {
+                gpb::uint32 mask;
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&mask));
+                if (!matched && suffixMask.isMatched(maskIndex, mask))
+                {
+                    matched = true;
+                }
+                maskIndex++;
                 break;
             }
             default:
@@ -1686,7 +1781,8 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
     const QPair<int, int>* poiAdditionalFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController,
-    const bool strictMatch)
+    const bool strictMatch,
+    const StringMatcherMode matcherMode)
 {
     ensureCategoriesLoaded(reader, section);
     ensureSubtypesLoaded(reader, section);
@@ -1708,7 +1804,8 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
         poiAdditionalFilter,
         visitor,
         queryController,
-        strictMatch);
+        strictMatch,
+        matcherMode);
 
     ObfReaderUtilities::ensureAllDataWasRead(cis);
     cis->PopLimit(oldLimit);

@@ -25,6 +25,7 @@ OsmAnd::QueryToken::QueryToken(const QString& query,
 
 void OsmAnd::QueryToken::SuffixMask::setDictionary(const QStringList& suffixDictionary)
 {
+    passThrough = suffixDictionary.isEmpty();
     if (prefix.key.isNull() || suffixDictionary.isEmpty())
     {
         return;
