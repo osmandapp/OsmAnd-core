@@ -642,6 +642,22 @@ bool isSpace(UChar c)
     return !u_isalnum(c);
 }
 
+bool isWordStart(const UnicodeString& searchIn, int index, const UnicodeString& part)
+{
+    if (!isSpace(searchIn.charAt(index - 1)))
+    {
+        return false;
+    }
+
+    UChar current = searchIn.charAt(index);
+    if (!isSpace(current))
+    {
+        return true;
+    }
+    // 0x002D '-'
+    return (current == 0x002D && part.length() > 1 && part.charAt(0) == 0x002D && u_isdigit(part.charAt(1)));
+}
+
 OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cmatches(const QString& _base, const QString& _part, StringMatcherMode _mode)
 {
     switch (_mode)
@@ -760,7 +776,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
         {
             for (int i = 1; i <= serchInLength - startLength; i++)
             {
-                if (isSpace(searchIn.charAt(i - 1)) && !isSpace(searchIn.charAt(i)))
+                if (isWordStart(searchIn, i, theStart))
                 {
                     if (collator->equals(searchIn.tempSubString(i, startLength), theStart))
                     {
