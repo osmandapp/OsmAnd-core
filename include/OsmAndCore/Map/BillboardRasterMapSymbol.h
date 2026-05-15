@@ -43,6 +43,10 @@ namespace OsmAnd
         virtual double getAdditionalPosition() const;
         virtual void setAdditionalPosition(const double additionalPosition);
 
+        int extraId;
+        virtual int getExtraId() const;
+        virtual void setExtraId(const int extraId);
+
         float elevation;
         float getElevation() const;
         void setElevation(const float elevation);

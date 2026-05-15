@@ -13,6 +13,7 @@ OsmAnd::MapMarkerBuilder_P::MapMarkerBuilder_P(MapMarkerBuilder* const owner_)
     : _isHidden(false)
     , _markerId(0)
     , _groupId(0)
+    , _extraId(-1)
     , _baseOrder(std::numeric_limits<int>::min())
     , _isAccuracyCircleSupported(false)
     , _isAccuracyCircleVisible(false)
@@ -70,6 +71,20 @@ void OsmAnd::MapMarkerBuilder_P::setGroupId(const int groupId)
     QWriteLocker scopedLocker(&_lock);
     
     _groupId = groupId;
+}
+
+int OsmAnd::MapMarkerBuilder_P::getExtraId() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _extraId;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setExtraId(const int extraId)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _extraId = extraId;
 }
 
 int OsmAnd::MapMarkerBuilder_P::getBaseOrder() const
@@ -434,6 +449,7 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
         marker->setIsAccuracyCircleVisible(_isAccuracyCircleVisible);
         marker->setAccuracyCircleRadius(_accuracyCircleRadius);
     }
+    marker->setExtraId(_extraId);
     marker->setPosition(_position);
     marker->setHeight(_height);
     marker->setElevationScaleFactor(_elevationScaleFactor);

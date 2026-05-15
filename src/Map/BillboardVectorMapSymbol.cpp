@@ -3,6 +3,7 @@
 OsmAnd::BillboardVectorMapSymbol::BillboardVectorMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_)
     : VectorMapSymbol(group_)
+    , extraId(-1)
 {
 }
 
@@ -28,4 +29,14 @@ OsmAnd::PointI OsmAnd::BillboardVectorMapSymbol::getPosition31() const
 void OsmAnd::BillboardVectorMapSymbol::setPosition31(const PointI position)
 {
     position31 = position;
+}
+
+int OsmAnd::BillboardVectorMapSymbol::getExtraId() const
+{
+    return extraId;
+}
+
+void OsmAnd::BillboardVectorMapSymbol::setExtraId(const int extraId_)
+{
+    extraId = extraId_;
 }

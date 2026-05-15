@@ -97,6 +97,16 @@ void OsmAnd::MapMarker::setAdditionalPosition(const double additionalPosition)
     _p->setAdditionalPosition(additionalPosition);
 }
 
+int OsmAnd::MapMarker::getExtraId() const
+{
+    return _p->getExtraId();
+}
+
+void OsmAnd::MapMarker::setExtraId(const int extraId)
+{
+    _p->setExtraId(extraId);
+}
+
 float OsmAnd::MapMarker::getHeight() const
 {
     return _p->getHeight();

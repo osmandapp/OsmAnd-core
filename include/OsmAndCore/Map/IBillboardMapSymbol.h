@@ -24,6 +24,9 @@ namespace OsmAnd
 
         virtual PointI getPosition31() const = 0;
         virtual void setPosition31(const PointI position) = 0;
+
+        virtual int getExtraId() const = 0;
+        virtual void setExtraId(const int extraId) = 0;
     };
 }
 

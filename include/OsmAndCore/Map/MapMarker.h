@@ -127,6 +127,9 @@ namespace OsmAnd
         double getAdditionalPosition() const;
         void setAdditionalPosition(const double additionalPosition);
 
+        int getExtraId() const;
+        void setExtraId(const int extraId);
+
         float getHeight() const;
         void setHeight(const float height);
 

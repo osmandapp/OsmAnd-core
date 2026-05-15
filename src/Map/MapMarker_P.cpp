@@ -21,6 +21,7 @@ OsmAnd::MapMarker_P::MapMarker_P(MapMarker* const owner_)
     , _adjustElevationToVectorObject(false)
     , _ownerIsLost(false)
     , _hasUnappliedPrimitiveChanges(false)
+    , _extraId(-1)
 {
 }
 
@@ -114,6 +115,24 @@ void OsmAnd::MapMarker_P::setAdditionalPosition(const double additionalPosition)
     if (_additionalPositionParameter != additionalPosition)
     {
         _additionalPositionParameter = additionalPosition;
+        _hasUnappliedChanges = true;
+    }
+}
+
+int OsmAnd::MapMarker_P::getExtraId() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _extraId;
+}
+
+void OsmAnd::MapMarker_P::setExtraId(const int extraId)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_extraId != extraId)
+    {
+        _extraId = extraId;
         _hasUnappliedChanges = true;
     }
 }
@@ -442,7 +461,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
     // SpriteMapSymbol with pinIcon as an icon
     if (owner->pinIcon)
     {
-        const std::shared_ptr<BillboardRasterMapSymbol> pinIconSymbol(new BillboardRasterMapSymbol(symbolsGroup));
+        const auto pinIconSymbol = std::make_shared<BillboardRasterMapSymbol>(symbolsGroup);
         pinIconSymbol->updateAfterCreated = _updateAfterCreated;
         pinIconSymbol->subsection = subsection;
         pinIconSymbol->order = order++;
@@ -485,6 +504,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         pinIconSymbol->offset = offset + owner->pinIconOffset;
         pinIconSymbol->isHidden = _isHidden;
         pinIconSymbol->modulationColor = _pinIconModulationColor;
+        pinIconSymbol->setExtraId(_extraId);
         symbolsGroup->symbols.push_back(pinIconSymbol);
         captionOffset.x = offset.x;
         captionOffset.y = owner->pinIcon->height() / 2 + offset.y;
@@ -542,6 +562,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
                 mapSymbolCaption->setPositionType(_positionType);
             }
             mapSymbolCaption->setAdditionalPosition(_additionalPositionParameter);
+            mapSymbolCaption->setExtraId(_extraId);
             mapSymbolCaption->elevation = _height;
             mapSymbolCaption->elevationScaleFactor = _elevationScaleFactor;
             symbolsGroup->symbols.push_back(mapSymbolCaption);
