@@ -105,17 +105,24 @@ OsmAnd::MapRendererResourcesManager::~MapRendererResourcesManager()
         resourcesCollections.clear();
     }
 
-    // Stop worker thread
-    _workerThreadIsAlive = false;
-    {
-        QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
-        _workerThreadWakeup.wakeAll();
-    }
-    REPEAT_UNTIL(_workerThread->wait());
+    stopWorkerThread();
 
     // Wait for all tasks to complete
     _taskHostBridge.onOwnerIsBeingDestructed();
     renderer->resourcesAreInUse.unlock();
+}
+
+void OsmAnd::MapRendererResourcesManager::stopWorkerThread()
+{
+    if (_workerThreadIsAlive)
+    {
+        _workerThreadIsAlive = false;
+        {
+            QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
+            _workerThreadWakeup.wakeAll();
+        }
+        REPEAT_UNTIL(_workerThread->wait());
+    }
 }
 
 bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
@@ -3386,6 +3393,7 @@ void OsmAnd::MapRendererResourcesManager::requestResourcesUploadOrUnload()
 
 void OsmAnd::MapRendererResourcesManager::releaseAllResources(bool gpuContextLost)
 {
+    stopWorkerThread();
     _requestedResourcesTasks.clear();
     _resourcesRequestWorkerPool.dequeueAll();
     _resourcesRequestWorkerPool.waitForDone();
