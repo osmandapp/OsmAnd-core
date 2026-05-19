@@ -17,6 +17,7 @@ OsmAnd::GpxAdditionalIconsProvider::GpxAdditionalIconsProvider(
     const int baseOrder_,
     const double screenScale_,
     const QList<PointI>& startFinishPoints_,
+    const QList<int>& startFinishExtraIds_,
     const QList<SplitLabel>& splitLabels_,
     const SingleSkImage& startIcon_,
     const SingleSkImage& finishIcon_,
@@ -28,6 +29,7 @@ OsmAnd::GpxAdditionalIconsProvider::GpxAdditionalIconsProvider(
     , baseOrder(baseOrder_)
     , screenScale(screenScale_)
     , startFinishPoints(startFinishPoints_)
+    , startFinishExtraIds(startFinishExtraIds_)
     , splitLabels(splitLabels_)
     , startIcon(startIcon_.sp)
     , finishIcon(finishIcon_.sp)
@@ -136,6 +138,7 @@ void OsmAnd::GpxAdditionalIconsProvider::buildSplitIntervalsSymbolsGroup(
             mapSymbol->position31 = label.pos31;
             mapSymbol->elevation = label.height;
             mapSymbol->elevationScaleFactor = elevationScaleFactor;
+            mapSymbol->setExtraId(label.extraId);
             mapSymbolsGroup->symbols.push_back(mapSymbol);
         }
     }
@@ -154,6 +157,8 @@ void OsmAnd::GpxAdditionalIconsProvider::buildStartFinishSymbolsGroup(
     {
         const auto startPos31 = startFinishPoints[i];
         const auto finishPos31 = startFinishPoints[i + 1];
+        const auto startExtraId = startFinishExtraIds.size() > i ? startFinishExtraIds[i] : -1;
+        const auto finishExtraId = startFinishExtraIds.size() > i + 1 ? startFinishExtraIds[i + 1] : -1;
         const auto startHeight = startFinishHeights.size() > i ? startFinishHeights[i] : NAN;
         const auto finishHeight = startFinishHeights.size() > i + 1 ? startFinishHeights[i + 1] : NAN;
         
@@ -175,6 +180,7 @@ void OsmAnd::GpxAdditionalIconsProvider::buildStartFinishSymbolsGroup(
                 mapSymbol->position31 = startPos31;
                 mapSymbol->elevation = startHeight;
                 mapSymbol->elevationScaleFactor = elevationScaleFactor;
+                mapSymbol->setExtraId(startExtraId);
                 mapSymbolsGroup->symbols.push_back(mapSymbol);
                 continue;
             }
@@ -189,6 +195,7 @@ void OsmAnd::GpxAdditionalIconsProvider::buildStartFinishSymbolsGroup(
             mapSymbol->position31 = startPos31;
             mapSymbol->elevation = startHeight;
             mapSymbol->elevationScaleFactor = elevationScaleFactor;
+            mapSymbol->setExtraId(startExtraId);
             mapSymbolsGroup->symbols.push_back(mapSymbol);
         }
         if (containsFinish && finishIcon)
@@ -201,6 +208,7 @@ void OsmAnd::GpxAdditionalIconsProvider::buildStartFinishSymbolsGroup(
             mapSymbol->position31 = finishPos31;
             mapSymbol->elevation = finishHeight;
             mapSymbol->elevationScaleFactor = elevationScaleFactor;
+            mapSymbol->setExtraId(finishExtraId);
             mapSymbolsGroup->symbols.push_back(mapSymbol);
         }
     }
@@ -301,10 +309,12 @@ OsmAnd::GpxAdditionalIconsProvider::SplitLabel::SplitLabel(
     const PointI& pos31_,
     const QString& text_,
     const ColorARGB& gpxColor_,
+    const int extraId_,
     const float height_ /* = NAN */)
     : pos31(pos31_)
     , text(text_)
     , gpxColor(gpxColor_)
+    , extraId(extraId_)
     , height(height_)
 {
 }

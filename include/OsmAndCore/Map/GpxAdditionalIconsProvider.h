@@ -50,6 +50,7 @@ namespace OsmAnd
                 const PointI& pos31,
                 const QString& text,
                 const ColorARGB& gpxColor,
+                const int extraId,
                 const float height = NAN);
             virtual ~SplitLabel();
             
@@ -57,6 +58,7 @@ namespace OsmAnd
             float height;
             QString text;
             ColorARGB gpxColor;
+            int extraId;
         };
 
     private:
@@ -88,6 +90,7 @@ namespace OsmAnd
             const int baseOrder,
             const double screenScale,
             const QList<PointI>& startFinishPoints,
+            const QList<int>& startFinishExtraIds,
             const QList<SplitLabel>& splitLabels,
             const SingleSkImage& startIcon,
             const SingleSkImage& finishIcon,
@@ -100,6 +103,7 @@ namespace OsmAnd
         const double screenScale;
 
         const QList<PointI> startFinishPoints;
+        const QList<int> startFinishExtraIds;
         const QList<float> startFinishHeights;
         const QList<SplitLabel> splitLabels;
         
