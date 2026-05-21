@@ -1298,7 +1298,7 @@ namespace OsmAnd
         return dictionary;
     }
 
-    inline static QSet<QString>& REGION_NAMES()
+    inline QSet<QString>& REGION_NAMES()
     {
         static QSet<QString> regionNames;
         return regionNames;

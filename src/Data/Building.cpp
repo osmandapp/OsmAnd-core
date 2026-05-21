@@ -37,15 +37,43 @@ float OsmAnd::Building::evaluateInterpolation(const QString& hno) const
         QString fname = nativeName;
         int numB = OsmAnd::Utilities::extractFirstInteger(fname);
         int numT = numB;
+        QString sname = interpolationNativeName;
+        if (fname.contains('-') && sname.isEmpty())
+        {
+            int l = fname.indexOf('-');
+            sname = fname.mid(l + 1);
+        }
+        if (interpolation == Interpolation::Alphabetic)
+        {
+            if (num != numB)
+            {
+                return -1;
+            }
+            if (sname.isEmpty())
+            {
+                return -1;
+            }
+
+            int hint = (int)hno.at(hno.length() - 1).unicode();
+            int idxDec = fname.indexOf('-');
+            int fch = (int)fname.at(idxDec > 0 ? idxDec - 1 : fname.length() - 1).unicode();
+            int sch = (int)sname.at(sname.length() - 1).unicode();
+            if (fch == sch)
+            {
+                return -1;
+            }
+
+            float res = ((float)hint - fch) / (((float)sch - fch));
+            if (res > 1 || res < 0)
+            {
+                return -1;
+            }
+            return res;
+        }
+
         if (num >= numB)
         {
-            QString sname = interpolationNativeName;
-            if (fname.contains('-') && sname.isNull())
-            {
-                int l = fname.indexOf('-');
-                sname = fname.mid(l + 1, fname.length() - (l + 1));
-            }
-            if (!sname.isNull())
+            if (!sname.isEmpty())
             {
                 numT = OsmAnd::Utilities::extractFirstInteger(sname);
                 if (numT < num)

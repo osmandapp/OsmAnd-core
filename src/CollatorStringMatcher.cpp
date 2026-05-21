@@ -62,7 +62,7 @@ bool OsmAnd::CollatorStringMatcher::cmatches(const QString& _base, const QString
     {
         part = alignChars(part);
     }
-    base = lowercaseAndAlignChars(base);
+    base = lowercaseAndAlignChars(_base);
     return OsmAnd::ICU::cmatches(base, part, _mode);
 }
 
