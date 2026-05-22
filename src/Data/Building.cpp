@@ -31,7 +31,7 @@ QString OsmAnd::Building::toString() const
 
 float OsmAnd::Building::evaluateInterpolation(const QString& hno) const
 {
-    if (interpolation != Interpolation::Disabled || interpolationInterval > 0 || nativeName.contains('-'))
+    if (interpolation != Interpolation::Disabled || interpolationInterval > 0)
     {
         int num = OsmAnd::Utilities::extractFirstInteger(hno);
         QString fname = nativeName;
