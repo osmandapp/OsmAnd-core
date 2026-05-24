@@ -67,6 +67,10 @@ namespace OsmAnd
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr,
             const bool strictMatch = false);
+        
+        static void ensureCategoriesLoaded(
+            const ObfReader& reader,
+                                           const std::shared_ptr<const ObfPoiSectionInfo>& section);
     };
 }
 
