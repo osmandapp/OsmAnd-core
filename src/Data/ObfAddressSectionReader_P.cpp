@@ -511,12 +511,14 @@ void OsmAnd::ObfAddressSectionReader_P::readStreet(
     }
 }
 
-void OsmAnd::ObfAddressSectionReader_P::readBuildingsFromStreet(
+void OsmAnd::ObfAddressSectionReader_P::readBuildingsAndIntersectionsFromStreet(
     const ObfReader_P& reader,
     const std::shared_ptr<const Street>& street,
-    QList< std::shared_ptr<const Building> >* resultOut,
+    QList< std::shared_ptr<const Building> >* buildingsOut,
+    QList< std::shared_ptr<const Street> >* intersectionOut,
     const AreaI* const bbox31,
-    const BuildingVisitorFunction visitor,
+    const BuildingVisitorFunction buildingVisitor,
+    const IntersectionVisitorFunction intesectionVisitor,
     const std::shared_ptr<const IQueryController>& queryController)
 {
     const auto cis = reader.getCodedInputStream().get();
@@ -534,21 +536,54 @@ void OsmAnd::ObfAddressSectionReader_P::readBuildingsFromStreet(
                 return;
             case OBF::StreetIndex::kBuildingsFieldNumber:
             {
-                const auto offset = cis->CurrentPosition();
-                gpb::uint32 length;
-                cis->ReadVarint32(&length);
-                const auto oldLimit = cis->PushLimit(length);
-
-                std::shared_ptr<Building> building;
-                readBuilding(reader, street, street->streetGroup, offset, building, bbox31, queryController);
-
-                ObfReaderUtilities::ensureAllDataWasRead(cis);
-                cis->PopLimit(oldLimit);
-
-                if (!visitor || visitor(building))
+                if (!buildingVisitor && !buildingsOut)
                 {
-                    if (resultOut)
-                        resultOut->push_back(building);
+                    ObfReaderUtilities::skipBlockWithLength(cis);
+                }
+                else
+                {
+                    const auto offset = cis->CurrentPosition();
+                    gpb::uint32 length;
+                    cis->ReadVarint32(&length);
+                    const auto oldLimit = cis->PushLimit(length);
+
+                    std::shared_ptr<Building> building;
+                    readBuilding(reader, street, street->streetGroup, offset, building, bbox31, queryController);
+
+                    ObfReaderUtilities::ensureAllDataWasRead(cis);
+                    cis->PopLimit(oldLimit);
+
+                    if (!buildingVisitor || buildingVisitor(building))
+                    {
+                        if (buildingsOut)
+                            buildingsOut->push_back(building);
+                    }
+                }
+                break;
+            }
+            case OBF::StreetIndex::kIntersectionsFieldNumber:
+            {
+                if (!intesectionVisitor && !intersectionOut)
+                {
+                    ObfReaderUtilities::skipBlockWithLength(cis);
+                }
+                else
+                {
+                    gpb::uint32 length;
+                    cis->ReadVarint32(&length);
+                    const auto oldLimit = cis->PushLimit(length);
+
+                    std::shared_ptr<Street> streetIntersection;
+                    readStreetIntersection(reader, street, streetIntersection, bbox31, queryController);
+
+                    ObfReaderUtilities::ensureAllDataWasRead(cis);
+                    cis->PopLimit(oldLimit);
+
+                    if (!intesectionVisitor || intesectionVisitor(streetIntersection))
+                    {
+                        if (intersectionOut)
+                            intersectionOut->push_back(streetIntersection);
+                    }
                 }
                 break;
             }
@@ -740,53 +775,6 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
                 else
                     buildingBBox31 = AreaI(interpolationPosition31, interpolationPosition31);
 
-                break;
-            }
-            default:
-                ObfReaderUtilities::skipUnknownField(cis, tag);
-                break;
-        }
-    }
-}
-
-void OsmAnd::ObfAddressSectionReader_P::readIntersectionsFromStreet(
-    const ObfReader_P& reader,
-    const std::shared_ptr<const Street>& street,
-    QList< std::shared_ptr<const Street> >* resultOut,
-    const AreaI* const bbox31,
-    const IntersectionVisitorFunction visitor,
-    const std::shared_ptr<const IQueryController>& queryController)
-{
-    const auto cis = reader.getCodedInputStream().get();
-
-    for (;;)
-    {
-        const auto tagPos = cis->CurrentPosition();
-        const auto tag = cis->ReadTag();
-        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
-        {
-            case 0:
-                if (!ObfReaderUtilities::reachedDataEnd(cis))
-                    return;
-
-                return;
-            case OBF::StreetIndex::kIntersectionsFieldNumber:
-            {
-                gpb::uint32 length;
-                cis->ReadVarint32(&length);
-                const auto oldLimit = cis->PushLimit(length);
-
-                std::shared_ptr<Street> streetIntersection;
-                readStreetIntersection(reader, street, streetIntersection, bbox31, queryController);
-
-                ObfReaderUtilities::ensureAllDataWasRead(cis);
-                cis->PopLimit(oldLimit);
-
-                if (!visitor || visitor(streetIntersection))
-                {
-                    if (resultOut)
-                        resultOut->push_back(streetIntersection);
-                }
                 break;
             }
             default:
@@ -1471,53 +1459,27 @@ void OsmAnd::ObfAddressSectionReader_P::loadStreetsFromGroup(
     cis->PopLimit(oldLimit);
 }
 
-void OsmAnd::ObfAddressSectionReader_P::loadBuildingsFromStreet(
+void OsmAnd::ObfAddressSectionReader_P::loadBuildingsAndIntersectionsFromStreet(
     const ObfReader_P& reader,
     const std::shared_ptr<const Street>& street,
-    QList< std::shared_ptr<const Building> >* resultOut,
-    const AreaI* const bbox31,
-    const BuildingVisitorFunction visitor,
-    const std::shared_ptr<const IQueryController>& queryController)
+    QList< std::shared_ptr<const Building> >* buildingsOut /*= nullptr*/,
+    QList< std::shared_ptr<const Street> >* intersectionsOut /*= nullptr*/,
+    const AreaI* const bbox31 /*= nullptr*/,
+    const BuildingVisitorFunction buildingVisitor /*= nullptr*/,
+    const IntersectionVisitorFunction intersectionVisitor /*= nullptr*/,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     const auto cis = reader.getCodedInputStream().get();
     cis->Seek(street->offset);
-
-    
     gpb::uint32 length;
     cis->ReadVarint32(&length);
-    
     const auto oldLimit = cis->PushLimit(length);
     cis->Skip(street->firstBuildingInnerOffset - (cis->CurrentPosition() - street->offset));
 
-    readBuildingsFromStreet(reader, street, resultOut, bbox31, visitor, queryController);
+    readBuildingsAndIntersectionsFromStreet(reader, street, buildingsOut, intersectionsOut, bbox31, buildingVisitor, intersectionVisitor, queryController);
 
     ObfReaderUtilities::ensureAllDataWasRead(cis);
     cis->PopLimit(oldLimit);
-    
-}
-
-void OsmAnd::ObfAddressSectionReader_P::loadIntersectionsFromStreet(
-    const ObfReader_P& reader,
-    const std::shared_ptr<const Street>& street,
-    QList< std::shared_ptr<const Street> >* resultOut,
-    const AreaI* const bbox31,
-    const IntersectionVisitorFunction visitor,
-    const std::shared_ptr<const IQueryController>& queryController)
-{
-    const auto cis = reader.getCodedInputStream().get();
-    cis->Skip(street->offset);
-
-    gpb::uint32 length;
-    cis->ReadVarint32(&length);
-    const auto oldLimit = cis->PushLimit(length);
-    cis->Skip(street->firstIntersectionInnerOffset - (cis->CurrentPosition() - street->offset));
-
-    readIntersectionsFromStreet(reader, street, resultOut, bbox31, visitor, queryController);
-
-    ObfReaderUtilities::ensureAllDataWasRead(cis);
-    cis->PopLimit(oldLimit);
-
-
 }
 
 void OsmAnd::ObfAddressSectionReader_P::scanAddressesByName(

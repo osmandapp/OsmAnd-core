@@ -31,6 +31,7 @@
 #include "IQueryController.h"
 #include "FunctorQueryController.h"
 #include "QKeyValueIterator.h"
+#include "Building.h"
 
 #define ENLARGE_QUERY_BBOX_METERS 100
 
@@ -1156,8 +1157,8 @@ bool OsmAnd::ObfDataInterface::loadStreetsFromGroups(
     return true;
 }
 
-bool OsmAnd::ObfDataInterface::preloadBuildings(
-    const QList< std::shared_ptr<Street> >& streets,
+bool OsmAnd::ObfDataInterface::preloadBuildingsAndIntersections(
+    const std::shared_ptr<Street> street,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     for (const auto& obfReader : constOf(obfReaders))
@@ -1171,22 +1172,23 @@ bool OsmAnd::ObfDataInterface::preloadBuildings(
             if (queryController && queryController->isAborted())
                 return false;
 
-            for (const auto& street : constOf(streets))
-            {
-                if (addressSection != street->streetGroup->obfSection)
-                    continue;
-
-                QList< std::shared_ptr<const Building> > intermediateResult;
-                OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(
+            if (addressSection != street->streetGroup->obfSection)
+                continue;
+                
+            QList< std::shared_ptr<const Building> > buildingsOut;
+            QList< std::shared_ptr<const Street> > intersectionsOut;
+            OsmAnd::ObfAddressSectionReader::loadBuildingsAndIntersectionsFromStreet(
                                                                          obfReader,
                                                                          street,
-                                                                         &intermediateResult,
+                                                                         &buildingsOut,
+                                                                         &intersectionsOut,
+                                                                         nullptr,
                                                                          nullptr,
                                                                          nullptr,
                                                                          queryController);
 
-                street->buildings = qMove(intermediateResult);
-            }
+            street->buildings = qMove(buildingsOut);
+            street->intersectedStreets = qMove(intersectionsOut);
         }
     }
 

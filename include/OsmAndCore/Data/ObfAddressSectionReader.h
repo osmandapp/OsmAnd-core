@@ -69,6 +69,16 @@ namespace OsmAnd
             const IntersectionVisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
+        static void loadBuildingsAndIntersectionsFromStreet(
+            const std::shared_ptr<const ObfReader>& reader,
+            const std::shared_ptr<const Street>& street,
+            QList< std::shared_ptr<const Building> >* buildingsOut = nullptr,
+            QList< std::shared_ptr<const Street> >* intersectionsOut = nullptr,
+            const AreaI* const bbox31 = nullptr,
+            const BuildingVisitorFunction buildingVisitor = nullptr,
+            const IntersectionVisitorFunction intersectionVisitor = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+
         static void scanAddressesByName(
             const std::shared_ptr<const ObfReader>& reader,
             const std::shared_ptr<const ObfAddressSectionInfo>& section,

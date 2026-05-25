@@ -173,8 +173,8 @@ namespace OsmAnd
             const ObfAddressSectionReader::StreetVisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
-        bool preloadBuildings(
-            const QList< std::shared_ptr<Street> >& streets,
+        bool preloadBuildingsAndIntersections(
+            const std::shared_ptr<Street> street,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool loadBuildingsFromStreets(
