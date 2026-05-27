@@ -232,25 +232,32 @@ namespace OsmAnd
     struct OSMAND_CORE_API GridParameters Q_DECL_FINAL
     {
         float factorX1; // = 1 - EPSG:4326 longitude (radians)
-        float factorX2; // = 1 - Universal Transverse Mercator easting coordinate (100 kilometers)
+        float factorX2; // = 1 - Transverse Mercator easting coordinate (100 kilometers)
         float factorX3; // = 1 - Mercator X coordinate (100 map kilometers)
         float offsetX;
         float factorY1; // = 1 - EPSG:4326 latitude (radians)
-        float factorY2; // = 1 - Universal Transverse Mercator northing coordinate (100 kilometers)
+        float factorY2; // = 1 - Transverse Mercator northing coordinate (100 kilometers)
         float factorY3; // = 1 - Mercator Y coordinate (100 map kilometers)
         float offsetY;
         ZoomLevel minZoom;
         ZoomLevel maxZoomForFloat; // Maximum zoom level to use only FP coordinates in GLSL shaders
         ZoomLevel maxZoomForMixed; // Maximum zoom level to use FP coordinates in GLSL shaders
+        PointD lonBounds; // Longitude bounds (radians)
+        PointD latBounds; // Latitute bounds (radians)
+        PointD semiMajorAxisAndInverseFlattening; // Ellipsoid: semi-major axis (km) and inverse flattening
+        PointD refLonLatTM; // Transverse Mercator: central meridian and latitude of origin (radians)
+        PointD falseEastingAndNorthingTM; // Transverse Mercator: false easting and false northing (km)
+        double scaleFactor; // Grid scale factor
     };
 
     struct OSMAND_CORE_API GridConfiguration Q_DECL_FINAL
     {
         enum class Projection {
             WGS84 = 0,
-            UTM = 1,
-            MGRS = 2,
-            Mercator = 3,
+            TM = 1,
+            UTM = 2,
+            MGRS = 3,
+            Mercator = 4,
         };
 
         enum class Format {
@@ -483,16 +490,25 @@ namespace OsmAnd
 
         GridParameters gridParameters[2];
         GridConfiguration& setProjectionParameters();
+        GridConfiguration& setPrimaryTransverseMercatorConstants(
+            const PointD& lonBounds, const PointD& latBounds, const PointD& semiMajorAxisAndInverseFlattening,
+            const PointD& refLonLat, const PointD& falseEastingAndNorthing, const PointD& scaleFactor);
+        GridConfiguration& setSecondaryTransverseMercatorConstants(
+            const PointD& lonBounds, const PointD& latBounds, const PointD& semiMajorAxisAndInverseFlattening,
+            const PointD& refLonLat, const PointD& falseEastingAndNorthing, const PointD& scaleFactor);
 
 #if !defined(SWIG)
         GridConfiguration& setProjectionParameters(const int gridIndex, const Projection projection);
-        double getPrimaryGridReference(const PointI& location31) const;
-        double getSecondaryGridReference(const PointI& location31) const;
-        PointD getPrimaryGridLocation(const PointI& location31, const double* referenceDeg = nullptr) const;
-        PointD getSecondaryGridLocation(const PointI& location31, const double* referenceDeg = nullptr) const;
-        double getLocationReference(const Projection projection, const PointI& location31) const;
-        PointD projectLocation(
-            const Projection projection, const PointI& location31, const double* referenceDeg = nullptr) const;
+        GridConfiguration& setTransverseMercatorConstants(const int gridIndex,
+            const PointD& lonBounds, const PointD& latBounds, const PointD& semiMajorAxisAndInverseFlattening,
+            const PointD& refLonLat, const PointD& falseEastingAndNorthing, const PointD& scaleFactor);
+        PointD getPrimaryGridReference(const PointI& location31) const;
+        PointD getSecondaryGridReference(const PointI& location31) const;
+        PointD getPrimaryGridLocation(const PointI& location31, const PointD* referenceDeg = nullptr) const;
+        PointD getSecondaryGridLocation(const PointI& location31, const PointD* referenceDeg = nullptr) const;
+        PointD getLocationReference(const int gridIndex, const Projection projection, const PointI& location31) const;
+        PointD projectLocation(const int gridIndex, const Projection projection, const PointI& location31,
+            const PointD* referenceDeg = nullptr) const;
         PointI getPrimaryGridLocation31(const PointD& location) const;
         PointI getSecondaryGridLocation31(const PointD& location) const;
         PointI unProjectLocation(const Projection projection, const PointD& location) const;
@@ -514,9 +530,10 @@ namespace OsmAnd
         QString getSecondaryGridMarkY(const PointD& coordinates, const int zone) const;
         QString getMarkX(
             const Projection projection, const Format format, const PointD& coordinates, const int zone) const;
-        QString getMarkY(
+        QString getMarkY(const int gridIndex,
             const Projection projection, const const Format format, const PointD& coordinates, const int zone) const;
-        PointD getCurrentGaps(const PointI& target31, const ZoomLevel& zoomLevel, PointD* refLons = nullptr) const;
+        PointD getCurrentGaps(const PointI& target31, const ZoomLevel& zoomLevel,
+            PointD* refLons = nullptr, PointD* refLats = nullptr) const;
         double correctGap(const Projection projection, const double gap) const;
 #endif // !defined(SWIG)
 
@@ -587,6 +604,8 @@ namespace OsmAnd
 
             bool fromLonLat(PointD& location);
             bool toLonLat(PointD& location);
+            bool getConstantsTM(PointD& lonBounds, PointD& latBounds, PointD& semiMajorAxisAndInverseFlattening,
+                PointD& refLonLatTM, PointD& falseEastingAndNorthingTM, PointD& scaleFactor);
     };
 }
 
