@@ -168,9 +168,15 @@ namespace OsmAnd
                     GLlocation groundCameraPosition;
                     GLlocation scaleToRetainProjectedSize;
                     GLlocation primaryGridAxisX;
-                    GLlocation secondaryGridAxisX;
                     GLlocation primaryGridAxisY;
+                    GLlocation primaryGridRefLonLat;
+                    GLlocation primaryGridBounds;
+                    GLlocation primaryGridConstants;
+                    GLlocation secondaryGridAxisX;
                     GLlocation secondaryGridAxisY;
+                    GLlocation secondaryGridRefLonLat;
+                    GLlocation secondaryGridBounds;
+                    GLlocation secondaryGridConstants;
 
                     // Per-tile data
                     GLlocation tileCoords31;

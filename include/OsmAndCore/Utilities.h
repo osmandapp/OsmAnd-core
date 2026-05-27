@@ -457,30 +457,54 @@ namespace OsmAnd
             return zone.y << 6 | zone.x;
         }
 
-        inline static PointD getCoordinatesUTM(const PointD& lonlat, const double refLon)
+        // Get Transverse Mercator coordinates from angles (latitude and longitude)
+        inline static PointD getCoordinatesTM(
+            const PointD& lonlat,
+            const PointD& refLonLat,
+            const PointD& semiMajorAxisAndInverseFlattening,
+            const PointD& falseEastingAndNorthing,
+            double scaleFactor,
+            bool withLatitudeCorrection = true,
+            bool withX = true)
         {
             auto sinlat = sin(lonlat.y);
-            //double f = 1.0 / 298.257223563;
-            //double n = f / (2.0 - f);
-            double nn = 0.081819190842621486; //2.0 * sqrt(n) / (1.0 + n);
+            double f = 1.0 / semiMajorAxisAndInverseFlattening.y;
+            double n = f / (2.0 - f);
+            double nn = 2.0 * sqrt(n) / (1.0 + n);
             double t = sinh(atanh(sinlat) - nn * atanh(nn * sinlat));
-            double xi = atan(t / cos(lonlat.x - refLon));
+            double x = lonlat.x - refLonLat.x;
+            double xi = atan(t / cos(x));
             double xi2 = xi * 2.0;
             double xi4 = xi * 4.0;
             double xi6 = xi * 6.0;
-            double eta = atanh(sin(lonlat.x - refLon) / sqrt(1.0 + t * t));
+            double eta = atanh(sin(x) / sqrt(1.0 + t * t));
             double eta2 = eta * 2.0;
             double eta4 = eta * 4.0;
             double eta6 = eta * 6.0;
-            double a1 = 8.3773181881925413e-4; //0.5 * n - 2.0 / 3.0 * n * n + 5.0 / 16.0 * pow(n, 3.0);
-            double a2 = 7.6084969586991665e-7; //13.0 / 48.0 * n * n - 3.0 / 5.0 * pow(n, 3.0);
-            double a3 = 1.2034877875966644e-9; //61.0 / 240.0 * pow(n, 3.0);
-            PointD result(eta + a1 * cos(xi2) * sinh(eta2) + a2 * cos(xi4) * sinh(eta4) + a3 * cos(xi6) * sinh(eta6),
-                xi + a1 * sin(xi2) * cosh(eta2) + a2 * sin(xi4) * cosh(eta4) + a3 * sin(xi6) * cosh(eta6));
-            //double a = 6378.137 / (1.0 + n) * (1.0 + n * n / 4.0 + pow(n, 4.0) / 64.0 + pow(n, 6.0) / 256.0);
-            result *= 6364.9021661650868; //a * 0.9996;
-            result.x += 500.0;
-            result.y += 10000.0;
+            double n2 = n * n;
+            double n3 = n2 * n;
+            double a1 = 0.5 * n - 2.0 / 3.0 * n2 + 5.0 / 16.0 * n3;
+            double a2 = 13.0 / 48.0 * n2 - 3.0 / 5.0 * n3;
+            double a3 = 61.0 / 240.0 * n3;
+            double factor = semiMajorAxisAndInverseFlattening.x * scaleFactor
+                / (1.0 + n) * (1.0 + n2 / 4.0 + n2 * n2 / 64.0 + n3 * n3 / 256.0);
+            PointD result;
+            if (withX)
+            {
+                result.x = eta + a1 * cos(xi2) * sinh(eta2) + a2 * cos(xi4) * sinh(eta4) + a3 * cos(xi6) * sinh(eta6);
+                result.x *= factor;
+                result.x += falseEastingAndNorthing.x;
+            }
+            result.y = xi + a1 * sin(xi2) * cosh(eta2) + a2 * sin(xi4) * cosh(eta4) + a3 * sin(xi6) * cosh(eta6);
+            result.y *= factor;
+            result.y += falseEastingAndNorthing.y;
+            if (withLatitudeCorrection && refLonLat.y != 0.0)
+            {
+                PointD zeroFalseEaN(0.0, 0.0);
+                auto origin = getCoordinatesTM(
+                    refLonLat, refLonLat, semiMajorAxisAndInverseFlattening, zeroFalseEaN, scaleFactor, false, false);
+                result.y -= origin.y;
+            }
             return result;
         }
 

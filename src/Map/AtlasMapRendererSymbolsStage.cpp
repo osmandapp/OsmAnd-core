@@ -1593,6 +1593,26 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 }
                 else
                 {
+                    if (isPrimary
+                        && currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::TM)
+                    {
+                        const auto lonlat = Utilities::getAnglesFrom31(currentState.target31);
+                        if (lonlat.x < currentState.gridConfiguration.gridParameters[0].lonBounds.x
+                            || lonlat.x > currentState.gridConfiguration.gridParameters[0].lonBounds.y
+                            || lonlat.y < currentState.gridConfiguration.gridParameters[0].latBounds.x
+                            || lonlat.y > currentState.gridConfiguration.gridParameters[0].latBounds.y)
+                        return;
+                    }
+                    else if (!isPrimary
+                        && currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::TM)
+                    {
+                        const auto lonlat = Utilities::getAnglesFrom31(currentState.target31);
+                        if (lonlat.x < currentState.gridConfiguration.gridParameters[1].lonBounds.x
+                            || lonlat.x > currentState.gridConfiguration.gridParameters[1].lonBounds.y
+                            || lonlat.y < currentState.gridConfiguration.gridParameters[1].latBounds.x
+                            || lonlat.y > currentState.gridConfiguration.gridParameters[1].latBounds.y)
+                        return;
+                    }
                     const auto intHalf = intFull >> 1;
                     AreaI64 area64(currentState.visibleBBoxShifted);
                     area64 += PointI64(intHalf, intHalf);
@@ -1603,30 +1623,31 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                     PointI p2(
                         isAxisY ? currentState.target31.x : static_cast<int32_t>(area64.bottomRight.x & INT32_MAX),
                         isAxisY ? static_cast<int32_t>(area64.bottomRight.y & INT32_MAX) : currentState.target31.y);
-                    auto refLon = isPrimary
+                    auto refLonLat = isPrimary
                         ? currentState.gridConfiguration.getPrimaryGridReference(currentState.target31)
                         : currentState.gridConfiguration.getSecondaryGridReference(currentState.target31);
-                    auto refLon1 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p1)
+                    auto refLonLat1 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p1)
                         : currentState.gridConfiguration.getSecondaryGridReference(p1);
-                    auto refLon2 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p2)
+                    auto refLonLat2 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p2)
                         : currentState.gridConfiguration.getSecondaryGridReference(p2);
-                    if (refLon != refLon1 && refLon != refLon2)
+                    if (refLonLat != refLonLat1 && refLonLat != refLonLat2)
                         return;
-                    if (refLon != refLon1)
+                    if (refLonLat != refLonLat1)
                         p1 = currentState.target31;
-                    if (refLon != refLon2)
+                    if (refLonLat != refLonLat2)
                         p2 = currentState.target31;
-                    auto location1 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p1, &refLon)
-                        : currentState.gridConfiguration.getSecondaryGridLocation(p1, &refLon);
-                    auto location2 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p2, &refLon)
-                        : currentState.gridConfiguration.getSecondaryGridLocation(p2, &refLon);
+                    auto location1 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p1, &refLonLat)
+                        : currentState.gridConfiguration.getSecondaryGridLocation(p1, &refLonLat);
+                    auto location2 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p2, &refLonLat)
+                        : currentState.gridConfiguration.getSecondaryGridLocation(p2, &refLonLat);
                     auto coord1 = isAxisY ? location1.y : location1.x;
                     auto coord2 = isAxisY ? location2.y : location2.x;
                     const bool inside = coordinate > std::min(coord1, coord2) && coordinate < std::max(coord1, coord2);
                     if (!inside)
                         return;
                     int i = 0;
-                    position31 = getApproximate31(coordinate, coord1, coord2, p1, p2, isPrimary, isAxisY, &refLon, i);
+                    position31 = getApproximate31(
+                        coordinate, coord1, coord2, p1, p2, isPrimary, isAxisY, &refLonLat, i);
                 }
             }
             else
@@ -1639,24 +1660,54 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 PointI p1(internalState.elevatedFrustum2D31.p1);
                 PointI p2(internalState.elevatedFrustum2D31.p2);
                 PointI p3(internalState.elevatedFrustum2D31.p3);
-                auto refLon0 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p0)
-                    : currentState.gridConfiguration.getSecondaryGridReference(p0);
-                auto refLon1 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p1)
-                    : currentState.gridConfiguration.getSecondaryGridReference(p1);
-                auto refLon2 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p2)
-                    : currentState.gridConfiguration.getSecondaryGridReference(p2);
-                auto refLon3 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p3)
-                    : currentState.gridConfiguration.getSecondaryGridReference(p3);
-                if (refLon0 != refLon1 || refLon0 != refLon2 || refLon0 != refLon3)
+                if (isPrimary
+                    && currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::TM)
+                {
+                    auto lonlat = Utilities::getAnglesFrom31(p0);
+                    const AreaD gridBounds(
+                        currentState.gridConfiguration.gridParameters[0].latBounds.x,
+                        currentState.gridConfiguration.gridParameters[0].lonBounds.x,
+                        currentState.gridConfiguration.gridParameters[0].latBounds.y,
+                        currentState.gridConfiguration.gridParameters[0].lonBounds.y);
+                    if (!gridBounds.contains(Utilities::getAnglesFrom31(p0))
+                        || !gridBounds.contains(Utilities::getAnglesFrom31(p1))
+                        || !gridBounds.contains(Utilities::getAnglesFrom31(p2))
+                        || !gridBounds.contains(Utilities::getAnglesFrom31(p3)))
                     return;
-                auto location0 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p0, &refLon0)
-                    : currentState.gridConfiguration.getSecondaryGridLocation(p0, &refLon0);
-                auto location1 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p1, &refLon0)
-                    : currentState.gridConfiguration.getSecondaryGridLocation(p1, &refLon0);
-                auto location2 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p2, &refLon0)
-                    : currentState.gridConfiguration.getSecondaryGridLocation(p2, &refLon0);
-                auto location3 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p3, &refLon0)
-                    : currentState.gridConfiguration.getSecondaryGridLocation(p3, &refLon0);
+                }
+                else if (!isPrimary
+                    && currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::TM)
+                {
+                    auto lonlat = Utilities::getAnglesFrom31(p0);
+                    const AreaD gridBounds(
+                        currentState.gridConfiguration.gridParameters[1].latBounds.x,
+                        currentState.gridConfiguration.gridParameters[1].lonBounds.x,
+                        currentState.gridConfiguration.gridParameters[1].latBounds.y,
+                        currentState.gridConfiguration.gridParameters[1].lonBounds.y);
+                    if (!gridBounds.contains(Utilities::getAnglesFrom31(p0))
+                        || !gridBounds.contains(Utilities::getAnglesFrom31(p1))
+                        || !gridBounds.contains(Utilities::getAnglesFrom31(p2))
+                        || !gridBounds.contains(Utilities::getAnglesFrom31(p3)))
+                    return;
+                }
+                auto refLonLat0 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p0)
+                    : currentState.gridConfiguration.getSecondaryGridReference(p0);
+                auto refLonLat1 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p1)
+                    : currentState.gridConfiguration.getSecondaryGridReference(p1);
+                auto refLonLat2 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p2)
+                    : currentState.gridConfiguration.getSecondaryGridReference(p2);
+                auto refLonLat3 = isPrimary ? currentState.gridConfiguration.getPrimaryGridReference(p3)
+                    : currentState.gridConfiguration.getSecondaryGridReference(p3);
+                if (refLonLat0 != refLonLat1 || refLonLat0 != refLonLat2 || refLonLat0 != refLonLat3)
+                    return;
+                auto location0 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p0, &refLonLat0)
+                    : currentState.gridConfiguration.getSecondaryGridLocation(p0, &refLonLat0);
+                auto location1 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p1, &refLonLat0)
+                    : currentState.gridConfiguration.getSecondaryGridLocation(p1, &refLonLat0);
+                auto location2 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p2, &refLonLat0)
+                    : currentState.gridConfiguration.getSecondaryGridLocation(p2, &refLonLat0);
+                auto location3 = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(p3, &refLonLat0)
+                    : currentState.gridConfiguration.getSecondaryGridLocation(p3, &refLonLat0);
                 auto coord0 = isAxisY ? location0.y : location0.x;
                 auto coord1 = isAxisY ? location1.y : location1.x;
                 auto coord2 = isAxisY ? location2.y : location2.x;
@@ -1680,16 +1731,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 PointI pos[4];
                 int i = 0;
                 if (cross[0] = coordinate > std::min(coord0, coord1) && coordinate < std::max(coord0, coord1))
-                    pos[0] = getApproximate31(coordinate, coord0, coord1, p0, p1, isPrimary, isAxisY, &refLon0, i);
+                    pos[0] = getApproximate31(coordinate, coord0, coord1, p0, p1, isPrimary, isAxisY, &refLonLat0, i);
                 i = 0;
                 if (cross[1] = coordinate > std::min(coord1, coord2) && coordinate < std::max(coord1, coord2))
-                    pos[1] = getApproximate31(coordinate, coord1, coord2, p1, p2, isPrimary, isAxisY, &refLon0, i);
+                    pos[1] = getApproximate31(coordinate, coord1, coord2, p1, p2, isPrimary, isAxisY, &refLonLat0, i);
                 i = 0;
                 if (cross[2] = coordinate > std::min(coord2, coord3) && coordinate < std::max(coord2, coord3))
-                    pos[2] = getApproximate31(coordinate, coord2, coord3, p2, p3, isPrimary, isAxisY, &refLon0, i);
+                    pos[2] = getApproximate31(coordinate, coord2, coord3, p2, p3, isPrimary, isAxisY, &refLonLat0, i);
                 i = 0;
                 if (cross[3] = coordinate > std::min(coord3, coord0) && coordinate < std::max(coord3, coord0))
-                    pos[3] = getApproximate31(coordinate, coord3, coord0, p3, p0, isPrimary, isAxisY, &refLon0, i);
+                    pos[3] = getApproximate31(coordinate, coord3, coord0, p3, p0, isPrimary, isAxisY, &refLonLat0, i);
                 int j;
                 bool isTop = false;
                 bool isBottom = false;
@@ -4414,7 +4465,7 @@ float OsmAnd::AtlasMapRendererSymbolsStage::getSubsectionOpacityFactor(
 
 OsmAnd::PointI OsmAnd::AtlasMapRendererSymbolsStage::getApproximate31(
     const double coordinate, const double coord1, const double coord2, const PointI& pos1, const PointI& pos2,
-    const bool isPrimary, const bool isAxisY, const double* pRefLon, int32_t& iteration) const
+    const bool isPrimary, const bool isAxisY, const PointD* pRefLonLat, int32_t& iteration) const
 {
     if (iteration == 0)
     {
@@ -4444,15 +4495,15 @@ OsmAnd::PointI OsmAnd::AtlasMapRendererSymbolsStage::getApproximate31(
     const auto gap = coord2 - coord1;
     const auto factor = gap != 0.0 ? delta / gap : 0.0;
     auto pos31 = PointI(PointD(pos2 - pos1) * factor) + pos1;
-    const auto point = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(pos31, pRefLon)
-        : currentState.gridConfiguration.getSecondaryGridLocation(pos31, pRefLon);
+    const auto point = isPrimary ? currentState.gridConfiguration.getPrimaryGridLocation(pos31, pRefLonLat)
+        : currentState.gridConfiguration.getSecondaryGridLocation(pos31, pRefLonLat);
     const auto newCoord = isAxisY ? point.y : point.x;
     if (iteration < GRID_ITER_LIMIT && std::abs(newCoord - coordinate) > std::abs(gap) / GRID_ITER_PRECISION)
     {
         iteration++;
         const bool s = std::abs(newCoord - coord1) > std::abs(delta);
         pos31 = getApproximate31(coordinate, s ? newCoord : coord1, s ? coord2 : newCoord,
-            s ? pos31 : pos1, s ? pos2 : pos31, isPrimary, isAxisY, pRefLon, iteration);
+            s ? pos31 : pos1, s ? pos2 : pos31, isPrimary, isAxisY, pRefLonLat, iteration);
     }
     return pos31;
 }

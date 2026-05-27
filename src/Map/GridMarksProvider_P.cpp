@@ -29,14 +29,14 @@ OsmAnd::GridMarksProvider_P::~GridMarksProvider_P()
 }
 
 void OsmAnd::GridMarksProvider_P::calculateGridMarks(const bool isPrimary,
-    const double gap, const double refLon, QHash<int, PointD>& marksX, QHash<int, PointD>& marksY)
+    const double gap, const PointD& refLonLat, QHash<int, PointD>& marksX, QHash<int, PointD>& marksY)
 {
     auto marksCount = static_cast<int>(std::min(static_cast<double>(GRID_MARKS_PER_AXIS),
         isPrimary ? _gridConfiguration.getPrimaryMaxMarksPerAxis(gap)
         : _gridConfiguration.getSecondaryMaxMarksPerAxis(gap)));
     double halfCount = marksCount / 2;
-    auto location = (isPrimary ? _gridConfiguration.getPrimaryGridLocation(_target31, &refLon)
-        : _gridConfiguration.getSecondaryGridLocation(_target31, &refLon)) / gap;
+    auto location = (isPrimary ? _gridConfiguration.getPrimaryGridLocation(_target31, &refLonLat)
+        : _gridConfiguration.getSecondaryGridLocation(_target31, &refLonLat)) / gap;
     PointD centerLocation(std::round(location.x), std::round(location.y));
     location.x = (centerLocation.x - halfCount) * gap;
     location.y = (centerLocation.y - halfCount) * gap;
@@ -199,11 +199,13 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
             || !secondaryEasternHemisphereSuffix.isEmpty() || !secondaryWesternHemisphereSuffix.isEmpty());
                 
         if (!withPrimary
-            || (_gridConfiguration.primaryProjection != GridConfiguration::Projection::UTM
+            || (_gridConfiguration.primaryProjection != GridConfiguration::Projection::TM
+                && _gridConfiguration.primaryProjection != GridConfiguration::Projection::UTM
                 && _gridConfiguration.primaryProjection != GridConfiguration::Projection::MGRS))
             keepPrimary = true;
         if (!withSecondary
-            || (_gridConfiguration.secondaryProjection != GridConfiguration::Projection::UTM
+            || (_gridConfiguration.secondaryProjection != GridConfiguration::Projection::TM
+                && _gridConfiguration.secondaryProjection != GridConfiguration::Projection::UTM
                 && _gridConfiguration.secondaryProjection != GridConfiguration::Projection::MGRS))
             keepSecondary = true;
     
@@ -218,12 +220,13 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
         _mapZoomLevel = mapZoomLevel;
 
         PointD refLons;
-        const auto gaps = _gridConfiguration.getCurrentGaps(target31, mapZoomLevel, &refLons);
+        PointD refLats;
+        const auto gaps = _gridConfiguration.getCurrentGaps(target31, mapZoomLevel, &refLons, &refLats);
         QHash<int, PointD> primaryMarksX, primaryMarksY, secondaryMarksX, secondaryMarksY;
         QHash<int, PointD> primaryMarksXExtra, primaryMarksYExtra, secondaryMarksXExtra, secondaryMarksYExtra;
         if (withPrimary)
         {
-            calculateGridMarks(true, gaps.x, refLons.x, primaryMarksX, primaryMarksY);
+            calculateGridMarks(true, gaps.x, PointD(refLons.x, refLats.x), primaryMarksX, primaryMarksY);
             if (!centerPrimaryMarks && _mapZoomLevel >= MIN_ZOOM_LEVEL_SIDE_MARKS)
             {
                 primaryMarksXExtra = primaryMarksX;
@@ -234,7 +237,7 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
         }
         if (withSecondary)
         {
-            calculateGridMarks(false, gaps.y, refLons.y, secondaryMarksX, secondaryMarksY);
+            calculateGridMarks(false, gaps.y, PointD(refLons.y, refLats.y), secondaryMarksX, secondaryMarksY);
             if (!centerSecondaryMarks && _mapZoomLevel >= MIN_ZOOM_LEVEL_SIDE_MARKS)
             {
                 secondaryMarksXExtra = secondaryMarksX;
