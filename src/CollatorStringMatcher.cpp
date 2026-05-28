@@ -17,10 +17,6 @@ OsmAnd::CollatorStringMatcher::CollatorStringMatcher(const QString& part, const 
             mode_ = StringMatcherMode::CHECK_ONLY_STARTS_WITH;
         }
     }
-    if (OsmAnd::ArabicNormalizer::isSpecialArabic(part_)) {
-        QString normalized  = OsmAnd::ArabicNormalizer::normalize(part_);
-        part_ = normalized.isEmpty() ? part_ : normalized;
-    }
     _part = part_;
     _mode = mode_;
 }
@@ -31,11 +27,7 @@ OsmAnd::CollatorStringMatcher::~CollatorStringMatcher()
 
 bool OsmAnd::CollatorStringMatcher::matches(const QString& name) const
 {
-    QString name_ = name;
-    if (OsmAnd::ArabicNormalizer::isSpecialArabic(name)) {
-        QString arabic = OsmAnd::ArabicNormalizer::normalize(name);
-        name_ = arabic.isEmpty() ? name : arabic;
-    }
+    QString name_ = CollatorStringMatcher_P::lowercaseAndAlignChars(name);
     return _p->CollatorStringMatcher_P::matches(name_, _part, _mode);
 }
 

@@ -736,9 +736,10 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
     {
         // FUTURE: This is not effective code, it runs on each comparision
         // It would be more efficient to normalize all strings in file and normalize search string before collator
-        UnicodeString searchIn = qStrToUniStr(OsmAnd::CollatorStringMatcher::lowercaseAndAlignChars(_searchInParam));
-        QString theStartAligned = OsmAnd::CollatorStringMatcher::alignChars(_theStart);
-        UnicodeString theStart = qStrToUniStr(theStartAligned);
+        QString searchInParam = OsmAnd::CollatorStringMatcher::lowercaseAndAlignChars(_searchInParam);
+        QString theStartParam = OsmAnd::CollatorStringMatcher::alignChars(_theStart);
+        UnicodeString searchIn = qStrToUniStr(searchInParam.replace("-", " "));
+        UnicodeString theStart = qStrToUniStr(theStartParam.replace("-", " "));
 
         int startLength = theStart.length();
         int serchInLength = searchIn.length();
