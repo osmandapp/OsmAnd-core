@@ -22,6 +22,7 @@
 #include <Logging.h>
 #include <OsmAndCore/ICU.h>
 #include "SearchAlgorithms.h"
+#include "OsmAndCore/Binary/ObfConstants.h"
 
 const int BUCKET_SEARCH_BY_NAME = 5;
 const int BASE_POI_SHIFT = 7;
@@ -1046,6 +1047,12 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                             travelElo = -1;
                         
                         continue;
+                    }
+                    else if (OsmAnd::ObfConstants::isTagIndexedAsSearchRelated(tag)
+                             || OsmAnd::ObfConstants::isTagIndexedForSearchAsId(tag)
+                             || OsmAnd::ObfConstants::isTagIndexedForSearchAsName(tag))
+                    {
+                        additionalNames.append(entry.value().toString());
                     }
                 }
 

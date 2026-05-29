@@ -18,8 +18,7 @@ OsmAnd::ResourcesManager::ResourcesManager(
     const QString& appVersion_ /*= QString::null*/,
     const QString& repositoryBaseUrl_ /*= QLatin1String("http://download.osmand.net")*/,
     const QString& indexesUrl_ /*= QLatin1String("http://download.osmand.net/get_indexes")*/,
-    const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/,
-    const bool isTestInit /* = false*/)
+    const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
     : _p(new ResourcesManager_P(this, webClient))
     , localStoragePath(localStoragePath_)
     , userStoragePath(userStoragePath_)
@@ -35,7 +34,6 @@ OsmAnd::ResourcesManager::ResourcesManager(
         ? localCachePath_
         : QStandardPaths::writableLocation(QStandardPaths::CacheLocation))
     , appVersion(appVersion_)
-    , isTestInit(isTestInit)
     , onlineTileSources(_p->onlineTileSources)
     , mapStylesCollection(_p->mapStylesCollection)
     , obfsCollection(_p->obfsCollection)

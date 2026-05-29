@@ -2498,8 +2498,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
         std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfMetadata->obfFile));
         obfReaders.push_back(qMove(obfReader));
     }
-    bool isTestInit = owner->owner && owner->owner->isTestInit;
-    if (!otherBasemapPresent && owner->_miniBasemapObfFile && !isTestInit)
+    if (!otherBasemapPresent && owner->_miniBasemapObfFile)
     {
         std::shared_ptr<const ObfReader> obfReader(new ObfReader(owner->_miniBasemapObfFile));
         obfReaders.push_back(qMove(obfReader));
