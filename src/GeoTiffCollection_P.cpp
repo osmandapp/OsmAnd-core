@@ -1006,7 +1006,7 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
         {
             const auto& filePath = itEntry.key();
             const auto& tiffProperties = itEntry.value();
-            if (compose && isPartOfTile(tiffProperties.region31, AreaI(upperLeft31, lowerRight31)) ||
+            if ((compose && isPartOfTile(tiffProperties.region31, AreaI(upperLeft31, lowerRight31))) ||
                 (!compose && containsTile(tiffProperties.region31, AreaI(upperLeft31, lowerRight31))))
             {
                 available = true;
@@ -1156,21 +1156,29 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                                     }
                                     if (dataOffset.x >= rasterSize.x)
                                         result = false;
-                                    else if (dataOffset.x + dataSize.x > rasterSize.x)
+                                    else
                                     {
-                                        auto delta = rasterSize.x - dataOffset.x - dataSize.x;
-                                        dataSize.x -= delta;
-                                        tileLength.x -= std::ceil(static_cast<double>(delta) / resFactor.x);
-                                        lowerRight.x = upperLeft.x + static_cast<double>(tileLength.x) * resFactor.x;
+                                        auto delta = dataOffset.x + dataSize.x - rasterSize.x;
+                                        if (delta > 0)
+                                        {
+                                            dataSize.x -= delta;
+                                            tileLength.x -= std::ceil(static_cast<double>(delta) / resFactor.x);
+                                            lowerRight.x =
+                                                upperLeft.x + static_cast<double>(tileLength.x) * resFactor.x;
+                                        }
                                     }
                                     if (dataOffset.y >= rasterSize.y)
                                         result = false;
-                                    else if (dataOffset.y + dataSize.y > rasterSize.y)
+                                    else
                                     {
-                                        auto delta = rasterSize.y - dataOffset.y - dataSize.y;
-                                        dataSize.y -= delta;
-                                        tileLength.y -= std::ceil(static_cast<double>(delta) / resFactor.y);
-                                        lowerRight.y = upperLeft.y + static_cast<double>(tileLength.y) * resFactor.y;
+                                        auto delta = dataOffset.y + dataSize.y - rasterSize.y;
+                                        if (delta > 0)
+                                        {
+                                            dataSize.y -= delta;
+                                            tileLength.y -= std::ceil(static_cast<double>(delta) / resFactor.y);
+                                            lowerRight.y =
+                                                upperLeft.y + static_cast<double>(tileLength.y) * resFactor.y;
+                                        }
                                     }
                                 }
                                 else
