@@ -82,8 +82,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering(bool reinitialize)
 {
     GL_CHECK_PRESENT(glClearColor);
 
-    const auto gpuAPI = getGPUAPI();
-
     bool ok;
 
     ok = AtlasMapRenderer::doInitializeRendering(reinitialize);
@@ -571,7 +569,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
             latFactor = qPow(latFactor, 5.0) / static_cast<double>(1 << (state.zoomLevel - ZoomLevel2));
             poleDim *= poleDim;
 
-            const auto pr = distanceToLowerDetail;
             // Advance detail distance from camera to zFar near the poles (for low zoom levels)
             distanceToLowerDetail =
                 qMin(distanceToLowerDetail, poleDistance * (1.0 - poleDim) + poleDim * distanceToLowerDetail);
@@ -612,11 +609,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         const glm::vec4 nBR_c(+planeHalfWidth, -planeHalfHeight, -_zNear, 1.0f);
 
         // Transform 4 frustum vertices + camera center to global space
-        const auto eye_g = internalState->worldCameraPosition;
         const auto nTL_g = internalState->mCameraViewInv * nTL_c;
         const auto nTR_g = internalState->mCameraViewInv * nTR_c;
         const auto nBL_g = internalState->mCameraViewInv * nBL_c;
-        const auto nBR_g = internalState->mCameraViewInv * nBR_c;
 
         const auto frontVisibleEdgeN =
             glm::normalize(glm::cross(nBL_g.xyz() - nTL_g.xyz(), nTR_g.xyz() - nTL_g.xyz()));
@@ -1139,26 +1134,22 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     auto maxDistance = 1.0;
     auto zoomLevel = internalState->synthZoomLevel;
     QMap<int32_t, QHash<TileId, TileVisibility>> tiles;
-    QMap<int32_t, QSet<TileId>> tilesN;
     if (zoomLevel < ZoomLevel2)
     {
         tiles[zoomLevel].insert(TileId::zero(), TileVisibility::Visible);
-        tilesN[zoomLevel].insert(TileId::zero());
         if (zoomLevel > ZoomLevel0)
         {
             auto tileId = TileId::fromXY(1, 0);
             tiles[zoomLevel].insert(tileId, TileVisibility::Visible);
-            tilesN[zoomLevel].insert(tileId);
             tileId = TileId::fromXY(0, 1);
             tiles[zoomLevel].insert(tileId, TileVisibility::Visible);
-            tilesN[zoomLevel].insert(tileId);
             tileId = TileId::fromXY(1, 1);
             tiles[zoomLevel].insert(tileId, TileVisibility::Visible);
-            tilesN[zoomLevel].insert(tileId);
         }
     }
     else
     {
+        QMap<int32_t, QSet<TileId>> tilesN;
         const auto dirAngle = static_cast<double>(state.azimuth) * M_PI / 180.0;
         const auto dirX = -qSin(dirAngle);
         const auto dirY = qCos(dirAngle);
@@ -1443,8 +1434,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         }
 
                         // Tile should be considered visible if any corner ray of frustum intersects surface of a tile
-                        if (testVert
-                            && rayIntersectsTileSurface(camPos, camDown, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
+                        if ((testVert
+                             && rayIntersectsTileSurface(camPos, camDown, angTL.x, angBR.x, angTL.y, angBR.y, 1.0))
                             || rayIntersectsTileSurface(camPos, camTL, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
                             || rayIntersectsTileSurface(camPos, camTR, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
                             || rayIntersectsTileSurface(camPos, camBL, angTL.x, angBR.x, angTL.y, angBR.y, 1.0)
@@ -1691,8 +1682,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
 
                         // Check distance of middle point of the super-tile:
                         // it should be considered visible instead if its central point is far enough
-                        const bool oddX = tileIdN.x & 1 > 0;
-                        const bool oddY = tileIdN.y & 1 > 0;
+                        const bool oddX = (tileIdN.x & 1) > 0;
+                        const bool oddY = (tileIdN.y & 1) > 0;
                         const auto centralPoint = oddY ? (oddX ? normalTL : normalTR) : (oddX ? normalBL : normalBR);
                         const auto distance = getDistanceToTile(centralPoint, camPos, camDir, tiltFactor);
                         if (!lookForStrictlyVisible && currentZoom > MinZoomLevel && zLower != zFar
@@ -1744,7 +1735,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                             {
                                 takeTop = true;
                                 lookForStrictlyVisible = false;
-                                tilesN[currentZoom].clear();
+                                tilesN.clear();
                             }
                             tiles[currentZoom].insert(tileId, visibility);
                             tilesN[currentZoom].insert(tileIdN);
@@ -1804,7 +1795,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     {
                         lookForStrictlyVisible = false;
                         stage = 0;
-                        tilesN[zoomLevel].clear();
+                        tilesN.clear();
                         atLeastOneFlatVisibleFound = false;
                         maxDistance = 1.0;
                         distanceFromTarget = 0.0;
@@ -1900,7 +1891,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     internalState->visibleTilesSet.clear();
     internalState->uniqueTiles.clear();
     internalState->extraDetailedTiles.clear();
-    int total = 0;
     for (const auto& setEntry : rangeOf(constOf(tiles)))
     {
         const auto realZoom = setEntry.key() - zoomDelta;
@@ -1930,7 +1920,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 internalState->extraDetailedTiles.insert(tileIdN);
         }
         internalState->visibleTilesCount += internalState->visibleTilesSet[zoomLevel].size();
-        total += uniqueTiles.size();
         internalState->uniqueTiles[zoomLevel] = QVector<TileId>(uniqueTiles.begin(), uniqueTiles.end());
         const auto zoomShift = MaxZoomLevel - zoomLevel;
         const auto targetTileId = TileId::fromXY(state.target31.x >> zoomShift, state.target31.y >> zoomShift);
@@ -2368,7 +2357,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getHeightLimits(const MapRendererState& st
 
     std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
     bool isNotReady = false;
-    if (captureElevationDataResource(state, tileId, zoomLevel, &elevationData, &isNotReady))
+    if (captureElevationDataResource(state, tileId, zoomLevel, &elevationData, &isNotReady, true))
     {
         if (state.flatEarth)
             getElevationDataLimits(state, elevationData, tileId, zoomLevel, minHeight, maxHeight);
@@ -2475,8 +2464,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
         const glm::dvec3 planeO(0.0, static_cast<double>(height), 0.0);
         double length;
         const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, camPos, length);
-        if (!intersects || !(length > 0.0 && internalState.worldCameraPosition.y > height
-            || length < 0.0 && internalState.worldCameraPosition.y < height)
+        if (!intersects || !((length > 0.0 && internalState.worldCameraPosition.y > height)
+            || (length < 0.0 && internalState.worldCameraPosition.y < height))
             || (height == 0.0f && glm::dot(rayD, -planeN) < MIN_COS_SURFACE))
             return false;
 
@@ -2535,8 +2524,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
         const glm::dvec3 planeO(0.0, static_cast<double>(height), 0.0);
         double length;
         const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, camPos, length);
-        if (!intersects || !(length > 0.0 && internalState.worldCameraPosition.y > height
-            || length < 0.0 && internalState.worldCameraPosition.y < height)
+        if (!intersects || !((length > 0.0 && internalState.worldCameraPosition.y > height)
+            || (length < 0.0 && internalState.worldCameraPosition.y < height))
             || (height == 0.0f && glm::dot(rayD, -planeN) < MIN_COS_SURFACE))
             return false;
 
@@ -2582,7 +2571,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNearestLocationFromScreenPoint(
 std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRenderer_OpenGL::captureElevationDataResource(
     const MapRendererState& state, TileId normalizedTileId, ZoomLevel zoomLevel,
     std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource /*= nullptr*/,
-    bool* isNotReady /* = nullptr */) const
+    bool* isNotReady /* = nullptr */, bool checkResourcePresence /* = false */) const
 {
     if (!isRenderingInitialized() || !state.elevationDataProvider)
         return nullptr;
@@ -2618,7 +2607,7 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRenderer_Op
         if (isNotReady && state != MapRendererResourceState::Unavailable)
             *isNotReady = true;
     }
-    else if (isNotReady)
+    else if (isNotReady && checkResourcePresence)
         *isNotReady = true;
 
     return nullptr;
@@ -3706,13 +3695,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetAndZoom(const MapRendererState
             * glm::dmat3(d.x, n.x, neededV.x, d.y, n.y, neededV.y, d.z, n.z, neededV.z);
         const auto sameHemisphere = glm::dot(targetV.xy(), currentV.xy()) > 0.0;
         const auto zMult = (m[2].y - mGlobeRotation[2].y) * (neededV.z - currentV.z);
-        if (sameHemisphere && zMult < 0.0 || !sameHemisphere && zMult > 0.0)
+        if ((sameHemisphere && zMult < 0.0) || (!sameHemisphere && zMult > 0.0))
         {
             target31 = PointI(-1, -1);
             return true;
         }
         target31 = Utilities::get31FromAngles(PointD(qAtan2(-m[1].x, m[0].x), qAsin(qBound(-1.0, -m[2].y, 1.0))));
-        const auto minPossibleZoomLevel = ceil(log2(cosh(M_PI)) / 2.0);
         getCorrectedZoomOverGlobe(state, target31, zoomLevel, visualZoom);
     }
 
