@@ -36,7 +36,6 @@ QString OsmAnd::CollatorStringMatcher_P::lowercaseAndAlignChars(const QString& f
     QLocale defaultLocale;
     QString res = defaultLocale.toLower(fullText);
     return alignChars(res);
-    //return OsmAnd::ICU::stripDiacritics(res);
 }
 
 QString OsmAnd::CollatorStringMatcher_P::alignChars(const QString& fullText)

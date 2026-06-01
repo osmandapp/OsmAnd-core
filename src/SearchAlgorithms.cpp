@@ -12,7 +12,8 @@ QStringList OsmAnd::SearchAlgorithms::splitAndNormalize(const QString& query) {
     QStringList queryTokens;
     QSet<QString> uniqueTokens;
 
-    for (const QString& token : split(normalizedQuery))
+    const QStringList tokens = split(normalizedQuery);
+    for (const QString& token : tokens)
     {
         QString norm = normalizeToken(token);
         if (!norm.isEmpty() && !uniqueTokens.contains(norm))
@@ -27,12 +28,14 @@ QStringList OsmAnd::SearchAlgorithms::splitAndNormalize(const QString& query) {
         QString arabic = OsmAnd::ArabicNormalizer::normalize(normalizedQuery);
         if (!arabic.isEmpty() && arabic != normalizedQuery)
         {
-            for (const QString& token : split(arabic))
+            const QStringList arabicTokens = split(arabic);
+            for (const QString& token : arabicTokens)
             {
                 QString normalizedToken = normalizeToken(token);
-                if (!normalizedToken.isEmpty())
+                if (!normalizedToken.isEmpty() && !uniqueTokens.contains(normalizedToken))
                 {
                     queryTokens.append(normalizedToken);
+                    uniqueTokens.insert(normalizedToken);
                 }
             }
         }
@@ -42,55 +45,80 @@ QStringList OsmAnd::SearchAlgorithms::splitAndNormalize(const QString& query) {
 
 QString OsmAnd::SearchAlgorithms::normalizeToken(const QString& token)
 {
-    if (token.isEmpty()) return "";
+    if (token.isEmpty())
+    {
+        return QString();
+    }
     return OsmAnd::ICU::toNFC(token).toLower();
 }
 
 QString OsmAnd::SearchAlgorithms::canonicalizePunctuation(QString s)
 {
-    static const char16_t keys[] = {u'’', u'ʼ', u'(', u')', u'´', u'`', u'′', u'‵', u'ʹ'};
-    static const char16_t values[] = {u'\'', u'\'', u' ', u' ', u'\'', u'\'', u'\'', u'\'', u'\''};
-    const int size = sizeof(keys) / sizeof(char16_t);
+    const int n = s.length();
+    for (int i = 0; i < n; ++i)
+    {
+        switch (s.at(i).unicode())
+        {
+            case u'’':
+            case u'ʼ':
+            case u'´':
+            case u'`':
+            case u'′':
+            case u'‵':
+            case u'ʹ':
+                s[i] = QLatin1Char('\'');
+                break;
 
-    bool needNormalization = false;
-    for (int i = 0; i < size; ++i) {
-        if (s.contains(QChar(keys[i]))) {
-            needNormalization = true;
-            break;
+            case u'(':
+            case u')':
+                s[i] = QLatin1Char(' ');
+                break;
+
+            default:
+                break;
         }
     }
 
-    if (!needNormalization) return s;
-
-    for (int i = 0; i < size; ++i)
-    {
-        s.replace(QChar(keys[i]), QChar(values[i]));
-    }
     return s;
 }
 
 QString OsmAnd::SearchAlgorithms::removeQuotes(QString s)
 {
-    return s.replace(QStringLiteral("«"), "").replace(QStringLiteral("»"), "");
+    if (!s.contains(QChar(u'«')) && !s.contains(QChar(u'»')))
+    {
+        return s;
+    }
+    s.remove(QChar(u'«'));
+    s.remove(QChar(u'»'));
+    return s;
 }
 
 QString OsmAnd::SearchAlgorithms::removeApostrophes(QString s)
 {
-    static const char16_t apostrophes[] = {u'\'', u'’', u'ʼ', u'´', u'`', u'′', u'‵', u'ʹ'};
-    const int size = sizeof(apostrophes) / sizeof(char16_t);
-
-    QString result;
-    result.reserve(s.length());
-    for (int i = 0; i < s.length(); ++i) {
-        QChar c = s[i];
-        bool isApostroph = false;
-        for (int j = 0; j < size; ++j) {
-            if (c.unicode() == apostrophes[j]) {
-                isApostroph = true;
-                break;
-            }
+    bool hasApostrophe = false;
+    for (int i = 0, n = s.length(); i < n && !hasApostrophe; ++i)
+    {
+        if (isApostropheLike(s.at(i)))
+        {
+            hasApostrophe = true;
         }
-        if (!isApostroph) result.append(c);
+    }
+    if (!hasApostrophe)
+    {
+        return s;
+    }
+
+    const int n = s.length();
+    QString result;
+    result.reserve(n);
+    for (int i = 0; i < n; ++i)
+    {
+        QChar c = s[i];
+        if (isApostropheLike(c))
+        {
+            continue;
+        }
+        result.append(c);
     }
     return result;
 }
@@ -102,20 +130,22 @@ QString OsmAnd::SearchAlgorithms::replaceGermanSS(QString fullText)
 
 OsmAnd::SearchAlgorithms::CodePointPrefixMatch OsmAnd::SearchAlgorithms::startWith(const QString& token, const QString& prefix)
 {
+    const int tokenLen = token.length();
+    const int prefixLen = prefix.length();
     int leftOffset = 0;
     int rightOffset = 0;
     int commonPrefixCodePointLength = 0;
 
-    while (leftOffset < token.length() && rightOffset < prefix.length())
+    while (leftOffset < tokenLen && rightOffset < prefixLen)
     {
         uint32_t leftCp = token.at(leftOffset).unicode();
-        if (QChar::isHighSurrogate(leftCp) && leftOffset + 1 < token.length())
+        if (QChar::isHighSurrogate(leftCp) && leftOffset + 1 < tokenLen)
         {
             leftCp = QChar::surrogateToUcs4(leftCp, token.at(leftOffset + 1).unicode());
         }
 
         uint32_t rightCp = prefix.at(rightOffset).unicode();
-        if (QChar::isHighSurrogate(rightCp) && rightOffset + 1 < prefix.length())
+        if (QChar::isHighSurrogate(rightCp) && rightOffset + 1 < prefixLen)
         {
             rightCp = QChar::surrogateToUcs4(rightCp, prefix.at(rightOffset + 1).unicode());
         }
@@ -141,19 +171,20 @@ int OsmAnd::SearchAlgorithms::suffixOffsetAfterPrefix(const QString& token, cons
 
 QStringList OsmAnd::SearchAlgorithms::split(const QString& name)
 {
+    const int nameLen = name.length();
     int prev = -1;
     QStringList namesToAdd;
     QSet<QString> seen;
 
-    for (int i = 0; i <= name.length(); )
+    for (int i = 0; i <= nameLen; )
     {
         bool tokenCharacter = false;
         int currentCpCount = 1;
 
-        if (i != name.length())
+        if (i != nameLen)
         {
             uint32_t cp = name.at(i).unicode();
-            if (QChar::isHighSurrogate(cp) && i + 1 < name.length())
+            if (QChar::isHighSurrogate(cp) && i + 1 < nameLen)
             {
                 cp = QChar::surrogateToUcs4(cp, name.at(i + 1).unicode());
             }
@@ -185,9 +216,10 @@ QStringList OsmAnd::SearchAlgorithms::split(const QString& name)
 
 bool OsmAnd::SearchAlgorithms::isTokenCharacter(const QString& value, int index, bool tokenAlreadyStarted)
 {
+    const int valueLen = value.length();
     uint32_t cp = value.at(index).unicode();
     int charLen = 1;
-    if (QChar::isHighSurrogate(cp) && index + 1 < value.length())
+    if (QChar::isHighSurrogate(cp) && index + 1 < valueLen)
     {
         char16_t low = value.at(index + 1).unicode();
         if (QChar::isLowSurrogate(low)) {
@@ -202,10 +234,10 @@ bool OsmAnd::SearchAlgorithms::isTokenCharacter(const QString& value, int index,
     if (cp == '-') {
         int nextIndex = index + charLen;
         bool nextIsNumber = false;
-        if (nextIndex < value.length())
+        if (nextIndex < valueLen)
         {
             uint32_t nextCp = value.at(nextIndex).unicode();
-            if (QChar::isHighSurrogate(nextCp) && nextIndex + 1 < value.length())
+            if (QChar::isHighSurrogate(nextCp) && nextIndex + 1 < valueLen)
             {
                 char16_t low = value.at(nextIndex + 1).unicode();
                 if (QChar::isLowSurrogate(low))
@@ -259,14 +291,16 @@ QString OsmAnd::SearchAlgorithms::nameIndexDecodeDictionarySuffix(const QString&
 
     if (marker >= SUFFIX_DICT_MARKER_BASE && marker <= SUFFIX_DICT_MARKER_MAX)
     {
+        const int prevLen = previousSuffix.length();
         int commonCpLen = marker - SUFFIX_DICT_MARKER_BASE;
         int prefixEndOffset = 0;
-        for (int i = 0; i < commonCpLen && prefixEndOffset < previousSuffix.length(); ++i)
+        for (int i = 0; i < commonCpLen && prefixEndOffset < prevLen; ++i)
         {
             prefixEndOffset += QChar::requiresSurrogates(previousSuffix.at(prefixEndOffset).unicode()) ? 2 : 1;
         }
 
-        QString suffixRemainder = encodedSuffix.mid(QChar::requiresSurrogates(marker) ? 2 : 1);
+        const int markerLen = QChar::requiresSurrogates(marker) ? 2 : 1;
+        QString suffixRemainder = encodedSuffix.mid(markerLen);
         return OsmAnd::ICU::toNFC(previousSuffix.left(prefixEndOffset) + suffixRemainder);
     }
 
@@ -286,14 +320,15 @@ bool OsmAnd::SearchAlgorithms::startsWithSuffixMarker(const QString& value)
 {
     if (value.isEmpty())
         return false;
-    uint32_t cp = value.at(0).unicode();
+    const uint32_t cp = value.at(0).unicode();
     return cp == SUFFIX_DICT_MARKER_RAW_ESCAPE || (cp >= SUFFIX_DICT_MARKER_BASE && cp <= SUFFIX_DICT_MARKER_MAX);
 }
 
 int OsmAnd::SearchAlgorithms::countCodePoints(const QString& s)
 {
+    const int n = s.length();
     int count = 0;
-    for (int i = 0; i < s.length(); ++count)
+    for (int i = 0; i < n; ++count)
     {
         i += QChar::requiresSurrogates(s.at(i).unicode()) ? 2 : 1;
     }
@@ -302,7 +337,11 @@ int OsmAnd::SearchAlgorithms::countCodePoints(const QString& s)
 
 QString OsmAnd::SearchAlgorithms::nameIndexEncodeSuffix(const QString& suffix, const QString& previousSuffix)
 {
-    QString encodedRaw = startsWithSuffixMarker(suffix) ? (QString(QChar(SUFFIX_DICT_MARKER_RAW_ESCAPE)) + suffix) : suffix;
+    QString encodedRaw = suffix;
+    if (startsWithSuffixMarker(suffix))
+    {
+        encodedRaw.prepend(QChar{SUFFIX_DICT_MARKER_RAW_ESCAPE});
+    }
     if (previousSuffix.isNull())
         return encodedRaw;
 
@@ -321,5 +360,25 @@ QString OsmAnd::SearchAlgorithms::nameIndexEncodeSuffix(const QString& suffix, c
     uint32_t markerCp = SUFFIX_DICT_MARKER_BASE + commonLen;
     QString deltaEncoded = QString::fromUcs4(&markerCp, 1) + suffix.mid(offset);
 
-    return (countCodePoints(deltaEncoded) < countCodePoints(encodedRaw)) ? deltaEncoded : encodedRaw;
+    const int rawCpCount = countCodePoints(encodedRaw);
+    return (countCodePoints(deltaEncoded) < rawCpCount) ? deltaEncoded : encodedRaw;
 }
+
+bool OsmAnd::SearchAlgorithms::isApostropheLike(QChar ch)
+{
+    switch (ch.unicode())
+    {
+        case u'\'':
+        case u'’':
+        case u'ʼ':
+        case u'´':
+        case u'`':
+        case u'′':
+        case u'‵':
+        case u'ʹ':
+            return true;
+        default:
+            return false;
+    }
+}
+

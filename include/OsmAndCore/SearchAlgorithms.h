@@ -40,6 +40,7 @@ namespace OsmAnd
         static QString decodeRawSuffix(const QString& encodedSuffix);
         static bool startsWithSuffixMarker(const QString& value);
         static int countCodePoints(const QString& s);
+        static bool isApostropheLike(QChar ch);
     };
 }
 
