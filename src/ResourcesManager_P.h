@@ -103,6 +103,9 @@ namespace OsmAnd
         void loadLocalResourcesFromPath_VoicePack(
             const QString& storagePath,
             QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
+        void loadLocalResourcesFromPath_StarMap(
+            const QString& storagePath,
+            QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
         
         const std::shared_ptr<const OnlineTileSources> downloadOnlineTileSources() const;
 
@@ -122,6 +125,7 @@ namespace OsmAnd
         bool uninstallObf(const std::shared_ptr<const InstalledResource>& resource);
         bool uninstallSQLiteDB(const std::shared_ptr<const InstalledResource>& resource);
         bool uninstallGeoTiff(const std::shared_ptr<const InstalledResource>& resource);
+        bool uninstallStarMap(const std::shared_ptr<const InstalledResource>& resource);
         bool uninstallVoicePack(const std::shared_ptr<const InstalledResource>& resource);
         bool uninstallTilesResource(const QString& name);
 
@@ -169,11 +173,18 @@ namespace OsmAnd
             const ResourceType resourceType,
             std::shared_ptr<const InstalledResource>& outResource,
             const QString& localPath_ = QString());
+        bool installStarMapFromFile(
+            const QString& id,
+            const QString& filePath,
+            const ResourceType resourceType,
+            std::shared_ptr<const InstalledResource>& outResource,
+            const QString& localPath_ = QString());
 
         bool updateObfFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
         bool updateSQLiteDBFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
         bool updateTifSQLiteDBFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
         bool updateGeoTiffFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
+        bool updateStarMapFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
         bool updateVoicePackFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
 
         class OnlineTileSourcesProxy : public IOnlineTileSources

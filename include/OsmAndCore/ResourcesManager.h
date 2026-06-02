@@ -60,7 +60,8 @@ namespace OsmAnd
             GpxFile,
             SqliteFile,
             WeatherForecast,
-            Travel
+            Travel,
+            StarMap
         };
 
         enum class ResourceOrigin

@@ -368,6 +368,9 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             outResult,
             QLatin1String("*.travel.obf"),
             ResourceType::Travel);
+
+        // Find ResourceType::StarMap -> "astro/*.stardb" files
+        loadLocalResourcesFromPath_StarMap(storagePath, outResult);
         
         if (outResult.size() > 0)
             cachedOsmandIndexes->writeToFile(indCache.fileName());
@@ -810,6 +813,32 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_VoicePack(
     }
 }
 
+void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_StarMap(
+    const QString& storagePath,
+    QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const
+{
+    const auto starMapStoragePath = QDir(storagePath).absoluteFilePath(QStringLiteral("astro"));
+    QFileInfoList starMapFileInfos;
+    Utilities::findFiles(starMapStoragePath, QStringList() << QLatin1String("*.stardb"), starMapFileInfos, false);
+    for (const auto& starMapFileInfo : constOf(starMapFileInfos))
+    {
+        const auto filePath = starMapFileInfo.absoluteFilePath();
+        const auto resourceId = starMapFileInfo.fileName().toLower();
+        const auto resourceInRepository = getResourceInRepository(resourceId);
+        const auto timestamp = resourceInRepository
+            ? resourceInRepository->timestamp
+            : starMapFileInfo.lastModified().toUTC().toMSecsSinceEpoch();
+        const auto pLocalResource = new InstalledResource(
+            resourceId,
+            ResourceType::StarMap,
+            filePath,
+            starMapFileInfo.size(),
+            timestamp);
+        std::shared_ptr<const LocalResource> localResource(pLocalResource);
+        outResult.insert(resourceId, qMove(localResource));
+    }
+}
+
 void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_MapStyleResource(
     const QString& storagePath,
     QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const
@@ -1004,6 +1033,8 @@ OsmAnd::ResourcesManager::ResourceType OsmAnd::ResourcesManager_P::getIndexType(
         resourceType = ResourceType::SqliteFile;
     else if (resourceTypeValue == QLatin1String("travel"))
         resourceType = ResourceType::Travel;
+    else if (resourceTypeValue == QLatin1String("starmap"))
+        resourceType = ResourceType::StarMap;
     else if (resourceTypeValue == QLatin1String("weather"))
         resourceType = ResourceType::WeatherForecast;
     else if (resourceTypeValue == QLatin1String("deleted_map"))
@@ -1247,6 +1278,17 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 downloadUrl =
                     owner->repositoryBaseUrl +
                     QLatin1String("/download?&wikivoyage=yes&file=") +
+                    QUrl::toPercentEncoding(name);
+                break;
+            case ResourceType::StarMap:
+                // '[resourceName].stardb.gz' -> '[resourceName].stardb'
+                resourceId = QString(name).toLower();
+                if (!resourceId.endsWith(QLatin1String(".stardb.gz")))
+                    continue;
+                resourceId.chop(3);
+                downloadUrl =
+                    owner->repositoryBaseUrl +
+                    QLatin1String("/download?file=") +
                     QUrl::toPercentEncoding(name);
                 break;
             default:
@@ -1507,6 +1549,9 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const std::shared_ptr<const O
         case ResourceType::GeoTiffRegion:
             ok = uninstallGeoTiff(installedResource);
             break;
+        case ResourceType::StarMap:
+            ok = uninstallStarMap(installedResource);
+            break;
         default:
             return false;
     }
@@ -1581,6 +1626,11 @@ bool OsmAnd::ResourcesManager_P::uninstallSQLiteDB(const std::shared_ptr<const I
 }
 
 bool OsmAnd::ResourcesManager_P::uninstallGeoTiff(const std::shared_ptr<const InstalledResource>& resource)
+{
+    return QFile(resource->localPath).remove();
+}
+
+bool OsmAnd::ResourcesManager_P::uninstallStarMap(const std::shared_ptr<const InstalledResource>& resource)
 {
     return QFile(resource->localPath).remove();
 }
@@ -1687,6 +1737,9 @@ bool OsmAnd::ResourcesManager_P::installImportedResource(const QString& filePath
         case ResourceType::GeoTiffRegion:
             ok = installGeoTiffFromFile(newName, filePath, resourceType, resource);
             break;
+        case ResourceType::StarMap:
+            ok = installStarMapFromFile(newName, filePath, resourceType, resource);
+            break;
         default:
             break;
     }
@@ -1710,7 +1763,9 @@ bool OsmAnd::ResourcesManager_P::installImportedResource(const QString& filePath
 
 bool OsmAnd::ResourcesManager_P::installFromFile(const QString& filePath, const ResourceType resourceType)
 {
-    const auto guessedResourceName = QFileInfo(filePath).fileName().remove(QLatin1String(".zip"));
+    auto guessedResourceName = QFileInfo(filePath).fileName().remove(QLatin1String(".zip"));
+    if (resourceType == ResourceType::StarMap && guessedResourceName.endsWith(QLatin1String(".gz")))
+        guessedResourceName.chop(3);
     return installFromFile(guessedResourceName, filePath, resourceType);
 }
 
@@ -1749,6 +1804,9 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
             break;
         case ResourceType::GeoTiffRegion:
             ok = installGeoTiffFromFile(id, filePath, resourceType, resource);
+            break;
+        case ResourceType::StarMap:
+            ok = installStarMapFromFile(id, filePath, resourceType, resource);
             break;
     }
 
@@ -1965,6 +2023,66 @@ bool OsmAnd::ResourcesManager_P::installGeoTiffFromFile(
         localFileName,
         QFile(localFileName).size(),
         QFileInfo(localFileName).lastModified().toUTC().toMSecsSinceEpoch());
+    outResource.reset(pLocalResource);
+    _localResources.insert(id, outResource);
+
+    return true;
+}
+
+bool OsmAnd::ResourcesManager_P::installStarMapFromFile(
+    const QString& id,
+    const QString& filePath,
+    const ResourceType resourceType,
+    std::shared_ptr<const InstalledResource>& outResource,
+    const QString& localPath_ /*= QString::null*/)
+{
+    assert(id.endsWith(QStringLiteral(".stardb")));
+
+    ArchiveReader archive(filePath);
+
+    bool ok = false;
+    const auto archiveItems = archive.getItems(&ok, true);
+    if (!ok)
+        return false;
+
+    ArchiveReader::Item starMapArchiveItem;
+    for (const auto& archiveItem : constOf(archiveItems))
+    {
+        if (!archiveItem.isValid())
+            continue;
+
+        if (!starMapArchiveItem.isValid() || archiveItem.name.endsWith(QLatin1String(".stardb")))
+        {
+            starMapArchiveItem = archiveItem;
+            if (archiveItem.name.endsWith(QLatin1String(".stardb")))
+                break;
+        }
+    }
+    if (!starMapArchiveItem.isValid())
+        return false;
+
+    const auto localDirectoryName = QDir(owner->localStoragePath).absoluteFilePath(QStringLiteral("astro"));
+    if (!QDir().mkpath(localDirectoryName))
+        return false;
+
+    const auto localFileName = localPath_.isNull() ? QDir(localDirectoryName).absoluteFilePath(id) : localPath_;
+    QFile(localFileName).remove();
+    if (!archive.extractItemToFile(starMapArchiveItem.name, localFileName, true))
+    {
+        QFile(localFileName).remove();
+        return false;
+    }
+
+    const auto resourceInRepository = getResourceInRepository(id);
+    const auto timestamp = resourceInRepository
+        ? resourceInRepository->timestamp
+        : QFileInfo(localFileName).lastModified().toUTC().toMSecsSinceEpoch();
+    const auto pLocalResource = new InstalledResource(
+        id,
+        resourceType,
+        localFileName,
+        QFile(localFileName).size(),
+        timestamp);
     outResource.reset(pLocalResource);
     _localResources.insert(id, outResource);
 
@@ -2209,6 +2327,20 @@ bool OsmAnd::ResourcesManager_P::updateGeoTiffFromFile(
     return ok;
 }
 
+bool OsmAnd::ResourcesManager_P::updateStarMapFromFile(
+    std::shared_ptr<const InstalledResource>& resource,
+    const QString& filePath)
+{
+    if (!resource->_lock.lockForWriting())
+        return false;
+
+    bool ok;
+    ok = uninstallStarMap(resource);
+    ok = installStarMapFromFile(resource->id, filePath, resource->type, resource, resource->localPath);
+
+    return ok;
+}
+
 bool OsmAnd::ResourcesManager_P::updateVoicePackFromFile(
     std::shared_ptr<const InstalledResource>& resource,
     const QString& filePath)
@@ -2263,6 +2395,9 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(
             break;
         case ResourceType::GeoTiffRegion:
             ok = updateGeoTiffFromFile(installedResource, filePath);
+            break;
+        case ResourceType::StarMap:
+            ok = updateStarMapFromFile(installedResource, filePath);
             break;
     }
     if (!ok)
