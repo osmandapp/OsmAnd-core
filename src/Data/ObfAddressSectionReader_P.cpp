@@ -1148,7 +1148,6 @@ void OsmAnd::ObfAddressSectionReader_P::scanNameIndex(
                 baseOffset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                //ObfReaderUtilities::scanIndexedStringTable(cis, query, intermediateOffsets, strictMatch);
                 QList<OsmAnd::QueryToken::Prefix> prefixCandidates = ObfReaderUtilities::readIndexedStringTablePrefixes(cis, {query}).at(0);
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
 

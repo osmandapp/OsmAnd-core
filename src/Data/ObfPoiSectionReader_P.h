@@ -130,8 +130,8 @@ namespace OsmAnd
             const AreaI* const bbox31,
             const TileAcceptorFunction tileFilter,
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
-            const QueryToken token,
-            const QueryToken::Prefix prefix);
+            const QueryToken& token,
+            const QueryToken::Prefix& prefix);
         static void readPoiNameIndexDataAtom(
             const ObfReader_P& reader,
             QMap<uint32_t, uint32_t>& outDataOffsets,

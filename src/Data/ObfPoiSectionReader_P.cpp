@@ -1508,14 +1508,6 @@ void OsmAnd::ObfPoiSectionReader_P::readPoiNameIndex(
                                 prefix);
                             ObfReaderUtilities::ensureAllDataWasRead(cis);
                             cis->PopLimit(oldLimit);
-
-//                            if (req.isCancelled()) {
-//                                codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
-//                                req.endSubSearchStats(subStart, BinaryMapIndexReaderStats.BinaryMapIndexReaderApiName.POI_BY_NAME,
-//                                        BinaryMapIndexReaderStats.BinaryMapIndexReaderSubApiName.POI_NAME_REFERENCES,
-//                                        map.getFile().getName(), codedIS.getBytesCounter() - bytes);
-//                                return offsets;
-//                            }
                         }
                         listOfSepOffsets.append(offsetMap);
                     }
@@ -1573,8 +1565,8 @@ void OsmAnd::ObfPoiSectionReader_P::readPoiNameIndexData(
     const AreaI* const bbox31,
     const TileAcceptorFunction tileFilter,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
-    const QueryToken token,
-    const QueryToken::Prefix prefix)
+    const QueryToken& token,
+    const QueryToken::Prefix& prefix)
 {
     const auto cis = reader.getCodedInputStream().get();
     QStringList suffixDictionary;

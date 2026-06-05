@@ -257,8 +257,7 @@ namespace OsmAnd
             const QString& appVersion = {},
             const QString& repositoryBaseUrl = QLatin1String("http://download.osmand.net"),
             const QString& indexesUrl = QLatin1String("http://download.osmand.net/get_indexes"),
-            const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient())
-        );
+            const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient()));
         virtual ~ResourcesManager();
 
         const QString localStoragePath;
