@@ -2,6 +2,7 @@
 #include "CollatorStringMatcher_P.h"
 #include "ArabicNormalizer.h"
 #include <ICU.h>
+#include "SearchAlgorithms.h"
 
 OsmAnd::CollatorStringMatcher::CollatorStringMatcher(const QString& part, const StringMatcherMode mode)
     : _p(new CollatorStringMatcher_P(this))
@@ -16,10 +17,6 @@ OsmAnd::CollatorStringMatcher::CollatorStringMatcher(const QString& part, const 
             mode_ = StringMatcherMode::CHECK_ONLY_STARTS_WITH;
         }
     }
-    if (OsmAnd::ArabicNormalizer::isSpecialArabic(part_)) {
-        QString normalized  = OsmAnd::ArabicNormalizer::normalize(part_);
-        part_ = normalized.isEmpty() ? part_ : normalized;
-    }
     _part = part_;
     _mode = mode_;
 }
@@ -30,11 +27,7 @@ OsmAnd::CollatorStringMatcher::~CollatorStringMatcher()
 
 bool OsmAnd::CollatorStringMatcher::matches(const QString& name) const
 {
-    QString name_ = name;
-    if (OsmAnd::ArabicNormalizer::isSpecialArabic(name)) {
-        QString arabic = OsmAnd::ArabicNormalizer::normalize(name);
-        name_ = arabic.isEmpty() ? name : arabic;
-    }
+    QString name_ = CollatorStringMatcher_P::lowercaseAndAlignChars(name);
     return _p->CollatorStringMatcher_P::matches(name_, _part, _mode);
 }
 
@@ -61,7 +54,7 @@ bool OsmAnd::CollatorStringMatcher::cmatches(const QString& _base, const QString
     {
         part = alignChars(part);
     }
-    base = lowercaseAndAlignChars(base);
+    base = lowercaseAndAlignChars(_base);
     return OsmAnd::ICU::cmatches(base, part, _mode);
 }
 
@@ -83,12 +76,5 @@ QString OsmAnd::CollatorStringMatcher::lowercaseAndAlignChars(const QString& ful
 
 QString OsmAnd::CollatorStringMatcher::alignChars(const QString& fullText)
 {
-    if (OsmAnd::ArabicNormalizer::isSpecialArabic(fullText)) {
-        QString normalized  = OsmAnd::ArabicNormalizer::normalize(fullText);
-        if (!normalized.isEmpty())
-        {
-            return CollatorStringMatcher_P::alignChars(normalized);;
-        }
-    }
     return CollatorStringMatcher_P::alignChars(fullText);
 }

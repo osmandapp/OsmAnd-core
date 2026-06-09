@@ -4,6 +4,7 @@
 #include "ignore_warnings_on_external_includes.h"
 #include <QtEndian>
 #include <QThread>
+#include <QMap>
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
@@ -84,99 +85,108 @@ void OsmAnd::ObfReaderUtilities::readStringTable(gpb::io::CodedInputStream* cis,
     }
 }
 
-int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
-    gpb::io::CodedInputStream* cis,
-    const QString& query,
-    QVector<uint32_t>& outValues,
-    const bool strictMatch /*= false*/,
-    const QString& keysPrefix /*= QString::null*/,
-    const int matchedCharactersCount_ /*= 0*/)
+bool OsmAnd::ObfReaderUtilities::matchIndexedStringTablePrefix(
+    const QStringList& queries,
+    const QString& key,
+    QVector<bool>& matched,
+    QVector<bool>& matchedSubtables)
+{
+    bool shouldWeReadSubtable = false;
+
+    for (int i = 0; i < queries.size(); ++i)
+    {
+        const QString& query = queries.at(i);
+        matched[i] = false;
+        matchedSubtables[i] = false;
+        if (query.isNull())
+        {
+            continue;
+        }
+        bool keyStartsWithQuery = CollatorStringMatcher::cmatches(key, query, StringMatcherMode::CHECK_ONLY_STARTS_WITH);
+        bool queryStartsWithKey = CollatorStringMatcher::cmatches(query, key, StringMatcherMode::CHECK_ONLY_STARTS_WITH);
+        bool potentialBranchMatch = keyStartsWithQuery || queryStartsWithKey;
+        matched[i] = potentialBranchMatch;
+        matchedSubtables[i] = potentialBranchMatch;
+        if (potentialBranchMatch)
+        {
+            shouldWeReadSubtable = true;
+        }
+    }
+
+    return shouldWeReadSubtable;
+}
+
+void OsmAnd::ObfReaderUtilities::readIndexedStringTablePrefixes(
+            OsmAnd::gpb::io::CodedInputStream* cis,
+            const QStringList& queries,
+            const QString& prefix,
+            QList<QMap<QString, int>>& prefixesByQuery)
 {
     QString key;
-    auto matchedCharactersCount = matchedCharactersCount_;
-
+    QVector<bool> matched(queries.size(), false);
+    QVector<bool> matchedSubtables(queries.size(), false);
+    bool shouldWeReadSubtable = false;
     for (;;)
     {
         const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
-                if (!ObfReaderUtilities::reachedDataEnd(cis))
-                    return matchedCharactersCount;
-
-                return matchedCharactersCount;
+                return;
             case OBF::IndexedStringTable::kKeyFieldNumber:
             {
                 readQString(cis, key);
-                if (!keysPrefix.isEmpty())
-                    key.prepend(keysPrefix);
-
-                bool matchesForward = false;
-                bool matchesBackward = false;
-                if (strictMatch)
-                    matchesForward = key.startsWith(query, Qt::CaseInsensitive);
-                else
-                    matchesForward = CollatorStringMatcher::cmatches(key, query, StringMatcherMode::CHECK_ONLY_STARTS_WITH);
-
-                if (!matchesForward)
-                {
-                    if (strictMatch)
-                        matchesBackward = query.startsWith(key, Qt::CaseInsensitive);
-                    else
-                        matchesBackward = CollatorStringMatcher::cmatches(query, key, StringMatcherMode::CHECK_ONLY_STARTS_WITH);
-                }
-
-                if (matchesForward)
-                {
-                    if (query.length() > matchedCharactersCount)
-                    {
-                        matchedCharactersCount = query.length();
-                        outValues.clear();
-                    }
-                    else if (query.length() < matchedCharactersCount)
-                    {
-                        key = QString::null;
-                    }
-                }
-                else if (matchesBackward)
-                {
-                    if (key.length() > matchedCharactersCount)
-                    {
-                        matchedCharactersCount = key.length();
-                        outValues.clear();
-                    }
-                    else if (key.length() < matchedCharactersCount)
-                    {
-                        key = QString::null;
-                    }
-                }
-                else
-                {
-                    key = QString::null;
-                }
+                if (!prefix.isEmpty())
+                    key.prepend(prefix);
+                shouldWeReadSubtable = matchIndexedStringTablePrefix(queries, key, matched, matchedSubtables);
                 break;
             }
             case OBF::IndexedStringTable::kValFieldNumber:
             {
                 const auto value = readBigEndianInt(cis);
-
-                if (!key.isNull())
-                    outValues.push_back(value);
+                for (int i = 0; i < queries.size(); i++)
+                {
+                    if (matched[i] && !key.isEmpty())
+                    {
+                        QMap<QString, int>& tokenPrefixes = prefixesByQuery[i];
+                        if (!tokenPrefixes.contains(key))
+                        {
+                            tokenPrefixes.insert(key, value);
+                        }
+                        else
+                        {
+                            int previousValue = tokenPrefixes.value(key);
+                            if (previousValue != value)
+                            {
+                                throw std::runtime_error("Indexed string table contains multiple offsets for key: " + key.toStdString());
+                            }
+                        }
+                    }
+                }
                 break;
             }
             case OBF::IndexedStringTable::kSubtablesFieldNumber:
             {
-                const auto length = ObfReaderUtilities::readLength(cis);
-                const auto oldLimit = cis->PushLimit(length);
-
-                if (!key.isNull())
-                    matchedCharactersCount = scanIndexedStringTable(cis, query, outValues, strictMatch, key, matchedCharactersCount);
+                const auto len = ObfReaderUtilities::readLength(cis);
+                const auto oldLimit = cis->PushLimit(len);
+                if (shouldWeReadSubtable)
+                {
+                    QStringList subqueries = queries;
+                    for (int i = 0; i < queries.size(); ++i)
+                    {
+                        if (!matchedSubtables[i])
+                        {
+                            subqueries[i] = QString();
+                        }
+                    }
+                    readIndexedStringTablePrefixes(cis, subqueries, key, prefixesByQuery);
+                }
                 else
+                {
                     cis->Skip(cis->BytesUntilLimit());
-
+                }
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
-
                 break;
             }
             default:
@@ -184,6 +194,35 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                 break;
         }
     }
+}
+
+QList<QList<OsmAnd::QueryToken::Prefix>> OsmAnd::ObfReaderUtilities::readIndexedStringTablePrefixes(
+            OsmAnd::gpb::io::CodedInputStream* cis,
+            const QStringList& queries,
+            const QString& keysPrefix)
+{
+    QList<QMap<QString, int>> prefixesByQuery;
+    prefixesByQuery.reserve(queries.size());
+    for (int i = 0; i < queries.size(); i++)
+    {
+        prefixesByQuery.append(QMap<QString, int>());
+    }
+    readIndexedStringTablePrefixes(cis, queries, QStringLiteral(""), prefixesByQuery);
+    QList<QList<OsmAnd::QueryToken::Prefix>> result;
+    result.reserve(queries.size());
+    for (const QMap<QString, int>& prefixes : prefixesByQuery)
+    {
+        QList<OsmAnd::QueryToken::Prefix> tokenPrefixes;
+        tokenPrefixes.reserve(prefixes.size());
+        QMap<QString, int>::const_iterator it = prefixes.constBegin();
+        while (it != prefixes.constEnd())
+        {
+            tokenPrefixes.append(OsmAnd::QueryToken::Prefix(it.key(), it.value()));
+            ++it;
+        }
+        result.append(tokenPrefixes);
+    }
+    return result;
 }
 
 void OsmAnd::ObfReaderUtilities::readTileBox(gpb::io::CodedInputStream* cis, AreaI& outArea)

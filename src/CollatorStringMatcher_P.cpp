@@ -3,6 +3,8 @@
 
 #include <ICU.h>
 #include <QLocale>
+#include "ArabicNormalizer.h"
+#include "SearchAlgorithms.h"
 
 OsmAnd::CollatorStringMatcher_P::CollatorStringMatcher_P(CollatorStringMatcher* owner_)
     : owner(owner_)
@@ -33,17 +35,18 @@ QString OsmAnd::CollatorStringMatcher_P::lowercaseAndAlignChars(const QString& f
 {
     QLocale defaultLocale;
     QString res = defaultLocale.toLower(fullText);
-    res = alignChars(res);
-    return res;
+    return alignChars(res);
 }
 
 QString OsmAnd::CollatorStringMatcher_P::alignChars(const QString& fullText)
 {
-    int i;
-    QString res = fullText;
-    while( (i = res.indexOf(QStringLiteral("ß")) ) != -1 )
+    QString normalized = fullText;
+    if (ArabicNormalizer::isSpecialArabic(fullText))
     {
-        res = res.mid(0, i) + QStringLiteral("ss") + res.mid(i + 1);
+        normalized = ArabicNormalizer::normalize(fullText);
+        normalized = normalized == "" ? fullText : normalized;
     }
-    return OsmAnd::ICU::stripDiacritics(res);
+    normalized = SearchAlgorithms::removeApostrophes(normalized);
+    normalized = SearchAlgorithms::replaceGermanSS(normalized);
+    return normalized;
 }

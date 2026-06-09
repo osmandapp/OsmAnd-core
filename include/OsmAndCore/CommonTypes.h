@@ -140,7 +140,8 @@ namespace OsmAnd
         CHECK_STARTS_FROM_SPACE_NOT_BEGINNING,
         CHECK_EQUALS_FROM_SPACE,
         CHECK_CONTAINS,
-        CHECK_EQUALS
+        CHECK_EQUALS,
+        MULTISEARCH
     };
 }
 

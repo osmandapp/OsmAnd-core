@@ -66,7 +66,8 @@ namespace OsmAnd
             const QPair<int, int>* poiAdditionalFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr,
-            const bool strictMatch = false);
+            const bool strictMatch = false,
+            const StringMatcherMode matcherMode = StringMatcherMode::CHECK_STARTS_FROM_SPACE);
     };
 }
 

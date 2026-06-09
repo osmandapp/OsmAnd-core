@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 197
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 198
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -303,21 +303,24 @@ file(GLOB includes
 	"include/OsmAndCore/Data/*.h*"
 	"include/OsmAndCore/Map/*.h*"
 	#"include/OsmAndCore/Routing/*.h*"
-	"include/OsmAndCore/Search/*.h*")
+	"include/OsmAndCore/Search/*.h*"
+	"include/OsmAndCore/Binary/*.h*")
 file(GLOB headers
 	"src/*.h*"
 	"src/Concurrent/*.h*"
 	"src/Data/*.h*"
 	"src/Map/*.h*"
 	#"src/Routing/*.h*"
-	"src/Search/*.h*")
+	"src/Search/*.h*"
+	"src/Binary/*.h*")
 file(GLOB sources
 	"src/*.c*"
 	"src/Concurrent/*.c*"
 	"src/Data/*.c*"
 	"src/Map/*.c*"
 	#"src/Routing/*.c*"
-	"src/Search/*.c*")
+	"src/Search/*.c*"
+	"src/Binary/*.c*")
 
 set(merged_sources
 	${includes}
@@ -354,11 +357,13 @@ set(merged_include_dirs_private
 	"${OSMAND_ROOT}/core/include/OsmAndCore/Routing"
 	"${OSMAND_ROOT}/core/include/OsmAndCore/Map"
 	"${OSMAND_ROOT}/core/include/OsmAndCore/Search"
+	"${OSMAND_ROOT}/core/include/OsmAndCore/Binary"
 	"${OSMAND_ROOT}/core/src"
 	"${OSMAND_ROOT}/core/src/Data"
 	"${OSMAND_ROOT}/core/src/Routing"
 	"${OSMAND_ROOT}/core/src/Map"
 	"${OSMAND_ROOT}/core/src/Search"
+	"${OSMAND_ROOT}/core/src/Binary"
 	"${OSMAND_ROOT}/core/protos"
 )
 set(merged_include_dirs_public

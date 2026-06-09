@@ -38,6 +38,7 @@ namespace OsmAnd
             QHash<QString, QStringList> categoriesFilter;
             QPair<QString, QString> poiAddtitionalFilter;
             QList< std::shared_ptr<const ResourcesManager::LocalResource> > localResources;
+            StringMatcherMode matcherMode;
         };
 
         struct OSMAND_CORE_API ResultEntry : public IResultEntry

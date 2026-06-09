@@ -43,7 +43,9 @@ void OsmAnd::AmenitiesByNameSearch::performSearch(
         criteria.categoriesFilter.isEmpty() ? nullptr : &criteria.categoriesFilter,
         (criteria.poiAddtitionalFilter.first.isEmpty() || criteria.poiAddtitionalFilter.second.isEmpty()) ? nullptr : &criteria.poiAddtitionalFilter,
         visitorFunction,
-        queryController);
+        queryController,
+        false,
+        criteria.matcherMode);
 }
 
 void OsmAnd::AmenitiesByNameSearch::performTravelGuidesSearch(
@@ -87,10 +89,12 @@ void OsmAnd::AmenitiesByNameSearch::performTravelGuidesSearch(
         (criteria.poiAddtitionalFilter.first.isEmpty() || criteria.poiAddtitionalFilter.second.isEmpty()) ? nullptr : &criteria.poiAddtitionalFilter,
         visitorFunction,
         queryController,
-        true);
+        true,
+        criteria.matcherMode);
 }
 
 OsmAnd::AmenitiesByNameSearch::Criteria::Criteria()
+    :matcherMode(StringMatcherMode::CHECK_STARTS_FROM_SPACE)
 {
 }
 

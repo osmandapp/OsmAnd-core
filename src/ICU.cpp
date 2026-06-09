@@ -642,6 +642,22 @@ bool isSpace(UChar c)
     return !u_isalnum(c);
 }
 
+bool isWordStart(const UnicodeString& searchIn, int index, const UnicodeString& part)
+{
+    if (!isSpace(searchIn.charAt(index - 1)))
+    {
+        return false;
+    }
+
+    UChar current = searchIn.charAt(index);
+    if (!isSpace(current))
+    {
+        return true;
+    }
+    // 0x002D '-'
+    return (current == 0x002D && part.length() > 1 && part.charAt(0) == 0x002D && u_isdigit(part.charAt(1)));
+}
+
 OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cmatches(const QString& _base, const QString& _part, StringMatcherMode _mode)
 {
     switch (_mode)
@@ -720,9 +736,10 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
     {
         // FUTURE: This is not effective code, it runs on each comparision
         // It would be more efficient to normalize all strings in file and normalize search string before collator
-        UnicodeString searchIn = qStrToUniStr(OsmAnd::CollatorStringMatcher::lowercaseAndAlignChars(_searchInParam));
-        QString theStartAligned = OsmAnd::CollatorStringMatcher::alignChars(_theStart);
-        UnicodeString theStart = qStrToUniStr(theStartAligned);
+        QString searchInParam = OsmAnd::CollatorStringMatcher::lowercaseAndAlignChars(_searchInParam);
+        QString theStartParam = OsmAnd::CollatorStringMatcher::alignChars(_theStart);
+        UnicodeString searchIn = qStrToUniStr(searchInParam.replace("-", " "));
+        UnicodeString theStart = qStrToUniStr(theStartParam.replace("-", " "));
 
         int startLength = theStart.length();
         int serchInLength = searchIn.length();
@@ -760,7 +777,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
         {
             for (int i = 1; i <= serchInLength - startLength; i++)
             {
-                if (isSpace(searchIn.charAt(i - 1)) && !isSpace(searchIn.charAt(i)))
+                if (isWordStart(searchIn, i, theStart))
                 {
                     if (collator->equals(searchIn.tempSubString(i, startLength), theStart))
                     {
@@ -808,4 +825,14 @@ OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::ICU::ccompare(const QString& _s1, c
         result = collator->compare(s1, s2);
     }
     return result;
+}
+
+OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::toNFC(const QString& s)
+{
+    if (!g_pIcuNFCNormalizer)
+        return s;
+    UErrorCode status = U_ZERO_ERROR;
+    UnicodeString input = qStrToUniStr(s);
+    UnicodeString output = g_pIcuNFCNormalizer->normalize(input, status);
+    return QString(reinterpret_cast<const QChar*>(output.getBuffer()), output.length());
 }

@@ -55,12 +55,14 @@ void OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(
     const BuildingVisitorFunction visitor /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
-    ObfAddressSectionReader_P::loadBuildingsFromStreet(
+    ObfAddressSectionReader_P::loadBuildingsAndIntersectionsFromStreet(
         *reader->_p,
         street,
         resultOut,
+        nullptr,
         bbox31,
         visitor,
+        nullptr,
         queryController);
 }
 
@@ -72,12 +74,35 @@ void OsmAnd::ObfAddressSectionReader::loadIntersectionsFromStreet(
     const IntersectionVisitorFunction visitor /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
-    ObfAddressSectionReader_P::loadIntersectionsFromStreet(
+    ObfAddressSectionReader_P::loadBuildingsAndIntersectionsFromStreet(
         *reader->_p,
         street,
+        nullptr,
         resultOut,
         bbox31,
+        nullptr,
         visitor,
+        queryController);
+}
+
+void OsmAnd::ObfAddressSectionReader::loadBuildingsAndIntersectionsFromStreet(
+    const std::shared_ptr<const ObfReader>& reader,
+    const std::shared_ptr<const Street>& street,
+    QList< std::shared_ptr<const Building> >* buildingsOut  /*= nullptr*/,
+    QList< std::shared_ptr<const Street> >* intersectionsOut /*= nullptr*/,
+    const AreaI* const bbox31 /*= nullptr*/,
+    const BuildingVisitorFunction buildingVisitor /*= nullptr*/,
+    const IntersectionVisitorFunction intersectionVisitor /*= nullptr*/,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
+{
+    ObfAddressSectionReader_P::loadBuildingsAndIntersectionsFromStreet(
+        *reader->_p,
+        street,
+        buildingsOut,
+        intersectionsOut,
+        bbox31,
+        buildingVisitor,
+        intersectionVisitor,
         queryController);
 }
 

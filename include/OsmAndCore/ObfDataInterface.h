@@ -128,7 +128,8 @@ namespace OsmAnd
             const QPair<QString, QString>* poiAdditionalFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr,
-            const bool strictMatch = false);
+            const bool strictMatch = false,
+            const StringMatcherMode matcherMode = StringMatcherMode::CHECK_STARTS_FROM_SPACE);
 
         bool findAmenityByObfMapObject(
             const std::shared_ptr<const OsmAnd::ObfMapObject>& obfMapObject,
@@ -172,8 +173,8 @@ namespace OsmAnd
             const ObfAddressSectionReader::StreetVisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
-        bool preloadBuildings(
-            const QList< std::shared_ptr<Street> >& streets,
+        bool preloadBuildingsAndIntersections(
+            const std::shared_ptr<Street> street,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool loadBuildingsFromStreets(
