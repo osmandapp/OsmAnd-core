@@ -300,7 +300,9 @@ void Map3DObjectsTiledProvider_P::filterBuildings(
                     {
                         if (building.heightFound || building.levelsFound)
                         {
-                            if (buildingPart.height < building.height + MAX_HEIGHT_DELTA
+                            if ((building.heightFound || !buildingPart.levelsFound
+                                    ? buildingPart.height < building.height + MAX_HEIGHT_DELTA
+                                    : buildingPart.levels <= building.levels)
                                 && buildingPart.minHeight > building.minHeight - MAX_HEIGHT_DELTA)
                                 isHidden = true;
                         }
