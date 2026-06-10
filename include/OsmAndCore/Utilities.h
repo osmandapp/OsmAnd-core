@@ -1789,8 +1789,10 @@ namespace OsmAnd
                     }
                     else if (point.y != node.y && point.y >= qMin(prev->y, node.y) && point.y <= qMax(prev->y, node.y))
                     {
-                        x = prev->x + qRound(static_cast<double>(point.y - prev->y)
-                            / static_cast<double>(node.y - prev->y) * static_cast<double>(node.x - prev->x));
+                        const int64_t dy = node.y - prev->y;
+                        const auto offset = dy / 2;
+                        const auto num = static_cast<int64_t>(point.y - prev->y) * (node.x - prev->x);
+                        x = prev->x + static_cast<int>((num + ((num ^ dy) < 0 ? -offset : offset)) / dy);
                     }
                     else
                         x = -1;
@@ -1832,8 +1834,10 @@ namespace OsmAnd
                     }
                     else if (point.x != node.x && point.x >= qMin(prev->x, node.x) && point.x <= qMax(prev->x, node.x))
                     {
-                        y = prev->y + qRound(static_cast<double>(point.x - prev->x)
-                            / static_cast<double>(node.x - prev->x) * static_cast<double>(node.y - prev->y));
+                        const int64_t dx = node.x - prev->x;
+                        const auto offset = dx / 2;
+                        const auto num = static_cast<int64_t>(point.x - prev->x) * (node.y - prev->y);
+                        y = prev->y + static_cast<int>((num + ((num ^ dx) < 0 ? -offset : offset)) / dx);
                     }
                     else
                         y = -1;
