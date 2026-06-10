@@ -14,7 +14,10 @@
 #include "IMapTiledSymbolsProvider.h"
 
 // Coordinate precision when filter out buildings by parts inside
-#define MAX_COORDINATE_DELTA 30 // ~60cm
+#define MAX_COORDINATE_DELTA 60 // ~120cm
+
+// Height precision when filter out buildings by parts inside
+#define MAX_HEIGHT_DELTA 0.3f // 30cm
 
 // Minimum allowed distance between corners
 #define MIN_ALLOWED_SQR_DISTANCE 100.0 // ~20cm
@@ -262,14 +265,6 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
     return true;
 }
 
-bool Map3DObjectsTiledProvider_P::isVisibleBuildingPart(const std::shared_ptr<const OsmAnd::ObfMapObject>& part) const
-{
-    bool result = part->containsCaptionTag(QStringLiteral("height"))
-        || part->containsTag(QStringLiteral("building:material"), true);
-
-    return result;
-}
-
 void Map3DObjectsTiledProvider_P::filterBuildings(
     QSet<BuildingPrimitive>& buildings,
     QSet<BuildingPrimitive>& buildingParts) const
@@ -299,15 +294,23 @@ void Map3DObjectsTiledProvider_P::filterBuildings(
                     buildingPart.parentSourceObject = buildingSource;
                     if (building.polygonColor != 0)
                         buildingPart.polygonColor = building.polygonColor;
-                    if (isOutline)
-                        buildingPart.hidden = false;
-                    else if (!buildingPart.hidden)
-                        isHidden = true;
+                    if (building.levelsFound && building.heightFound && !buildingPart.heightFound)
+                        buildingPart.height = buildingPart.levels * building.levelHeight;
+                    if (!isOutline && !isHidden && !buildingPart.isEmbedded)
+                    {
+                        if (building.heightFound || building.levelsFound)
+                        {
+                            if (buildingPart.height < building.height + MAX_HEIGHT_DELTA
+                                && buildingPart.minHeight > building.minHeight - MAX_HEIGHT_DELTA)
+                                isHidden = true;
+                        }
+                        else if (buildingPart.minHeight == 0.0f)
+                            isHidden = true;
+                    }
                 }
             }
             if ((isOutline || isHidden)
-                && (!buildingSource->containsTag(QStringLiteral("building:part"))
-                || buildingSource->containsAttribute(QStringLiteral("building:part"), QStringLiteral("no"))
+                && (building.isNotPart
                 || !buildingSource->innerPolygonsPoints31.isEmpty()
                 || buildingSource->containsTag(QStringLiteral("role_outer"), true)
                 || buildingSource->containsTag(QStringLiteral("role_inner"), true)))
@@ -316,22 +319,115 @@ void Map3DObjectsTiledProvider_P::filterBuildings(
     }
 }
 
-void Map3DObjectsTiledProvider_P::insertOrUpdateBuilding(
-    const BuildingPrimitive& primitive, QSet<BuildingPrimitive>& outCollection) const
+void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
+    const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive, const OsmAnd::ObfMapObject& sourceObject,
+    bool isPart, QSet<BuildingPrimitive>& outCollection) const
 {
-    auto primitiveIt = outCollection.find(primitive);
+    bool isNotPart = true;
+    bool isEmbedded = false;
+    if (isPart)
+    {
+        const auto part = QStringLiteral("building:part");
+        const auto partValue = sourceObject.getResolvedAttribute(QStringRef(&part));
+        if (partValue == QStringLiteral("no"))
+            return;
+        if (partValue == QStringLiteral("tower"))
+            isEmbedded = true;
+        isNotPart = false;
+    }
+
+    float levelHeight = getDefaultBuildingsLevelHeight();
+    float height = getDefaultBuildingsHeight();
+    float minHeight = 0.0f;
+
+    float levels = 0.0f;
+    float minLevels = 0.0f;
+
+    bool heightFound = false;
+    bool minHeightFound = false;
+    bool levelsFound = false;
+    bool minLevelFound = false;
+
+    for (const auto& captionAttributeId : constOf(sourceObject.captionsOrder))
+    {
+        const auto& caption = constOf(sourceObject.captions)[captionAttributeId];
+        const auto& captionTag = sourceObject.attributeMapping->decodeMap[captionAttributeId].tag;
+
+        if (!heightFound && captionTag == QStringLiteral("height"))
+        {
+            heightFound = true;
+            height = OsmAnd::Utilities::parseLength(caption, height, &heightFound);
+            continue;
+        }
+
+        if (!minHeightFound && captionTag == QStringLiteral("min_height"))
+        {
+            minHeightFound = true;
+            minHeight = OsmAnd::Utilities::parseLength(caption, height, &minHeightFound);
+            continue;
+        }
+
+        if (!levelsFound && captionTag == QStringLiteral("building:levels"))
+        {
+            levelsFound = true;
+            levels = caption.toFloat();
+            continue;
+        }
+
+        if (!minLevelFound && captionTag == QStringLiteral("building:min_level"))
+        {
+            minLevelFound = true;
+            minLevels = caption.toFloat();
+        }
+    }
+
+    if (heightFound && height == 0.0f)
+    {
+        return;
+    }
+
+    if (levelsFound)
+    {
+        if (!heightFound)
+        {
+            if (levels > 0.0f)
+                height = levels * levelHeight;
+            else
+                return;
+        }
+        else if (levels > 0.0f)
+            levelHeight = height / levels;
+    }
+
+    if (!minHeightFound && minLevelFound)
+        minHeight = minLevels * levelHeight;
+
+    if (isPart && !heightFound && !levelsFound)
+        return;
+
+    BuildingPrimitive buildingPrimitive;
+    buildingPrimitive.primitive = primitive;
+    buildingPrimitive.height = height;
+    buildingPrimitive.minHeight = minHeight;
+    buildingPrimitive.levels = levels;
+    buildingPrimitive.levelHeight = levelHeight;
+    buildingPrimitive.heightFound = heightFound;
+    buildingPrimitive.levelsFound = levelsFound;
+    buildingPrimitive.isNotPart = isNotPart;
+    buildingPrimitive.isEmbedded = isEmbedded;
+
+    buildingPrimitive.polygonColor = getPolygonColor(buildingPrimitive.primitive);
+    buildingPrimitive.bbox31 = sourceObject.bbox31;
+    buildingPrimitive.hidden = false;
+
+    auto primitiveIt = outCollection.find(buildingPrimitive);
 
     if (primitiveIt == outCollection.end())
+        outCollection.insert(buildingPrimitive);
+    else if (primitiveIt->polygonColor == 0)
     {
-        outCollection.insert(primitive);
-    }
-    else
-    {
-        if (primitiveIt->polygonColor == 0)
-        {
-            outCollection.remove(*primitiveIt);
-            outCollection.insert(primitive);
-        }
+        outCollection.remove(*primitiveIt);
+        outCollection.insert(buildingPrimitive);
     }
 }
 
@@ -341,9 +437,7 @@ void Map3DObjectsTiledProvider_P::insertOrUpdatePassage(
     auto primitiveIt = outCollection.find(primitive);
 
     if (primitiveIt == outCollection.end())
-    {
         outCollection.insert(primitive);
-    }
 }
 
 void Map3DObjectsTiledProvider_P::collectFromPolyline(
@@ -359,24 +453,15 @@ void Map3DObjectsTiledProvider_P::collectFromPolyline(
 
     if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polygon && sourceObject->points31.size() > 2)
     {
-        BuildingPrimitive buildingPrimitive;
-        buildingPrimitive.primitive = polylinePrimitive;
-        buildingPrimitive.polygonColor = getPolygonColor(buildingPrimitive.primitive);
-        buildingPrimitive.bbox31 = sourceObject->bbox31;
-        buildingPrimitive.hidden = false;
-
         if (sourceObject->containsTag(QStringLiteral("building")))
         {
             const auto layer = QStringLiteral("layer");
             const auto layerValue = sourceObject->getResolvedAttribute(QStringRef(&layer));
             if (!layerValue.startsWith(QLatin1Char('-')))
-                insertOrUpdateBuilding(buildingPrimitive, outBuildings);
+                insertOrUpdateBuildingPrimitive(polylinePrimitive, *sourceObject, false, outBuildings);
         }
         else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part")))
-        {
-            buildingPrimitive.hidden = !isVisibleBuildingPart(sourceObject);
-            insertOrUpdateBuilding(buildingPrimitive, outBuildingParts);
-        }
+            insertOrUpdateBuildingPrimitive(polylinePrimitive, *sourceObject, true, outBuildingParts);
     }
     else if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polyline
         && (sourceObject->containsAttribute(QStringLiteral("tunnel"), QStringLiteral("building_passage"))
@@ -421,24 +506,15 @@ void Map3DObjectsTiledProvider_P::collectFromPolygons(
     if (!sourceObject || sourceObject->points31.size() < 3)
         return;
 
-    BuildingPrimitive buildingPrimitive;
-    buildingPrimitive.primitive = polygonPrimitive;
-    buildingPrimitive.polygonColor = getPolygonColor(buildingPrimitive.primitive);
-    buildingPrimitive.bbox31 = sourceObject->bbox31;
-    buildingPrimitive.hidden = false;
-
     if (sourceObject->containsTag(QStringLiteral("building")))
     {
         const auto layer = QStringLiteral("layer");
         const auto layerValue = sourceObject->getResolvedAttribute(QStringRef(&layer));
         if (!layerValue.startsWith(QLatin1Char('-')))
-            insertOrUpdateBuilding(buildingPrimitive, outBuildings);
+            insertOrUpdateBuildingPrimitive(polygonPrimitive, *sourceObject, false, outBuildings);
     }
     else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part")))
-    {
-        buildingPrimitive.hidden = !isVisibleBuildingPart(sourceObject);
-        insertOrUpdateBuilding(buildingPrimitive, outBuildingParts);
-    }
+        insertOrUpdateBuildingPrimitive(polygonPrimitive, *sourceObject, true, outBuildingParts);
 }
 
 bool Map3DObjectsTiledProvider_P::obtainData(
@@ -501,76 +577,10 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     if (!sourceObject)
         return;
 
-    float levelHeight = getDefaultBuildingsLevelHeight();
-
-    float height = getDefaultBuildingsHeight();
-    float minHeight = 0.0f;
+    float height = primitive.height;
+    float minHeight = primitive.minHeight;
     float terrainHeight = 0.0f;
     float baseTerrainHeight = 0.0f;
-
-    float levels = 0.0;
-    float minLevels = 0.0;
-
-    bool heightFound = false;
-    bool minHeightFound = false;
-    bool levelsFound = false;
-    bool minLevelsFound = false;
-
-    for (const auto& captionAttributeId : constOf(sourceObject->captionsOrder))
-    {
-        const auto& caption = constOf(sourceObject->captions)[captionAttributeId];
-        const auto& captionTag = sourceObject->attributeMapping->decodeMap[captionAttributeId].tag;
-
-        if (!heightFound && captionTag == QStringLiteral("height"))
-        {
-            height = OsmAnd::Utilities::parseLength(caption, height, &heightFound);
-            continue;
-        }
-
-        if (!minHeightFound && captionTag == QStringLiteral("min_height"))
-        {
-            minHeight = OsmAnd::Utilities::parseLength(caption, height, &minHeightFound);
-            continue;
-        }
-
-        if (!heightFound && !levelsFound && captionTag == QStringLiteral("building:levels"))
-        {
-            levelsFound = true;
-            levels = caption.toFloat();
-        }
-
-        if (!minHeightFound && !minLevelsFound && captionTag == QStringLiteral("building:min_level"))
-        {
-            minLevelsFound = true;
-            minLevels = caption.toFloat();
-            continue;
-        }
-    }
-
-    if (height == 0.0f)
-    {
-        return;
-    }
-
-    if (!heightFound && levelsFound)
-    {
-        if (levels == 0)
-        {
-            return;
-        }
-
-        height = levels * levelHeight;
-    }
-
-    if (!minHeightFound && minLevelsFound)
-    {
-        if (minLevels == 0)
-        {
-            return;
-        }
-
-        minHeight = minLevels * levelHeight;
-    }
 
     if (!elevationDataMap.isEmpty())
     {

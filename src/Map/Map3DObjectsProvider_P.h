@@ -26,6 +26,14 @@ namespace OsmAnd
         struct BuildingPrimitive
         {
             std::shared_ptr<const MapPrimitiviser::Primitive> primitive;
+            mutable float height;
+            float minHeight;
+            float levels;
+            float levelHeight;
+            bool heightFound;
+            bool levelsFound;
+            bool isNotPart;
+            bool isEmbedded;
             mutable std::shared_ptr<const OsmAnd::ObfMapObject> parentSourceObject;
             mutable uint32_t polygonColor;
             mutable AreaI bbox31;
@@ -92,11 +100,11 @@ namespace OsmAnd
             QSet<BuildingPrimitive>& outBuildings,
             QSet<BuildingPrimitive>& outBuildingParts) const;
 
-        bool isVisibleBuildingPart(const std::shared_ptr<const OsmAnd::ObfMapObject>& part) const;
         void filterBuildings(QSet<BuildingPrimitive>& buildings,
             QSet<BuildingPrimitive>& buildingParts) const;
 
-        void insertOrUpdateBuilding(const BuildingPrimitive& primitive, QSet<BuildingPrimitive>& outCollection) const;
+        void insertOrUpdateBuildingPrimitive(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
+            const OsmAnd::ObfMapObject& sourceObject, bool isPart, QSet<BuildingPrimitive>& outCollection) const;
         void insertOrUpdatePassage(const PassagePrimitive& primitive, QSet<PassagePrimitive>& outCollection) const;
 
         inline BuildingVertex getIntersection(
