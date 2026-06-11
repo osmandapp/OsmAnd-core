@@ -128,17 +128,17 @@ namespace
 
         bool hasGeometry = false;
         bool hasRouteId = false;
-        for (const auto& valueEntry : OsmAnd::rangeOf(OsmAnd::constOf(amenity->values)))
+        for (const auto& pair : OsmAnd::rangeOf(OsmAnd::constOf(amenity->values)))
         {
-            const auto subtypeIndex = valueEntry.key();
+            const auto subtypeIndex = pair->first;
             if (subtypeIndex >= sectionSubtypes->subtypes.size())
                 continue;
 
             const auto& subtype = sectionSubtypes->subtypes[subtypeIndex];
             if (subtype->tagName == kRouteBboxRadius)
-                hasGeometry = hasNonEmptyAmenityValue(valueEntry.value());
+                hasGeometry = hasNonEmptyAmenityValue(pair->second);
             else if (subtype->tagName == kRouteId)
-                hasRouteId = hasNonEmptyAmenityValue(valueEntry.value());
+                hasRouteId = hasNonEmptyAmenityValue(pair->second);
 
             if (hasGeometry && hasRouteId)
                 return true;

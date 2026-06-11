@@ -989,10 +989,11 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     PointI position31;
     QString nativeName;
     QHash<QString, QString> localizedNames;
+    QList<QString> localizedNamesOrder;
     QList<ObfPoiCategoryId> categories;
     QVector<int> textValueSubtypeIndices;
-    QHash<int, QVariant> intValues;
-    QHash<int, QVariant> stringOrDataValues;
+    QList<QPair<int, QVariant>> intValues;
+    QList<QPair<int, QVariant>> stringOrDataValues;
     QHash<uint32_t, QList<QPair<QString, QString>>> tagGroupsAmenity;
     auto categoriesFilterChecked = false;
     const CollatorStringMatcher matcher(query, StringMatcherMode::CHECK_STARTS_FROM_SPACE);
@@ -1024,25 +1025,26 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 {
                     const auto& entry = itStringOrDataValue.next();
 
-                    const auto& tag = subtypes->subtypes[entry.key()]->tagName;
+                    const auto& tag = subtypes->subtypes[entry.first]->tagName;
                     if (tag.contains(QLatin1String("_name")))
                     {
-                        additionalNames.append(entry.value().toString());
+                        additionalNames.append(entry.second.toString());
                     }
                     else if (tag == QLatin1String("name"))
                     {
-                        nativeName = entry.value().toString();
+                        nativeName = entry.second.toString();
                         itStringOrDataValue.remove();
                     }
                     else if (OsmAnd::Amenity::isNameLangTag(tag))
                     {
-                        localizedNames.insert(tag, entry.value().toString());
+                        localizedNames.insert(tag, entry.second.toString());
+                        localizedNamesOrder.append(tag);
                         itStringOrDataValue.remove();
                     }
                     else if (tag == QLatin1String("travel_elo"))
                     {
                         bool ok = false;
-                        travelElo = entry.value().toInt(&ok);
+                        travelElo = entry.second.toInt(&ok);
                         if (!ok)
                             travelElo = -1;
                         
@@ -1052,7 +1054,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                              || OsmAnd::ObfConstants::isTagIndexedForSearchAsId(tag)
                              || OsmAnd::ObfConstants::isTagIndexedForSearchAsName(tag))
                     {
-                        additionalNames.append(entry.value().toString());
+                        additionalNames.append(entry.second.toString());
                     }
                 }
 
@@ -1098,6 +1100,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
 
                 amenity->nativeName = qMove(nativeName);
                 amenity->localizedNames = qMove(localizedNames);
+                amenity->localizedNamesOrder = qMove(localizedNamesOrder);
                 if (precisionXY > 0)
                 {
                     int xBase = position31.x >> BASE_POI_SHIFT;
@@ -1109,7 +1112,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 amenity->position31 = position31;
                 amenity->categories = qMove(categories);
                 amenity->id = id;
-                amenity->values = detachedOf(intValues).unite(stringOrDataValues);
+                amenity->values.append(intValues);
+                amenity->values.append(stringOrDataValues);
                 amenity->evaluateTypes();
                 amenity->tagGroups = qMove(tagGroupsAmenity);
                 amenity->regionName = section->name;
@@ -1168,8 +1172,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     ? (rawValue >> 16)
                     : (rawValue >> 6);
 
-                intValues.insert(subtypeIndex, QVariant(intValue));
-                
+                intValues.append({(int)subtypeIndex, QVariant(intValue)});
+
                 if (poiAdditionalFilter && poiAdditionalFilter->first == subtypeIndex && poiAdditionalFilter->second == intValue)
                 {
                     topIndexAdditonalFound = true;
@@ -1184,6 +1188,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 QString name;
                 ObfReaderUtilities::readQString(cis, name);
                 localizedNames.insert(QLatin1String("en"), name);
+                localizedNamesOrder.append(QLatin1String("en"));
 
                 break;
             }
@@ -1230,10 +1235,10 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                         *pDst++ = static_cast<uint8_t>(dst);
                     }
 
-                    stringOrDataValues.insert(subtypeIndex, QVariant(data));
+                    stringOrDataValues.append({(int)subtypeIndex, QVariant(data)});
                 }
                 else
-                    stringOrDataValues.insert(subtypeIndex, valueString);
+                    stringOrDataValues.append({(int)subtypeIndex, valueString});
 
                 break;
             }
@@ -1242,7 +1247,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 QString valueString;
                 ObfReaderUtilities::readQString(cis, valueString);
 
-                stringOrDataValues.insert(subtypes->openingHoursSubtypeIndex, valueString);
+                stringOrDataValues.append({subtypes->openingHoursSubtypeIndex, valueString});
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kSiteFieldNumber:
@@ -1250,7 +1255,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 QString valueString;
                 ObfReaderUtilities::readQString(cis, valueString);
 
-                stringOrDataValues.insert(subtypes->websiteSubtypeIndex, valueString);
+                stringOrDataValues.append({subtypes->websiteSubtypeIndex, valueString});
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kPhoneFieldNumber:
@@ -1258,7 +1263,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 QString valueString;
                 ObfReaderUtilities::readQString(cis, valueString);
 
-                stringOrDataValues.insert(subtypes->phoneSubtypeIndex, valueString);
+                stringOrDataValues.append({subtypes->phoneSubtypeIndex, valueString});
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kNoteFieldNumber:
@@ -1266,7 +1271,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 QString valueString;
                 ObfReaderUtilities::readQString(cis, valueString);
 
-                stringOrDataValues.insert(subtypes->descriptionSubtypeIndex, valueString);
+                stringOrDataValues.append({subtypes->descriptionSubtypeIndex, valueString});
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kPrecisionXYFieldNumber:

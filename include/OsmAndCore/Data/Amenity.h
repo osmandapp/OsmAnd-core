@@ -60,8 +60,9 @@ namespace OsmAnd
         QList<ObfPoiCategoryId> categories;
         QString nativeName;
         QHash<QString, QString> localizedNames;
+        QList<QString> localizedNamesOrder;
         ObfObjectId id;
-        QHash<int, QVariant> values;
+        QList<QPair<int, QVariant>> values;
 
         QString type;
         QString subType;

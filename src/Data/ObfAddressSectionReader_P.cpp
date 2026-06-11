@@ -206,6 +206,7 @@ void OsmAnd::ObfAddressSectionReader_P::readCityHeader(
     auto type = ObfAddressStreetGroupSubtype::Unknown;
     QString nativeName;
     QHash<QString, QString> localizedNames;
+    QList<QString> localizedNamesOrder;
     ObfObjectId id;
     bool autogenerateId = true;
     PointI position31;
@@ -240,6 +241,7 @@ void OsmAnd::ObfAddressSectionReader_P::readCityHeader(
                 outStreetGroup->type = type;
                 outStreetGroup->nativeName = nativeName;
                 outStreetGroup->localizedNames = localizedNames;
+                outStreetGroup->localizedNamesOrder = localizedNamesOrder;
                 outStreetGroup->position31 = position31;
                 outStreetGroup->dataOffset = dataOffset;
                 outStreetGroup->bbox31 = boundaryBbox;
@@ -261,6 +263,7 @@ void OsmAnd::ObfAddressSectionReader_P::readCityHeader(
                 QString value;
                 ObfReaderUtilities::readQString(cis, value);
                 localizedNames.insert(QLatin1String("en"), value);
+                localizedNamesOrder.append(QLatin1String("en"));
                 break;
             }
             case OBF::CityIndex::kAttributeTagIdsFieldNumber:
@@ -279,7 +282,11 @@ void OsmAnd::ObfAddressSectionReader_P::readCityHeader(
                     QString tg = additionalTags.front();
                     additionalTags.pop_front();
                     if (tg.startsWith(QLatin1String("name:")))
-                        localizedNames.insert(tg.mid(5), nm);
+                    {
+                        const QString & m = tg.mid(5);
+                        localizedNames.insert(m, nm);
+                        localizedNamesOrder.append(m);
+                    }
                 }
                 break;
             }
@@ -379,6 +386,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreet(
 
     QString nativeName;
     QHash<QString, QString> localizedNames;
+    QList<QString> localizedNamesOrder;
     PointI position31;
     ObfObjectId id;
     bool autogenerateId = true;
@@ -413,6 +421,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreet(
                     outStreet->id = id;
                 outStreet->nativeName = nativeName;
                 outStreet->localizedNames = localizedNames;
+                outStreet->localizedNamesOrder = localizedNamesOrder;
                 outStreet->position31 = position31;
                 outStreet->offset = streetOffset;
                 outStreet->firstBuildingInnerOffset = firstBuildingInnerOffset;
@@ -427,6 +436,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreet(
                 QString value;
                 ObfReaderUtilities::readQString(cis, value);
                 localizedNames.insert(QLatin1String("en"), value);
+                localizedNamesOrder.append(QLatin1String("en"));
                 break;
             }
             case OBF::StreetIndex::kAttributeTagIdsFieldNumber:
@@ -445,7 +455,11 @@ void OsmAnd::ObfAddressSectionReader_P::readStreet(
                     QString tg = additionalTags.front();
                     additionalTags.pop_front();
                     if (tg.startsWith(QLatin1String("name:")))
-                        localizedNames.insert(tg.mid(5), nm);
+                    {
+                        const QString & m = tg.mid(5);
+                        localizedNames.insert(m, nm);
+                        localizedNamesOrder.append(m);
+                    }
                 }
                 break;
             }
@@ -603,6 +617,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
     ObfObjectId id;
     QString nativeName;
     QHash<QString, QString> localizedNames;
+    QList<QString> localizedNamesOrder;
     QString postcode;
     PointI position31;
 
@@ -649,6 +664,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
                     outBuilding->id = id;
                 outBuilding->nativeName = nativeName;
                 outBuilding->localizedNames = localizedNames;
+                outBuilding->localizedNamesOrder = localizedNamesOrder;
                 outBuilding->postcode = postcode;
                 outBuilding->position31 = position31;
 
@@ -671,6 +687,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
                 QString value;
                 ObfReaderUtilities::readQString(cis, value);
                 localizedNames.insert(QLatin1String("en"), value);
+                localizedNamesOrder.append(QLatin1String("en"));
                 break;
             }
             case OBF::BuildingIndex::kAttributeTagIdsFieldNumber:
@@ -689,7 +706,11 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
                     QString tg = additionalTags.front();
                     additionalTags.pop_front();
                     if (tg.startsWith(QLatin1String("name:")))
-                        localizedNames.insert(tg.mid(5), nm);
+                    {
+                        const QString & m = tg.mid(5);
+                        localizedNames.insert(m, nm);
+                        localizedNamesOrder.append(m);
+                    }
                 }
                 break;
             }
@@ -787,6 +808,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetIntersection(
 
     QString nativeName;
     QHash<QString, QString> localizedNames;
+    QList<QString> localizedNamesOrder;
     PointI position31;
 
     QStringList additionalTags;
@@ -809,6 +831,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetIntersection(
                 outIntersection.reset(new Street(street->streetGroup));
                 outIntersection->nativeName = nativeName;
                 outIntersection->localizedNames = localizedNames;
+                outIntersection->localizedNamesOrder = localizedNamesOrder;
                 outIntersection->position31 = position31;
 
                 return;
@@ -821,6 +844,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetIntersection(
                 ObfReaderUtilities::readQString(cis, value);
 
                 localizedNames.insert(QLatin1String("en"), value);
+                localizedNamesOrder.append(QLatin1String("en"));
 
                 break;
             }
@@ -840,7 +864,11 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetIntersection(
                     QString tg = additionalTags.front();
                     additionalTags.pop_front();
                     if (tg.startsWith(QLatin1String("name:")))
-                        localizedNames.insert(tg.mid(5), nm);
+                    {
+                        const QString & m = tg.mid(5);
+                        localizedNames.insert(m, nm);
+                        localizedNamesOrder.append(m);
+                    }
                 }
                 break;
             }
@@ -1235,6 +1263,11 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexData(
     for (;;)
     {
         const auto tag = cis->ReadTag();
+        if (queryController && queryController->isAborted())
+        {
+            ObfReaderUtilities::skipBlockWithLength(cis);
+            break;
+        }
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
