@@ -297,7 +297,7 @@ bool OsmAnd::TileSqliteDatabase_P::isTileTimeSupported() const
     QReadLocker scopedLocker(&_lock);
 
     isSupported = QString::compare(timeColumn, QStringLiteral("yes"), Qt::CaseInsensitive) == 0;
-    isSupported = isSupported && execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1"));
+    isSupported = isSupported && execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1"), true);
     
     _cachedIsTileTimeSupported.storeRelease(isSupported);
     return isSupported > 0;
@@ -312,7 +312,7 @@ bool OsmAnd::TileSqliteDatabase_P::hasTimeColumn() const
 
     QReadLocker scopedLocker(&_lock);
 
-    return execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1"));
+    return execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1"), true);
  }
 
 bool OsmAnd::TileSqliteDatabase_P::enableTileTimeSupport(bool force /* = false */)
@@ -330,7 +330,7 @@ bool OsmAnd::TileSqliteDatabase_P::enableTileTimeSupport(bool force /* = false *
     {
         QWriteLocker scopedLocker(&_lock);
 
-        if (!execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1")))
+        if (!execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1"), true))
         {
             if (!execStatement(_database, QStringLiteral("ALTER TABLE tiles ADD COLUMN time INTEGER")))
             {
@@ -392,7 +392,7 @@ bool OsmAnd::TileSqliteDatabase_P::isTileTimestampSupported() const
     QReadLocker scopedLocker(&_lock);
 
     isSupported = QString::compare(timestampColumn, QStringLiteral("yes"), Qt::CaseInsensitive) == 0;
-    isSupported = isSupported && execStatement(_database, QStringLiteral("SELECT timestamp FROM tiles LIMIT 1"));
+    isSupported = isSupported && execStatement(_database, QStringLiteral("SELECT timestamp FROM tiles LIMIT 1"), true);
     
     _cachedIsTileTimestampSupported.storeRelease(isSupported);
     return isSupported > 0;
@@ -407,7 +407,7 @@ bool OsmAnd::TileSqliteDatabase_P::hasTimestampColumn() const
 
     QReadLocker scopedLocker(&_lock);
 
-    return execStatement(_database, QStringLiteral("SELECT timestamp FROM tiles LIMIT 1"));
+    return execStatement(_database, QStringLiteral("SELECT timestamp FROM tiles LIMIT 1"), true);
  }
 
 bool OsmAnd::TileSqliteDatabase_P::enableTileTimestampSupport(bool force /* = false */)
@@ -425,7 +425,7 @@ bool OsmAnd::TileSqliteDatabase_P::enableTileTimestampSupport(bool force /* = fa
     {
         QWriteLocker scopedLocker(&_lock);
 
-        if (!execStatement(_database, QStringLiteral("SELECT timestamp FROM tiles LIMIT 1")))
+        if (!execStatement(_database, QStringLiteral("SELECT timestamp FROM tiles LIMIT 1"), true))
         {
             if (!execStatement(_database, QStringLiteral("ALTER TABLE tiles ADD COLUMN timestamp INTEGER")))
             {
@@ -487,7 +487,7 @@ bool OsmAnd::TileSqliteDatabase_P::isTileSpecificationSupported() const
     QReadLocker scopedLocker(&_lock);
 
     isSupported = QString::compare(specificationColumn, QStringLiteral("yes"), Qt::CaseInsensitive) == 0;
-    isSupported = isSupported && execStatement(_database, QStringLiteral("SELECT s FROM tiles LIMIT 1"));
+    isSupported = isSupported && execStatement(_database, QStringLiteral("SELECT s FROM tiles LIMIT 1"), true);
     
     _cachedIsTileSpecificationSupported.storeRelease(isSupported);
     return isSupported > 0;
@@ -502,7 +502,7 @@ bool OsmAnd::TileSqliteDatabase_P::hasSpecificationColumn() const
 
     QReadLocker scopedLocker(&_lock);
 
-    return execStatement(_database, QStringLiteral("SELECT s FROM tiles LIMIT 1"));
+    return execStatement(_database, QStringLiteral("SELECT s FROM tiles LIMIT 1"), true);
 }
 
 bool OsmAnd::TileSqliteDatabase_P::isTileValueRangeSupported() const
@@ -536,7 +536,7 @@ bool OsmAnd::TileSqliteDatabase_P::isTileValueRangeSupported() const
     QReadLocker scopedLocker(&_lock);
 
     isSupported = QString::compare(valueRangeColumn, QStringLiteral("yes"), Qt::CaseInsensitive) == 0;
-    isSupported = isSupported && execStatement(_database, QStringLiteral("SELECT maxvalue FROM tiles LIMIT 1"));
+    isSupported = isSupported && execStatement(_database, QStringLiteral("SELECT maxvalue FROM tiles LIMIT 1"), true);
     
     _cachedIsTileValueRangeSupported.storeRelease(isSupported);
     return isSupported > 0;
@@ -551,7 +551,7 @@ bool OsmAnd::TileSqliteDatabase_P::hasValueRangeColumn() const
 
     QReadLocker scopedLocker(&_lock);
 
-    return execStatement(_database, QStringLiteral("SELECT maxvalue FROM tiles LIMIT 1"));
+    return execStatement(_database, QStringLiteral("SELECT maxvalue FROM tiles LIMIT 1"), true);
 }
 
 bool OsmAnd::TileSqliteDatabase_P::enableValueRangeSupport(bool force /* = false */)
@@ -569,7 +569,7 @@ bool OsmAnd::TileSqliteDatabase_P::enableValueRangeSupport(bool force /* = false
     {
         QWriteLocker scopedLocker(&_lock);
 
-        if (!execStatement(_database, QStringLiteral("SELECT minvalue FROM tiles LIMIT 1")))
+        if (!execStatement(_database, QStringLiteral("SELECT minvalue FROM tiles LIMIT 1"), true))
         {
             if (!execStatement(_database, QStringLiteral("ALTER TABLE tiles ADD COLUMN minvalue REAL")))
             {
@@ -580,7 +580,7 @@ bool OsmAnd::TileSqliteDatabase_P::enableValueRangeSupport(bool force /* = false
                 return false;
             }
         }
-        if (!execStatement(_database, QStringLiteral("SELECT maxvalue FROM tiles LIMIT 1")))
+        if (!execStatement(_database, QStringLiteral("SELECT maxvalue FROM tiles LIMIT 1"), true))
         {
             if (!execStatement(_database, QStringLiteral("ALTER TABLE tiles ADD COLUMN maxvalue REAL")))
             {
@@ -2782,20 +2782,22 @@ bool OsmAnd::TileSqliteDatabase_P::configureStatement(
 
 std::shared_ptr<sqlite3_stmt> OsmAnd::TileSqliteDatabase_P::prepareStatement(
     const std::shared_ptr<sqlite3>& db,
-    QString sql)
+    QString sql,
+    bool suppressError /* = false */)
 {
     sqlite3_stmt* pStatement = nullptr;
     const auto res = sqlite3_prepare16_v2(db.get(), sql.utf16(), -1, &pStatement, nullptr);
     const std::shared_ptr<sqlite3_stmt> statement(pStatement, sqlite3_finalize);
     if (res != SQLITE_OK)
     {
-        LogPrintf(
-            LogSeverityLevel::Error,
-            "Failed to prepare statement from '%s': %s (%s)",
-            qPrintable(sql),
-            sqlite3_errmsg(db.get()),
-            sqlite3_errstr(res)
-        );
+        if (!suppressError)
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to prepare statement from '%s': %s (%s)",
+                qPrintable(sql),
+                sqlite3_errmsg(db.get()),
+                sqlite3_errstr(res)
+            );
 
         return nullptr;
     }
@@ -2935,9 +2937,10 @@ int OsmAnd::TileSqliteDatabase_P::stepStatement(const std::shared_ptr<sqlite3_st
     }
 }
 
-bool OsmAnd::TileSqliteDatabase_P::execStatement(const std::shared_ptr<sqlite3>& db, QString sql)
+bool OsmAnd::TileSqliteDatabase_P::execStatement(
+    const std::shared_ptr<sqlite3>& db, QString sql, bool suppressError /* = false */)
 {
-    const auto statement = prepareStatement(db, sql);
+    const auto statement = prepareStatement(db, sql, suppressError);
     return statement && stepStatement(statement) >= 0;
 }
 
@@ -2946,13 +2949,26 @@ std::shared_ptr<OsmAnd::TileSqliteDatabase_P::Meta> OsmAnd::TileSqliteDatabase_P
 {
     int res;
 
-    const auto meta = std::make_shared<Meta>();
-
-    const auto selectStatement = prepareStatement(db, QStringLiteral("SELECT * FROM info LIMIT 1"));
-    if (!selectStatement)
+    const auto statement = prepareStatement(db,
+        QStringLiteral("SELECT name FROM sqlite_master WHERE type='table' AND name='info'"));
+    if (!statement || (res = stepStatement(statement)) < 0)
     {
+        LogPrintf(
+            LogSeverityLevel::Error,
+            "Failed to check table presence: %s",
+            sqlite3_errmsg(db.get()));
+
         return nullptr;
     }
+
+    if (res < 1)
+        return nullptr;
+
+    const auto selectStatement = prepareStatement(db, QStringLiteral("SELECT * FROM info LIMIT 1"), true);
+    if (!selectStatement)
+        return nullptr;
+
+    const auto meta = std::make_shared<Meta>();
 
     while ((res = stepStatement(selectStatement)) > 0)
     {
