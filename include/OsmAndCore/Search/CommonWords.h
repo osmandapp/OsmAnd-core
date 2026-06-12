@@ -24,7 +24,7 @@ namespace OsmAnd
     const QString NUMBER_WITH_LESS_THAN_2_LETTERS = QStringLiteral("NUMBER_WITH_LESS_THAN_2_LETTERS");
 
     inline QHash<QString, int>& FREQUENTLY_USED_WORDS()
-{
+    {
         static const std::initializer_list<QString> calculatedFrequentWords =
         {
             QStringLiteral("street"), // 1. 11954399, 0.001% (76363)
@@ -3483,20 +3483,21 @@ namespace OsmAnd
         return dictionary;
     }
 
-    inline QSet<QString>& REGION_NAMES()
+    inline QList<QString>& REGION_NAMES()
     {
-        static QSet<QString> regionNames;
+        static QList<QString> regionNames;
         return regionNames;
     }
     
     union CommonWords
     {
-        static inline int getFrequentlyUsed(const QString name)
+        static inline int getFrequentlyUsed(const QString& name)
         {
+            int rs = REGION_NAMES().size();
             auto it = FREQUENTLY_USED_WORDS().find(name);
             if (it != FREQUENTLY_USED_WORDS().end())
             {
-                return *it;
+                return *it + rs;
             }
             if (REGION_NAMES().contains(name))
             {
@@ -3504,7 +3505,12 @@ namespace OsmAnd
             }
             return -1;
         }
-        
+
+        static inline int getRegionIndex(const QString& name)
+        {
+            return REGION_NAMES().indexOf(name);
+        }
+
         static inline int getCommonSearch(QString name)
         {
             bool startsWithDigit = false;
@@ -3530,6 +3536,11 @@ namespace OsmAnd
             if (it != COMMON_WORDS().end())
             {
                 return *it;
+            }
+            int ri = getRegionIndex(name);
+            if (ri != -1)
+            {
+                return COMMON_WORDS().size() + ri + 1;
             }
             int fq = getFrequentlyUsed(name);
             if (fq != -1)
@@ -3571,9 +3582,29 @@ namespace OsmAnd
             return -1;
         }
         
-        static inline void addRegionName(const QString & regionName)
+        static inline void addAllRegions(const QStringList& rawRegionNames)
         {
-            REGION_NAMES().insert(regionName.toLower());
+            auto& regions = REGION_NAMES();
+            QSet<QString> seen;
+            seen.reserve(rawRegionNames.size() * 1.5);
+            regions.reserve(rawRegionNames.size() * 1.5);
+
+            for (const QString& rawName : rawRegionNames)
+            {
+                QString original = rawName.toLower();
+                if (!seen.contains(original))
+                {
+                    seen.insert(original);
+                    regions.push_back(original);
+                }
+                QString transformed = OsmAnd::SearchAlgorithms::replaceGermanSS(original);
+                transformed = OsmAnd::ICU::stripDiacritics(transformed);
+                if (transformed != original && !seen.contains(transformed))
+                {
+                    seen.insert(transformed);
+                    regions.push_back(transformed);
+                }
+            }
         }
     };
 }
