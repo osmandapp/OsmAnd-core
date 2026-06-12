@@ -15,6 +15,7 @@ namespace OsmAnd
     {
         QStringList l;
         const QHash<QString, QString>& localizedNames = obj.localizedNames;
+        const QList<QString>& order = obj.localizedNamesOrder;
         if (localizedNames.contains(QStringLiteral("en")))
         {
             QString enName = localizedNames[QStringLiteral("en")];
@@ -23,21 +24,19 @@ namespace OsmAnd
                 l.append(enName);
             }
         }
-        if (!localizedNames.isEmpty())
+        for (const QString& key : order)
         {
-            QHash<QString, QString>::const_iterator i = localizedNames.constBegin();
-            while (i != localizedNames.constEnd())
+            if (!localizedNames.contains(key))
+                continue;
+            if (key == QStringLiteral("en"))
+                continue;
+
+            QString name = localizedNames.value(key);
+            if (key == QStringLiteral("admin_level") || key == QStringLiteral("place") || localeName == name)
             {
-                QString key = i.key();
-                QString name = localizedNames[key];
-                if (key == QStringLiteral("admin_level") || key == QStringLiteral("place") || localeName == name)
-                {
-                    ++i;
-                    continue;
-                }
-                l.append(i.value());
-                ++i;
+                continue;
             }
+            l.append(name);
         }
         if (localeName != obj.nativeName)
         {

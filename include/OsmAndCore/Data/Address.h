@@ -54,6 +54,7 @@ namespace OsmAnd
         PointI position31;
         QString nativeName;
         QHash<QString, QString> localizedNames;
+        QList<QString> localizedNamesOrder;
         QStringList getOtherNames(bool transliterate) const;
         QStringList getOtherNames(bool transliterate, QString localeName) const;
     };

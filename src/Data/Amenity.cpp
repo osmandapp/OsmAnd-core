@@ -108,9 +108,9 @@ QList<OsmAnd::Amenity::DecodedValue> OsmAnd::Amenity::getDecodedValues() const
     if (!sectionSubtypes)
         return result;
 
-    for (const auto& valueEntry : rangeOf(constOf(values)))
+    for (const auto& pair : rangeOf(constOf(values)))
     {
-        const auto subtypeIndex = valueEntry.key();
+        const auto subtypeIndex = pair->first;
         if (subtypeIndex >= sectionSubtypes->subtypes.size())
         {
             LogPrintf(LogSeverityLevel::Warning,
@@ -122,7 +122,7 @@ QList<OsmAnd::Amenity::DecodedValue> OsmAnd::Amenity::getDecodedValues() const
         }
 
         const auto& subtype = sectionSubtypes->subtypes[subtypeIndex];
-        const auto& value = valueEntry.value();
+        const auto& value = pair->second;
 
         DecodedValue decodedValue;
         decodedValue.declaration = subtype;
@@ -171,9 +171,9 @@ QHash<QString, QString> OsmAnd::Amenity::getDecodedValuesHash() const
     if (!sectionSubtypes)
         return result;
 
-    for (const auto& valueEntry : rangeOf(constOf(values)))
+    for (const auto& pair : rangeOf(constOf(values)))
     {
-        const auto subtypeIndex = valueEntry.key();
+        const auto subtypeIndex = pair->first;
         if (subtypeIndex >= sectionSubtypes->subtypes.size())
         {
             LogPrintf(LogSeverityLevel::Warning,
@@ -185,8 +185,8 @@ QHash<QString, QString> OsmAnd::Amenity::getDecodedValuesHash() const
         }
 
         const auto& subtype = sectionSubtypes->subtypes[subtypeIndex];
-        const auto& value = valueEntry.value();
-        
+        const auto& value = pair->second;
+
         QString resultTag = subtype->tagName;
         QString resultValue;
 
@@ -233,9 +233,9 @@ QString OsmAnd::Amenity::getDecodedValue(const QString& key) const
     if (!sectionSubtypes)
         return QString();
 
-    for (const auto& valueEntry : rangeOf(constOf(values)))
+    for (const auto& pair : rangeOf(constOf(values)))
     {
-        const auto subtypeIndex = valueEntry.key();
+        const auto subtypeIndex = pair->first;
         if (subtypeIndex >= sectionSubtypes->subtypes.size())
         {
             LogPrintf(LogSeverityLevel::Warning,
@@ -250,7 +250,7 @@ QString OsmAnd::Amenity::getDecodedValue(const QString& key) const
         if (subtype->tagName != key)
             continue;
 
-        const auto& value = valueEntry.value();
+        const auto& value = pair->second;
         switch (value.type())
         {
             case QVariant::Int:

@@ -25,739 +25,2576 @@ namespace OsmAnd
 
     inline QHash<QString, int>& FREQUENTLY_USED_WORDS()
 {
-        static const std::initializer_list<QString> frequentlyWords =
+        static const std::initializer_list<QString> calculatedFrequentWords =
         {
-            QStringLiteral("santa"),
-            QStringLiteral("west"),
-            QStringLiteral("east"),
-            QStringLiteral("north"),
-            QStringLiteral("northeast"),
-            QStringLiteral("northwest"),
-            QStringLiteral("southwest"),
-            QStringLiteral("san"),
-            QStringLiteral("southeast"),
-            QStringLiteral("old"),
-            QStringLiteral("main"),
-            QStringLiteral("ridge"),
-            QStringLiteral("josé"),
-            QStringLiteral("view"),
-            QStringLiteral("range"),
-            QStringLiteral("pine"),
-            QStringLiteral("church"),
-            QStringLiteral("mill"),
-            QStringLiteral("green"),
-            QStringLiteral("point"),
-            QStringLiteral("cove"),
-            QStringLiteral("gardens"),
-            QStringLiteral("francisco"),
-            QStringLiteral("mountain"),
-            QStringLiteral("jean"),
-            QStringLiteral("joão"),
-            QStringLiteral("meadow"),
-            QStringLiteral("farm"),
-            QStringLiteral("juan"),
-            QStringLiteral("bay"),
-            QStringLiteral("run"),
-            QStringLiteral("national"),
-            QStringLiteral("cedar"),
-            QStringLiteral("hollow"),
-            QStringLiteral("new"),
-            QStringLiteral("high"),
-            QStringLiteral("maple"),
-            QStringLiteral("antonio"),
-            QStringLiteral("walk"),
-            QStringLiteral("maria"),
-            QStringLiteral("spring"),
-            QStringLiteral("pedro"),
-            QStringLiteral("vista"),
-            QStringLiteral("grand"),
-            QStringLiteral("giuseppe"),
-            QStringLiteral("antônio"),
-            QStringLiteral("saint"),
-            QStringLiteral("development"),
-            QStringLiteral("washington"),
-            QStringLiteral("john"),
-            QStringLiteral("white"),
-            QStringLiteral("silva"),
-            QStringLiteral("willow"),
-            QStringLiteral("school"),
-            QStringLiteral("giovanni"),
-            QStringLiteral("canyon"),
-            QStringLiteral("general"),
-            QStringLiteral("charles"),
-            QStringLiteral("king"),
-            QStringLiteral("moulin"),
-            QStringLiteral("monte"),
-            QStringLiteral("wood"),
-            QStringLiteral("glen"),
-            QStringLiteral("rock"),
-            QStringLiteral("elm"),
-            QStringLiteral("center"),
-            QStringLiteral("mount"),
-            QStringLiteral("tree"),
-            QStringLiteral("red"),
-            QStringLiteral("central"),
-            QStringLiteral("norte"),
-            QStringLiteral("delle"),
-            QStringLiteral("église"),
-            QStringLiteral("carlos"),
-            QStringLiteral("springs"),
-            QStringLiteral("doutor"),
-            QStringLiteral("grande"),
-            QStringLiteral("martin"),
-            QStringLiteral("station"),
-            QStringLiteral("statale"),
-            QStringLiteral("alte"),
-            QStringLiteral("paul"),
-            QStringLiteral("hills"),
-            QStringLiteral("beach"),
-            QStringLiteral("brook"),
-            QStringLiteral("walnut"),
-            QStringLiteral("gate"),
-            QStringLiteral("oaks"),
-            QStringLiteral("cross"),
-            QStringLiteral("pierre"),
-            QStringLiteral("rural"),
-            QStringLiteral("service"),
-            QStringLiteral("manuel"),
-            QStringLiteral("country"),
-            QStringLiteral("blue"),
-            QStringLiteral("miguel"),
-            QStringLiteral("branch"),
-            QStringLiteral("cherry"),
-            QStringLiteral("don"),
-            QStringLiteral("lincoln"),
-            QStringLiteral("orchard"),
-            QStringLiteral("little"),
-            QStringLiteral("memorial"),
-            QStringLiteral("clos"),
-            QStringLiteral("club"),
-            QStringLiteral("bois"),
-            QStringLiteral("james"),
-            QStringLiteral("ranch"),
-            QStringLiteral("louis"),
-            QStringLiteral("sunset"),
-            QStringLiteral("pond"),
-            QStringLiteral("george"),
-            QStringLiteral("général"),
-            QStringLiteral("costa"),
-            QStringLiteral("santos"),
-            QStringLiteral("victoria"),
-            QStringLiteral("albert"),
-            QStringLiteral("manor"),
-            QStringLiteral("hall"),
-            QStringLiteral("cemetery"),
-            QStringLiteral("rose"),
-            QStringLiteral("luis"),
-            QStringLiteral("fox"),
-            QStringLiteral("doctor"),
-            QStringLiteral("long"),
-            QStringLiteral("alameda"),
-            QStringLiteral("smith"),
-            QStringLiteral("padre"),
-            QStringLiteral("woods"),
-            QStringLiteral("villa"),
-            QStringLiteral("lotissement"),
-            QStringLiteral("indian"),
-            QStringLiteral("pleasant"),
-            QStringLiteral("jackson"),
-            QStringLiteral("water"),
-            QStringLiteral("wilson"),
-            QStringLiteral("hickory"),
-            QStringLiteral("deer"),
-            QStringLiteral("birch"),
-            QStringLiteral("chestnut"),
-            QStringLiteral("eagle"),
-            QStringLiteral("laurel"),
-            QStringLiteral("heights"),
-            QStringLiteral("jana"),
-            QStringLiteral("shore"),
-            QStringLiteral("highland"),
-            QStringLiteral("roma"),
-            QStringLiteral("oliveira"),
-            QStringLiteral("garden"),
-            QStringLiteral("château"),
-            QStringLiteral("provincial"),
-            QStringLiteral("thomas"),
-            QStringLiteral("camp"),
-            QStringLiteral("largo"),
-            QStringLiteral("access"),
-            QStringLiteral("georges"),
-            QStringLiteral("college"),
-            QStringLiteral("chapel"),
-            QStringLiteral("house"),
-            QStringLiteral("rosa"),
-            QStringLiteral("johnson"),
-            QStringLiteral("upper"),
-            QStringLiteral("union"),
-            QStringLiteral("crest"),
-            QStringLiteral("gare"),
-            QStringLiteral("market"),
-            QStringLiteral("ленина"),
-            QStringLiteral("jefferson"),
-            QStringLiteral("stone"),
-            QStringLiteral("franklin"),
-            QStringLiteral("résidence"),
-            QStringLiteral("francesco"),
-            QStringLiteral("railroad"),
-            QStringLiteral("black"),
-            QStringLiteral("fontaine"),
-            QStringLiteral("silver"),
-            QStringLiteral("lower"),
-            QStringLiteral("mile"),
-            QStringLiteral("henri"),
-            QStringLiteral("big"),
-            QStringLiteral("brown"),
-            QStringLiteral("kennedy"),
-            QStringLiteral("pereira"),
-            QStringLiteral("airport"),
-            QStringLiteral("spruce"),
-            QStringLiteral("woodland"),
-            QStringLiteral("robert"),
-            QStringLiteral("victor"),
-            QStringLiteral("manoel"),
-            QStringLiteral("meadows"),
-            QStringLiteral("vicente"),
-            QStringLiteral("ash"),
-            QStringLiteral("rise"),
-            QStringLiteral("pike"),
-            QStringLiteral("luigi"),
-            QStringLiteral("sant"),
-            QStringLiteral("santo"),
-            QStringLiteral("western"),
-            QStringLiteral("poplar"),
-            QStringLiteral("советская"),
-            QStringLiteral("croix"),
-            QStringLiteral("real"),
-            QStringLiteral("vittorio"),
-            QStringLiteral("mews"),
-            QStringLiteral("taylor"),
-            QStringLiteral("davis"),
-            QStringLiteral("jose"),
-            QStringLiteral("frontage"),
-            QStringLiteral("gaulle"),
-            QStringLiteral("bank"),
-            QStringLiteral("ferry"),
-            QStringLiteral("nord"),
-            QStringLiteral("holly"),
-            QStringLiteral("castle"),
-            QStringLiteral("sierra"),
-            QStringLiteral("acceso"),
-            QStringLiteral("royal"),
-            QStringLiteral("praça"),
-            QStringLiteral("williams"),
-            QStringLiteral("souza"),
-            QStringLiteral("madison"),
-            QStringLiteral("joseph"),
-            QStringLiteral("riverside"),
-            QStringLiteral("adams"),
-            QStringLiteral("nacional"),
-            QStringLiteral("oude"),
-            QStringLiteral("tee"),
-            QStringLiteral("port"),
-            QStringLiteral("private"),
-            QStringLiteral("mayo"),
-            QStringLiteral("carlo"),
-            QStringLiteral("york"),
-            QStringLiteral("ferreira"),
-            QStringLiteral("giacomo"),
-            QStringLiteral("parade"),
-            QStringLiteral("field"),
-            QStringLiteral("professor"),
-            QStringLiteral("jones"),
-            QStringLiteral("maría"),
-            QStringLiteral("lakeview"),
-            QStringLiteral("great"),
-            QStringLiteral("alves"),
-            QStringLiteral("miller"),
-            QStringLiteral("william"),
-            QStringLiteral("henry"),
-            QStringLiteral("coronel"),
-            QStringLiteral("industrial"),
-            QStringLiteral("maréchal"),
-            QStringLiteral("acres"),
-            QStringLiteral("joaquim"),
-            QStringLiteral("landing"),
-            QStringLiteral("summit"),
-            QStringLiteral("burgemeester"),
-            QStringLiteral("magnolia"),
-            QStringLiteral("trace"),
-            QStringLiteral("presidente"),
-            QStringLiteral("falls"),
-            QStringLiteral("jules"),
-            QStringLiteral("docteur"),
-            QStringLiteral("pacific"),
-            QStringLiteral("auzoa"),
-            QStringLiteral("prairie"),
-            QStringLiteral("luiz"),
-            QStringLiteral("diagonal"),
-            QStringLiteral("cypress"),
-            QStringLiteral("mar"),
-            QStringLiteral("harbor"),
-            QStringLiteral("shady"),
-            QStringLiteral("clark"),
-            QStringLiteral("fort"),
-            QStringLiteral("bluff"),
-            QStringLiteral("grant"),
-            QStringLiteral("fork"),
-            QStringLiteral("fire"),
-            QStringLiteral("petit"),
-            QStringLiteral("sycamore"),
-            QStringLiteral("nelson"),
-            QStringLiteral("queen"),
-            QStringLiteral("city"),
-            QStringLiteral("vico"),
-            QStringLiteral("józefa"),
-            QStringLiteral("pietro"),
-            QStringLiteral("bear"),
-            QStringLiteral("lima"),
-            QStringLiteral("центральная"),
-            QStringLiteral("pablo"),
-            QStringLiteral("golden"),
-            QStringLiteral("mary"),
-            QStringLiteral("hillside"),
-            QStringLiteral("haven"),
-            QStringLiteral("alberto"),
-            QStringLiteral("lorong"),
-            QStringLiteral("elizabeth"),
-            QStringLiteral("kings"),
-            QStringLiteral("dogwood"),
-            QStringLiteral("scott"),
-            QStringLiteral("beech"),
-            QStringLiteral("lange"),
-            QStringLiteral("andré"),
-            QStringLiteral("verde"),
-            QStringLiteral("front"),
-            QStringLiteral("obere"),
-            QStringLiteral("hidden"),
-            QStringLiteral("centre"),
-            QStringLiteral("hamilton"),
-            QStringLiteral("arthur"),
-            QStringLiteral("parc"),
-            QStringLiteral("quail"),
-            QStringLiteral("julio"),
-            QStringLiteral("jan"),
-            QStringLiteral("bell"),
-            QStringLiteral("sandy"),
-            QStringLiteral("back"),
-            QStringLiteral("sud"),
-            QStringLiteral("paulo"),
-            QStringLiteral("lago"),
-            QStringLiteral("locust"),
-            QStringLiteral("martín"),
-            QStringLiteral("gabriel"),
-            QStringLiteral("chase"),
-            QStringLiteral("palm"),
-            QStringLiteral("liberty"),
-            QStringLiteral("mairie"),
-            QStringLiteral("jorge"),
-            QStringLiteral("castro"),
-            QStringLiteral("fernando"),
-            QStringLiteral("alter"),
-            QStringLiteral("salvador"),
-            QStringLiteral("hillcrest"),
-            QStringLiteral("cité"),
-            QStringLiteral("rodrigues"),
-            QStringLiteral("prospect"),
-            QStringLiteral("golf"),
-            QStringLiteral("dom"),
-            QStringLiteral("jacques"),
-            QStringLiteral("berliner"),
-            QStringLiteral("santiago"),
-            QStringLiteral("transversal"),
-            QStringLiteral("садовая"),
-            QStringLiteral("guglielmo"),
-            QStringLiteral("pointe"),
-            QStringLiteral("circuit"),
-            QStringLiteral("rang"),
-            QStringLiteral("françois"),
-            QStringLiteral("lewis"),
-            QStringLiteral("railway"),
-            QStringLiteral("allen"),
-            QStringLiteral("grange"),
-            QStringLiteral("ronda"),
-            QStringLiteral("link"),
-            QStringLiteral("harrison"),
-            QStringLiteral("tower"),
-            QStringLiteral("garibaldi"),
-            QStringLiteral("novembre"),
-            QStringLiteral("heritage"),
-            QStringLiteral("anderson"),
-            QStringLiteral("evergreen"),
-            QStringLiteral("ribeiro"),
-            QStringLiteral("ford"),
-            QStringLiteral("linden"),
-            QStringLiteral("short"),
-            QStringLiteral("walker"),
-            QStringLiteral("marie"),
-            QStringLiteral("twin"),
-            QStringLiteral("untere"),
-            QStringLiteral("university"),
-            QStringLiteral("douglas"),
-            QStringLiteral("marconi"),
-            QStringLiteral("martins"),
-            QStringLiteral("windsor"),
-            QStringLiteral("мира"),
-            QStringLiteral("david"),
-            QStringLiteral("middle"),
-            QStringLiteral("fairview"),
-            QStringLiteral("stanisława"),
-            QStringLiteral("timber"),
-            QStringLiteral("thompson"),
-            QStringLiteral("generała"),
-            QStringLiteral("virginia"),
-            QStringLiteral("broad"),
-            QStringLiteral("pasteur"),
-            QStringLiteral("promenade"),
-            QStringLiteral("hugo"),
-            QStringLiteral("montée"),
-            QStringLiteral("gomes"),
-            QStringLiteral("warren"),
-            QStringLiteral("luther"),
-            QStringLiteral("columbia"),
-            QStringLiteral("lakes"),
-            QStringLiteral("campo"),
-            QStringLiteral("puerto"),
-            QStringLiteral("république"),
-            QStringLiteral("enrico"),
-            QStringLiteral("champ"),
-            QStringLiteral("lawrence"),
-            QStringLiteral("monroe"),
-            QStringLiteral("alessandro"),
-            QStringLiteral("władysława"),
-            QStringLiteral("pod"),
-            QStringLiteral("campbell"),
-            QStringLiteral("pinto"),
-            QStringLiteral("школьная"),
-            QStringLiteral("estates"),
-            QStringLiteral("howard"),
-            QStringLiteral("orange"),
-            QStringLiteral("croft"),
-            QStringLiteral("star"),
-            QStringLiteral("est"),
-            QStringLiteral("triq"),
-            QStringLiteral("beaver"),
-            QStringLiteral("principale"),
-            QStringLiteral("paz"),
-            QStringLiteral("sol"),
-            QStringLiteral("vieux"),
-            QStringLiteral("southern"),
-            QStringLiteral("greenway"),
-            QStringLiteral("rocky"),
-            QStringLiteral("roosevelt"),
-            QStringLiteral("mai"),
-            QStringLiteral("aspen"),
-            QStringLiteral("russell"),
-            QStringLiteral("pines"),
-            QStringLiteral("concession"),
-            QStringLiteral("wellington"),
-            QStringLiteral("barrio"),
-            QStringLiteral("neue"),
-            QStringLiteral("post"),
-            QStringLiteral("vale"),
-            QStringLiteral("молодёжная"),
-            QStringLiteral("октябрьская"),
-            QStringLiteral("london"),
-            QStringLiteral("four"),
-            QStringLiteral("machado"),
-            QStringLiteral("parque"),
-            QStringLiteral("augusto"),
-            QStringLiteral("carvalho"),
-            QStringLiteral("markt"),
-            QStringLiteral("division"),
-            QStringLiteral("marina"),
-            QStringLiteral("almeida"),
-            QStringLiteral("horse"),
-            QStringLiteral("berg"),
-            QStringLiteral("mitchell"),
-            QStringLiteral("pearl"),
-            QStringLiteral("governador"),
-            QStringLiteral("side"),
-            QStringLiteral("robin"),
-            QStringLiteral("iii"),
-            QStringLiteral("vignes"),
-            QStringLiteral("dale"),
-            QStringLiteral("oriente"),
-            QStringLiteral("coast"),
-            QStringLiteral("baker"),
-            QStringLiteral("ann"),
-            QStringLiteral("europa"),
-            QStringLiteral("maurice"),
-            QStringLiteral("plac"),
-            QStringLiteral("prince"),
-            QStringLiteral("jardins"),
-            QStringLiteral("ocean"),
-            QStringLiteral("harris"),
-            QStringLiteral("oxford"),
-            QStringLiteral("kirchweg"),
-            QStringLiteral("sunrise"),
-            QStringLiteral("moore"),
-            QStringLiteral("apple"),
-            QStringLiteral("birkenweg"),
-            QStringLiteral("flores"),
-            QStringLiteral("marcel"),
-            QStringLiteral("morgan"),
-            QStringLiteral("ana"),
-            QStringLiteral("cesare"),
-            QStringLiteral("comunale"),
-            QStringLiteral("mário"),
-            QStringLiteral("olive"),
-            QStringLiteral("rené"),
-            QStringLiteral("vine"),
-            QStringLiteral("rafael"),
-            QStringLiteral("champs"),
-            QStringLiteral("nova"),
-            QStringLiteral("brasil"),
-            QStringLiteral("privada"),
-            QStringLiteral("barbosa"),
-            QStringLiteral("mare"),
-            QStringLiteral("dias"),
-            QStringLiteral("leclerc"),
-            QStringLiteral("daniel"),
-            QStringLiteral("dante"),
-            QStringLiteral("parker"),
-            QStringLiteral("francis"),
-            QStringLiteral("prés"),
-            QStringLiteral("knoll"),
-            QStringLiteral("torre"),
-            QStringLiteral("contrada"),
-            QStringLiteral("località"),
-            QStringLiteral("mesa"),
-            QStringLiteral("stade"),
-            QStringLiteral("hampton"),
-            QStringLiteral("alfredo"),
-            QStringLiteral("peak"),
-            QStringLiteral("ross"),
-            QStringLiteral("лесная"),
-            QStringLiteral("ivy"),
-            QStringLiteral("filho"),
-            QStringLiteral("mills"),
-            QStringLiteral("major"),
-            QStringLiteral("fratelli"),
-            QStringLiteral("garcía"),
-            QStringLiteral("wild"),
-            QStringLiteral("gordon"),
-            QStringLiteral("diego"),
-            QStringLiteral("cerro"),
-            QStringLiteral("cambridge"),
-            QStringLiteral("alta"),
-            QStringLiteral("home"),
-            QStringLiteral("ramón"),
-            QStringLiteral("raymond"),
-            QStringLiteral("juniper"),
-            QStringLiteral("redwood"),
-            QStringLiteral("crystal"),
-            QStringLiteral("mulberry"),
-            QStringLiteral("новая"),
-            QStringLiteral("poniente"),
-            QStringLiteral("alten"),
-            QStringLiteral("гагарина"),
-            QStringLiteral("bellevue"),
-            QStringLiteral("veterans"),
-            QStringLiteral("hope"),
-            QStringLiteral("jaurès"),
-            QStringLiteral("summer"),
-            QStringLiteral("bahnhof"),
-            QStringLiteral("r-c"),
-            QStringLiteral("oakwood"),
-            QStringLiteral("richmond"),
-            QStringLiteral("paris"),
-            QStringLiteral("lorenzo"),
-            QStringLiteral("hof"),
-            QStringLiteral("mariano"),
-            QStringLiteral("navajo"),
-            QStringLiteral("комсомольская"),
-            QStringLiteral("kleine"),
-            QStringLiteral("lodge"),
-            QStringLiteral("torres"),
-            QStringLiteral("leśna"),
-            QStringLiteral("cardinal"),
-            QStringLiteral("marsh"),
-            QStringLiteral("fern"),
-            QStringLiteral("campos"),
-            QStringLiteral("nationale"),
-            QStringLiteral("berry"),
-            QStringLiteral("commerce"),
-            QStringLiteral("ignacio"),
-            QStringLiteral("acesso"),
-            QStringLiteral("madrid"),
-            QStringLiteral("mission"),
-            QStringLiteral("gang"),
-            QStringLiteral("oeste"),
-            QStringLiteral("cherokee"),
-            QStringLiteral("paolo"),
-            QStringLiteral("stewart"),
-            QStringLiteral("cliff"),
-            QStringLiteral("eduardo"),
-            QStringLiteral("marshall"),
-            QStringLiteral("dam"),
-            QStringLiteral("pioneer"),
-            QStringLiteral("alfred"),
-            QStringLiteral("greenwood"),
-            QStringLiteral("robinson"),
-            QStringLiteral("acacias"),
-            QStringLiteral("lópez"),
-            QStringLiteral("tadeusza"),
-            QStringLiteral("leonardo"),
-            QStringLiteral("hilltop"),
-            QStringLiteral("diamond"),
-            QStringLiteral("quarry"),
-            QStringLiteral("het"),
-            QStringLiteral("temple"),
-            QStringLiteral("scenic"),
-            QStringLiteral("alexander"),
-            QStringLiteral("победы"),
-            QStringLiteral("osiedle"),
-            QStringLiteral("écoles"),
-            QStringLiteral("cleveland"),
-            QStringLiteral("lynn"),
-            QStringLiteral("top"),
-            QStringLiteral("mont"),
-            QStringLiteral("polna"),
-            QStringLiteral("leaf"),
-            QStringLiteral("vieira"),
-            QStringLiteral("cottonwood"),
-            QStringLiteral("perry"),
-            QStringLiteral("morris"),
-            QStringLiteral("oberer"),
-            QStringLiteral("domingo"),
-            QStringLiteral("hawthorne"),
-            QStringLiteral("autumn"),
-            QStringLiteral("alto"),
-            QStringLiteral("chapelle"),
-            QStringLiteral("kelly"),
-            QStringLiteral("sherwood"),
-            QStringLiteral("garcia"),
-            QStringLiteral("bruce"),
-            QStringLiteral("cour"),
-            QStringLiteral("petite"),
-            QStringLiteral("gap"),
-            QStringLiteral("sea"),
-            QStringLiteral("émile"),
-            QStringLiteral("murray"),
-            QStringLiteral("tangenziale"),
-            QStringLiteral("mühlenweg"),
-            QStringLiteral("gonçalves"),
-            QStringLiteral("eastern"),
-            QStringLiteral("belle"),
-            QStringLiteral("northern"),
-            QStringLiteral("xxiii"),
-            QStringLiteral("vicinale"),
-            QStringLiteral("hemlock"),
-            QStringLiteral("hunter"),
-            QStringLiteral("лет"),
-            QStringLiteral("roberts"),
-            QStringLiteral("heather"),
-            QStringLiteral("bernardo"),
-            QStringLiteral("verte"),
-            QStringLiteral("arbor"),
-            QStringLiteral("puits"),
-            QStringLiteral("mine"),
-            QStringLiteral("stefana"),
-            QStringLiteral("güterweg"),
-            QStringLiteral("newton"),
-            QStringLiteral("кирова"),
-            QStringLiteral("riverview"),
-            QStringLiteral("clay"),
-            QStringLiteral("sint"),
-            QStringLiteral("aldo"),
-            QStringLiteral("tilleuls"),
-            QStringLiteral("claude"),
-            QStringLiteral("kossuth"),
-            QStringLiteral("edward"),
-            QStringLiteral("communale"),
-            QStringLiteral("fuente"),
-            QStringLiteral("cooper"),
-            QStringLiteral("trails"),
-            QStringLiteral("nieuwe"),
-            QStringLiteral("sebastião"),
-            QStringLiteral("roberto"),
-            QStringLiteral("overlook"),
-            QStringLiteral("первомайская"),
-            QStringLiteral("roger"),
-            QStringLiteral("turner"),
-            QStringLiteral("france"),
-            QStringLiteral("mario"),
-            QStringLiteral("iv"),
-            QStringLiteral("sugar"),
-            QStringLiteral("hudson"),
-            QStringLiteral("lopes"),
-            QStringLiteral("evans"),
-            QStringLiteral("cottage"),
-            QStringLiteral("raya"),
-            QStringLiteral("branco"),
-            QStringLiteral("vernon"),
-            QStringLiteral("traverse"),
-            QStringLiteral("emerald"),
-            QStringLiteral("dove"),
-            QStringLiteral("felipe"),
-            QStringLiteral("wildwood"),
-            QStringLiteral("moro"),
-            QStringLiteral("marechal"),
-            QStringLiteral("köz"),
-            QStringLiteral("marion"),
-            QStringLiteral("marco"),
-            QStringLiteral("léon"),
-            QStringLiteral("mt"),
-            QStringLiteral("veneto"),
-            QStringLiteral("mazzini"),
-            QStringLiteral("plum"),
-            QStringLiteral("boundary"),
-            QStringLiteral("barros"),
-            QStringLiteral("tour"),
-            QStringLiteral("andrews"),
-            QStringLiteral("wiesenweg"),
-            QStringLiteral("maggio"),
-            QStringLiteral("ricardo"),
-            QStringLiteral("pennsylvania"),
-            QStringLiteral("myrtle"),
-            QStringLiteral("matteotti"),
-            QStringLiteral("hinter"),
-            QStringLiteral("линия"),
-            QStringLiteral("ouest"),
-            QStringLiteral("maja"),
-            QStringLiteral("kent"),
-            QStringLiteral("stanley"),
-            QStringLiteral("jacob"),
-            QStringLiteral("principal"),
-            QStringLiteral("rogers"),
-            QStringLiteral("homestead"),
-            QStringLiteral("collins"),
-            QStringLiteral("richard"),
-            QStringLiteral("crown"),
-            QStringLiteral("moss"),
-            QStringLiteral("moreno"),
-            QStringLiteral("garfield"),
-            QStringLiteral("belmont"),
-            QStringLiteral("rolling"),
-            QStringLiteral("sportplatz"),
-            QStringLiteral("côte"),
-            QStringLiteral("hospital"),
-            QStringLiteral("sun"),
-            QStringLiteral("горького"),
-            QStringLiteral("flat"),
-            QStringLiteral("colonial"),
-            QStringLiteral("ramos"),
-            QStringLiteral("lilas"),
-            QStringLiteral("mason"),
-            QStringLiteral("forge"),
-            QStringLiteral("shadow"),
-            QStringLiteral("gold"),
-            QStringLiteral("rocha"),
-            QStringLiteral("linda"),
-            QStringLiteral("young"),
-            QStringLiteral("estate"),
-            QStringLiteral("martiri"),
-            QStringLiteral("verdi"),
-            QStringLiteral("augusta")
+            QStringLiteral("street"), // 1. 11954399, 0.001% (76363)
+            QStringLiteral("улица"), // 2. 11052215, 0.000% (50610)
+            QStringLiteral("road"), // 3. 10841695, 0.006% (125174)
+            QStringLiteral("avenue"), // 4. 8638100, 0.041% (69251)
+            QStringLiteral("drive"), // 5. 7135716, 0.001% (96184)
+            QStringLiteral("rue"), // 6. 5497105, 0.004% (91943)
+            QStringLiteral("de"), // 7. 4926092, 0.000% (106027)
+            QStringLiteral("straße"), // 8. 4590107, 0.000% (58840)
+            QStringLiteral("via"), // 9. 3772011, 0.003% (55206)
+            QStringLiteral("lane"), // 10. 2742596, 0.105% (53471)
+            QStringLiteral("west"), // 11. 2311463, 2.043% (29762)
+            QStringLiteral("south"), // 12. 2156752, 2.428% (28774)
+            QStringLiteral("court"), // 13. 2136840, 0.567% (59352)
+            QStringLiteral("north"), // 14. 2055847, 3.233% (24863)
+            QStringLiteral("calle"), // 15. 2049908, 0.013% (38712)
+            QStringLiteral("شارع"), // 16. 2014568, 0.000% (41364)
+            QStringLiteral("east"), // 17. 2002099, 2.178% (25253)
+            QStringLiteral("strada"), // 18. 1760761, 0.010% (16020)
+            QStringLiteral("rua"), // 19. 1726381, 0.027% (36426)
+            QStringLiteral("place"), // 20. 1600210, 0.095% (38742)
+            QStringLiteral("du"), // 21. 1398077, 0.004% (31571)
+            QStringLiteral("way"), // 22. 1393254, 0.134% (32225)
+            QStringLiteral("la"), // 23. 1380990, 0.230% (30236)
+            QStringLiteral("des"), // 24. 1365169, 0.001% (24780)
+            QStringLiteral("am"), // 25. 1130003, 0.002% (22584)
+            QStringLiteral("boulevard"), // 26. 1013516, 0.808% (13580)
+            QStringLiteral("g"), // 27. 979206, 1.060% (12178)
+            QStringLiteral("вуліца"), // 28. 948971, 0.000% (5500)
+            QStringLiteral("route"), // 29. 944106, 0.019% (18974)
+            QStringLiteral("вулиця"), // 30. 943996, 0.000% (10076)
+            QStringLiteral("avenida"), // 31. 906065, 0.047% (13044)
+            QStringLiteral("crescent"), // 32. 844121, 2.581% (15409)
+            QStringLiteral("circle"), // 33. 798575, 1.510% (19918)
+            QStringLiteral("southwest"), // 34. 703732, 0.235% (10969)
+            QStringLiteral("northeast"), // 35. 686552, 0.263% (10378)
+            QStringLiteral("переулок"), // 36. 657981, 0.009% (9321)
+            QStringLiteral("weg"), // 37. 652003, 0.013% (18034)
+            QStringLiteral("close"), // 38. 649356, 0.234% (16524)
+            QStringLiteral("van"), // 39. 630548, 0.086% (9533)
+            QStringLiteral("chemin"), // 40. 629116, 0.113% (21104)
+            QStringLiteral("southeast"), // 41. 594708, 0.305% (10924)
+            QStringLiteral("park"), // 42. 590496, 24.657% (9747)
+            QStringLiteral("utca"), // 43. 588155, 0.061% (6442)
+            QStringLiteral("carrer"), // 44. 574534, 0.019% (13179)
+            QStringLiteral("hill"), // 45. 540826, 7.788% (9340)
+            QStringLiteral("del"), // 46. 515151, 0.069% (12037)
+            QStringLiteral("northwest"), // 47. 502317, 0.722% (7663)
+            QStringLiteral("terrace"), // 48. 500189, 4.111% (11236)
+            QStringLiteral("san"), // 49. 455499, 0.004% (5616)
+            QStringLiteral("der"), // 50. 442708, 0.007% (9501)
+            QStringLiteral("highway"), // 51. 433934, 0.704% (3616)
+            QStringLiteral("hauptstraße"), // 52. 431145, 84.475% (772)
+            QStringLiteral("main"), // 53. 427750, 90.952% (676)
+            QStringLiteral("1"), // 54. 419470, 8.406% (7840)
+            QStringLiteral("saint"), // 55. 405468, 0.069% (5792)
+            QStringLiteral("im"), // 56. 397130, 0.124% (9369)
+            QStringLiteral("d"), // 57. 384271, 4.038% (8731)
+            QStringLiteral("я"), // 58. 374975, 0.689% (6094)
+            QStringLiteral("l"), // 59. 370800, 2.165% (7193)
+            QStringLiteral("2"), // 60. 347253, 9.957% (7659)
+            QStringLiteral("grove"), // 61. 319900, 13.148% (6655)
+            QStringLiteral("iela"), // 62. 318304, 0.000% (3631)
+            QStringLiteral("st"), // 63. 310333, 0.817% (5964)
+            QStringLiteral("ridge"), // 64. 306210, 17.766% (5697)
+            QStringLiteral("lake"), // 65. 284085, 26.179% (4629)
+            QStringLiteral("trail"), // 66. 278981, 1.709% (7148)
+            QStringLiteral("центральная"), // 67. 272160, 99.346% (53)
+            QStringLiteral("ленина"), // 68. 266507, 93.588% (45)
+            QStringLiteral("советская"), // 69. 260796, 98.437% (44)
+            QStringLiteral("old"), // 70. 258737, 4.395% (4618)
+            QStringLiteral("creek"), // 71. 256343, 5.398% (5328)
+            QStringLiteral("view"), // 72. 249726, 11.926% (4810)
+            QStringLiteral("josé"), // 73. 240607, 2.772% (4599)
+            QStringLiteral("3"), // 74. 236688, 13.509% (4742)
+            QStringLiteral("dorfstraße"), // 75. 226715, 69.372% (1073)
+            QStringLiteral("da"), // 76. 220510, 0.000% (5228)
+            QStringLiteral("viale"), // 77. 219730, 0.058% (2584)
+            QStringLiteral("an"), // 78. 218705, 0.037% (5225)
+            QStringLiteral("impasse"), // 79. 215709, 0.106% (8781)
+            QStringLiteral("s"), // 80. 213147, 1.775% (5115)
+            QStringLiteral("oak"), // 81. 210594, 41.216% (2718)
+            QStringLiteral("й"), // 82. 206949, 1.121% (6822)
+            QStringLiteral("allée"), // 83. 205945, 0.246% (6366)
+            QStringLiteral("the"), // 84. 204416, 21.426% (1982)
+            QStringLiteral("valley"), // 85. 193360, 24.645% (3056)
+            QStringLiteral("jalan"), // 86. 191039, 0.589% (5967)
+            QStringLiteral("ulica"), // 87. 187837, 0.018% (4310)
+            QStringLiteral("state"), // 88. 187669, 30.011% (950)
+            QStringLiteral("gardens"), // 89. 183497, 1.625% (4802)
+            QStringLiteral("عبد"), // 90. 182247, 0.000% (5292)
+            QStringLiteral("santa"), // 91. 177692, 0.153% (2518)
+            QStringLiteral("los"), // 92. 177311, 0.007% (3729)
+            QStringLiteral("green"), // 93. 175915, 27.591% (3476)
+            QStringLiteral("parkway"), // 94. 175883, 8.343% (3026)
+            QStringLiteral("jean"), // 95. 172420, 8.257% (3291)
+            QStringLiteral("river"), // 96. 170616, 45.697% (2230)
+            QStringLiteral("high"), // 97. 167906, 77.576% (894)
+            QStringLiteral("general"), // 98. 167100, 0.403% (1651)
+            QStringLiteral("county"), // 99. 163052, 12.605% (1759)
+            QStringLiteral("садовая"), // 100. 162457, 93.337% (133)
+            QStringLiteral("juan"), // 101. 161707, 9.431% (2565)
+            QStringLiteral("auf"), // 102. 160211, 0.062% (3883)
+            QStringLiteral("проспект"), // 103. 158586, 0.000% (977)
+            QStringLiteral("4"), // 104. 157973, 17.715% (3465)
+            QStringLiteral("di"), // 105. 154592, 0.032% (3831)
+            QStringLiteral("проезд"), // 106. 153121, 2.671% (4344)
+            QStringLiteral("den"), // 107. 151628, 0.235% (3311)
+            QStringLiteral("bahnhofstraße"), // 108. 149838, 94.119% (102)
+            QStringLiteral("mill"), // 109. 149836, 39.205% (2354)
+            QStringLiteral("point"), // 110. 149483, 7.568% (3686)
+            QStringLiteral("bay"), // 111. 148632, 24.892% (3088)
+            QStringLiteral("حارة"), // 112. 144936, 0.844% (5841)
+            QStringLiteral("pine"), // 113. 143433, 59.500% (1581)
+            QStringLiteral("школьная"), // 114. 142761, 99.464% (41)
+            QStringLiteral("a"), // 115. 142757, 13.779% (3620)
+            QStringLiteral("5"), // 116. 141106, 19.254% (2601)
+            QStringLiteral("dr"), // 117. 140309, 0.527% (4339)
+            QStringLiteral("church"), // 118. 138368, 77.983% (735)
+            QStringLiteral("октябрьская"), // 119. 138161, 98.838% (24)
+            QStringLiteral("nw"), // 120. 138110, 1.115% (2349)
+            QStringLiteral("in"), // 121. 136857, 0.386% (3568)
+            QStringLiteral("محمد"), // 122. 136666, 0.077% (3411)
+            QStringLiteral("do"), // 123. 136366, 0.007% (3891)
+            QStringLiteral("8"), // 124. 134786, 15.884% (1532)
+            QStringLiteral("мира"), // 125. 134345, 98.665% (60)
+            QStringLiteral("jana"), // 126. 133685, 0.593% (895)
+            QStringLiteral("giuseppe"), // 127. 133469, 1.638% (1182)
+            QStringLiteral("na"), // 128. 131704, 0.416% (2822)
+            QStringLiteral("loop"), // 129. 129593, 3.577% (3564)
+            QStringLiteral("meadow"), // 130. 128222, 40.350% (2150)
+            QStringLiteral("ring"), // 131. 127108, 6.199% (2246)
+            QStringLiteral("zum"), // 132. 126424, 0.244% (4165)
+            QStringLiteral("forest"), // 133. 126368, 55.476% (1719)
+            QStringLiteral("antonio"), // 134. 126190, 6.591% (2058)
+            QStringLiteral("набережная"), // 135. 125385, 86.301% (420)
+            QStringLiteral("grand"), // 136. 124232, 54.631% (1537)
+            QStringLiteral("i"), // 137. 122422, 7.870% (2443)
+            QStringLiteral("della"), // 138. 122314, 0.778% (1864)
+            QStringLiteral("albert"), // 139. 121352, 24.651% (1367)
+            QStringLiteral("doctor"), // 140. 121324, 0.104% (2483)
+            QStringLiteral("las"), // 141. 120837, 0.017% (2527)
+            QStringLiteral("молодёжная"), // 142. 118043, 99.891% (20)
+            QStringLiteral("9"), // 143. 117862, 20.163% (1341)
+            QStringLiteral("e"), // 144. 117782, 10.255% (2518)
+            QStringLiteral("pasaje"), // 145. 117325, 8.493% (4846)
+            QStringLiteral("بن"), // 146. 117133, 0.000% (1634)
+            QStringLiteral("alte"), // 147. 116555, 6.729% (1339)
+            QStringLiteral("el"), // 148. 116300, 0.031% (2935)
+            QStringLiteral("vista"), // 149. 116042, 19.344% (2049)
+            QStringLiteral("francisco"), // 150. 114498, 8.913% (2259)
+            QStringLiteral("glen"), // 151. 113927, 20.424% (2744)
+            QStringLiteral("village"), // 152. 113828, 38.287% (1883)
+            QStringLiteral("von"), // 153. 113437, 0.101% (2512)
+            QStringLiteral("paul"), // 154. 112666, 16.927% (1954)
+            QStringLiteral("rd"), // 155. 112499, 0.819% (1870)
+            QStringLiteral("maple"), // 156. 110942, 82.237% (691)
+            QStringLiteral("j"), // 157. 110135, 8.855% (2282)
+            QStringLiteral("ko"), // 158. 110001, 0.008% (2522)
+            QStringLiteral("new"), // 159. 109253, 20.614% (1332)
+            QStringLiteral("փողոց"), // 160. 109089, 0.029% (1801)
+            QStringLiteral("washington"), // 161. 108940, 89.675% (293)
+            QStringLiteral("tee"), // 162. 108812, 0.482% (2539)
+            QStringLiteral("mountain"), // 163. 108240, 44.039% (1772)
+            QStringLiteral("king"), // 164. 108179, 53.784% (764)
+            QStringLiteral("6"), // 165. 105908, 26.128% (1983)
+            QStringLiteral("piazza"), // 166. 105126, 1.244% (2532)
+            QStringLiteral("grande"), // 167. 104107, 62.443% (981)
+            QStringLiteral("út"), // 168. 104080, 0.010% (1239)
+            QStringLiteral("новая"), // 169. 103274, 93.583% (127)
+            QStringLiteral("gate"), // 170. 102914, 4.566% (2855)
+            QStringLiteral("комсомольская"), // 171. 102025, 98.843% (39)
+            QStringLiteral("sokak"), // 172. 102011, 0.363% (3930)
+            QStringLiteral("7"), // 173. 101865, 28.923% (1674)
+            QStringLiteral("cove"), // 174. 101626, 11.373% (4457)
+            QStringLiteral("square"), // 175. 101522, 4.636% (3432)
+            QStringLiteral("лесная"), // 176. 101168, 97.896% (65)
+            QStringLiteral("spring"), // 177. 100512, 53.322% (1336)
+            QStringLiteral("mount"), // 178. 99427, 10.911% (1590)
+            QStringLiteral("beach"), // 179. 99283, 36.443% (1176)
+            QStringLiteral("martin"), // 180. 97944, 37.261% (1214)
+            QStringLiteral("giovanni"), // 181. 97463, 5.015% (1345)
+            QStringLiteral("run"), // 182. 97372, 2.371% (2203)
+            QStringLiteral("гагарина"), // 183. 97351, 94.755% (57)
+            QStringLiteral("cedar"), // 184. 96593, 72.867% (941)
+            QStringLiteral("walk"), // 185. 96541, 2.808% (3500)
+            QStringLiteral("maria"), // 186. 96120, 11.278% (2275)
+            QStringLiteral("corso"), // 187. 95921, 1.294% (571)
+            QStringLiteral("charles"), // 188. 95518, 40.200% (1380)
+            QStringLiteral("schulstraße"), // 189. 95503, 96.674% (88)
+            QStringLiteral("se"), // 190. 95269, 0.895% (2083)
+            QStringLiteral("первомайская"), // 191. 95081, 99.418% (23)
+            QStringLiteral("chasi"), // 192. 94834, 0.011% (2034)
+            QStringLiteral("jan"), // 193. 94130, 1.403% (1399)
+            QStringLiteral("кирова"), // 194. 93950, 98.871% (46)
+            QStringLiteral("pedro"), // 195. 91905, 8.229% (1796)
+            QStringLiteral("brook"), // 196. 90697, 28.765% (1836)
+            QStringLiteral("manuel"), // 197. 90598, 1.318% (1591)
+            QStringLiteral("dei"), // 198. 90476, 0.000% (1729)
+            QStringLiteral("vei"), // 199. 89931, 0.010% (2332)
+            QStringLiteral("mare"), // 200. 89536, 7.303% (473)
+            QStringLiteral("лет"), // 201. 88568, 0.000% (329)
+            QStringLiteral("sint"), // 202. 88036, 0.000% (1134)
+            QStringLiteral("gartenstraße"), // 203. 87038, 97.820% (51)
+            QStringLiteral("sw"), // 204. 86853, 1.968% (1930)
+            QStringLiteral("john"), // 205. 86775, 39.115% (1355)
+            QStringLiteral("pierre"), // 206. 86724, 13.678% (1889)
+            QStringLiteral("lange"), // 207. 86412, 42.471% (627)
+            QStringLiteral("победы"), // 208. 86336, 65.769% (112)
+            QStringLiteral("cel"), // 209. 85951, 0.043% (95)
+            QStringLiteral("broadway"), // 210. 85500, 97.457% (137)
+            QStringLiteral("中正路"), // 211. 85207, 100.000% (1)
+            QStringLiteral("2nd"), // 212. 85128, 95.549% (262)
+            QStringLiteral("dem"), // 213. 84936, 0.075% (2371)
+            QStringLiteral("көшесі"), // 214. 84744, 0.000% (1343)
+            QStringLiteral("louis"), // 215. 84678, 19.326% (1692)
+            QStringLiteral("wood"), // 216. 84647, 35.003% (1814)
+            QStringLiteral("bergstraße"), // 217. 84342, 93.631% (84)
+            QStringLiteral("victoria"), // 218. 84116, 83.799% (396)
+            QStringLiteral("farm"), // 219. 84100, 20.504% (2294)
+            QStringLiteral("3rd"), // 220. 83561, 95.881% (246)
+            QStringLiteral("karl"), // 221. 83233, 1.107% (1582)
+            QStringLiteral("józefa"), // 222. 83083, 0.227% (591)
+            QStringLiteral("завулак"), // 223. 82845, 0.000% (2205)
+            QStringLiteral("11"), // 224. 82662, 24.537% (987)
+            QStringLiteral("manor"), // 225. 82322, 38.046% (1575)
+            QStringLiteral("central"), // 226. 82036, 84.529% (434)
+            QStringLiteral("sant"), // 227. 82014, 5.422% (1121)
+            QStringLiteral("burgemeester"), // 228. 81933, 0.011% (1432)
+            QStringLiteral("4th"), // 229. 81670, 96.007% (251)
+            QStringLiteral("пут"), // 230. 81561, 0.000% (1265)
+            QStringLiteral("parade"), // 231. 80933, 10.465% (1344)
+            QStringLiteral("hills"), // 232. 80495, 8.153% (1731)
+            QStringLiteral("gasse"), // 233. 80355, 4.537% (2301)
+            QStringLiteral("elm"), // 234. 80310, 87.992% (438)
+            QStringLiteral("5th"), // 235. 80149, 96.052% (215)
+            QStringLiteral("george"), // 236. 79802, 48.995% (775)
+            QStringLiteral("tree"), // 237. 79267, 4.465% (1400)
+            QStringLiteral("willow"), // 238. 79231, 69.257% (850)
+            QStringLiteral("калинина"), // 239. 79105, 98.905% (32)
+            QStringLiteral("station"), // 240. 78489, 70.198% (680)
+            QStringLiteral("cesta"), // 241. 78341, 0.439% (1304)
+            QStringLiteral("карла"), // 242. 78335, 0.000% (65)
+            QStringLiteral("friedrich"), // 243. 78239, 2.014% (912)
+            QStringLiteral("провулок"), // 244. 77827, 0.000% (2426)
+            QStringLiteral("camino"), // 245. 77273, 4.771% (1832)
+            QStringLiteral("robert"), // 246. 76049, 15.092% (1154)
+            QStringLiteral("линия"), // 247. 75959, 34.064% (845)
+            QStringLiteral("carlos"), // 248. 75920, 10.003% (1435)
+            QStringLiteral("ابو"), // 249. 75920, 0.065% (2106)
+            QStringLiteral("пушкина"), // 250. 75750, 98.469% (40)
+            QStringLiteral("vej"), // 251. 75691, 0.070% (1759)
+            QStringLiteral("горького"), // 252. 75591, 61.562% (56)
+            QStringLiteral("rise"), // 253. 75234, 5.723% (2270)
+            QStringLiteral("заречная"), // 254. 73493, 98.167% (44)
+            QStringLiteral("ștefan"), // 255. 73404, 0.000% (135)
+            QStringLiteral("thomas"), // 256. 73365, 47.091% (848)
+            QStringLiteral("orchard"), // 257. 72998, 77.906% (627)
+            QStringLiteral("u"), // 258. 72507, 8.945% (1499)
+            QStringLiteral("hollow"), // 259. 72439, 9.732% (1771)
+            QStringLiteral("зелёная"), // 260. 72386, 97.571% (40)
+            QStringLiteral("ქუჩა"), // 261. 71374, 0.000% (1482)
+            QStringLiteral("полевая"), // 262. 71237, 98.640% (29)
+            QStringLiteral("pond"), // 263. 71046, 24.163% (1495)
+            QStringLiteral("heights"), // 264. 70997, 7.158% (1977)
+            QStringLiteral("c"), // 265. 70990, 24.048% (1391)
+            QStringLiteral("lincoln"), // 266. 70957, 93.231% (237)
+            QStringLiteral("bridge"), // 267. 70760, 44.676% (1032)
+            QStringLiteral("10"), // 268. 70740, 28.608% (1215)
+            QStringLiteral("6th"), // 269. 70720, 96.284% (196)
+            QStringLiteral("пролетарская"), // 270. 70446, 98.460% (26)
+            QStringLiteral("joseph"), // 271. 70399, 26.652% (1480)
+            QStringLiteral("roma"), // 272. 70283, 94.277% (114)
+            QStringLiteral("martín"), // 273. 70098, 54.007% (491)
+            QStringLiteral("landstraße"), // 274. 69716, 22.676% (663)
+            QStringLiteral("pleasant"), // 275. 69696, 89.974% (401)
+            QStringLiteral("white"), // 276. 69597, 24.977% (1078)
+            QStringLiteral("1st"), // 277. 69527, 95.402% (236)
+            QStringLiteral("oude"), // 278. 69390, 0.572% (950)
+            QStringLiteral("маркса"), // 279. 69323, 0.814% (43)
+            QStringLiteral("stanisława"), // 280. 69292, 0.120% (535)
+            QStringLiteral("lindenstraße"), // 281. 69248, 98.182% (39)
+            QStringLiteral("shore"), // 282. 69116, 79.096% (592)
+            QStringLiteral("m"), // 283. 69073, 12.377% (1502)
+            QStringLiteral("7th"), // 284. 69020, 96.036% (196)
+            QStringLiteral("chaussée"), // 285. 68675, 2.681% (349)
+            QStringLiteral("le"), // 286. 68559, 0.595% (2605)
+            QStringLiteral("line"), // 287. 68483, 7.154% (1356)
+            QStringLiteral("luis"), // 288. 68383, 14.967% (1215)
+            QStringLiteral("o"), // 289. 68203, 6.617% (1685)
+            QStringLiteral("احمد"), // 290. 68124, 1.048% (1773)
+            QStringLiteral("springs"), // 291. 68104, 6.042% (1482)
+            QStringLiteral("center"), // 292. 68061, 58.808% (731)
+            QStringLiteral("zur"), // 293. 67764, 0.273% (2223)
+            QStringLiteral("ne"), // 294. 67620, 1.448% (1404)
+            QStringLiteral("władysława"), // 295. 67613, 0.101% (294)
+            QStringLiteral("monte"), // 296. 67376, 17.209% (1305)
+            QStringLiteral("joão"), // 297. 67344, 0.581% (1611)
+            QStringLiteral("ringstraße"), // 298. 67250, 94.981% (43)
+            QStringLiteral("rock"), // 299. 66807, 21.716% (1407)
+            QStringLiteral("25"), // 300. 66481, 14.291% (459)
+            QStringLiteral("dos"), // 301. 66410, 0.906% (1767)
+            QStringLiteral("oaks"), // 302. 66054, 9.957% (1566)
+            QStringLiteral("12"), // 303. 65943, 28.065% (939)
+            QStringLiteral("obere"), // 304. 65619, 9.246% (1209)
+            QStringLiteral("moulin"), // 305. 65205, 60.868% (792)
+            QStringLiteral("highland"), // 306. 65104, 92.269% (364)
+            QStringLiteral("james"), // 307. 65085, 68.500% (740)
+            QStringLiteral("луговая"), // 308. 64974, 96.014% (33)
+            QStringLiteral("ii"), // 309. 64960, 1.405% (1045)
+            QStringLiteral("8th"), // 310. 64720, 95.824% (202)
+            QStringLiteral("caddesi"), // 311. 64279, 0.050% (1295)
+            QStringLiteral("b"), // 312. 64174, 28.998% (1147)
+            QStringLiteral("heinrich"), // 313. 63909, 0.466% (1138)
+            QStringLiteral("allee"), // 314. 63657, 4.488% (1115)
+            QStringLiteral("kalea"), // 315. 63639, 1.867% (2452)
+            QStringLiteral("tadeusza"), // 316. 63234, 0.335% (213)
+            QStringLiteral("wilhelm"), // 317. 63134, 1.294% (1182)
+            QStringLiteral("les"), // 318. 62573, 0.085% (2313)
+            QStringLiteral("bois"), // 319. 62182, 19.822% (1636)
+            QStringLiteral("oji"), // 320. 61976, 0.000% (2479)
+            QStringLiteral("country"), // 321. 61960, 37.571% (746)
+            QStringLiteral("august"), // 322. 61913, 3.298% (641)
+            QStringLiteral("v"), // 323. 61516, 4.799% (1440)
+            QStringLiteral("union"), // 324. 61441, 88.130% (277)
+            QStringLiteral("miguel"), // 325. 61028, 15.046% (987)
+            QStringLiteral("waldstraße"), // 326. 60887, 98.014% (45)
+            QStringLiteral("generała"), // 327. 60849, 0.000% (293)
+            QStringLiteral("woods"), // 328. 60841, 20.642% (1648)
+            QStringLiteral("y"), // 329. 60738, 2.878% (1152)
+            QStringLiteral("leśna"), // 330. 60600, 97.563% (26)
+            QStringLiteral("doutor"), // 331. 60238, 0.116% (1678)
+            QStringLiteral("walnut"), // 332. 60181, 93.400% (297)
+            QStringLiteral("chestnut"), // 333. 60155, 95.247% (261)
+            QStringLiteral("pod"), // 334. 59682, 0.015% (1361)
+            QStringLiteral("чапаева"), // 335. 59670, 98.882% (34)
+            QStringLiteral("k"), // 336. 59505, 13.389% (1399)
+            QStringLiteral("henri"), // 337. 59298, 1.831% (1168)
+            QStringLiteral("шоссе"), // 338. 59288, 0.000% (665)
+            QStringLiteral("красноармейская"), // 339. 58842, 98.657% (28)
+            QStringLiteral("delle"), // 340. 58716, 1.971% (1066)
+            QStringLiteral("avinguda"), // 341. 58685, 0.051% (1079)
+            QStringLiteral("général"), // 342. 58653, 0.029% (564)
+            QStringLiteral("principale"), // 343. 58528, 91.389% (47)
+            QStringLiteral("vittorio"), // 344. 58418, 12.222% (229)
+            QStringLiteral("северная"), // 345. 58406, 90.874% (84)
+            QStringLiteral("plaza"), // 346. 58345, 18.715% (2046)
+            QStringLiteral("franklin"), // 347. 58254, 84.944% (274)
+            QStringLiteral("río"), // 348. 57907, 2.627% (1156)
+            QStringLiteral("school"), // 349. 57863, 60.609% (585)
+            QStringLiteral("circuit"), // 350. 57779, 4.581% (1373)
+            QStringLiteral("10th"), // 351. 57706, 95.609% (184)
+            QStringLiteral("clos"), // 352. 57673, 7.723% (2572)
+            QStringLiteral("queen"), // 353. 57345, 72.008% (337)
+            QStringLiteral("stefana"), // 354. 57140, 0.128% (185)
+            QStringLiteral("red"), // 355. 57018, 9.951% (1154)
+            QStringLiteral("p"), // 356. 56963, 6.573% (1149)
+            QStringLiteral("مسجد"), // 357. 56940, 0.090% (967)
+            QStringLiteral("willem"), // 358. 56814, 0.044% (587)
+            QStringLiteral("rose"), // 359. 56664, 54.310% (979)
+            QStringLiteral("trace"), // 360. 56633, 1.923% (1789)
+            QStringLiteral("și"), // 361. 56293, 0.000% (57)
+            QStringLiteral("中山路"), // 362. 56286, 100.000% (1)
+            QStringLiteral("9th"), // 363. 56277, 95.568% (175)
+            QStringLiteral("цэнтральная"), // 364. 56183, 99.918% (5)
+            QStringLiteral("maría"), // 365. 56145, 6.273% (1092)
+            QStringLiteral("polna"), // 366. 55832, 99.726% (9)
+            QStringLiteral("sunset"), // 367. 55738, 88.412% (422)
+            QStringLiteral("mihai"), // 368. 55670, 0.257% (101)
+            QStringLiteral("cherry"), // 369. 55529, 80.988% (523)
+            QStringLiteral("kirchstraße"), // 370. 54923, 96.781% (54)
+            QStringLiteral("georges"), // 371. 54673, 22.689% (903)
+            QStringLiteral("paseo"), // 372. 54511, 6.017% (1492)
+            QStringLiteral("villa"), // 373. 54364, 30.700% (1020)
+            QStringLiteral("октября"), // 374. 54018, 5.861% (192)
+            QStringLiteral("h"), // 375. 53977, 16.924% (1103)
+            QStringLiteral("пионерская"), // 376. 53878, 99.183% (19)
+            QStringLiteral("12th"), // 377. 53726, 97.381% (169)
+            QStringLiteral("don"), // 378. 53495, 6.429% (1179)
+            QStringLiteral("fox"), // 379. 53281, 56.636% (816)
+            QStringLiteral("estrada"), // 380. 53225, 11.577% (1102)
+            QStringLiteral("marie"), // 381. 53175, 10.990% (1130)
+            QStringLiteral("garden"), // 382. 52989, 54.634% (787)
+            QStringLiteral("victor"), // 383. 52955, 14.924% (720)
+            QStringLiteral("wilson"), // 384. 52598, 78.923% (311)
+            QStringLiteral("hans"), // 385. 52366, 1.419% (1228)
+            QStringLiteral("long"), // 386. 52301, 42.125% (683)
+            QStringLiteral("солнечная"), // 387. 52219, 95.925% (44)
+            QStringLiteral("giacomo"), // 388. 52097, 4.386% (322)
+            QStringLiteral("alle"), // 389. 51947, 1.829% (1090)
+            QStringLiteral("słoneczna"), // 390. 51893, 99.212% (8)
+            QStringLiteral("untere"), // 391. 51535, 7.971% (1008)
+            QStringLiteral("петра"), // 392. 51490, 0.787% (366)
+            QStringLiteral("royal"), // 393. 51447, 42.679% (786)
+            QStringLiteral("szkolna"), // 394. 51444, 99.487% (11)
+            QStringLiteral("college"), // 395. 51439, 89.199% (286)
+            QStringLiteral("11th"), // 396. 51365, 97.222% (160)
+            QStringLiteral("laurel"), // 397. 51250, 80.139% (473)
+            QStringLiteral("francesco"), // 398. 51156, 6.779% (840)
+            QStringLiteral("island"), // 399. 51121, 28.305% (982)
+            QStringLiteral("50"), // 400. 50990, 20.277% (293)
+            QStringLiteral("aleja"), // 401. 50853, 0.423% (469)
+            QStringLiteral("rúa"), // 402. 50720, 2.397% (1928)
+            QStringLiteral("schillerstraße"), // 403. 50711, 99.834% (8)
+            QStringLiteral("coronel"), // 404. 50688, 1.115% (872)
+            QStringLiteral("prospect"), // 405. 50554, 96.178% (169)
+            QStringLiteral("maja"), // 406. 50342, 88.548% (78)
+            QStringLiteral("ion"), // 407. 50267, 0.042% (437)
+            QStringLiteral("path"), // 408. 50216, 1.738% (1606)
+            QStringLiteral("blue"), // 409. 50207, 24.883% (1037)
+            QStringLiteral("range"), // 410. 50167, 9.169% (643)
+            QStringLiteral("laan"), // 411. 49982, 1.951% (499)
+            QStringLiteral("mayo"), // 412. 49831, 31.095% (251)
+            QStringLiteral("julio"), // 413. 49783, 1.864% (461)
+            QStringLiteral("église"), // 414. 49665, 89.109% (173)
+            QStringLiteral("l'église"),
+            QStringLiteral("carrera"), // 415. 49655, 15.455% (610)
+            QStringLiteral("birch"), // 416. 49405, 72.420% (478)
+            QStringLiteral("kościuszki"), // 417. 49316, 0.253% (13)
+            QStringLiteral("al"), // 418. 49244, 0.538% (1676)
+            QStringLiteral("hall"), // 419. 49219, 42.067% (953)
+            QStringLiteral("14"), // 420. 49050, 31.376% (751)
+            QStringLiteral("goethestraße"), // 421. 49037, 99.798% (7)
+            QStringLiteral("t"), // 422. 48922, 8.722% (993)
+            QStringLiteral("principală"), // 423. 48795, 96.948% (20)
+            QStringLiteral("market"), // 424. 48737, 85.338% (279)
+            QStringLiteral("jefferson"), // 425. 48665, 94.189% (168)
+            QStringLiteral("york"), // 426. 48432, 70.794% (215)
+            QStringLiteral("20"), // 427. 48420, 29.459% (567)
+            QStringLiteral("valle"), // 428. 48356, 15.345% (923)
+            QStringLiteral("club"), // 429. 48129, 12.367% (648)
+            QStringLiteral("est"), // 430. 48016, 2.414% (608)
+            QStringLiteral("canyon"), // 431. 47994, 28.958% (1164)
+            QStringLiteral("15th"), // 432. 47811, 98.053% (135)
+            QStringLiteral("meadows"), // 433. 47560, 19.844% (1155)
+            QStringLiteral("william"), // 434. 47477, 59.073% (562)
+            QStringLiteral("cross"), // 435. 47275, 45.629% (819)
+            QStringLiteral("crest"), // 436. 47066, 32.416% (1156)
+            QStringLiteral("sainte"), // 437. 46793, 5.638% (632)
+            QStringLiteral("14th"), // 438. 46740, 98.727% (139)
+            QStringLiteral("adama"), // 439. 46689, 0.349% (139)
+            QStringLiteral("stone"), // 440. 46580, 43.881% (967)
+            QStringLiteral("franz"), // 441. 46571, 0.399% (1244)
+            QStringLiteral("заводская"), // 442. 46356, 97.114% (50)
+            QStringLiteral("são"), // 443. 46339, 21.105% (611)
+            QStringLiteral("13"), // 444. 46321, 32.881% (755)
+            QStringLiteral("het"), // 445. 46320, 0.086% (847)
+            QStringLiteral("rosa"), // 446. 46007, 36.355% (747)
+            QStringLiteral("costa"), // 447. 45889, 12.291% (945)
+            QStringLiteral("berliner"), // 448. 45838, 92.890% (29)
+            QStringLiteral("южная"), // 449. 45835, 96.967% (51)
+            QStringLiteral("рабочая"), // 450. 45798, 95.902% (49)
+            QStringLiteral("księdza"), // 451. 45787, 0.041% (906)
+            QStringLiteral("richard"), // 452. 45745, 21.611% (584)
+            QStringLiteral("neue"), // 453. 45506, 46.680% (360)
+            QStringLiteral("block"), // 454. 45394, 2.430% (363)
+            QStringLiteral("henryka"), // 455. 45199, 0.352% (163)
+            QStringLiteral("n"), // 456. 45172, 13.192% (1134)
+            QStringLiteral("16th"), // 457. 45124, 98.943% (137)
+            QStringLiteral("f"), // 458. 45056, 25.894% (909)
+            QStringLiteral("prins"), // 459. 44897, 0.176% (174)
+            QStringLiteral("długa"), // 460. 44841, 99.764% (4)
+            QStringLiteral("17"), // 461. 44682, 35.191% (591)
+            QStringLiteral("garibaldi"), // 462. 44616, 91.490% (110)
+            QStringLiteral("юбилейная"), // 463. 44510, 99.539% (16)
+            QStringLiteral("13th"), // 464. 44506, 98.432% (141)
+            QStringLiteral("hermann"), // 465. 44421, 0.734% (836)
+            QStringLiteral("jackson"), // 466. 44396, 89.224% (244)
+            QStringLiteral("восточная"), // 467. 44303, 94.479% (61)
+            QStringLiteral("upper"), // 468. 44212, 11.610% (1063)
+            QStringLiteral("красная"), // 469. 44150, 82.195% (74)
+            QStringLiteral("padre"), // 470. 44100, 2.751% (1163)
+            QStringLiteral("колхозная"), // 471. 43960, 98.872% (15)
+            QStringLiteral("madison"), // 472. 43906, 94.730% (171)
+            QStringLiteral("15"), // 473. 43881, 31.348% (684)
+            QStringLiteral("rio"), // 474. 43728, 18.830% (785)
+            QStringLiteral("travessa"), // 475. 43701, 2.041% (2149)
+            QStringLiteral("17th"), // 476. 43700, 98.668% (136)
+            QStringLiteral("19th"), // 477. 43688, 98.460% (140)
+            QStringLiteral("markt"), // 478. 43549, 70.323% (150)
+            QStringLiteral("silver"), // 479. 43503, 44.298% (790)
+            QStringLiteral("das"), // 480. 43413, 0.481% (1093)
+            QStringLiteral("birkenweg"), // 481. 43368, 99.177% (22)
+            QStringLiteral("woodland"), // 482. 43180, 95.563% (254)
+            QStringLiteral("carlo"), // 483. 43125, 8.028% (659)
+            QStringLiteral("hugo"), // 484. 43040, 2.842% (409)
+            QStringLiteral("max"), // 485. 43029, 3.184% (699)
+            QStringLiteral("luigi"), // 486. 42919, 1.270% (738)
+            QStringLiteral("ernst"), // 487. 42918, 3.069% (647)
+            QStringLiteral("eagle"), // 488. 42902, 60.487% (672)
+            QStringLiteral("peter"), // 489. 42862, 22.556% (899)
+            QStringLiteral("arthur"), // 490. 42782, 39.704% (635)
+            QStringLiteral("40"), // 491. 42681, 13.240% (333)
+            QStringLiteral("степная"), // 492. 42518, 98.713% (31)
+            QStringLiteral("железнодорожная"), // 493. 42498, 98.513% (30)
+            QStringLiteral("jacques"), // 494. 42380, 17.183% (749)
+            QStringLiteral("professor"), // 495. 42244, 0.447% (1024)
+            QStringLiteral("otto"), // 496. 42190, 3.209% (887)
+            QStringLiteral("hamilton"), // 497. 42187, 90.763% (206)
+            QStringLiteral("osiedle"), // 498. 42124, 3.836% (734)
+            QStringLiteral("ст"), // 499. 42105, 0.000% (768)
+            QStringLiteral("18th"), // 500. 41964, 99.209% (119)
+            QStringLiteral("dell"), // 501. 41363, 9.808% (798)
+            QStringLiteral("us"), // 502. 41227, 5.880% (595)
+            QStringLiteral("18"), // 503. 41121, 24.435% (502)
+            QStringLiteral("краља"), // 504. 41015, 0.000% (69)
+            QStringLiteral("kerkstraat"), // 505. 40998, 89.758% (31)
+            QStringLiteral("veg"), // 506. 40808, 0.051% (1265)
+            QStringLiteral("mary"), // 507. 40609, 61.225% (595)
+            QStringLiteral("16"), // 508. 40605, 32.572% (570)
+            QStringLiteral("richmond"), // 509. 40543, 92.408% (133)
+            QStringLiteral("ogrodowa"), // 510. 40392, 99.955% (3)
+            QStringLiteral("water"), // 511. 40371, 60.122% (535)
+            QStringLiteral("фрунзе"), // 512. 40333, 97.149% (39)
+            QStringLiteral("broad"), // 513. 40328, 85.315% (214)
+            QStringLiteral("sur"), // 514. 40320, 8.698% (1256)
+            QStringLiteral("чкалова"), // 515. 40309, 98.859% (28)
+            QStringLiteral("fontaine"), // 516. 40282, 68.006% (583)
+            QStringLiteral("војводе"), // 517. 40165, 0.000% (121)
+            QStringLiteral("główna"), // 518. 39902, 99.882% (2)
+            QStringLiteral("windsor"), // 519. 39882, 90.131% (228)
+            QStringLiteral("sodų"), // 520. 39853, 23.802% (1070)
+            QStringLiteral("московская"), // 521. 39759, 96.547% (22)
+            QStringLiteral("little"), // 522. 39741, 17.252% (979)
+            QStringLiteral("الشهيد"), // 523. 39708, 1.861% (1501)
+            QStringLiteral("siedlung"), // 524. 39676, 40.765% (696)
+            QStringLiteral("hillside"), // 525. 39611, 97.541% (146)
+            QStringLiteral("carl"), // 526. 39608, 6.466% (720)
+            QStringLiteral("21st"), // 527. 39564, 99.429% (126)
+            QStringLiteral("береговая"), // 528. 39466, 97.720% (39)
+            QStringLiteral("cr"), // 529. 39448, 7.296% (859)
+            QStringLiteral("dorpsstraat"), // 530. 39397, 96.281% (20)
+            QStringLiteral("taylor"), // 531. 39316, 90.421% (258)
+            QStringLiteral("castle"), // 532. 39251, 65.527% (543)
+            QStringLiteral("smith"), // 533. 39173, 76.213% (392)
+            QStringLiteral("19"), // 534. 38932, 29.788% (446)
+            QStringLiteral("lower"), // 535. 38920, 15.396% (896)
+            QStringLiteral("johann"), // 536. 38814, 1.639% (1024)
+            QStringLiteral("маршала"), // 537. 38737, 0.000% (93)
+            QStringLiteral("privada"), // 538. 38719, 2.461% (1661)
+            QStringLiteral("oxford"), // 540. 38628, 93.497% (167)
+            QStringLiteral("great"), // 541. 38572, 35.824% (472)
+            QStringLiteral("gare"), // 542. 38556, 92.289% (106)
+            QStringLiteral("kleine"), // 543. 38553, 9.104% (936)
+            QStringLiteral("свердлова"), // 544. 38443, 98.907% (22)
+            QStringLiteral("wellington"), // 545. 38307, 92.189% (194)
+            QStringLiteral("23rd"), // 546. 38255, 99.211% (117)
+            QStringLiteral("elizabeth"), // 547. 38185, 85.895% (195)
+            QStringLiteral("chapel"), // 548. 38173, 69.277% (425)
+            QStringLiteral("antônio"), // 549. 38132, 1.316% (947)
+            QStringLiteral("holly"), // 550. 38130, 80.805% (402)
+            QStringLiteral("савецкая"), // 551. 38098, 100.000% (5)
+            QStringLiteral("anne"), // 552. 38086, 22.000% (488)
+            QStringLiteral("дружбы"), // 553. 37999, 91.837% (46)
+            QStringLiteral("linden"), // 554. 37996, 82.967% (203)
+            QStringLiteral("brown"), // 555. 37984, 60.091% (337)
+            QStringLiteral("jacob"), // 556. 37940, 9.721% (537)
+            QStringLiteral("ferry"), // 557. 37906, 32.246% (371)
+            QStringLiteral("jules"), // 558. 37890, 2.605% (649)
+            QStringLiteral("turnpike"), // 559. 37849, 12.730% (246)
+            QStringLiteral("kennedy"), // 560. 37762, 48.978% (269)
+            QStringLiteral("20th"), // 561. 37725, 98.744% (126)
+            QStringLiteral("аллея"), // 562. 37663, 7.811% (503)
+            QStringLiteral("22nd"), // 563. 37616, 99.426% (130)
+            QStringLiteral("свободы"), // 564. 37402, 97.722% (26)
+            QStringLiteral("pietro"), // 565. 37382, 7.148% (611)
+            QStringLiteral("riverside"), // 566. 37367, 97.608% (136)
+            QStringLiteral("24th"), // 567. 37338, 99.422% (121)
+            QStringLiteral("мичурина"), // 568. 37287, 96.833% (35)
+            QStringLiteral("дзержинского"), // 569. 37282, 98.884% (16)
+            QStringLiteral("berg"), // 570. 37174, 35.439% (695)
+            QStringLiteral("николе"), // 571. 37083, 0.000% (148)
+            QStringLiteral("rang"), // 572. 36995, 4.011% (865)
+            QStringLiteral("ocean"), // 573. 36928, 74.615% (279)
+            QStringLiteral("eminescu"), // 574. 36897, 0.903% (18)
+            QStringLiteral("على"), // 575. 36826, 6.504% (936)
+            QStringLiteral("гоголя"), // 576. 36758, 97.571% (25)
+            QStringLiteral("mickiewicza"), // 577. 36726, 0.305% (12)
+            QStringLiteral("alberto"), // 578. 36707, 8.813% (676)
+            QStringLiteral("jahnstraße"), // 579. 36693, 99.779% (6)
+            QStringLiteral("maréchal"), // 580. 36677, 2.012% (209)
+            QStringLiteral("theodor"), // 581. 36662, 2.619% (334)
+            QStringLiteral("строителей"), // 582. 36653, 96.909% (41)
+            QStringLiteral("spruce"), // 583. 36636, 83.380% (297)
+            QStringLiteral("ابراهيم"), // 584. 36589, 7.158% (1079)
+            QStringLiteral("feldstraße"), // 585. 36587, 96.961% (44)
+            QStringLiteral("alter"), // 586. 36556, 11.517% (466)
+            QStringLiteral("centre"), // 587. 36514, 68.653% (399)
+            QStringLiteral("nord"), // 588. 36499, 14.258% (734)
+            QStringLiteral("grote"), // 589. 36476, 1.209% (388)
+            QStringLiteral("ludwig"), // 590. 36449, 4.291% (603)
+            QStringLiteral("hickory"), // 591. 36415, 82.853% (414)
+            QStringLiteral("croix"), // 592. 36315, 23.872% (974)
+            QStringLiteral("kings"), // 593. 36302, 72.927% (409)
+            QStringLiteral("indian"), // 594. 36289, 48.750% (529)
+            QStringLiteral("henry"), // 595. 36165, 51.019% (501)
+            QStringLiteral("château"), // 596. 36159, 53.243% (380)
+            QStringLiteral("lipowa"), // 597. 36088, 99.884% (6)
+            QStringLiteral("deer"), // 598. 36055, 69.810% (561)
+            QStringLiteral("nieuwe"), // 599. 35996, 1.217% (385)
+            QStringLiteral("anna"), // 601. 35868, 22.602% (674)
+            QStringLiteral("silva"), // 602. 35726, 7.504% (1022)
+            QStringLiteral("محمود"), // 603. 35707, 5.526% (1080)
+            QStringLiteral("hof"), // 604. 35687, 14.151% (1011)
+            QStringLiteral("bend"), // 605. 35543, 10.793% (945)
+            QStringLiteral("30"), // 606. 35492, 19.858% (382)
+            QStringLiteral("landing"), // 607. 35406, 14.065% (1103)
+            QStringLiteral("alfred"), // 608. 35367, 27.777% (677)
+            QStringLiteral("лермонтова"), // 609. 35325, 97.390% (42)
+            QStringLiteral("маяковского"), // 610. 35202, 98.608% (29)
+            QStringLiteral("pont"), // 611. 35079, 27.033% (906)
+            QStringLiteral("حسن"), // 612. 35073, 11.468% (1077)
+            QStringLiteral("28th"), // 613. 35031, 99.466% (111)
+            QStringLiteral("ignacego"), // 614. 35008, 0.026% (118)
+            QStringLiteral("мая"), // 615. 34807, 65.245% (62)
+            QStringLiteral("crossing"), // 616. 34747, 5.793% (1179)
+            QStringLiteral("r"), // 617. 34732, 13.377% (1016)
+            QStringLiteral("26th"), // 618. 34680, 99.795% (121)
+            QStringLiteral("25th"), // 619. 34679, 98.743% (122)
+            QStringLiteral("josef"), // 620. 34665, 4.973% (1198)
+            QStringLiteral("stradela"), // 621. 34595, 0.000% (1091)
+            QStringLiteral("carretera"), // 622. 34533, 6.681% (939)
+            QStringLiteral("22"), // 623. 34499, 36.024% (426)
+            QStringLiteral("cambridge"), // 624. 34472, 94.967% (141)
+            QStringLiteral("vicente"), // 625. 34470, 10.830% (626)
+            QStringLiteral("talstraße"), // 626. 34426, 96.863% (28)
+            QStringLiteral("lotissement"), // 627. 34425, 0.767% (1731)
+            QStringLiteral("summit"), // 628. 34343, 84.253% (363)
+            QStringLiteral("magnolia"), // 629. 34325, 91.406% (272)
+            QStringLiteral("hlavná"), // 630. 34265, 99.346% (6)
+            QStringLiteral("black"), // 631. 34253, 18.214% (669)
+            QStringLiteral("кооперативная"), // 632. 34240, 99.743% (13)
+            QStringLiteral("adams"), // 633. 34227, 91.758% (191)
+            QStringLiteral("front"), // 634. 34208, 73.152% (160)
+            QStringLiteral("ouest"), // 635. 34202, 2.564% (544)
+            QStringLiteral("chase"), // 636. 34080, 33.782% (758)
+            QStringLiteral("sierra"), // 637. 34080, 41.951% (655)
+            QStringLiteral("town"), // 638. 34068, 35.406% (584)
+            QStringLiteral("27th"), // 639. 34063, 99.225% (116)
+            QStringLiteral("liberty"), // 640. 34060, 93.787% (190)
+            QStringLiteral("րդ"), // 641. 33970, 11.254% (839)
+            QStringLiteral("en"), // 642. 33920, 0.879% (912)
+            QStringLiteral("luther"), // 643. 33890, 6.878% (195)
+            QStringLiteral("david"), // 644. 33886, 47.822% (565)
+            QStringLiteral("nelson"), // 645. 33848, 75.464% (264)
+            QStringLiteral("françois"), // 646. 33779, 7.428% (870)
+            QStringLiteral("docteur"), // 647. 33778, 0.178% (1111)
+            QStringLiteral("mühlenstraße"), // 648. 33742, 97.502% (24)
+            QStringLiteral("falls"), // 649. 33733, 22.930% (757)
+            QStringLiteral("lee"), // 650. 33732, 66.581% (490)
+            QStringLiteral("mews"), // 651. 33653, 5.494% (1654)
+            QStringLiteral("grant"), // 652. 33544, 88.684% (224)
+            QStringLiteral("alexandru"), // 653. 33540, 0.000% (213)
+            QStringLiteral("platz"), // 654. 33484, 3.578% (1321)
+            QStringLiteral("bulevardul"), // 655. 33418, 0.000% (235)
+            QStringLiteral("house"), // 656. 33372, 9.625% (792)
+            QStringLiteral("ash"), // 657. 33315, 77.076% (329)
+            QStringLiteral("molenstraat"), // 658. 33264, 93.038% (31)
+            QStringLiteral("bolesława"), // 659. 33177, 0.084% (96)
+            QStringLiteral("bell"), // 660. 33140, 75.042% (372)
+            QStringLiteral("cruz"), // 661. 33122, 43.340% (607)
+            QStringLiteral("29th"), // 662. 33071, 99.586% (121)
+            QStringLiteral("милоша"), // 663. 33031, 0.000% (119)
+            QStringLiteral("campbell"), // 664. 32973, 93.934% (154)
+            QStringLiteral("pasteur"), // 665. 32941, 95.507% (110)
+            QStringLiteral("grange"), // 666. 32867, 67.375% (508)
+            QStringLiteral("нагорная"), // 667. 32826, 97.542% (30)
+            QStringLiteral("guglielmo"), // 668. 32815, 0.101% (122)
+            QStringLiteral("virginia"), // 669. 32813, 81.599% (182)
+            QStringLiteral("poplar"), // 670. 32802, 89.906% (224)
+            QStringLiteral("moreno"), // 671. 32734, 42.280% (234)
+            QStringLiteral("marii"), // 672. 32678, 0.196% (114)
+            QStringLiteral("bank"), // 673. 32674, 39.683% (612)
+            QStringLiteral("norte"), // 674. 32626, 23.196% (861)
+            QStringLiteral("fort"), // 675. 32539, 36.639% (619)
+            QStringLiteral("marconi"), // 676. 32527, 15.427% (101)
+            QStringLiteral("presidente"), // 677. 32476, 0.453% (318)
+            QStringLiteral("alten"), // 678. 32461, 1.380% (695)
+            QStringLiteral("haven"), // 679. 32337, 42.954% (663)
+            QStringLiteral("микрорайон"), // 680. 32324, 17.560% (481)
+            QStringLiteral("roosevelt"), // 681. 32268, 82.193% (122)
+            QStringLiteral("sfânt"), // 682. 32216, 0.000% (13)
+            QStringLiteral("wiesenstraße"), // 683. 32177, 99.413% (13)
+            QStringLiteral("university"), // 684. 32097, 92.342% (156)
+            QStringLiteral("polskiego"), // 685. 32093, 0.028% (45)
+            QStringLiteral("wiejska"), // 686. 32088, 100.000% (1)
+            QStringLiteral("цара"), // 687. 32085, 0.000% (30)
+            QStringLiteral("cypress"), // 688. 32067, 79.580% (365)
+            QStringLiteral("28"), // 689. 32057, 30.418% (330)
+            QStringLiteral("21"), // 690. 32040, 35.811% (464)
+            QStringLiteral("port"), // 691. 31974, 34.935% (595)
+            QStringLiteral("lópez"), // 692. 31973, 13.333% (476)
+            QStringLiteral("prince"), // 693. 31971, 34.816% (409)
+            QStringLiteral("pike"), // 694. 31952, 19.198% (378)
+            QStringLiteral("речная"), // 695. 31938, 99.324% (17)
+            QStringLiteral("western"), // 696. 31932, 78.338% (205)
+            QStringLiteral("harrison"), // 697. 31927, 96.223% (135)
+            QStringLiteral("pointe"), // 698. 31920, 20.542% (915)
+            QStringLiteral("beech"), // 699. 31858, 87.234% (259)
+            QStringLiteral("عمر"), // 700. 31830, 4.684% (327)
+            QStringLiteral("steenweg"), // 701. 31816, 22.897% (179)
+            QStringLiteral("дачная"), // 702. 31757, 95.500% (44)
+            QStringLiteral("branch"), // 703. 31718, 22.274% (805)
+            QStringLiteral("golden"), // 704. 31704, 45.262% (640)
+            QStringLiteral("35th"), // 705. 31668, 99.773% (102)
+            QStringLiteral("palm"), // 706. 31632, 58.997% (362)
+            QStringLiteral("township"), // 707. 31631, 5.295% (584)
+            QStringLiteral("31"), // 708. 31588, 28.460% (270)
+            QStringLiteral("vicolo"), // 709. 31579, 1.767% (1711)
+            QStringLiteral("väg"), // 710. 31555, 0.057% (1300)
+            QStringLiteral("32nd"), // 711. 31489, 99.867% (109)
+            QStringLiteral("fairview"), // 712. 31484, 96.405% (123)
+            QStringLiteral("pacific"), // 713. 31441, 82.437% (194)
+            QStringLiteral("sycamore"), // 714. 31423, 93.915% (185)
+            QStringLiteral("andré"), // 715. 31353, 15.759% (819)
+            QStringLiteral("russell"), // 716. 31308, 91.079% (167)
+            QStringLiteral("rudolf"), // 717. 31166, 0.770% (470)
+            QStringLiteral("monroe"), // 718. 31151, 93.695% (92)
+            QStringLiteral("douglas"), // 719. 30992, 85.829% (254)
+            QStringLiteral("lawrence"), // 720. 30974, 93.888% (173)
+            QStringLiteral("circuito"), // 721. 30962, 0.717% (515)
+            QStringLiteral("30th"), // 722. 30831, 99.338% (106)
+            QStringLiteral("27"), // 723. 30830, 24.830% (349)
+            QStringLiteral("chaussee"), // 724. 30815, 6.331% (530)
+            QStringLiteral("santos"), // 725. 30789, 8.753% (744)
+            QStringLiteral("mar"), // 726. 30645, 30.612% (671)
+            QStringLiteral("nicolae"), // 727. 30644, 0.170% (250)
+            QStringLiteral("prinses"), // 728. 30623, 0.000% (112)
+            QStringLiteral("pastoor"), // 729. 30504, 0.000% (776)
+            QStringLiteral("end"), // 730. 30476, 43.618% (579)
+            QStringLiteral("pablo"), // 731. 30449, 22.336% (441)
+            QStringLiteral("république"), // 732. 30442, 97.408% (27)
+            QStringLiteral("pawła"), // 733. 30403, 0.464% (110)
+            QStringLiteral("middle"), // 734. 30367, 66.622% (260)
+            QStringLiteral("коммунистическая"), // 735. 30355, 99.891% (7)
+            QStringLiteral("mariano"), // 736. 30284, 3.068% (388)
+            QStringLiteral("hillcrest"), // 737. 30267, 97.952% (132)
+            QStringLiteral("lorong"), // 738. 30260, 1.950% (1034)
+            QStringLiteral("некрасова"), // 739. 30259, 99.052% (34)
+            QStringLiteral("clinton"), // 742. 29991, 98.560% (85)
+            QStringLiteral("ave"), // 743. 29935, 8.722% (910)
+            QStringLiteral("vasile"), // 744. 29834, 0.000% (217)
+            QStringLiteral("mozartstraße"), // 745. 29788, 99.973% (2)
+            QStringLiteral("nad"), // 746. 29776, 0.168% (753)
+            QStringLiteral("williams"), // 747. 29761, 87.665% (243)
+            QStringLiteral("georg"), // 748. 29686, 8.223% (779)
+            QStringLiteral("энгельса"), // 749. 29666, 86.881% (31)
+            QStringLiteral("résidence"), // 750. 29622, 1.107% (1139)
+            QStringLiteral("23"), // 751. 29601, 35.077% (399)
+            QStringLiteral("rosenstraße"), // 752. 29573, 99.892% (4)
+            QStringLiteral("real"), // 753. 29560, 59.073% (374)
+            QStringLiteral("толстого"), // 754. 29533, 48.806% (47)
+            QStringLiteral("cité"), // 755. 29491, 6.666% (873)
+            QStringLiteral("miller"), // 756. 29480, 85.258% (254)
+            QStringLiteral("الله"), // 757. 29470, 11.211% (888)
+            QStringLiteral("field"), // 758. 29462, 39.559% (757)
+            QStringLiteral("clark"), // 759. 29457, 87.500% (202)
+            QStringLiteral("vale"), // 760. 29449, 27.386% (593)
+            QStringLiteral("kolejowa"), // 761. 29435, 99.076% (8)
+            QStringLiteral("партизанская"), // 762. 29352, 99.905% (12)
+            QStringLiteral("italia"), // 763. 29346, 79.680% (131)
+            QStringLiteral("озёрная"), // 764. 29300, 98.648% (23)
+            QStringLiteral("куйбышева"), // 765. 29251, 98.971% (16)
+            QStringLiteral("lakeview"), // 766. 29215, 97.666% (123)
+            QStringLiteral("совхозная"), // 767. 29213, 99.483% (19)
+            QStringLiteral("alexander"), // 768. 29206, 65.178% (286)
+            QStringLiteral("34th"), // 769. 29171, 99.630% (105)
+            QStringLiteral("warren"), // 770. 29140, 93.171% (161)
+            QStringLiteral("fritz"), // 771. 29136, 1.891% (593)
+            QStringLiteral("evergreen"), // 772. 29086, 96.593% (185)
+            QStringLiteral("beethovenstraße"), // 773. 29009, 100.000% (1)
+            QStringLiteral("37th"), // 774. 28964, 99.548% (99)
+            QStringLiteral("römerstraße"), // 775. 28949, 99.478% (13)
+            QStringLiteral("31st"), // 776. 28948, 99.416% (105)
+            QStringLiteral("santo"), // 777. 28875, 13.330% (502)
+            QStringLiteral("parc"), // 778. 28816, 46.332% (550)
+            QStringLiteral("johnson"), // 779. 28808, 86.032% (232)
+            QStringLiteral("post"), // 780. 28801, 47.839% (337)
+            QStringLiteral("33rd"), // 781. 28781, 99.739% (112)
+            QStringLiteral("harbor"), // 782. 28726, 48.064% (511)
+            QStringLiteral("bachstraße"), // 783. 28719, 98.830% (19)
+            QStringLiteral("pieter"), // 784. 28641, 0.719% (408)
+            QStringLiteral("парковая"), // 785. 28613, 96.547% (31)
+            QStringLiteral("edward"), // 786. 28598, 53.769% (260)
+            QStringLiteral("kossuth"), // 787. 28544, 27.267% (30)
+            QStringLiteral("vermont"), // 788. 28516, 37.530% (160)
+            QStringLiteral("poststraße"), // 789. 28494, 98.786% (16)
+            QStringLiteral("belmont"), // 790. 28458, 92.958% (165)
+            QStringLiteral("карађорђева"), // 791. 28376, 99.965% (2)
+            QStringLiteral("davis"), // 792. 28356, 83.580% (268)
+            QStringLiteral("lorenzo"), // 793. 28346, 51.432% (358)
+            QStringLiteral("major"), // 794. 28338, 53.483% (321)
+            QStringLiteral("bellevue"), // 795. 28334, 94.441% (144)
+            QStringLiteral("scott"), // 796. 28318, 82.622% (263)
+            QStringLiteral("belgrano"), // 797. 28264, 92.478% (59)
+            QStringLiteral("émile"), // 798. 28197, 2.635% (511)
+            QStringLiteral("calea"), // 799. 28186, 0.000% (198)
+            QStringLiteral("salvador"), // 800. 28104, 22.139% (419)
+            QStringLiteral("curie"), // 801. 28049, 39.281% (134)
+            QStringLiteral("london"), // 802. 28010, 88.583% (119)
+            QStringLiteral("36th"), // 803. 27984, 99.521% (98)
+            QStringLiteral("чехова"), // 804. 27983, 97.702% (28)
+            QStringLiteral("santiago"), // 805. 27919, 21.519% (425)
+            QStringLiteral("howard"), // 806. 27809, 94.275% (143)
+            QStringLiteral("domingo"), // 807. 27745, 6.340% (413)
+            QStringLiteral("petit"), // 808. 27712, 5.655% (922)
+            QStringLiteral("anton"), // 809. 27697, 4.351% (695)
+            QStringLiteral("mikołaja"), // 810. 27675, 0.643% (67)
+            QStringLiteral("hauptstrasse"), // 811. 27611, 99.957% (5)
+            QStringLiteral("kościelna"), // 812. 27590, 98.728% (6)
+            QStringLiteral("саве"), // 813. 27547, 0.000% (97)
+            QStringLiteral("dante"), // 814. 27527, 14.291% (117)
+            QStringLiteral("kirchweg"), // 815. 27515, 64.256% (224)
+            QStringLiteral("западная"), // 816. 27502, 93.062% (51)
+            QStringLiteral("iii"), // 817. 27400, 3.471% (507)
+            QStringLiteral("fratelli"), // 818. 27382, 0.150% (347)
+            QStringLiteral("alessandro"), // 819. 27351, 2.914% (233)
+            QStringLiteral("locust"), // 820. 27345, 94.196% (142)
+            QStringLiteral("świętego"), // 821. 27342, 12.230% (138)
+            QStringLiteral("أبو"), // 822. 27327, 0.666% (956)
+            QStringLiteral("kazimierza"), // 823. 27299, 7.293% (241)
+            QStringLiteral("ramón"), // 824. 27295, 4.180% (467)
+            QStringLiteral("primo"), // 825. 27283, 0.946% (362)
+            QStringLiteral("бульвар"), // 826. 27234, 0.033% (514)
+            QStringLiteral("breslauer"), // 827. 27209, 99.871% (6)
+            QStringLiteral("中華路"), // 828. 27184, 100.000% (1)
+            QStringLiteral("bluff"), // 829. 27146, 33.169% (716)
+            QStringLiteral("te"), // 830. 27142, 0.000% (635)
+            QStringLiteral("большая"), // 831. 27115, 21.180% (244)
+            QStringLiteral("а"), // 832. 27113, 0.170% (729)
+            QStringLiteral("kwiatowa"), // 833. 27112, 99.639% (6)
+            QStringLiteral("sankt"), // 834. 27096, 7.961% (539)
+            QStringLiteral("38th"), // 835. 27073, 99.837% (106)
+            QStringLiteral("verde"), // 836. 27062, 32.289% (520)
+            QStringLiteral("александра"), // 837. 27044, 0.129% (305)
+            QStringLiteral("матросова"), // 838. 27005, 89.465% (42)
+            QStringLiteral("вука"), // 839. 27001, 0.000% (24)
+            QStringLiteral("summer"), // 840. 26995, 69.617% (412)
+            QStringLiteral("vincent"), // 841. 26957, 60.207% (275)
+            QStringLiteral("thompson"), // 842. 26927, 90.756% (172)
+            QStringLiteral("крупской"), // 843. 26910, 98.105% (29)
+            QStringLiteral("островского"), // 844. 26883, 93.215% (18)
+            QStringLiteral("hampton"), // 845. 26848, 83.489% (247)
+            QStringLiteral("kamp"), // 846. 26807, 26.523% (550)
+            QStringLiteral("sarmiento"), // 849. 26680, 72.320% (79)
+            QStringLiteral("johannes"), // 850. 26657, 3.170% (582)
+            QStringLiteral("mazzini"), // 851. 26657, 97.547% (39)
+            QStringLiteral("matteotti"), // 852. 26646, 7.052% (34)
+            QStringLiteral("novembre"), // 853. 26612, 5.449% (129)
+            QStringLiteral("w"), // 854. 26600, 10.789% (714)
+            QStringLiteral("вокзальная"), // 855. 26598, 96.812% (20)
+            QStringLiteral("prairie"), // 856. 26542, 67.011% (430)
+            QStringLiteral("mittelstraße"), // 857. 26493, 98.871% (19)
+            QStringLiteral("mont"), // 858. 26401, 18.431% (679)
+            QStringLiteral("row"), // 859. 26392, 7.370% (898)
+            QStringLiteral("greenwood"), // 860. 26386, 97.783% (121)
+            QStringLiteral("stanley"), // 861. 26370, 87.315% (133)
+            QStringLiteral("đường"), // 862. 26360, 0.125% (684)
+            QStringLiteral("buchenweg"), // 863. 26335, 99.951% (4)
+            QStringLiteral("шевченка"), // 864. 26331, 73.123% (38)
+            QStringLiteral("blumenstraße"), // 865. 26323, 99.772% (4)
+            QStringLiteral("za"), // 866. 26278, 0.000% (599)
+            QStringLiteral("warszawska"), // 867. 26258, 99.916% (4)
+            QStringLiteral("nieuwstraat"), // 868. 26218, 84.930% (20)
+            QStringLiteral("alameda"), // 869. 26209, 38.338% (463)
+            QStringLiteral("26"), // 870. 26181, 40.552% (298)
+            QStringLiteral("amselweg"), // 871. 26151, 99.943% (4)
+            QStringLiteral("gabriel"), // 872. 26124, 23.392% (517)
+            QStringLiteral("ranch"), // 873. 26081, 25.018% (730)
+            QStringLiteral("шевченко"), // 874. 26048, 94.602% (41)
+            QStringLiteral("الشيخ"), // 875. 26027, 6.436% (820)
+            QStringLiteral("jaurès"), // 876. 26017, 96.591% (26)
+            QStringLiteral("vernon"), // 877. 25945, 94.889% (139)
+            QStringLiteral("ignacio"), // 878. 25933, 6.471% (312)
+            QStringLiteral("plac"), // 879. 25866, 0.197% (464)
+            QStringLiteral("mile"), // 880. 25831, 8.265% (309)
+            QStringLiteral("dale"), // 881. 25802, 62.894% (418)
+            QStringLiteral("gordon"), // 882. 25789, 91.512% (163)
+            QStringLiteral("dame"), // 883. 25773, 2.627% (307)
+            QStringLiteral("marshall"), // 884. 25768, 91.881% (133)
+            QStringLiteral("brunnenstraße"), // 885. 25754, 98.808% (9)
+            QStringLiteral("sienkiewicza"), // 886. 25746, 0.047% (4)
+            QStringLiteral("wagner"), // 887. 25738, 22.476% (187)
+            QStringLiteral("val"), // 888. 25735, 15.978% (682)
+            QStringLiteral("цветочная"), // 889. 25734, 95.966% (32)
+            QStringLiteral("allen"), // 890. 25693, 82.976% (223)
+            QStringLiteral("av"), // 891. 25663, 1.621% (712)
+            QStringLiteral("караџића"), // 892. 25641, 0.000% (7)
+            QStringLiteral("königsberger"), // 893. 25525, 99.432% (9)
+            QStringLiteral("42nd"), // 894. 25499, 99.796% (99)
+            QStringLiteral("rivadavia"), // 895. 25487, 78.126% (38)
+            QStringLiteral("friedrichstraße"), // 896. 25483, 99.125% (7)
+            QStringLiteral("dorfstrasse"), // 897. 25476, 98.379% (14)
+            QStringLiteral("maurice"), // 898. 25468, 16.825% (587)
+            QStringLiteral("fairway"), // 899. 25465, 90.190% (212)
+            QStringLiteral("cleveland"), // 900. 25405, 97.249% (84)
+            QStringLiteral("41st"), // 901. 25393, 99.673% (109)
+            QStringLiteral("ahornweg"), // 902. 25384, 99.811% (5)
+            QStringLiteral("24"), // 903. 25370, 34.848% (368)
+            QStringLiteral("nova"), // 904. 25365, 32.198% (471)
+            QStringLiteral("hudson"), // 905. 25344, 89.489% (171)
+            QStringLiteral("lewis"), // 906. 25331, 80.948% (196)
+            QStringLiteral("paz"), // 907. 25278, 73.993% (236)
+            QStringLiteral("friedhofstraße"), // 908. 25259, 98.975% (11)
+            QStringLiteral("walker"), // 909. 25232, 76.708% (179)
+            QStringLiteral("michel"), // 910. 25199, 28.207% (510)
+            QStringLiteral("canal"), // 911. 25198, 71.950% (307)
+            QStringLiteral("marktstraße"), // 912. 25190, 97.114% (16)
+            QStringLiteral("45th"), // 913. 25174, 99.436% (102)
+            QStringLiteral("шоссейная"), // 914. 25174, 99.658% (11)
+            QStringLiteral("heide"), // 915. 25169, 52.243% (345)
+            QStringLiteral("спортивная"), // 916. 25033, 99.469% (14)
+            QStringLiteral("zielona"), // 917. 25019, 95.527% (20)
+            QStringLiteral("суворова"), // 918. 24968, 97.685% (26)
+            QStringLiteral("burgstraße"), // 919. 24964, 98.169% (18)
+            QStringLiteral("große"), // 920. 24964, 25.228% (393)
+            QStringLiteral("pass"), // 921. 24954, 4.508% (833)
+            QStringLiteral("largo"), // 922. 24940, 5.754% (1038)
+            QStringLiteral("orange"), // 923. 24930, 82.535% (227)
+            QStringLiteral("walter"), // 924. 24905, 25.469% (578)
+            QStringLiteral("brzozowa"), // 925. 24902, 99.538% (9)
+            QStringLiteral("clara"), // 926. 24889, 42.931% (283)
+            QStringLiteral("pearl"), // 927. 24887, 93.382% (128)
+            QStringLiteral("first"), // 928. 24872, 88.674% (159)
+            QStringLiteral("cesare"), // 929. 24668, 0.061% (211)
+            QStringLiteral("43rd"), // 930. 24633, 99.375% (99)
+            QStringLiteral("juliusza"), // 931. 24594, 0.403% (37)
+            QStringLiteral("lajos"), // 932. 24580, 0.797% (87)
+            QStringLiteral("душана"), // 933. 24576, 0.000% (149)
+            QStringLiteral("lafayette"), // 934. 24538, 95.375% (115)
+            QStringLiteral("francis"), // 935. 24522, 74.688% (270)
+            QStringLiteral("anderson"), // 936. 24521, 87.953% (160)
+            QStringLiteral("mühlenweg"), // 937. 24509, 86.980% (59)
+            QStringLiteral("40th"), // 938. 24498, 99.788% (106)
+            QStringLiteral("augusta"), // 939. 24483, 63.509% (215)
+            QStringLiteral("parker"), // 940. 24483, 91.990% (154)
+            QStringLiteral("náměstí"), // 941. 24479, 9.514% (430)
+            QStringLiteral("michael"), // 942. 24453, 54.918% (475)
+            QStringLiteral("hawthorne"), // 943. 24419, 97.658% (123)
+            QStringLiteral("damm"), // 944. 24418, 11.930% (387)
+            QStringLiteral("emanuele"), // 945. 24404, 0.484% (103)
+            QStringLiteral("интернациональная"), // 946. 24398, 99.512% (10)
+            QStringLiteral("columbia"), // 947. 24388, 88.445% (143)
+            QStringLiteral("johan"), // 948. 24309, 0.461% (360)
+            QStringLiteral("big"), // 949. 24285, 24.439% (509)
+            QStringLiteral("raymond"), // 950. 24276, 59.581% (354)
+            QStringLiteral("murray"), // 951. 24267, 90.584% (162)
+            QStringLiteral("hinter"), // 952. 24254, 0.252% (501)
+            QStringLiteral("olive"), // 953. 24246, 89.083% (181)
+            QStringLiteral("sandy"), // 954. 24221, 66.496% (360)
+            QStringLiteral("powstańców"), // 955. 24215, 16.411% (34)
+            QStringLiteral("lago"), // 956. 24206, 14.926% (582)
+            QStringLiteral("47th"), // 957. 24146, 99.590% (89)
+            QStringLiteral("wilhelmstraße"), // 958. 24134, 99.826% (5)
+            QStringLiteral("allé"), // 959. 24107, 0.908% (524)
+            QStringLiteral("churchill"), // 960. 24074, 74.375% (123)
+            QStringLiteral("mai"), // 961. 24046, 32.733% (137)
+            QStringLiteral("60"), // 962. 24021, 21.394% (205)
+            QStringLiteral("schloßstraße"), // 963. 23958, 99.098% (11)
+            QStringLiteral("op"), // 964. 23957, 0.088% (503)
+            QStringLiteral("м"), // 965. 23853, 0.038% (484)
+            QStringLiteral("ruta"), // 966. 23841, 2.475% (412)
+            QStringLiteral("koningin"), // 967. 23830, 0.000% (70)
+            QStringLiteral("belle"), // 968. 23824, 21.802% (504)
+            QStringLiteral("lac"), // 969. 23813, 31.743% (606)
+            QStringLiteral("sherwood"), // 970. 23810, 92.902% (156)
+            QStringLiteral("lexington"), // 971. 23795, 96.924% (95)
+            QStringLiteral("champ"), // 972. 23794, 3.543% (878)
+            QStringLiteral("enrico"), // 973. 23787, 0.362% (259)
+            QStringLiteral("canterbury"), // 974. 23768, 93.230% (100)
+            QStringLiteral("stationsstraat"), // 975. 23763, 98.052% (11)
+            QStringLiteral("rené"), // 976. 23745, 4.060% (598)
+            QStringLiteral("croft"), // 977. 23673, 25.523% (710)
+            QStringLiteral("hidden"), // 978. 23672, 62.644% (477)
+            QStringLiteral("second"), // 979. 23610, 91.656% (103)
+            QStringLiteral("acres"), // 980. 23518, 8.934% (616)
+            QStringLiteral("notre"), // 981. 23464, 0.222% (232)
+            QStringLiteral("sand"), // 982. 23453, 50.471% (369)
+            QStringLiteral("светог"), // 983. 23440, 0.000% (88)
+            QStringLiteral("dom"), // 984. 23433, 12.004% (410)
+            QStringLiteral("kent"), // 985. 23402, 85.335% (163)
+            QStringLiteral("mihail"), // 986. 23361, 0.000% (144)
+            QStringLiteral("29"), // 987. 23331, 28.923% (288)
+            QStringLiteral("piłsudskiego"), // 988. 23328, 45.966% (27)
+            QStringLiteral("garcía"), // 989. 23315, 5.653% (548)
+            QStringLiteral("spacerowa"), // 990. 23272, 99.948% (3)
+            QStringLiteral("39th"), // 991. 23268, 99.858% (94)
+            QStringLiteral("ломоносова"), // 992. 23266, 99.123% (28)
+            QStringLiteral("winkel"), // 993. 23204, 64.941% (170)
+            QStringLiteral("الدين"), // 994. 23185, 0.522% (496)
+            QStringLiteral("sud"), // 995. 23180, 4.232% (535)
+            QStringLiteral("46th"), // 996. 23149, 99.581% (92)
+            QStringLiteral("autumn"), // 997. 23095, 64.564% (392)
+            QStringLiteral("schoolstraat"), // 998. 23045, 97.574% (18)
+            QStringLiteral("ferreira"), // 999. 23015, 6.418% (497)
+            QStringLiteral("кнеза"), // 1001. 22990, 0.000% (92)
+            QStringLiteral("independenței"), // 1002. 22980, 96.379% (7)
+            QStringLiteral("springfield"), // 1003. 22953, 95.151% (94)
+            QStringLiteral("brighton"), // 1004. 22920, 78.285% (197)
+            QStringLiteral("emerald"), // 1005. 22778, 82.040% (271)
+            QStringLiteral("morgan"), // 1006. 22772, 89.390% (205)
+            QStringLiteral("extension"), // 1007. 22762, 8.070% (839)
+            QStringLiteral("lancaster"), // 1008. 22726, 96.458% (99)
+            QStringLiteral("44th"), // 1009. 22671, 99.493% (97)
+            QStringLiteral("paris"), // 1010. 22604, 86.874% (144)
+            QStringLiteral("wiesenweg"), // 1011. 22590, 95.905% (27)
+            QStringLiteral("復興路"), // 1012. 22567, 100.000% (1)
+            QStringLiteral("au"), // 1013. 22543, 29.064% (595)
+            QStringLiteral("fernando"), // 1014. 22510, 23.523% (492)
+            QStringLiteral("ferdinand"), // 1015. 22508, 13.106% (429)
+            QStringLiteral("wolności"), // 1016. 22493, 76.508% (11)
+            QStringLiteral("tudor"), // 1017. 22489, 41.958% (124)
+            QStringLiteral("pri"), // 1018. 22468, 0.000% (520)
+            QStringLiteral("rodríguez"), // 1019. 22451, 21.246% (409)
+            QStringLiteral("bedford"), // 1020. 22449, 92.191% (110)
+            QStringLiteral("lindenweg"), // 1021. 22443, 99.412% (9)
+            QStringLiteral("knoll"), // 1022. 22414, 26.042% (601)
+            QStringLiteral("heritage"), // 1023. 22407, 86.241% (267)
+            QStringLiteral("bernard"), // 1024. 22382, 44.040% (417)
+            QStringLiteral("ann"), // 1025. 22374, 39.895% (461)
+            QStringLiteral("guido"), // 1026. 22359, 7.053% (242)
+            QStringLiteral("schützenstraße"), // 1027. 22359, 99.173% (11)
+            QStringLiteral("caminho"), // 1028. 22354, 1.029% (647)
+            QStringLiteral("champs"), // 1029. 22352, 36.171% (505)
+            QStringLiteral("queens"), // 1030. 22349, 90.666% (151)
+            QStringLiteral("degli"), // 1031. 22325, 0.403% (387)
+            QStringLiteral("вишнёвая"), // 1032. 22313, 95.173% (25)
+            QStringLiteral("bulevar"), // 1033. 22291, 1.476% (280)
+            QStringLiteral("akacjowa"), // 1034. 22265, 99.686% (7)
+            QStringLiteral("طريق"), // 1035. 22252, 4.386% (519)
+            QStringLiteral("łąkowa"), // 1036. 22220, 99.541% (4)
+            QStringLiteral("parkstraße"), // 1037. 22220, 98.789% (16)
+            QStringLiteral("івана"), // 1038. 22212, 0.000% (224)
+            QStringLiteral("rynek"), // 1039. 22185, 76.205% (84)
+            QStringLiteral("берёзовая"), // 1040. 22170, 90.753% (34)
+            QStringLiteral("eichenweg"), // 1041. 22065, 99.705% (7)
+            QStringLiteral("república"), // 1042. 22040, 22.700% (197)
+            QStringLiteral("مصطفى"), // 1043. 22025, 11.841% (572)
+            QStringLiteral("mairie"), // 1044. 22017, 94.958% (48)
+            QStringLiteral("abril"), // 1045. 22013, 14.033% (185)
+            QStringLiteral("milton"), // 1046. 21986, 88.252% (157)
+            QStringLiteral("السلام"), // 1047. 21978, 66.517% (258)
+            QStringLiteral("newton"), // 1048. 21966, 87.030% (148)
+            QStringLiteral("golf"), // 1049. 21963, 44.926% (296)
+            QStringLiteral("sokağı"), // 1050. 21962, 0.041% (821)
+            QStringLiteral("mills"), // 1051. 21959, 34.628% (400)
+            QStringLiteral("feld"), // 1052. 21950, 13.289% (552)
+            QStringLiteral("camp"), // 1053. 21932, 41.565% (525)
+            QStringLiteral("gheorghe"), // 1054. 21917, 0.000% (271)
+            QStringLiteral("fairfield"), // 1055. 21915, 94.880% (92)
+            QStringLiteral("vieux"), // 1056. 21821, 5.055% (523)
+            QStringLiteral("sosnowa"), // 1057. 21774, 99.591% (7)
+            QStringLiteral("chester"), // 1058. 21764, 90.466% (120)
+            QStringLiteral("concession"), // 1059. 21763, 31.278% (453)
+            QStringLiteral("jorge"), // 1060. 21757, 11.550% (503)
+            QStringLiteral("quail"), // 1061. 21752, 80.062% (330)
+            QStringLiteral("маладзёжная"), // 1062. 21719, 100.000% (4)
+            QStringLiteral("cottage"), // 1063. 21712, 86.178% (250)
+            QStringLiteral("provinciale"), // 1064. 21712, 35.888% (255)
+            QStringLiteral("lessingstraße"), // 1065. 21701, 99.853% (3)
+            QStringLiteral("øvre"), // 1066. 21700, 2.000% (751)
+            QStringLiteral("umberto"), // 1067. 21700, 25.124% (155)
+            QStringLiteral("oakwood"), // 1068. 21665, 97.051% (115)
+            QStringLiteral("southern"), // 1069. 21637, 54.023% (180)
+            QStringLiteral("ул"), // 1070. 21633, 0.000% (648)
+            QStringLiteral("nazionale"), // 1071. 21611, 67.179% (97)
+            QStringLiteral("promenade"), // 1072. 21581, 40.095% (435)
+            QStringLiteral("temple"), // 1073. 21563, 85.888% (214)
+            QStringLiteral("mitre"), // 1074. 21551, 41.734% (62)
+            QStringLiteral("oberer"), // 1075. 21525, 4.892% (662)
+            QStringLiteral("località"), // 1076. 21516, 0.860% (780)
+            QStringLiteral("подгорная"), // 1077. 21506, 98.098% (16)
+            QStringLiteral("48th"), // 1078. 21505, 99.628% (93)
+            QStringLiteral("myrtle"), // 1079. 21505, 89.802% (114)
+            QStringLiteral("danziger"), // 1080. 21503, 99.437% (10)
+            QStringLiteral("industriestraße"), // 1081. 21493, 98.130% (26)
+            QStringLiteral("finkenweg"), // 1082. 21477, 100.000% (3)
+            QStringLiteral("gustav"), // 1083. 21469, 0.755% (416)
+            QStringLiteral("тесле"), // 1084. 21449, 0.000% (4)
+            QStringLiteral("dels"), // 1085. 21439, 0.000% (623)
+            QStringLiteral("crystal"), // 1086. 21427, 71.881% (330)
+            QStringLiteral("ross"), // 1087. 21427, 81.869% (194)
+            QStringLiteral("marx"), // 1088. 21424, 91.024% (76)
+            QStringLiteral("commercial"), // 1089. 21415, 87.789% (128)
+            QStringLiteral("mitchell"), // 1090. 21410, 91.798% (139)
+            QStringLiteral("bernardo"), // 1091. 21397, 17.334% (346)
+            QStringLiteral("jones"), // 1092. 21377, 68.480% (288)
+            QStringLiteral("степана"), // 1093. 21317, 0.000% (94)
+            QStringLiteral("baker"), // 1094. 21316, 87.610% (176)
+            QStringLiteral("robin"), // 1095. 21259, 69.905% (252)
+            QStringLiteral("fe"), // 1096. 21234, 88.890% (134)
+            QStringLiteral("oakland"), // 1097. 21218, 95.716% (113)
+            QStringLiteral("boston"), // 1098. 21202, 65.244% (109)
+            QStringLiteral("słowackiego"), // 1099. 21202, 0.292% (9)
+            QStringLiteral("webster"), // 1100. 21193, 93.554% (83)
+            QStringLiteral("joaquim"), // 1101. 21138, 4.707% (548)
+            QStringLiteral("sportplatz"), // 1102. 21123, 92.255% (33)
+            QStringLiteral("комарова"), // 1103. 21119, 96.150% (24)
+            QStringLiteral("frank"), // 1104. 21099, 27.551% (269)
+            QStringLiteral("albany"), // 1105. 21068, 88.191% (70)
+            QStringLiteral("frans"), // 1106. 21016, 0.542% (309)
+            QStringLiteral("sfînt"), // 1107. 21005, 0.000% (11)
+            QStringLiteral("colón"), // 1108. 20999, 68.694% (74)
+            QStringLiteral("veneto"), // 1109. 20993, 11.289% (46)
+            QStringLiteral("seestraße"), // 1110. 20978, 97.059% (19)
+            QStringLiteral("castro"), // 1111. 20956, 19.250% (407)
+            QStringLiteral("oliveira"), // 1112. 20950, 5.990% (586)
+            QStringLiteral("private"), // 1113. 20948, 3.604% (571)
+            QStringLiteral("جادة"), // 1114. 20915, 53.254% (168)
+            QStringLiteral("montgomery"), // 1115. 20914, 95.811% (82)
+            QStringLiteral("creangă"), // 1116. 20910, 0.306% (13)
+            QStringLiteral("third"), // 1117. 20910, 93.089% (76)
+            QStringLiteral("hoofdstraat"), // 1118. 20906, 95.748% (10)
+            QStringLiteral("beaver"), // 1119. 20902, 64.841% (241)
+            QStringLiteral("uhlandstraße"), // 1120. 20882, 100.000% (1)
+            QStringLiteral("сосновая"), // 1121. 20880, 94.943% (21)
+            QStringLiteral("lakeshore"), // 1122. 20872, 92.631% (123)
+            QStringLiteral("lima"), // 1123. 20867, 27.397% (410)
+            QStringLiteral("charlotte"), // 1124. 20850, 68.269% (188)
+            QStringLiteral("60th"), // 1125. 20849, 99.755% (83)
+            QStringLiteral("јована"), // 1126. 20824, 0.000% (211)
+            QStringLiteral("erlenweg"), // 1127. 20762, 99.432% (9)
+            QStringLiteral("лазара"), // 1128. 20757, 0.000% (75)
+            QStringLiteral("dworcowa"), // 1129. 20743, 99.205% (5)
+            QStringLiteral("libertà"), // 1130. 20740, 53.510% (63)
+            QStringLiteral("حسين"), // 1131. 20732, 15.869% (621)
+            QStringLiteral("andrea"), // 1132. 20676, 23.684% (306)
+            QStringLiteral("heather"), // 1133. 20634, 85.984% (234)
+            QStringLiteral("marcel"), // 1134. 20620, 12.367% (508)
+            QStringLiteral("иве"), // 1135. 20616, 0.000% (20)
+            QStringLiteral("почтовая"), // 1136. 20604, 97.806% (14)
+            QStringLiteral("shady"), // 1137. 20599, 68.858% (369)
+            QStringLiteral("kensington"), // 1138. 20579, 92.959% (121)
+            QStringLiteral("nationale"), // 1139. 20578, 80.465% (91)
+            QStringLiteral("stein"), // 1140. 20573, 16.653% (192)
+            QStringLiteral("grandview"), // 1141. 20572, 98.751% (88)
+            QStringLiteral("krakowska"), // 1142. 20570, 99.407% (4)
+            QStringLiteral("sheridan"), // 1143. 20555, 98.613% (74)
+            QStringLiteral("alighieri"), // 1144. 20552, 0.000% (25)
+            QStringLiteral("батыра"), // 1145. 20541, 0.716% (281)
+            QStringLiteral("arnold"), // 1146. 20508, 67.554% (215)
+            QStringLiteral("garfield"), // 1147. 20484, 98.902% (61)
+            QStringLiteral("glenwood"), // 1148. 20478, 97.651% (97)
+            QStringLiteral("city"), // 1149. 20466, 31.144% (397)
+            QStringLiteral("daniel"), // 1150. 20461, 36.640% (473)
+            QStringLiteral("браће"), // 1151. 20448, 0.000% (319)
+            QStringLiteral("andrews"), // 1152. 20447, 92.092% (180)
+            QStringLiteral("grüner"), // 1153. 20437, 77.966% (58)
+            QStringLiteral("hipólito"), // 1154. 20433, 0.871% (74)
+            QStringLiteral("catherine"), // 1155. 20422, 65.425% (167)
+            QStringLiteral("aspen"), // 1156. 20408, 87.245% (261)
+            QStringLiteral("трудовая"), // 1157. 20399, 99.461% (19)
+            QStringLiteral("woodside"), // 1158. 20393, 95.307% (122)
+            QStringLiteral("السيد"), // 1159. 20384, 10.935% (687)
+            QStringLiteral("breite"), // 1160. 20383, 87.813% (84)
+            QStringLiteral("ivy"), // 1161. 20361, 77.811% (292)
+            QStringLiteral("58th"), // 1162. 20339, 99.951% (89)
+            QStringLiteral("marina"), // 1163. 20328, 63.385% (304)
+            QStringLiteral("gammel"), // 1164. 20322, 0.615% (325)
+            QStringLiteral("alfredo"), // 1165. 20315, 2.368% (483)
+            QStringLiteral("орджоникидзе"), // 1166. 20313, 99.119% (13)
+            QStringLiteral("morris"), // 1167. 20304, 83.831% (159)
+            QStringLiteral("florence"), // 1168. 20256, 88.162% (123)
+            QStringLiteral("france"), // 1169. 20255, 35.300% (164)
+            QStringLiteral("51st"), // 1170. 20244, 99.946% (96)
+            QStringLiteral("borgo"), // 1171. 20219, 9.872% (486)
+            QStringLiteral("урицкого"), // 1172. 20210, 99.292% (18)
+            QStringLiteral("ленинградская"), // 1173. 20168, 98.746% (20)
+            QStringLiteral("colonial"), // 1174. 20144, 90.796% (145)
+            QStringLiteral("blossom"), // 1175. 20140, 47.433% (320)
+            QStringLiteral("gramsci"), // 1176. 20134, 98.932% (21)
+            QStringLiteral("sea"), // 1177. 20111, 36.716% (486)
+            QStringLiteral("star"), // 1178. 20094, 27.939% (460)
+            QStringLiteral("raiffeisenstraße"), // 1179. 20084, 100.000% (1)
+            QStringLiteral("graf"), // 1180. 20079, 7.879% (387)
+            QStringLiteral("vignes"), // 1181. 20075, 74.775% (208)
+            QStringLiteral("edgewood"), // 1182. 20048, 98.219% (88)
+            QStringLiteral("eastern"), // 1183. 20040, 66.956% (106)
+            QStringLiteral("sunrise"), // 1184. 19976, 90.859% (200)
+            QStringLiteral("луначарского"), // 1185. 19973, 99.619% (18)
+            QStringLiteral("arlington"), // 1186. 19959, 96.097% (105)
+            QStringLiteral("juniper"), // 1187. 19952, 94.888% (156)
+            QStringLiteral("hope"), // 1188. 19949, 72.480% (211)
+            QStringLiteral("à"), // 1189. 19923, 0.050% (562)
+            QStringLiteral("harris"), // 1190. 19912, 85.486% (186)
+            QStringLiteral("الرحمن"), // 1191. 19884, 37.150% (345)
+            QStringLiteral("parkowa"), // 1192. 19873, 100.000% (3)
+            QStringLiteral("ferenc"), // 1193. 19855, 0.761% (114)
+            QStringLiteral("fern"), // 1194. 19830, 70.545% (317)
+            QStringLiteral("louise"), // 1195. 19826, 40.407% (276)
+            QStringLiteral("heath"), // 1196. 19819, 54.332% (331)
+            QStringLiteral("lakeside"), // 1197. 19817, 95.998% (114)
+            QStringLiteral("atlantic"), // 1198. 19812, 96.487% (78)
+            QStringLiteral("stewart"), // 1199. 19804, 91.880% (141)
+            QStringLiteral("строительная"), // 1200. 19800, 98.823% (20)
+            QStringLiteral("космонавтов"), // 1201. 19788, 97.448% (22)
+            QStringLiteral("somerset"), // 1202. 19775, 96.723% (117)
+            QStringLiteral("pré"), // 1203. 19761, 6.665% (813)
+            QStringLiteral("marco"), // 1204. 19757, 25.596% (271)
+            QStringLiteral("труда"), // 1205. 19727, 92.787% (29)
+            QStringLiteral("chapelle"), // 1206. 19697, 80.733% (205)
+            QStringLiteral("sportowa"), // 1207. 19683, 99.893% (3)
+            QStringLiteral("56th"), // 1208. 19681, 99.959% (86)
+            QStringLiteral("rosenweg"), // 1209. 19674, 99.512% (7)
+            QStringLiteral("wiesengrund"), // 1210. 19651, 99.674% (8)
+            QStringLiteral("mason"), // 1211. 19601, 87.924% (170)
+            QStringLiteral("55th"), // 1212. 19595, 99.832% (83)
+            QStringLiteral("coast"), // 1213. 19594, 51.888% (133)
+            QStringLiteral("62nd"), // 1214. 19587, 99.566% (86)
+            QStringLiteral("63rd"), // 1215. 19572, 99.571% (86)
+            QStringLiteral("светлая"), // 1216. 19569, 98.937% (17)
+            QStringLiteral("eduardo"), // 1217. 19552, 0.916% (478)
+            QStringLiteral("españa"), // 1218. 19552, 85.751% (76)
+            QStringLiteral("52nd"), // 1219. 19544, 99.882% (92)
+            QStringLiteral("anger"), // 1220. 19516, 79.484% (136)
+            QStringLiteral("preston"), // 1221. 19504, 88.115% (135)
+            QStringLiteral("dokter"), // 1222. 19463, 0.000% (424)
+            QStringLiteral("57th"), // 1223. 19462, 99.568% (85)
+            QStringLiteral("العزيز"), // 1224. 19455, 18.838% (416)
+            QStringLiteral("ville"), // 1225. 19451, 13.624% (381)
+            QStringLiteral("vine"), // 1226. 19438, 87.689% (131)
+            QStringLiteral("49th"), // 1227. 19419, 99.866% (99)
+            QStringLiteral("dębowa"), // 1228. 19413, 99.387% (9)
+            QStringLiteral("bach"), // 1229. 19404, 32.973% (254)
+            QStringLiteral("nowa"), // 1230. 19398, 90.195% (20)
+            QStringLiteral("бранка"), // 1231. 19395, 0.000% (101)
+            QStringLiteral("koch"), // 1232. 19385, 7.336% (133)
+            QStringLiteral("clifton"), // 1233. 19384, 89.770% (124)
+            QStringLiteral("64th"), // 1234. 19376, 99.345% (85)
+            QStringLiteral("winchester"), // 1235. 19374, 97.399% (70)
+            QStringLiteral("mnt"), // 1236. 19359, 0.000% (85)
+            QStringLiteral("constantin"), // 1237. 19348, 0.972% (242)
+            QStringLiteral("per"), // 1238. 19330, 0.481% (421)
+            QStringLiteral("дорожная"), // 1239. 19328, 98.143% (23)
+            QStringLiteral("robinson"), // 1240. 19302, 88.079% (150)
+            QStringLiteral("adolf"), // 1241. 19300, 10.104% (403)
+            QStringLiteral("claude"), // 1242. 19280, 24.829% (353)
+            QStringLiteral("богдана"), // 1243. 19276, 1.131% (89)
+            QStringLiteral("bruno"), // 1244. 19270, 14.281% (343)
+            QStringLiteral("dogwood"), // 1245. 19267, 95.510% (163)
+            QStringLiteral("rheinstraße"), // 1246. 19237, 98.622% (14)
+            QStringLiteral("joan"), // 1247. 19205, 23.166% (377)
+            QStringLiteral("50th"), // 1248. 19198, 99.818% (87)
+            QStringLiteral("unter"), // 1249. 19195, 0.349% (416)
+            QStringLiteral("konrad"), // 1250. 19186, 2.142% (224)
+            QStringLiteral("民族路"), // 1251. 19185, 100.000% (1)
+            QStringLiteral("arbor"), // 1252. 19178, 66.545% (344)
+            QStringLiteral("păcii"), // 1253. 19168, 99.515% (10)
+            QStringLiteral("california"), // 1254. 19146, 91.983% (98)
+            QStringLiteral("plaça"), // 1255. 19134, 1.453% (723)
+            QStringLiteral("wallace"), // 1256. 19125, 92.235% (123)
+            QStringLiteral("division"), // 1257. 19120, 85.345% (98)
+            QStringLiteral("علي"), // 1258. 19110, 10.068% (633)
+            QStringLiteral("beacon"), // 1259. 19099, 94.471% (132)
+            QStringLiteral("民權路"), // 1260. 19056, 100.000% (1)
+            QStringLiteral("nová"), // 1261. 18981, 82.540% (56)
+            QStringLiteral("redwood"), // 1262. 18965, 95.592% (124)
+            QStringLiteral("antoine"), // 1263. 18956, 25.164% (451)
+            QStringLiteral("michigan"), // 1264. 18943, 98.068% (64)
+            QStringLiteral("sherman"), // 1265. 18929, 95.108% (101)
+            QStringLiteral("birkenstraße"), // 1266. 18928, 100.000% (1)
+            QStringLiteral("emilio"), // 1267. 18927, 1.268% (352)
+            QStringLiteral("torre"), // 1268. 18910, 22.221% (396)
+            QStringLiteral("margaret"), // 1269. 18895, 83.477% (169)
+            QStringLiteral("roger"), // 1270. 18876, 12.720% (373)
+            QStringLiteral("timber"), // 1271. 18866, 71.753% (365)
+            QStringLiteral("auburn"), // 1272. 18809, 82.418% (182)
+            QStringLiteral("разина"), // 1273. 18793, 19.401% (31)
+            QStringLiteral("квартал"), // 1274. 18787, 30.793% (483)
+            QStringLiteral("chiesa"), // 1275. 18784, 34.535% (242)
+            QStringLiteral("sol"), // 1276. 18777, 55.632% (374)
+            QStringLiteral("simon"), // 1277. 18768, 26.673% (414)
+            QStringLiteral("kingston"), // 1278. 18758, 93.459% (111)
+            QStringLiteral("mesa"), // 1279. 18749, 41.517% (389)
+            QStringLiteral("rolling"), // 1280. 18745, 57.045% (280)
+            QStringLiteral("hoge"), // 1281. 18739, 7.194% (299)
+            QStringLiteral("بكر"), // 1282. 18725, 5.880% (162)
+            QStringLiteral("hunter"), // 1283. 18714, 87.266% (212)
+            QStringLiteral("esplanade"), // 1284. 18713, 71.191% (216)
+            QStringLiteral("verdi"), // 1285. 18712, 94.896% (73)
+            QStringLiteral("mission"), // 1286. 18707, 82.146% (200)
+            QStringLiteral("leipziger"), // 1287. 18705, 97.354% (20)
+            QStringLiteral("marktplatz"), // 1288. 18688, 96.591% (33)
+            QStringLiteral("中山路二段"), // 1289. 18688, 100.000% (1)
+            QStringLiteral("cardinal"), // 1290. 18658, 79.778% (210)
+            QStringLiteral("سيد"), // 1291. 18657, 8.361% (677)
+            QStringLiteral("léon"), // 1292. 18656, 4.208% (436)
+            QStringLiteral("nedre"), // 1293. 18634, 1.138% (674)
+            QStringLiteral("harbour"), // 1294. 18614, 48.200% (313)
+            QStringLiteral("klein"), // 1295. 18606, 9.830% (534)
+            QStringLiteral("schweitzer"), // 1296. 18604, 10.659% (75)
+            QStringLiteral("весенняя"), // 1297. 18602, 99.602% (11)
+            QStringLiteral("hochstraße"), // 1298. 18580, 99.236% (11)
+            QStringLiteral("pereira"), // 1299. 18580, 7.524% (548)
+            QStringLiteral("flores"), // 1300. 18531, 63.515% (295)
+            QStringLiteral("leaf"), // 1301. 18499, 6.979% (452)
+            QStringLiteral("korte"), // 1302. 18493, 2.277% (468)
+            QStringLiteral("four"), // 1303. 18488, 30.468% (301)
+            QStringLiteral("armii"), // 1304. 18461, 0.569% (40)
+            QStringLiteral("72nd"), // 1305. 18458, 99.518% (82)
+            QStringLiteral("pines"), // 1306. 18450, 12.715% (495)
+            QStringLiteral("apple"), // 1307. 18418, 57.873% (297)
+            QStringLiteral("54th"), // 1308. 18410, 99.430% (87)
+            QStringLiteral("leonardo"), // 1309. 18408, 9.469% (195)
+            QStringLiteral("ы"), // 1310. 18398, 0.136% (757)
+            QStringLiteral("memorial"), // 1311. 18392, 59.053% (171)
+            QStringLiteral("hohe"), // 1312. 18389, 53.831% (200)
+            QStringLiteral("frankfurter"), // 1313. 18362, 94.941% (17)
+            QStringLiteral("люксембург"), // 1314. 18355, 2.937% (21)
+            QStringLiteral("kasztanowa"), // 1315. 18348, 99.956% (4)
+            QStringLiteral("tannenweg"), // 1316. 18344, 99.662% (7)
+            QStringLiteral("independencia"), // 1317. 18341, 86.778% (77)
+            QStringLiteral("bismarckstraße"), // 1318. 18339, 100.000% (3)
+            QStringLiteral("hacienda"), // 1319. 18331, 24.134% (394)
+            QStringLiteral("pfarrer"), // 1320. 18314, 0.912% (818)
+            QStringLiteral("karola"), // 1321. 18299, 0.361% (164)
+            QStringLiteral("estates"), // 1322. 18293, 14.743% (637)
+            QStringLiteral("53rd"), // 1323. 18230, 99.846% (90)
+            QStringLiteral("lerchenweg"), // 1324. 18222, 99.940% (3)
+            QStringLiteral("fray"), // 1325. 18208, 1.335% (331)
+            QStringLiteral("ford"), // 1326. 18195, 61.396% (249)
+            QStringLiteral("民生路"), // 1327. 18188, 100.000% (1)
+            QStringLiteral("petőfi"), // 1328. 18178, 22.918% (15)
+            QStringLiteral("portland"), // 1329. 18170, 92.818% (92)
+            QStringLiteral("cumberland"), // 1330. 18165, 94.275% (109)
+            QStringLiteral("cavour"), // 1331. 18164, 43.680% (40)
+            QStringLiteral("enrique"), // 1332. 18158, 1.630% (358)
+            QStringLiteral("fő"), // 1333. 18156, 91.623% (11)
+            QStringLiteral("fulton"), // 1334. 18156, 95.974% (87)
+            QStringLiteral("twin"), // 1335. 18152, 38.260% (397)
+            QStringLiteral("graniczna"), // 1336. 18133, 99.531% (3)
+            QStringLiteral("tower"), // 1337. 18117, 74.957% (233)
+            QStringLiteral("perry"), // 1338. 18079, 85.939% (147)
+            QStringLiteral("elmwood"), // 1339. 18078, 98.916% (78)
+            QStringLiteral("vor"), // 1340. 18069, 0.338% (598)
+            QStringLiteral("и"), // 1341. 18058, 0.089% (319)
+            QStringLiteral("antónio"), // 1342. 18054, 1.279% (518)
+            QStringLiteral("karel"), // 1343. 18049, 0.127% (194)
+            QStringLiteral("collins"), // 1344. 18015, 89.004% (123)
+            QStringLiteral("beechwood"), // 1345. 18012, 96.030% (78)
+            QStringLiteral("crown"), // 1346. 18008, 67.448% (259)
+            QStringLiteral("harvest"), // 1347. 18000, 64.172% (282)
+            QStringLiteral("manchester"), // 1348. 18000, 98.456% (63)
+            QStringLiteral("ter"), // 1349. 17994, 1.545% (404)
+            QStringLiteral("bürgermeister"), // 1350. 17982, 0.523% (684)
+            QStringLiteral("gonzález"), // 1351. 17973, 7.589% (441)
+            QStringLiteral("中山路一段"), // 1352. 17946, 100.000% (1)
+            QStringLiteral("marienstraße"), // 1353. 17938, 99.626% (3)
+            QStringLiteral("seneca"), // 1354. 17923, 84.082% (112)
+            QStringLiteral("melrose"), // 1355. 17919, 95.859% (71)
+            QStringLiteral("westwood"), // 1356. 17917, 93.174% (99)
+            QStringLiteral("alexandre"), // 1357. 17908, 9.325% (370)
+            QStringLiteral("augusto"), // 1358. 17907, 4.825% (483)
+            QStringLiteral("graaf"), // 1359. 17904, 1.419% (220)
+            QStringLiteral("cliff"), // 1360. 17901, 59.784% (328)
+            QStringLiteral("austin"), // 1361. 17896, 85.522% (161)
+            QStringLiteral("karlstraße"), // 1362. 17895, 99.547% (6)
+            QStringLiteral("diego"), // 1363. 17888, 18.996% (370)
+            QStringLiteral("ricardo"), // 1364. 17882, 7.298% (366)
+            QStringLiteral("harvard"), // 1365. 17855, 99.020% (61)
+            QStringLiteral("bear"), // 1366. 17849, 48.003% (367)
+            QStringLiteral("і"), // 1367. 17849, 0.073% (667)
+            QStringLiteral("pérez"), // 1368. 17847, 5.093% (408)
+            QStringLiteral("estate"), // 1369. 17843, 21.734% (491)
+            QStringLiteral("cameron"), // 1370. 17825, 88.926% (158)
+            QStringLiteral("delaware"), // 1371. 17816, 97.918% (60)
+            QStringLiteral("володарского"), // 1372. 17798, 99.410% (18)
+            QStringLiteral("alta"), // 1373. 17788, 53.429% (314)
+            QStringLiteral("żeromskiego"), // 1374. 17782, 0.332% (6)
+            QStringLiteral("almirante"), // 1375. 17765, 0.918% (171)
+            QStringLiteral("arturo"), // 1376. 17764, 0.873% (245)
+            QStringLiteral("wincentego"), // 1377. 17750, 0.051% (71)
+            QStringLiteral("evans"), // 1378. 17749, 90.332% (139)
+            QStringLiteral("82nd"), // 1379. 17744, 99.296% (94)
+            QStringLiteral("سعد"), // 1380. 17737, 8.096% (409)
+            QStringLiteral("spokojna"), // 1381. 17733, 99.650% (5)
+            QStringLiteral("jános"), // 1382. 17732, 1.026% (164)
+            QStringLiteral("sándor"), // 1383. 17718, 1.518% (92)
+            QStringLiteral("overlook"), // 1384. 17691, 80.928% (234)
+            QStringLiteral("би"), // 1385. 17670, 0.000% (171)
+            QStringLiteral("bayview"), // 1386. 17662, 97.430% (86)
+            QStringLiteral("ernest"), // 1387. 17637, 17.650% (355)
+            QStringLiteral("diamond"), // 1388. 17635, 80.232% (234)
+            QStringLiteral("tak"), // 1389. 17631, 0.000% (525)
+            QStringLiteral("martins"), // 1390. 17617, 32.225% (394)
+            QStringLiteral("paolo"), // 1391. 17610, 10.806% (321)
+            QStringLiteral("стевана"), // 1392. 17603, 0.000% (140)
+            QStringLiteral("florida"), // 1393. 17595, 89.565% (125)
+            QStringLiteral("vincenzo"), // 1394. 17586, 5.823% (233)
+            QStringLiteral("84th"), // 1395. 17582, 98.288% (98)
+            QStringLiteral("campo"), // 1396. 17573, 22.153% (400)
+            QStringLiteral("cooper"), // 1397. 17558, 89.629% (142)
+            QStringLiteral("горная"), // 1398. 17546, 96.409% (18)
+            QStringLiteral("розы"), // 1399. 17539, 0.000% (24)
+            QStringLiteral("noord"), // 1400. 17538, 12.270% (239)
+            QStringLiteral("милана"), // 1401. 17526, 0.000% (269)
+            QStringLiteral("maggio"), // 1402. 17521, 3.510% (102)
+            QStringLiteral("brookside"), // 1403. 17508, 96.619% (92)
+            QStringLiteral("lakes"), // 1404. 17481, 11.756% (393)
+            QStringLiteral("marion"), // 1405. 17465, 87.392% (141)
+            QStringLiteral("78th"), // 1406. 17435, 98.996% (93)
+            QStringLiteral("martiri"), // 1407. 17435, 13.519% (191)
+            QStringLiteral("artigas"), // 1408. 17429, 52.952% (87)
+            QStringLiteral("kopernika"), // 1409. 17429, 0.975% (8)
+            QStringLiteral("генерала"), // 1410. 17420, 0.000% (368)
+            QStringLiteral("marine"), // 1411. 17415, 93.569% (123)
+            QStringLiteral("joaquín"), // 1412. 17414, 5.157% (259)
+            QStringLiteral("bebel"), // 1413. 17411, 0.000% (14)
+            QStringLiteral("regent"), // 1414. 17409, 91.303% (98)
+            QStringLiteral("61st"), // 1415. 17400, 99.540% (86)
+            QStringLiteral("светозара"), // 1416. 17400, 0.000% (57)
+            QStringLiteral("kurt"), // 1417. 17395, 2.667% (205)
+            QStringLiteral("verdun"), // 1418. 17389, 95.279% (42)
+            QStringLiteral("80th"), // 1419. 17380, 98.901% (98)
+            QStringLiteral("common"), // 1420. 17362, 26.909% (461)
+            QStringLiteral("moore"), // 1421. 17356, 85.233% (152)
+            QStringLiteral("gómez"), // 1422. 17352, 7.642% (324)
+            QStringLiteral("klonowa"), // 1423. 17340, 99.712% (5)
+            QStringLiteral("го"), // 1424. 17323, 0.000% (127)
+            QStringLiteral("konopnickiej"), // 1425. 17296, 0.064% (4)
+            QStringLiteral("graham"), // 1426. 17241, 87.547% (128)
+            QStringLiteral("79th"), // 1427. 17240, 99.031% (89)
+            QStringLiteral("yrigoyen"), // 1428. 17232, 5.734% (24)
+            QStringLiteral("piaskowa"), // 1429. 17183, 100.000% (2)
+            QStringLiteral("quai"), // 1430. 17157, 6.773% (632)
+            QStringLiteral("68th"), // 1431. 17143, 99.259% (86)
+            QStringLiteral("brasil"), // 1432. 17137, 72.288% (87)
+            QStringLiteral("јовановића"), // 1433. 17119, 0.088% (211)
+            QStringLiteral("drosselweg"), // 1434. 17105, 100.000% (2)
+            QStringLiteral("frederick"), // 1435. 17101, 89.708% (84)
+            QStringLiteral("тургенева"), // 1436. 17094, 97.274% (19)
+            QStringLiteral("libération"), // 1437. 17087, 94.750% (22)
+            QStringLiteral("stettiner"), // 1438. 17068, 99.543% (10)
+            QStringLiteral("christian"), // 1439. 17067, 31.365% (436)
+            QStringLiteral("sikorskiego"), // 1440. 17064, 0.996% (20)
+            QStringLiteral("gamle"), // 1441. 17063, 0.059% (403)
+            QStringLiteral("alpine"), // 1442. 17052, 83.480% (174)
+            QStringLiteral("desert"), // 1443. 17051, 41.945% (343)
+            QStringLiteral("87th"), // 1444. 17038, 99.161% (93)
+            QStringLiteral("cerro"), // 1445. 17036, 24.466% (468)
+            QStringLiteral("mulberry"), // 1446. 17029, 96.154% (98)
+            QStringLiteral("рибара"), // 1447. 17029, 0.000% (8)
+            QStringLiteral("berry"), // 1448. 17010, 67.378% (268)
+            QStringLiteral("65th"), // 1449. 17009, 99.206% (85)
+            QStringLiteral("abbey"), // 1450. 17002, 77.226% (199)
+            QStringLiteral("concord"), // 1451. 16974, 94.238% (107)
+            QStringLiteral("salem"), // 1452. 16959, 68.984% (159)
+            QStringLiteral("tineretului"), // 1453. 16959, 95.890% (19)
+            QStringLiteral("emerson"), // 1454. 16941, 97.822% (80)
+            QStringLiteral("clover"), // 1455. 16929, 73.903% (232)
+            QStringLiteral("wolf"), // 1456. 16929, 46.441% (325)
+            QStringLiteral("pinto"), // 1457. 16928, 23.476% (349)
+            QStringLiteral("zuid"), // 1458. 16920, 0.981% (230)
+            QStringLiteral("леніна"), // 1459. 16914, 94.023% (16)
+            QStringLiteral("montée"), // 1460. 16902, 4.420% (647)
+            QStringLiteral("torres"), // 1461. 16893, 26.757% (364)
+            QStringLiteral("heerstraße"), // 1462. 16888, 59.729% (59)
+            QStringLiteral("mark"), // 1463. 16882, 60.911% (300)
+            QStringLiteral("nordstraße"), // 1464. 16882, 99.218% (12)
+            QStringLiteral("83rd"), // 1465. 16875, 99.585% (88)
+            QStringLiteral("jardins"), // 1466. 16863, 67.467% (271)
+            QStringLiteral("industrial"), // 1467. 16849, 51.297% (425)
+            QStringLiteral("princeton"), // 1468. 16831, 95.075% (98)
+            QStringLiteral("лоле"), // 1469. 16826, 0.000% (7)
+            QStringLiteral("成功路"), // 1470. 16821, 100.000% (1)
+            QStringLiteral("ворошилова"), // 1471. 16810, 99.857% (11)
+            QStringLiteral("59th"), // 1472. 16808, 99.726% (81)
+            QStringLiteral("palmer"), // 1473. 16787, 92.304% (129)
+            QStringLiteral("allende"), // 1474. 16770, 17.418% (114)
+            QStringLiteral("aux"), // 1475. 16759, 0.000% (688)
+            QStringLiteral("essex"), // 1476. 16739, 96.463% (83)
+            QStringLiteral("peak"), // 1477. 16718, 16.222% (480)
+            QStringLiteral("franciszka"), // 1478. 16707, 0.132% (276)
+            QStringLiteral("77th"), // 1479. 16682, 98.933% (91)
+            QStringLiteral("et"), // 1480. 16681, 0.138% (495)
+            QStringLiteral("32"), // 1481. 16676, 52.045% (212)
+            QStringLiteral("88th"), // 1482. 16676, 98.873% (92)
+            QStringLiteral("warwick"), // 1483. 16658, 97.407% (74)
+            QStringLiteral("parkside"), // 1484. 16634, 95.118% (99)
+            QStringLiteral("мишића"), // 1485. 16599, 0.000% (20)
+            QStringLiteral("emilia"), // 1486. 16574, 45.807% (83)
+            QStringLiteral("чернышевского"), // 1487. 16568, 99.384% (18)
+            QStringLiteral("forge"), // 1488. 16567, 78.306% (212)
+            QStringLiteral("heideweg"), // 1489. 16541, 93.864% (34)
+            QStringLiteral("rákóczi"), // 1490. 16539, 53.873% (18)
+            QStringLiteral("wspólna"), // 1491. 16535, 99.371% (3)
+            QStringLiteral("fourth"), // 1492. 16534, 88.980% (67)
+            QStringLiteral("павла"), // 1493. 16533, 0.000% (211)
+            QStringLiteral("europa"), // 1494. 16524, 81.651% (90)
+            QStringLiteral("foster"), // 1495. 16524, 92.484% (118)
+            QStringLiteral("جمال"), // 1496. 16512, 5.093% (292)
+            QStringLiteral("ивана"), // 1497. 16509, 0.000% (271)
+            QStringLiteral("wild"), // 1498. 16492, 9.035% (490)
+            QStringLiteral("hoogstraat"), // 1499. 16491, 96.974% (11)
+            QStringLiteral("eichendorffstraße"), // 1500. 16489, 100.000% (1)
+            QStringLiteral("friedensstraße"), // 1501. 16468, 98.980% (9)
+            QStringLiteral("tilleuls"), // 1502. 16468, 94.778% (53)
+            QStringLiteral("ابن"), // 1503. 16462, 0.079% (516)
+            QStringLiteral("clay"), // 1504. 16460, 82.066% (135)
+            QStringLiteral("unterer"), // 1505. 16454, 1.884% (547)
+            QStringLiteral("airport"), // 1506. 16452, 82.470% (140)
+            QStringLiteral("prés"), // 1507. 16444, 46.905% (319)
+            QStringLiteral("71st"), // 1508. 16437, 99.331% (81)
+            QStringLiteral("gray"), // 1509. 16407, 61.754% (238)
+            QStringLiteral("heine"), // 1510. 16400, 2.756% (35)
+            QStringLiteral("spencer"), // 1511. 16388, 95.326% (116)
+            QStringLiteral("hilltop"), // 1512. 16379, 91.886% (92)
+            QStringLiteral("73rd"), // 1513. 16368, 99.395% (87)
+            QStringLiteral("gartenweg"), // 1514. 16356, 97.487% (28)
+            QStringLiteral("machado"), // 1515. 16355, 27.612% (292)
+            QStringLiteral("sage"), // 1516. 16334, 41.992% (367)
+            QStringLiteral("may"), // 1517. 16332, 79.984% (187)
+            QStringLiteral("waldweg"), // 1518. 16325, 93.844% (42)
+            QStringLiteral("35"), // 1519. 16319, 40.830% (222)
+            QStringLiteral("peña"), // 1520. 16283, 7.142% (191)
+            QStringLiteral("aires"), // 1521. 16269, 6.153% (98)
+            QStringLiteral("ana"), // 1522. 16249, 40.544% (296)
+            QStringLiteral("hidalgo"), // 1523. 16240, 36.429% (131)
+            QStringLiteral("colony"), // 1524. 16233, 70.831% (299)
+            QStringLiteral("70"), // 1525. 16220, 18.002% (161)
+            QStringLiteral("rocky"), // 1526. 16219, 53.000% (295)
+            QStringLiteral("boundary"), // 1527. 16192, 91.848% (130)
+            QStringLiteral("ortsstraße"), // 1528. 16187, 91.456% (31)
+            QStringLiteral("riverview"), // 1529. 16154, 97.412% (78)
+            QStringLiteral("carlton"), // 1530. 16150, 94.130% (95)
+            QStringLiteral("pennsylvania"), // 1531. 16141, 99.201% (46)
+            QStringLiteral("auguste"), // 1532. 16130, 1.184% (413)
+            QStringLiteral("laguna"), // 1533. 16118, 36.723% (321)
+            QStringLiteral("grace"), // 1534. 16110, 83.669% (149)
+            QStringLiteral("villas"), // 1535. 16103, 19.195% (463)
+            QStringLiteral("air"), // 1536. 16068, 2.844% (241)
+            QStringLiteral("100"), // 1537. 16064, 60.819% (167)
+            QStringLiteral("lawn"), // 1538. 16062, 28.172% (401)
+            QStringLiteral("bel"), // 1539. 16058, 2.896% (262)
+            QStringLiteral("dover"), // 1540. 16029, 90.879% (132)
+            QStringLiteral("tomás"), // 1541. 16025, 1.460% (307)
+            QStringLiteral("șoseaua"), // 1542. 16019, 0.000% (128)
+            QStringLiteral("leandro"), // 1543. 16009, 4.922% (92)
+            QStringLiteral("krótka"), // 1544. 16005, 99.831% (3)
+            QStringLiteral("cook"), // 1545. 16001, 83.957% (115)
+            QStringLiteral("huntington"), // 1546. 15996, 90.204% (105)
+            QStringLiteral("haut"), // 1547. 15995, 18.043% (563)
+            QStringLiteral("bruce"), // 1548. 15983, 77.082% (138)
+            QStringLiteral("86th"), // 1549. 15981, 98.824% (93)
+            QStringLiteral("vodă"), // 1550. 15968, 0.000% (103)
+            QStringLiteral("mario"), // 1551. 15963, 5.300% (459)
+            QStringLiteral("glendale"), // 1552. 15962, 91.004% (73)
+            QStringLiteral("princes"), // 1553. 15962, 95.990% (61)
+            QStringLiteral("alder"), // 1554. 15953, 87.946% (165)
+            QStringLiteral("الخطاب"), // 1555. 15944, 1.154% (36)
+            QStringLiteral("acacias"), // 1556. 15920, 95.879% (70)
+            QStringLiteral("scholl"), // 1557. 15911, 1.967% (27)
+            QStringLiteral("side"), // 1558. 15901, 38.199% (364)
+            QStringLiteral("92nd"), // 1559. 15900, 98.528% (94)
+            QStringLiteral("neck"), // 1560. 15888, 14.709% (252)
+            QStringLiteral("pioneer"), // 1561. 15881, 91.625% (127)
+            QStringLiteral("stade"), // 1562. 15865, 95.739% (53)
+            QStringLiteral("уральская"), // 1563. 15862, 97.314% (11)
+            QStringLiteral("rafael"), // 1564. 15856, 23.940% (359)
+            QStringLiteral("julianastraat"), // 1565. 15855, 77.080% (3)
+            QStringLiteral("schubertstraße"), // 1566. 15838, 100.000% (2)
+            QStringLiteral("quarry"), // 1567. 15821, 78.415% (197)
+            QStringLiteral("côte"), // 1568. 15794, 17.051% (425)
+            QStringLiteral("85th"), // 1569. 15792, 98.449% (96)
+            QStringLiteral("крестьянская"), // 1570. 15784, 85.593% (10)
+            QStringLiteral("кутузова"), // 1571. 15774, 99.151% (22)
+            QStringLiteral("74th"), // 1572. 15771, 98.764% (83)
+            QStringLiteral("bahnstraße"), // 1573. 15768, 97.330% (16)
+            QStringLiteral("derby"), // 1574. 15766, 90.327% (116)
+            QStringLiteral("primrose"), // 1575. 15760, 94.569% (88)
+            QStringLiteral("maplewood"), // 1576. 15747, 98.914% (66)
+            QStringLiteral("settembre"), // 1577. 15745, 2.490% (80)
+            QStringLiteral("70th"), // 1578. 15733, 99.625% (82)
+            QStringLiteral("trieste"), // 1579. 15731, 85.945% (50)
+            QStringLiteral("roberts"), // 1580. 15714, 88.354% (128)
+            QStringLiteral("الصديق"), // 1581. 15690, 3.321% (47)
+            QStringLiteral("linda"), // 1582. 15678, 76.158% (196)
+            QStringLiteral("paso"), // 1583. 15677, 52.300% (220)
+            QStringLiteral("lodge"), // 1584. 15674, 44.143% (358)
+            QStringLiteral("76th"), // 1585. 15654, 98.754% (85)
+            QStringLiteral("hemlock"), // 1586. 15641, 97.347% (102)
+            QStringLiteral("grunwaldzka"), // 1587. 15638, 100.000% (2)
+            QStringLiteral("duke"), // 1588. 15630, 77.972% (103)
+            QStringLiteral("euclid"), // 1589. 15624, 100.000% (43)
+            QStringLiteral("benito"), // 1590. 15615, 9.049% (173)
+            QStringLiteral("1989"), // 1591. 15598, 0.115% (24)
+            QStringLiteral("commerce"), // 1592. 15596, 94.140% (103)
+            QStringLiteral("princess"), // 1593. 15567, 69.551% (154)
+            QStringLiteral("woodlawn"), // 1594. 15564, 98.869% (79)
+            QStringLiteral("perón"), // 1595. 15563, 4.703% (69)
+            QStringLiteral("winter"), // 1596. 15559, 73.135% (231)
+            QStringLiteral("félix"), // 1597. 15553, 6.115% (389)
+            QStringLiteral("герцена"), // 1598. 15550, 98.547% (27)
+            QStringLiteral("libertad"), // 1599. 15530, 88.880% (69)
+            QStringLiteral("heron"), // 1600. 15522, 56.339% (230)
+            QStringLiteral("hunters"), // 1601. 15522, 72.297% (255)
+            QStringLiteral("bristol"), // 1602. 15507, 87.735% (125)
+            QStringLiteral("railway"), // 1603. 15506, 89.378% (97)
+            QStringLiteral("марковића"), // 1604. 15505, 0.561% (118)
+            QStringLiteral("prof"), // 1605. 15498, 0.155% (479)
+            QStringLiteral("bennett"), // 1606. 15493, 90.105% (114)
+            QStringLiteral("66th"), // 1607. 15483, 99.315% (78)
+            QStringLiteral("lucas"), // 1608. 15476, 45.367% (253)
+            QStringLiteral("holland"), // 1609. 15470, 87.195% (135)
+            QStringLiteral("moor"), // 1610. 15470, 38.274% (320)
+            QStringLiteral("bush"), // 1611. 15427, 45.939% (284)
+            QStringLiteral("tish"), // 1612. 15426, 0.447% (566)
+            QStringLiteral("првог"), // 1613. 15420, 0.000% (31)
+            QStringLiteral("marsh"), // 1614. 15418, 59.833% (235)
+            QStringLiteral("haute"), // 1615. 15413, 52.319% (260)
+            QStringLiteral("krajowej"), // 1616. 15406, 0.000% (15)
+            QStringLiteral("auzoa"), // 1617. 15391, 1.364% (497)
+            QStringLiteral("świerkowa"), // 1618. 15388, 99.747% (5)
+            QStringLiteral("shadow"), // 1619. 15375, 54.686% (316)
+            QStringLiteral("trandafirilor"), // 1620. 15372, 94.737% (10)
+            QStringLiteral("manoel"), // 1621. 15364, 5.988% (430)
+            QStringLiteral("nicolás"), // 1622. 15362, 17.686% (219)
+            QStringLiteral("wells"), // 1623. 15358, 75.342% (159)
+            QStringLiteral("lynn"), // 1624. 15357, 60.305% (246)
+            QStringLiteral("justo"), // 1625. 15355, 2.846% (114)
+            QStringLiteral("newport"), // 1626. 15352, 91.630% (86)
+            QStringLiteral("logan"), // 1627. 15347, 95.380% (108)
+            QStringLiteral("др"), // 1628. 15345, 0.000% (365)
+            QStringLiteral("grey"), // 1629. 15335, 50.068% (265)
+            QStringLiteral("felipe"), // 1630. 15331, 15.915% (322)
+            QStringLiteral("leonard"), // 1631. 15317, 77.672% (127)
+            QStringLiteral("friedenstraße"), // 1632. 15310, 100.000% (3)
+            QStringLiteral("трактовая"), // 1633. 15298, 98.660% (9)
+            QStringLiteral("sudetenstraße"), // 1634. 15272, 100.000% (1)
+            QStringLiteral("عثمان"), // 1635. 15262, 15.666% (237)
+            QStringLiteral("69th"), // 1636. 15249, 98.918% (87)
+            QStringLiteral("irving"), // 1637. 15244, 97.730% (60)
+            QStringLiteral("gilbert"), // 1638. 15236, 77.842% (184)
+            QStringLiteral("voie"), // 1639. 15236, 1.168% (454)
+            QStringLiteral("komenského"), // 1640. 15231, 92.364% (20)
+            QStringLiteral("beverly"), // 1641. 15221, 94.652% (101)
+            QStringLiteral("hameau"), // 1642. 15220, 9.757% (663)
+            QStringLiteral("meridian"), // 1643. 15218, 95.545% (86)
+            QStringLiteral("ridgewood"), // 1644. 15210, 97.535% (73)
+            QStringLiteral("denis"), // 1645. 15198, 54.948% (197)
+            QStringLiteral("hendrik"), // 1646. 15198, 0.243% (258)
+            QStringLiteral("poznańska"), // 1647. 15197, 98.519% (5)
+            QStringLiteral("dorf"), // 1648. 15196, 56.127% (117)
+            QStringLiteral("wildwood"), // 1649. 15189, 95.997% (109)
+            QStringLiteral("bartolomé"), // 1650. 15185, 4.768% (113)
+            QStringLiteral("ashley"), // 1651. 15178, 87.686% (148)
+            QStringLiteral("jose"), // 1652. 15169, 30.852% (396)
+            QStringLiteral("westminster"), // 1653. 15169, 94.403% (68)
+            QStringLiteral("carriage"), // 1654. 15165, 82.150% (174)
+            QStringLiteral("щорса"), // 1655. 15164, 98.787% (26)
+            QStringLiteral("wilhelminastraat"), // 1656. 15163, 83.638% (6)
+            QStringLiteral("wright"), // 1657. 15119, 82.902% (140)
+            QStringLiteral("homestead"), // 1658. 15098, 88.237% (112)
+            QStringLiteral("plymouth"), // 1659. 15092, 97.224% (78)
+            QStringLiteral("alexandra"), // 1660. 15085, 89.526% (82)
+            QStringLiteral("federico"), // 1661. 15083, 1.976% (324)
+            QStringLiteral("fliederweg"), // 1662. 15079, 100.000% (2)
+            QStringLiteral("nicolas"), // 1663. 15072, 33.068% (362)
+            QStringLiteral("rocha"), // 1664. 15066, 15.837% (266)
+            QStringLiteral("sun"), // 1665. 15063, 35.478% (345)
+            QStringLiteral("falcon"), // 1666. 15056, 80.984% (182)
+            QStringLiteral("ward"), // 1667. 15052, 82.560% (123)
+            QStringLiteral("butler"), // 1668. 15047, 88.543% (122)
+            QStringLiteral("quattro"), // 1669. 15040, 1.257% (60)
+            QStringLiteral("woodlands"), // 1670. 15036, 87.829% (106)
+            QStringLiteral("buckingham"), // 1671. 15006, 96.368% (79)
+            QStringLiteral("gomes"), // 1672. 14985, 9.837% (357)
+            QStringLiteral("südstraße"), // 1673. 14949, 99.137% (8)
+            QStringLiteral("moro"), // 1674. 14944, 11.061% (114)
+            QStringLiteral("ленинская"), // 1675. 14943, 97.711% (18)
+            QStringLiteral("rivera"), // 1676. 14941, 39.147% (137)
+            QStringLiteral("eichenstraße"), // 1677. 14939, 99.940% (3)
+            QStringLiteral("swan"), // 1678. 14929, 81.734% (157)
+            QStringLiteral("三民路"), // 1679. 14929, 100.000% (1)
+            QStringLiteral("сиреневая"), // 1680. 14924, 94.519% (20)
+            QStringLiteral("виноградная"), // 1681. 14897, 94.462% (22)
+            QStringLiteral("strasse"), // 1682. 14884, 6.067% (450)
+            QStringLiteral("ridgeway"), // 1683. 14882, 98.965% (66)
+            QStringLiteral("kaiserstraße"), // 1684. 14881, 100.000% (4)
+            QStringLiteral("рябиновая"), // 1685. 14864, 91.261% (29)
+            QStringLiteral("juliana"), // 1686. 14863, 5.181% (96)
+            QStringLiteral("центральна"), // 1687. 14861, 99.058% (10)
+            QStringLiteral("salisbury"), // 1688. 14852, 97.677% (54)
+            QStringLiteral("sunnyside"), // 1689. 14844, 98.255% (63)
+            QStringLiteral("kóshesi"), // 1690. 14838, 0.000% (368)
+            QStringLiteral("rathausstraße"), // 1691. 14833, 99.393% (7)
+            QStringLiteral("patrick"), // 1692. 14831, 74.371% (168)
+            QStringLiteral("bahnhofstrasse"), // 1693. 14819, 97.442% (11)
+            QStringLiteral("barton"), // 1694. 14801, 84.656% (150)
+            QStringLiteral("bahnhof"), // 1695. 14800, 85.628% (98)
+            QStringLiteral("hazel"), // 1696. 14798, 90.877% (119)
+            QStringLiteral("91st"), // 1697. 14789, 98.026% (88)
+            QStringLiteral("中興路"), // 1698. 14789, 100.000% (1)
+            QStringLiteral("hubert"), // 1699. 14787, 49.929% (266)
+            QStringLiteral("67th"), // 1700. 14766, 99.309% (80)
+            QStringLiteral("aldo"), // 1701. 14758, 1.145% (151)
+            QStringLiteral("kirchgasse"), // 1702. 14755, 95.446% (26)
+            QStringLiteral("burg"), // 1703. 14742, 26.340% (268)
+            QStringLiteral("johns"), // 1704. 14728, 87.194% (157)
+            QStringLiteral("kiefernweg"), // 1705. 14725, 99.185% (7)
+            QStringLiteral("andrew"), // 1706. 14700, 85.592% (179)
+            QStringLiteral("adolfo"), // 1707. 14694, 2.382% (307)
+            QStringLiteral("bosco"), // 1708. 14693, 76.288% (153)
+            QStringLiteral("81st"), // 1709. 14692, 98.972% (87)
+            QStringLiteral("vico"), // 1710. 14692, 4.962% (799)
+            QStringLiteral("hunt"), // 1711. 14690, 54.500% (226)
+            QStringLiteral("baptiste"), // 1712. 14676, 23.542% (355)
+            QStringLiteral("gambetta"), // 1713. 14671, 83.389% (23)
+            QStringLiteral("colorado"), // 1714. 14670, 88.828% (97)
+            QStringLiteral("generaal"), // 1715. 14663, 0.430% (182)
+            QStringLiteral("neuer"), // 1716. 14662, 65.066% (96)
+            QStringLiteral("kapellenstraße"), // 1717. 14639, 99.611% (5)
+            QStringLiteral("nádražní"), // 1718. 14630, 98.209% (13)
+            QStringLiteral("birchwood"), // 1719. 14622, 98.338% (80)
+            QStringLiteral("górna"), // 1720. 14608, 96.324% (17)
+            QStringLiteral("valea"), // 1721. 14588, 0.000% (253)
+            QStringLiteral("busch"), // 1722. 14582, 66.534% (200)
+            QStringLiteral("sterling"), // 1723. 14581, 89.699% (160)
+            QStringLiteral("unirii"), // 1724. 14581, 81.359% (19)
+            QStringLiteral("strandvej"), // 1725. 14579, 9.678% (181)
+            QStringLiteral("mühlstraße"), // 1726. 14578, 98.765% (10)
+            QStringLiteral("buena"), // 1727. 14573, 71.639% (131)
+            QStringLiteral("claremont"), // 1728. 14563, 98.640% (59)
+            QStringLiteral("mayor"), // 1729. 14560, 75.591% (130)
+            QStringLiteral("partyzantów"), // 1730. 14554, 97.451% (8)
+            QStringLiteral("sonnenstraße"), // 1731. 14554, 98.887% (7)
+            QStringLiteral("sebastian"), // 1732. 14547, 16.258% (164)
+            QStringLiteral("rogers"), // 1733. 14545, 88.463% (114)
+            QStringLiteral("gladstone"), // 1734. 14520, 99.339% (49)
+            QStringLiteral("roque"), // 1735. 14494, 26.128% (183)
+            QStringLiteral("erich"), // 1736. 14482, 0.801% (206)
+            QStringLiteral("argentina"), // 1737. 14481, 38.008% (105)
+            QStringLiteral("75th"), // 1738. 14479, 99.413% (88)
+            QStringLiteral("domenico"), // 1739. 14476, 8.566% (293)
+            QStringLiteral("rosewood"), // 1740. 14472, 97.381% (87)
+            QStringLiteral("colombo"), // 1741. 14461, 22.848% (79)
+            QStringLiteral("emil"), // 1742. 14451, 2.609% (340)
+            QStringLiteral("foch"), // 1743. 14449, 19.635% (38)
+            QStringLiteral("миру"), // 1744. 14444, 98.927% (18)
+            QStringLiteral("будённого"), // 1745. 14418, 98.238% (14)
+            QStringLiteral("dimitrie"), // 1746. 14417, 0.000% (55)
+            QStringLiteral("díaz"), // 1747. 14413, 7.472% (271)
+            QStringLiteral("cicha"), // 1748. 14408, 98.702% (5)
+            QStringLiteral("ludwigstraße"), // 1749. 14408, 100.000% (2)
+            QStringLiteral("harding"), // 1750. 14405, 94.634% (65)
+            QStringLiteral("wall"), // 1751. 14391, 77.347% (144)
+            QStringLiteral("andrés"), // 1752. 14378, 14.752% (272)
+            QStringLiteral("alves"), // 1753. 14374, 8.995% (381)
+            QStringLiteral("cabral"), // 1754. 14358, 7.341% (164)
+            QStringLiteral("postweg"), // 1755. 14357, 51.313% (41)
+            QStringLiteral("льва"), // 1756. 14356, 0.000% (48)
+            QStringLiteral("luiz"), // 1757. 14354, 1.059% (397)
+            QStringLiteral("durham"), // 1758. 14327, 91.848% (82)
+            QStringLiteral("camillo"), // 1759. 14324, 0.838% (106)
+            QStringLiteral("kastanienweg"), // 1760. 14317, 99.553% (4)
+            QStringLiteral("saratoga"), // 1761. 14306, 95.491% (87)
+            QStringLiteral("gold"), // 1762. 14305, 39.245% (300)
+            QStringLiteral("ontario"), // 1763. 14285, 94.400% (66)
+            QStringLiteral("meisenweg"), // 1764. 14276, 100.000% (1)
+            QStringLiteral("ruelle"), // 1765. 14262, 5.792% (848)
+            QStringLiteral("stuart"), // 1766. 14238, 90.511% (102)
+            QStringLiteral("майская"), // 1767. 14223, 98.629% (15)
+            QStringLiteral("french"), // 1768. 14222, 74.448% (143)
+            QStringLiteral("jeanne"), // 1769. 14218, 8.257% (219)
+            QStringLiteral("bourg"), // 1770. 14217, 59.795% (218)
+            QStringLiteral("steinstraße"), // 1771. 14209, 98.564% (9)
+            QStringLiteral("абая"), // 1772. 14208, 89.569% (47)
+            QStringLiteral("cornelis"), // 1773. 14198, 0.176% (196)
+            QStringLiteral("camí"), // 1774. 14196, 0.592% (536)
+            QStringLiteral("beaumont"), // 1775. 14190, 83.975% (107)
+            QStringLiteral("filippo"), // 1776. 14181, 3.237% (160)
+            QStringLiteral("2e"), // 1777. 14176, 34.537% (235)
+            QStringLiteral("of"), // 1778. 14176, 1.637% (368)
+            QStringLiteral("norfolk"), // 1779. 14163, 94.140% (79)
+            QStringLiteral("mendoza"), // 1780. 14162, 78.103% (149)
+            QStringLiteral("alt"), // 1781. 14158, 2.726% (299)
+            QStringLiteral("paulo"), // 1782. 14153, 4.148% (317)
+            QStringLiteral("революционная"), // 1783. 14151, 98.587% (6)
+            QStringLiteral("turner"), // 1784. 14139, 89.822% (117)
+            QStringLiteral("morning"), // 1785. 14137, 18.292% (269)
+            QStringLiteral("dean"), // 1786. 14134, 83.869% (121)
+            QStringLiteral("ten"), // 1787. 14112, 4.330% (310)
+            QStringLiteral("norman"), // 1788. 14111, 89.094% (96)
+            QStringLiteral("mckinley"), // 1789. 14109, 98.115% (83)
+            QStringLiteral("eugène"), // 1790. 14085, 1.846% (394)
+            QStringLiteral("hanover"), // 1791. 14077, 93.493% (85)
+            QStringLiteral("höhe"), // 1792. 14077, 41.657% (269)
+            QStringLiteral("hauptmann"), // 1793. 14074, 0.000% (19)
+            QStringLiteral("terrasse"), // 1794. 14069, 5.551% (420)
+            QStringLiteral("خالد"), // 1795. 14059, 4.054% (147)
+            QStringLiteral("с"), // 1796. 14054, 0.057% (329)
+            QStringLiteral("aprile"), // 1797. 14040, 0.000% (102)
+            QStringLiteral("lambert"), // 1798. 14040, 69.936% (193)
+            QStringLiteral("bishop"), // 1799. 14022, 86.443% (147)
+            QStringLiteral("monterey"), // 1800. 14017, 96.312% (93)
+            QStringLiteral("moss"), // 1801. 14001, 58.224% (281)
+            QStringLiteral("florilor"), // 1802. 14000, 97.986% (19)
+            QStringLiteral("geschwister"), // 1803. 13972, 0.000% (35)
+            QStringLiteral("mead"), // 1804. 13967, 39.293% (342)
+            QStringLiteral("ђуре"), // 1805. 13967, 0.000% (46)
+            QStringLiteral("regina"), // 1806. 13966, 33.453% (146)
+            QStringLiteral("gerhart"), // 1807. 13965, 0.516% (12)
+            QStringLiteral("carmen"), // 1808. 13952, 55.325% (254)
+            QStringLiteral("alma"), // 1809. 13947, 81.057% (112)
+            QStringLiteral("eau"), // 1810. 13946, 6.446% (194)
+            QStringLiteral("meadowbrook"), // 1811. 13942, 97.755% (73)
+            QStringLiteral("pestalozzistraße"), // 1812. 13942, 99.900% (2)
+            QStringLiteral("weinbergstraße"), // 1813. 13940, 98.415% (12)
+            QStringLiteral("fasanenweg"), // 1814. 13927, 100.000% (2)
+            QStringLiteral("barbara"), // 1815. 13922, 85.735% (166)
+            QStringLiteral("заселак"), // 1816. 13916, 0.000% (841)
+            QStringLiteral("97th"), // 1817. 13915, 99.554% (82)
+            QStringLiteral("верхняя"), // 1818. 13906, 75.327% (70)
+            QStringLiteral("الحاج"), // 1819. 13904, 4.136% (650)
+            QStringLiteral("fryderyka"), // 1820. 13888, 0.000% (18)
+            QStringLiteral("lakewood"), // 1821. 13887, 96.875% (95)
+            QStringLiteral("лясная"), // 1822. 13879, 99.186% (12)
+            QStringLiteral("eden"), // 1823. 13877, 82.792% (157)
+            QStringLiteral("neuve"), // 1824. 13869, 75.377% (115)
+            QStringLiteral("downs"), // 1825. 13868, 34.345% (338)
+            QStringLiteral("aberdeen"), // 1826. 13858, 97.547% (81)
+            QStringLiteral("agustín"), // 1827. 13854, 13.512% (236)
+            QStringLiteral("sector"), // 1828. 13851, 8.353% (296)
+            QStringLiteral("no"), // 1829. 13846, 16.055% (499)
+            QStringLiteral("viilor"), // 1830. 13841, 88.418% (23)
+            QStringLiteral("fleming"), // 1831. 13834, 71.606% (137)
+            QStringLiteral("heuss"), // 1832. 13830, 0.832% (19)
+            QStringLiteral("horse"), // 1833. 13830, 9.197% (336)
+            QStringLiteral("bradford"), // 1834. 13824, 93.779% (104)
+            QStringLiteral("winston"), // 1835. 13816, 56.203% (93)
+            QStringLiteral("topolowa"), // 1836. 13815, 99.855% (4)
+            QStringLiteral("stratford"), // 1837. 13812, 94.765% (84)
+            QStringLiteral("chênes"), // 1838. 13810, 73.903% (141)
+            QStringLiteral("gerard"), // 1839. 13795, 18.717% (139)
+            QStringLiteral("home"), // 1840. 13795, 47.082% (201)
+            QStringLiteral("skyline"), // 1841. 13786, 96.895% (80)
+            QStringLiteral("oliver"), // 1842. 13779, 81.182% (132)
+            QStringLiteral("fraser"), // 1843. 13772, 90.960% (86)
+            QStringLiteral("89th"), // 1844. 13768, 99.056% (87)
+            QStringLiteral("gloucester"), // 1845. 13766, 92.750% (59)
+            QStringLiteral("лазо"), // 1846. 13765, 71.980% (44)
+            QStringLiteral("kelly"), // 1847. 13723, 83.203% (190)
+            QStringLiteral("różana"), // 1848. 13721, 99.096% (6)
+            QStringLiteral("nottingham"), // 1849. 13715, 97.557% (53)
+            QStringLiteral("henderson"), // 1850. 13713, 96.317% (87)
+            QStringLiteral("livezilor"), // 1851. 13711, 98.935% (13)
+            QStringLiteral("scenic"), // 1852. 13702, 83.886% (184)
+            QStringLiteral("fields"), // 1853. 13697, 18.698% (367)
+            QStringLiteral("kreuzstraße"), // 1854. 13691, 99.401% (8)
+            QStringLiteral("stevens"), // 1855. 13686, 86.205% (115)
+            QStringLiteral("löns"), // 1856. 13681, 0.000% (10)
+            QStringLiteral("rijksweg"), // 1857. 13680, 77.902% (35)
+            QStringLiteral("hang"), // 1858. 13660, 79.180% (97)
+            QStringLiteral("90th"), // 1859. 13650, 99.136% (82)
+            QStringLiteral("liepų"), // 1860. 13643, 99.406% (6)
+            QStringLiteral("iris"), // 1861. 13640, 86.899% (137)
+            QStringLiteral("37"), // 1862. 13588, 41.412% (164)
+            QStringLiteral("capitol"), // 1863. 13587, 92.368% (87)
+            QStringLiteral("baldwin"), // 1864. 13583, 96.702% (88)
+            QStringLiteral("площадь"), // 1865. 13582, 0.272% (277)
+            QStringLiteral("ahornstraße"), // 1866. 13579, 100.000% (1)
+            QStringLiteral("lilas"), // 1867. 13574, 96.611% (57)
+            QStringLiteral("shaw"), // 1868. 13571, 79.161% (110)
+            QStringLiteral("nazimabad"), // 1869. 13567, 50.645% (41)
+            QStringLiteral("33"), // 1870. 13540, 49.830% (200)
+            QStringLiteral("104th"), // 1871. 13536, 100.000% (75)
+            QStringLiteral("bas"), // 1872. 13505, 22.584% (438)
+            QStringLiteral("anthony"), // 1873. 13493, 80.627% (137)
+            QStringLiteral("hawthorn"), // 1874. 13492, 95.064% (65)
+            QStringLiteral("surrey"), // 1875. 13485, 96.596% (100)
+            QStringLiteral("صلاح"), // 1876. 13485, 7.141% (289)
+            QStringLiteral("alecsandri"), // 1877. 13475, 0.260% (10)
+            QStringLiteral("graben"), // 1878. 13453, 59.979% (127)
+            QStringLiteral("edge"), // 1879. 13451, 19.545% (313)
+            QStringLiteral("höhenweg"), // 1880. 13451, 96.365% (18)
+            QStringLiteral("coral"), // 1881. 13436, 56.691% (248)
+            QStringLiteral("córdoba"), // 1882. 13429, 87.922% (52)
+            QStringLiteral("clarendon"), // 1883. 13424, 96.976% (52)
+            QStringLiteral("fifth"), // 1884. 13421, 93.316% (60)
+            QStringLiteral("brückenstraße"), // 1885. 13419, 98.301% (13)
+            QStringLiteral("mühlweg"), // 1886. 13415, 94.849% (28)
+            QStringLiteral("columbus"), // 1887. 13390, 97.177% (65)
+            QStringLiteral("sánchez"), // 1888. 13389, 8.119% (247)
+            QStringLiteral("thälmann"), // 1889. 13386, 0.000% (12)
+            QStringLiteral("bailey"), // 1890. 13380, 90.658% (113)
+            QStringLiteral("watson"), // 1891. 13376, 93.690% (100)
+            QStringLiteral("intendente"), // 1892. 13368, 0.060% (359)
+            QStringLiteral("león"), // 1893. 13365, 13.019% (250)
+            QStringLiteral("kantstraße"), // 1894. 13364, 99.596% (2)
+            QStringLiteral("sideroad"), // 1895. 13364, 6.622% (359)
+            QStringLiteral("aurora"), // 1896. 13361, 76.671% (151)
+            QStringLiteral("repubblica"), // 1897. 13353, 93.043% (39)
+            QStringLiteral("argyle"), // 1898. 13350, 96.449% (58)
+            QStringLiteral("julius"), // 1899. 13348, 5.379% (323)
+            QStringLiteral("41"), // 1900. 13345, 48.198% (172)
+            QStringLiteral("witosa"), // 1901. 13344, 0.000% (5)
+            QStringLiteral("титова"), // 1902. 13341, 93.201% (25)
+            QStringLiteral("écoles"), // 1903. 13334, 96.783% (34)
+            QStringLiteral("carvalho"), // 1904. 13331, 12.107% (331)
+            QStringLiteral("hastings"), // 1905. 13321, 93.094% (76)
+            QStringLiteral("ludwika"), // 1906. 13299, 0.714% (119)
+            QStringLiteral("buffalo"), // 1907. 13298, 82.809% (134)
+            QStringLiteral("марка"), // 1908. 13292, 0.000% (92)
+            QStringLiteral("пугачёва"), // 1909. 13290, 95.628% (20)
+            QStringLiteral("سعيد"), // 1910. 13278, 23.648% (457)
+            QStringLiteral("waterloo"), // 1911. 13270, 75.961% (66)
+            QStringLiteral("wrzosowa"), // 1912. 13270, 99.714% (5)
+            QStringLiteral("rancho"), // 1913. 13265, 46.227% (316)
+            QStringLiteral("wiśniowa"), // 1914. 13261, 99.774% (4)
+            QStringLiteral("pater"), // 1915. 13255, 1.871% (387)
+            QStringLiteral("józsef"), // 1916. 13253, 2.135% (118)
+            QStringLiteral("энергетиков"), // 1917. 13251, 99.162% (25)
+            QStringLiteral("jakob"), // 1918. 13248, 1.849% (441)
+            QStringLiteral("acacia"), // 1919. 13241, 96.745% (91)
+            QStringLiteral("tulpenweg"), // 1920. 13225, 100.000% (2)
+            QStringLiteral("federal"), // 1921. 13214, 83.843% (100)
+            QStringLiteral("secondo"), // 1922. 13213, 3.633% (234)
+            QStringLiteral("carolina"), // 1923. 13210, 59.614% (157)
+            QStringLiteral("istván"), // 1924. 13207, 5.391% (141)
+            QStringLiteral("laurent"), // 1925. 13201, 67.306% (234)
+            QStringLiteral("martínez"), // 1926. 13198, 11.077% (317)
+            QStringLiteral("faubourg"), // 1927. 13187, 28.073% (232)
+            QStringLiteral("революции"), // 1928. 13183, 58.522% (40)
+            QStringLiteral("wyzwolenia"), // 1929. 13178, 98.482% (8)
+            QStringLiteral("basse"), // 1930. 13170, 51.746% (260)
+            QStringLiteral("pierce"), // 1931. 13167, 93.825% (79)
+            QStringLiteral("kolpingstraße"), // 1932. 13165, 100.000% (1)
+            QStringLiteral("barrio"), // 1933. 13156, 7.206% (398)
+            QStringLiteral("wiener"), // 1934. 13151, 83.530% (27)
+            QStringLiteral("малая"), // 1935. 13147, 22.188% (254)
+            QStringLiteral("тимирязева"), // 1936. 13146, 97.878% (19)
+            QStringLiteral("briar"), // 1937. 13132, 61.994% (264)
+            QStringLiteral("baron"), // 1938. 13131, 25.885% (314)
+            QStringLiteral("cascade"), // 1939. 13129, 88.750% (167)
+            QStringLiteral("werner"), // 1940. 13127, 18.748% (231)
+            QStringLiteral("ellis"), // 1941. 13110, 89.512% (120)
+            QStringLiteral("يوسف"), // 1942. 13105, 21.740% (410)
+            QStringLiteral("herman"), // 1943. 13104, 21.047% (190)
+            QStringLiteral("jordan"), // 1944. 13069, 83.771% (195)
+            QStringLiteral("albrecht"), // 1945. 13067, 5.135% (116)
+            QStringLiteral("aristide"), // 1946. 13067, 0.199% (75)
+            QStringLiteral("kölner"), // 1947. 13065, 91.642% (22)
+            QStringLiteral("hancock"), // 1948. 13063, 90.768% (72)
+            QStringLiteral("paradise"), // 1949. 13059, 88.299% (149)
+            QStringLiteral("pheasant"), // 1950. 13058, 91.208% (175)
+            QStringLiteral("passeig"), // 1951. 13054, 1.256% (317)
+            QStringLiteral("vinci"), // 1952. 13053, 7.171% (76)
+            QStringLiteral("першамайская"), // 1953. 13053, 100.000% (5)
+            QStringLiteral("lowell"), // 1954. 13052, 97.104% (55)
+            QStringLiteral("mt"), // 1955. 13032, 1.212% (256)
+            QStringLiteral("puits"), // 1956. 13026, 47.167% (297)
+            QStringLiteral("coventry"), // 1957. 13020, 79.324% (99)
+            QStringLiteral("providence"), // 1958. 13019, 84.761% (134)
+            QStringLiteral("souza"), // 1959. 13014, 3.058% (369)
+            QStringLiteral("chopina"), // 1960. 13006, 0.000% (5)
+            QStringLiteral("walton"), // 1961. 12985, 84.644% (121)
+            QStringLiteral("septiembre"), // 1962. 12974, 1.588% (97)
+            QStringLiteral("жарка"), // 1963. 12974, 0.000% (48)
+            QStringLiteral("alfonso"), // 1964. 12970, 7.625% (294)
+            QStringLiteral("schulweg"), // 1965. 12961, 82.224% (34)
+            QStringLiteral("российская"), // 1966. 12948, 99.884% (4)
+            QStringLiteral("кошевого"), // 1967. 12946, 27.607% (33)
+            QStringLiteral("back"), // 1968. 12938, 47.782% (233)
+            QStringLiteral("sutton"), // 1969. 12923, 88.014% (118)
+            QStringLiteral("103rd"), // 1970. 12920, 99.799% (83)
+            QStringLiteral("greenfield"), // 1971. 12914, 98.606% (66)
+            QStringLiteral("stafford"), // 1972. 12910, 96.158% (85)
+            QStringLiteral("carnot"), // 1973. 12905, 67.423% (35)
+            QStringLiteral("mann"), // 1974. 12903, 21.600% (92)
+            QStringLiteral("sky"), // 1975. 12900, 17.667% (369)
+            QStringLiteral("molenweg"), // 1976. 12895, 91.904% (35)
+            QStringLiteral("parkview"), // 1977. 12893, 96.820% (98)
+            QStringLiteral("либкнехта"), // 1978. 12886, 3.430% (13)
+            QStringLiteral("briarwood"), // 1979. 12884, 97.477% (75)
+            QStringLiteral("powell"), // 1980. 12884, 80.976% (116)
+            QStringLiteral("wesoła"), // 1981. 12883, 100.000% (1)
+            QStringLiteral("flower"), // 1982. 12880, 57.756% (210)
+            QStringLiteral("patterson"), // 1983. 12876, 96.156% (78)
+            QStringLiteral("national"), // 1984. 12870, 68.345% (120)
+            QStringLiteral("bradley"), // 1985. 12861, 88.897% (105)
+            QStringLiteral("camille"), // 1986. 12840, 14.283% (254)
+            QStringLiteral("cantemir"), // 1987. 12827, 0.616% (20)
+            QStringLiteral("passage"), // 1988. 12826, 19.492% (609)
+            QStringLiteral("loma"), // 1989. 12822, 41.023% (278)
+            QStringLiteral("steinweg"), // 1990. 12816, 92.104% (27)
+            QStringLiteral("brunswick"), // 1991. 12810, 96.003% (58)
+            QStringLiteral("winding"), // 1992. 12801, 61.323% (188)
+            QStringLiteral("roca"), // 1993. 12800, 45.367% (141)
+            QStringLiteral("gonçalves"), // 1994. 12798, 5.290% (263)
+            QStringLiteral("95th"), // 1995. 12796, 99.859% (71)
+            QStringLiteral("young"), // 1996. 12793, 79.332% (119)
+            QStringLiteral("marcos"), // 1997. 12781, 37.384% (221)
+            QStringLiteral("кастрычніцкая"), // 1998. 12776, 99.859% (4)
+            QStringLiteral("fisher"), // 1999. 12775, 90.466% (102)
+            QStringLiteral("norwood"), // 2000. 12775, 95.076% (80)
+            QStringLiteral("edison"), // 2001. 12772, 72.440% (105)
+            QStringLiteral("marszałka"), // 2002. 12772, 1.660% (24)
+            QStringLiteral("mihály"), // 2003. 12767, 0.446% (65)
+            QStringLiteral("ribeiro"), // 2004. 12764, 7.866% (373)
+            QStringLiteral("greenway"), // 2005. 12759, 92.115% (93)
+            QStringLiteral("devon"), // 2006. 12758, 94.976% (88)
+            QStringLiteral("grund"), // 2007. 12751, 56.160% (177)
+            QStringLiteral("principal"), // 2008. 12749, 64.617% (171)
+            QStringLiteral("восточный"), // 2009. 12739, 43.661% (41)
+            QStringLiteral("railroad"), // 2010. 12738, 96.004% (68)
+            QStringLiteral("bun"), // 2011. 12736, 0.620% (23)
+            QStringLiteral("mallard"), // 2012. 12729, 87.800% (148)
+            QStringLiteral("108th"), // 2013. 12706, 99.551% (78)
+            QStringLiteral("marais"), // 2014. 12700, 71.315% (145)
+            QStringLiteral("tour"), // 2015. 12699, 36.019% (270)
+            QStringLiteral("buenos"), // 2016. 12695, 0.142% (50)
+            QStringLiteral("agosto"), // 2017. 12694, 6.231% (166)
+            QStringLiteral("see"), // 2018. 12683, 50.296% (191)
+            QStringLiteral("grigore"), // 2019. 12680, 0.000% (109)
+            QStringLiteral("родниковая"), // 2020. 12679, 99.448% (15)
+            QStringLiteral("hoofdweg"), // 2021. 12675, 94.682% (14)
+            QStringLiteral("112th"), // 2022. 12672, 99.740% (80)
+            QStringLiteral("belvedere"), // 2023. 12659, 95.545% (84)
+            QStringLiteral("battisti"), // 2024. 12653, 1.897% (24)
+            QStringLiteral("baan"), // 2025. 12652, 71.665% (76)
+            QStringLiteral("школьный"), // 2026. 12650, 98.538% (25)
+            QStringLiteral("oscar"), // 2027. 12641, 10.988% (311)
+            QStringLiteral("chapman"), // 2028. 12636, 91.398% (83)
+            QStringLiteral("brentwood"), // 2029. 12634, 96.905% (83)
+            QStringLiteral("puerto"), // 2030. 12631, 4.782% (350)
+            QStringLiteral("devonshire"), // 2031. 12620, 98.756% (57)
+            QStringLiteral("zahradní"), // 2032. 12610, 97.819% (10)
+            QStringLiteral("györgy"), // 2033. 12595, 1.755% (58)
+            QStringLiteral("juárez"), // 2034. 12586, 16.224% (91)
+            QStringLiteral("talbot"), // 2035. 12578, 91.096% (71)
+            QStringLiteral("тельмана"), // 2036. 12574, 96.684% (17)
+            QStringLiteral("giorgio"), // 2037. 12572, 25.907% (205)
+            QStringLiteral("granada"), // 2038. 12571, 88.808% (112)
+            QStringLiteral("herbert"), // 2039. 12562, 67.569% (173)
+            QStringLiteral("за"), // 2040. 12561, 0.127% (318)
+            QStringLiteral("phillips"), // 2041. 12556, 87.942% (116)
+            QStringLiteral("lorraine"), // 2042. 12550, 75.394% (90)
+            QStringLiteral("yale"), // 2043. 12548, 98.478% (66)
+            QStringLiteral("wethouder"), // 2044. 12529, 0.000% (271)
+            QStringLiteral("angelo"), // 2045. 12503, 17.756% (326)
+            QStringLiteral("higgins"), // 2046. 12499, 53.780% (82)
+            QStringLiteral("meester"), // 2047. 12494, 0.000% (374)
+            QStringLiteral("sugar"), // 2048. 12493, 38.205% (261)
+            QStringLiteral("hlavní"), // 2049. 12486, 95.018% (7)
+            QStringLiteral("ponte"), // 2050. 12481, 12.940% (302)
+            QStringLiteral("fair"), // 2051. 12460, 63.780% (218)
+            QStringLiteral("cole"), // 2052. 12459, 81.122% (105)
+            QStringLiteral("trinity"), // 2053. 12459, 90.248% (108)
+            QStringLiteral("булевар"), // 2054. 12456, 0.000% (91)
+            QStringLiteral("100th"), // 2055. 12453, 99.695% (78)
+            QStringLiteral("белинского"), // 2056. 12453, 99.775% (11)
+            QStringLiteral("新興路"), // 2057. 12453, 100.000% (1)
+            QStringLiteral("piave"), // 2058. 12450, 96.466% (26)
+            QStringLiteral("plains"), // 2059. 12448, 26.253% (155)
+            QStringLiteral("больничная"), // 2060. 12444, 99.421% (10)
+            QStringLiteral("parque"), // 2061. 12438, 24.674% (387)
+            QStringLiteral("shirley"), // 2062. 12435, 93.599% (67)
+            QStringLiteral("bernardino"), // 2063. 12431, 15.437% (175)
+            QStringLiteral("maio"), // 2064. 12427, 7.532% (100)
+            QStringLiteral("chelsea"), // 2065. 12417, 89.708% (118)
+            QStringLiteral("ronda"), // 2066. 12407, 20.263% (301)
+            QStringLiteral("united"), // 2067. 12404, 6.119% (79)
+            QStringLiteral("wentworth"), // 2068. 12403, 94.816% (66)
+            QStringLiteral("farms"), // 2069. 12400, 10.879% (412)
+            QStringLiteral("102nd"), // 2070. 12394, 99.653% (74)
+            QStringLiteral("vestre"), // 2071. 12391, 6.053% (287)
+            QStringLiteral("ríos"), // 2072. 12385, 7.412% (98)
+            QStringLiteral("valencia"), // 2073. 12377, 86.548% (137)
+            QStringLiteral("pogodna"), // 2074. 12372, 99.919% (2)
+            QStringLiteral("декабристов"), // 2075. 12364, 99.256% (19)
+            QStringLiteral("westfield"), // 2076. 12363, 96.312% (57)
+            QStringLiteral("чайковского"), // 2077. 12348, 98.340% (17)
+            QStringLiteral("116th"), // 2078. 12341, 99.425% (79)
+            QStringLiteral("elgin"), // 2079. 12332, 88.453% (91)
+            QStringLiteral("jirón"), // 2080. 12329, 0.552% (348)
+            QStringLiteral("wojciecha"), // 2081. 12322, 1.729% (96)
+            QStringLiteral("1e"), // 2082. 12309, 19.985% (217)
+            QStringLiteral("和平路"), // 2083. 12309, 100.000% (1)
+            QStringLiteral("května"), // 2084. 12308, 45.223% (44)
+            QStringLiteral("sonnenweg"), // 2085. 12302, 99.366% (8)
+            QStringLiteral("kochanowskiego"), // 2086. 12301, 99.740% (4)
+            QStringLiteral("urquiza"), // 2087. 12281, 73.235% (33)
+            QStringLiteral("avalon"), // 2088. 12279, 94.299% (99)
+            QStringLiteral("sobieskiego"), // 2089. 12277, 15.476% (10)
+            QStringLiteral("45"), // 2090. 12273, 47.079% (162)
+            QStringLiteral("ابى"), // 2091. 12266, 0.000% (69)
+            QStringLiteral("仁愛路"), // 2092. 12263, 100.000% (1)
+            QStringLiteral("нова"), // 2093. 12259, 37.271% (278)
+            QStringLiteral("traversa"), // 2094. 12245, 5.014% (492)
+            QStringLiteral("96th"), // 2095. 12229, 98.553% (75)
+            QStringLiteral("cottonwood"), // 2096. 12221, 96.882% (82)
+            QStringLiteral("99th"), // 2097. 12219, 99.697% (80)
+            QStringLiteral("roland"), // 2098. 12214, 36.335% (166)
+            QStringLiteral("oriente"), // 2099. 12213, 27.946% (324)
+            QStringLiteral("grabenstraße"), // 2100. 12208, 98.739% (9)
+            QStringLiteral("paix"), // 2101. 12187, 92.279% (48)
+            QStringLiteral("klosterstraße"), // 2102. 12184, 99.228% (8)
+            QStringLiteral("roy"), // 2103. 12182, 53.021% (251)
+            QStringLiteral("eschenweg"), // 2104. 12181, 99.499% (5)
+            QStringLiteral("colonel"), // 2105. 12179, 3.522% (368)
+            QStringLiteral("vallée"), // 2106. 12172, 61.806% (181)
+            QStringLiteral("listopada"), // 2107. 12165, 0.000% (13)
+            QStringLiteral("reed"), // 2108. 12163, 85.629% (108)
+            QStringLiteral("reuter"), // 2109. 12155, 5.323% (47)
+            QStringLiteral("93rd"), // 2110. 12152, 96.190% (101)
+            QStringLiteral("benjamin"), // 2111. 12147, 43.303% (203)
+            QStringLiteral("herrera"), // 2112. 12143, 60.800% (136)
+            QStringLiteral("alto"), // 2113. 12135, 19.934% (341)
+            QStringLiteral("gata"), // 2114. 12133, 2.242% (440)
+            QStringLiteral("maryland"), // 2115. 12126, 96.578% (46)
+            QStringLiteral("flurstraße"), // 2116. 12114, 98.638% (9)
+            QStringLiteral("erie"), // 2117. 12106, 93.268% (62)
+            QStringLiteral("жукова"), // 2118. 12105, 53.350% (33)
+            QStringLiteral("52"), // 2119. 12099, 55.476% (151)
+            QStringLiteral("haveforeningen"), // 2120. 12097, 0.000% (113)
+            QStringLiteral("bautista"), // 2121. 12087, 9.630% (131)
+            QStringLiteral("dove"), // 2122. 12073, 58.204% (250)
+            QStringLiteral("barros"), // 2123. 12071, 8.218% (225)
+            QStringLiteral("тупик"), // 2124. 12064, 3.241% (700)
+            QStringLiteral("1945"), // 2125. 12057, 4.777% (64)
+            QStringLiteral("народная"), // 2126. 12055, 89.274% (31)
+            QStringLiteral("pinewood"), // 2127. 12045, 94.878% (71)
+            QStringLiteral("aleksandra"), // 2128. 12042, 1.578% (129)
+            QStringLiteral("nordre"), // 2129. 12035, 3.207% (308)
+            QStringLiteral("hawk"), // 2130. 12033, 36.084% (300)
+            QStringLiteral("hayes"), // 2131. 12031, 87.399% (112)
+            QStringLiteral("alexei"), // 2132. 12028, 0.000% (38)
+            QStringLiteral("107th"), // 2133. 12025, 99.884% (78)
+            QStringLiteral("хајдук"), // 2134. 12008, 0.000% (17)
+            QStringLiteral("osborne"), // 2135. 12007, 95.486% (53)
+            QStringLiteral("mayfield"), // 2136. 11997, 96.524% (52)
+            QStringLiteral("piotra"), // 2137. 11981, 0.860% (93)
+            QStringLiteral("viteazul"), // 2138. 11981, 0.392% (15)
+            QStringLiteral("casa"), // 2139. 11979, 10.326% (419)
+            QStringLiteral("академика"), // 2140. 11978, 0.000% (180)
+            QStringLiteral("adenauer"), // 2141. 11976, 2.605% (24)
+            QStringLiteral("文化路"), // 2142. 11970, 100.000% (1)
+            QStringLiteral("zygmunta"), // 2143. 11966, 1.045% (138)
+            QStringLiteral("سليمان"), // 2144. 11966, 21.419% (366)
+            QStringLiteral("césar"), // 2145. 11964, 5.634% (232)
+            QStringLiteral("109th"), // 2146. 11947, 99.063% (75)
+            QStringLiteral("head"), // 2147. 11946, 16.600% (313)
+            QStringLiteral("к"), // 2148. 11938, 0.142% (189)
+            QStringLiteral("промышленная"), // 2149. 11937, 97.537% (19)
+            QStringLiteral("tyler"), // 2150. 11927, 91.113% (93)
+            QStringLiteral("carter"), // 2151. 11924, 89.324% (113)
+            QStringLiteral("34"), // 2152. 11917, 52.278% (176)
+            QStringLiteral("wrocławska"), // 2153. 11901, 100.000% (1)
+            QStringLiteral("механизаторов"), // 2154. 11900, 97.782% (16)
+            QStringLiteral("poniente"), // 2155. 11898, 22.903% (311)
+            QStringLiteral("михаила"), // 2156. 11893, 0.000% (199)
+            QStringLiteral("venti"), // 2157. 11890, 0.791% (37)
+            QStringLiteral("states"), // 2158. 11889, 3.129% (68)
+            QStringLiteral("chrobrego"), // 2159. 11887, 0.404% (7)
+            QStringLiteral("kirchplatz"), // 2160. 11878, 94.494% (35)
+            QStringLiteral("kilińskiego"), // 2161. 11862, 97.825% (6)
+            QStringLiteral("clarence"), // 2162. 11855, 89.169% (72)
+            QStringLiteral("кольцевая"), // 2163. 11855, 93.049% (16)
+            QStringLiteral("северный"), // 2164. 11853, 59.622% (104)
+            QStringLiteral("avon"), // 2165. 11851, 88.710% (100)
+            QStringLiteral("amherst"), // 2166. 11848, 98.464% (56)
+            QStringLiteral("imperial"), // 2167. 11841, 88.734% (119)
+            QStringLiteral("cape"), // 2168. 11831, 22.661% (250)
+            QStringLiteral("pastor"), // 2169. 11827, 3.822% (360)
+            QStringLiteral("whispering"), // 2170. 11821, 40.479% (219)
+            QStringLiteral("porter"), // 2171. 11817, 90.920% (92)
+            QStringLiteral("petite"), // 2172. 11812, 15.171% (439)
+            QStringLiteral("oro"), // 2173. 11811, 33.477% (255)
+            QStringLiteral("bryant"), // 2174. 11802, 94.653% (73)
+            QStringLiteral("nueva"), // 2175. 11795, 40.729% (204)
+            QStringLiteral("highfield"), // 2176. 11754, 95.533% (46)
+            QStringLiteral("mansfield"), // 2177. 11743, 91.765% (71)
+            QStringLiteral("aleea"), // 2178. 11741, 0.264% (524)
+            QStringLiteral("eugenio"), // 2179. 11741, 2.760% (199)
+            QStringLiteral("gade"), // 2180. 11737, 1.695% (329)
+            QStringLiteral("110th"), // 2181. 11735, 99.284% (82)
+            QStringLiteral("вељка"), // 2182. 11714, 0.000% (40)
+            QStringLiteral("rodrigues"), // 2183. 11705, 7.484% (345)
+            QStringLiteral("południowa"), // 2184. 11703, 99.410% (4)
+            QStringLiteral("saavedra"), // 2185. 11701, 55.935% (74)
+            QStringLiteral("широкая"), // 2186. 11701, 98.641% (11)
+            QStringLiteral("balmoral"), // 2187. 11700, 97.957% (53)
+            QStringLiteral("hampshire"), // 2188. 11696, 69.297% (88)
+            QStringLiteral("luna"), // 2189. 11696, 62.038% (228)
+            QStringLiteral("tres"), // 2190. 11694, 4.327% (150)
+            QStringLiteral("94th"), // 2191. 11692, 98.623% (77)
+            QStringLiteral("adam"), // 2192. 11692, 31.859% (245)
+            QStringLiteral("кучаи"), // 2193. 11690, 0.000% (265)
+            QStringLiteral("sylvan"), // 2194. 11684, 93.881% (106)
+            QStringLiteral("frankenstraße"), // 2195. 11674, 100.000% (5)
+            QStringLiteral("reymonta"), // 2196. 11667, 0.403% (8)
+            QStringLiteral("isabel"), // 2197. 11665, 29.456% (208)
+            QStringLiteral("drake"), // 2198. 11657, 84.867% (106)
+            QStringLiteral("clayton"), // 2199. 11638, 91.356% (69)
+            QStringLiteral("اسماعيل"), // 2200. 11634, 21.497% (382)
+            QStringLiteral("信義路"), // 2201. 11630, 100.000% (1)
+            QStringLiteral("branco"), // 2202. 11624, 5.385% (130)
+            QStringLiteral("ca"), // 2203. 11615, 1.739% (459)
+            QStringLiteral("51"), // 2204. 11608, 52.938% (139)
+            QStringLiteral("rruga"), // 2205. 11604, 0.000% (407)
+            QStringLiteral("sargento"), // 2206. 11603, 0.698% (132)
+            QStringLiteral("котовского"), // 2207. 11602, 99.914% (14)
+            QStringLiteral("genesee"), // 2208. 11601, 97.914% (36)
+            QStringLiteral("rainbow"), // 2209. 11598, 88.972% (133)
+            QStringLiteral("zeppelinstraße"), // 2210. 11595, 100.000% (1)
+            QStringLiteral("holmes"), // 2211. 11594, 93.005% (78)
+            QStringLiteral("craig"), // 2212. 11576, 78.162% (125)
+            QStringLiteral("rosas"), // 2213. 11570, 57.969% (119)
+            QStringLiteral("commons"), // 2214. 11569, 30.806% (310)
+            QStringLiteral("manzoni"), // 2215. 11566, 5.611% (27)
+            QStringLiteral("morningside"), // 2216. 11561, 97.362% (66)
+            QStringLiteral("mall"), // 2217. 11559, 36.924% (230)
+            QStringLiteral("blanco"), // 2218. 11552, 20.871% (198)
+            QStringLiteral("jägerstraße"), // 2219. 11549, 100.000% (3)
+            QStringLiteral("montrose"), // 2220. 11548, 95.766% (56)
+            QStringLiteral("prolongación"), // 2221. 11546, 1.256% (315)
+            QStringLiteral("братьев"), // 2222. 11546, 0.087% (274)
+            QStringLiteral("buchenstraße"), // 2223. 11542, 100.000% (1)
+            QStringLiteral("имени"), // 2224. 11539, 0.000% (324)
+            QStringLiteral("battista"), // 2225. 11536, 4.308% (272)
+            QStringLiteral("сибирская"), // 2226. 11532, 97.286% (14)
+            QStringLiteral("alem"), // 2227. 11516, 16.751% (46)
+            QStringLiteral("lavalle"), // 2228. 11515, 91.307% (38)
+            QStringLiteral("cristoforo"), // 2229. 11507, 11.749% (52)
+            QStringLiteral("tér"), // 2230. 11505, 0.000% (317)
+            QStringLiteral("cherokee"), // 2231. 11501, 95.618% (92)
+            QStringLiteral("wind"), // 2232. 11495, 19.339% (329)
+            QStringLiteral("jay"), // 2233. 11486, 61.257% (147)
+            QStringLiteral("granite"), // 2234. 11481, 81.709% (161)
+            QStringLiteral("campos"), // 2235. 11477, 16.964% (254)
+            QStringLiteral("duncan"), // 2236. 11464, 86.628% (108)
+            QStringLiteral("98th"), // 2237. 11458, 99.503% (82)
+            QStringLiteral("michała"), // 2238. 11449, 1.284% (131)
+            QStringLiteral("oost"), // 2239. 11449, 4.463% (189)
+            QStringLiteral("ke"), // 2240. 11448, 1.136% (273)
+            QStringLiteral("степе"), // 2241. 11444, 0.000% (7)
+            QStringLiteral("mohawk"), // 2242. 11437, 98.855% (51)
+            QStringLiteral("lindenallee"), // 2243. 11436, 98.688% (9)
+            QStringLiteral("octubre"), // 2244. 11433, 6.158% (110)
+            QStringLiteral("mittelweg"), // 2245. 11430, 97.699% (16)
+            QStringLiteral("domaine"), // 2246. 11426, 14.870% (329)
+            QStringLiteral("43"), // 2247. 11423, 45.548% (138)
+            QStringLiteral("49"), // 2248. 11423, 61.770% (112)
+            QStringLiteral("fir"), // 2249. 11421, 76.534% (181)
+            QStringLiteral("saddle"), // 2250. 11420, 56.462% (211)
+            QStringLiteral("jozef"), // 2251. 11415, 0.788% (188)
+            QStringLiteral("vas"), // 2252. 11391, 2.019% (179)
+            QStringLiteral("wyszyńskiego"), // 2253. 11391, 0.000% (25)
+            QStringLiteral("ulmenweg"), // 2254. 11387, 99.895% (4)
+            QStringLiteral("коммунальная"), // 2255. 11386, 99.473% (11)
+            QStringLiteral("caroline"), // 2256. 11378, 80.339% (120)
+            QStringLiteral("academy"), // 2257. 11372, 96.702% (62)
+            QStringLiteral("whitney"), // 2258. 11372, 95.137% (101)
+            QStringLiteral("roberto"), // 2259. 11369, 5.278% (352)
+            QStringLiteral("briand"), // 2260. 11368, 5.955% (39)
+            QStringLiteral("коммунаров"), // 2261. 11367, 90.631% (21)
+            QStringLiteral("buchanan"), // 2262. 11366, 98.531% (55)
+            QStringLiteral("hindenburgstraße"), // 2263. 11361, 100.000% (2)
+            QStringLiteral("лугавая"), // 2264. 11360, 98.680% (12)
+            QStringLiteral("中央路"), // 2265. 11358, 100.000% (1)
+            QStringLiteral("клубная"), // 2266. 11356, 98.714% (13)
+            QStringLiteral("крылова"), // 2267. 11356, 95.016% (23)
+            QStringLiteral("42"), // 2268. 11355, 44.641% (155)
+            QStringLiteral("praça"), // 2269. 11353, 5.461% (475)
+            QStringLiteral("reynolds"), // 2270. 11340, 93.748% (60)
+            QStringLiteral("الوليد"), // 2271. 11337, 2.443% (30)
+            QStringLiteral("alberdi"), // 2272. 11328, 51.748% (28)
+            QStringLiteral("teresa"), // 2273. 11327, 43.471% (228)
+            QStringLiteral("carmel"), // 2274. 11326, 77.318% (148)
+            QStringLiteral("constitución"), // 2275. 11325, 89.740% (59)
+            QStringLiteral("carroll"), // 2276. 11313, 89.013% (86)
+            QStringLiteral("windmill"), // 2277. 11304, 92.277% (97)
+            QStringLiteral("энтузиастов"), // 2278. 11302, 97.726% (16)
+            QStringLiteral("камсамольская"), // 2279. 11292, 100.000% (1)
+            QStringLiteral("bella"), // 2280. 11287, 52.290% (250)
+            QStringLiteral("hart"), // 2281. 11270, 72.955% (111)
+            QStringLiteral("catalina"), // 2282. 11269, 82.483% (129)
+            QStringLiteral("buren"), // 2283. 11265, 99.494% (48)
+            QStringLiteral("поповића"), // 2284. 11261, 1.501% (122)
+            QStringLiteral("gutenbergstraße"), // 2285. 11255, 100.000% (1)
+            QStringLiteral("randolph"), // 2286. 11253, 94.517% (70)
+            QStringLiteral("ugo"), // 2287. 11242, 0.409% (106)
+            QStringLiteral("eduard"), // 2288. 11240, 1.886% (278)
+            QStringLiteral("в"), // 2289. 11237, 0.596% (292)
+            QStringLiteral("hartford"), // 2290. 11232, 80.119% (68)
+            QStringLiteral("fernández"), // 2291. 11224, 10.246% (307)
+            QStringLiteral("44"), // 2292. 11211, 50.111% (149)
+            QStringLiteral("addison"), // 2293. 11209, 95.682% (60)
+            QStringLiteral("sunny"), // 2294. 11207, 56.224% (247)
+            QStringLiteral("транспортная"), // 2295. 11206, 98.590% (12)
+            QStringLiteral("paula"), // 2296. 11200, 26.295% (231)
+            QStringLiteral("wierzbowa"), // 2297. 11199, 100.000% (2)
+            QStringLiteral("shores"), // 2298. 11198, 9.475% (330)
+            QStringLiteral("alice"), // 2299. 11184, 68.339% (172)
+            QStringLiteral("febrero"), // 2300. 11182, 59.319% (85)
+            QStringLiteral("top"), // 2301. 11178, 43.192% (296)
+            QStringLiteral("nacional"), // 2302. 11168, 5.408% (246)
+            QStringLiteral("horseshoe"), // 2303. 11167, 74.317% (113)
+            QStringLiteral("درب"), // 2304. 11165, 1.299% (523)
+            QStringLiteral("tennyson"), // 2305. 11151, 98.673% (31)
+            QStringLiteral("eerste"), // 2306. 11149, 0.000% (123)
+            QStringLiteral("ново"), // 2307. 11146, 0.000% (214)
+            QStringLiteral("curtis"), // 2308. 11145, 93.531% (85)
+            QStringLiteral("павлова"), // 2309. 11143, 77.726% (35)
+            QStringLiteral("sweet"), // 2310. 11140, 22.513% (293)
+            QStringLiteral("нижняя"), // 2311. 11139, 68.687% (64)
+            QStringLiteral("edwards"), // 2312. 11134, 84.013% (126)
+            QStringLiteral("georgia"), // 2313. 11134, 91.944% (70)
+            QStringLiteral("corner"), // 2314. 11133, 6.485% (357)
+            QStringLiteral("忠孝路"), // 2315. 11119, 100.000% (1)
+            QStringLiteral("byron"), // 2316. 11114, 89.122% (76)
+            QStringLiteral("rita"), // 2317. 11112, 57.604% (181)
+            QStringLiteral("سالم"), // 2318. 11109, 25.313% (297)
+            QStringLiteral("كامل"), // 2319. 11097, 14.914% (222)
+            QStringLiteral("vert"), // 2320. 11095, 40.216% (214)
+            QStringLiteral("pins"), // 2321. 11092, 80.256% (115)
+            QStringLiteral("alvear"), // 2322. 11082, 65.710% (53)
+            QStringLiteral("lilac"), // 2323. 11081, 94.414% (87)
+            QStringLiteral("northern"), // 2324. 11070, 75.519% (112)
+            QStringLiteral("dudley"), // 2325. 11063, 94.351% (62)
+            QStringLiteral("fitzgerald"), // 2326. 11061, 42.012% (51)
+            QStringLiteral("大同路"), // 2327. 11061, 100.000% (1)
+            QStringLiteral("schumacher"), // 2328. 11060, 5.778% (49)
+            QStringLiteral("hermitage"), // 2329. 11052, 93.920% (81)
+            QStringLiteral("kapellenweg"), // 2330. 11045, 99.502% (6)
+            QStringLiteral("обилића"), // 2331. 11044, 0.000% (1)
+            QStringLiteral("shannon"), // 2332. 11042, 91.206% (121)
+            QStringLiteral("pebble"), // 2333. 11039, 50.131% (163)
+            QStringLiteral("victoriei"), // 2334. 11037, 89.155% (11)
+            QStringLiteral("settlement"), // 2335. 11036, 34.079% (194)
+            QStringLiteral("panorama"), // 2336. 11029, 92.048% (113)
+            QStringLiteral("kenwood"), // 2337. 11024, 99.447% (55)
+            QStringLiteral("phố"), // 2338. 11024, 0.109% (364)
+            QStringLiteral("الحميد"), // 2339. 11023, 17.182% (354)
+            QStringLiteral("victory"), // 2340. 11017, 91.912% (77)
+            QStringLiteral("oststraße"), // 2341. 11016, 99.410% (4)
+            QStringLiteral("shesi"), // 2342. 11007, 0.000% (297)
+            QStringLiteral("marlborough"), // 2343. 11006, 94.994% (50)
+            QStringLiteral("copper"), // 2344. 10999, 52.923% (284)
+            QStringLiteral("dorchester"), // 2345. 10993, 98.635% (37)
+            QStringLiteral("osiedlowa"), // 2346. 10986, 99.244% (4)
+            QStringLiteral("sheffield"), // 2347. 10972, 96.218% (62)
+            QStringLiteral("магистральная"), // 2348. 10967, 97.319% (19)
+            QStringLiteral("piet"), // 2349. 10965, 0.119% (121)
+            QStringLiteral("jesús"), // 2350. 10957, 16.017% (288)
+            QStringLiteral("carducci"), // 2351. 10940, 4.424% (24)
+            QStringLiteral("michele"), // 2352. 10939, 46.458% (190)
+            QStringLiteral("venticinque"), // 2353. 10937, 0.000% (29)
+            QStringLiteral("gulshan"), // 2354. 10935, 0.741% (46)
+            QStringLiteral("uruguay"), // 2355. 10933, 91.686% (38)
+            QStringLiteral("crawford"), // 2356. 10931, 92.379% (74)
+            QStringLiteral("светосавска"), // 2357. 10931, 100.000% (3)
+            QStringLiteral("arch"), // 2358. 10925, 42.261% (257)
+            QStringLiteral("mühle"), // 2359. 10921, 61.102% (169)
+            QStringLiteral("peach"), // 2360. 10918, 77.707% (130)
+            QStringLiteral("senhora"), // 2361. 10915, 0.889% (191)
+            QStringLiteral("guillermo"), // 2362. 10914, 3.784% (211)
+            QStringLiteral("hyde"), // 2363. 10914, 90.086% (93)
+            QStringLiteral("president"), // 2364. 10912, 28.336% (96)
+            QStringLiteral("petru"), // 2365. 10903, 0.000% (89)
+            QStringLiteral("cours"), // 2366. 10895, 9.224% (302)
+            QStringLiteral("ohio"), // 2367. 10894, 90.857% (52)
+            QStringLiteral("олега"), // 2368. 10888, 0.000% (60)
+            QStringLiteral("gustave"), // 2369. 10877, 1.066% (234)
+            QStringLiteral("батыр"), // 2370. 10876, 0.000% (153)
+            QStringLiteral("waverly"), // 2371. 10868, 95.777% (74)
+            QStringLiteral("szent"), // 2372. 10854, 0.000% (80)
+            QStringLiteral("papa"), // 2373. 10847, 7.689% (152)
+            QStringLiteral("caminito"), // 2374. 10843, 11.482% (361)
+            QStringLiteral("carpenter"), // 2375. 10837, 95.192% (53)
+            QStringLiteral("armando"), // 2376. 10818, 0.869% (190)
+            QStringLiteral("carol"), // 2377. 10811, 72.722% (103)
+            QStringLiteral("114th"), // 2378. 10810, 99.750% (79)
+            QStringLiteral("avondale"), // 2379. 10799, 96.953% (59)
+            QStringLiteral("entre"), // 2380. 10792, 0.491% (92)
+            QStringLiteral("октобра"), // 2381. 10783, 23.945% (51)
+            QStringLiteral("gabriela"), // 2382. 10782, 2.560% (44)
+            QStringLiteral("woodstock"), // 2383. 10779, 97.328% (58)
+            QStringLiteral("осипенко"), // 2384. 10779, 78.876% (30)
+            QStringLiteral("clemenceau"), // 2385. 10774, 20.837% (27)
+            QStringLiteral("палявая"), // 2386. 10772, 99.926% (5)
+            QStringLiteral("зрењанина"), // 2387. 10770, 0.000% (4)
+            QStringLiteral("peupliers"), // 2388. 10767, 95.895% (37)
+            QStringLiteral("kruisstraat"), // 2389. 10759, 79.106% (24)
+            QStringLiteral("dózsa"), // 2390. 10756, 7.484% (11)
+            QStringLiteral("iv"), // 2391. 10750, 14.186% (315)
+            QStringLiteral("hernández"), // 2392. 10748, 42.734% (171)
+            QStringLiteral("abraham"), // 2393. 10745, 19.600% (181)
+            QStringLiteral("公園路"), // 2394. 10741, 100.000% (1)
+            QStringLiteral("mr"), // 2395. 10735, 0.000% (181)
+            QStringLiteral("48"), // 2396. 10732, 55.442% (121)
+            QStringLiteral("miranda"), // 2397. 10731, 42.261% (238)
+            QStringLiteral("arc"), // 2398. 10726, 4.662% (106)
+            QStringLiteral("luisenstraße"), // 2399. 10726, 99.814% (3)
+            QStringLiteral("brink"), // 2400. 10714, 77.319% (107)
+            QStringLiteral("pembroke"), // 2401. 10714, 95.343% (53)
+            QStringLiteral("simpang"), // 2402. 10709, 0.579% (560)
+            QStringLiteral("ernesto"), // 2403. 10703, 1.850% (306)
+            QStringLiteral("veldstraat"), // 2404. 10702, 95.851% (13)
+            QStringLiteral("josep"), // 2405. 10694, 20.675% (282)
+            QStringLiteral("molino"), // 2406. 10690, 42.311% (189)
+            QStringLiteral("koning"), // 2407. 10687, 0.187% (85)
+            QStringLiteral("linwood"), // 2408. 10685, 99.008% (45)
+            QStringLiteral("dias"), // 2409. 10679, 5.965% (218)
+            QStringLiteral("giosuè"), // 2410. 10670, 0.000% (13)
+            QStringLiteral("wayne"), // 2411. 10670, 90.103% (77)
+            QStringLiteral("montagne"), // 2412. 10669, 72.312% (116)
+            QStringLiteral("simpson"), // 2413. 10660, 87.983% (82)
+            QStringLiteral("marechal"), // 2414. 10659, 1.454% (95)
+            QStringLiteral("115th"), // 2415. 10654, 99.850% (76)
+            QStringLiteral("niagara"), // 2416. 10654, 77.933% (52)
+            QStringLiteral("husova"), // 2417. 10647, 96.638% (6)
+            QStringLiteral("113th"), // 2418. 10646, 98.262% (82)
+            QStringLiteral("vestergade"), // 2419. 10645, 93.621% (17)
+            QStringLiteral("радужная"), // 2420. 10636, 98.834% (19)
+            QStringLiteral("blanche"), // 2421. 10632, 39.456% (214)
+            QStringLiteral("гагарына"), // 2422. 10632, 94.987% (7)
+            QStringLiteral("stoney"), // 2423. 10628, 63.671% (167)
+            QStringLiteral("111th"), // 2424. 10626, 99.784% (69)
+            QStringLiteral("weston"), // 2425. 10622, 89.268% (79)
+            QStringLiteral("weber"), // 2426. 10618, 60.284% (173)
+            QStringLiteral("armstrong"), // 2427. 10612, 90.643% (74)
+            QStringLiteral("harmony"), // 2428. 10588, 86.296% (128)
+            QStringLiteral("młyńska"), // 2429. 10583, 98.658% (8)
+            QStringLiteral("corte"), // 2430. 10580, 8.233% (505)
+            QStringLiteral("trois"), // 2431. 10577, 0.700% (287)
+            QStringLiteral("samuel"), // 2432. 10573, 31.817% (243)
+            QStringLiteral("ángel"), // 2433. 10572, 5.779% (274)
+            QStringLiteral("königstraße"), // 2434. 10566, 99.385% (7)
+            QStringLiteral("amber"), // 2435. 10565, 80.057% (177)
+            QStringLiteral("elisabeth"), // 2436. 10560, 4.328% (237)
+            QStringLiteral("almeida"), // 2437. 10559, 8.590% (290)
+            QStringLiteral("endre"), // 2438. 10558, 1.051% (25)
+            QStringLiteral("isle"), // 2439. 10552, 14.680% (299)
+            QStringLiteral("snp"), // 2440. 10549, 80.188% (12)
+            QStringLiteral("beatrixstraat"), // 2441. 10546, 60.544% (5)
+            QStringLiteral("independence"), // 2442. 10533, 96.611% (69)
+            QStringLiteral("camden"), // 2443. 10528, 92.031% (92)
+            QStringLiteral("przemysłowa"), // 2444. 10525, 100.000% (1)
+            QStringLiteral("albion"), // 2445. 10524, 95.848% (53)
+            QStringLiteral("virgen"), // 2446. 10524, 9.730% (267)
+            QStringLiteral("clyde"), // 2447. 10518, 84.208% (65)
+            QStringLiteral("harold"), // 2448. 10518, 81.052% (91)
+            QStringLiteral("hillview"), // 2449. 10516, 95.978% (60)
+            QStringLiteral("baltimore"), // 2450. 10510, 78.192% (47)
+            QStringLiteral("sir"), // 2451. 10499, 0.171% (271)
+            QStringLiteral("azalea"), // 2452. 10495, 92.454% (98)
+            QStringLiteral("liberté"), // 2453. 10493, 94.291% (25)
+            QStringLiteral("الإمام"), // 2454. 10491, 9.189% (106)
+            QStringLiteral("seaview"), // 2455. 10490, 96.501% (55)
+            QStringLiteral("الاسلام"), // 2456. 10481, 9.827% (69)
+            QStringLiteral("fichtenweg"), // 2457. 10479, 99.781% (3)
+            QStringLiteral("forêt"), // 2458. 10479, 81.687% (86)
+            QStringLiteral("fountain"), // 2459. 10476, 88.383% (139)
+            QStringLiteral("kloosterstraat"), // 2460. 10475, 98.778% (6)
+            QStringLiteral("güemes"), // 2461. 10464, 70.394% (47)
+            QStringLiteral("baxter"), // 2462. 10463, 60.193% (246)
+            QStringLiteral("macarthur"), // 2463. 10462, 97.926% (71)
+            QStringLiteral("moon"), // 2464. 10461, 22.866% (272)
+            QStringLiteral("gaetano"), // 2465. 10459, 4.589% (160)
+            QStringLiteral("morrison"), // 2466. 10453, 93.504% (77)
+            QStringLiteral("wheeler"), // 2467. 10452, 93.944% (80)
+            QStringLiteral("okrężna"), // 2468. 10450, 98.938% (3)
+            QStringLiteral("forststraße"), // 2469. 10443, 98.114% (8)
+            QStringLiteral("bergweg"), // 2470. 10441, 82.789% (28)
+            QStringLiteral("партизанска"), // 2471. 10438, 99.310% (5)
+            QStringLiteral("midland"), // 2472. 10434, 96.531% (57)
+            QStringLiteral("gregorio"), // 2473. 10431, 17.410% (214)
+            QStringLiteral("nelkenweg"), // 2474. 10428, 100.000% (2)
+            QStringLiteral("oakdale"), // 2475. 10427, 97.468% (43)
+            QStringLiteral("eva"), // 2476. 10423, 26.307% (101)
+            QStringLiteral("садова"), // 2477. 10401, 89.943% (48)
+            QStringLiteral("brookfield"), // 2478. 10399, 94.326% (68)
+            QStringLiteral("norton"), // 2479. 10399, 86.479% (85)
+            QStringLiteral("müller"), // 2480. 10388, 24.653% (253)
+            QStringLiteral("jaśminowa"), // 2481. 10381, 99.432% (4)
+            QStringLiteral("lerchenstraße"), // 2482. 10380, 100.000% (2)
+            QStringLiteral("milano"), // 2483. 10379, 93.631% (53)
+            QStringLiteral("area"), // 2484. 10376, 1.349% (98)
+            QStringLiteral("chatham"), // 2485. 10376, 93.080% (91)
+            QStringLiteral("ramos"), // 2486. 10372, 8.803% (261)
+            QStringLiteral("huron"), // 2487. 10369, 95.564% (87)
+            QStringLiteral("kardynała"), // 2488. 10368, 0.000% (33)
+            QStringLiteral("bernhardstraat"), // 2489. 10367, 36.558% (5)
+            QStringLiteral("marc"), // 2490. 10355, 41.690% (217)
+            QStringLiteral("z"), // 2491. 10354, 10.141% (209)
+            QStringLiteral("кубанская"), // 2492. 10351, 98.039% (8)
+            QStringLiteral("barn"), // 2493. 10350, 26.541% (211)
+            QStringLiteral("gasperi"), // 2494. 10339, 6.732% (35)
+            QStringLiteral("101st"), // 2495. 10335, 99.197% (80)
+            QStringLiteral("dresdener"), // 2496. 10326, 99.651% (8)
+            QStringLiteral("36"), // 2497. 10325, 45.860% (179)
+            QStringLiteral("steenstraat"), // 2498. 10321, 83.955% (26)
+            QStringLiteral("владимира"), // 2499. 10310, 0.000% (168)
+            QStringLiteral("fremont"), // 2500. 10304, 98.777% (55)
+            QStringLiteral("alcide"), // 2501. 10298, 0.194% (51)
+            QStringLiteral("madrid"), // 2502. 10292, 87.106% (114)
+            QStringLiteral("rosedale"), // 2503. 10292, 98.290% (61)
+            QStringLiteral("hendrikstraat"), // 2504. 10290, 11.224% (16)
+            QStringLiteral("álvarez"), // 2505. 10289, 12.421% (184)
+            QStringLiteral("industrieweg"), // 2506. 10288, 93.594% (22)
+            QStringLiteral("adelaide"), // 2507. 10282, 86.365% (64)
+            QStringLiteral("roses"), // 2508. 10282, 81.375% (91)
+            QStringLiteral("heidestraße"), // 2509. 10279, 98.083% (11)
+            QStringLiteral("lea"), // 2510. 10276, 31.754% (259)
+            QStringLiteral("strażacka"), // 2511. 10276, 99.251% (2)
+            QStringLiteral("dartmouth"), // 2512. 10270, 98.929% (58)
+            QStringLiteral("sixth"), // 2513. 10266, 91.467% (55)
+            QStringLiteral("petra"), // 2514. 10259, 5.975% (162)
+            QStringLiteral("gobernador"), // 2515. 10254, 0.946% (206)
+            QStringLiteral("knox"), // 2516. 10254, 88.141% (83)
+            QStringLiteral("woodward"), // 2517. 10253, 98.722% (58)
+            QStringLiteral("galileo"), // 2518. 10252, 10.827% (51)
+            QStringLiteral("richardson"), // 2519. 10251, 93.620% (67)
+            QStringLiteral("stationsweg"), // 2520. 10251, 97.698% (8)
+            QStringLiteral("diagonal"), // 2521. 10241, 25.173% (292)
+            QStringLiteral("oberdorf"), // 2522. 10235, 97.040% (19)
+            QStringLiteral("sharon"), // 2523. 10235, 85.696% (80)
+            QStringLiteral("blanc"), // 2524. 10232, 24.629% (268)
+            QStringLiteral("космодемьянской"), // 2525. 10228, 17.560% (21)
+            QStringLiteral("akazienweg"), // 2526. 10227, 100.000% (2)
+            QStringLiteral("tucumán"), // 2527. 10226, 92.676% (21)
+            QStringLiteral("132nd"), // 2528. 10223, 98.992% (74)
+            QStringLiteral("cornwall"), // 2529. 10223, 94.845% (50)
+            QStringLiteral("prusa"), // 2530. 10223, 0.157% (7)
+            QStringLiteral("105th"), // 2531. 10220, 100.000% (72)
+            QStringLiteral("europe"), // 2532. 10213, 93.773% (34)
+            QStringLiteral("links"), // 2533. 10211, 49.936% (116)
+            QStringLiteral("mozart"), // 2534. 10209, 67.450% (86)
+            QStringLiteral("rodovia"), // 2535. 10209, 0.000% (261)
+            QStringLiteral("коммуны"), // 2536. 10208, 53.928% (18)
+            QStringLiteral("lily"), // 2537. 10205, 39.265% (216)
+            QStringLiteral("106th"), // 2538. 10203, 100.000% (72)
+            QStringLiteral("ginsterweg"), // 2539. 10203, 100.000% (1)
+            QStringLiteral("46"), // 2540. 10200, 51.441% (148)
+            QStringLiteral("122nd"), // 2541. 10199, 99.020% (71)
+            QStringLiteral("breeze"), // 2542. 10197, 29.489% (242)
+            QStringLiteral("социалистическая"), // 2543. 10196, 100.000% (4)
+            QStringLiteral("luís"), // 2544. 10194, 1.344% (239)
+            QStringLiteral("200"), // 2545. 10187, 82.919% (97)
+            QStringLiteral("elena"), // 2546. 10185, 33.942% (164)
+            QStringLiteral("walden"), // 2547. 10185, 87.226% (145)
+            QStringLiteral("echo"), // 2548. 10184, 84.535% (189)
+            QStringLiteral("kingsway"), // 2549. 10180, 99.902% (34)
+            QStringLiteral("бул"), // 2550. 10178, 0.000% (162)
+            QStringLiteral("أحمد"), // 2551. 10177, 5.139% (350)
+            QStringLiteral("martino"), // 2552. 10175, 64.973% (108)
+            QStringLiteral("cervantes"), // 2553. 10173, 54.330% (89)
+            QStringLiteral("lansdowne"), // 2554. 10165, 98.515% (49)
+            QStringLiteral("النصر"), // 2555. 10164, 79.329% (72)
+            QStringLiteral("130th"), // 2556. 10160, 98.986% (70)
+            QStringLiteral("dolna"), // 2557. 10160, 92.687% (20)
+            QStringLiteral("nuova"), // 2558. 10160, 41.220% (150)
+            QStringLiteral("pot"), // 2559. 10147, 0.000% (316)
+            QStringLiteral("guadalupe"), // 2560. 10145, 38.275% (123)
+            QStringLiteral("monseigneur"), // 2561. 10141, 0.779% (289)
+            QStringLiteral("mateevici"), // 2562. 10138, 1.144% (10)
+            QStringLiteral("thornton"), // 2563. 10138, 92.908% (82)
+            QStringLiteral("fire"), // 2564. 10137, 11.088% (478)
+            QStringLiteral("dorset"), // 2565. 10135, 96.339% (52)
+            QStringLiteral("sous"), // 2566. 10135, 0.414% (353)
         };
         static QHash<QString, int> dictionary = [&]()
         {
             QHash<QString, int> dict;
-            dict.reserve(frequentlyWords.size() * 2.0L);
+            dict.reserve(calculatedFrequentWords.size() * 2.0L);
 
             int i = 0;
-            for (const QString& originalString : frequentlyWords)
+            for (const QString& originalString : calculatedFrequentWords)
             {
                 dict.insert(originalString, i);
                 QString transformedString = OsmAnd::SearchAlgorithms::replaceGermanSS(originalString);
@@ -773,52 +2610,51 @@ namespace OsmAnd
         return dictionary;
     }
 
-    inline QHash<QString, int>& COMMON_WORDS()
+    inline void addAbbreviations(std::vector<QString> & words)
     {
-    
-        static const std::initializer_list<QString> words =
+        static const QHash<QString, QString> abbreviations = {
+            {QStringLiteral("e"), QStringLiteral("East")},
+            {QStringLiteral("w"), QStringLiteral("West")},
+            {QStringLiteral("s"), QStringLiteral("South")},
+            {QStringLiteral("n"), QStringLiteral("North")},
+            {QStringLiteral("sw"), QStringLiteral("Southwest")},
+            {QStringLiteral("se"), QStringLiteral("Southeast")},
+            {QStringLiteral("nw"), QStringLiteral("Northwest")},
+            {QStringLiteral("ne"), QStringLiteral("Northeast")},
+            {QStringLiteral("ln"), QStringLiteral("Lane")},
+            {QStringLiteral("dr"), QStringLiteral("Drive")},
+            {QStringLiteral("rd"), QStringLiteral("Road")},
+            {QStringLiteral("ave"), QStringLiteral("Avenue")},
+            {QStringLiteral("st"), QStringLiteral("Street")},
+            {QStringLiteral("hwy"), QStringLiteral("Highway")},
+            {QStringLiteral("blvd"), QStringLiteral("Boulevard")}
+        };
+        for (auto it = abbreviations.cbegin(); it != abbreviations.cend(); ++it)
         {
-            QStringLiteral("la"),
-            QStringLiteral("via"),
-            QStringLiteral("rua"),
-            QStringLiteral("de"),
-            QStringLiteral("du"),
-            QStringLiteral("des"),
-            QStringLiteral("del"),
-            QStringLiteral("am"),
-            QStringLiteral("da"),
-            QStringLiteral("a"),
-            QStringLiteral("der"),
-            QStringLiteral("do"),
-            QStringLiteral("los"),
-            QStringLiteral("di"),
-            QStringLiteral("im"),
-            QStringLiteral("el"),
+            const QString & value = it.value().toLower();
+            if (std::find(words.begin(), words.end(), value) == words.end())
+            {
+                words.push_back(it.key());
+            }
+        }
+    }
+
+    inline void addManualFrequentWords(std::vector<QString> & words)
+    {
+        static const std::initializer_list<QString> topFrequentManually = {
             QStringLiteral("e"),
-            QStringLiteral("an"),
             QStringLiteral("g."),
-            QStringLiteral("rd"),
-            QStringLiteral("dos"),
-            QStringLiteral("dei"),
             QStringLiteral("b"),
-            QStringLiteral("st"),
             QStringLiteral("the"),
-            QStringLiteral("las"),
             QStringLiteral("f"),
-            QStringLiteral("u"),
             QStringLiteral("jl."),
-            QStringLiteral("j"),
             QStringLiteral("sk"),
             QStringLiteral("w"),
             QStringLiteral("a."),
-            QStringLiteral("of"),
             QStringLiteral("k"),
             QStringLiteral("r"),
             QStringLiteral("h"),
             QStringLiteral("mc"),
-            QStringLiteral("sw"),
-            QStringLiteral("g"),
-            QStringLiteral("v"),
             QStringLiteral("m"),
             QStringLiteral("c."),
             QStringLiteral("r."),
@@ -826,432 +2662,805 @@ namespace OsmAnd
             QStringLiteral("e."),
             QStringLiteral("dr."),
             QStringLiteral("j."),
-            QStringLiteral("in"),
-            QStringLiteral("al"),
-            QStringLiteral("út"),
-            QStringLiteral("per"),
-            QStringLiteral("ne"),
-            QStringLiteral("p"),
-            QStringLiteral("et"),
             QStringLiteral("s."),
             QStringLiteral("f."),
-            QStringLiteral("t"),
             QStringLiteral("fe"),
-            QStringLiteral("à"),
-            QStringLiteral("i"),
             QStringLiteral("c"),
-            QStringLiteral("le"),
-            QStringLiteral("s"),
             QStringLiteral("av."),
-            QStringLiteral("den"),
-            QStringLiteral("dr"),
-            QStringLiteral("y"),
             QStringLiteral("un"),
-            QStringLiteral("nw"),
-
-            // Push higher than roads to avoid problem with "Drive A 21"
-            NUMBER_WITH_LESS_THAN_2_LETTERS,
-
-            QStringLiteral("van"),
-            QStringLiteral("road"),
-            QStringLiteral("street"),
-            QStringLiteral("sector"),
-            QStringLiteral("drive"),
-            QStringLiteral("avenue"),
-            QStringLiteral("rue"),
-            QStringLiteral("lane"),
-            QStringLiteral("улица"),
-            QStringLiteral("спуск"),
-            QStringLiteral("straße"),
-            QStringLiteral("strasse"), // needed as well
-            QStringLiteral("chemin"),
-            QStringLiteral("way"),
-            QStringLiteral("court"),
-            QStringLiteral("calle"),
-            QStringLiteral("place"),
-            QStringLiteral("avenida"),
-            QStringLiteral("boulevard"),
-            QStringLiteral("county"),
-            QStringLiteral("route"),
-            QStringLiteral("trail"),
-            QStringLiteral("circle"),
-            QStringLiteral("close"),
-            QStringLiteral("highway"),
-            QStringLiteral("strada"),
-            QStringLiteral("impasse"),
-            QStringLiteral("utca"),
-            QStringLiteral("creek"),
-            QStringLiteral("carrer"),
-            QStringLiteral("вулиця"),
-            QStringLiteral("allée"),
-            QStringLiteral("weg"),
-            QStringLiteral("площадь"),
-            QStringLiteral("тупик"),
-            QStringLiteral("terrace"),
-            QStringLiteral("jalan"),
-            QStringLiteral("parkway"),
-            QStringLiteral("переулок"),
-            QStringLiteral("carretera"),
-            QStringLiteral("valley"),
-            QStringLiteral("camino"),
-            QStringLiteral("viale"),
-            QStringLiteral("loop"),
-            QStringLiteral("bridge"),
-            QStringLiteral("embankment"),
-            QStringLiteral("township"),
-            QStringLiteral("town"),
-            QStringLiteral("village"),
-            QStringLiteral("piazza"),
-            QStringLiteral("della"),
-            QStringLiteral("plaza"),
-            QStringLiteral("pasaje"),
-            QStringLiteral("expressway"),
-            QStringLiteral("ruta"),
-            QStringLiteral("square"),
-            QStringLiteral("freeway"),
-            QStringLiteral("line"),
-            QStringLiteral("track"),
-            QStringLiteral("zum"),
-            QStringLiteral("rodovia"),
-            QStringLiteral("sokak"),
-            QStringLiteral("sur"),
-            QStringLiteral("path"),
-            QStringLiteral("das"),
-            QStringLiteral("yolu"),
-            QStringLiteral("проспект"),
-            QStringLiteral("auf"),
-            QStringLiteral("alley"),
-            QStringLiteral("são"),
-            QStringLiteral("les"),
-            QStringLiteral("paseo"),
-            QStringLiteral("autostrada"),
-            QStringLiteral("iela"),
-            QStringLiteral("autovía"),
-            QStringLiteral("d"),
-            QStringLiteral("ulica"),
-            QStringLiteral("na"),
-            QStringLiteral("проезд"),
-            QStringLiteral("n"),
-            QStringLiteral("ул."),
-            QStringLiteral("voie"),
-            QStringLiteral("ring"),
-            QStringLiteral("ruelle"),
-            QStringLiteral("vicolo"),
-            QStringLiteral("avinguda"),
-            QStringLiteral("шоссе"),
-            QStringLiteral("zur"),
-            QStringLiteral("corso"),
-            QStringLiteral("autopista"),
-            QStringLiteral("провулок"),
-            QStringLiteral("broadway"),
-            QStringLiteral("to"),
-            QStringLiteral("passage"),
-            QStringLiteral("sentier"),
-            QStringLiteral("aleja"),
-            QStringLiteral("dem"),
-            QStringLiteral("valle"),
-            QStringLiteral("cruz"),
-            QStringLiteral("bypass"),
-            QStringLiteral("rúa"),
-            QStringLiteral("crest"),
-            QStringLiteral("ave"),
-            QStringLiteral("turnpike"),
-            QStringLiteral("autoroute"),
-            QStringLiteral("crossing"),
-            QStringLiteral("camí"),
-            QStringLiteral("bend"),
-            QStringLiteral("end"),
-            QStringLiteral("caddesi"),
-            QStringLiteral("bis"),
-            QStringLiteral("ქუჩა"),
-            QStringLiteral("kalea"),
-            QStringLiteral("pass"),
-            QStringLiteral("ponte"),
-            QStringLiteral("cruce"),
-            QStringLiteral("se"),
-            QStringLiteral("au"),
-            QStringLiteral("allee"),
-            QStringLiteral("autobahn"),
-            QStringLiteral("väg"),
-            QStringLiteral("sentiero"),
-            QStringLiteral("plaça"),
-            QStringLiteral("o"),
-            QStringLiteral("vej"),
-            QStringLiteral("aux"),
-            QStringLiteral("spur"),
-            QStringLiteral("ringstraße"),
-            QStringLiteral("lindenstraße"),
-            QStringLiteral("kirchstraße"),
-            QStringLiteral("bergstraße"),
-            QStringLiteral("mühlenstraße"),
-            QStringLiteral("industriestraße"),
-            QStringLiteral("schillerstraße"),
-            QStringLiteral("talstraße"),
-            QStringLiteral("gartenstraße"),
-            QStringLiteral("prospect"),
-            QStringLiteral("m."),
-            QStringLiteral("chaussee"),
-            QStringLiteral("row"),
-            QStringLiteral("link"),
-            QStringLiteral("travesía"),
-            QStringLiteral("degli"),
-            QStringLiteral("piazzale"),
-            QStringLiteral("vei"),
-            QStringLiteral("waldstraße"),
-            QStringLiteral("promenade"),
-            QStringLiteral("puente"),
-            QStringLiteral("rond-point"),
-            QStringLiteral("vía"),
-            QStringLiteral("pod"),
-            QStringLiteral("triq"),
-            QStringLiteral("hwy"),
-            QStringLiteral("οδός"),
-            QStringLiteral("dels"),
-            QStringLiteral("and"),
-            QStringLiteral("pré"),
-            QStringLiteral("plac"),
-            QStringLiteral("fairway"),
-            QStringLiteral("farm-to-market"),
-            QStringLiteral("набережная"),
-            QStringLiteral("chaussée"),
-            QStringLiteral("náměstí"),
-            QStringLiteral("tér"),
-            QStringLiteral("roundabout"),
-            QStringLiteral("lakeshore"),
-            QStringLiteral("lakeside"),
-            QStringLiteral("alle"),
-            QStringLiteral("gasse"),
             QStringLiteral("str."),
-            QStringLiteral("p."),
-            QStringLiteral("ville"),
-            QStringLiteral("beco"),
-            QStringLiteral("platz"),
-            QStringLiteral("porto"),
-            QStringLiteral("sideroad"),
-            QStringLiteral("pista"),
-            QStringLiteral("аллея"),
-            QStringLiteral("бульвар"),
-            QStringLiteral("город"),
-            QStringLiteral("городок"),
-            QStringLiteral("деревня"),
+            QStringLiteral("ул."),
+            QStringLiteral("to."),
+            QStringLiteral("m."),
             QStringLiteral("дер."),
             QStringLiteral("пос."),
-            QStringLiteral("дорога"),
-            QStringLiteral("дорожка"),
-            QStringLiteral("кольцо"),
-            QStringLiteral("мост"),
-            QStringLiteral("остров"),
-            QStringLiteral("островок"),
-            QStringLiteral("поселок"),
-            QStringLiteral("посёлок"),
-            QStringLiteral("путепровод"),
-            QStringLiteral("слобода"),
-            QStringLiteral("станция"),
-            QStringLiteral("тоннель"),
-            QStringLiteral("тракт"),
-            QStringLiteral("island"),
-            QStringLiteral("islet"),
-            QStringLiteral("tunnel"),
-            QStringLiteral("stadt"),
-            QStringLiteral("brücke"),
-            QStringLiteral("damm"),
-            QStringLiteral("insel"),
-            QStringLiteral("dorf"),
-            QStringLiteral("bereich"),
-            QStringLiteral("überführung"),
-            QStringLiteral("bulevar"),
-            QStringLiteral("ciudad"),
-            QStringLiteral("pueblo"),
-            QStringLiteral("anillo"),
-            QStringLiteral("muelle"),
-            QStringLiteral("isla"),
-            QStringLiteral("islote"),
-            QStringLiteral("carril"),
-            QStringLiteral("viaje"),
-            QStringLiteral("città"),
-            QStringLiteral("paese"),
-            QStringLiteral("villaggio"),
-            QStringLiteral("banchina"),
-            QStringLiteral("isola"),
-            QStringLiteral("isolotto"),
-            QStringLiteral("corsia"),
-            QStringLiteral("viaggio"),
-            QStringLiteral("canale"),
-            QStringLiteral("pont"),
-            QStringLiteral("quai"),
-            QStringLiteral("île"),
-            QStringLiteral("îlot"),
-            QStringLiteral("voyage"),
-            QStringLiteral("descente"),
-            QStringLiteral("straat"),
-            QStringLiteral("stad"),
-            QStringLiteral("dorp"),
-            QStringLiteral("brug"),
-            QStringLiteral("kade"),
-            QStringLiteral("eiland"),
-            QStringLiteral("eilandje"),
-            QStringLiteral("laan"),
-            QStringLiteral("plein"),
-            QStringLiteral("reizen"),
-            QStringLiteral("afkomst"),
-            QStringLiteral("kanaal"),
-            QStringLiteral("doodlopende"),
-            QStringLiteral("stradă"),
-            QStringLiteral("rutier"),
-            QStringLiteral("alee"),
-            QStringLiteral("municipiu"),
-            QStringLiteral("oras"),
-            QStringLiteral("drumuri"),
-            QStringLiteral("poduri"),
-            QStringLiteral("cheu"),
-            QStringLiteral("insula"),
-            QStringLiteral("ostrov"),
-            QStringLiteral("sat"),
-            QStringLiteral("călătorie"),
-            QStringLiteral("coborâre"),
-            QStringLiteral("statie"),
-            QStringLiteral("tunel"),
-            QStringLiteral("fundătură"),
-            QStringLiteral("ulice"),
-            QStringLiteral("silnice"),
-            QStringLiteral("bulvár"),
-            QStringLiteral("město"),
-            QStringLiteral("obec"),
-            QStringLiteral("most"),
-            QStringLiteral("nábřeží"),
-            QStringLiteral("ostrova"),
-            QStringLiteral("ostrůvek"),
-            QStringLiteral("vesnice"),
-            QStringLiteral("jezdit"),
-            QStringLiteral("sestup"),
-            QStringLiteral("nádraží"),
-            QStringLiteral("kanál"),
-            QStringLiteral("ulička"),
-            QStringLiteral("gata"),
-            QStringLiteral("by"),
-            QStringLiteral("bro"),
-            QStringLiteral("kaj"),
-            QStringLiteral("ö"),
-            QStringLiteral("holme"),
-            QStringLiteral("fyrkant"),
-            QStringLiteral("resa"),
-            QStringLiteral("härkomst"),
-            QStringLiteral("kanal"),
-            QStringLiteral("återvändsgränd"),
-            QStringLiteral("cesty"),
-            QStringLiteral("ostrovček"),
-            QStringLiteral("námestie"),
-            QStringLiteral("dediny"),
-            QStringLiteral("jazdiť"),
-            QStringLiteral("zostup"),
-            QStringLiteral("stanice"),
-            QStringLiteral("cesta"),
-            QStringLiteral("pot"),
-            QStringLiteral("mesto"),
-            QStringLiteral("kraj"),
-            QStringLiteral("vas"),
-            QStringLiteral("pomol"),
-            QStringLiteral("otok"),
-            QStringLiteral("otoček"),
-            QStringLiteral("trg"),
-            QStringLiteral("potovanje"),
-            QStringLiteral("spust"),
-            QStringLiteral("postaja"),
-            QStringLiteral("predor"),
-            QStringLiteral("вуліца"),
-            QStringLiteral("шаша"),
-            QStringLiteral("алея"),
-            QStringLiteral("горад"),
-            QStringLiteral("мястэчка"),
-            QStringLiteral("вёска"),
-            QStringLiteral("дарога"),
-            QStringLiteral("набярэжная"),
-            QStringLiteral("востраў"),
-            QStringLiteral("астравок"),
-            QStringLiteral("завулак"),
-            QStringLiteral("плошча"),
-            QStringLiteral("пасёлак"),
-            QStringLiteral("праезд"),
-            QStringLiteral("праспект"),
-            QStringLiteral("станцыя"),
-            QStringLiteral("тунэль"),
-            QStringLiteral("тупік"),
-            QStringLiteral("افي."),
-            QStringLiteral("إلى"),
-            QStringLiteral("تسوية"),
-            QStringLiteral("جادة"),
-            QStringLiteral("جزيرة"),
-            QStringLiteral("جسر"),
-            QStringLiteral("زقاق"),
-            QStringLiteral("شارع"),
-            QStringLiteral("طريق"),
-            QStringLiteral("قرية"),
-            QStringLiteral("مأزق"),
-            QStringLiteral("محطة"),
-            QStringLiteral("مدينة"),
-            QStringLiteral("مرور"),
-            QStringLiteral("مسار"),
-            QStringLiteral("ممر"),
-            QStringLiteral("منطقة"),
-            QStringLiteral("نفق"),
-            QStringLiteral("път"),
-            QStringLiteral("булевард"),
-            QStringLiteral("град"),
-            QStringLiteral("село"),
-            QStringLiteral("кей"),
-            QStringLiteral("островче"),
-            QStringLiteral("платно"),
-            QStringLiteral("квадрат"),
-            QStringLiteral("пътуване"),
-            QStringLiteral("произход"),
-            QStringLiteral("гара"),
-            QStringLiteral("тунел"),
-            QStringLiteral("канал"),
-            QStringLiteral("körút"),
-            QStringLiteral("híd"),
-            QStringLiteral("rakpart"),
-            QStringLiteral("állomás"),
-            QStringLiteral("alagút"),
-            QStringLiteral("đường"),
-            QStringLiteral("đại"),
-            QStringLiteral("làng"),
-            QStringLiteral("cầu"),
-            QStringLiteral("đảo"),
-            QStringLiteral("phố"),
-            QStringLiteral("gốc"),
-            QStringLiteral("kênh"),
-            QStringLiteral("δρόμο"),
-            QStringLiteral("λεωφόρος"),
-            QStringLiteral("πόλη"),
-            QStringLiteral("κωμόπολη"),
-            QStringLiteral("χωριό"),
-            QStringLiteral("δρόμος"),
-            QStringLiteral("γέφυρα"),
-            QStringLiteral("αποβάθρα"),
-            QStringLiteral("νησί"),
-            QStringLiteral("νησίδα"),
-            QStringLiteral("λωρίδα"),
-            QStringLiteral("πλατεία"),
-            QStringLiteral("χωριό"),
-            QStringLiteral("ταξίδια"),
-            QStringLiteral("ø"),
-            QStringLiteral("bane"),
-            QStringLiteral("villages"),
-            QStringLiteral("stravenue"),
-            QStringLiteral("forge"),
-            QStringLiteral("loops"),
-            QStringLiteral("crossroad"),
-            QStringLiteral("ridges"),
-            QStringLiteral("motorway"),
-            QStringLiteral("squares"),
-            QStringLiteral("ways"),
-            QStringLiteral("junctions"),
-            QStringLiteral("drives"),
-            QStringLiteral("throughway"),
-            QStringLiteral("trafficway"),
-            QStringLiteral("plaine")
+//            QStringLiteral("ave"), // already common
+//            QStringLiteral("dr"), // already common
+            QStringLiteral("st"),
+            QStringLiteral("ln"),
+//            QStringLiteral("rd"), // already common
+            QStringLiteral("blvd"),
+            QStringLiteral("hwy")
         };
-        
+
+        words.insert(words.end(), topFrequentManually);
+    }
+
+    inline void addCalculatedCommonWords(std::vector<QString> & words)
+    {
+        static const std::initializer_list<QString> calculatedCommonWords =
+        {
+            QStringLiteral("street"), // 1. 11954399, 0.001% (76363)
+            QStringLiteral("улица"), // 2. 11052215, 0.000% (50610)
+            QStringLiteral("road"), // 3. 10841695, 0.006% (125174)
+            QStringLiteral("avenue"), // 4. 8638100, 0.041% (69251)
+            QStringLiteral("drive"), // 5. 7135716, 0.001% (96184)
+            QStringLiteral("rue"), // 6. 5497105, 0.004% (91943)
+            QStringLiteral("de"), // 7. 4926092, 0.000% (106027)
+            QStringLiteral("straße"), // 8. 4590107, 0.000% (58840)
+            QStringLiteral("via"), // 9. 3772011, 0.003% (55206)
+            QStringLiteral("lane"), // 10. 2742596, 0.105% (53471)
+            QStringLiteral("west"), // 11. 2311463, 2.043% (29762)
+            QStringLiteral("south"), // 12. 2156752, 2.428% (28774)
+            QStringLiteral("court"), // 13. 2136840, 0.567% (59352)
+            QStringLiteral("north"), // 14. 2055847, 3.233% (24863)
+            QStringLiteral("calle"), // 15. 2049908, 0.013% (38712)
+            QStringLiteral("شارع"), // 16. 2014568, 0.000% (41364)
+            QStringLiteral("east"), // 17. 2002099, 2.178% (25253)
+            QStringLiteral("strada"), // 18. 1760761, 0.010% (16020)
+            QStringLiteral("rua"), // 19. 1726381, 0.027% (36426)
+            QStringLiteral("place"), // 20. 1600210, 0.095% (38742)
+            QStringLiteral("du"), // 21. 1398077, 0.004% (31571)
+            QStringLiteral("way"), // 22. 1393254, 0.134% (32225)
+            QStringLiteral("la"), // 23. 1380990, 0.230% (30236)
+            QStringLiteral("des"), // 24. 1365169, 0.001% (24780)
+            QStringLiteral("am"), // 25. 1130003, 0.002% (22584)
+            QStringLiteral("boulevard"), // 26. 1013516, 0.808% (13580)
+            QStringLiteral("g"), // 27. 979206, 1.060% (12178)
+            QStringLiteral("вуліца"), // 28. 948971, 0.000% (5500)
+            QStringLiteral("route"), // 29. 944106, 0.019% (18974)
+            QStringLiteral("вулиця"), // 30. 943996, 0.000% (10076)
+            QStringLiteral("avenida"), // 31. 906065, 0.047% (13044)
+            QStringLiteral("crescent"), // 32. 844121, 2.581% (15409)
+            QStringLiteral("circle"), // 33. 798575, 1.510% (19918)
+            QStringLiteral("southwest"), // 34. 703732, 0.235% (10969)
+            QStringLiteral("northeast"), // 35. 686552, 0.263% (10378)
+            QStringLiteral("переулок"), // 36. 657981, 0.009% (9321)
+            QStringLiteral("weg"), // 37. 652003, 0.013% (18034)
+            QStringLiteral("close"), // 38. 649356, 0.234% (16524)
+            QStringLiteral("van"), // 39. 630548, 0.086% (9533)
+            QStringLiteral("chemin"), // 40. 629116, 0.113% (21104)
+            QStringLiteral("southeast"), // 41. 594708, 0.305% (10924)
+            QStringLiteral("utca"), // 43. 588155, 0.061% (6442)
+            QStringLiteral("carrer"), // 44. 574534, 0.019% (13179)
+            QStringLiteral("hill"), // 45. 540826, 7.788% (9340)
+            QStringLiteral("del"), // 46. 515151, 0.069% (12037)
+            QStringLiteral("northwest"), // 47. 502317, 0.722% (7663)
+            QStringLiteral("terrace"), // 48. 500189, 4.111% (11236)
+            QStringLiteral("san"), // 49. 455499, 0.004% (5616)
+            QStringLiteral("der"), // 50. 442708, 0.007% (9501)
+            QStringLiteral("highway"), // 51. 433934, 0.704% (3616)
+            QStringLiteral("saint"), // 55. 405468, 0.069% (5792)
+            QStringLiteral("im"), // 56. 397130, 0.124% (9369)
+            QStringLiteral("d"), // 57. 384271, 4.038% (8731)
+            QStringLiteral("я"), // 58. 374975, 0.689% (6094)
+            QStringLiteral("l"), // 59. 370800, 2.165% (7193)
+            QStringLiteral("iela"), // 62. 318304, 0.000% (3631)
+            QStringLiteral("st"), // 63. 310333, 0.817% (5964)
+            QStringLiteral("trail"), // 66. 278981, 1.709% (7148)
+            QStringLiteral("old"), // 70. 258737, 4.395% (4618)
+            QStringLiteral("creek"), // 71. 256343, 5.398% (5328)
+            QStringLiteral("josé"), // 73. 240607, 2.772% (4599)
+            QStringLiteral("da"), // 76. 220510, 0.000% (5228)
+            QStringLiteral("viale"), // 77. 219730, 0.058% (2584)
+            QStringLiteral("an"), // 78. 218705, 0.037% (5225)
+            QStringLiteral("impasse"), // 79. 215709, 0.106% (8781)
+            QStringLiteral("s"), // 80. 213147, 1.775% (5115)
+            QStringLiteral("й"), // 82. 206949, 1.121% (6822)
+            QStringLiteral("allée"), // 83. 205945, 0.246% (6366)
+            QStringLiteral("jalan"), // 86. 191039, 0.589% (5967)
+            QStringLiteral("ulica"), // 87. 187837, 0.018% (4310)
+            QStringLiteral("gardens"), // 89. 183497, 1.625% (4802)
+            QStringLiteral("عبد"), // 90. 182247, 0.000% (5292)
+            QStringLiteral("santa"), // 91. 177692, 0.153% (2518)
+            QStringLiteral("los"), // 92. 177311, 0.007% (3729)
+            QStringLiteral("parkway"), // 94. 175883, 8.343% (3026)
+            QStringLiteral("jean"), // 95. 172420, 8.257% (3291)
+            QStringLiteral("general"), // 98. 167100, 0.403% (1651)
+            QStringLiteral("juan"), // 101. 161707, 9.431% (2565)
+            QStringLiteral("auf"), // 102. 160211, 0.062% (3883)
+            QStringLiteral("проспект"), // 103. 158586, 0.000% (977)
+            QStringLiteral("di"), // 105. 154592, 0.032% (3831)
+            QStringLiteral("проезд"), // 106. 153121, 2.671% (4344)
+            QStringLiteral("den"), // 107. 151628, 0.235% (3311)
+            QStringLiteral("point"), // 110. 149483, 7.568% (3686)
+            QStringLiteral("حارة"), // 112. 144936, 0.844% (5841)
+            QStringLiteral("dr"), // 117. 140309, 0.527% (4339)
+            QStringLiteral("nw"), // 120. 138110, 1.115% (2349)
+            QStringLiteral("in"), // 121. 136857, 0.386% (3568)
+            QStringLiteral("محمد"), // 122. 136666, 0.077% (3411)
+            QStringLiteral("do"), // 123. 136366, 0.007% (3891)
+            QStringLiteral("jana"), // 126. 133685, 0.593% (895)
+            QStringLiteral("giuseppe"), // 127. 133469, 1.638% (1182)
+            QStringLiteral("na"), // 128. 131704, 0.416% (2822)
+            QStringLiteral("loop"), // 129. 129593, 3.577% (3564)
+            QStringLiteral("ring"), // 131. 127108, 6.199% (2246)
+            QStringLiteral("zum"), // 132. 126424, 0.244% (4165)
+            QStringLiteral("antonio"), // 134. 126190, 6.591% (2058)
+            QStringLiteral("i"), // 137. 122422, 7.870% (2443)
+            QStringLiteral("della"), // 138. 122314, 0.778% (1864)
+            QStringLiteral("doctor"), // 140. 121324, 0.104% (2483)
+            QStringLiteral("las"), // 141. 120837, 0.017% (2527)
+            QStringLiteral("pasaje"), // 145. 117325, 8.493% (4846)
+            QStringLiteral("بن"), // 146. 117133, 0.000% (1634)
+            QStringLiteral("alte"), // 147. 116555, 6.729% (1339)
+            QStringLiteral("el"), // 148. 116300, 0.031% (2935)
+            QStringLiteral("francisco"), // 150. 114498, 8.913% (2259)
+            QStringLiteral("von"), // 153. 113437, 0.101% (2512)
+            QStringLiteral("rd"), // 155. 112499, 0.819% (1870)
+            QStringLiteral("j"), // 157. 110135, 8.855% (2282)
+            QStringLiteral("ko"), // 158. 110001, 0.008% (2522)
+            QStringLiteral("փողոց"), // 160. 109089, 0.029% (1801)
+            QStringLiteral("tee"), // 162. 108812, 0.482% (2539)
+            QStringLiteral("piazza"), // 166. 105126, 1.244% (2532)
+            QStringLiteral("út"), // 168. 104080, 0.010% (1239)
+            QStringLiteral("gate"), // 170. 102914, 4.566% (2855)
+            QStringLiteral("sokak"), // 172. 102011, 0.363% (3930)
+            QStringLiteral("square"), // 175. 101522, 4.636% (3432)
+            QStringLiteral("giovanni"), // 181. 97463, 5.015% (1345)
+            QStringLiteral("run"), // 182. 97372, 2.371% (2203)
+            QStringLiteral("walk"), // 185. 96541, 2.808% (3500)
+            QStringLiteral("corso"), // 187. 95921, 1.294% (571)
+            QStringLiteral("se"), // 190. 95269, 0.895% (2083)
+            QStringLiteral("chasi"), // 192. 94834, 0.011% (2034)
+            QStringLiteral("jan"), // 193. 94130, 1.403% (1399)
+            QStringLiteral("pedro"), // 195. 91905, 8.229% (1796)
+            QStringLiteral("manuel"), // 197. 90598, 1.318% (1591)
+            QStringLiteral("dei"), // 198. 90476, 0.000% (1729)
+            QStringLiteral("vei"), // 199. 89931, 0.010% (2332)
+            QStringLiteral("mare"), // 200. 89536, 7.303% (473)
+            QStringLiteral("лет"), // 201. 88568, 0.000% (329)
+            QStringLiteral("sint"), // 202. 88036, 0.000% (1134)
+            QStringLiteral("sw"), // 204. 86853, 1.968% (1930)
+            QStringLiteral("cel"), // 209. 85951, 0.043% (95)
+            QStringLiteral("dem"), // 213. 84936, 0.075% (2371)
+            QStringLiteral("көшесі"), // 214. 84744, 0.000% (1343)
+            QStringLiteral("karl"), // 221. 83233, 1.107% (1582)
+            QStringLiteral("józefa"), // 222. 83083, 0.227% (591)
+            QStringLiteral("завулак"), // 223. 82845, 0.000% (2205)
+            QStringLiteral("sant"), // 227. 82014, 5.422% (1121)
+            QStringLiteral("burgemeester"), // 228. 81933, 0.011% (1432)
+            QStringLiteral("пут"), // 230. 81561, 0.000% (1265)
+            QStringLiteral("hills"), // 232. 80495, 8.153% (1731)
+            QStringLiteral("gasse"), // 233. 80355, 4.537% (2301)
+            QStringLiteral("tree"), // 237. 79267, 4.465% (1400)
+            QStringLiteral("cesta"), // 241. 78341, 0.439% (1304)
+            QStringLiteral("карла"), // 242. 78335, 0.000% (65)
+            QStringLiteral("friedrich"), // 243. 78239, 2.014% (912)
+            QStringLiteral("провулок"), // 244. 77827, 0.000% (2426)
+            QStringLiteral("camino"), // 245. 77273, 4.771% (1832)
+            QStringLiteral("ابو"), // 249. 75920, 0.065% (2106)
+            QStringLiteral("vej"), // 251. 75691, 0.070% (1759)
+            QStringLiteral("rise"), // 253. 75234, 5.723% (2270)
+            QStringLiteral("ștefan"), // 255. 73404, 0.000% (135)
+            QStringLiteral("u"), // 258. 72507, 8.945% (1499)
+            QStringLiteral("hollow"), // 259. 72439, 9.732% (1771)
+            QStringLiteral("ქუჩა"), // 261. 71374, 0.000% (1482)
+            QStringLiteral("heights"), // 264. 70997, 7.158% (1977)
+            QStringLiteral("oude"), // 278. 69390, 0.572% (950)
+            QStringLiteral("stanisława"), // 280. 69292, 0.120% (535)
+            QStringLiteral("chaussée"), // 285. 68675, 2.681% (349)
+            QStringLiteral("le"), // 286. 68559, 0.595% (2605)
+            QStringLiteral("line"), // 287. 68483, 7.154% (1356)
+            QStringLiteral("o"), // 289. 68203, 6.617% (1685)
+            QStringLiteral("احمد"), // 290. 68124, 1.048% (1773)
+            QStringLiteral("springs"), // 291. 68104, 6.042% (1482)
+            QStringLiteral("zur"), // 293. 67764, 0.273% (2223)
+            QStringLiteral("ne"), // 294. 67620, 1.448% (1404)
+            QStringLiteral("władysława"), // 295. 67613, 0.101% (294)
+            QStringLiteral("joão"), // 297. 67344, 0.581% (1611)
+            QStringLiteral("dos"), // 301. 66410, 0.906% (1767)
+            QStringLiteral("oaks"), // 302. 66054, 9.957% (1566)
+            QStringLiteral("obere"), // 304. 65619, 9.246% (1209)
+            QStringLiteral("ii"), // 309. 64960, 1.405% (1045)
+            QStringLiteral("caddesi"), // 311. 64279, 0.050% (1295)
+            QStringLiteral("heinrich"), // 313. 63909, 0.466% (1138)
+            QStringLiteral("allee"), // 314. 63657, 4.488% (1115)
+            QStringLiteral("kalea"), // 315. 63639, 1.867% (2452)
+            QStringLiteral("wilhelm"), // 317. 63134, 1.294% (1182)
+            QStringLiteral("les"), // 318. 62573, 0.085% (2313)
+            QStringLiteral("oji"), // 320. 61976, 0.000% (2479)
+            QStringLiteral("august"), // 322. 61913, 3.298% (641)
+            QStringLiteral("v"), // 323. 61516, 4.799% (1440)
+            QStringLiteral("generała"), // 327. 60849, 0.000% (293)
+            QStringLiteral("y"), // 329. 60738, 2.878% (1152)
+            QStringLiteral("doutor"), // 331. 60238, 0.116% (1678)
+            QStringLiteral("pod"), // 334. 59682, 0.015% (1361)
+            QStringLiteral("henri"), // 337. 59298, 1.831% (1168)
+            QStringLiteral("шоссе"), // 338. 59288, 0.000% (665)
+            QStringLiteral("delle"), // 340. 58716, 1.971% (1066)
+            QStringLiteral("avinguda"), // 341. 58685, 0.051% (1079)
+            QStringLiteral("général"), // 342. 58653, 0.029% (564)
+            QStringLiteral("río"), // 348. 57907, 2.627% (1156)
+            QStringLiteral("circuit"), // 350. 57779, 4.581% (1373)
+            QStringLiteral("clos"), // 352. 57673, 7.723% (2572)
+            QStringLiteral("stefana"), // 354. 57140, 0.128% (185)
+            QStringLiteral("red"), // 355. 57018, 9.951% (1154)
+            QStringLiteral("p"), // 356. 56963, 6.573% (1149)
+            QStringLiteral("مسجد"), // 357. 56940, 0.090% (967)
+            QStringLiteral("willem"), // 358. 56814, 0.044% (587)
+            QStringLiteral("trace"), // 360. 56633, 1.923% (1789)
+            QStringLiteral("și"), // 361. 56293, 0.000% (57)
+            QStringLiteral("maría"), // 365. 56145, 6.273% (1092)
+            QStringLiteral("mihai"), // 368. 55670, 0.257% (101)
+            QStringLiteral("paseo"), // 372. 54511, 6.017% (1492)
+            QStringLiteral("октября"), // 374. 54018, 5.861% (192)
+            QStringLiteral("don"), // 378. 53495, 6.429% (1179)
+            QStringLiteral("hans"), // 385. 52366, 1.419% (1228)
+            QStringLiteral("giacomo"), // 388. 52097, 4.386% (322)
+            QStringLiteral("alle"), // 389. 51947, 1.829% (1090)
+            QStringLiteral("untere"), // 391. 51535, 7.971% (1008)
+            QStringLiteral("петра"), // 392. 51490, 0.787% (366)
+            QStringLiteral("francesco"), // 398. 51156, 6.779% (840)
+            QStringLiteral("aleja"), // 401. 50853, 0.423% (469)
+            QStringLiteral("rúa"), // 402. 50720, 2.397% (1928)
+            QStringLiteral("coronel"), // 404. 50688, 1.115% (872)
+            QStringLiteral("ion"), // 407. 50267, 0.042% (437)
+            QStringLiteral("path"), // 408. 50216, 1.738% (1606)
+            QStringLiteral("range"), // 410. 50167, 9.169% (643)
+            QStringLiteral("laan"), // 411. 49982, 1.951% (499)
+            QStringLiteral("julio"), // 413. 49783, 1.864% (461)
+            QStringLiteral("al"), // 418. 49244, 0.538% (1676)
+            QStringLiteral("t"), // 422. 48922, 8.722% (993)
+            QStringLiteral("est"), // 430. 48016, 2.414% (608)
+            QStringLiteral("sainte"), // 437. 46793, 5.638% (632)
+            QStringLiteral("adama"), // 439. 46689, 0.349% (139)
+            QStringLiteral("franz"), // 441. 46571, 0.399% (1244)
+            QStringLiteral("het"), // 445. 46320, 0.086% (847)
+            QStringLiteral("księdza"), // 451. 45787, 0.041% (906)
+            QStringLiteral("block"), // 454. 45394, 2.430% (363)
+            QStringLiteral("henryka"), // 455. 45199, 0.352% (163)
+            QStringLiteral("prins"), // 459. 44897, 0.176% (174)
+            QStringLiteral("hermann"), // 465. 44421, 0.734% (836)
+            QStringLiteral("padre"), // 470. 44100, 2.751% (1163)
+            QStringLiteral("travessa"), // 475. 43701, 2.041% (2149)
+            QStringLiteral("das"), // 480. 43413, 0.481% (1093)
+            QStringLiteral("carlo"), // 483. 43125, 8.028% (659)
+            QStringLiteral("hugo"), // 484. 43040, 2.842% (409)
+            QStringLiteral("max"), // 485. 43029, 3.184% (699)
+            QStringLiteral("luigi"), // 486. 42919, 1.270% (738)
+            QStringLiteral("ernst"), // 487. 42918, 3.069% (647)
+            QStringLiteral("professor"), // 495. 42244, 0.447% (1024)
+            QStringLiteral("otto"), // 496. 42190, 3.209% (887)
+            QStringLiteral("osiedle"), // 498. 42124, 3.836% (734)
+            QStringLiteral("ст"), // 499. 42105, 0.000% (768)
+            QStringLiteral("dell"), // 501. 41363, 9.808% (798)
+            QStringLiteral("us"), // 502. 41227, 5.880% (595)
+            QStringLiteral("краља"), // 504. 41015, 0.000% (69)
+            QStringLiteral("veg"), // 506. 40808, 0.051% (1265)
+            QStringLiteral("sur"), // 514. 40320, 8.698% (1256)
+            QStringLiteral("војводе"), // 517. 40165, 0.000% (121)
+            QStringLiteral("الشهيد"), // 523. 39708, 1.861% (1501)
+            QStringLiteral("carl"), // 526. 39608, 6.466% (720)
+            QStringLiteral("cr"), // 529. 39448, 7.296% (859)
+            QStringLiteral("johann"), // 536. 38814, 1.639% (1024)
+            QStringLiteral("маршала"), // 537. 38737, 0.000% (93)
+            QStringLiteral("privada"), // 538. 38719, 2.461% (1661)
+            QStringLiteral("gaulle"), // 539. 38629, 1.755% (93)
+            QStringLiteral("kleine"), // 543. 38553, 9.104% (936)
+            QStringLiteral("antônio"), // 549. 38132, 1.316% (947)
+            QStringLiteral("jacob"), // 556. 37940, 9.721% (537)
+            QStringLiteral("jules"), // 558. 37890, 2.605% (649)
+            QStringLiteral("аллея"), // 562. 37663, 7.811% (503)
+            QStringLiteral("pietro"), // 565. 37382, 7.148% (611)
+            QStringLiteral("николе"), // 571. 37083, 0.000% (148)
+            QStringLiteral("rang"), // 572. 36995, 4.011% (865)
+            QStringLiteral("على"), // 575. 36826, 6.504% (936)
+            QStringLiteral("alberto"), // 578. 36707, 8.813% (676)
+            QStringLiteral("maréchal"), // 580. 36677, 2.012% (209)
+            QStringLiteral("theodor"), // 581. 36662, 2.619% (334)
+            QStringLiteral("ابراهيم"), // 584. 36589, 7.158% (1079)
+            QStringLiteral("grote"), // 589. 36476, 1.209% (388)
+            QStringLiteral("ludwig"), // 590. 36449, 4.291% (603)
+            QStringLiteral("nieuwe"), // 599. 35996, 1.217% (385)
+            QStringLiteral("марта"), // 600. 35985, 0.378% (57)
+            QStringLiteral("silva"), // 602. 35726, 7.504% (1022)
+            QStringLiteral("محمود"), // 603. 35707, 5.526% (1080)
+            QStringLiteral("ignacego"), // 614. 35008, 0.026% (118)
+            QStringLiteral("crossing"), // 616. 34747, 5.793% (1179)
+            QStringLiteral("josef"), // 620. 34665, 4.973% (1198)
+            QStringLiteral("stradela"), // 621. 34595, 0.000% (1091)
+            QStringLiteral("carretera"), // 622. 34533, 6.681% (939)
+            QStringLiteral("lotissement"), // 627. 34425, 0.767% (1731)
+            QStringLiteral("ouest"), // 635. 34202, 2.564% (544)
+            QStringLiteral("en"), // 642. 33920, 0.879% (912)
+            QStringLiteral("françois"), // 646. 33779, 7.428% (870)
+            QStringLiteral("docteur"), // 647. 33778, 0.178% (1111)
+            QStringLiteral("mews"), // 651. 33653, 5.494% (1654)
+            QStringLiteral("alexandru"), // 653. 33540, 0.000% (213)
+            QStringLiteral("platz"), // 654. 33484, 3.578% (1321)
+            QStringLiteral("bulevardul"), // 655. 33418, 0.000% (235)
+            QStringLiteral("house"), // 656. 33372, 9.625% (792)
+            QStringLiteral("bolesława"), // 659. 33177, 0.084% (96)
+            QStringLiteral("милоша"), // 663. 33031, 0.000% (119)
+            QStringLiteral("guglielmo"), // 668. 32815, 0.101% (122)
+            QStringLiteral("marii"), // 672. 32678, 0.196% (114)
+            QStringLiteral("presidente"), // 677. 32476, 0.453% (318)
+            QStringLiteral("alten"), // 678. 32461, 1.380% (695)
+            QStringLiteral("polskiego"), // 685. 32093, 0.028% (45)
+            QStringLiteral("цара"), // 687. 32085, 0.000% (30)
+            QStringLiteral("عمر"), // 700. 31830, 4.684% (327)
+            QStringLiteral("township"), // 707. 31631, 5.295% (584)
+            QStringLiteral("vicolo"), // 709. 31579, 1.767% (1711)
+            QStringLiteral("väg"), // 710. 31555, 0.057% (1300)
+            QStringLiteral("rudolf"), // 717. 31166, 0.770% (470)
+            QStringLiteral("circuito"), // 721. 30962, 0.717% (515)
+            QStringLiteral("chaussee"), // 724. 30815, 6.331% (530)
+            QStringLiteral("santos"), // 725. 30789, 8.753% (744)
+            QStringLiteral("nicolae"), // 727. 30644, 0.170% (250)
+            QStringLiteral("prinses"), // 728. 30623, 0.000% (112)
+            QStringLiteral("pastoor"), // 729. 30504, 0.000% (776)
+            QStringLiteral("pawła"), // 733. 30403, 0.464% (110)
+            QStringLiteral("mariano"), // 736. 30284, 3.068% (388)
+            QStringLiteral("lorong"), // 738. 30260, 1.950% (1034)
+            QStringLiteral("максима"), // 740. 30232, 0.000% (65)
+            QStringLiteral("wojska"), // 741. 30071, 0.000% (26)
+            QStringLiteral("ave"), // 743. 29935, 8.722% (910)
+            QStringLiteral("vasile"), // 744. 29834, 0.000% (217)
+            QStringLiteral("nad"), // 746. 29776, 0.168% (753)
+            QStringLiteral("georg"), // 748. 29686, 8.223% (779)
+            QStringLiteral("résidence"), // 750. 29622, 1.107% (1139)
+            QStringLiteral("cité"), // 755. 29491, 6.666% (873)
+            QStringLiteral("fritz"), // 771. 29136, 1.891% (593)
+            QStringLiteral("pieter"), // 784. 28641, 0.719% (408)
+            QStringLiteral("émile"), // 798. 28197, 2.635% (511)
+            QStringLiteral("calea"), // 799. 28186, 0.000% (198)
+            QStringLiteral("domingo"), // 807. 27745, 6.340% (413)
+            QStringLiteral("petit"), // 808. 27712, 5.655% (922)
+            QStringLiteral("anton"), // 809. 27697, 4.351% (695)
+            QStringLiteral("mikołaja"), // 810. 27675, 0.643% (67)
+            QStringLiteral("саве"), // 813. 27547, 0.000% (97)
+            QStringLiteral("iii"), // 817. 27400, 3.471% (507)
+            QStringLiteral("fratelli"), // 818. 27382, 0.150% (347)
+            QStringLiteral("alessandro"), // 819. 27351, 2.914% (233)
+            QStringLiteral("أبو"), // 822. 27327, 0.666% (956)
+            QStringLiteral("kazimierza"), // 823. 27299, 7.293% (241)
+            QStringLiteral("ramón"), // 824. 27295, 4.180% (467)
+            QStringLiteral("primo"), // 825. 27283, 0.946% (362)
+            QStringLiteral("бульвар"), // 826. 27234, 0.033% (514)
+            QStringLiteral("te"), // 830. 27142, 0.000% (635)
+            QStringLiteral("а"), // 832. 27113, 0.170% (729)
+            QStringLiteral("sankt"), // 834. 27096, 7.961% (539)
+            QStringLiteral("александра"), // 837. 27044, 0.129% (305)
+            QStringLiteral("вука"), // 839. 27001, 0.000% (24)
+            QStringLiteral("ebert"), // 847. 26744, 1.982% (32)
+            QStringLiteral("тита"), // 848. 26694, 0.000% (5)
+            QStringLiteral("johannes"), // 850. 26657, 3.170% (582)
+            QStringLiteral("novembre"), // 853. 26612, 5.449% (129)
+            QStringLiteral("row"), // 859. 26392, 7.370% (898)
+            QStringLiteral("đường"), // 862. 26360, 0.125% (684)
+            QStringLiteral("za"), // 866. 26278, 0.000% (599)
+            QStringLiteral("الشيخ"), // 875. 26027, 6.436% (820)
+            QStringLiteral("ignacio"), // 878. 25933, 6.471% (312)
+            QStringLiteral("plac"), // 879. 25866, 0.197% (464)
+            QStringLiteral("mile"), // 880. 25831, 8.265% (309)
+            QStringLiteral("dame"), // 883. 25773, 2.627% (307)
+            QStringLiteral("av"), // 891. 25663, 1.621% (712)
+            QStringLiteral("pass"), // 921. 24954, 4.508% (833)
+            QStringLiteral("largo"), // 922. 24940, 5.754% (1038)
+            QStringLiteral("cesare"), // 929. 24668, 0.061% (211)
+            QStringLiteral("juliusza"), // 931. 24594, 0.403% (37)
+            QStringLiteral("душана"), // 933. 24576, 0.000% (149)
+            QStringLiteral("náměstí"), // 941. 24479, 9.514% (430)
+            QStringLiteral("emanuele"), // 945. 24404, 0.484% (103)
+            QStringLiteral("johan"), // 948. 24309, 0.461% (360)
+            QStringLiteral("hinter"), // 952. 24254, 0.252% (501)
+            QStringLiteral("allé"), // 959. 24107, 0.908% (524)
+            QStringLiteral("op"), // 964. 23957, 0.088% (503)
+            QStringLiteral("м"), // 965. 23853, 0.038% (484)
+            QStringLiteral("ruta"), // 966. 23841, 2.475% (412)
+            QStringLiteral("koningin"), // 967. 23830, 0.000% (70)
+            QStringLiteral("champ"), // 972. 23794, 3.543% (878)
+            QStringLiteral("enrico"), // 973. 23787, 0.362% (259)
+            QStringLiteral("rené"), // 976. 23745, 4.060% (598)
+            QStringLiteral("acres"), // 980. 23518, 8.934% (616)
+            QStringLiteral("notre"), // 981. 23464, 0.222% (232)
+            QStringLiteral("светог"), // 983. 23440, 0.000% (88)
+            QStringLiteral("mihail"), // 986. 23361, 0.000% (144)
+            QStringLiteral("garcía"), // 989. 23315, 5.653% (548)
+            QStringLiteral("الدين"), // 994. 23185, 0.522% (496)
+            QStringLiteral("sud"), // 995. 23180, 4.232% (535)
+            QStringLiteral("ferreira"), // 999. 23015, 6.418% (497)
+            QStringLiteral("leclerc"), // 1000. 23010, 4.598% (79)
+            QStringLiteral("кнеза"), // 1001. 22990, 0.000% (92)
+            QStringLiteral("extension"), // 1007. 22762, 8.070% (839)
+            QStringLiteral("pri"), // 1018. 22468, 0.000% (520)
+            QStringLiteral("guido"), // 1026. 22359, 7.053% (242)
+            QStringLiteral("caminho"), // 1028. 22354, 1.029% (647)
+            QStringLiteral("degli"), // 1031. 22325, 0.403% (387)
+            QStringLiteral("bulevar"), // 1033. 22291, 1.476% (280)
+            QStringLiteral("طريق"), // 1035. 22252, 4.386% (519)
+            QStringLiteral("івана"), // 1038. 22212, 0.000% (224)
+            QStringLiteral("sokağı"), // 1050. 21962, 0.041% (821)
+            QStringLiteral("gheorghe"), // 1054. 21917, 0.000% (271)
+            QStringLiteral("vieux"), // 1056. 21821, 5.055% (523)
+            QStringLiteral("øvre"), // 1066. 21700, 2.000% (751)
+            QStringLiteral("ул"), // 1070. 21633, 0.000% (648)
+            QStringLiteral("oberer"), // 1075. 21525, 4.892% (662)
+            QStringLiteral("località"), // 1076. 21516, 0.860% (780)
+            QStringLiteral("gustav"), // 1083. 21469, 0.755% (416)
+            QStringLiteral("тесле"), // 1084. 21449, 0.000% (4)
+            QStringLiteral("dels"), // 1085. 21439, 0.000% (623)
+            QStringLiteral("степана"), // 1093. 21317, 0.000% (94)
+            QStringLiteral("słowackiego"), // 1099. 21202, 0.292% (9)
+            QStringLiteral("joaquim"), // 1101. 21138, 4.707% (548)
+            QStringLiteral("frans"), // 1106. 21016, 0.542% (309)
+            QStringLiteral("sfînt"), // 1107. 21005, 0.000% (11)
+            QStringLiteral("oliveira"), // 1112. 20950, 5.990% (586)
+            QStringLiteral("private"), // 1113. 20948, 3.604% (571)
+            QStringLiteral("creangă"), // 1116. 20910, 0.306% (13)
+            QStringLiteral("јована"), // 1126. 20824, 0.000% (211)
+            QStringLiteral("лазара"), // 1128. 20757, 0.000% (75)
+            QStringLiteral("иве"), // 1135. 20616, 0.000% (20)
+            QStringLiteral("alighieri"), // 1144. 20552, 0.000% (25)
+            QStringLiteral("батыра"), // 1145. 20541, 0.716% (281)
+            QStringLiteral("браће"), // 1151. 20448, 0.000% (319)
+            QStringLiteral("hipólito"), // 1154. 20433, 0.871% (74)
+            QStringLiteral("gammel"), // 1164. 20322, 0.615% (325)
+            QStringLiteral("alfredo"), // 1165. 20315, 2.368% (483)
+            QStringLiteral("borgo"), // 1171. 20219, 9.872% (486)
+            QStringLiteral("graf"), // 1180. 20079, 7.879% (387)
+            QStringLiteral("à"), // 1189. 19923, 0.050% (562)
+            QStringLiteral("ferenc"), // 1193. 19855, 0.761% (114)
+            QStringLiteral("pré"), // 1203. 19761, 6.665% (813)
+            QStringLiteral("eduardo"), // 1217. 19552, 0.916% (478)
+            QStringLiteral("dokter"), // 1222. 19463, 0.000% (424)
+            QStringLiteral("бранка"), // 1231. 19395, 0.000% (101)
+            QStringLiteral("koch"), // 1232. 19385, 7.336% (133)
+            QStringLiteral("mnt"), // 1236. 19359, 0.000% (85)
+            QStringLiteral("constantin"), // 1237. 19348, 0.972% (242)
+            QStringLiteral("per"), // 1238. 19330, 0.481% (421)
+            QStringLiteral("богдана"), // 1243. 19276, 1.131% (89)
+            QStringLiteral("unter"), // 1249. 19195, 0.349% (416)
+            QStringLiteral("konrad"), // 1250. 19186, 2.142% (224)
+            QStringLiteral("plaça"), // 1255. 19134, 1.453% (723)
+            QStringLiteral("emilio"), // 1267. 18927, 1.268% (352)
+            QStringLiteral("hoge"), // 1281. 18739, 7.194% (299)
+            QStringLiteral("بكر"), // 1282. 18725, 5.880% (162)
+            QStringLiteral("سيد"), // 1291. 18657, 8.361% (677)
+            QStringLiteral("léon"), // 1292. 18656, 4.208% (436)
+            QStringLiteral("nedre"), // 1293. 18634, 1.138% (674)
+            QStringLiteral("klein"), // 1295. 18606, 9.830% (534)
+            QStringLiteral("pereira"), // 1299. 18580, 7.524% (548)
+            QStringLiteral("leaf"), // 1301. 18499, 6.979% (452)
+            QStringLiteral("korte"), // 1302. 18493, 2.277% (468)
+            QStringLiteral("armii"), // 1304. 18461, 0.569% (40)
+            QStringLiteral("leonardo"), // 1309. 18408, 9.469% (195)
+            QStringLiteral("ы"), // 1310. 18398, 0.136% (757)
+            QStringLiteral("люксембург"), // 1314. 18355, 2.937% (21)
+            QStringLiteral("pfarrer"), // 1320. 18314, 0.912% (818)
+            QStringLiteral("karola"), // 1321. 18299, 0.361% (164)
+            QStringLiteral("fray"), // 1325. 18208, 1.335% (331)
+            QStringLiteral("enrique"), // 1332. 18158, 1.630% (358)
+            QStringLiteral("vor"), // 1340. 18069, 0.338% (598)
+            QStringLiteral("и"), // 1341. 18058, 0.089% (319)
+            QStringLiteral("antónio"), // 1342. 18054, 1.279% (518)
+            QStringLiteral("karel"), // 1343. 18049, 0.127% (194)
+            QStringLiteral("ter"), // 1349. 17994, 1.545% (404)
+            QStringLiteral("bürgermeister"), // 1350. 17982, 0.523% (684)
+            QStringLiteral("gonzález"), // 1351. 17973, 7.589% (441)
+            QStringLiteral("alexandre"), // 1357. 17908, 9.325% (370)
+            QStringLiteral("augusto"), // 1358. 17907, 4.825% (483)
+            QStringLiteral("graaf"), // 1359. 17904, 1.419% (220)
+            QStringLiteral("ricardo"), // 1364. 17882, 7.298% (366)
+            QStringLiteral("і"), // 1367. 17849, 0.073% (667)
+            QStringLiteral("pérez"), // 1368. 17847, 5.093% (408)
+            QStringLiteral("żeromskiego"), // 1374. 17782, 0.332% (6)
+            QStringLiteral("almirante"), // 1375. 17765, 0.918% (171)
+            QStringLiteral("arturo"), // 1376. 17764, 0.873% (245)
+            QStringLiteral("wincentego"), // 1377. 17750, 0.051% (71)
+            QStringLiteral("سعد"), // 1380. 17737, 8.096% (409)
+            QStringLiteral("jános"), // 1382. 17732, 1.026% (164)
+            QStringLiteral("sándor"), // 1383. 17718, 1.518% (92)
+            QStringLiteral("би"), // 1385. 17670, 0.000% (171)
+            QStringLiteral("tak"), // 1389. 17631, 0.000% (525)
+            QStringLiteral("стевана"), // 1392. 17603, 0.000% (140)
+            QStringLiteral("vincenzo"), // 1394. 17586, 5.823% (233)
+            QStringLiteral("розы"), // 1399. 17539, 0.000% (24)
+            QStringLiteral("милана"), // 1401. 17526, 0.000% (269)
+            QStringLiteral("maggio"), // 1402. 17521, 3.510% (102)
+            QStringLiteral("kopernika"), // 1409. 17429, 0.975% (8)
+            QStringLiteral("генерала"), // 1410. 17420, 0.000% (368)
+            QStringLiteral("joaquín"), // 1412. 17414, 5.157% (259)
+            QStringLiteral("bebel"), // 1413. 17411, 0.000% (14)
+            QStringLiteral("светозара"), // 1416. 17400, 0.000% (57)
+            QStringLiteral("kurt"), // 1417. 17395, 2.667% (205)
+            QStringLiteral("gómez"), // 1422. 17352, 7.642% (324)
+            QStringLiteral("го"), // 1424. 17323, 0.000% (127)
+            QStringLiteral("konopnickiej"), // 1425. 17296, 0.064% (4)
+            QStringLiteral("yrigoyen"), // 1428. 17232, 5.734% (24)
+            QStringLiteral("quai"), // 1430. 17157, 6.773% (632)
+            QStringLiteral("јовановића"), // 1433. 17119, 0.088% (211)
+            QStringLiteral("sikorskiego"), // 1440. 17064, 0.996% (20)
+            QStringLiteral("gamle"), // 1441. 17063, 0.059% (403)
+            QStringLiteral("рибара"), // 1447. 17029, 0.000% (8)
+            QStringLiteral("zuid"), // 1458. 16920, 0.981% (230)
+            QStringLiteral("montée"), // 1460. 16902, 4.420% (647)
+            QStringLiteral("лоле"), // 1469. 16826, 0.000% (7)
+            QStringLiteral("aux"), // 1475. 16759, 0.000% (688)
+            QStringLiteral("franciszka"), // 1478. 16707, 0.132% (276)
+            QStringLiteral("et"), // 1480. 16681, 0.138% (495)
+            QStringLiteral("мишића"), // 1485. 16599, 0.000% (20)
+            QStringLiteral("павла"), // 1493. 16533, 0.000% (211)
+            QStringLiteral("جمال"), // 1496. 16512, 5.093% (292)
+            QStringLiteral("ивана"), // 1497. 16509, 0.000% (271)
+            QStringLiteral("wild"), // 1498. 16492, 9.035% (490)
+            QStringLiteral("ابن"), // 1503. 16462, 0.079% (516)
+            QStringLiteral("unterer"), // 1505. 16454, 1.884% (547)
+            QStringLiteral("heine"), // 1510. 16400, 2.756% (35)
+            QStringLiteral("peña"), // 1520. 16283, 7.142% (191)
+            QStringLiteral("aires"), // 1521. 16269, 6.153% (98)
+            QStringLiteral("auguste"), // 1532. 16130, 1.184% (413)
+            QStringLiteral("air"), // 1536. 16068, 2.844% (241)
+            QStringLiteral("bel"), // 1539. 16058, 2.896% (262)
+            QStringLiteral("tomás"), // 1541. 16025, 1.460% (307)
+            QStringLiteral("șoseaua"), // 1542. 16019, 0.000% (128)
+            QStringLiteral("leandro"), // 1543. 16009, 4.922% (92)
+            QStringLiteral("vodă"), // 1550. 15968, 0.000% (103)
+            QStringLiteral("mario"), // 1551. 15963, 5.300% (459)
+            QStringLiteral("الخطاب"), // 1555. 15944, 1.154% (36)
+            QStringLiteral("scholl"), // 1557. 15911, 1.967% (27)
+            QStringLiteral("settembre"), // 1577. 15745, 2.490% (80)
+            QStringLiteral("الصديق"), // 1581. 15690, 3.321% (47)
+            QStringLiteral("benito"), // 1590. 15615, 9.049% (173)
+            QStringLiteral("1989"), // 1591. 15598, 0.115% (24)
+            QStringLiteral("perón"), // 1595. 15563, 4.703% (69)
+            QStringLiteral("félix"), // 1597. 15553, 6.115% (389)
+            QStringLiteral("марковића"), // 1604. 15505, 0.561% (118)
+            QStringLiteral("prof"), // 1605. 15498, 0.155% (479)
+            QStringLiteral("tish"), // 1612. 15426, 0.447% (566)
+            QStringLiteral("првог"), // 1613. 15420, 0.000% (31)
+            QStringLiteral("krajowej"), // 1616. 15406, 0.000% (15)
+            QStringLiteral("auzoa"), // 1617. 15391, 1.364% (497)
+            QStringLiteral("manoel"), // 1621. 15364, 5.988% (430)
+            QStringLiteral("justo"), // 1625. 15355, 2.846% (114)
+            QStringLiteral("др"), // 1628. 15345, 0.000% (365)
+            QStringLiteral("voie"), // 1639. 15236, 1.168% (454)
+            QStringLiteral("hameau"), // 1642. 15220, 9.757% (663)
+            QStringLiteral("hendrik"), // 1646. 15198, 0.243% (258)
+            QStringLiteral("bartolomé"), // 1650. 15185, 4.768% (113)
+            QStringLiteral("federico"), // 1661. 15083, 1.976% (324)
+            QStringLiteral("quattro"), // 1669. 15040, 1.257% (60)
+            QStringLiteral("gomes"), // 1672. 14985, 9.837% (357)
+            QStringLiteral("strasse"), // 1682. 14884, 6.067% (450)
+            QStringLiteral("juliana"), // 1686. 14863, 5.181% (96)
+            QStringLiteral("kóshesi"), // 1690. 14838, 0.000% (368)
+            QStringLiteral("aldo"), // 1701. 14758, 1.145% (151)
+            QStringLiteral("adolfo"), // 1707. 14694, 2.382% (307)
+            QStringLiteral("vico"), // 1710. 14692, 4.962% (799)
+            QStringLiteral("generaal"), // 1715. 14663, 0.430% (182)
+            QStringLiteral("valea"), // 1721. 14588, 0.000% (253)
+            QStringLiteral("strandvej"), // 1725. 14579, 9.678% (181)
+            QStringLiteral("erich"), // 1736. 14482, 0.801% (206)
+            QStringLiteral("domenico"), // 1739. 14476, 8.566% (293)
+            QStringLiteral("emil"), // 1742. 14451, 2.609% (340)
+            QStringLiteral("dimitrie"), // 1746. 14417, 0.000% (55)
+            QStringLiteral("díaz"), // 1747. 14413, 7.472% (271)
+            QStringLiteral("alves"), // 1753. 14374, 8.995% (381)
+            QStringLiteral("cabral"), // 1754. 14358, 7.341% (164)
+            QStringLiteral("льва"), // 1756. 14356, 0.000% (48)
+            QStringLiteral("luiz"), // 1757. 14354, 1.059% (397)
+            QStringLiteral("camillo"), // 1759. 14324, 0.838% (106)
+            QStringLiteral("ruelle"), // 1765. 14262, 5.792% (848)
+            QStringLiteral("jeanne"), // 1769. 14218, 8.257% (219)
+            QStringLiteral("cornelis"), // 1773. 14198, 0.176% (196)
+            QStringLiteral("camí"), // 1774. 14196, 0.592% (536)
+            QStringLiteral("filippo"), // 1776. 14181, 3.237% (160)
+            QStringLiteral("of"), // 1778. 14176, 1.637% (368)
+            QStringLiteral("alt"), // 1781. 14158, 2.726% (299)
+            QStringLiteral("paulo"), // 1782. 14153, 4.148% (317)
+            QStringLiteral("ten"), // 1787. 14112, 4.330% (310)
+            QStringLiteral("eugène"), // 1790. 14085, 1.846% (394)
+            QStringLiteral("hauptmann"), // 1793. 14074, 0.000% (19)
+            QStringLiteral("terrasse"), // 1794. 14069, 5.551% (420)
+            QStringLiteral("خالد"), // 1795. 14059, 4.054% (147)
+            QStringLiteral("с"), // 1796. 14054, 0.057% (329)
+            QStringLiteral("aprile"), // 1797. 14040, 0.000% (102)
+            QStringLiteral("geschwister"), // 1803. 13972, 0.000% (35)
+            QStringLiteral("ђуре"), // 1805. 13967, 0.000% (46)
+            QStringLiteral("gerhart"), // 1807. 13965, 0.516% (12)
+            QStringLiteral("eau"), // 1810. 13946, 6.446% (194)
+            QStringLiteral("заселак"), // 1816. 13916, 0.000% (841)
+            QStringLiteral("الحاج"), // 1819. 13904, 4.136% (650)
+            QStringLiteral("fryderyka"), // 1820. 13888, 0.000% (18)
+            QStringLiteral("sector"), // 1828. 13851, 8.353% (296)
+            QStringLiteral("heuss"), // 1832. 13830, 0.832% (19)
+            QStringLiteral("horse"), // 1833. 13830, 9.197% (336)
+            QStringLiteral("löns"), // 1856. 13681, 0.000% (10)
+            QStringLiteral("площадь"), // 1865. 13582, 0.272% (277)
+            QStringLiteral("صلاح"), // 1876. 13485, 7.141% (289)
+            QStringLiteral("alecsandri"), // 1877. 13475, 0.260% (10)
+            QStringLiteral("sánchez"), // 1888. 13389, 8.119% (247)
+            QStringLiteral("thälmann"), // 1889. 13386, 0.000% (12)
+            QStringLiteral("intendente"), // 1892. 13368, 0.060% (359)
+            QStringLiteral("sideroad"), // 1895. 13364, 6.622% (359)
+            QStringLiteral("julius"), // 1899. 13348, 5.379% (323)
+            QStringLiteral("witosa"), // 1901. 13344, 0.000% (5)
+            QStringLiteral("ludwika"), // 1906. 13299, 0.714% (119)
+            QStringLiteral("марка"), // 1908. 13292, 0.000% (92)
+            QStringLiteral("pater"), // 1915. 13255, 1.871% (387)
+            QStringLiteral("józsef"), // 1916. 13253, 2.135% (118)
+            QStringLiteral("jakob"), // 1918. 13248, 1.849% (441)
+            QStringLiteral("secondo"), // 1922. 13213, 3.633% (234)
+            QStringLiteral("istván"), // 1924. 13207, 5.391% (141)
+            QStringLiteral("barrio"), // 1933. 13156, 7.206% (398)
+            QStringLiteral("albrecht"), // 1945. 13067, 5.135% (116)
+            QStringLiteral("aristide"), // 1946. 13067, 0.199% (75)
+            QStringLiteral("passeig"), // 1951. 13054, 1.256% (317)
+            QStringLiteral("mt"), // 1955. 13032, 1.212% (256)
+            QStringLiteral("souza"), // 1959. 13014, 3.058% (369)
+            QStringLiteral("chopina"), // 1960. 13006, 0.000% (5)
+            QStringLiteral("septiembre"), // 1962. 12974, 1.588% (97)
+            QStringLiteral("жарка"), // 1963. 12974, 0.000% (48)
+            QStringLiteral("alfonso"), // 1964. 12970, 7.625% (294)
+            QStringLiteral("cantemir"), // 1987. 12827, 0.616% (20)
+            QStringLiteral("gonçalves"), // 1994. 12798, 5.290% (263)
+            QStringLiteral("marszałka"), // 2002. 12772, 1.660% (24)
+            QStringLiteral("mihály"), // 2003. 12767, 0.446% (65)
+            QStringLiteral("ribeiro"), // 2004. 12764, 7.866% (373)
+            QStringLiteral("bun"), // 2011. 12736, 0.620% (23)
+            QStringLiteral("buenos"), // 2016. 12695, 0.142% (50)
+            QStringLiteral("agosto"), // 2017. 12694, 6.231% (166)
+            QStringLiteral("grigore"), // 2019. 12680, 0.000% (109)
+            QStringLiteral("battisti"), // 2024. 12653, 1.897% (24)
+            QStringLiteral("puerto"), // 2030. 12631, 4.782% (350)
+            QStringLiteral("györgy"), // 2033. 12595, 1.755% (58)
+            QStringLiteral("за"), // 2040. 12561, 0.127% (318)
+            QStringLiteral("wethouder"), // 2044. 12529, 0.000% (271)
+            QStringLiteral("meester"), // 2047. 12494, 0.000% (374)
+            QStringLiteral("булевар"), // 2054. 12456, 0.000% (91)
+            QStringLiteral("maio"), // 2064. 12427, 7.532% (100)
+            QStringLiteral("united"), // 2067. 12404, 6.119% (79)
+            QStringLiteral("vestre"), // 2071. 12391, 6.053% (287)
+            QStringLiteral("ríos"), // 2072. 12385, 7.412% (98)
+            QStringLiteral("jirón"), // 2080. 12329, 0.552% (348)
+            QStringLiteral("wojciecha"), // 2081. 12322, 1.729% (96)
+            QStringLiteral("ابى"), // 2091. 12266, 0.000% (69)
+            QStringLiteral("traversa"), // 2094. 12245, 5.014% (492)
+            QStringLiteral("colonel"), // 2105. 12179, 3.522% (368)
+            QStringLiteral("listopada"), // 2107. 12165, 0.000% (13)
+            QStringLiteral("reuter"), // 2109. 12155, 5.323% (47)
+            QStringLiteral("gata"), // 2114. 12133, 2.242% (440)
+            QStringLiteral("haveforeningen"), // 2120. 12097, 0.000% (113)
+            QStringLiteral("bautista"), // 2121. 12087, 9.630% (131)
+            QStringLiteral("barros"), // 2123. 12071, 8.218% (225)
+            QStringLiteral("тупик"), // 2124. 12064, 3.241% (700)
+            QStringLiteral("1945"), // 2125. 12057, 4.777% (64)
+            QStringLiteral("aleksandra"), // 2128. 12042, 1.578% (129)
+            QStringLiteral("nordre"), // 2129. 12035, 3.207% (308)
+            QStringLiteral("alexei"), // 2132. 12028, 0.000% (38)
+            QStringLiteral("хајдук"), // 2134. 12008, 0.000% (17)
+            QStringLiteral("piotra"), // 2137. 11981, 0.860% (93)
+            QStringLiteral("viteazul"), // 2138. 11981, 0.392% (15)
+            QStringLiteral("академика"), // 2140. 11978, 0.000% (180)
+            QStringLiteral("adenauer"), // 2141. 11976, 2.605% (24)
+            QStringLiteral("zygmunta"), // 2143. 11966, 1.045% (138)
+            QStringLiteral("césar"), // 2145. 11964, 5.634% (232)
+            QStringLiteral("к"), // 2148. 11938, 0.142% (189)
+            QStringLiteral("михаила"), // 2156. 11893, 0.000% (199)
+            QStringLiteral("venti"), // 2157. 11890, 0.791% (37)
+            QStringLiteral("states"), // 2158. 11889, 3.129% (68)
+            QStringLiteral("chrobrego"), // 2159. 11887, 0.404% (7)
+            QStringLiteral("pastor"), // 2169. 11827, 3.822% (360)
+            QStringLiteral("aleea"), // 2178. 11741, 0.264% (524)
+            QStringLiteral("eugenio"), // 2179. 11741, 2.760% (199)
+            QStringLiteral("gade"), // 2180. 11737, 1.695% (329)
+            QStringLiteral("вељка"), // 2182. 11714, 0.000% (40)
+            QStringLiteral("rodrigues"), // 2183. 11705, 7.484% (345)
+            QStringLiteral("tres"), // 2190. 11694, 4.327% (150)
+            QStringLiteral("кучаи"), // 2193. 11690, 0.000% (265)
+            QStringLiteral("reymonta"), // 2196. 11667, 0.403% (8)
+            QStringLiteral("branco"), // 2202. 11624, 5.385% (130)
+            QStringLiteral("ca"), // 2203. 11615, 1.739% (459)
+            QStringLiteral("rruga"), // 2205. 11604, 0.000% (407)
+            QStringLiteral("sargento"), // 2206. 11603, 0.698% (132)
+            QStringLiteral("manzoni"), // 2215. 11566, 5.611% (27)
+            QStringLiteral("prolongación"), // 2221. 11546, 1.256% (315)
+            QStringLiteral("братьев"), // 2222. 11546, 0.087% (274)
+            QStringLiteral("имени"), // 2224. 11539, 0.000% (324)
+            QStringLiteral("battista"), // 2225. 11536, 4.308% (272)
+            QStringLiteral("tér"), // 2230. 11505, 0.000% (317)
+            QStringLiteral("michała"), // 2238. 11449, 1.284% (131)
+            QStringLiteral("oost"), // 2239. 11449, 4.463% (189)
+            QStringLiteral("ke"), // 2240. 11448, 1.136% (273)
+            QStringLiteral("степе"), // 2241. 11444, 0.000% (7)
+            QStringLiteral("octubre"), // 2244. 11433, 6.158% (110)
+            QStringLiteral("jozef"), // 2251. 11415, 0.788% (188)
+            QStringLiteral("vas"), // 2252. 11391, 2.019% (179)
+            QStringLiteral("wyszyńskiego"), // 2253. 11391, 0.000% (25)
+            QStringLiteral("roberto"), // 2259. 11369, 5.278% (352)
+            QStringLiteral("briand"), // 2260. 11368, 5.955% (39)
+            QStringLiteral("praça"), // 2269. 11353, 5.461% (475)
+            QStringLiteral("الوليد"), // 2271. 11337, 2.443% (30)
+            QStringLiteral("поповића"), // 2284. 11261, 1.501% (122)
+            QStringLiteral("ugo"), // 2287. 11242, 0.409% (106)
+            QStringLiteral("eduard"), // 2288. 11240, 1.886% (278)
+            QStringLiteral("в"), // 2289. 11237, 0.596% (292)
+            QStringLiteral("shores"), // 2298. 11198, 9.475% (330)
+            QStringLiteral("nacional"), // 2302. 11168, 5.408% (246)
+            QStringLiteral("درب"), // 2304. 11165, 1.299% (523)
+            QStringLiteral("eerste"), // 2306. 11149, 0.000% (123)
+            QStringLiteral("ново"), // 2307. 11146, 0.000% (214)
+            QStringLiteral("corner"), // 2314. 11133, 6.485% (357)
+            QStringLiteral("schumacher"), // 2328. 11060, 5.778% (49)
+            QStringLiteral("обилића"), // 2331. 11044, 0.000% (1)
+            QStringLiteral("phố"), // 2338. 11024, 0.109% (364)
+            QStringLiteral("shesi"), // 2342. 11007, 0.000% (297)
+            QStringLiteral("piet"), // 2349. 10965, 0.119% (121)
+            QStringLiteral("carducci"), // 2351. 10940, 4.424% (24)
+            QStringLiteral("venticinque"), // 2353. 10937, 0.000% (29)
+            QStringLiteral("gulshan"), // 2354. 10935, 0.741% (46)
+            QStringLiteral("senhora"), // 2361. 10915, 0.889% (191)
+            QStringLiteral("guillermo"), // 2362. 10914, 3.784% (211)
+            QStringLiteral("petru"), // 2365. 10903, 0.000% (89)
+            QStringLiteral("cours"), // 2366. 10895, 9.224% (302)
+            QStringLiteral("олега"), // 2368. 10888, 0.000% (60)
+            QStringLiteral("gustave"), // 2369. 10877, 1.066% (234)
+            QStringLiteral("батыр"), // 2370. 10876, 0.000% (153)
+            QStringLiteral("szent"), // 2372. 10854, 0.000% (80)
+            QStringLiteral("papa"), // 2373. 10847, 7.689% (152)
+            QStringLiteral("armando"), // 2376. 10818, 0.869% (190)
+            QStringLiteral("entre"), // 2380. 10792, 0.491% (92)
+            QStringLiteral("gabriela"), // 2382. 10782, 2.560% (44)
+            QStringLiteral("зрењанина"), // 2387. 10770, 0.000% (4)
+            QStringLiteral("dózsa"), // 2390. 10756, 7.484% (11)
+            QStringLiteral("mr"), // 2395. 10735, 0.000% (181)
+            QStringLiteral("arc"), // 2398. 10726, 4.662% (106)
+            QStringLiteral("simpang"), // 2402. 10709, 0.579% (560)
+            QStringLiteral("ernesto"), // 2403. 10703, 1.850% (306)
+            QStringLiteral("koning"), // 2407. 10687, 0.187% (85)
+            QStringLiteral("dias"), // 2409. 10679, 5.965% (218)
+            QStringLiteral("giosuè"), // 2410. 10670, 0.000% (13)
+            QStringLiteral("marechal"), // 2414. 10659, 1.454% (95)
+            QStringLiteral("corte"), // 2430. 10580, 8.233% (505)
+            QStringLiteral("trois"), // 2431. 10577, 0.700% (287)
+            QStringLiteral("ángel"), // 2433. 10572, 5.779% (274)
+            QStringLiteral("elisabeth"), // 2436. 10560, 4.328% (237)
+            QStringLiteral("almeida"), // 2437. 10559, 8.590% (290)
+            QStringLiteral("endre"), // 2438. 10558, 1.051% (25)
+            QStringLiteral("virgen"), // 2446. 10524, 9.730% (267)
+            QStringLiteral("sir"), // 2451. 10499, 0.171% (271)
+            QStringLiteral("الإمام"), // 2454. 10491, 9.189% (106)
+            QStringLiteral("الاسلام"), // 2456. 10481, 9.827% (69)
+            QStringLiteral("gaetano"), // 2465. 10459, 4.589% (160)
+            QStringLiteral("area"), // 2484. 10376, 1.349% (98)
+            QStringLiteral("ramos"), // 2486. 10372, 8.803% (261)
+            QStringLiteral("kardynała"), // 2488. 10368, 0.000% (33)
+            QStringLiteral("gasperi"), // 2494. 10339, 6.732% (35)
+            QStringLiteral("владимира"), // 2499. 10310, 0.000% (168)
+            QStringLiteral("alcide"), // 2501. 10298, 0.194% (51)
+            QStringLiteral("petra"), // 2514. 10259, 5.975% (162)
+            QStringLiteral("gobernador"), // 2515. 10254, 0.946% (206)
+            QStringLiteral("prusa"), // 2530. 10223, 0.157% (7)
+            QStringLiteral("rodovia"), // 2535. 10209, 0.000% (261)
+            QStringLiteral("бул"), // 2550. 10178, 0.000% (162)
+            QStringLiteral("أحمد"), // 2551. 10177, 5.139% (350)
+            QStringLiteral("pot"), // 2559. 10147, 0.000% (316)
+            QStringLiteral("monseigneur"), // 2561. 10141, 0.779% (289)
+            QStringLiteral("mateevici"), // 2562. 10138, 1.144% (10)
+            QStringLiteral("sous") // 2566. 10135, 0.414% (353)
+        };
+        words.insert(words.end(), calculatedCommonWords);
+    }
+
+    inline const QHash<QString, int>& COMMON_WORDS()
+    {
+        std::vector<QString> words;
+        addManualFrequentWords(words);
+        words.push_back(NUMBER_WITH_LESS_THAN_2_LETTERS);
+        addCalculatedCommonWords(words);
+        addAbbreviations(words);
+
         static QHash<QString, int> dictionary = [&]()
         {
             QHash<QString, int> dict;
@@ -1289,6 +3498,10 @@ namespace OsmAnd
             {
                 return *it;
             }
+            if (REGION_NAMES().contains(name))
+            {
+                return FREQUENTLY_USED_WORDS().size();
+            }
             return -1;
         }
         
@@ -1317,10 +3530,6 @@ namespace OsmAnd
             if (it != COMMON_WORDS().end())
             {
                 return *it;
-            }
-            if (REGION_NAMES().contains(name))
-            {
-                return COMMON_WORDS().size();
             }
             int fq = getFrequentlyUsed(name);
             if (fq != -1)
@@ -1365,14 +3574,6 @@ namespace OsmAnd
         static inline void addRegionName(const QString & regionName)
         {
             REGION_NAMES().insert(regionName.toLower());
-        }
-        
-        static inline void insertCommonWord(const QString name, int index)
-        {
-            if (index < COMMON_WORDS().size())
-            {
-                COMMON_WORDS().insert(name, index);
-            }
         }
     };
 }
