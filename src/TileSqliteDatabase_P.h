@@ -65,14 +65,15 @@ namespace OsmAnd
             int64_t specification) const;
         bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, int64_t time) const;
 
-        static std::shared_ptr<sqlite3_stmt> prepareStatement(const std::shared_ptr<sqlite3>& db, QString sql);
+        static std::shared_ptr<sqlite3_stmt> prepareStatement(
+            const std::shared_ptr<sqlite3>& db, QString sql, bool suppressErrorLogging = false);
         static QVariant readStatementValue(const std::shared_ptr<sqlite3_stmt>& statement,
             int index, void* data = nullptr);
         static bool bindStatementParameter(const std::shared_ptr<sqlite3_stmt>& statement,
             QString name, QVariant value);
         static bool bindStatementParameter(const std::shared_ptr<sqlite3_stmt>& statement, int index, QVariant value);
         static int stepStatement(const std::shared_ptr<sqlite3_stmt>& statement);
-        static bool execStatement(const std::shared_ptr<sqlite3>& db, QString sql);
+        static bool execStatement(const std::shared_ptr<sqlite3>& db, QString sql, bool suppressErrorLogging = false);
 
         static std::shared_ptr<Meta> readMeta(const std::shared_ptr<sqlite3>& db);
         static bool writeMeta(const std::shared_ptr<sqlite3>& db, const Meta& meta);

@@ -3499,6 +3499,10 @@ namespace OsmAnd
             {
                 return *it + rs;
             }
+            if (REGION_NAMES().contains(name))
+            {
+                return FREQUENTLY_USED_WORDS().size();
+            }
             return -1;
         }
 
