@@ -2783,14 +2783,14 @@ bool OsmAnd::TileSqliteDatabase_P::configureStatement(
 std::shared_ptr<sqlite3_stmt> OsmAnd::TileSqliteDatabase_P::prepareStatement(
     const std::shared_ptr<sqlite3>& db,
     QString sql,
-    bool suppressError /* = false */)
+    bool suppressErrorLogging /* = false */)
 {
     sqlite3_stmt* pStatement = nullptr;
     const auto res = sqlite3_prepare16_v2(db.get(), sql.utf16(), -1, &pStatement, nullptr);
     const std::shared_ptr<sqlite3_stmt> statement(pStatement, sqlite3_finalize);
     if (res != SQLITE_OK)
     {
-        if (!suppressError)
+        if (!suppressErrorLogging)
             LogPrintf(
                 LogSeverityLevel::Error,
                 "Failed to prepare statement from '%s': %s (%s)",
@@ -2938,9 +2938,9 @@ int OsmAnd::TileSqliteDatabase_P::stepStatement(const std::shared_ptr<sqlite3_st
 }
 
 bool OsmAnd::TileSqliteDatabase_P::execStatement(
-    const std::shared_ptr<sqlite3>& db, QString sql, bool suppressError /* = false */)
+    const std::shared_ptr<sqlite3>& db, QString sql, bool suppressErrorLogging /* = false */)
 {
-    const auto statement = prepareStatement(db, sql, suppressError);
+    const auto statement = prepareStatement(db, sql, suppressErrorLogging);
     return statement && stepStatement(statement) >= 0;
 }
 
