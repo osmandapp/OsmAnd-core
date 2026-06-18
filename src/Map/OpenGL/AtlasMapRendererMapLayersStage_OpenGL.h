@@ -172,11 +172,15 @@ namespace OsmAnd
                     GLlocation primaryGridRefLonLat;
                     GLlocation primaryGridBounds;
                     GLlocation primaryGridConstants;
+                    GLlocation primaryGridHelmertTranslations;
+                    GLlocation primaryGridHelmertRotations;
                     GLlocation secondaryGridAxisX;
                     GLlocation secondaryGridAxisY;
                     GLlocation secondaryGridRefLonLat;
                     GLlocation secondaryGridBounds;
                     GLlocation secondaryGridConstants;
+                    GLlocation secondaryGridHelmertTranslations;
+                    GLlocation secondaryGridHelmertRotations;
 
                     // Per-tile data
                     GLlocation tileCoords31;

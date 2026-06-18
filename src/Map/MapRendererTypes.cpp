@@ -1,7 +1,10 @@
 #include "MapRendererTypes.h"
 #include "MapRendererTypes_private.h"
 
-#include <ogr_spatialref.h>
+#include <QRegularExpression>
+#include "ogr_spatialref.h"
+#include "ogr_proj_p.h"
+#include <proj.h>
 
 OsmAnd::MapLayerConfiguration::MapLayerConfiguration()
     : opacityFactor(1.0f)
@@ -124,6 +127,9 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setProjectionParameters(
         parameters->latBounds = parameters->lonBounds; // Without latitude bounds
         parameters->semiMajorAxisAndInverseFlattening.x = 6378.137; // Semi-major axis of WGS84 ellipsoid (km)
         parameters->semiMajorAxisAndInverseFlattening.y = 298.257223563; // Inverse flattening of WGS84 ellipsoid
+        parameters->semiMajorAxisAndSemiMinorAxis.x = parameters->semiMajorAxisAndInverseFlattening.x;
+        parameters->semiMajorAxisAndSemiMinorAxis.y = Utilities::getSemiMinorAxis(
+            parameters->semiMajorAxisAndInverseFlattening, parameters->squaredEccentricities);
         parameters->refLonLatTM.x = 0.0; // Longitude of central meridian
         parameters->refLonLatTM.y = 0.0; // Latitude of origin
         parameters->falseEastingAndNorthingTM.x = 0.0; // False easting (km)
@@ -181,6 +187,39 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setProjectionParameters(
     return *this;
 }
 
+OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setPrimaryEllipsoidParameters(
+    const PointD& helmertTranslationsXY, const PointD& helmertTranslationsZW,
+    const PointD& helmertRotationsXY, const PointD& helmertRotationsZScale)
+{
+    setEllipsoidParameters(0,
+        helmertTranslationsXY, helmertTranslationsZW, helmertRotationsXY, helmertRotationsZScale);
+    return *this;
+}
+
+OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setSecondaryEllipsoidParameters(
+    const PointD& helmertTranslationsXY, const PointD& helmertTranslationsZW,
+    const PointD& helmertRotationsXY, const PointD& helmertRotationsZScale)
+{
+    setEllipsoidParameters(1,
+        helmertTranslationsXY, helmertTranslationsZW, helmertRotationsXY, helmertRotationsZScale);
+    return *this;
+}
+
+OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setEllipsoidParameters(
+    const int gridIndex, const PointD& helmertTranslationsXY, const PointD& helmertTranslationsZW,
+    const PointD& helmertRotationsXY, const PointD& helmertRotationsZScale)
+{
+    auto parameters = &gridParameters[gridIndex];
+    parameters->helmertTranslations.x = helmertTranslationsXY.x;
+    parameters->helmertTranslations.y = helmertTranslationsXY.y;
+    parameters->helmertTranslations.z = helmertTranslationsZW.x;
+    parameters->helmertRotations.x = helmertRotationsXY.x;
+    parameters->helmertRotations.y = helmertRotationsXY.y;
+    parameters->helmertRotations.z = helmertRotationsZScale.x;
+    parameters->helmertScale = helmertRotationsZScale.y;
+    return *this;
+}
+
 OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setPrimaryTransverseMercatorConstants(
     const PointD& lonBounds,
     const PointD& latBounds,
@@ -220,6 +259,9 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setTransverseMercatorConst
     parameters->lonBounds = lonBounds;
     parameters->latBounds = latBounds;
     parameters->semiMajorAxisAndInverseFlattening = semiMajorAxisAndInverseFlattening;
+    parameters->semiMajorAxisAndSemiMinorAxis.x = semiMajorAxisAndInverseFlattening.x;
+    parameters->semiMajorAxisAndSemiMinorAxis.y =
+        Utilities::getSemiMinorAxis(semiMajorAxisAndInverseFlattening, parameters->squaredEccentricities);
     parameters->refLonLatTM = refLonLat;
     parameters->falseEastingAndNorthingTM = falseEastingAndNorthing;
     parameters->scaleFactor = scaleFactor.x;
@@ -284,8 +326,16 @@ OsmAnd::PointD OsmAnd::GridConfiguration::projectLocation(const int gridIndex, c
             {
                 const auto lonlat = Utilities::getAnglesFrom31(location31);
                 auto parameters = &gridParameters[gridIndex];
-                result = Utilities::getCoordinatesTM(
+                const auto ellipsoidLonLat = Utilities::getEllipsoidCoordinates(
                     lonlat,
+                    6378.137,
+                    parameters->semiMajorAxisAndSemiMinorAxis,
+                    parameters->squaredEccentricities,
+                    parameters->helmertTranslations,
+                    parameters->helmertRotations,
+                    parameters->helmertScale);
+                result = Utilities::getCoordinatesTM(
+                    ellipsoidLonLat,
                     parameters->refLonLatTM,
                     parameters->semiMajorAxisAndInverseFlattening,
                     parameters->falseEastingAndNorthingTM,
@@ -736,22 +786,26 @@ bool OsmAnd::GridConfiguration::isValid() const
 class OsmAnd::CoordinateTransformer_P Q_DECL_FINAL
 {
 private:
+    int towsg84_epsg;
     OGRSpatialReference source_crs;
     OGRSpatialReference target_crs;
     OGRCoordinateTransformation* forwardTransform;
     OGRCoordinateTransformation* backwardTransform;
 
 public:
-    CoordinateTransformer_P(const QString& projResourcesPath, int epsg_number);
+    CoordinateTransformer_P(const QString& projResourcesPath, int epsg_number, int towsg84_epsg_number);
     ~CoordinateTransformer_P();
 
     bool fromLonLat(PointD& location);
     bool toLonLat(PointD& location);
     bool getConstantsTM(PointD& lonBounds, PointD& latBounds, PointD& semiMajorAxisAndInverseFlattening,
         PointD& refLonLatTM, PointD& falseEastingAndNorthingTM, PointD& scaleFactor);
+    bool getEllipsoidParameters(PointD& helmertTranslationsXY, PointD& helmertTranslationsZW,
+        PointD& helmertRotationsXY, PointD& helmertRotationsZScale);
 };
 
-OsmAnd::CoordinateTransformer_P::CoordinateTransformer_P(const QString& projResourcesPath, int epsg_number)
+OsmAnd::CoordinateTransformer_P::CoordinateTransformer_P(
+    const QString& projResourcesPath, int epsg_number, int towsg84_epsg_number)
     : forwardTransform(nullptr)
     , backwardTransform(nullptr)
 {
@@ -788,6 +842,8 @@ OsmAnd::CoordinateTransformer_P::CoordinateTransformer_P(const QString& projReso
         LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to create backward GDAL transformation.");
         return;
     }
+
+    towsg84_epsg = towsg84_epsg_number;
 }
 
 OsmAnd::CoordinateTransformer_P::~CoordinateTransformer_P()
@@ -854,19 +910,155 @@ bool OsmAnd::CoordinateTransformer_P::getConstantsTM(PointD& lonBounds, PointD& 
     OGRErr err;
 
     refLonLatTM.x = target_crs.GetProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0, &err) * radFactor;
+    if (err != OGRERR_NONE)
+        return false;
     refLonLatTM.y = target_crs.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0, &err) * radFactor;
+    if (err != OGRERR_NONE)
+        return false;
     semiMajorAxisAndInverseFlattening.x = target_crs.GetSemiMajor(&err) / 1000.0;
+    if (err != OGRERR_NONE)
+        return false;
     semiMajorAxisAndInverseFlattening.y = target_crs.GetInvFlattening(&err);
+    if (err != OGRERR_NONE)
+        return false;
     falseEastingAndNorthingTM.x = target_crs.GetProjParm(SRS_PP_FALSE_EASTING, 0.0, &err) / 1000.0;
+    if (err != OGRERR_NONE)
+        return false;
     falseEastingAndNorthingTM.y = target_crs.GetProjParm(SRS_PP_FALSE_NORTHING, 0.0, &err) / 1000.0;
+    if (err != OGRERR_NONE)
+        return false;
     scaleFactor.x = target_crs.GetProjParm(SRS_PP_SCALE_FACTOR, 1.0, &err);
     scaleFactor.y = scaleFactor.x;
+    if (err != OGRERR_NONE)
+        return false;
 
-    return err == OGRERR_NONE;
+    return true;
 }
 
-OsmAnd::CoordinateTransformer::CoordinateTransformer(const QString& projResourcesPath, int epsg_number)
-    : _p(new CoordinateTransformer_P(projResourcesPath, epsg_number))
+bool OsmAnd::CoordinateTransformer_P::getEllipsoidParameters(
+    PointD& helmertTranslationsXY, PointD& helmertTranslationsZW,
+    PointD& helmertRotationsXY, PointD& helmertRotationsZScale)
+{
+    if (!forwardTransform || !backwardTransform)
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to get CRS constants: not initialized.");
+        helmertRotationsZScale.y = 1.0;
+        return false;
+    }
+
+    double coeffs[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    target_crs.AddGuessedTOWGS84();
+    bool isFound = target_crs.GetTOWGS84(coeffs) == OGRERR_NONE;
+    if (!isFound && towsg84_epsg > 0)
+    {
+        auto ctx = OSRGetProjTLSContext();
+        auto pj = proj_create(ctx,
+            QStringLiteral("urn:ogc:def:coordinateOperation:EPSG::%1").arg(towsg84_epsg).toUtf8().constData());
+        if (!pj)
+        {
+            LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to create PROJ coordinate operation.");
+            helmertRotationsZScale.y = 1.0;
+            return false;
+        }
+        auto projStr = proj_as_proj_string(ctx, pj, PJ_PROJ_5, nullptr);
+        if (projStr)
+        {
+            auto pipeline = QString::fromUtf8(projStr);
+            int helmertPos = pipeline.indexOf(QStringLiteral("+proj=helmert"));
+            if (helmertPos != -1) {
+                isFound = true;
+                int nextStepPos = pipeline.indexOf(QStringLiteral("+step"), helmertPos);
+                QStringRef helmertStep = (nextStepPos != -1) 
+                    ? pipeline.midRef(helmertPos, nextStepPos - helmertPos)
+                    : pipeline.midRef(helmertPos);
+                QRegularExpression paramRegex(QStringLiteral("\\+([a-z_]+)=([-0-9.eE+]+)"));
+                QRegularExpressionMatchIterator i = paramRegex.globalMatch(helmertStep);
+                double rates[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+                double epoch = 0.0;
+                bool hasEpoch = false;
+                while (i.hasNext())
+                {
+                    auto match = i.next();
+                    auto key = match.capturedRef(1);
+                    bool ok = true;
+                    double value = match.capturedRef(2).toDouble(&ok);
+                    if (ok)
+                    {
+                        if (key == QStringLiteral("x"))
+                            coeffs[0] = value;
+                        else if (key == QStringLiteral("y"))
+                            coeffs[1] = value;
+                        else if (key == QStringLiteral("z"))
+                            coeffs[2] = value;
+                        else if (key == QStringLiteral("rx"))
+                            coeffs[3] = value;
+                        else if (key == QStringLiteral("ry"))
+                            coeffs[4] = value;
+                        else if (key == QStringLiteral("rz"))
+                            coeffs[5] = value;
+                        else if (key == QStringLiteral("s"))
+                            coeffs[6] = value;
+                        else if (key == QStringLiteral("dx"))
+                            rates[0] = value;
+                        else if (key == QStringLiteral("dy"))
+                            rates[1] = value;
+                        else if (key == QStringLiteral("dz"))
+                            rates[2] = value;
+                        else if (key == QStringLiteral("drx"))
+                            rates[3] = value;
+                        else if (key == QStringLiteral("dry"))
+                            rates[4] = value;
+                        else if (key == QStringLiteral("drz"))
+                            rates[5] = value;
+                        else if (key == QStringLiteral("ds"))
+                            rates[6] = value;
+                        else if (key == QStringLiteral("t_epoch"))
+                        {
+                            epoch = value;
+                            hasEpoch = true;
+                        }
+                    }
+                }
+                if (hasEpoch)
+                {
+                    auto now = QDateTime::currentDateTimeUtc();
+                    int year = now.date().year();
+                    QDateTime s(QDate(year, 1, 1), QTime(0, 0));
+                    QDateTime f(QDate(year + 1, 1, 1), QTime(0, 0));
+                    auto dt = static_cast<double>(s.msecsTo(now)) / static_cast<double>(s.msecsTo(f)) + year - epoch;
+                    for(int j = 0; j < 7; j++)
+                    {
+                        coeffs[j] += (rates[j] * dt);
+                    }
+                }
+            }
+        }
+        proj_destroy(pj);
+    }
+
+    if (!isFound)
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to get Helmert shift parameters.");
+        helmertRotationsZScale.y = 1.0;
+        return false;
+    }
+
+    const auto radFactor = M_PI / (180.0 * 3600.0);
+
+    helmertTranslationsXY.x = -coeffs[0] / 1000.0;
+    helmertTranslationsXY.y = -coeffs[1] / 1000.0;
+    helmertTranslationsZW.x = -coeffs[2] / 1000.0;
+    helmertRotationsXY.x = -coeffs[3] * radFactor;
+    helmertRotationsXY.y = -coeffs[4] * radFactor;
+    helmertRotationsZScale.x = -coeffs[5] * radFactor;
+    helmertRotationsZScale.y = 1.0 + (-coeffs[6] * 1e-6);
+
+    return true;
+}
+
+OsmAnd::CoordinateTransformer::CoordinateTransformer(
+    const QString& projResourcesPath, int epsg_number, int towsg84_epsg_number /* = 0 */)
+    : _p(new CoordinateTransformer_P(projResourcesPath, epsg_number, towsg84_epsg_number))
 {
 }
 
@@ -888,4 +1080,12 @@ bool OsmAnd::CoordinateTransformer::getConstantsTM(PointD& lonBounds, PointD& la
 {
     return _p->getConstantsTM(lonBounds, latBounds, semiMajorAxisAndInverseFlattening, refLonLatTM,
         falseEastingAndNorthingTM, scaleFactor);
+}
+
+bool OsmAnd::CoordinateTransformer::getEllipsoidParameters(
+    PointD& helmertTranslationsXY, PointD& helmertTranslationsZW,
+    PointD& helmertRotationsXY, PointD& helmertRotationsZScale)
+{
+    return _p->getEllipsoidParameters(helmertTranslationsXY, helmertTranslationsZW,
+        helmertRotationsXY, helmertRotationsZScale);
 }

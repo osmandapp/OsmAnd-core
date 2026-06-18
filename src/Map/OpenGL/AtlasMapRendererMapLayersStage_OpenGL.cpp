@@ -321,11 +321,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*param_vs_primaryGridRefLonLat*/ +
         1 /*param_vs_primaryGridBounds*/ +
         1 /*param_vs_primaryGridConstants*/ +
+        1 /*param_vs_primaryGridHelmertTranslations*/ +
+        1 /*param_vs_primaryGridHelmertRotations*/ +
         1 /*param_vs_secondaryGridAxisX*/ +
         1 /*param_vs_secondaryGridAxisY*/ +
         1 /*param_vs_secondaryGridRefLonLat*/ +
         1 /*param_vs_secondaryGridBounds*/ +
-        1 /*param_vs_secondaryGridConstants*/;
+        1 /*param_vs_secondaryGridConstants*/ +
+        1 /*param_vs_secondaryGridHelmertTranslations*/ +
+        1 /*param_vs_secondaryGridHelmertRotations*/;
     const auto fsOtherUniforms =
         1 /*param_fs_lastBatch*/ +
         1 /*param_fs_blendingEnabled*/ + 
@@ -476,11 +480,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "uniform vec4 param_vs_primaryGridRefLonLat;                                                                        ""\n"
             "uniform vec4 param_vs_primaryGridBounds;                                                                           ""\n"
             "uniform vec4 param_vs_primaryGridConstants;                                                                        ""\n"
+            "uniform vec4 param_vs_primaryGridHelmertTranslations;                                                              ""\n"
+            "uniform vec4 param_vs_primaryGridHelmertRotations;                                                                 ""\n"
             "uniform vec4 param_vs_secondaryGridAxisX;                                                                          ""\n"
             "uniform vec4 param_vs_secondaryGridAxisY;                                                                          ""\n"
             "uniform vec4 param_vs_secondaryGridRefLonLat;                                                                      ""\n"
             "uniform vec4 param_vs_secondaryGridBounds;                                                                         ""\n"
             "uniform vec4 param_vs_secondaryGridConstants;                                                                      ""\n"
+            "uniform vec4 param_vs_secondaryGridHelmertTranslations;                                                            ""\n"
+            "uniform vec4 param_vs_secondaryGridHelmertRotations;                                                               ""\n"
             "uniform vec4 param_vs_primaryGridTileTop;                                                                          ""\n"
             "uniform vec4 param_vs_primaryGridTileBot;                                                                          ""\n"
             "uniform vec4 param_vs_secondaryGridTileTop;                                                                        ""\n"
@@ -553,6 +561,30 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    vec2 texCoords = in_vs_vertexTexCoords;                                                                        ""\n"
             "    texCoords = texCoords * tileLayer.txOffsetAndScale.zw + tileLayer.txOffsetAndScale.xy;                         ""\n"
             "    outTexCoords = texCoords;                                                                                      ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "vec2 toEllipsoid(in vec2 lonlat, in vec2 semiMajorAxisInvFlat, in vec4 t, in vec4 r)                               ""\n"
+            "{                                                                                                                  ""\n"
+            "    vec2 res = lonlat;                                                                                             ""\n"
+            "    if (t.w > 0.0)                                                                                                 ""\n"
+            "    {                                                                                                              ""\n"
+            "        vec2 sncslat = vec2(sin(lonlat.y), cos(lonlat.y));                                                         ""\n"
+            "        float wgse2 = 0.006694379990141316461;                                                                     ""\n"
+            "        float wgsn = 6378.137 / sqrt(1.0 - wgse2 * sncslat.x * sncslat.x);                                         ""\n"
+            "        vec3 w = vec3(sncslat.y * cos(lonlat.x), sncslat.y * sin(lonlat.x), (1.0 - wgse2) * sncslat.x) * wgsn;     ""\n"
+            "        vec3 tgt = vec3(dot(w, vec3(1.0, r.z, -r.y)), dot(w, vec3(-r.z, 1.0, r.x)), dot(w, vec3(r.y, -r.x, 1.0))); ""\n"
+            "        tgt *= r.w;                                                                                                ""\n"
+            "        tgt += t.xyz;                                                                                              ""\n"
+            "        float f = 1.0 / semiMajorAxisInvFlat.y;                                                                    ""\n"
+            "        float s_min_a = semiMajorAxisInvFlat.x * (1.0 - f);                                                        ""\n"
+            "        float e2 = f * (2.0 - f);                                                                                  ""\n"
+            "        float ep2 = e2 / (1.0 - e2);                                                                               ""\n"
+            "        float p = length(tgt.xy);                                                                                  ""\n"
+            "        vec2 v = normalize(vec2(tgt.z * semiMajorAxisInvFlat.x, p * s_min_a));                                     ""\n"
+            "        v *= v * v;                                                                                                ""\n"
+            "        res = vec2(atan(tgt.y, tgt.x), atan(tgt.z + ep2 * s_min_a * v.x, p - e2 * semiMajorAxisInvFlat.x * v.y));  ""\n"
+            "    }                                                                                                              ""\n"
+            "    return res;                                                                                                    ""\n"
             "}                                                                                                                  ""\n"
             "                                                                                                                   ""\n"
             "vec2 getCrdTM(in vec2 lonlat, in float refLon, in vec4 semiMAxisIFlatFalEaN, in float scale)                       ""\n"
@@ -832,7 +864,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    pCut = param_vs_primaryGridRefLonLat.w > 0.0 ? (isOut ? pCut : vec2(0.0)) : zUTM;                              ""\n"
             "    vec2 r = param_vs_primaryGridRefLonLat.xy;                                                                     ""\n"
             "    r.x = param_vs_primaryGridRefLonLat.w > 0.0 ? r.x : refLonUTM;                                                 ""\n"
-            "    vec2 mTM = getCrdTM(lonlat, r.x, param_vs_primaryGridConstants, param_vs_primaryGridRefLonLat.z);              ""\n"
+            "    vec2 coords = toEllipsoid(lonlat, param_vs_primaryGridConstants.xy,                                            ""\n"
+            "        param_vs_primaryGridHelmertTranslations, param_vs_primaryGridHelmertRotations);                            ""\n"
+            "    vec2 mTM = getCrdTM(coords, r.x, param_vs_primaryGridConstants, param_vs_primaryGridRefLonLat.z);              ""\n"
             "    vec2 oTM = getCrdTM(r, r.x, vec4(param_vs_primaryGridConstants.xy, 0.0, 0.0), param_vs_primaryGridRefLonLat.z);""\n"
             "    mTM.y -= param_vs_primaryGridRefLonLat.w > 0.0 && r.y != 0.0 ? oTM.y: 0.0;                                     ""\n"
             "    vec4 axisX = vec4(lonlat.x, mTM.x, mercMeters.x, 1.0);                                                         ""\n"
@@ -848,7 +882,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    sCut = param_vs_secondaryGridRefLonLat.w > 0.0 ? (isOut ? sCut : vec2(0.0)) : zUTM;                            ""\n"
             "    r = param_vs_secondaryGridRefLonLat.xy;                                                                        ""\n"
             "    r.x = param_vs_secondaryGridRefLonLat.w > 0.0 ? r.x : refLonUTM;                                               ""\n"
-            "    mTM = getCrdTM(lonlat, r.x, param_vs_secondaryGridConstants, param_vs_secondaryGridRefLonLat.z);               ""\n"
+            "    coords = toEllipsoid(lonlat, param_vs_secondaryGridConstants.xy,                                               ""\n"
+            "        param_vs_secondaryGridHelmertTranslations, param_vs_secondaryGridHelmertRotations);                        ""\n"
+            "    mTM = getCrdTM(coords, r.x, param_vs_secondaryGridConstants, param_vs_secondaryGridRefLonLat.z);               ""\n"
             "    oTM = getCrdTM(r, r.x, vec4(param_vs_secondaryGridConstants.xy, 0.0, 0.0), param_vs_secondaryGridRefLonLat.z); ""\n"
             "    mTM.y -= param_vs_secondaryGridRefLonLat.w > 0.0 && r.y != 0.0 ? oTM.y : 0.0;                                  ""\n"
             "    axisX = vec4(lonlat.x, mTM.x, mercMeters.x, 1.0);                                                              ""\n"
@@ -1558,6 +1594,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "param_vs_primaryGridConstants",
             GlslVariableType::Uniform);
         ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.primaryGridHelmertTranslations,
+            "param_vs_primaryGridHelmertTranslations",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.primaryGridHelmertRotations,
+            "param_vs_primaryGridHelmertRotations",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
             outRasterLayerTileProgram.vs.param.secondaryGridAxisX,
             "param_vs_secondaryGridAxisX",
             GlslVariableType::Uniform);
@@ -1576,6 +1620,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         ok = ok && lookup->lookupLocation(
             outRasterLayerTileProgram.vs.param.secondaryGridConstants,
             "param_vs_secondaryGridConstants",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.secondaryGridHelmertTranslations,
+            "param_vs_secondaryGridHelmertTranslations",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.secondaryGridHelmertRotations,
+            "param_vs_secondaryGridHelmertRotations",
             GlslVariableType::Uniform);
         ok = ok && lookup->lookupLocation(
             outRasterLayerTileProgram.vs.param.primaryGridTileTop,
@@ -2400,6 +2452,18 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
             static_cast<float>(currentState.gridConfiguration.gridParameters[0].falseEastingAndNorthingTM.x / 100.0),
             static_cast<float>(currentState.gridConfiguration.gridParameters[0].falseEastingAndNorthingTM.y / 100.0));
         GL_CHECK_RESULT;
+        glUniform4f(program.vs.param.primaryGridHelmertTranslations,
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertTranslations.x),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertTranslations.y),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertTranslations.z),
+            currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::TM ? 1.0f : 0.0f);
+        GL_CHECK_RESULT;
+        glUniform4f(program.vs.param.primaryGridHelmertRotations,
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertRotations.x),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertRotations.y),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertRotations.z),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertScale));
+        GL_CHECK_RESULT;
         glUniform4f(program.vs.param.secondaryGridAxisX,
             currentState.gridConfiguration.gridParameters[1].factorX1,
             currentState.gridConfiguration.gridParameters[1].factorX2,
@@ -2429,6 +2493,18 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
             static_cast<float>(currentState.gridConfiguration.gridParameters[1].semiMajorAxisAndInverseFlattening.y),
             static_cast<float>(currentState.gridConfiguration.gridParameters[1].falseEastingAndNorthingTM.x / 100.0),
             static_cast<float>(currentState.gridConfiguration.gridParameters[1].falseEastingAndNorthingTM.y / 100.0));
+        GL_CHECK_RESULT;
+        glUniform4f(program.vs.param.secondaryGridHelmertTranslations,
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].helmertTranslations.x),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].helmertTranslations.y),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].helmertTranslations.z),
+            currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::TM ? 1.0f : 0.0f);
+        GL_CHECK_RESULT;
+        glUniform4f(program.vs.param.secondaryGridHelmertRotations,
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].helmertRotations.x),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].helmertRotations.y),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].helmertRotations.z),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].helmertScale));
         GL_CHECK_RESULT;
         float minVisualZoom;
         const auto minZoomLevel = renderer->getMinZoomLimit(currentState, PointI(0, INT32_MAX / 2 + 1), minVisualZoom);
