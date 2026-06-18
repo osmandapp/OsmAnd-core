@@ -457,9 +457,58 @@ namespace OsmAnd
             return zone.y << 6 | zone.x;
         }
 
-        // Get Transverse Mercator coordinates from angles (latitude and longitude)
+        inline static double getSemiMinorAxis(
+            const PointD& semiMajorAxisAndInverseFlattening,
+            PointD& squaredEccentricities)
+        {
+            const auto flattening = 1.0 / semiMajorAxisAndInverseFlattening.y;
+            const auto squaredEccentricity = flattening * (2.0 - flattening);
+            squaredEccentricities.x = squaredEccentricity;
+            squaredEccentricities.y = squaredEccentricity / (1.0 - squaredEccentricity);
+            return semiMajorAxisAndInverseFlattening.x * (1.0 - flattening);
+        }
+
+        inline static PointD getEllipsoidCoordinates(
+            const PointD& wgsLonLat,
+            double wgsSemiMajorAxis,
+            const PointD& semiMajorAxisAndSemiMinorAxis,
+            const PointD& squaredEccentricities,
+            const glm::dvec3& helmertTranslations,
+            const glm::dvec3& helmertRotations,
+            double helmertScale)
+        {
+            auto sinLat = sin(wgsLonLat.y);
+            auto cosLat = cos(wgsLonLat.y);
+            auto sinLon = sin(wgsLonLat.x);
+            auto cosLon = cos(wgsLonLat.x);
+            
+            constexpr double e2 = 0.006694379990141316461; // = 1.0 / 298.257223563 * (2.0 - 1.0 / 298.257223563);
+            auto n = wgsSemiMajorAxis / std::sqrt(1.0 - e2 * sinLat * sinLat);
+            auto pWgs = glm::dvec3(cosLat * cosLon, cosLat * sinLon, (1.0 - e2) * sinLat) * n;
+
+            auto pTarget = glm::dvec3(
+                pWgs.x + helmertRotations.z * pWgs.y - helmertRotations.y * pWgs.z,
+                -helmertRotations.z * pWgs.x + pWgs.y + helmertRotations.x * pWgs.z,
+                helmertRotations.y * pWgs.x - helmertRotations.x * pWgs.y + pWgs.z)
+                * helmertScale + helmertTranslations;
+
+            auto p = std::sqrt(pTarget.x * pTarget.x + pTarget.y * pTarget.y);
+            auto vx = pTarget.z * semiMajorAxisAndSemiMinorAxis.x;
+            auto vy = p * semiMajorAxisAndSemiMinorAxis.y;
+            auto vh = std::sqrt(vx * vx + vy * vy);
+            auto st = vx / vh;
+            auto ct = vy / vh;
+
+            PointD result(atan2(pTarget.y, pTarget.x),
+                atan2(pTarget.z + squaredEccentricities.y * semiMajorAxisAndSemiMinorAxis.y * st * st * st,
+                p - squaredEccentricities.x * semiMajorAxisAndSemiMinorAxis.x * ct * ct * ct));
+
+            return result;
+        }
+
+        // Get Transverse Mercator coordinates from ellipsoid angles
         inline static PointD getCoordinatesTM(
-            const PointD& lonlat,
+            const PointD& ellipsoidLonLat,
             const PointD& refLonLat,
             const PointD& semiMajorAxisAndInverseFlattening,
             const PointD& falseEastingAndNorthing,
@@ -467,26 +516,26 @@ namespace OsmAnd
             bool withLatitudeCorrection = true,
             bool withX = true)
         {
-            auto sinlat = sin(lonlat.y);
-            double f = 1.0 / semiMajorAxisAndInverseFlattening.y;
-            double n = f / (2.0 - f);
-            double nn = 2.0 * sqrt(n) / (1.0 + n);
-            double t = sinh(atanh(sinlat) - nn * atanh(nn * sinlat));
-            double x = lonlat.x - refLonLat.x;
-            double xi = atan(t / cos(x));
-            double xi2 = xi * 2.0;
-            double xi4 = xi * 4.0;
-            double xi6 = xi * 6.0;
-            double eta = atanh(sin(x) / sqrt(1.0 + t * t));
-            double eta2 = eta * 2.0;
-            double eta4 = eta * 4.0;
-            double eta6 = eta * 6.0;
-            double n2 = n * n;
-            double n3 = n2 * n;
-            double a1 = 0.5 * n - 2.0 / 3.0 * n2 + 5.0 / 16.0 * n3;
-            double a2 = 13.0 / 48.0 * n2 - 3.0 / 5.0 * n3;
-            double a3 = 61.0 / 240.0 * n3;
-            double factor = semiMajorAxisAndInverseFlattening.x * scaleFactor
+            auto sinlat = sin(ellipsoidLonLat.y);
+            auto f = 1.0 / semiMajorAxisAndInverseFlattening.y;
+            auto n = f / (2.0 - f);
+            auto nn = 2.0 * sqrt(n) / (1.0 + n);
+            auto t = sinh(atanh(sinlat) - nn * atanh(nn * sinlat));
+            auto x = ellipsoidLonLat.x - refLonLat.x;
+            auto xi = atan(t / cos(x));
+            auto xi2 = xi * 2.0;
+            auto xi4 = xi * 4.0;
+            auto xi6 = xi * 6.0;
+            auto eta = atanh(sin(x) / sqrt(1.0 + t * t));
+            auto eta2 = eta * 2.0;
+            auto eta4 = eta * 4.0;
+            auto eta6 = eta * 6.0;
+            auto n2 = n * n;
+            auto n3 = n2 * n;
+            auto a1 = 0.5 * n - 2.0 / 3.0 * n2 + 5.0 / 16.0 * n3;
+            auto a2 = 13.0 / 48.0 * n2 - 3.0 / 5.0 * n3;
+            auto a3 = 61.0 / 240.0 * n3;
+            auto factor = semiMajorAxisAndInverseFlattening.x * scaleFactor
                 / (1.0 + n) * (1.0 + n2 / 4.0 + n2 * n2 / 64.0 + n3 * n3 / 256.0);
             PointD result;
             if (withX)
