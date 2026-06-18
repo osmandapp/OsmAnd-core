@@ -487,9 +487,9 @@ namespace OsmAnd
             auto pWgs = glm::dvec3(cosLat * cosLon, cosLat * sinLon, (1.0 - e2) * sinLat) * n;
 
             auto pTarget = glm::dvec3(
-                pWgs.x + helmertRotations.z * pWgs.y - helmertRotations.y * pWgs.z,
-                -helmertRotations.z * pWgs.x + pWgs.y + helmertRotations.x * pWgs.z,
-                helmertRotations.y * pWgs.x - helmertRotations.x * pWgs.y + pWgs.z)
+                pWgs.x - helmertRotations.z * pWgs.y + helmertRotations.y * pWgs.z,
+                helmertRotations.z * pWgs.x + pWgs.y - helmertRotations.x * pWgs.z,
+                -helmertRotations.y * pWgs.x + helmertRotations.x * pWgs.y + pWgs.z)
                 * helmertScale + helmertTranslations;
 
             auto p = std::sqrt(pTarget.x * pTarget.x + pTarget.y * pTarget.y);

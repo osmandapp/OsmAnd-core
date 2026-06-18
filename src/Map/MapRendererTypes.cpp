@@ -946,11 +946,13 @@ bool OsmAnd::CoordinateTransformer_P::getEllipsoidParameters(
         return false;
     }
 
+    bool isPositionVector = true;
     double coeffs[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     target_crs.AddGuessedTOWGS84();
     bool isFound = target_crs.GetTOWGS84(coeffs) == OGRERR_NONE;
     if (!isFound && towsg84_epsg > 0)
     {
+        isPositionVector = false;
         auto ctx = OSRGetProjTLSContext();
         auto pj = proj_create(ctx,
             QStringLiteral("urn:ogc:def:coordinateOperation:EPSG::%1").arg(towsg84_epsg).toUtf8().constData());
@@ -971,6 +973,7 @@ bool OsmAnd::CoordinateTransformer_P::getEllipsoidParameters(
                 QStringRef helmertStep = (nextStepPos != -1) 
                     ? pipeline.midRef(helmertPos, nextStepPos - helmertPos)
                     : pipeline.midRef(helmertPos);
+                isPositionVector = helmertStep.indexOf(QStringLiteral("+convention=position_vector")) != -1;
                 QRegularExpression paramRegex(QStringLiteral("\\+([a-z_]+)=([-0-9.eE+]+)"));
                 QRegularExpressionMatchIterator i = paramRegex.globalMatch(helmertStep);
                 double rates[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -1048,9 +1051,9 @@ bool OsmAnd::CoordinateTransformer_P::getEllipsoidParameters(
     helmertTranslationsXY.x = -coeffs[0] / 1000.0;
     helmertTranslationsXY.y = -coeffs[1] / 1000.0;
     helmertTranslationsZW.x = -coeffs[2] / 1000.0;
-    helmertRotationsXY.x = -coeffs[3] * radFactor;
-    helmertRotationsXY.y = -coeffs[4] * radFactor;
-    helmertRotationsZScale.x = -coeffs[5] * radFactor;
+    helmertRotationsXY.x = (isPositionVector ? -coeffs[3] : coeffs[3]) * radFactor;
+    helmertRotationsXY.y = (isPositionVector ? -coeffs[4] : coeffs[4]) * radFactor;
+    helmertRotationsZScale.x = (isPositionVector ? -coeffs[5] : coeffs[5]) * radFactor;
     helmertRotationsZScale.y = 1.0 + (-coeffs[6] * 1e-6);
 
     return true;

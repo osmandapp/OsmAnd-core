@@ -572,7 +572,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "        float wgse2 = 0.006694379990141316461;                                                                     ""\n"
             "        float wgsn = 6378.137 / sqrt(1.0 - wgse2 * sncslat.x * sncslat.x);                                         ""\n"
             "        vec3 w = vec3(sncslat.y * cos(lonlat.x), sncslat.y * sin(lonlat.x), (1.0 - wgse2) * sncslat.x) * wgsn;     ""\n"
-            "        vec3 tgt = vec3(dot(w, vec3(1.0, r.z, -r.y)), dot(w, vec3(-r.z, 1.0, r.x)), dot(w, vec3(r.y, -r.x, 1.0))); ""\n"
+            "        vec3 tgt = vec3(dot(w, vec3(1.0, -r.z, r.y)), dot(w, vec3(r.z, 1.0, -r.x)), dot(w, vec3(-r.y, r.x, 1.0))); ""\n"
             "        tgt *= r.w;                                                                                                ""\n"
             "        tgt += t.xyz;                                                                                              ""\n"
             "        float f = 1.0 / semiMajorAxisInvFlat.y;                                                                    ""\n"
