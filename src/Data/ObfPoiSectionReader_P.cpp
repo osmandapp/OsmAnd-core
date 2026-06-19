@@ -1644,7 +1644,8 @@ void OsmAnd::ObfPoiSectionReader_P::readPoiNameIndexDataAtom(
     auto tileId = TileId::zero();
     auto zoom = MinZoomLevel;
 
-    bool matched = suffixMask.shouldPassThrough();
+    bool matched = false;
+    bool noBisetIndex = true;
     int maskIndex = 0;
     uint32_t shift = UINT_MAX;
     for (;;)
@@ -1654,6 +1655,11 @@ void OsmAnd::ObfPoiSectionReader_P::readPoiNameIndexDataAtom(
         {
             case 0:
             {
+                if (suffixMask.shouldPassThrough() || noBisetIndex)
+                {
+                    // intermediate version ignore
+                    matched = true;
+                }
                 if (!ObfReaderUtilities::reachedDataEnd(cis) || !matched || shift == UINT_MAX)
                     return;
 
@@ -1692,15 +1698,16 @@ void OsmAnd::ObfPoiSectionReader_P::readPoiNameIndexDataAtom(
             case OBF::OsmAndPoiNameIndexDataAtom::kShiftToFieldNumber:
             {
                 shift = ObfReaderUtilities::readBigEndianInt(cis);
-                if (!matched)
-                {
-                    cis->Skip(cis->BytesUntilLimit());
-                    return;
-                }
+//                if (!matched)
+//                {
+//                    cis->Skip(cis->BytesUntilLimit());
+//                    return;
+//                }
                 break;
             }
             case OBF::OsmAndPoiNameIndexDataAtom::kSuffixesBitsetFieldNumber:
             {
+                noBisetIndex = false;
                 gpb::uint32 mask;
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&mask));
                 if (!matched && suffixMask.isMatched(maskIndex, mask))

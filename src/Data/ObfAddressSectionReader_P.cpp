@@ -1036,7 +1036,7 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                             
                             if (!street)
                                 continue;
-                            
+
                             if (!query.isNull())
                             {
                                 bool accept = false;
@@ -1335,7 +1335,8 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
 
     AddressReference addressReference;
     bool add = true;
-    bool matched = suffixMask != nullptr && suffixMask->shouldPassThrough();
+    bool matched = false;
+    bool noBisetIndex = true;
     int maskIndex = 0;
 
     for (;;)
@@ -1345,21 +1346,30 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
         {
             case 0:
             {
-                if (!add || !matched || !ObfReaderUtilities::reachedDataEnd(cis) || addressReference.addressType == AddressNameIndexDataAtomType::Count)
+                if (!ObfReaderUtilities::reachedDataEnd(cis) || addressReference.addressType == AddressNameIndexDataAtomType::Count)
                     return;
 
-                if (addressReference.cityIndexOffset != 0)
-                    addressReference.cityIndexOffset = baseOffset - addressReference.cityIndexOffset;
-                if (addressReference.dataIndexOffset != 0)
-                    addressReference.dataIndexOffset = baseOffset - addressReference.dataIndexOffset;
-                auto it = outAddressReferences.find(addressReference.addressType);
-                if (it != outAddressReferences.end())
+                if ((suffixMask != nullptr && suffixMask->shouldPassThrough()) || noBisetIndex)
                 {
-                    it->push_back(addressReference);
+                    // intermediate version ignore
+                    matched = true;
                 }
-                else
+
+                if (add && matched)
                 {
-                    outAddressReferences.insert(addressReference.addressType, {addressReference});
+                    if (addressReference.cityIndexOffset != 0)
+                        addressReference.cityIndexOffset = baseOffset - addressReference.cityIndexOffset;
+                    if (addressReference.dataIndexOffset != 0)
+                        addressReference.dataIndexOffset = baseOffset - addressReference.dataIndexOffset;
+                    auto it = outAddressReferences.find(addressReference.addressType);
+                    if (it != outAddressReferences.end())
+                    {
+                        it->push_back(addressReference);
+                    }
+                    else
+                    {
+                        outAddressReferences.insert(addressReference.addressType, {addressReference});
+                    }
                 }
                 return;
             }
@@ -1416,6 +1426,7 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
             }
             case OBF::AddressNameIndexDataAtom::kSuffixesBitsetFieldNumber:
             {
+                noBisetIndex = false;
                 gpb::uint32 mask;
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&mask));
                 if (!matched && suffixMask != nullptr && suffixMask->isMatched(maskIndex, mask))
