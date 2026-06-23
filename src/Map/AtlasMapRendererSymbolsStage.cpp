@@ -1593,8 +1593,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 }
                 else
                 {
-                    if (isPrimary
-                        && currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::TM)
+                    if (isPrimary && (
+                        currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::HOMV2
+                        || currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::OSTEREO
+                        || currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::TM))
                     {
                         const auto lonlat = Utilities::getAnglesFrom31(currentState.target31);
                         if (lonlat.x < currentState.gridConfiguration.gridParameters[0].lonBounds.x
@@ -1603,8 +1605,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                             || lonlat.y > currentState.gridConfiguration.gridParameters[0].latBounds.y)
                         return;
                     }
-                    else if (!isPrimary
-                        && currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::TM)
+                    else if (!isPrimary && (
+                        currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::HOMV2
+                        || currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::OSTEREO
+                        || currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::TM))
                     {
                         const auto lonlat = Utilities::getAnglesFrom31(currentState.target31);
                         if (lonlat.x < currentState.gridConfiguration.gridParameters[1].lonBounds.x
@@ -1660,8 +1664,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 PointI p1(internalState.elevatedFrustum2D31.p1);
                 PointI p2(internalState.elevatedFrustum2D31.p2);
                 PointI p3(internalState.elevatedFrustum2D31.p3);
-                if (isPrimary
-                    && currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::TM)
+                if (isPrimary && (
+                    currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::HOMV2
+                    || currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::OSTEREO
+                    || currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::TM))
                 {
                     auto lonlat = Utilities::getAnglesFrom31(p0);
                     const AreaD gridBounds(
@@ -1675,8 +1681,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                         || !gridBounds.contains(Utilities::getAnglesFrom31(p3)))
                     return;
                 }
-                else if (!isPrimary
-                    && currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::TM)
+                else if (!isPrimary && (
+                    currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::HOMV2
+                    || currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::OSTEREO
+                    || currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::TM))
                 {
                     auto lonlat = Utilities::getAnglesFrom31(p0);
                     const AreaD gridBounds(

@@ -172,6 +172,8 @@ namespace OsmAnd
                     GLlocation primaryGridRefLonLat;
                     GLlocation primaryGridBounds;
                     GLlocation primaryGridConstants;
+                    GLlocation primaryGridParams;
+                    GLlocation primaryGridExtraParams;
                     GLlocation primaryGridHelmertTranslations;
                     GLlocation primaryGridHelmertRotations;
                     GLlocation secondaryGridAxisX;
@@ -179,6 +181,8 @@ namespace OsmAnd
                     GLlocation secondaryGridRefLonLat;
                     GLlocation secondaryGridBounds;
                     GLlocation secondaryGridConstants;
+                    GLlocation secondaryGridParams;
+                    GLlocation secondaryGridExtraParams;
                     GLlocation secondaryGridHelmertTranslations;
                     GLlocation secondaryGridHelmertRotations;
 

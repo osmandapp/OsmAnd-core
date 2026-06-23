@@ -121,7 +121,7 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setProjectionParameters(
     const int gridIndex, const Projection projection)
 {
     auto parameters = &gridParameters[gridIndex];
-    if (projection != Projection::TM)
+    if (projection != Projection::HOMV2 && projection != Projection::OSTEREO && projection != Projection::TM)
     {
         parameters->lonBounds = PointD(-1e38, 1e38); // Without longitude bounds
         parameters->latBounds = parameters->lonBounds; // Without latitude bounds
@@ -130,19 +130,23 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setProjectionParameters(
         parameters->semiMajorAxisAndSemiMinorAxis.x = parameters->semiMajorAxisAndInverseFlattening.x;
         parameters->semiMajorAxisAndSemiMinorAxis.y = Utilities::getSemiMinorAxis(
             parameters->semiMajorAxisAndInverseFlattening, parameters->squaredEccentricities);
-        parameters->refLonLatTM.x = 0.0; // Longitude of central meridian
-        parameters->refLonLatTM.y = 0.0; // Latitude of origin
-        parameters->falseEastingAndNorthingTM.x = 0.0; // False easting (km)
-        parameters->falseEastingAndNorthingTM.y = 0.0; // False northing (km)
+        parameters->refLonLat.x = 0.0; // Longitude of central meridian
+        parameters->refLonLat.y = 0.0; // Latitude of origin
+        parameters->falseEastingAndNorthing.x = 0.0; // False easting (km)
+        parameters->falseEastingAndNorthing.y = 0.0; // False northing (km)
         parameters->scaleFactor = 1.0; // Grid scale factor
+        Utilities::getIntermediateConstantsTM(
+            parameters->semiMajorAxisAndInverseFlattening, 1.0, parameters->constants1, parameters->constants2);
     }
     switch (projection)
     {
         case Projection::UTM:
         case Projection::MGRS:
-            parameters->falseEastingAndNorthingTM.x = 500.0; // False easting (km)
-            parameters->falseEastingAndNorthingTM.y = 10000.0; // False northing (km)
+            parameters->falseEastingAndNorthing.x = 500.0; // False easting (km)
+            parameters->falseEastingAndNorthing.y = 10000.0; // False northing (km)
             parameters->scaleFactor = 0.9996; // Grid scale factor
+        case Projection::HOMV2:
+        case Projection::OSTEREO:
         case Projection::TM:
             parameters->factorX1 = 0.0f;
             parameters->factorX2 = 1.0f;
@@ -220,7 +224,8 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setEllipsoidParameters(
     return *this;
 }
 
-OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setPrimaryTransverseMercatorConstants(
+OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setPrimaryProjectionConstants(
+    const Projection projection,
     const PointD& lonBounds,
     const PointD& latBounds,
     const PointD& semiMajorAxisAndInverseFlattening,
@@ -228,12 +233,13 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setPrimaryTransverseMercat
     const PointD& falseEastingAndNorthing,
     const PointD& scaleFactor)
 {
-    setTransverseMercatorConstants(0,
+    setProjectionConstants(0, projection,
         lonBounds, latBounds, semiMajorAxisAndInverseFlattening, refLonLat, falseEastingAndNorthing, scaleFactor);
     return *this;
 }
 
-OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setSecondaryTransverseMercatorConstants(
+OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setSecondaryProjectionConstants(
+    const Projection projection,
     const PointD& lonBounds,
     const PointD& latBounds,
     const PointD& semiMajorAxisAndInverseFlattening,
@@ -241,13 +247,14 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setSecondaryTransverseMerc
     const PointD& falseEastingAndNorthing,
     const PointD& scaleFactor)
 {
-    setTransverseMercatorConstants(1,
+    setProjectionConstants(1, projection,
         lonBounds, latBounds, semiMajorAxisAndInverseFlattening, refLonLat, falseEastingAndNorthing, scaleFactor);
     return *this;
 }
 
-OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setTransverseMercatorConstants(
+OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setProjectionConstants(
     const int gridIndex,
+    const Projection projection,
     const PointD& lonBounds,
     const PointD& latBounds,
     const PointD& semiMajorAxisAndInverseFlattening,
@@ -262,9 +269,25 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setTransverseMercatorConst
     parameters->semiMajorAxisAndSemiMinorAxis.x = semiMajorAxisAndInverseFlattening.x;
     parameters->semiMajorAxisAndSemiMinorAxis.y =
         Utilities::getSemiMinorAxis(semiMajorAxisAndInverseFlattening, parameters->squaredEccentricities);
-    parameters->refLonLatTM = refLonLat;
-    parameters->falseEastingAndNorthingTM = falseEastingAndNorthing;
+    parameters->refLonLat = refLonLat;
+    parameters->falseEastingAndNorthing = falseEastingAndNorthing;
     parameters->scaleFactor = scaleFactor.x;
+    switch (projection)
+    {
+        case Projection::HOMV2:
+            Utilities::getIntermediateConstantsHOMV2(semiMajorAxisAndInverseFlattening, refLonLat,
+                scaleFactor, parameters->falseEastingAndNorthing, parameters->constants1, parameters->constants2);
+            break;
+        case Projection::OSTEREO:
+            Utilities::getIntermediateConstantsOS(semiMajorAxisAndInverseFlattening, refLonLat,
+                scaleFactor.x, parameters->constants1, parameters->constants2);
+            break;
+        case Projection::TM:
+            Utilities::getIntermediateConstantsTM(semiMajorAxisAndInverseFlattening,
+                scaleFactor.x, parameters->constants1, parameters->constants2);
+            break;
+        default:
+    }
     return *this;
 }
 
@@ -298,8 +321,10 @@ OsmAnd::PointD OsmAnd::GridConfiguration::getLocationReference(
     PointD result;
     switch (projection)
     {
+        case Projection::HOMV2: // Hotine Oblique Mercator central meridian (degrees)
+        case Projection::OSTEREO: // Oblique Stereographic central meridian (degrees)
         case Projection::TM: // TM central meridian (degrees)
-            result = gridParameters[gridIndex].refLonLatTM * 180.0 / M_PI;
+            result = gridParameters[gridIndex].refLonLat * 180.0 / M_PI;
             break;
         case Projection::UTM: // UTM zone central meridian (degrees)
         case Projection::MGRS:
@@ -322,6 +347,45 @@ OsmAnd::PointD OsmAnd::GridConfiguration::projectLocation(const int gridIndex, c
     PointD result;
     switch (projection)
     {
+        case Projection::HOMV2: // Hotine Oblique Mercator easting and northing coordinates (100 kilometers)
+            {
+                const auto lonlat = Utilities::getAnglesFrom31(location31);
+                auto parameters = &gridParameters[gridIndex];
+                const auto ellipsoidLonLat = Utilities::getEllipsoidCoordinates(
+                    lonlat,
+                    6378.137,
+                    parameters->semiMajorAxisAndSemiMinorAxis,
+                    parameters->squaredEccentricities,
+                    parameters->helmertTranslations,
+                    parameters->helmertRotations,
+                    parameters->helmertScale);
+                result = Utilities::getCoordinatesHOMV2(
+                    ellipsoidLonLat,
+                    parameters->falseEastingAndNorthing,
+                    parameters->constants1,
+                    parameters->constants2) / 100.0;
+            }
+            break;
+        case Projection::OSTEREO: // Oblique Stereographic easting and northing coordinates (100 kilometers)
+            {
+                const auto lonlat = Utilities::getAnglesFrom31(location31);
+                auto parameters = &gridParameters[gridIndex];
+                const auto ellipsoidLonLat = Utilities::getEllipsoidCoordinates(
+                    lonlat,
+                    6378.137,
+                    parameters->semiMajorAxisAndSemiMinorAxis,
+                    parameters->squaredEccentricities,
+                    parameters->helmertTranslations,
+                    parameters->helmertRotations,
+                    parameters->helmertScale);
+                result = Utilities::getCoordinatesOS(
+                    ellipsoidLonLat,
+                    parameters->refLonLat,
+                    parameters->falseEastingAndNorthing,
+                    parameters->constants1,
+                    parameters->constants2) / 100.0;
+            }
+            break;
         case Projection::TM: // TM easting and northing coordinates (100 kilometers)
             {
                 const auto lonlat = Utilities::getAnglesFrom31(location31);
@@ -336,10 +400,10 @@ OsmAnd::PointD OsmAnd::GridConfiguration::projectLocation(const int gridIndex, c
                     parameters->helmertScale);
                 result = Utilities::getCoordinatesTM(
                     ellipsoidLonLat,
-                    parameters->refLonLatTM,
-                    parameters->semiMajorAxisAndInverseFlattening,
-                    parameters->falseEastingAndNorthingTM,
-                    parameters->scaleFactor) / 100.0;
+                    parameters->refLonLat,
+                    parameters->falseEastingAndNorthing,
+                    parameters->constants1,
+                    parameters->constants2) / 100.0;
             }
             break;
         case Projection::UTM: // UTM easting and northing coordinates (100 kilometers)
@@ -354,10 +418,10 @@ OsmAnd::PointD OsmAnd::GridConfiguration::projectLocation(const int gridIndex, c
                 auto parameters = &gridParameters[gridIndex];
                 result = Utilities::getCoordinatesTM(
                     lonlat,
-                    PointD(refLon * M_PI / 180.0, parameters->refLonLatTM.y),
-                    parameters->semiMajorAxisAndInverseFlattening,
-                    parameters->falseEastingAndNorthingTM,
-                    parameters->scaleFactor) / 100.0;
+                    PointD(refLon * M_PI / 180.0, parameters->refLonLat.y),
+                    parameters->falseEastingAndNorthing,
+                    parameters->constants1,
+                    parameters->constants2) / 100.0;
             }
             break;
         case Projection::Mercator: // EPSG:3857 X and Y coordinates (100 map kilometers)
@@ -394,7 +458,9 @@ OsmAnd::PointI OsmAnd::GridConfiguration::unProjectLocation(
     PointI result(-1, -1);
     switch (projection)
     {
-        case Projection::TM: // TODO: unproject TM to 31-coordinates
+        case Projection::HOMV2: // TODO: unproject to 31-coordinates
+        case Projection::OSTEREO:
+        case Projection::TM:
         case Projection::UTM:
         case Projection::MGRS:
             break;
@@ -425,7 +491,9 @@ OsmAnd::PointD OsmAnd::GridConfiguration::getFullturnLocation(
     PointD result;
     switch (projection)
     {
-        case Projection::TM: // Return TM coordinates unchanged
+        case Projection::HOMV2: // Return coordinates unchanged
+        case Projection::OSTEREO:
+        case Projection::TM:
         case Projection::UTM:
         case Projection::MGRS:
             result = location;
@@ -468,7 +536,9 @@ bool OsmAnd::GridConfiguration::getCoordinateX(const Projection projection, doub
     bool result = false;
     switch (projection)
     {
-        case Projection::TM: // TM easting coordinate (100 kilometers)
+        case Projection::HOMV2: // Easting coordinate (100 kilometers)
+        case Projection::OSTEREO:
+        case Projection::TM:
         case Projection::UTM:
         case Projection::MGRS:
             result = true;
@@ -498,7 +568,9 @@ bool OsmAnd::GridConfiguration::getCoordinateY(const Projection projection, doub
     bool result = false;
     switch (projection)
     {
-        case Projection::TM: // TM northing coordinate (100 kilometers)
+        case Projection::HOMV2: // Northing coordinate (100 kilometers)
+        case Projection::OSTEREO:
+        case Projection::TM:
         case Projection::UTM:
         case Projection::MGRS:
             result = true;
@@ -532,7 +604,9 @@ double OsmAnd::GridConfiguration::getMaxMarksPerAxis(const Projection projection
     double result;
     switch (projection)
     {
-        case Projection::TM: // No need to limit TM marks
+        case Projection::HOMV2: // No need to limit marks
+        case Projection::OSTEREO:
+        case Projection::TM:
         case Projection::UTM:
         case Projection::MGRS:
             result = std::numeric_limits<double>::max();
@@ -575,6 +649,8 @@ QString OsmAnd::GridConfiguration::getMarkX(
     QString result;
     switch (projection)
     {
+        case Projection::HOMV2: // Hotine Oblique Mercator easting coordinate (meters)
+        case Projection::OSTEREO: // Oblique Stereographic easting coordinate (meters)
         case Projection::TM: // TM easting coordinate (meters)
             result = QStringLiteral("%1").arg(coordinates.x * 100000.0, 0, 'f', 0);
             break;
@@ -634,6 +710,8 @@ QString OsmAnd::GridConfiguration::getMarkY(const int gridIndex,
     QString result;
     switch (projection)
     {
+        case Projection::HOMV2: // Hotine Oblique Mercator northing coordinate (meters)
+        case Projection::OSTEREO: // Oblique Stereographic northing coordinate (meters)
         case Projection::TM: // TM northing coordinate (meters)
             result = QStringLiteral("%1").arg(coordinates.y * 100000.0, 0, 'f', 0);
             break;
@@ -752,7 +830,9 @@ double OsmAnd::GridConfiguration::correctGap(const Projection projection, const 
     double result;
     switch (projection)
     {
-        case Projection::TM: // No need to correct TM gap
+        case Projection::HOMV2: // No need to correct gap
+        case Projection::OSTEREO:
+        case Projection::TM:
         case Projection::UTM:
         case Projection::MGRS:
             result = gap;
@@ -772,11 +852,15 @@ double OsmAnd::GridConfiguration::correctGap(const Projection projection, const 
 bool OsmAnd::GridConfiguration::isValid() const
 {
     return (primaryProjection == Projection::WGS84
+        || primaryProjection == Projection::HOMV2
+        || primaryProjection == Projection::OSTEREO
         || primaryProjection == Projection::TM
         || primaryProjection == Projection::UTM
         || primaryProjection == Projection::MGRS
         || primaryProjection == Projection::Mercator) &&
         (secondaryProjection == Projection::WGS84
+        || secondaryProjection == Projection::HOMV2
+        || secondaryProjection == Projection::OSTEREO
         || secondaryProjection == Projection::TM
         || secondaryProjection == Projection::UTM
         || secondaryProjection == Projection::MGRS
@@ -798,8 +882,9 @@ public:
 
     bool fromLonLat(PointD& location);
     bool toLonLat(PointD& location);
-    bool getConstantsTM(PointD& lonBounds, PointD& latBounds, PointD& semiMajorAxisAndInverseFlattening,
-        PointD& refLonLatTM, PointD& falseEastingAndNorthingTM, PointD& scaleFactor);
+    bool getConstants(const GridConfiguration::Projection projection,
+        PointD& lonBounds, PointD& latBounds, PointD& semiMajorAxisAndInverseFlattening,
+        PointD& refLonLat, PointD& falseEastingAndNorthing, PointD& scaleFactor);
     bool getEllipsoidParameters(PointD& helmertTranslationsXY, PointD& helmertTranslationsZW,
         PointD& helmertRotationsXY, PointD& helmertRotationsZScale);
 };
@@ -868,8 +953,9 @@ bool OsmAnd::CoordinateTransformer_P::toLonLat(PointD& location)
     return false;
 }
 
-bool OsmAnd::CoordinateTransformer_P::getConstantsTM(PointD& lonBounds, PointD& latBounds,
-    PointD& semiMajorAxisAndInverseFlattening, PointD& refLonLatTM, PointD& falseEastingAndNorthingTM,
+bool OsmAnd::CoordinateTransformer_P::getConstants(
+    const GridConfiguration::Projection projection, PointD& lonBounds, PointD& latBounds,
+    PointD& semiMajorAxisAndInverseFlattening, PointD& refLonLat, PointD& falseEastingAndNorthing,
     PointD& scaleFactor)
 {
     if (!forwardTransform || !backwardTransform)
@@ -885,7 +971,30 @@ bool OsmAnd::CoordinateTransformer_P::getConstantsTM(PointD& lonBounds, PointD& 
     }
 
     const char* pszProjection = target_crs.GetAttrValue("PROJECTION");
-    if (!pszProjection || std::string(pszProjection) != SRS_PT_TRANSVERSE_MERCATOR)
+    if (!pszProjection)
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to get CRS constants: unknown projection.");
+        return false;
+    }
+
+    if (projection == GridConfiguration::Projection::HOMV2
+        && std::string(pszProjection) != SRS_PT_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER)
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error,
+            "Failed to get CRS constants: not an Hotine Oblique Mercator projection.");
+        return false;
+    }
+
+    if (projection == GridConfiguration::Projection::OSTEREO
+        && std::string(pszProjection) != SRS_PT_OBLIQUE_STEREOGRAPHIC)
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error,
+            "Failed to get CRS constants: not an Oblique Stereographic projection.");
+        return false;
+    }
+
+    if (projection == GridConfiguration::Projection::TM
+        && std::string(pszProjection) != SRS_PT_TRANSVERSE_MERCATOR)
     {
         LogPrintf(OsmAnd::LogSeverityLevel::Error,
             "Failed to get CRS constants: not a Transverse Mercator projection.");
@@ -909,28 +1018,59 @@ bool OsmAnd::CoordinateTransformer_P::getConstantsTM(PointD& lonBounds, PointD& 
 
     OGRErr err;
 
-    refLonLatTM.x = target_crs.GetProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0, &err) * radFactor;
+    refLonLat.x = target_crs.GetProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0, &err) * radFactor;
     if (err != OGRERR_NONE)
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to get CRS constant: central meridian.");
         return false;
-    refLonLatTM.y = target_crs.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0, &err) * radFactor;
+    }
+    refLonLat.y = target_crs.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0, &err) * radFactor;
     if (err != OGRERR_NONE)
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to get CRS constant: latitude of origin.");
         return false;
+    }
     semiMajorAxisAndInverseFlattening.x = target_crs.GetSemiMajor(&err) / 1000.0;
     if (err != OGRERR_NONE)
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to get CRS constant: semi-major axis.");
         return false;
+    }
     semiMajorAxisAndInverseFlattening.y = target_crs.GetInvFlattening(&err);
     if (err != OGRERR_NONE)
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to get CRS constant: inverse flattening.");
         return false;
-    falseEastingAndNorthingTM.x = target_crs.GetProjParm(SRS_PP_FALSE_EASTING, 0.0, &err) / 1000.0;
+    }
+    falseEastingAndNorthing.x = target_crs.GetProjParm(SRS_PP_FALSE_EASTING, 0.0, &err) / 1000.0;
     if (err != OGRERR_NONE)
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to get CRS constant: false easting.");
         return false;
-    falseEastingAndNorthingTM.y = target_crs.GetProjParm(SRS_PP_FALSE_NORTHING, 0.0, &err) / 1000.0;
+    }
+    falseEastingAndNorthing.y = target_crs.GetProjParm(SRS_PP_FALSE_NORTHING, 0.0, &err) / 1000.0;
     if (err != OGRERR_NONE)
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to get CRS constant: false northing.");
         return false;
+    }
     scaleFactor.x = target_crs.GetProjParm(SRS_PP_SCALE_FACTOR, 1.0, &err);
-    scaleFactor.y = scaleFactor.x;
     if (err != OGRERR_NONE)
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to get CRS constant: scale factor.");
         return false;
+    }
+    if (projection == GridConfiguration::Projection::HOMV2)
+    {
+        scaleFactor.y = target_crs.GetProjParm(SRS_PT_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER, 0.0, &err) * radFactor;
+        if (err != OGRERR_NONE)
+        {
+            LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to get CRS constant: azimuth center.");
+            return false;
+        }
+    }
+    else
+        scaleFactor.y = scaleFactor.x;
 
     return true;
 }
@@ -1077,12 +1217,13 @@ bool OsmAnd::CoordinateTransformer::toLonLat(PointD& location)
     return _p->toLonLat(location);
 }
 
-bool OsmAnd::CoordinateTransformer::getConstantsTM(PointD& lonBounds, PointD& latBounds,
-    PointD& semiMajorAxisAndInverseFlattening, PointD& refLonLatTM, PointD& falseEastingAndNorthingTM,
+bool OsmAnd::CoordinateTransformer::getConstants(
+    const GridConfiguration::Projection projection, PointD& lonBounds, PointD& latBounds,
+    PointD& semiMajorAxisAndInverseFlattening, PointD& refLonLat, PointD& falseEastingAndNorthing,
     PointD& scaleFactor)
 {
-    return _p->getConstantsTM(lonBounds, latBounds, semiMajorAxisAndInverseFlattening, refLonLatTM,
-        falseEastingAndNorthingTM, scaleFactor);
+    return _p->getConstants(projection, lonBounds, latBounds, semiMajorAxisAndInverseFlattening, refLonLat,
+        falseEastingAndNorthing, scaleFactor);
 }
 
 bool OsmAnd::CoordinateTransformer::getEllipsoidParameters(
