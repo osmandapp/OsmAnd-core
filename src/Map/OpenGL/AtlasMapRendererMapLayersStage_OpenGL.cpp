@@ -321,6 +321,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*param_vs_primaryGridRefLonLat*/ +
         1 /*param_vs_primaryGridBounds*/ +
         1 /*param_vs_primaryGridConstants*/ +
+        1 /*param_vs_primaryGridParams*/ +
+        1 /*param_vs_primaryGridExtraParams*/ +
         1 /*param_vs_primaryGridHelmertTranslations*/ +
         1 /*param_vs_primaryGridHelmertRotations*/ +
         1 /*param_vs_secondaryGridAxisX*/ +
@@ -328,6 +330,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*param_vs_secondaryGridRefLonLat*/ +
         1 /*param_vs_secondaryGridBounds*/ +
         1 /*param_vs_secondaryGridConstants*/ +
+        1 /*param_vs_secondaryGridParams*/ +
+        1 /*param_vs_secondaryGridExtraParams*/ +
         1 /*param_vs_secondaryGridHelmertTranslations*/ +
         1 /*param_vs_secondaryGridHelmertRotations*/;
     const auto fsOtherUniforms =
@@ -480,6 +484,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "uniform vec4 param_vs_primaryGridRefLonLat;                                                                        ""\n"
             "uniform vec4 param_vs_primaryGridBounds;                                                                           ""\n"
             "uniform vec4 param_vs_primaryGridConstants;                                                                        ""\n"
+            "uniform vec4 param_vs_primaryGridParams;                                                                           ""\n"
+            "uniform vec4 param_vs_primaryGridExtraParams;                                                                      ""\n"
             "uniform vec4 param_vs_primaryGridHelmertTranslations;                                                              ""\n"
             "uniform vec4 param_vs_primaryGridHelmertRotations;                                                                 ""\n"
             "uniform vec4 param_vs_secondaryGridAxisX;                                                                          ""\n"
@@ -487,6 +493,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "uniform vec4 param_vs_secondaryGridRefLonLat;                                                                      ""\n"
             "uniform vec4 param_vs_secondaryGridBounds;                                                                         ""\n"
             "uniform vec4 param_vs_secondaryGridConstants;                                                                      ""\n"
+            "uniform vec4 param_vs_secondaryGridParams;                                                                         ""\n"
+            "uniform vec4 param_vs_secondaryGridExtraParams;                                                                    ""\n"
             "uniform vec4 param_vs_secondaryGridHelmertTranslations;                                                            ""\n"
             "uniform vec4 param_vs_secondaryGridHelmertRotations;                                                               ""\n"
             "uniform vec4 param_vs_primaryGridTileTop;                                                                          ""\n"
@@ -587,35 +595,65 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    return res;                                                                                                    ""\n"
             "}                                                                                                                  ""\n"
             "                                                                                                                   ""\n"
-            "vec2 getCrdTM(in vec2 lonlat, in float refLon, in vec4 semiMAxisIFlatFalEaN, in float scale)                       ""\n"
+            "vec2 getCrdTM(in vec2 lonlat, in float refLon, in vec4 semiMAxisIFlatFalEaN, in vec4 a, in vec4 e)                 ""\n"
             "{                                                                                                                  ""\n"
-            "    float sinlat = sin(lonlat.y);                                                                                  ""\n"
-            "    float f = 1.0 / semiMAxisIFlatFalEaN.y;                                                                        ""\n"
-            "    vec3 n;                                                                                                        ""\n"
-            "    n.x = f / (2.0 - f);                                                                                           ""\n"
-            "    n.y = n.x * n.x;                                                                                               ""\n"
-            "    n.z = n.y * n.x;                                                                                               ""\n"
-            "    float nn = 2.0 * sqrt(n.x) / (1.0 + n.x);                                                                      ""\n"
-            "    float t = nn * sinlat;                                                                                         ""\n"
-            "    t = 0.5 * log((1.0 + sinlat) / (1.0 - sinlat)) - nn * 0.5 * log((1.0 + t) / (1.0 - t));                        ""\n"
+            "    float sinLat = sin(lonlat.y);                                                                                  ""\n"
+            "    float t = e.x * sinLat;                                                                                        ""\n"
+            "    t = 0.5 * log((1.0 + sinLat) / (1.0 - sinLat)) - e.x * 0.5 * log((1.0 + t) / (1.0 - t));                       ""\n"
             "    t = (exp(t) - exp(-t)) / 2.0;                                                                                  ""\n"
-            "    vec3 st = vec3(2.0, 4.0, 6.0);                                                                                 ""\n"
-            "    float xa = lonlat.x - refLon;                                                                                  ""\n"
-            "    float xi = atan(t / cos(xa));                                                                                  ""\n"
-            "    vec3 xin = st * xi;                                                                                            ""\n"
-            "    float eta = sin(xa) / sqrt(1.0 + t * t);                                                                       ""\n"
+            "    float xi = lonlat.x - refLon;                                                                                  ""\n"
+            "    float eta = sin(xi) / sqrt(1.0 + t * t);                                                                       ""\n"
             "    eta = 0.5 * log((1.0 + eta) / (1.0 - eta));                                                                    ""\n"
-            "    vec3 etan = st * eta;                                                                                          ""\n"
-            "    vec3 expEtan = exp(etan);                                                                                      ""\n"
-            "    vec3 expmEtan = exp(-etan);                                                                                    ""\n"
-            "    vec3 alpha;                                                                                                    ""\n"
-            "    alpha.x = dot(vec3(0.5, -2.0 / 3.0, 5.0 / 16.0), n);                                                           ""\n"
-            "    alpha.y = dot(vec2(13.0 / 48.0, -3.0 / 5.0), n.yz);                                                            ""\n"
-            "    alpha.z = 61.0 / 240.0 * n.z;                                                                                  ""\n"
-            "    vec2 res;                                                                                                      ""\n"
-            "    res.x = eta + dot(alpha * cos(xin), (expEtan - expmEtan) / 2.0);                                               ""\n"
-            "    res.y = xi + dot(alpha * sin(xin), (expEtan + expmEtan) / 2.0);                                                ""\n"
-            "    res *= semiMAxisIFlatFalEaN.x * scale / (1.0 + n.x) * (1.0 + n.y / 4.0 + n.y * n.y / 64.0 + n.z * n.z / 256.0);""\n"
+            "    xi = atan(t / cos(xi));                                                                                        ""\n"
+            "    float xi2 = 2.0 * xi;                                                                                          ""\n"
+            "    float eta2 = 2.0 * eta;                                                                                        ""\n"
+            "    vec3 sinXi = vec3(sin(xi2));                                                                                   ""\n"
+            "    vec3 cosXi = vec3(cos(xi2));                                                                                   ""\n"
+            "    sinXi.y = 2.0 * sinXi.x * cosXi.x;                                                                             ""\n"
+            "    cosXi.y = 2.0 * cosXi.x * cosXi.x - 1.0;                                                                       ""\n"
+            "    sinXi.z = sinXi.y * cosXi.x + cosXi.y * sinXi.x;                                                               ""\n"
+            "    cosXi.z = cosXi.y * cosXi.x - sinXi.y * sinXi.x;                                                               ""\n"
+            "    vec3 sinhEta = vec3((exp(eta2) - exp(-eta2)) / 2.0);                                                           ""\n"
+            "    vec3 coshEta = vec3(sqrt(1.0 + sinhEta * sinhEta));                                                            ""\n"
+            "    sinhEta.y = 2.0 * sinhEta.x * coshEta.x;                                                                       ""\n"
+            "    coshEta.y = 2.0 * coshEta.x * coshEta.x - 1.0;                                                                 ""\n"
+            "    sinhEta.z = sinhEta.y * coshEta.x + coshEta.y * sinhEta.x;                                                     ""\n"
+            "    coshEta.z = coshEta.y * coshEta.x + sinhEta.y * sinhEta.x;                                                     ""\n"
+            "    vec2 res = vec2(eta + dot(a.xyz, cosXi * sinhEta), xi + dot(a.xyz, sinXi * coshEta));                          ""\n"
+            "    res *= a.w * 0.01;                                                                                             ""\n"
+            "    res += semiMAxisIFlatFalEaN.zw;                                                                                ""\n"
+            "    return res;                                                                                                    ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "vec2 getCrdOS(in vec2 lonlat, in float refLon, in vec4 semiMAxisIFlatFalEaN, in vec4 a, in vec4 e)                 ""\n"
+            "{                                                                                                                  ""\n"
+            "    float sinLat = sin(lonlat.y);                                                                                  ""\n"
+            "    float t = e.x * sinLat;                                                                                        ""\n"
+            "    t = e.z * pow((1.0 + sinLat) / (1.0 - sinLat) * pow((1.0 - t) / (1.0 + t), e.x), e.y);                         ""\n"
+            "    vec2 sincosChi = vec2((t - 1.0) / (t + 1.0));                                                                  ""\n"
+            "    sincosChi.y = sqrt(1.0 - sincosChi.x * sincosChi.x);                                                           ""\n"
+            "    float b = e.y * (lonlat.x - refLon);                                                                           ""\n"
+            "    vec2 sincosD = vec2(sin(b), cos(b));                                                                           ""\n"
+            "    b = 1.0 + dot(sincosChi, a.xy * vec2(1.0, sincosD.y));                                                         ""\n"
+            "    vec2 res = vec2(sincosChi.y * sincosD.x, sincosChi.x * a.y - sincosChi.y * a.x * sincosD.y);                   ""\n"
+            "    res *= a.z / b * 0.01;                                                                                         ""\n"
+            "    res += semiMAxisIFlatFalEaN.zw;                                                                                ""\n"
+            "    return res;                                                                                                    ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "vec2 getCrdHOMV2(in vec2 lonlat, in vec4 semiMAxisIFlatFalEaN, in vec4 a, in vec4 e)                               ""\n"
+            "{                                                                                                                  ""\n"
+            "    float sinLat = sin(lonlat.y);                                                                                  ""\n"
+            "    float eSinLat = e.x * sinLat;                                                                                  ""\n"
+            "    float cosLat = sqrt(1.0 - sinLat * sinLat);                                                                    ""\n"
+            "    float t = pow((cosLat / (1.0 + sinLat)) * pow((1.0 + eSinLat) / (1.0 - eSinLat), e.x * 0.5), e.y);             ""\n"
+            "    vec2 q = vec2(e.z / t, t / e.z);                                                                               ""\n"
+            "    float s = 0.5 * (q.x - q.y);                                                                                   ""\n"
+            "    float d = e.y * (lonlat.x - e.w);                                                                              ""\n"
+            "    vec2 sc = vec2(sin(d), cos(d));                                                                                ""\n"
+            "    float u = max(min((-sc.x * a.y + s * a.x) / (0.5 * (q.x + q.y)), 0.9999999999), -0.9999999999);                ""\n"
+            "    vec2 raw = vec2(0.5 * log((1.0 - u) / (1.0 + u)), atan(s * a.y + sc.x * a.x, sc.y));                           ""\n"
+            "    vec2 res = vec2(raw.y * a.z + raw.x * a.w, raw.y * a.w - raw.x * a.z);                                         ""\n"
             "    res *= 0.01;                                                                                                   ""\n"
             "    res += semiMAxisIFlatFalEaN.zw;                                                                                ""\n"
             "    return res;                                                                                                    ""\n"
@@ -861,16 +899,32 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    isOut = isOut || lonlat.y < param_vs_primaryGridBounds.z || lonlat.y > param_vs_primaryGridBounds.w;           ""\n"
             "    pCut.x = lonlat.x < (param_vs_primaryGridBounds.x + param_vs_primaryGridBounds.y) / 2.0 ? -1e38 : 1e38;        ""\n"
             "    pCut.y = lonlat.y < (param_vs_primaryGridBounds.z + param_vs_primaryGridBounds.w) / 2.0 ? -1e38 : 1e38;        ""\n"
-            "    pCut = param_vs_primaryGridRefLonLat.w > 0.0 ? (isOut ? pCut : vec2(0.0)) : zUTM;                              ""\n"
-            "    vec2 r = param_vs_primaryGridRefLonLat.xy;                                                                     ""\n"
-            "    r.x = param_vs_primaryGridRefLonLat.w > 0.0 ? r.x : refLonUTM;                                                 ""\n"
+            "    pCut = param_vs_primaryGridRefLonLat.w > 0.0 ? zUTM : (isOut ? pCut : vec2(0.0));                              ""\n"
             "    vec2 coords = toEllipsoid(lonlat, param_vs_primaryGridConstants.xy,                                            ""\n"
             "        param_vs_primaryGridHelmertTranslations, param_vs_primaryGridHelmertRotations);                            ""\n"
-            "    vec2 mTM = getCrdTM(coords, r.x, param_vs_primaryGridConstants, param_vs_primaryGridRefLonLat.z);              ""\n"
-            "    vec2 oTM = getCrdTM(r, r.x, vec4(param_vs_primaryGridConstants.xy, 0.0, 0.0), param_vs_primaryGridRefLonLat.z);""\n"
-            "    mTM.y -= param_vs_primaryGridRefLonLat.w > 0.0 && r.y != 0.0 ? oTM.y: 0.0;                                     ""\n"
-            "    vec4 axisX = vec4(lonlat.x, mTM.x, mercMeters.x, 1.0);                                                         ""\n"
-            "    vec4 axisY = vec4(lonlat.y, mTM.y, mercMeters.y, 1.0);                                                         ""\n"
+            "    vec2 crd;                                                                                                      ""\n"
+            "    if (param_vs_primaryGridHelmertTranslations.w > 2.0)                                                           ""\n"
+            "    {                                                                                                              ""\n"
+            "        crd = getCrdHOMV2(coords, param_vs_primaryGridConstants,                                                   ""\n"
+            "            param_vs_primaryGridParams, param_vs_primaryGridExtraParams);                                          ""\n"
+            "    }                                                                                                              ""\n"
+            "    else if (param_vs_primaryGridHelmertTranslations.w > 1.0)                                                      ""\n"
+            "    {                                                                                                              ""\n"
+            "        crd = getCrdOS(coords, param_vs_primaryGridRefLonLat.x, param_vs_primaryGridConstants,                     ""\n"
+            "            param_vs_primaryGridParams, param_vs_primaryGridExtraParams);                                          ""\n"
+            "    }                                                                                                              ""\n"
+            "    else                                                                                                           ""\n"
+            "    {                                                                                                              ""\n"
+            "        vec2 r = param_vs_primaryGridRefLonLat.xy;                                                                 ""\n"
+            "        r.x = param_vs_primaryGridRefLonLat.w > 0.0 ? refLonUTM : r.x;                                             ""\n"
+            "        crd = getCrdTM(coords, r.x, param_vs_primaryGridConstants,                                                 ""\n"
+            "            param_vs_primaryGridParams, param_vs_primaryGridExtraParams);                                          ""\n"
+            "        vec2 oTM = getCrdTM(r, r.x, vec4(param_vs_primaryGridConstants.xy, 0.0, 0.0),                              ""\n"
+            "             param_vs_primaryGridParams, param_vs_primaryGridExtraParams);                                         ""\n"
+            "        crd.y -= param_vs_primaryGridRefLonLat.w > 0.0 || r.y == 0.0 ? 0.0 : oTM.y;                                ""\n"
+            "    }                                                                                                              ""\n"
+            "    vec4 axisX = vec4(lonlat.x, crd.x, mercMeters.x, 1.0);                                                         ""\n"
+            "    vec4 axisY = vec4(lonlat.y, crd.y, mercMeters.y, 1.0);                                                         ""\n"
             "    axisX.y += param_vs_primaryGridAxisX.y != 0.0 ? pCut.x : 0.0;                                                  ""\n"
             "    axisY.y += param_vs_primaryGridAxisY.y != 0.0 ? pCut.y : 0.0;                                                  ""\n"
             "    primary.xy = vec2(dot(axisX, param_vs_primaryGridAxisX), dot(axisY, param_vs_primaryGridAxisY));               ""\n"
@@ -879,16 +933,31 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    isOut = isOut || lonlat.y < param_vs_secondaryGridBounds.z || lonlat.y > param_vs_secondaryGridBounds.w;       ""\n"
             "    sCut.x = lonlat.x < (param_vs_secondaryGridBounds.x + param_vs_secondaryGridBounds.y) / 2.0 ? -1e38 : 1e38;    ""\n"
             "    sCut.y = lonlat.y < (param_vs_secondaryGridBounds.z + param_vs_secondaryGridBounds.w) / 2.0 ? -1e38 : 1e38;    ""\n"
-            "    sCut = param_vs_secondaryGridRefLonLat.w > 0.0 ? (isOut ? sCut : vec2(0.0)) : zUTM;                            ""\n"
-            "    r = param_vs_secondaryGridRefLonLat.xy;                                                                        ""\n"
-            "    r.x = param_vs_secondaryGridRefLonLat.w > 0.0 ? r.x : refLonUTM;                                               ""\n"
+            "    sCut = param_vs_secondaryGridRefLonLat.w > 0.0 ? zUTM : (isOut ? sCut : vec2(0.0));                            ""\n"
             "    coords = toEllipsoid(lonlat, param_vs_secondaryGridConstants.xy,                                               ""\n"
             "        param_vs_secondaryGridHelmertTranslations, param_vs_secondaryGridHelmertRotations);                        ""\n"
-            "    mTM = getCrdTM(coords, r.x, param_vs_secondaryGridConstants, param_vs_secondaryGridRefLonLat.z);               ""\n"
-            "    oTM = getCrdTM(r, r.x, vec4(param_vs_secondaryGridConstants.xy, 0.0, 0.0), param_vs_secondaryGridRefLonLat.z); ""\n"
-            "    mTM.y -= param_vs_secondaryGridRefLonLat.w > 0.0 && r.y != 0.0 ? oTM.y : 0.0;                                  ""\n"
-            "    axisX = vec4(lonlat.x, mTM.x, mercMeters.x, 1.0);                                                              ""\n"
-            "    axisY = vec4(lonlat.y, mTM.y, mercMeters.y, 1.0);                                                              ""\n"
+            "    if (param_vs_secondaryGridHelmertTranslations.w > 2.0)                                                         ""\n"
+            "    {                                                                                                              ""\n"
+            "        crd = getCrdHOMV2(coords, param_vs_secondaryGridConstants,                                                 ""\n"
+            "            param_vs_secondaryGridParams, param_vs_secondaryGridExtraParams);                                      ""\n"
+            "    }                                                                                                              ""\n"
+            "    else if (param_vs_secondaryGridHelmertTranslations.w > 1.0)                                                    ""\n"
+            "    {                                                                                                              ""\n"
+            "        crd = getCrdOS(coords, param_vs_secondaryGridRefLonLat.x, param_vs_secondaryGridConstants,                 ""\n"
+            "            param_vs_secondaryGridParams, param_vs_secondaryGridExtraParams);                                      ""\n"
+            "    }                                                                                                              ""\n"
+            "    else                                                                                                           ""\n"
+            "    {                                                                                                              ""\n"
+            "        vec2 r = param_vs_secondaryGridRefLonLat.xy;                                                               ""\n"
+            "        r.x = param_vs_secondaryGridRefLonLat.w > 0.0 ? refLonUTM : r.x;                                           ""\n"
+            "        crd = getCrdTM(coords, r.x, param_vs_secondaryGridConstants,                                               ""\n"
+            "            param_vs_secondaryGridParams, param_vs_secondaryGridExtraParams);                                      ""\n"
+            "        vec2 oTM = getCrdTM(r, r.x, vec4(param_vs_secondaryGridConstants.xy, 0.0, 0.0),                            ""\n"
+            "            param_vs_secondaryGridParams, param_vs_secondaryGridExtraParams);                                      ""\n"
+            "        crd.y -= param_vs_secondaryGridRefLonLat.w > 0.0 || r.y == 0.0 ? 0.0 : oTM.y;                              ""\n"
+            "    }                                                                                                              ""\n"
+            "    axisX = vec4(lonlat.x, crd.x, mercMeters.x, 1.0);                                                              ""\n"
+            "    axisY = vec4(lonlat.y, crd.y, mercMeters.y, 1.0);                                                              ""\n"
             "    axisX.y += param_vs_secondaryGridAxisX.y != 0.0 ? sCut.x : 0.0;                                                ""\n"
             "    axisY.y += param_vs_secondaryGridAxisY.y != 0.0 ? sCut.y : 0.0;                                                ""\n"
             "    secondary.xy = vec2(dot(axisX, param_vs_secondaryGridAxisX), dot(axisY, param_vs_secondaryGridAxisY));         ""\n"
@@ -1594,6 +1663,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "param_vs_primaryGridConstants",
             GlslVariableType::Uniform);
         ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.primaryGridParams,
+            "param_vs_primaryGridParams",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.primaryGridExtraParams,
+            "param_vs_primaryGridExtraParams",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
             outRasterLayerTileProgram.vs.param.primaryGridHelmertTranslations,
             "param_vs_primaryGridHelmertTranslations",
             GlslVariableType::Uniform);
@@ -1620,6 +1697,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         ok = ok && lookup->lookupLocation(
             outRasterLayerTileProgram.vs.param.secondaryGridConstants,
             "param_vs_secondaryGridConstants",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.secondaryGridParams,
+            "param_vs_secondaryGridParams",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.secondaryGridExtraParams,
+            "param_vs_secondaryGridExtraParams",
             GlslVariableType::Uniform);
         ok = ok && lookup->lookupLocation(
             outRasterLayerTileProgram.vs.param.secondaryGridHelmertTranslations,
@@ -2422,6 +2507,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     // Set parameters for grids
     if (withGrids)
     {
+        bool isGlobalGrid = currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::WGS84
+            || currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::UTM
+            || currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::MGRS
+            || currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::Mercator;
         glUniform4f(program.vs.param.primaryGridAxisX,
             currentState.gridConfiguration.gridParameters[0].factorX1,
             currentState.gridConfiguration.gridParameters[0].factorX2,
@@ -2435,10 +2524,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
             currentState.gridConfiguration.gridParameters[0].offsetY);
         GL_CHECK_RESULT;
         glUniform4f(program.vs.param.primaryGridRefLonLat,
-            static_cast<float>(currentState.gridConfiguration.gridParameters[0].refLonLatTM.x),
-            static_cast<float>(currentState.gridConfiguration.gridParameters[0].refLonLatTM.y),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].refLonLat.x),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].refLonLat.y),
             static_cast<float>(currentState.gridConfiguration.gridParameters[0].scaleFactor),
-            currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::TM ? 1.0f : 0.0f);
+            isGlobalGrid ? 1.0f : 0.0f);
         GL_CHECK_RESULT;
         glUniform4f(program.vs.param.primaryGridBounds,
             static_cast<float>(currentState.gridConfiguration.gridParameters[0].lonBounds.x),
@@ -2449,14 +2538,29 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         glUniform4f(program.vs.param.primaryGridConstants,
             static_cast<float>(currentState.gridConfiguration.gridParameters[0].semiMajorAxisAndInverseFlattening.x),
             static_cast<float>(currentState.gridConfiguration.gridParameters[0].semiMajorAxisAndInverseFlattening.y),
-            static_cast<float>(currentState.gridConfiguration.gridParameters[0].falseEastingAndNorthingTM.x / 100.0),
-            static_cast<float>(currentState.gridConfiguration.gridParameters[0].falseEastingAndNorthingTM.y / 100.0));
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].falseEastingAndNorthing.x / 100.0),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].falseEastingAndNorthing.y / 100.0));
+        GL_CHECK_RESULT;
+        glUniform4f(program.vs.param.primaryGridParams,
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].constants1.x),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].constants1.y),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].constants1.z),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].constants1.w));
+        GL_CHECK_RESULT;
+        glUniform4f(program.vs.param.primaryGridExtraParams,
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].constants2.x),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].constants2.y),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].constants2.z),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[0].constants2.w));
         GL_CHECK_RESULT;
         glUniform4f(program.vs.param.primaryGridHelmertTranslations,
             static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertTranslations.x),
             static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertTranslations.y),
             static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertTranslations.z),
-            currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::TM ? 1.0f : 0.0f);
+            currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::HOMV2 ? 3.0f
+                : (currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::OSTEREO ? 2.0f
+                    : (currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::TM ? 1.0f
+                        : 0.0f)));
         GL_CHECK_RESULT;
         glUniform4f(program.vs.param.primaryGridHelmertRotations,
             static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertRotations.x),
@@ -2464,6 +2568,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
             static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertRotations.z),
             static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertScale));
         GL_CHECK_RESULT;
+        isGlobalGrid = currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::WGS84
+            || currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::UTM
+            || currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::MGRS
+            || currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::Mercator;
         glUniform4f(program.vs.param.secondaryGridAxisX,
             currentState.gridConfiguration.gridParameters[1].factorX1,
             currentState.gridConfiguration.gridParameters[1].factorX2,
@@ -2477,10 +2585,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
             currentState.gridConfiguration.gridParameters[1].offsetY);
         GL_CHECK_RESULT;
         glUniform4f(program.vs.param.secondaryGridRefLonLat,
-            static_cast<float>(currentState.gridConfiguration.gridParameters[1].refLonLatTM.x),
-            static_cast<float>(currentState.gridConfiguration.gridParameters[1].refLonLatTM.y),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].refLonLat.x),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].refLonLat.y),
             static_cast<float>(currentState.gridConfiguration.gridParameters[1].scaleFactor),
-            currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::TM ? 1.0f : 0.0f);
+            isGlobalGrid ? 1.0f : 0.0f);
         GL_CHECK_RESULT;
         glUniform4f(program.vs.param.secondaryGridBounds,
             static_cast<float>(currentState.gridConfiguration.gridParameters[1].lonBounds.x),
@@ -2491,14 +2599,29 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         glUniform4f(program.vs.param.secondaryGridConstants,
             static_cast<float>(currentState.gridConfiguration.gridParameters[1].semiMajorAxisAndInverseFlattening.x),
             static_cast<float>(currentState.gridConfiguration.gridParameters[1].semiMajorAxisAndInverseFlattening.y),
-            static_cast<float>(currentState.gridConfiguration.gridParameters[1].falseEastingAndNorthingTM.x / 100.0),
-            static_cast<float>(currentState.gridConfiguration.gridParameters[1].falseEastingAndNorthingTM.y / 100.0));
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].falseEastingAndNorthing.x / 100.0),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].falseEastingAndNorthing.y / 100.0));
+        GL_CHECK_RESULT;
+        glUniform4f(program.vs.param.secondaryGridParams,
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].constants1.x),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].constants1.y),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].constants1.z),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].constants1.w));
+        GL_CHECK_RESULT;
+        glUniform4f(program.vs.param.secondaryGridExtraParams,
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].constants2.x),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].constants2.y),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].constants2.z),
+            static_cast<float>(currentState.gridConfiguration.gridParameters[1].constants2.w));
         GL_CHECK_RESULT;
         glUniform4f(program.vs.param.secondaryGridHelmertTranslations,
             static_cast<float>(currentState.gridConfiguration.gridParameters[1].helmertTranslations.x),
             static_cast<float>(currentState.gridConfiguration.gridParameters[1].helmertTranslations.y),
             static_cast<float>(currentState.gridConfiguration.gridParameters[1].helmertTranslations.z),
-            currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::TM ? 1.0f : 0.0f);
+            currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::HOMV2 ? 3.0f
+                : (currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::OSTEREO ? 2.0f
+                    : (currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::TM ? 1.0f
+                        : 0.0f)));
         GL_CHECK_RESULT;
         glUniform4f(program.vs.param.secondaryGridHelmertRotations,
             static_cast<float>(currentState.gridConfiguration.gridParameters[1].helmertRotations.x),

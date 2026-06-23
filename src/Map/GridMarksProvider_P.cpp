@@ -199,12 +199,16 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
             || !secondaryEasternHemisphereSuffix.isEmpty() || !secondaryWesternHemisphereSuffix.isEmpty());
                 
         if (!withPrimary
-            || (_gridConfiguration.primaryProjection != GridConfiguration::Projection::TM
+            || (_gridConfiguration.primaryProjection != GridConfiguration::Projection::HOMV2
+                && _gridConfiguration.primaryProjection != GridConfiguration::Projection::OSTEREO
+                && _gridConfiguration.primaryProjection != GridConfiguration::Projection::TM
                 && _gridConfiguration.primaryProjection != GridConfiguration::Projection::UTM
                 && _gridConfiguration.primaryProjection != GridConfiguration::Projection::MGRS))
             keepPrimary = true;
         if (!withSecondary
-            || (_gridConfiguration.secondaryProjection != GridConfiguration::Projection::TM
+            || (_gridConfiguration.secondaryProjection != GridConfiguration::Projection::HOMV2
+                && _gridConfiguration.secondaryProjection != GridConfiguration::Projection::OSTEREO
+                && _gridConfiguration.secondaryProjection != GridConfiguration::Projection::TM
                 && _gridConfiguration.secondaryProjection != GridConfiguration::Projection::UTM
                 && _gridConfiguration.secondaryProjection != GridConfiguration::Projection::MGRS))
             keepSecondary = true;

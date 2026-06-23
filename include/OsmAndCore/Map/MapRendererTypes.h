@@ -250,19 +250,24 @@ namespace OsmAnd
         glm::dvec3 helmertTranslations; // Helmert translations from WGS84 to ellipsoid (km)
         glm::dvec3 helmertRotations; // Helmert rotations from WGS84 to ellipsoid (radians)
         double helmertScale; // Helmert scale from WGS84 to ellipsoid (1.0 + (ppm * 1e-6))
-        PointD refLonLatTM; // Transverse Mercator: central meridian and latitude of origin (radians)
-        PointD falseEastingAndNorthingTM; // Transverse Mercator: false easting and false northing (km)
+        PointD refLonLat; // Central meridian and latitude of origin (radians)
+        PointD falseEastingAndNorthing; // False easting and false northing (km)
         double scaleFactor; // Grid scale factor
+        double azimuthCenter; // Grid azimuth center
+        glm::dvec4 constants1; // Intermediate CRS constants
+        glm::dvec4 constants2; // Intermediate CRS constants
     };
 
     struct OSMAND_CORE_API GridConfiguration Q_DECL_FINAL
     {
         enum class Projection {
             WGS84 = 0,
-            TM = 1,
-            UTM = 2,
-            MGRS = 3,
-            Mercator = 4,
+            HOMV2 = 1,
+            OSTEREO = 2,
+            TM = 3,
+            UTM = 4,
+            MGRS = 5,
+            Mercator = 6,
         };
 
         enum class Format {
@@ -501,10 +506,10 @@ namespace OsmAnd
         GridConfiguration& setSecondaryEllipsoidParameters(
             const PointD& helmertTranslationsXY, const PointD& helmertTranslationsZW,
             const PointD& helmertRotationsXY, const PointD& helmertRotationsZScale);
-        GridConfiguration& setPrimaryTransverseMercatorConstants(
+        GridConfiguration& setPrimaryProjectionConstants(const Projection projection,
             const PointD& lonBounds, const PointD& latBounds, const PointD& semiMajorAxisAndInverseFlattening,
             const PointD& refLonLat, const PointD& falseEastingAndNorthing, const PointD& scaleFactor);
-        GridConfiguration& setSecondaryTransverseMercatorConstants(
+        GridConfiguration& setSecondaryProjectionConstants(const Projection projection,
             const PointD& lonBounds, const PointD& latBounds, const PointD& semiMajorAxisAndInverseFlattening,
             const PointD& refLonLat, const PointD& falseEastingAndNorthing, const PointD& scaleFactor);
 
@@ -513,7 +518,7 @@ namespace OsmAnd
         GridConfiguration& setEllipsoidParameters(const int gridIndex,
             const PointD& helmertTranslationsXY, const PointD& helmertTranslationsZW,
             const PointD& helmertRotationsXY, const PointD& helmertRotationsZScale);
-        GridConfiguration& setTransverseMercatorConstants(const int gridIndex,
+        GridConfiguration& setProjectionConstants(const int gridIndex, const Projection projection,
             const PointD& lonBounds, const PointD& latBounds, const PointD& semiMajorAxisAndInverseFlattening,
             const PointD& refLonLat, const PointD& falseEastingAndNorthing, const PointD& scaleFactor);
         PointD getPrimaryGridReference(const PointI& location31) const;
@@ -618,8 +623,9 @@ namespace OsmAnd
 
             bool fromLonLat(PointD& location);
             bool toLonLat(PointD& location);
-            bool getConstantsTM(PointD& lonBounds, PointD& latBounds, PointD& semiMajorAxisAndInverseFlattening,
-                PointD& refLonLatTM, PointD& falseEastingAndNorthingTM, PointD& scaleFactor);
+            bool getConstants(const GridConfiguration::Projection projection,
+                PointD& lonBounds, PointD& latBounds, PointD& semiMajorAxisAndInverseFlattening,
+                PointD& refLonLat, PointD& falseEastingAndNorthing, PointD& scaleFactor);
             bool getEllipsoidParameters(
                 PointD& helmertTranslationsXY, PointD& helmertTranslationsZW,
                 PointD& helmertRotationsXY, PointD& helmertRotationsZScale);

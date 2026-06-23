@@ -483,7 +483,7 @@ namespace OsmAnd
             auto cosLon = cos(wgsLonLat.x);
             
             constexpr double e2 = 0.006694379990141316461; // = 1.0 / 298.257223563 * (2.0 - 1.0 / 298.257223563);
-            auto n = wgsSemiMajorAxis / std::sqrt(1.0 - e2 * sinLat * sinLat);
+            auto n = wgsSemiMajorAxis / sqrt(1.0 - e2 * sinLat * sinLat);
             auto pWgs = glm::dvec3(cosLat * cosLon, cosLat * sinLon, (1.0 - e2) * sinLat) * n;
 
             auto pTarget = glm::dvec3(
@@ -492,10 +492,10 @@ namespace OsmAnd
                 -helmertRotations.y * pWgs.x + helmertRotations.x * pWgs.y + pWgs.z)
                 * helmertScale + helmertTranslations;
 
-            auto p = std::sqrt(pTarget.x * pTarget.x + pTarget.y * pTarget.y);
+            auto p = sqrt(pTarget.x * pTarget.x + pTarget.y * pTarget.y);
             auto vx = pTarget.z * semiMajorAxisAndSemiMinorAxis.x;
             auto vy = p * semiMajorAxisAndSemiMinorAxis.y;
-            auto vh = std::sqrt(vx * vx + vy * vy);
+            auto vh = sqrt(vx * vx + vy * vy);
             auto st = vx / vh;
             auto ct = vy / vh;
 
@@ -506,54 +506,183 @@ namespace OsmAnd
             return result;
         }
 
+        // Get Transverse Mercator additional constants
+        inline static void getIntermediateConstantsTM(
+            const PointD& semiMajorAxisAndInverseFlattening,
+            const double scaleFactor,
+            glm::dvec4& a,
+            glm::dvec4& e)
+        {
+            auto f = 1.0 / semiMajorAxisAndInverseFlattening.y;
+            auto n = f / (2.0 - f);
+            auto n2 = n * n;
+            auto n3 = n2 * n;
+            a.x = 0.5 * n - 2.0 / 3.0 * n2 + 5.0 / 16.0 * n3;
+            a.y = 13.0 / 48.0 * n2 - 3.0 / 5.0 * n3;
+            a.z = 61.0 / 240.0 * n3;
+            a.w = semiMajorAxisAndInverseFlattening.x * scaleFactor
+                / (1.0 + n) * (1.0 + n2 / 4.0 + n2 * n2 / 64.0 + n3 * n3 / 256.0);
+            e.x = 2.0 * sqrt(n) / (1.0 + n);
+        }
+
         // Get Transverse Mercator coordinates from ellipsoid angles
         inline static PointD getCoordinatesTM(
             const PointD& ellipsoidLonLat,
             const PointD& refLonLat,
-            const PointD& semiMajorAxisAndInverseFlattening,
             const PointD& falseEastingAndNorthing,
-            double scaleFactor,
+            const glm::dvec4& a,
+            const glm::dvec4& e,
             bool withLatitudeCorrection = true,
             bool withX = true)
         {
             auto sinlat = sin(ellipsoidLonLat.y);
-            auto f = 1.0 / semiMajorAxisAndInverseFlattening.y;
-            auto n = f / (2.0 - f);
-            auto nn = 2.0 * sqrt(n) / (1.0 + n);
-            auto t = sinh(atanh(sinlat) - nn * atanh(nn * sinlat));
+            auto q = atanh(sinlat) - e.x * atanh(e.x * sinlat);
+            auto t = sinh(q);
+            auto cq = cosh(q);
             auto x = ellipsoidLonLat.x - refLonLat.x;
             auto xi = atan(t / cos(x));
+            auto eta = atanh(sin(x) / cq);
             auto xi2 = xi * 2.0;
-            auto xi4 = xi * 4.0;
-            auto xi6 = xi * 6.0;
-            auto eta = atanh(sin(x) / sqrt(1.0 + t * t));
             auto eta2 = eta * 2.0;
-            auto eta4 = eta * 4.0;
-            auto eta6 = eta * 6.0;
-            auto n2 = n * n;
-            auto n3 = n2 * n;
-            auto a1 = 0.5 * n - 2.0 / 3.0 * n2 + 5.0 / 16.0 * n3;
-            auto a2 = 13.0 / 48.0 * n2 - 3.0 / 5.0 * n3;
-            auto a3 = 61.0 / 240.0 * n3;
-            auto factor = semiMajorAxisAndInverseFlattening.x * scaleFactor
-                / (1.0 + n) * (1.0 + n2 / 4.0 + n2 * n2 / 64.0 + n3 * n3 / 256.0);
+            auto cosXi2 = cos(xi2);
+            auto sinXi2 = sin(xi2);
+            auto coshEta2 = cosh(eta2);
+            auto sinhEta2 = sinh(eta2);
+            auto cosXi4 = 2.0 * cosXi2 * cosXi2 - 1.0;
+            auto sinXi4 = 2.0 * sinXi2 * cosXi2;
+            auto coshEta4 = 2.0 * coshEta2 * coshEta2 - 1.0;
+            auto sinhEta4 = 2.0 * sinhEta2 * coshEta2;
+            auto cosXi6 = cosXi4 * cosXi2 - sinXi4 * sinXi2;
+            auto sinXi6 = sinXi4 * cosXi2 + cosXi4 * sinXi2;
+            auto coshEta6 = coshEta4 * coshEta2 + sinhEta4 * sinhEta2;
+            auto sinhEta6 = sinhEta4 * coshEta2 + coshEta4 * sinhEta2;
             PointD result;
-            if (withX)
-            {
-                result.x = eta + a1 * cos(xi2) * sinh(eta2) + a2 * cos(xi4) * sinh(eta4) + a3 * cos(xi6) * sinh(eta6);
-                result.x *= factor;
-                result.x += falseEastingAndNorthing.x;
-            }
-            result.y = xi + a1 * sin(xi2) * cosh(eta2) + a2 * sin(xi4) * cosh(eta4) + a3 * sin(xi6) * cosh(eta6);
-            result.y *= factor;
-            result.y += falseEastingAndNorthing.y;
+            result.x = withX ? (eta + a.x * cosXi2 * sinhEta2 + a.y * cosXi4 * sinhEta4 + a.z * cosXi6 * sinhEta6)
+                * a.w + falseEastingAndNorthing.x : 0.0;
+            result.y = (xi + a.x * sinXi2 * coshEta2 + a.y * sinXi4 * coshEta4 + a.z * sinXi6 * coshEta6)
+                * a.w + falseEastingAndNorthing.y;
             if (withLatitudeCorrection && refLonLat.y != 0.0)
             {
-                PointD zeroFalseEaN(0.0, 0.0);
-                auto origin = getCoordinatesTM(
-                    refLonLat, refLonLat, semiMajorAxisAndInverseFlattening, zeroFalseEaN, scaleFactor, false, false);
+                auto origin = getCoordinatesTM(refLonLat, refLonLat, PointD(0.0, 0.0), a, e, false, false);
                 result.y -= origin.y;
             }
+            return result;
+        }
+
+        // Get Oblique Stereographic additional constants
+        inline static void getIntermediateConstantsOS(
+            const PointD& semiMajorAxisAndInverseFlattening,
+            const PointD& refLonLat,
+            const double scaleFactor,
+            glm::dvec4& a,
+            glm::dvec4& e)
+        {
+            auto f = 1.0 / semiMajorAxisAndInverseFlattening.y;
+            auto e2 = f * (2.0 - f);
+            e.x = sqrt(e2);
+            auto sinLat = sin(refLonLat.y);
+            auto cosLat = cos(refLonLat.y);
+            auto cosLat2 = cosLat * cosLat;
+            auto cosLat4 = cosLat2 * cosLat2;
+            e.y = sqrt(1.0 + (e2 * cosLat4) / (1.0 - e2));
+            auto esin = e.x * sinLat;
+            auto w1 = pow((1.0 + sinLat) / (1.0 - sinLat) * pow((1.0 - esin) / (1.0 + esin), e.x), e.y);
+            auto sinChi = (w1 - 1.0) / (w1 + 1.0);
+            e.z = ((e.y + sinLat) * (1.0 - sinChi)) / ((e.y - sinLat) * (1.0 + sinChi));
+            auto w2 = e.z * w1;
+            sinChi = (w2 - 1.0) / (w2 + 1.0);
+            a.x = sinChi;
+            a.y = sqrt(1.0 - sinChi * sinChi);
+            a.z = (semiMajorAxisAndInverseFlattening.x * sqrt(1.0 - e2)) / (1.0 - e2 * sinLat * sinLat)
+                * 2.0 * scaleFactor;
+        }
+
+        // Get Oblique Stereographic coordinates from ellipsoid angles
+        inline static PointD getCoordinatesOS(
+            const PointD& ellipsoidLonLat,
+            const PointD& refLonLat,
+            const PointD& falseEastingAndNorthing,
+            const glm::dvec4& a,
+            const glm::dvec4& e)
+        {
+            auto sinLat = sin(ellipsoidLonLat.y);
+            auto t = e.x * sinLat;
+            t = e.z * pow((1.0 + sinLat) / (1.0 - sinLat) * pow((1.0 - t) / (1.0 + t), e.x), e.y);
+            auto sinChi = (t - 1.0) / (t + 1.0);
+            auto cosChi = sqrt(1.0 - sinChi * sinChi);
+            auto b = e.y * (ellipsoidLonLat.x - refLonLat.x);
+            auto sinD = sin(b);
+            auto cosD = cos(b);
+            b = 1.0 + sinChi * a.x + cosChi * a.y * cosD;
+            PointD result;
+            result.x = falseEastingAndNorthing.x + a.z * cosChi * sinD / b;
+            result.y = falseEastingAndNorthing.y + a.z * (sinChi * a.y - cosChi * a.x * cosD) / b;
+            return result;
+        }
+
+        // Get Hotine Oblique Mercator additional constants
+        inline static void getIntermediateConstantsHOMV2(
+            const PointD& semiMajorAxisAndInverseFlattening,
+            const PointD& refLonLat,
+            const PointD& scaleFactorAndAzimuth,
+            PointD& falseEastingAndNorthing,
+            glm::dvec4& a,
+            glm::dvec4& e)
+        {
+            auto fl = 1.0 / semiMajorAxisAndInverseFlattening.y;
+            auto e2 = fl * (2.0 - fl);
+            e.x = sqrt(e2);
+            auto sinLat = sin(refLonLat.y);
+            auto cosLat = cos(refLonLat.y);
+            auto cosLat2 = cosLat * cosLat;
+            auto cosLat4 = cosLat2 * cosLat2;
+            e.y = sqrt(1.0 + (e2 * cosLat4) / (1.0 - e2));
+            auto r = semiMajorAxisAndInverseFlattening.x * e.y * scaleFactorAndAzimuth.x * sqrt(1.0 - e2)
+                / (1.0 - e2 * sinLat * sinLat);
+            auto eSinLat = e.x * sinLat;
+            auto t = (cosLat / (1.0 + sinLat)) * pow((1.0 + eSinLat) / (1.0 - eSinLat), e.x * 0.5);
+            auto d = fmax((e.y * sqrt(1.0 - e2)) / (cosLat * sqrt(1.0 - e2 * sinLat * sinLat)), 1.0);
+            auto sign = (sinLat >= 0.0) ? 1.0 : -1.0; 
+            auto f = d + sign * sqrt(d * d - 1.0);
+            e.z = f * pow(t, e.y);
+            auto sinAlpha = sin(scaleFactorAndAzimuth.y);
+            auto cosAlpha = cos(scaleFactorAndAzimuth.y);
+            auto gamma = asin(sinAlpha / d);
+            e.w = refLonLat.x - asin(0.5 * (f - 1.0 / f) * tan(gamma)) / e.y;
+            auto uc =
+                r / e.y * sign * (abs(cosAlpha) < 1e-11 ? M_PI_2 : atan(sqrt(d * d - 1.0) / cosAlpha));
+            falseEastingAndNorthing.x -= uc * sinAlpha;
+            falseEastingAndNorthing.y -= uc * cosAlpha;
+            auto aob = r / e.y;
+            a.x = sin(gamma);
+            a.y = cos(gamma);
+            a.z = aob * sinAlpha;
+            a.w = aob * cosAlpha;
+        }
+
+        // Get Hotine Oblique Mercator coordinates from ellipsoid angles
+        inline static PointD getCoordinatesHOMV2(
+            const PointD& ellipsoidLonLat,
+            const PointD& falseEastingAndNorthing,
+            const glm::dvec4& a,
+            const glm::dvec4& e)
+        {
+            auto sinLat = sin(ellipsoidLonLat.y);
+            auto eSinLat = e.x * sinLat;
+            auto cosLat = sqrt(1.0 - sinLat * sinLat);
+            auto t = pow((cosLat / (1.0 + sinLat)) * pow((1.0 + eSinLat) / (1.0 - eSinLat), e.x * 0.5), e.y);
+            auto q = e.z / t;
+            auto invq = t / e.z;
+            auto s = 0.5 * (q - invq);
+            auto dLambda = e.y * (ellipsoidLonLat.x - e.w);
+            auto v = sin(dLambda);
+            auto cosDLambda = cos(dLambda);
+            auto u = fmax(fmin((-v * a.y + s * a.x) / (0.5 * (q + invq)), 0.9999999999), -0.9999999999);
+            auto vRaw = 0.5 * log((1.0 - u) / (1.0 + u));
+            auto uRaw = atan2(s * a.y + v * a.x, cosDLambda);
+            PointD result;
+            result.x = falseEastingAndNorthing.x + uRaw * a.z + vRaw * a.w;
+            result.y = falseEastingAndNorthing.y + uRaw * a.w - vRaw * a.z;
             return result;
         }
 
