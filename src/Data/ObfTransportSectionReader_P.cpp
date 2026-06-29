@@ -195,6 +195,22 @@ void OsmAnd::ObfTransportSectionReader_P::initializeNames(
     
     if (!s->enName.isEmpty())
         s->enName = stringTable->value(s->enName[0].unicode());
+
+    if (!s->localizedNames.isEmpty())
+    {
+        const auto localizedNames = s->localizedNames;
+        const auto localizedNamesOrder = s->localizedNamesOrder;
+        s->localizedNames.clear();
+        s->localizedNamesOrder.clear();
+        for (const auto& key : localizedNamesOrder)
+        {
+            const auto localizedName = localizedNames.value(key);
+            const auto nameKey = stringTable->value(key[0].unicode());
+            const auto nameValue = stringTable->value(localizedName[0].unicode());
+            s->localizedNames.insert(nameKey, nameValue);
+            s->localizedNamesOrder.append(nameKey);
+        }
+    }
 }
 
 void OsmAnd::ObfTransportSectionReader_P::searchTransportStops(
@@ -418,6 +434,27 @@ std::shared_ptr<OsmAnd::TransportStop> OsmAnd::ObfTransportSectionReader_P::read
                 else
                     ObfReaderUtilities::skipUnknownField(cis, tag);
 
+                break;
+            }
+            case OBF::TransportStop::kAdditionalNamePairsFieldNumber:
+            {
+                if (stringTable)
+                {
+                    gpb::uint32 length;
+                    cis->ReadVarint32(&length);
+                    const auto oldLimit = cis->PushLimit(length);
+                    while (cis->BytesUntilLimit() > 0)
+                    {
+                        const auto key = regStr(reader, stringTable);
+                        outTransportStop->localizedNames.insert(key, regStr(reader, stringTable));
+                        outTransportStop->localizedNamesOrder.append(key);
+                    }
+                    cis->PopLimit(oldLimit);
+                }
+                else
+                {
+                    ObfReaderUtilities::skipUnknownField(cis, t);
+                }
                 break;
             }
             case OBF::TransportStop::kExitsFieldNumber:
@@ -670,4 +707,3 @@ std::shared_ptr<OsmAnd::TransportStop> OsmAnd::ObfTransportSectionReader_P::read
     dataObject->location = LatLon(Utilities::getLatitudeFromTile(TRANSPORT_STOP_ZOOM, dy), Utilities::getLongitudeFromTile(TRANSPORT_STOP_ZOOM, dx));
     return dataObject;
 }
-
