@@ -1226,6 +1226,17 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                             auto pData = pByteBuffer;
                             int pShift = outRaster ? (tileOffset.y * tileSize + tileOffset.x) * pixelSizeInBytes : 0;
                             const auto side = tileSize * pixelSizeInBytes;
+                            const auto canReadRaster =
+                                dataSize.x > 0 && dataSize.y > 0 &&
+                                tileLength.x > 0 && tileLength.y > 0 &&
+                                extraArg.dfXSize > 0.0 && extraArg.dfYSize > 0.0;
+                            const auto bandBufferSize = static_cast<int64_t>(bandSize);
+                            const auto writeOffset = static_cast<int64_t>(pShift);
+                            const auto writeEnd = writeOffset +
+                                static_cast<int64_t>(tileLength.y - 1) * static_cast<int64_t>(side) +
+                                static_cast<int64_t>(tileLength.x) * pixelSizeInBytes;
+                            result = result && canReadRaster &&
+                                writeOffset >= 0 && writeEnd <= bandBufferSize;
                             for (int bandIndex = 1; bandIndex <= numOfBands; bandIndex++)
                             {
                                 result = result && (band = dataset->GetRasterBand(bandIndex));
@@ -1244,11 +1255,15 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                                     auto pValues = reinterpret_cast<float*>(pData);
                                     std::fill(pValues, pValues + valueCount, static_cast<float>(noData));
                                 }
-                                result = result && band->RasterIO(GF_Read,
-                                    dataOffset.x, dataOffset.y,
-                                    dataSize.x, dataSize.y,
-                                    pData + pShift, tileLength.x, tileLength.y,
-                                    dataType, 0, side, &extraArg) == CE_None;
+                                if (result)
+                                {
+                                    QMutexLocker rasterIOLocker(&_gdalRasterIOLock);
+                                    result = band->RasterIO(GF_Read,
+                                        dataOffset.x, dataOffset.y,
+                                        dataSize.x, dataSize.y,
+                                        pData + pShift, tileLength.x, tileLength.y,
+                                        dataType, 0, side, &extraArg) == CE_None;
+                                }
                                 if (!result) break;
                                 if (!procParameters)
                                     getMinMaxValues(pData, dataType, noData, valueCount, minValue, maxValue);
@@ -1286,9 +1301,17 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                                     extraArg.dfYSize = 1.0;
                                     band = dataset->GetRasterBand(1);
                                     double centerValue = noData;
-                                    result = band->RasterIO(GF_Read,
-                                        std::floor(extraArg.dfXOff), std::floor(extraArg.dfYOff),
-                                        1, 1, &centerValue, 1, 1, GDT_Float64, 0, 0, &extraArg) == CE_None;
+                                    if (band)
+                                    {
+                                        QMutexLocker rasterIOLocker(&_gdalRasterIOLock);
+                                        result = band->RasterIO(GF_Read,
+                                            std::floor(extraArg.dfXOff), std::floor(extraArg.dfYOff),
+                                            1, 1, &centerValue, 1, 1, GDT_Float64, 0, 0, &extraArg) == CE_None;
+                                    }
+                                    else
+                                    {
+                                        result = false;
+                                    }
                                     result = result && centerValue != noData;
                                 }
                                 if (!result)
@@ -1465,4 +1488,3 @@ bool OsmAnd::GeoTiffCollection_P::calculateHeights(
     }
     return true;
 }
-
