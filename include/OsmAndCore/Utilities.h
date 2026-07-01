@@ -2062,6 +2062,38 @@ namespace OsmAnd
             return res;
         }
 
+        inline static QString simplifyFileName(const QString &filename)
+        {
+            QString lc = filename.toLower();
+            int dotIndex = lc.indexOf('.');
+            if (dotIndex != -1)
+            {
+                lc = lc.left(dotIndex);
+            }
+
+            if (lc.endsWith(QLatin1String("_2")))
+            {
+                lc.chop(2);
+            }
+
+            bool hasTimestampEnd = false;
+            for (const QChar &ch : lc)
+            {
+                if (ch.isDigit())
+                {
+                    hasTimestampEnd = true;
+                    break;
+                }
+            }
+
+            if (!hasTimestampEnd)
+            {
+                lc += QLatin1String("_00_00_00");
+            }
+
+            return lc;
+        }
+
     private:
         Utilities();
         ~Utilities();

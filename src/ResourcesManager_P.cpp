@@ -10,6 +10,7 @@
 #include <QTextStream>
 #include <QBuffer>
 #include "restore_internal_warnings.h"
+#include <algorithm>
 
 #include "OsmAndCore_private.h"
 #include "CoreResourcesEmbeddedBundle.h"
@@ -2587,6 +2588,15 @@ QList< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::Obfs
     }
     if (!otherBasemapPresent && owner->_miniBasemapObfFile)
         obfFiles.push_back(owner->_miniBasemapObfFile);
+
+    std::sort(obfFiles.begin(), obfFiles.end(), [](const auto &a, const auto &b) {
+        QString nameA = QFileInfo(a->filePath).fileName();
+        QString nameB = QFileInfo(b->filePath).fileName();
+
+        QString simplifiedA = Utilities::simplifyFileName(nameA);
+        QString simplifiedB = Utilities::simplifyFileName(nameB);
+        return simplifiedA > simplifiedB;
+    });
 
     return obfFiles;
 }
