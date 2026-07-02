@@ -170,6 +170,105 @@ namespace OsmAnd
             return QStringLiteral("%1%2").arg(sdeg).arg(smin);
         }
 
+        inline static QString getOpenLocationCode(const PointD& coordinates, double gap)
+        {
+            static constexpr char alphabet[] = "23456789CFGHJMPQRVWX";
+            static constexpr double resolutions[] = {5.0, 0.25, 0.25 / 20.0, 0.25 / 400.0};
+            
+            auto lon = fmod(coordinates.x + 360.0, 360.0) / 20.0;
+            auto lat = fmin(fmax(coordinates.y, 0.0), 179.9999999) / 20.0;
+
+            QString code;
+            code.reserve(11);
+            for (int i = 0; i < 5; i++)
+            {
+                auto lonDigit = static_cast<int>(std::floor(lon));
+                auto latDigit = static_cast<int>(std::floor(lat));
+
+                code.append(QLatin1Char(alphabet[lonDigit]));
+                code.append(QLatin1Char(alphabet[latDigit]));
+
+                lon = (lon - lonDigit) * 20.0;
+                lat = (lat - latDigit) * 20.0;
+
+                if (i == 3)
+                    code.append(QLatin1Char('+'));
+
+                if (gap >= resolutions[i])
+                {
+                    if (code.length() < 8)
+                    {
+                        code.append(QLatin1Char('.'));
+                        code.append(QLatin1Char('.'));
+                    }
+                    return code;
+                }
+            }
+            /* Extra precision letter (not needed yet)
+            if (gap < 0.000025)
+            {
+                int col = std::min(std::max(static_cast<int>(lon / 4.0), 0), 4);
+                int row = std::min(std::max(static_cast<int>(lat / 5.0), 0), 3);
+                code.append(QLatin1Char(alphabet[row * 5 + col]));
+            }
+            */
+            return code;
+        }
+
+        inline static QString getMaidenheadLocator(const PointD& coordinates, double gap)
+        {
+            static constexpr double resolutions[] = {5.0, 0.125, 15.0 / 720.0, 0.625 / 1200.0};
+
+            auto lon = fmod(coordinates.x + 540.0, 360.0) / 20.0;
+            auto lat = fmin(fmax(coordinates.y + 90.0, 0.0), 179.9999999) / 10.0;
+
+            QString code;
+            code.reserve(10);
+
+            int lonField = static_cast<int>(std::floor(lon));
+            int latField = static_cast<int>(std::floor(lat));
+            code.append(QLatin1Char('A' + lonField));
+            code.append(QLatin1Char('A' + latField));
+            if (gap >= resolutions[0])
+                return code;
+
+            lon = (lon - lonField) * 10.0;
+            lat = (lat - latField) * 10.0;
+            int lonSquare = static_cast<int>(std::floor(lon));
+            int latSquare = static_cast<int>(std::floor(lat));
+            code.append(QLatin1Char('0' + lonSquare));
+            code.append(QLatin1Char('0' + latSquare));
+            if (gap >= resolutions[1])
+                return code;
+
+            lon = (lon - lonSquare) * 24.0;
+            lat = (lat - latSquare) * 24.0;
+            int lonSub = static_cast<int>(std::floor(lon));
+            int latSub = static_cast<int>(std::floor(lat));
+            code.append(QLatin1Char('A' + lonSub));
+            code.append(QLatin1Char('A' + latSub));
+            if (gap >= resolutions[2])
+                return code;
+
+            lon = (lon - lonSub) * 10.0;
+            lat = (lat - latSub) * 10.0;
+            int lonExt = static_cast<int>(std::floor(lon));
+            int latExt = static_cast<int>(std::floor(lat));
+            code.append(QLatin1Char('0' + lonExt));
+            code.append(QLatin1Char('0' + latExt));
+            if (gap >= resolutions[3])
+                return code;
+
+            lon = (lon - lonExt) * 24.0;
+            lat = (lat - latExt) * 24.0;
+            int lonFifth = std::min(std::max(static_cast<int>(std::floor(lon)), 0), 23);
+            int latFifth = std::min(std::max(static_cast<int>(std::floor(lat)), 0), 23);
+            code.append(QLatin1Char('A' + lonFifth));
+            code.append(QLatin1Char('A' + latFifth));
+
+            return code;
+        }
+
         inline static double toRadians(const double angle)
         {
             return angle / 180.0 * M_PI;
@@ -1591,9 +1690,11 @@ namespace OsmAnd
             return glm::dmat3(cx, sx * cy, sx * sy, -sx, cx * cy, cx * sy, 0.0, -sy, cy);
         }
 
+        // Snap value to the closest number from range [1, 2, 5, 10] * (10 ^ n)
         inline static double snapToGridDecimal(const double value)
         {
-            // Snap value to the closest number from range [1, 2, 5, 10] * (10 ^ n)
+            if (value <= 0.0)
+                return 1.0;
             double factor = std::pow(10.0, std::floor(log10(value)));
             double result = value / factor;
             if (result < 2.0)
@@ -1608,32 +1709,31 @@ namespace OsmAnd
             return result;
         }
 
+        // Snap value to the closest number from range [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60]
         inline static double snapToGridSexagesimal(const double value)
         {
-            // Snap value to the closest number from range [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60]
-            double result = value;
-            if (result < 6.0)
-                result = std::round(result);
-            else if (result < 10.0)
-                result = 6.0;
-            else if (result < 12.0)
-                result = 10.0;
-            else if (result < 15.0)
-                result = 12.0;
-            else if (result < 20.0)
-                result = 15.0;
-            else if (result < 30.0)
-                result = 20.0;
-            else if (result < 60.0)
-                result = 30.0;
-            else
-                result = 60.0;
-            return result;
+            if (value < 6.0)
+                return std::floor(value);
+            if (value < 10.0)
+                return 6.0;
+            if (value < 12.0)
+                return 10.0;
+            if (value < 15.0)
+                return 12.0;
+            if (value < 20.0)
+                return 15.0;
+            if (value < 30.0)
+                return 20.0;
+            if (value < 60.0)
+                return 30.0;
+            return 60.0;
         }
 
+        // Snap value to the closest degree:minute:second.n
         inline static double snapToGridDMS(const double value)
         {
-            // Snap value to the closest degree:minute:second.n
+            if (value <= 0.0)
+                return 1.0;
             if (value >= 1.0)
                 return snapToGridDecimal(value);
             double factor = 60.0;
@@ -1649,9 +1749,11 @@ namespace OsmAnd
             return snapToGridDecimal(gap) / factor;
         }
 
+        // Snap value to the closest degree:minute.n
         inline static double snapToGridDM(const double value)
         {
-            // Snap value to the closest degree:minute.n
+            if (value <= 0.0)
+                return 1.0;
             if (value >= 1.0)
                 return snapToGridDecimal(value);
             double factor = 60.0;
@@ -1661,6 +1763,38 @@ namespace OsmAnd
             factor *= 10.0;
             gap = value * factor;
             return snapToGridDecimal(gap) / factor;
+        }
+
+        // Snap value to the suitable Open Location Code interval
+        inline static double snapToGridOLC(const double value)
+        {
+            static constexpr double levels[] = {20.0, 10.0, 5.0, 1.0, 0.5, 0.25,
+                1.0 / 20.0, 0.5 / 20.0, 0.25 / 20.0, 1.0 / 400.0, 0.5 / 400.0, 0.25 / 400.0, 1.0 / 8000.0};
+            static constexpr int lastLevelIdx = sizeof(levels) / sizeof(double) - 1;
+
+            for (const auto level : levels)
+            {
+                if (value >= level)
+                    return level;
+            }
+
+            return levels[lastLevelIdx];
+        }
+
+        // Snap value to the suitable Maidenhead latitude interval
+        inline static double snapToGridMLS(const double value)
+        {
+            static constexpr double levels[] = {10.0, 5.0, 1.0, 0.5, 0.25, 0.125,
+                2.5 / 60.0, 15.0 / 720.0, 15.0 / 3600.0, 7.5 / 3600.0, 0.625 / 600.0, 0.625 / 1200.0, 0.625 / 3600.0};
+            static constexpr int lastLevelIdx = sizeof(levels) / sizeof(double) - 1;
+
+            for (const auto level : levels)
+            {
+                if (value >= level)
+                    return level;
+            }
+
+            return levels[lastLevelIdx];
         }
 
         enum class CHCode : uint8_t

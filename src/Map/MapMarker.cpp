@@ -59,12 +59,12 @@ void OsmAnd::MapMarker::setIsAccuracyCircleVisible(const bool visible)
 
 double OsmAnd::MapMarker::getAccuracyCircleRadius() const
 {
-    return _p->getAdditionalPosition();
+    return _p->getAdditionalPosition().x;
 }
 
 void OsmAnd::MapMarker::setAccuracyCircleRadius(const double radius)
 {
-    _p->setAdditionalPosition(radius);
+    _p->setAdditionalPosition(PointD(radius, 0.0));
 }
 
 OsmAnd::PointI OsmAnd::MapMarker::getPosition() const
@@ -87,12 +87,12 @@ void OsmAnd::MapMarker::setPositionType(const PositionType positionType)
     _p->setPositionType(positionType);
 }
 
-double OsmAnd::MapMarker::getAdditionalPosition() const
+OsmAnd::PointD OsmAnd::MapMarker::getAdditionalPosition() const
 {
     return _p->getAdditionalPosition();
 }
 
-void OsmAnd::MapMarker::setAdditionalPosition(const double additionalPosition)
+void OsmAnd::MapMarker::setAdditionalPosition(const PointD additionalPosition)
 {
     _p->setAdditionalPosition(additionalPosition);
 }

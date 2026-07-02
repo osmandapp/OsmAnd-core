@@ -39,9 +39,9 @@ namespace OsmAnd
         virtual PositionType getPositionType() const;
         virtual void setPositionType(const PositionType positionType);
 
-        double additionalPosition;
-        virtual double getAdditionalPosition() const;
-        virtual void setAdditionalPosition(const double additionalPosition);
+        PointD additionalPosition;
+        virtual PointD getAdditionalPosition() const;
+        virtual void setAdditionalPosition(const PointD additionalPosition);
 
         int extraId;
         virtual int getExtraId() const;

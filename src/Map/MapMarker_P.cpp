@@ -101,14 +101,14 @@ void OsmAnd::MapMarker_P::setPositionType(const PositionType positionType)
     }
 }
 
-double OsmAnd::MapMarker_P::getAdditionalPosition() const
+OsmAnd::PointD OsmAnd::MapMarker_P::getAdditionalPosition() const
 {
     QReadLocker scopedLocker(&_lock);
 
     return _additionalPositionParameter;
 }
 
-void OsmAnd::MapMarker_P::setAdditionalPosition(const double additionalPosition)
+void OsmAnd::MapMarker_P::setAdditionalPosition(const PointD additionalPosition)
 {
     QWriteLocker scopedLocker(&_lock);
 
@@ -524,7 +524,9 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
                 case PositionType::SecondaryGridXMiddle:
                     extraOffset.x = textImage->width() / 2 + owner->captionTopSpace;
                     if (textStyle.textAlignment == TextRasterizer::Style::TextAlignment::Under)
-                        extraOffset.y = textImage->height() + owner->captionTopSpace;
+                        extraOffset.y = -textImage->height() / 2 - 1;
+                    else
+                        extraOffset.y = textImage->height() / 2 + 1;
                     break;
                 case PositionType::PrimaryGridYMiddle:
                 case PositionType::SecondaryGridYMiddle:
