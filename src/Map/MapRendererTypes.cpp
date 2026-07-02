@@ -140,6 +140,38 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setProjectionParameters(
     }
     switch (projection)
     {
+        case Projection::OLC:
+            {
+                const auto radToDeg = static_cast<float>(180.0 / M_PI);
+                parameters->factorX1 = radToDeg;
+                parameters->factorX2 = 0.0f;
+                parameters->factorX3 = 0.0f;
+                parameters->offsetX = 180.0f;
+                parameters->factorY1 = radToDeg;
+                parameters->factorY2 = 0.0f;
+                parameters->factorY3 = 0.0f;
+                parameters->offsetY = 90.0f;
+                parameters->minZoom = ZoomLevel0;
+                parameters->maxZoomForFloat = ZoomLevel12;
+                parameters->maxZoomForMixed = ZoomLevel14;
+            }
+            break;
+        case Projection::MLS:
+            {
+                const auto radToDeg = static_cast<float>(180.0 / M_PI);
+                parameters->factorX1 = radToDeg / 2.0f;
+                parameters->factorX2 = 0.0f;
+                parameters->factorX3 = 0.0f;
+                parameters->offsetX = 90.0f;
+                parameters->factorY1 = radToDeg;
+                parameters->factorY2 = 0.0f;
+                parameters->factorY3 = 0.0f;
+                parameters->offsetY = 90.0f;
+                parameters->minZoom = ZoomLevel0;
+                parameters->maxZoomForFloat = ZoomLevel12;
+                parameters->maxZoomForMixed = ZoomLevel14;
+            }
+            break;
         case Projection::UTM:
         case Projection::MGRS:
             parameters->falseEastingAndNorthing.x = 500.0; // False easting (km)
@@ -174,20 +206,21 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setProjectionParameters(
             parameters->maxZoomForMixed = ZoomLevel14;
             break;
         default: // EPSG:4326 (WGS84 Lat/Lon degrees)
-            const auto radToDeg = static_cast<float>(180.0 / M_PI);
-            parameters->factorX1 = radToDeg;
-            parameters->factorX2 = 0.0f;
-            parameters->factorX3 = 0.0f;
-            parameters->offsetX = 0.0f;
-            parameters->factorY1 = radToDeg;
-            parameters->factorY2 = 0.0f;
-            parameters->factorY3 = 0.0f;
-            parameters->offsetY = 0.0f;
-            parameters->minZoom = ZoomLevel0;
-            parameters->maxZoomForFloat = ZoomLevel12;
-            parameters->maxZoomForMixed = ZoomLevel14;
+            {
+                const auto radToDeg = static_cast<float>(180.0 / M_PI);
+                parameters->factorX1 = radToDeg;
+                parameters->factorX2 = 0.0f;
+                parameters->factorX3 = 0.0f;
+                parameters->offsetX = 0.0f;
+                parameters->factorY1 = radToDeg;
+                parameters->factorY2 = 0.0f;
+                parameters->factorY3 = 0.0f;
+                parameters->offsetY = 0.0f;
+                parameters->minZoom = ZoomLevel0;
+                parameters->maxZoomForFloat = ZoomLevel12;
+                parameters->maxZoomForMixed = ZoomLevel14;
+            }
     }
-
     return *this;
 }
 
@@ -347,6 +380,28 @@ OsmAnd::PointD OsmAnd::GridConfiguration::projectLocation(const int gridIndex, c
     PointD result;
     switch (projection)
     {
+        case Projection::OLC: // Open Location Code longitude and latitude (zero-based)
+            {
+                const bool isOverX = location31.x < 0;
+                const bool isOverY = location31.y < 0;
+                const auto lonlat = Utilities::getAnglesFrom31(PointI(
+                    isOverX ? location31.x + 1 + INT32_MAX : location31.x,
+                    isOverY ? location31.y + 1 + INT32_MAX : location31.y));
+                result = (lonlat - PointD(isOverX ? M_PI : -M_PI, isOverY ? M_PI_2 : -M_PI_2)) * 180.0 / M_PI;
+            }
+            break;
+        case Projection::MLS: // Maidenhead Locator squeezed-longitude and latitude (zero-based)
+            {
+                const bool isOverX = location31.x < 0;
+                const bool isOverY = location31.y < 0;
+                const auto lonlat = Utilities::getAnglesFrom31(PointI(
+                    isOverX ? location31.x + 1 + INT32_MAX : location31.x,
+                    isOverY ? location31.y + 1 + INT32_MAX : location31.y));
+                result = (lonlat - PointD(isOverX ? M_PI : -M_PI, isOverY ? M_PI_2 : -M_PI_2)) / M_PI;
+                result.x *= 90.0;
+                result.y *= 180.0;
+            }
+            break;
         case Projection::HOMV2: // Hotine Oblique Mercator easting and northing coordinates (100 kilometers)
             {
                 const auto lonlat = Utilities::getAnglesFrom31(location31);
@@ -458,6 +513,12 @@ OsmAnd::PointI OsmAnd::GridConfiguration::unProjectLocation(
     PointI result(-1, -1);
     switch (projection)
     {
+        case Projection::OLC: // Get 31-coordinates from zero-based longitude and latitude in degrees
+            result = Utilities::get31FromAngles((location - PointD(180.0, 90.0)) * M_PI / 180.0);
+            break;
+        case Projection::MLS: // Get 31-coordinates from zero-based squeezed-longitude and latitude in degrees
+            result = Utilities::get31FromAngles(PointD((location.x - 90.0) / 90.0, (location.y - 90.0) / 180.0) * M_PI);
+            break;
         case Projection::HOMV2: // TODO: unproject to 31-coordinates
         case Projection::OSTEREO:
         case Projection::TM:
@@ -536,6 +597,18 @@ bool OsmAnd::GridConfiguration::getCoordinateX(const Projection projection, doub
     bool result = false;
     switch (projection)
     {
+        case Projection::OLC: // Zero-based longitude in degrees
+            if (coordinate >= 360.0)
+                coordinate -= 360.0;
+            else if (coordinate < 0.0)
+                coordinate += 360.0;
+            result = true;
+        case Projection::MLS: // Zero-based squeezed-longitude in degrees
+            if (coordinate >= 180.0)
+                coordinate -= 180.0;
+            else if (coordinate < 0.0)
+                coordinate += 180.0;
+            result = true;
         case Projection::HOMV2: // Easting coordinate (100 kilometers)
         case Projection::OSTEREO:
         case Projection::TM:
@@ -568,6 +641,11 @@ bool OsmAnd::GridConfiguration::getCoordinateY(const Projection projection, doub
     bool result = false;
     switch (projection)
     {
+        case Projection::OLC: // Zero-based latitude in degrees
+        case Projection::MLS: // Zero-based latitude in degrees
+            if (coordinate >= 5.0 && coordinate <= 175.0)
+                result = true;
+            break;
         case Projection::HOMV2: // Northing coordinate (100 kilometers)
         case Projection::OSTEREO:
         case Projection::TM:
@@ -623,32 +701,42 @@ double OsmAnd::GridConfiguration::getMaxMarksPerAxis(const Projection projection
     return result;
 }
 
-QString OsmAnd::GridConfiguration::getPrimaryGridMarkX(const PointD& coordinates, const int zone) const
+QString OsmAnd::GridConfiguration::getPrimaryGridMarkX(
+    const PointD& coordinates, const int zone, const double gap) const
 {
-    return getMarkX(primaryProjection, primaryFormat, coordinates, zone);
+    return getMarkX(primaryProjection, primaryFormat, coordinates, zone, gap);
 }
 
-QString OsmAnd::GridConfiguration::getPrimaryGridMarkY(const PointD& coordinates, const int zone) const
+QString OsmAnd::GridConfiguration::getPrimaryGridMarkY(
+    const PointD& coordinates, const int zone, const double gap) const
 {
-    return getMarkY(0, primaryProjection, primaryFormat, coordinates, zone);
+    return getMarkY(primaryProjection, primaryFormat, coordinates, zone, gap);
 }
 
-QString OsmAnd::GridConfiguration::getSecondaryGridMarkX(const PointD& coordinates, const int zone) const
+QString OsmAnd::GridConfiguration::getSecondaryGridMarkX(
+    const PointD& coordinates, const int zone, const double gap) const
 {
-    return getMarkX(secondaryProjection, secondaryFormat, coordinates, zone);
+    return getMarkX(secondaryProjection, secondaryFormat, coordinates, zone, gap);
 }
 
-QString OsmAnd::GridConfiguration::getSecondaryGridMarkY(const PointD& coordinates, const int zone) const
+QString OsmAnd::GridConfiguration::getSecondaryGridMarkY(
+    const PointD& coordinates, const int zone, const double gap) const
 {
-    return getMarkY(1, secondaryProjection, secondaryFormat, coordinates, zone);
+    return getMarkY(secondaryProjection, secondaryFormat, coordinates, zone, gap);
 }
 
-QString OsmAnd::GridConfiguration::getMarkX(
-    const Projection projection, const Format format, const PointD& coordinates, const int zone) const
+QString OsmAnd::GridConfiguration::getMarkX(const Projection projection,
+    const Format format, const PointD& coordinates, const int zone, const double gap) const
 {
     QString result;
     switch (projection)
     {
+        case Projection::OLC: // Open Location Code area center coordinates
+            result = Utilities::getOpenLocationCode(coordinates, gap);
+            break;
+        case Projection::MLS: // Maidenhead Locator area center coordinates
+            result = Utilities::getMaidenheadLocator(coordinates, gap);
+            break;
         case Projection::HOMV2: // Hotine Oblique Mercator easting coordinate (meters)
         case Projection::OSTEREO: // Oblique Stereographic easting coordinate (meters)
         case Projection::TM: // TM easting coordinate (meters)
@@ -704,13 +792,19 @@ QString OsmAnd::GridConfiguration::getMarkX(
     return result;
 }
 
-QString OsmAnd::GridConfiguration::getMarkY(const int gridIndex,
-    const Projection projection, const Format format, const PointD& coordinates, const int zone) const
+QString OsmAnd::GridConfiguration::getMarkY(const Projection projection,
+    const Format format, const PointD& coordinates, const int zone, const double gap) const
 {
     QString result;
     switch (projection)
     {
-        case Projection::HOMV2: // Hotine Oblique Mercator northing coordinate (meters)
+        case Projection::OLC: // Open Location Code area center coordinates
+            result = Utilities::getOpenLocationCode(coordinates, gap);
+            break;
+        case Projection::MLS: // Maidenhead Locator area center coordinates
+            result = Utilities::getMaidenheadLocator(coordinates, gap);
+            break;
+            case Projection::HOMV2: // Hotine Oblique Mercator northing coordinate (meters)
         case Projection::OSTEREO: // Oblique Stereographic northing coordinate (meters)
         case Projection::TM: // TM northing coordinate (meters)
             result = QStringLiteral("%1").arg(coordinates.y * 100000.0, 0, 'f', 0);
@@ -764,7 +858,7 @@ QString OsmAnd::GridConfiguration::getMarkY(const int gridIndex,
 }
 
 OsmAnd::PointD OsmAnd::GridConfiguration::getCurrentGaps(
-    const PointI& target31, const ZoomLevel& zoomLevel,
+    const PointI& target31, const ZoomLevel zoomLevel,
     PointD* refLons_ /* = nullptr */, PointD* refLats_ /* = nullptr */) const
 {
     PointD result(primaryGap, secondaryGap);
@@ -786,10 +880,17 @@ OsmAnd::PointD OsmAnd::GridConfiguration::getCurrentGaps(
         auto tileBegin = getPrimaryGridLocation(startTile31, &refLonLat);
         auto tileCenter = getPrimaryGridLocation(centerTile31, &refLonLat);
         auto cellSize = fabs(tileCenter.x - tileBegin.x) * 2.0 * primaryGranularity;
-        result.x = primaryFormat == Format::DMS && primaryProjection == Projection::WGS84
-            ? Utilities::snapToGridDMS(cellSize)
-            : (primaryFormat == Format::DM && primaryProjection == Projection::WGS84
+        if (primaryProjection == Projection::WGS84)
+        {
+            result.x = primaryFormat == Format::DMS ? Utilities::snapToGridDMS(cellSize) : (primaryFormat == Format::DM
                 ? Utilities::snapToGridDM(cellSize) : Utilities::snapToGridDecimal(cellSize));
+        }
+        else if (primaryProjection == Projection::OLC)
+            result.x = Utilities::snapToGridOLC(cellSize);
+        else if (primaryProjection == Projection::MLS)
+            result.x = Utilities::snapToGridMLS(cellSize);
+        else
+            result.x = Utilities::snapToGridDecimal(cellSize);
     }
     if (secondaryGranularity > 0.0f)
     {
@@ -804,11 +905,19 @@ OsmAnd::PointD OsmAnd::GridConfiguration::getCurrentGaps(
             auto tileBegin = getSecondaryGridLocation(startTile31, &refLonLat);
             auto tileCenter = getSecondaryGridLocation(centerTile31, &refLonLat);
             auto cellSize = fabs(tileCenter.x - tileBegin.x) * 2.0 * secondaryGranularity;
-            result.y = secondaryFormat == Format::DMS && secondaryProjection == Projection::WGS84
-                ? Utilities::snapToGridDMS(cellSize)
-                : (secondaryFormat == Format::DM && secondaryProjection == Projection::WGS84
-                    ? Utilities::snapToGridDM(cellSize) : Utilities::snapToGridDecimal(cellSize));
+            if (secondaryProjection == Projection::WGS84)
+            {
+                result.y = secondaryFormat == Format::DMS ? Utilities::snapToGridDMS(cellSize)
+                    : (secondaryFormat == Format::DM
+                        ? Utilities::snapToGridDM(cellSize) : Utilities::snapToGridDecimal(cellSize));
             }
+            else if (secondaryProjection == Projection::OLC)
+                result.y = Utilities::snapToGridOLC(cellSize);
+            else if (secondaryProjection == Projection::MLS)
+                result.y = Utilities::snapToGridMLS(cellSize);
+            else
+                result.y = Utilities::snapToGridDecimal(cellSize);
+        }
         else
             result.y = result.x / static_cast<double>(difFactor);
     }
@@ -852,6 +961,8 @@ double OsmAnd::GridConfiguration::correctGap(const Projection projection, const 
 bool OsmAnd::GridConfiguration::isValid() const
 {
     return (primaryProjection == Projection::WGS84
+        || primaryProjection == Projection::OLC
+        || primaryProjection == Projection::MLS
         || primaryProjection == Projection::HOMV2
         || primaryProjection == Projection::OSTEREO
         || primaryProjection == Projection::TM
@@ -859,6 +970,8 @@ bool OsmAnd::GridConfiguration::isValid() const
         || primaryProjection == Projection::MGRS
         || primaryProjection == Projection::Mercator) &&
         (secondaryProjection == Projection::WGS84
+        || secondaryProjection == Projection::OLC
+        || secondaryProjection == Projection::MLS
         || secondaryProjection == Projection::HOMV2
         || secondaryProjection == Projection::OSTEREO
         || secondaryProjection == Projection::TM

@@ -1560,6 +1560,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
             offsetOnScreenOverride.y = (rasterMapSymbol->size.y + rasterMapSymbol->offsetFromLine) * cosAngle;
             overrideOffset = true;
         }
+        else if (positionType == PositionType::PrimaryGridCenter)
+        {
+            const auto position = rasterMapSymbol->getAdditionalPosition();
+            position31 = currentState.gridConfiguration.getPrimaryGridLocation31(position);
+        }
+        else if (positionType == PositionType::SecondaryGridCenter)
+        {
+            const auto position = rasterMapSymbol->getAdditionalPosition();
+            position31 = currentState.gridConfiguration.getSecondaryGridLocation31(position);
+        }
         else if (positionType != PositionType::Coordinate31)
         {
             bool isPrimary = positionType == PositionType::PrimaryGridXFirst
@@ -1578,7 +1588,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 || positionType == PositionType::PrimaryGridYMiddle
                 || positionType == PositionType::SecondaryGridXMiddle
                 || positionType == PositionType::SecondaryGridYMiddle;
-            auto coordinate = rasterMapSymbol->getAdditionalPosition();
+            auto coordinate = rasterMapSymbol->getAdditionalPosition().x;
             int64_t intFull = INT32_MAX;
             intFull++;
             if (isMiddle || internalState.elevatedFrustum2D31.p0.x == std::numeric_limits<int64_t>::min())

@@ -261,19 +261,21 @@ namespace OsmAnd
     struct OSMAND_CORE_API GridConfiguration Q_DECL_FINAL
     {
         enum class Projection {
-            WGS84 = 0,
-            HOMV2 = 1,
-            OSTEREO = 2,
-            TM = 3,
-            UTM = 4,
-            MGRS = 5,
-            Mercator = 6,
+            WGS84 = 0, // WGS 84 latitude and longitude (EPSG:4326)
+            OLC = 1, // Open Location Code
+            MLS = 2, // Maidenhead Locator System
+            HOMV2 = 3, // Hotine Oblique Mercator (Version 2)
+            OSTEREO = 4, // Oblique Stereographic
+            TM = 5, // Transverse Mercator
+            UTM = 6, // Universal Transverse Mercator
+            MGRS = 7, // Military Grid Reference System
+            Mercator = 8 // Web Mercator (EPSG:3857)
         };
 
         enum class Format {
             Decimal = 0,
             DMS = 1,
-            DM = 2,
+            DM = 2
         };
 
         GridConfiguration();
@@ -543,15 +545,15 @@ namespace OsmAnd
         double getPrimaryMaxMarksPerAxis(const double gap) const;
         double getSecondaryMaxMarksPerAxis(const double gap) const;
         double getMaxMarksPerAxis(const Projection projection, const double gap) const;
-        QString getPrimaryGridMarkX(const PointD& coordinates, const int zone) const;
-        QString getPrimaryGridMarkY(const PointD& coordinates, const int zone) const;
-        QString getSecondaryGridMarkX(const PointD& coordinates, const int zone) const;
-        QString getSecondaryGridMarkY(const PointD& coordinates, const int zone) const;
-        QString getMarkX(
-            const Projection projection, const Format format, const PointD& coordinates, const int zone) const;
-        QString getMarkY(const int gridIndex,
-            const Projection projection, const const Format format, const PointD& coordinates, const int zone) const;
-        PointD getCurrentGaps(const PointI& target31, const ZoomLevel& zoomLevel,
+        QString getPrimaryGridMarkX(const PointD& coordinates, const int zone, const double gap) const;
+        QString getPrimaryGridMarkY(const PointD& coordinates, const int zone, const double gap) const;
+        QString getSecondaryGridMarkX(const PointD& coordinates, const int zone, const double gap) const;
+        QString getSecondaryGridMarkY(const PointD& coordinates, const int zone, const double gap) const;
+        QString getMarkX(const Projection projection,
+            const Format format, const PointD& coordinates, const int zone, const double gap) const;
+        QString getMarkY(const Projection projection,
+            const const Format format, const PointD& coordinates, const int zone, const double gap) const;
+        PointD getCurrentGaps(const PointI& target31, const ZoomLevel zoomLevel,
             PointD* refLons = nullptr, PointD* refLats = nullptr) const;
         double correctGap(const Projection projection, const double gap) const;
 #endif // !defined(SWIG)

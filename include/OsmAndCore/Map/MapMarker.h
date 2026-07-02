@@ -124,8 +124,8 @@ namespace OsmAnd
         PositionType getPositionType() const;
         void setPositionType(const PositionType positionType);
 
-        double getAdditionalPosition() const;
-        void setAdditionalPosition(const double additionalPosition);
+        PointD getAdditionalPosition() const;
+        void setAdditionalPosition(const PointD additionalPosition);
 
         int getExtraId() const;
         void setExtraId(const int extraId);

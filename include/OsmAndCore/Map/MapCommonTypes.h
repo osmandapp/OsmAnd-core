@@ -84,13 +84,15 @@ namespace OsmAnd
         PrimaryGridYFirst = 4,
         PrimaryGridYMiddle = 5,
         PrimaryGridYLast = 6,
-        SecondaryGridXFirst = 7,
-        SecondaryGridXMiddle = 8,
-        SecondaryGridXLast = 9,
-        SecondaryGridYFirst = 10,
-        SecondaryGridYMiddle = 11,
-        SecondaryGridYLast = 12,
-        AttachedToLine = 13
+        PrimaryGridCenter = 7,
+        SecondaryGridXFirst = 8,
+        SecondaryGridXMiddle = 9,
+        SecondaryGridXLast = 10,
+        SecondaryGridYFirst = 11,
+        SecondaryGridYMiddle = 12,
+        SecondaryGridYLast = 13,
+        SecondaryGridCenter = 14,
+        AttachedToLine = 15
     };
 
     union TagValueId

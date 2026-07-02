@@ -5,7 +5,7 @@ OsmAnd::BillboardRasterMapSymbol::BillboardRasterMapSymbol(
     : RasterMapSymbol(group_)
     , drawAlongPath(false)
     , positionType(PositionType::Coordinate31)
-    , additionalPosition(0.0)
+    , additionalPosition(PointD(0.0, 0.0))
     , extraId(-1)
     , elevation(NAN)
     , elevationScaleFactor(1.0f)
@@ -46,12 +46,12 @@ void OsmAnd::BillboardRasterMapSymbol::setPositionType(const PositionType positi
     positionType = positionType_;
 }
 
-double OsmAnd::BillboardRasterMapSymbol::getAdditionalPosition() const
+OsmAnd::PointD OsmAnd::BillboardRasterMapSymbol::getAdditionalPosition() const
 {
     return additionalPosition;
 }
 
-void OsmAnd::BillboardRasterMapSymbol::setAdditionalPosition(const double additionalPosition_)
+void OsmAnd::BillboardRasterMapSymbol::setAdditionalPosition(const PointD additionalPosition_)
 {
     additionalPosition = additionalPosition_;
 }

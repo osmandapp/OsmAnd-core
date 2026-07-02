@@ -8,6 +8,7 @@
 # define MIN_ZOOM_LEVEL_SIDE_MARKS 5
 
 # define GRID_MARKS_PER_AXIS 10
+# define GRID_MARKS_PER_SIDE 7
 # define MAP_CHANGE_FACTOR_PART 4
 
 OsmAnd::GridMarksProvider_P::GridMarksProvider_P(
@@ -18,6 +19,8 @@ OsmAnd::GridMarksProvider_P::GridMarksProvider_P(
     , withSecondaryValues(false)
     , primaryMarksOffset(1.0)
     , secondaryMarksOffset(1.0)
+    , centerPrimaryMarks(false)
+    , centerSecondaryMarks(false)
     , _target31(PointI(-1, -1))
     , _primaryZone(-1)
     , _secondaryZone(-1)
@@ -28,50 +31,69 @@ OsmAnd::GridMarksProvider_P::~GridMarksProvider_P()
 {
 }
 
-void OsmAnd::GridMarksProvider_P::calculateGridMarks(const bool isPrimary,
-    const double gap, const PointD& refLonLat, QHash<int, PointD>& marksX, QHash<int, PointD>& marksY)
+void OsmAnd::GridMarksProvider_P::calculateGridMarks(const bool isPrimary, const bool isCell,
+    const double gap, const PointD& refLonLat, QHash<int64_t, PointD>& marksX, QHash<int64_t, PointD>& marksY)
 {
-    auto marksCount = static_cast<int>(std::min(static_cast<double>(GRID_MARKS_PER_AXIS),
-        isPrimary ? _gridConfiguration.getPrimaryMaxMarksPerAxis(gap)
-        : _gridConfiguration.getSecondaryMaxMarksPerAxis(gap)));
+    auto marksCount = std::min(isCell ? GRID_MARKS_PER_SIDE : GRID_MARKS_PER_AXIS,
+        isPrimary ? static_cast<int>(_gridConfiguration.getPrimaryMaxMarksPerAxis(gap))
+        : static_cast<int>(_gridConfiguration.getSecondaryMaxMarksPerAxis(gap)));
     double halfCount = marksCount / 2;
     auto location = (isPrimary ? _gridConfiguration.getPrimaryGridLocation(_target31, &refLonLat)
         : _gridConfiguration.getSecondaryGridLocation(_target31, &refLonLat)) / gap;
     PointD centerLocation(std::round(location.x), std::round(location.y));
-    location.x = (centerLocation.x - halfCount) * gap;
-    location.y = (centerLocation.y - halfCount) * gap;
+    auto shiftX = isCell ? (location.x < centerLocation.x ? -0.5 : 0.5) : 0.0;
+    auto shiftY = isCell ? (location.y < centerLocation.y ? -0.5 : 0.5) : 0.0;
+    location.x = (centerLocation.x - halfCount + shiftX) * gap;
+    location.y = (centerLocation.y - halfCount + shiftY) * gap;
+    const auto startX = location.x;
     centerLocation *= gap;
-    for (int i = 0; i < marksCount; i++)
+    auto rowCount = isCell ? marksCount : 1;
+    for (int i = 0; i < rowCount; i++)
     {
-        auto locationN = location;
-        bool withX = isPrimary ? _gridConfiguration.getPrimaryGridCoordinateX(locationN.x)
-            : _gridConfiguration.getSecondaryGridCoordinateX(locationN.x);
-        bool withY = isPrimary ? _gridConfiguration.getPrimaryGridCoordinateY(locationN.y)
-            : _gridConfiguration.getSecondaryGridCoordinateY(locationN.y);
-        PointF coord(static_cast<float>(locationN.x), static_cast<float>(locationN.y));
-        if (withX)
-            marksX.insert(*reinterpret_cast<int*>(&coord.x), PointD(locationN.x, centerLocation.y));
-        if (withY)
-            marksY.insert(*reinterpret_cast<int*>(&coord.y), PointD(centerLocation.x, locationN.y));
-        location.x += gap;
+        for (int j = 0; j < marksCount; j++)
+        {
+            auto locationN = location;
+            bool withX = isPrimary ? _gridConfiguration.getPrimaryGridCoordinateX(locationN.x)
+                : _gridConfiguration.getSecondaryGridCoordinateX(locationN.x);
+            bool withY = isPrimary ? _gridConfiguration.getPrimaryGridCoordinateY(locationN.y)
+                : _gridConfiguration.getSecondaryGridCoordinateY(locationN.y);
+            auto codeX = *reinterpret_cast<uint64_t*>(&locationN.x);
+            auto codeY = *reinterpret_cast<uint64_t*>(&locationN.y);
+            if (isCell)
+            {
+                auto code = static_cast<int64_t>(codeX ^ (codeY << 32) ^ (codeY >> 32));
+                if (withX && withY)
+                    marksY.insert(code, locationN);
+            }
+            else
+            {
+                if (withX)
+                    marksX.insert(static_cast<int64_t>(codeX), PointD(locationN.x, centerLocation.y));
+                if (withY)
+                    marksY.insert(static_cast<int64_t>(codeY), PointD(centerLocation.x, locationN.y));
+                location.y += gap;
+            }
+            location.x += gap;
+        }
+        location.x = startX;
         location.y += gap;
     }
 }
 
-void OsmAnd::GridMarksProvider_P::addGridMarks(const int zone, const bool isPrimary,
-    const bool isAxisY, const bool isExtra, const float offset, QHash<int, PointD>& marks, QSet<int>& availableIds)
+void OsmAnd::GridMarksProvider_P::addGridMarks(const int zone, const double gap, const bool isPrimary,
+    const bool isAxisY, const bool isExtra, const float offset, QHash<int64_t, PointD>& marks, QSet<int>& availableIds)
 {
-    auto type = isPrimary ?
-        (isAxisY
+    bool isCell = offset < 0.0f;
+    auto type = isPrimary ? (isCell ? PositionType::PrimaryGridCenter : (isAxisY
             ? (centerPrimaryMarks || _mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS ? PositionType::PrimaryGridYMiddle
                 : (isExtra ? PositionType::PrimaryGridYLast : PositionType::PrimaryGridYFirst))
             : (centerPrimaryMarks || _mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS ? PositionType::PrimaryGridXMiddle
-                : (isExtra ? PositionType::PrimaryGridXLast : PositionType::PrimaryGridXFirst)))
-        : (isAxisY
+                : (isExtra ? PositionType::PrimaryGridXLast : PositionType::PrimaryGridXFirst))))
+        : (isCell ? PositionType::SecondaryGridCenter : (isAxisY
             ? (centerSecondaryMarks || _mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS ? PositionType::SecondaryGridYMiddle
                 : (isExtra ? PositionType::SecondaryGridYLast : PositionType::SecondaryGridYFirst))
             : (centerSecondaryMarks || _mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS ? PositionType::SecondaryGridXMiddle
-                : (isExtra ? PositionType::SecondaryGridXLast : PositionType::SecondaryGridXFirst)));
+                : (isExtra ? PositionType::SecondaryGridXLast : PositionType::SecondaryGridXFirst))));
 
     OsmAnd::MapMarkerBuilder builder;
     builder.setBaseOrder(std::numeric_limits<int>::min() + (isPrimary ? 10 : 20));
@@ -91,19 +113,23 @@ void OsmAnd::GridMarksProvider_P::addGridMarks(const int zone, const bool isPrim
         QString mark;
         if (withPrimaryValues && isPrimary)
         {
-            mark = isAxisY ? _gridConfiguration.getPrimaryGridMarkY(coordinates, zone)
-                : _gridConfiguration.getPrimaryGridMarkX(coordinates, zone);
-        } else if (withSecondaryValues && !isPrimary)
+            mark = isAxisY ? _gridConfiguration.getPrimaryGridMarkY(coordinates, zone, gap)
+                : _gridConfiguration.getPrimaryGridMarkX(coordinates, zone, gap);
+        }
+        else if (withSecondaryValues && !isPrimary)
         {
-            mark = isAxisY ? _gridConfiguration.getSecondaryGridMarkY(coordinates, zone)
-                : _gridConfiguration.getSecondaryGridMarkX(coordinates, zone);
+            mark = isAxisY ? _gridConfiguration.getSecondaryGridMarkY(coordinates, zone, gap)
+                : _gridConfiguration.getSecondaryGridMarkX(coordinates, zone, gap);
         }
         builder.setCaption(mark % suffix);
         builder.setMarkerId(*itId);
-        builder.setCaptionTopSpace(offset);
+        builder.setCaptionTopSpace(isCell ? 0.0f : offset);
         const auto newMarker = builder.buildAndAddToCollection(_markersCollection);
         newMarker->setPositionType(type);
-        newMarker->setAdditionalPosition(isAxisY ? coordinates.y : coordinates.x);
+        if (isCell)
+            newMarker->setAdditionalPosition(coordinates);
+        else
+            newMarker->setAdditionalPosition(PointD(isAxisY ? coordinates.y : coordinates.x, 0.0));
         availableIds.erase(itId);
     }
 }
@@ -187,12 +213,25 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
     
         renderer->getGridConfiguration(&_gridConfiguration);
 
+        const bool isPrimaryCell = _gridConfiguration.primaryProjection == GridConfiguration::Projection::OLC
+            || _gridConfiguration.primaryProjection == GridConfiguration::Projection::MLS;
+        if (isPrimaryCell)
+            centerPrimaryMarks = true;
+        const bool isSecondaryCell = _gridConfiguration.secondaryProjection == GridConfiguration::Projection::OLC
+            || _gridConfiguration.secondaryProjection == GridConfiguration::Projection::MLS;
+        if (isSecondaryCell)
+            centerSecondaryMarks = true;
+
         const bool withPrimary = mapZoomLevel >= _gridConfiguration.gridParameters[0].minZoom
+            && (mapZoomLevel <= _gridConfiguration.gridParameters[0].maxZoomForMixed
+            || _gridConfiguration.primaryGranularity != 0.0f)
             && mapZoomLevel >= _gridConfiguration.primaryMinZoomLevel
             && mapZoomLevel <= _gridConfiguration.primaryMaxZoomLevel && (withPrimaryValues
             || !primaryNorthernHemisphereSuffix.isEmpty() || !primarySouthernHemisphereSuffix.isEmpty()
             || !primaryEasternHemisphereSuffix.isEmpty() || !primaryWesternHemisphereSuffix.isEmpty());
         const bool withSecondary = mapZoomLevel >= _gridConfiguration.gridParameters[1].minZoom
+            && (mapZoomLevel <= _gridConfiguration.gridParameters[1].maxZoomForMixed
+            || _gridConfiguration.secondaryGranularity != 0.0f)
             && mapZoomLevel >= _gridConfiguration.secondaryMinZoomLevel
             && mapZoomLevel <= _gridConfiguration.secondaryMaxZoomLevel && (withSecondaryValues
             || !secondaryNorthernHemisphereSuffix.isEmpty() || !secondarySouthernHemisphereSuffix.isEmpty()
@@ -221,16 +260,25 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
         if (zoomChange && !centerSecondaryMarks)
             keepSecondary = false;
 
+        if (mapZoomLevel != _mapZoomLevel)
+        {
+            if (isPrimaryCell)
+                keepPrimary = false;
+            if (isSecondaryCell)
+                keepSecondary = false;
+        }
+        
         _mapZoomLevel = mapZoomLevel;
 
         PointD refLons;
         PointD refLats;
         const auto gaps = _gridConfiguration.getCurrentGaps(target31, mapZoomLevel, &refLons, &refLats);
-        QHash<int, PointD> primaryMarksX, primaryMarksY, secondaryMarksX, secondaryMarksY;
-        QHash<int, PointD> primaryMarksXExtra, primaryMarksYExtra, secondaryMarksXExtra, secondaryMarksYExtra;
+        QHash<int64_t, PointD> primaryMarksX, primaryMarksY, secondaryMarksX, secondaryMarksY;
+        QHash<int64_t, PointD> primaryMarksXExtra, primaryMarksYExtra, secondaryMarksXExtra, secondaryMarksYExtra;
         if (withPrimary)
         {
-            calculateGridMarks(true, gaps.x, PointD(refLons.x, refLats.x), primaryMarksX, primaryMarksY);
+            calculateGridMarks(true, isPrimaryCell,
+                gaps.x, PointD(refLons.x, refLats.x), primaryMarksX, primaryMarksY);
             if (!centerPrimaryMarks && _mapZoomLevel >= MIN_ZOOM_LEVEL_SIDE_MARKS)
             {
                 primaryMarksXExtra = primaryMarksX;
@@ -241,7 +289,8 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
         }
         if (withSecondary)
         {
-            calculateGridMarks(false, gaps.y, PointD(refLons.y, refLats.y), secondaryMarksX, secondaryMarksY);
+            calculateGridMarks(false, isSecondaryCell,
+                gaps.y, PointD(refLons.y, refLats.y), secondaryMarksX, secondaryMarksY);
             if (!centerSecondaryMarks && _mapZoomLevel >= MIN_ZOOM_LEVEL_SIDE_MARKS)
             {
                 secondaryMarksXExtra = secondaryMarksX;
@@ -255,8 +304,10 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
 
         QSet<int> ids;
         const auto markCount =
-            GRID_MARKS_PER_AXIS * ((centerPrimaryMarks || _mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS ? 2 : 4)
-                + (centerSecondaryMarks || _mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS ? 2 : 4));
+            (isPrimaryCell ? GRID_MARKS_PER_SIDE * GRID_MARKS_PER_SIDE
+                : (centerPrimaryMarks || _mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS ? 2 : 4) * GRID_MARKS_PER_AXIS)
+            + (isSecondaryCell ? GRID_MARKS_PER_SIDE * GRID_MARKS_PER_SIDE
+                : (centerSecondaryMarks || _mapZoomLevel < MIN_ZOOM_LEVEL_SIDE_MARKS ? 2 : 4) * GRID_MARKS_PER_AXIS);
         for (int markIdx = 0; markIdx < markCount; markIdx++)
         {
             ids.insert(markIdx);
@@ -266,14 +317,25 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
 
         for (const auto& marker : _markersCollection->getMarkers())
         {
-            auto coord = static_cast<float>(marker->getAdditionalPosition());
-            auto key = *reinterpret_cast<int*>(&coord);
             auto type = marker->getPositionType();
-            bool primaryX = type == PositionType::PrimaryGridXMiddle || type == PositionType::PrimaryGridXFirst;
-            bool primaryY = type == PositionType::PrimaryGridYMiddle || type == PositionType::PrimaryGridYFirst;
-            bool secondaryX = type == PositionType::SecondaryGridXMiddle || type == PositionType::SecondaryGridXFirst;
-            bool secondaryY = type == PositionType::SecondaryGridYMiddle || type == PositionType::SecondaryGridYFirst;
-            auto value = marker->getAdditionalPosition();
+            bool primaryX = type == PositionType::PrimaryGridXMiddle
+                || type == PositionType::PrimaryGridXFirst
+                || type == PositionType::PrimaryGridCenter;
+            bool primaryY = type == PositionType::PrimaryGridYMiddle
+                || type == PositionType::PrimaryGridYFirst
+                || type == PositionType::PrimaryGridCenter;
+            bool secondaryX = type == PositionType::SecondaryGridXMiddle
+                || type == PositionType::SecondaryGridXFirst
+                || type == PositionType::SecondaryGridCenter;
+            bool secondaryY = type == PositionType::SecondaryGridYMiddle
+                || type == PositionType::SecondaryGridYFirst
+                || type == PositionType::SecondaryGridCenter;
+            auto pos = marker->getAdditionalPosition();
+            auto codeX = *reinterpret_cast<uint64_t*>(&pos.x);
+            auto codeY = *reinterpret_cast<uint64_t*>(&pos.y);
+            auto key = static_cast<int64_t>(
+                type == PositionType::PrimaryGridCenter ||  type == PositionType::SecondaryGridCenter
+                ? codeX ^ (codeY << 32) ^ (codeY >> 32) : codeX);
             bool isPresent = true;
             if (keepPrimary && primaryX && primaryMarksX.contains(key))
                 primaryMarksX.remove(key);
@@ -303,29 +365,31 @@ void OsmAnd::GridMarksProvider_P::applyMapChanges(IMapRenderer* renderer)
             }
         }
 
+        const auto primaryOffset = isPrimaryCell ? -1.0f : primaryMarksOffset;
+        const auto secondaryOffset = isSecondaryCell ? -1.0f : secondaryMarksOffset;
         if (!primaryMarksX.isEmpty())
-            addGridMarks(_primaryZone, true, false, false, primaryMarksOffset, primaryMarksX, ids);
+            addGridMarks(_primaryZone, gaps.x, true, false, false, primaryOffset, primaryMarksX, ids);
 
         if (!primaryMarksXExtra.isEmpty())
-            addGridMarks(_primaryZone, true, false, true, primaryMarksOffset, primaryMarksXExtra, ids);
+            addGridMarks(_primaryZone, gaps.x, true, false, true, primaryOffset, primaryMarksXExtra, ids);
 
         if (!primaryMarksY.isEmpty())
-            addGridMarks(_primaryZone, true, true, false, primaryMarksOffset, primaryMarksY, ids);
+            addGridMarks(_primaryZone, gaps.x, true, true, false, primaryOffset, primaryMarksY, ids);
 
         if (!primaryMarksYExtra.isEmpty())
-            addGridMarks(_primaryZone, true, true, true, primaryMarksOffset, primaryMarksYExtra, ids);
+            addGridMarks(_primaryZone, gaps.x, true, true, true, primaryOffset, primaryMarksYExtra, ids);
 
         if (!secondaryMarksX.isEmpty())
-            addGridMarks(_secondaryZone, false, false, false, secondaryMarksOffset, secondaryMarksX, ids);
+            addGridMarks(_secondaryZone, gaps.y, false, false, false, secondaryOffset, secondaryMarksX, ids);
 
         if (!secondaryMarksXExtra.isEmpty())
-            addGridMarks(_secondaryZone, false, false, true, secondaryMarksOffset, secondaryMarksXExtra,ids);
+            addGridMarks(_secondaryZone, gaps.y, false, false, true, secondaryOffset, secondaryMarksXExtra,ids);
 
         if (!secondaryMarksY.isEmpty())
-            addGridMarks(_secondaryZone, false, true, false, secondaryMarksOffset, secondaryMarksY, ids);
+            addGridMarks(_secondaryZone, gaps.y, false, true, false, secondaryOffset, secondaryMarksY, ids);
 
         if (!secondaryMarksYExtra.isEmpty())
-            addGridMarks(_secondaryZone, false, true, true, secondaryMarksOffset, secondaryMarksYExtra, ids);
+            addGridMarks(_secondaryZone, gaps.y, false, true, true, secondaryOffset, secondaryMarksYExtra, ids);
 
         for (const auto& marker : markersToRemove)
         {
