@@ -140,13 +140,29 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setProjectionParameters(
     }
     switch (projection)
     {
-        case Projection::OLC: // Zero-based Lat/Lon degrees
+        case Projection::OLC:
             {
                 const auto radToDeg = static_cast<float>(180.0 / M_PI);
                 parameters->factorX1 = radToDeg;
                 parameters->factorX2 = 0.0f;
                 parameters->factorX3 = 0.0f;
                 parameters->offsetX = 180.0f;
+                parameters->factorY1 = radToDeg;
+                parameters->factorY2 = 0.0f;
+                parameters->factorY3 = 0.0f;
+                parameters->offsetY = 90.0f;
+                parameters->minZoom = ZoomLevel0;
+                parameters->maxZoomForFloat = ZoomLevel12;
+                parameters->maxZoomForMixed = ZoomLevel14;
+            }
+            break;
+        case Projection::MLS:
+            {
+                const auto radToDeg = static_cast<float>(180.0 / M_PI);
+                parameters->factorX1 = radToDeg / 2.0f;
+                parameters->factorX2 = 0.0f;
+                parameters->factorX3 = 0.0f;
+                parameters->offsetX = 90.0f;
                 parameters->factorY1 = radToDeg;
                 parameters->factorY2 = 0.0f;
                 parameters->factorY3 = 0.0f;
@@ -374,6 +390,18 @@ OsmAnd::PointD OsmAnd::GridConfiguration::projectLocation(const int gridIndex, c
                 result = (lonlat - PointD(isOverX ? M_PI : -M_PI, isOverY ? M_PI_2 : -M_PI_2)) * 180.0 / M_PI;
             }
             break;
+        case Projection::MLS: // Maidenhead Locator squeezed-longitude and latitude (zero-based)
+            {
+                const bool isOverX = location31.x < 0;
+                const bool isOverY = location31.y < 0;
+                const auto lonlat = Utilities::getAnglesFrom31(PointI(
+                    isOverX ? location31.x + 1 + INT32_MAX : location31.x,
+                    isOverY ? location31.y + 1 + INT32_MAX : location31.y));
+                result = (lonlat - PointD(isOverX ? M_PI : -M_PI, isOverY ? M_PI_2 : -M_PI_2)) / M_PI;
+                result.x *= 90.0;
+                result.y *= 180.0;
+            }
+            break;
         case Projection::HOMV2: // Hotine Oblique Mercator easting and northing coordinates (100 kilometers)
             {
                 const auto lonlat = Utilities::getAnglesFrom31(location31);
@@ -488,6 +516,9 @@ OsmAnd::PointI OsmAnd::GridConfiguration::unProjectLocation(
         case Projection::OLC: // Get 31-coordinates from zero-based longitude and latitude in degrees
             result = Utilities::get31FromAngles((location - PointD(180.0, 90.0)) * M_PI / 180.0);
             break;
+        case Projection::MLS: // Get 31-coordinates from zero-based squeezed-longitude and latitude in degrees
+            result = Utilities::get31FromAngles(PointD((location.x - 90.0) / 90.0, (location.y - 90.0) / 180.0) * M_PI);
+            break;
         case Projection::HOMV2: // TODO: unproject to 31-coordinates
         case Projection::OSTEREO:
         case Projection::TM:
@@ -572,6 +603,12 @@ bool OsmAnd::GridConfiguration::getCoordinateX(const Projection projection, doub
             else if (coordinate < 0.0)
                 coordinate += 360.0;
             result = true;
+        case Projection::MLS: // Zero-based squeezed-longitude in degrees
+            if (coordinate >= 180.0)
+                coordinate -= 180.0;
+            else if (coordinate < 0.0)
+                coordinate += 180.0;
+            result = true;
         case Projection::HOMV2: // Easting coordinate (100 kilometers)
         case Projection::OSTEREO:
         case Projection::TM:
@@ -605,6 +642,7 @@ bool OsmAnd::GridConfiguration::getCoordinateY(const Projection projection, doub
     switch (projection)
     {
         case Projection::OLC: // Zero-based latitude in degrees
+        case Projection::MLS: // Zero-based latitude in degrees
             if (coordinate >= 5.0 && coordinate <= 175.0)
                 result = true;
             break;

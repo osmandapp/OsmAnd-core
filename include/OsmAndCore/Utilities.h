@@ -188,21 +188,15 @@ namespace OsmAnd
                 code.append(QLatin1Char(alphabet[lonDigit]));
                 code.append(QLatin1Char(alphabet[latDigit]));
 
+                if (gap >= resolutions[i])
+                    return code;
+
                 lon = (lon - lonDigit) * 20.0;
                 lat = (lat - latDigit) * 20.0;
 
                 if (i == 3)
                     code.append(QLatin1Char('+'));
 
-                if (gap >= resolutions[i])
-                {
-                    if (code.length() < 8)
-                    {
-                        code.append(QLatin1Char('.'));
-                        code.append(QLatin1Char('.'));
-                    }
-                    return code;
-                }
             }
             /* Extra precision letter (not needed yet)
             if (gap < 0.000025)
@@ -219,8 +213,8 @@ namespace OsmAnd
         {
             static constexpr double resolutions[] = {5.0, 0.125, 15.0 / 720.0, 0.625 / 1200.0};
 
-            auto lon = fmod(coordinates.x + 540.0, 360.0) / 20.0;
-            auto lat = fmin(fmax(coordinates.y + 90.0, 0.0), 179.9999999) / 10.0;
+            auto lon = fmod(coordinates.x + 180.0, 180.0) / 10.0;
+            auto lat = fmin(fmax(coordinates.y, 0.0), 179.9999999) / 10.0;
 
             QString code;
             code.reserve(10);
@@ -1768,8 +1762,7 @@ namespace OsmAnd
         // Snap value to the suitable Open Location Code interval
         inline static double snapToGridOLC(const double value)
         {
-            static constexpr double levels[] = {20.0, 10.0, 5.0, 1.0, 0.5, 0.25,
-                1.0 / 20.0, 0.5 / 20.0, 0.25 / 20.0, 1.0 / 400.0, 0.5 / 400.0, 0.25 / 400.0, 1.0 / 8000.0};
+            static constexpr double levels[] = {20.0, 1.0, 1.0 / 20.0, 1.0 / 400.0, 1.0 / 8000.0};
             static constexpr int lastLevelIdx = sizeof(levels) / sizeof(double) - 1;
 
             for (const auto level : levels)
@@ -1781,11 +1774,10 @@ namespace OsmAnd
             return levels[lastLevelIdx];
         }
 
-        // Snap value to the suitable Maidenhead latitude interval
+        // Snap value to the suitable Maidenhead Locator latitude interval
         inline static double snapToGridMLS(const double value)
         {
-            static constexpr double levels[] = {10.0, 5.0, 1.0, 0.5, 0.25, 0.125,
-                2.5 / 60.0, 15.0 / 720.0, 15.0 / 3600.0, 7.5 / 3600.0, 0.625 / 600.0, 0.625 / 1200.0, 0.625 / 3600.0};
+            static constexpr double levels[] = {10.0, 1.0, 2.5 / 60.0, 15.0 / 3600.0, 0.625 / 3600.0};
             static constexpr int lastLevelIdx = sizeof(levels) / sizeof(double) - 1;
 
             for (const auto level : levels)
