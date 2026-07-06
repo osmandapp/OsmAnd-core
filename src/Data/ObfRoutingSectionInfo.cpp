@@ -240,7 +240,7 @@ void OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::analyze()
             {
                 const auto cond = std::make_shared<RouteTypeCondition>();
                 cond->floatValue = Utilities::parseSpeed(c.mid(0, ch), 0);
-                cond->condition = c.mid(0, ch + 1).trimmed();
+                cond->condition = c.mid(ch + 1).trimmed();
                 if (cond->condition.startsWith('('))
                     cond->condition = cond->condition.mid(1).trimmed();
                 
