@@ -43,6 +43,7 @@ namespace OsmAnd
         const static float _zNear;
         const static double _radius;
         const static double _maximumHeightFromSeaLevelInMeters;
+        const static double _minimumHeightFromSeaLevelInMeters;
         const static double _maximumDepthFromSeaLevelInMeters;
         const static double _detailDistanceFactor;
         const static float _invalidElevationValue;

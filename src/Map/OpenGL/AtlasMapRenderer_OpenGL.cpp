@@ -49,7 +49,9 @@ const float OsmAnd::AtlasMapRenderer_OpenGL::_zNear = 1.0f;
 const double OsmAnd::AtlasMapRenderer_OpenGL::_radius = 6371e3;
 // Set maximum height of terrain to render
 const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumHeightFromSeaLevelInMeters = 10000.0;
-// Set maximum depth of terrain to render
+// Set minimum height of terrain to render
+const double OsmAnd::AtlasMapRenderer_OpenGL::_minimumHeightFromSeaLevelInMeters = -500.0;
+// Set maximum depth of terrain to render (ocean)
 const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumDepthFromSeaLevelInMeters = 12000.0;
 // Set minimal distance factor for tiles of each detail level / 3
 const double OsmAnd::AtlasMapRenderer_OpenGL::_detailDistanceFactor = TileSize3D * M_SQRT2;
@@ -573,8 +575,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
             distanceToLowerDetail =
                 qMin(distanceToLowerDetail, poleDistance * (1.0 - poleDim) + poleDim * distanceToLowerDetail);
 
-            const auto zLowerDetailAdvanced = qMin(static_cast<float>(qMax(qMax(
-                2.0 * _detailDistanceFactor * elevationCosine + internalState->distanceFromCameraToTarget,
+            const auto extraLow = distanceToTarget - static_cast<double>(internalState->scaleToRetainProjectedSize)
+                * elevationSine * _minimumHeightFromSeaLevelInMeters / metersPerUnit;
+            const auto zLowerDetailAdvanced = qMin(static_cast<float>(qMax(qMax(qMax(extraLow,
+                2.0 * _detailDistanceFactor * elevationCosine + distanceToTarget),
                 distanceToLowerDetail / targetCosine), internalState->zFar * latFactor)), internalState->zFar);
             if (zLowerDetailAdvanced > zLowerDetail || highDetail >= visibleDistance)
                 zLowerDetail = zLowerDetailAdvanced;
