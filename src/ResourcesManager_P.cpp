@@ -1133,26 +1133,53 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
 
         QString resourceId;
         QString downloadUrl;
+        const auto obfSuffix = QLatin1String(".obf");
+        const auto roadObfSuffix = QLatin1String(".road.obf");
+        const auto obfZipSuffix = QLatin1String("_2.obf.zip");
+        const auto roadObfZipSuffix = QLatin1String("_2.road.obf.zip");
         switch (resourceType)
         {
             case ResourceType::DeletedMap:
+                if (name.endsWith(roadObfZipSuffix))
+                {
+                    resourceId = QString(name)
+                        .remove(roadObfZipSuffix)
+                        .toLower()
+                        .append(roadObfSuffix);
+                    downloadUrl =
+                        owner->repositoryBaseUrl +
+                        QLatin1String("/download?road=yes&file=") +
+                        QUrl::toPercentEncoding(name);
+                }
+                else
+                {
+                    resourceId = QString(name)
+                        .remove(obfZipSuffix)
+                        .toLower()
+                        .append(obfSuffix);
+                    downloadUrl =
+                        owner->repositoryBaseUrl +
+                        QLatin1String("/download?file=") +
+                        QUrl::toPercentEncoding(name);
+                }
+                break;
             case ResourceType::MapRegion:
                 // '[region]_2.obf.zip' -> '[region].obf'
                 resourceId = QString(name)
-                    .remove(QLatin1String("_2.obf.zip"))
+                    .remove(obfZipSuffix)
                     .toLower()
-                    .append(QLatin1String(".obf"));
+                    .append(obfSuffix);
                 downloadUrl =
                     owner->repositoryBaseUrl +
                     QLatin1String("/download?file=") +
                     QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::RoadMapRegion:
-                // '[region]_2.obf.zip' -> '[region].road.obf'
+                // '[region]_2.road.obf.zip' -> '[region].road.obf'
                 resourceId = QString(name)
-                    .remove(QLatin1String("_2.road.obf.zip"))
+                    .remove(roadObfZipSuffix)
                     .toLower()
-                    .append(QLatin1String(".road.obf"));
+                    .append(roadObfSuffix);
                 downloadUrl =
                     owner->repositoryBaseUrl +
                     QLatin1String("/download?road=yes&file=") +
