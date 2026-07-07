@@ -333,7 +333,8 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
         const auto partValue = sourceObject.getResolvedAttribute(QStringRef(&part));
         if (partValue == QStringLiteral("no"))
             return;
-        if (partValue == QStringLiteral("tower"))
+        if (partValue == QStringLiteral("tower")
+            || sourceObject.containsAttribute(QStringLiteral("man_made"), QStringLiteral("tower")))
             isEmbedded = true;
         isNotPart = false;
     }
