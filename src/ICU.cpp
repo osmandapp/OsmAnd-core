@@ -674,6 +674,8 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cmatches(const QString& _base
             return cstartsWith(_base, _part, true, false, false);
         case StringMatcherMode::CHECK_EQUALS:
             return cstartsWith(_base, _part, false, false, true);
+        case StringMatcherMode::MULTISEARCH:
+            return cstartsWith(_part, _base, true, true, true);
         default:
             return false;
     }

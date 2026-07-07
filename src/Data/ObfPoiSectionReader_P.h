@@ -154,12 +154,14 @@ namespace OsmAnd
             const QPair<int, int>* poiAdditionalFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController,
+            const StringMatcherMode matcherMode,
             const TagGroupsMap& tagGroups);
         static void readAmenity(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
             std::shared_ptr<const Amenity>& outAmenity,
             const QString& query,
+            const StringMatcherMode matcherMode,
             const TileId boxTileId,
             const ZoomLevel boxZoom,
             const AreaI* const bbox31,
