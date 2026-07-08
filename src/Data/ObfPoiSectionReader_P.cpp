@@ -494,6 +494,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                         poiAdditionalFilter,
                         visitor,
                         queryController,
+                        StringMatcherMode::CHECK_STARTS_FROM_SPACE,
                         tagGroups);
 
                     if (tilesToSkip && zoomFilter != InvalidZoomLevel && atLeastOneAccepted)
@@ -840,6 +841,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
     const QPair<int, int>* poiAdditionalFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController,
+    const StringMatcherMode matcherMode,
     const TagGroupsMap& tagGroups)
 {
     const auto cis = reader.getCodedInputStream().get();
@@ -911,6 +913,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
                     section,
                     amenity,
                     query,
+                    matcherMode,
                     tileId,
                     zoom,
                     bbox31,
@@ -971,6 +974,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
     std::shared_ptr<const Amenity>& outAmenity,
     const QString& query,
+    const StringMatcherMode matcherMode,
     const TileId boxTileId,
     const ZoomLevel boxZoom,
     const AreaI* const bbox31,
@@ -996,7 +1000,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     QList<QPair<int, QVariant>> stringOrDataValues;
     QHash<uint32_t, QList<QPair<QString, QString>>> tagGroupsAmenity;
     auto categoriesFilterChecked = false;
-    const CollatorStringMatcher matcher(query, StringMatcherMode::CHECK_STARTS_FROM_SPACE);
+    const CollatorStringMatcher matcher(query, matcherMode);
     uint32_t precisionXY = 0;
     bool hasSubcategoriesField = false;
     bool topIndexAdditonalFound = false;
@@ -1424,6 +1428,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                         poiAdditionalFilter,
                         visitor,
                         queryController,
+                        matcherMode,
                         tagGroups);
 
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
