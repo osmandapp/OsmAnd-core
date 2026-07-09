@@ -592,7 +592,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                if (!categoriesFilter)
+                if (!categoriesFilter && !poiAdditionalFilter)
                 {
                     cis->Skip(length);
                     break;
@@ -600,7 +600,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                 const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                const auto hasMatchingContent = scanTileForMatchingCategories(reader, *categoriesFilter, poiAdditionalFilter);
+                const auto hasMatchingContent = scanTileForMatchingCategories(reader, categoriesFilter, poiAdditionalFilter);
 
                 cis->PopLimit(oldLimit);
 
@@ -773,7 +773,7 @@ void OsmAnd::ObfPoiSectionReader_P::readTagGroup(const ObfReader_P& reader, TagG
 
 bool OsmAnd::ObfPoiSectionReader_P::scanTileForMatchingCategories(
     const ObfReader_P& reader,
-    const QSet<ObfPoiCategoryId>& categories,
+    const QSet<ObfPoiCategoryId>* categories,
     const QPair<int, int>* poiAdditionalFilter)
 {
     const auto cis = reader.getCodedInputStream().get();
@@ -792,7 +792,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTileForMatchingCategories(
                 ObfPoiCategoryId id;
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&id));
 
-                if (categories.contains(id))
+                if (categories && categories->contains(id))
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     return true;

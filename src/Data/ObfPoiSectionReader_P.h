@@ -95,7 +95,7 @@ namespace OsmAnd
             TagGroupsMap& tagGroups);
         static bool scanTileForMatchingCategories(
             const ObfReader_P& reader,
-            const QSet<ObfPoiCategoryId>& categories,
+            const QSet<ObfPoiCategoryId>* categories,
             const QPair<int, int>* poiAdditionalFilter);
 
         static void readAmenitiesByName(
