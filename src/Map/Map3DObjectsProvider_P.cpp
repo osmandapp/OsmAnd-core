@@ -27,6 +27,7 @@
 
 // Minimum cosine of the angle between adjacent walls that must be drawn seamlessly
 #define MIN_COSINE_CURVED_WALL 0.76 // ~40deg
+#define MIN_POINTS_CURVED_WALL 9 // ~40deg
 
 #define PASSAGE_DEFAULT_WIDTH 6.0f
 #define PASSAGE_DEFAULT_HEIGHT 6.0f
@@ -428,18 +429,12 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
     if (heightFound && height == 0.0f)
         return;
 
-    if (heightFound)
+    if (heightFound && roofShape != RoofShape::Flat)
     {
         if (roofHeightFound && roofHeight > 0.0f)
-        {
             height -= roofHeight;
-            if (height <= 0.0f)
-                return;
-        }
         else if (roofLevelsFound && roofLevels > 0.0f && levelsFound && levels > 0.0f)
-        {
             height /= roofLevels / levels + 1.0f;
-        }
     }
 
     if (levelsFound)
@@ -468,7 +463,7 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
 
     BuildingPrimitive buildingPrimitive;
     buildingPrimitive.primitive = primitive;
-    buildingPrimitive.height = height;
+    buildingPrimitive.height = height + roofHeight;
     buildingPrimitive.minHeight = minHeight;
     buildingPrimitive.levels = levels;
     buildingPrimitive.levelHeight = levelHeight;
@@ -643,7 +638,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     if (!sourceObject)
         return;
 
-    float height = primitive.height;
+    float height = primitive.height - primitive.roofHeight;
     float minHeight = primitive.minHeight;
     float terrainHeight = 0.0f;
     float baseTerrainHeight = 0.0f;
@@ -769,9 +764,14 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     glm::vec4 zeroV(0.0f);
     glm::vec3 upV(0.0f, 1.0f, 0.0f);
     const auto roofHeight = primitive.roofHeight;
-    const bool isPyramidal = primitive.roofShape == RoofShape::Pyramidal;
-    const bool isCone = primitive.roofShape == RoofShape::Cone;
-    const bool isDome = primitive.roofShape == RoofShape::Dome;
+    bool isPyramidal = primitive.roofShape == RoofShape::Pyramidal;
+    bool isCone = primitive.roofShape == RoofShape::Cone;
+    bool isDome = primitive.roofShape == RoofShape::Dome;
+    if (isPyramidal && edgePointsCount > MIN_POINTS_CURVED_WALL)
+    {
+        isPyramidal = false;
+        isCone = true;
+    }
     if (roofHeight > 0.0f && (isPyramidal || isCone || isDome))
     {
         // Construct pyramidal/cone top side of the mesh
@@ -780,7 +780,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         const auto p0 = sourceObject->bbox31.center();
         const auto vSize = roofHeight / static_cast<float>(Utilities::getMetersPer31Coordinate(p0));
         const auto total = height + roofHeight;
-        glm::vec3 n1, n2;
+        glm::vec3 prevSlope, n1, n2;
         if (!isPyramidal)
         {
             vertices.append({glm::ivec2(p0.x, p0.y),
@@ -791,7 +791,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         {
             auto p1 = points31[i];
             auto p2 = points31[(i + 1) % edgePointsCount];
-            const glm::vec3 prevSlope(static_cast<float>(p1.x - p0.x), vSize, static_cast<float>(p1.y - p0.y));
+            if (i == 0)
+                prevSlope = glm::vec3(static_cast<float>(p1.x - p0.x), vSize, static_cast<float>(p1.y - p0.y));
             const glm::vec3 nextSlope(static_cast<float>(p2.x - p0.x), vSize, static_cast<float>(p2.y - p0.y));
             auto lowerY = height;
             if (isDome)
@@ -800,21 +801,20 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                 n1 = sqRadius1 > 0.0f ? glm::vec3(prevSlope.x, 0.0f, prevSlope.z) / sqrt(sqRadius1) : upV;
                 auto sqRadius2 = nextSlope.x * nextSlope.x + nextSlope.z * nextSlope.z;
                 n2 = sqRadius2 > 0.0f ? glm::vec3(nextSlope.x, 0.0f, nextSlope.z) / sqrt(sqRadius2) : upV;
-                const auto roundCount = qRound(roofHeight);
+                const auto roundCount = qRound(roofHeight) * 2;
                 const auto ringCount = roundCount - 1;
                 for (int j = 0; j < ringCount; j++)
                 {
-                    const auto upperAngle = static_cast<float>(M_PI_2) * (j + 1) / roundCount;
-                    float upperSin = qSin(upperAngle);
-                    float upperCos = qCos(upperAngle);
-                    const auto upperY = upperSin * roofHeight + height;
-                    auto p3 = p0 + PointI(qRound(prevSlope.x * upperCos), qRound(prevSlope.z * upperCos));
-                    auto p4 = p0 + PointI(qRound(nextSlope.x * upperCos), qRound(nextSlope.z * upperCos));
+                    const auto factorXZ = static_cast<float>(ringCount - j) / roundCount;
+                    const auto factorY = sqrt(1.0f - factorXZ * factorXZ);
+                    const auto upperY = factorY * roofHeight + height;
+                    auto p3 = p0 + PointI(qRound(prevSlope.x * factorXZ), qRound(prevSlope.z * factorXZ));
+                    auto p4 = p0 + PointI(qRound(nextSlope.x * factorXZ), qRound(nextSlope.z *factorXZ));
                     
-                    glm::vec3 n3(vSize * upperCos * prevSlope.x, sqRadius1 * upperSin, vSize * upperCos * prevSlope.z);
+                    glm::vec3 n3(vSize * factorXZ * prevSlope.x, sqRadius1 * factorY, vSize * factorXZ * prevSlope.z);
                     auto sqLen = n3.x * n3.x + n3.y * n3.y + n3.z * n3.z;
                     n3 = sqLen > 0.0f ? n3 / sqrt(sqLen) : upV;
-                    glm::vec3 n4(vSize * upperCos * nextSlope.x, sqRadius2 * upperSin, vSize * upperCos * nextSlope.z);
+                    glm::vec3 n4(vSize * factorXZ * nextSlope.x, sqRadius2 * factorY, vSize * factorXZ * nextSlope.z);
                     sqLen = n4.x * n4.x + n4.y * n4.y + n4.z * n4.z;
                     n4 = sqLen > 0.0f ? n4 / sqrt(sqLen) : upV;
                     
@@ -887,6 +887,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             roofIndices.push_back(vertexIndex++);
             vertices.append({glm::ivec2(p1.x, p1.y), zeroV, glm::vec2(lowerY, terrainHeight), n1, colorVec});
             roofIndices.push_back(vertexIndex++);
+            prevSlope = nextSlope;
         }
         cutMeshForTile(
             roofIndices,
@@ -926,6 +927,9 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             minTile31,
             maxTile31);
     }
+
+    if (height <= 0.0f)
+        return;
 
     // Construct walls of the mesh
     const bool withPassages = !passages.isEmpty();
