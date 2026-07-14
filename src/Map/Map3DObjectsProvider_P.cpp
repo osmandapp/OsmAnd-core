@@ -354,12 +354,14 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
     {
         const auto shapeTag = QStringLiteral("roof:shape");
         const auto shapeValue = sourceObject.getResolvedAttribute(QStringRef(&shapeTag));
-        if (shapeValue == QStringLiteral("pyramidal"))
-            roofShape = RoofShape::Pyramidal;
-        else if (shapeValue == QStringLiteral("cone"))
+        if (shapeValue.startsWith(QStringLiteral("cone")))
             roofShape = RoofShape::Cone;
-        else if (shapeValue == QStringLiteral("dome"))
+        else if (shapeValue.startsWith(QStringLiteral("dome")))
             roofShape = RoofShape::Dome;
+        else if (shapeValue.startsWith(QStringLiteral("round")))
+            roofShape = RoofShape::Round;
+        else if (shapeValue == QStringLiteral("pyramidal"))
+            roofShape = RoofShape::Pyramidal;
         else if (shapeValue == QStringLiteral("skillion"))
             roofShape = RoofShape::Skillion;
         else if (shapeValue == QStringLiteral("gabled"))
@@ -806,8 +808,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                     float upperSin = qSin(upperAngle);
                     float upperCos = qCos(upperAngle);
                     const auto upperY = upperSin * roofHeight + height;
-                    auto p3 = p0 + PointI(prevSlope.x * upperCos, prevSlope.z * upperCos);
-                    auto p4 = p0 + PointI(nextSlope.x * upperCos, nextSlope.z * upperCos);
+                    auto p3 = p0 + PointI(qRound(prevSlope.x * upperCos), qRound(prevSlope.z * upperCos));
+                    auto p4 = p0 + PointI(qRound(nextSlope.x * upperCos), qRound(nextSlope.z * upperCos));
                     
                     glm::vec3 n3(vSize * upperCos * prevSlope.x, sqRadius1 * upperSin, vSize * upperCos * prevSlope.z);
                     auto sqLen = n3.x * n3.x + n3.y * n3.y + n3.z * n3.z;

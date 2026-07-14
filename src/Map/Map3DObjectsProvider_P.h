@@ -25,9 +25,10 @@ namespace OsmAnd
     public:
         enum RoofShape : int32_t {
             Flat = 0,
-            Pyramidal,
             Cone,
             Dome,
+            Round,
+            Pyramidal,
             Skillion,
             Gabled
         };
