@@ -278,7 +278,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
             PARAM_OUTPUT highp float v2f_height;
         )");
         const QString colorCalculation = QString(R"(
-                v2f_sizes = in_vs_sizes;
+                v2f_sizes.xy = in_vs_sizes.xy;
                 v2f_sizes.z = in_vs_sizes.z * tileFactor;
                 v2f_sizes.w = in_vs_sizes.w / param_vs_metersPerUnit;
                 v2f_height = in_vs_heights.x;
@@ -310,7 +310,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
             {
                 vec3 v = normalize(param_fs_cameraPosition - v2f_pointPosition);
                 vec3 n = normalize(v2f_pointNormal);
-                bool top = abs(n.y) > abs(n.x) && abs(n.y) > abs(n.z);
+                bool top = abs(n.y) > 0.0;
                 float a = atan(n.x, n.z);
                 vec2 p = abs(v2f_sizes.zw) + 10.0;
                 vec2 g = clamp(pow(v2f_sizes.xy, p) - pow(1.0 - v2f_sizes.xy, p), 0.0, 1.0) * 0.4;
