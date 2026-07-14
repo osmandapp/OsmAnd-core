@@ -4,6 +4,8 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <QHash>
+#include <QList>
 #include <QString>
 #include <QVector>
 
@@ -39,6 +41,8 @@ namespace OsmAnd
         LatLon location;
         QString enName;
         QString localizedName;
+        QHash<QString, QString> localizedNames;
+        QList<QString> localizedNamesOrder;
         
         void addExit(std::shared_ptr<TransportStopExit> &exit);
         bool compareStop(const std::shared_ptr<OsmAnd::TransportStop>& thatObj);
