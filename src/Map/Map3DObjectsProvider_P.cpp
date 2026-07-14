@@ -801,12 +801,12 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                 n1 = sqRadius1 > 0.0f ? glm::vec3(prevSlope.x, 0.0f, prevSlope.z) / sqrt(sqRadius1) : upV;
                 auto sqRadius2 = nextSlope.x * nextSlope.x + nextSlope.z * nextSlope.z;
                 n2 = sqRadius2 > 0.0f ? glm::vec3(nextSlope.x, 0.0f, nextSlope.z) / sqrt(sqRadius2) : upV;
-                const auto roundCount = qRound(roofHeight) * 2;
+                const auto roundCount = qRound(roofHeight);
                 const auto ringCount = roundCount - 1;
                 for (int j = 0; j < ringCount; j++)
                 {
-                    const auto factorXZ = static_cast<float>(ringCount - j) / roundCount;
-                    const auto factorY = sqrt(1.0f - factorXZ * factorXZ);
+                    const auto factorY = static_cast<float>(j + 1) / roundCount;
+                    const auto factorXZ = sqrt(1.0f - factorY * factorY);
                     const auto upperY = factorY * roofHeight + height;
                     auto p3 = p0 + PointI(qRound(prevSlope.x * factorXZ), qRound(prevSlope.z * factorXZ));
                     auto p4 = p0 + PointI(qRound(nextSlope.x * factorXZ), qRound(nextSlope.z *factorXZ));
