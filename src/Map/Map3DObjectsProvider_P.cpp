@@ -323,14 +323,14 @@ void Map3DObjectsTiledProvider_P::filterBuildings(
 
 void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
     const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive, const OsmAnd::ObfMapObject& sourceObject,
-    bool isPart, QSet<BuildingPrimitive>& outCollection) const
+    bool isPart, bool isHighDetail, QSet<BuildingPrimitive>& outCollection) const
 {
     bool isNotPart = true;
     bool isEmbedded = false;
     if (isPart)
     {
-        const auto part = QStringLiteral("building:part");
-        const auto partValue = sourceObject.getResolvedAttribute(QStringRef(&part));
+        const auto partTag = QStringLiteral("building:part");
+        const auto partValue = sourceObject.getResolvedAttribute(QStringRef(&partTag));
         if (partValue == QStringLiteral("no"))
             return;
         if (partValue == QStringLiteral("tower")
@@ -346,10 +346,32 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
     float levels = 0.0f;
     float minLevels = 0.0f;
 
+    float roofLevels = 0.0f;
+    float roofHeight = 0.0f;
+
+    auto roofShape = RoofShape::Flat;
+    if (isHighDetail)
+    {
+        const auto shapeTag = QStringLiteral("roof:shape");
+        const auto shapeValue = sourceObject.getResolvedAttribute(QStringRef(&shapeTag));
+        if (shapeValue == QStringLiteral("pyramidal"))
+            roofShape = RoofShape::Pyramidal;
+        else if (shapeValue == QStringLiteral("cone"))
+            roofShape = RoofShape::Cone;
+        else if (shapeValue == QStringLiteral("dome"))
+            roofShape = RoofShape::Dome;
+        else if (shapeValue == QStringLiteral("skillion"))
+            roofShape = RoofShape::Skillion;
+        else if (shapeValue == QStringLiteral("gabled"))
+            roofShape = RoofShape::Gabled;
+    }
+
     bool heightFound = false;
     bool minHeightFound = false;
     bool levelsFound = false;
     bool minLevelFound = false;
+    bool roofLevelsFound = false;
+    bool roofHeightFound = false;
 
     for (const auto& captionAttributeId : constOf(sourceObject.captionsOrder))
     {
@@ -382,11 +404,40 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
             minLevelFound = true;
             minLevels = caption.toFloat();
         }
+
+        if (isHighDetail && !roofLevelsFound && captionTag == QStringLiteral("roof:levels"))
+        {
+            roofLevelsFound = true;
+            roofLevels = caption.toFloat();
+            continue;
+        }
+
+        if (isHighDetail && !roofHeightFound && captionTag == QStringLiteral("roof:height"))
+        {
+            roofHeightFound = true;
+            roofHeight = OsmAnd::Utilities::parseLength(caption, roofHeight, &roofHeightFound);
+            continue;
+        }
     }
 
-    if (heightFound && height == 0.0f)
-    {
+    if (isPart && !heightFound && !levelsFound)
         return;
+
+    if (heightFound && height == 0.0f)
+        return;
+
+    if (heightFound)
+    {
+        if (roofHeightFound && roofHeight > 0.0f)
+        {
+            height -= roofHeight;
+            if (height <= 0.0f)
+                return;
+        }
+        else if (roofLevelsFound && roofLevels > 0.0f && levelsFound && levels > 0.0f)
+        {
+            height /= roofLevels / levels + 1.0f;
+        }
     }
 
     if (levelsFound)
@@ -402,11 +453,16 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
             levelHeight = height / levels;
     }
 
+    if (roofShape != RoofShape::Flat && (!roofHeightFound || roofHeight <= 0.0f))
+    {
+        if (roofLevelsFound && roofLevels > 0.0f)
+            roofHeight = levelHeight * roofLevels;
+        else
+            roofHeight = levelHeight;
+    }
+
     if (!minHeightFound && minLevelFound)
         minHeight = minLevels * levelHeight;
-
-    if (isPart && !heightFound && !levelsFound)
-        return;
 
     BuildingPrimitive buildingPrimitive;
     buildingPrimitive.primitive = primitive;
@@ -414,8 +470,11 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
     buildingPrimitive.minHeight = minHeight;
     buildingPrimitive.levels = levels;
     buildingPrimitive.levelHeight = levelHeight;
+    buildingPrimitive.roofHeight = roofHeight;
+    buildingPrimitive.roofShape = roofShape;
     buildingPrimitive.heightFound = heightFound;
     buildingPrimitive.levelsFound = levelsFound;
+    buildingPrimitive.roofHeightFound = roofHeightFound;
     buildingPrimitive.isNotPart = isNotPart;
     buildingPrimitive.isEmbedded = isEmbedded;
 
@@ -445,7 +504,7 @@ void Map3DObjectsTiledProvider_P::insertOrUpdatePassage(
 
 void Map3DObjectsTiledProvider_P::collectFromPolyline(
     const std::shared_ptr<const MapPrimitiviser::Primitive>& polylinePrimitive,
-    const bool show3DbuildingParts,
+    const bool isHighDetail,
     QSet<BuildingPrimitive>& outBuildings,
     QSet<BuildingPrimitive>& outBuildingParts,
     QSet<PassagePrimitive>& outBuildingPassages) const
@@ -461,10 +520,10 @@ void Map3DObjectsTiledProvider_P::collectFromPolyline(
             const auto layer = QStringLiteral("layer");
             const auto layerValue = sourceObject->getResolvedAttribute(QStringRef(&layer));
             if (!layerValue.startsWith(QLatin1Char('-')))
-                insertOrUpdateBuildingPrimitive(polylinePrimitive, *sourceObject, false, outBuildings);
+                insertOrUpdateBuildingPrimitive(polylinePrimitive, *sourceObject, false, isHighDetail, outBuildings);
         }
-        else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part")))
-            insertOrUpdateBuildingPrimitive(polylinePrimitive, *sourceObject, true, outBuildingParts);
+        else if (isHighDetail && sourceObject->containsTag(QStringLiteral("building:part")))
+            insertOrUpdateBuildingPrimitive(polylinePrimitive, *sourceObject, true, isHighDetail, outBuildingParts);
     }
     else if (polylinePrimitive->type == MapPrimitiviser::PrimitiveType::Polyline
         && (sourceObject->containsAttribute(QStringLiteral("tunnel"), QStringLiteral("building_passage"))
@@ -501,7 +560,7 @@ void Map3DObjectsTiledProvider_P::collectFromPolyline(
 
 void Map3DObjectsTiledProvider_P::collectFromPolygons(
     const std::shared_ptr<const MapPrimitiviser::Primitive>& polygonPrimitive,
-    const bool show3DbuildingParts,
+    const bool isHighDetail,
     QSet<BuildingPrimitive>& outBuildings,
     QSet<BuildingPrimitive>& outBuildingParts) const
 {
@@ -509,15 +568,17 @@ void Map3DObjectsTiledProvider_P::collectFromPolygons(
     if (!sourceObject || sourceObject->points31.size() < 3)
         return;
 
-    if (sourceObject->containsTag(QStringLiteral("building")))
+    // TODO: only "building" tag should be checked here!
+    if (sourceObject->containsTag(QStringLiteral("building"))
+        || sourceObject->containsAttribute(QStringLiteral("man_made"), QStringLiteral("tower")))
     {
         const auto layer = QStringLiteral("layer");
         const auto layerValue = sourceObject->getResolvedAttribute(QStringRef(&layer));
         if (!layerValue.startsWith(QLatin1Char('-')))
-            insertOrUpdateBuildingPrimitive(polygonPrimitive, *sourceObject, false, outBuildings);
+            insertOrUpdateBuildingPrimitive(polygonPrimitive, *sourceObject, false, isHighDetail, outBuildings);
     }
-    else if (show3DbuildingParts && sourceObject->containsTag(QStringLiteral("building:part")))
-        insertOrUpdateBuildingPrimitive(polygonPrimitive, *sourceObject, true, outBuildingParts);
+    else if (isHighDetail && sourceObject->containsTag(QStringLiteral("building:part")))
+        insertOrUpdateBuildingPrimitive(polygonPrimitive, *sourceObject, true, isHighDetail, outBuildingParts);
 }
 
 bool Map3DObjectsTiledProvider_P::obtainData(
@@ -664,7 +725,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     }
 
     // Calculate pseudo-random seed value to produce slightly different colors for equally-lit walls of building
-    const auto centerPoint = AreaI64(sourceObject->bbox31).center();
+    const auto centerPoint = sourceObject->bbox31.center();
     int b = (centerPoint.x ^ centerPoint.y) & 255;
     b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
     b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
@@ -677,8 +738,6 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     double area = Utilities::computeSignedArea(points31);
     if (area >= 0.0)
         std::reverse(points31.begin(), points31.end());
-
-    const int edgePointsCount = points31.size();
 
     QVector<QVector<PointI>> innerPolygons;
     if (!sourceObject->innerPolygonsPoints31.isEmpty())
@@ -699,53 +758,172 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         }
     }
 
-    int currentVertexOffset = vertices.size();
-    const int currentIndexOffset = indices.size();
-
-    // Construct top side of the mesh
-    std::vector<std::vector<std::array<int32_t, 2>>> topPolygon;
-
-    std::vector<std::array<int32_t, 2>> outerRing;
-    for (int i = 0; i < edgePointsCount; ++i)
-    {
-        const int next = (i + 1) % edgePointsCount;
-        const auto& p = points31[i];
-        BuildingVertex v{glm::ivec2(p.x, p.y),
-            glm::vec4(0.0f), glm::vec2(height, terrainHeight), glm::vec3(0.0f, 1.0f, 0.0f), colorVec};
-
-        outerRing.push_back({p.x, p.y});
-        vertices.append(v);
-    }
-
-    topPolygon.push_back(std::move(outerRing));
-
-    for (const auto& innerPoly : innerPolygons)
-    {
-        std::vector<std::array<int32_t, 2>> innerRing;
-
-        for (const auto& p : innerPoly)
-        {
-            BuildingVertex v{glm::ivec2(p.x, p.y),
-                glm::vec4(0.0f), glm::vec2(height, terrainHeight), glm::vec3(0.0f, 1.0f, 0.0f), colorVec};
-
-            innerRing.push_back({p.x, p.y});
-            vertices.append(v);
-        }
-
-        topPolygon.push_back(std::move(innerRing));
-    }
-
+    const int edgePointsCount = points31.size();
+    uint16_t currentVertexOffset = vertices.size();
     const auto zoomLevelDelta = MaxZoomLevel - zoom;
     const PointD minTile31(tileId.x << zoomLevelDelta, tileId.y << zoomLevelDelta);
     const PointD maxTile31((tileId.x + 1) << zoomLevelDelta, (tileId.y + 1) << zoomLevelDelta);
 
-    cutMeshForTile(
-        mapbox::earcut<uint16_t>(topPolygon),
-        vertices,
-        indices,
-        currentVertexOffset,
-        minTile31,
-        maxTile31);
+    glm::vec4 zeroV(0.0f);
+    glm::vec3 upV(0.0f, 1.0f, 0.0f);
+    const auto roofHeight = primitive.roofHeight;
+    const bool isPyramidal = primitive.roofShape == RoofShape::Pyramidal;
+    const bool isCone = primitive.roofShape == RoofShape::Cone;
+    const bool isDome = primitive.roofShape == RoofShape::Dome;
+    if (roofHeight > 0.0f && (isPyramidal || isCone || isDome))
+    {
+        // Construct pyramidal/cone top side of the mesh
+        std::vector<uint16_t> roofIndices;
+        uint16_t vertexIndex = 0;
+        const auto p0 = sourceObject->bbox31.center();
+        const auto vSize = roofHeight / static_cast<float>(Utilities::getMetersPer31Coordinate(p0));
+        const auto total = height + roofHeight;
+        glm::vec3 n1, n2;
+        if (!isPyramidal)
+        {
+            vertices.append({glm::ivec2(p0.x, p0.y),
+                zeroV, glm::vec2(total, terrainHeight), isCone ? zeroV.xyz() : upV, colorVec});
+            vertexIndex++;
+        }
+        for (int i = 0; i < edgePointsCount; ++i)
+        {
+            auto p1 = points31[i];
+            auto p2 = points31[(i + 1) % edgePointsCount];
+            const glm::vec3 prevSlope(static_cast<float>(p1.x - p0.x), vSize, static_cast<float>(p1.y - p0.y));
+            const glm::vec3 nextSlope(static_cast<float>(p2.x - p0.x), vSize, static_cast<float>(p2.y - p0.y));
+            auto lowerY = height;
+            if (isDome)
+            {
+                auto sqRadius1 = prevSlope.x * prevSlope.x + prevSlope.z * prevSlope.z;
+                n1 = sqRadius1 > 0.0f ? glm::vec3(prevSlope.x, 0.0f, prevSlope.z) / sqrt(sqRadius1) : upV;
+                auto sqRadius2 = nextSlope.x * nextSlope.x + nextSlope.z * nextSlope.z;
+                n2 = sqRadius2 > 0.0f ? glm::vec3(nextSlope.x, 0.0f, nextSlope.z) / sqrt(sqRadius2) : upV;
+                const auto roundCount = qRound(roofHeight);
+                const auto ringCount = roundCount - 1;
+                for (int j = 0; j < ringCount; j++)
+                {
+                    const auto upperAngle = static_cast<float>(M_PI_2) * (j + 1) / roundCount;
+                    float upperSin = qSin(upperAngle);
+                    float upperCos = qCos(upperAngle);
+                    const auto upperY = upperSin * roofHeight + height;
+                    auto p3 = p0 + PointI(prevSlope.x * upperCos, prevSlope.z * upperCos);
+                    auto p4 = p0 + PointI(nextSlope.x * upperCos, nextSlope.z * upperCos);
+                    
+                    glm::vec3 n3(vSize * upperCos * prevSlope.x, sqRadius1 * upperSin, vSize * upperCos * prevSlope.z);
+                    auto sqLen = n3.x * n3.x + n3.y * n3.y + n3.z * n3.z;
+                    n3 = sqLen > 0.0f ? n3 / sqrt(sqLen) : upV;
+                    glm::vec3 n4(vSize * upperCos * nextSlope.x, sqRadius2 * upperSin, vSize * upperCos * nextSlope.z);
+                    sqLen = n4.x * n4.x + n4.y * n4.y + n4.z * n4.z;
+                    n4 = sqLen > 0.0f ? n4 / sqrt(sqLen) : upV;
+                    
+                    vertices.append({glm::ivec2(p4.x, p4.y), zeroV, glm::vec2(upperY, terrainHeight), n4, colorVec});
+                    const auto idx4 = vertexIndex++;
+                    vertices.append({glm::ivec2(p3.x, p3.y), zeroV, glm::vec2(upperY, terrainHeight), n3, colorVec});
+                    const auto idx3 = vertexIndex++;
+                    vertices.append({glm::ivec2(p2.x, p2.y), zeroV, glm::vec2(lowerY, terrainHeight), n2, colorVec});
+                    const auto idx2 = vertexIndex++;
+                    vertices.append({glm::ivec2(p1.x, p1.y), zeroV, glm::vec2(lowerY, terrainHeight), n1, colorVec});
+                    const auto idx1 = vertexIndex++;
+                    
+                    roofIndices.push_back(idx3);
+                    roofIndices.push_back(idx2);
+                    roofIndices.push_back(idx1);
+                    
+                    roofIndices.push_back(idx4);
+                    roofIndices.push_back(idx2);
+                    roofIndices.push_back(idx3);
+
+                    p1 = p3;
+                    p2 = p4;
+                    n1 = n3;
+                    n2 = n4;
+                    lowerY = upperY;
+                }
+                roofIndices.push_back(0);
+            }
+            else if (isCone)
+            {
+                auto sqRadius = prevSlope.x * prevSlope.x + prevSlope.z * prevSlope.z;
+                if (sqRadius > 0.0f)
+                {
+                    const auto len = sqrt(sqRadius + vSize * vSize);
+                    const auto f = vSize / sqrt(sqRadius);
+                    const auto fXY = f / len;
+                    n1 = prevSlope * glm::vec3(fXY, 1.0f / (f * len), fXY);
+                }
+                else
+                    n1 = upV;
+                sqRadius = nextSlope.x * nextSlope.x + nextSlope.z * nextSlope.z;
+                if (sqRadius > 0.0f)
+                {
+                    const auto len = sqrt(sqRadius + vSize * vSize);
+                    const auto f = vSize / sqrt(sqRadius);
+                    const auto fXY = f / len;
+                    n2 = nextSlope * glm::vec3(fXY, 1.0f / (f * len), fXY);
+                }
+                else
+                    n2 = upV;
+                roofIndices.push_back(0);
+            }
+            else
+            {
+                glm::vec3 edgeDir(static_cast<float>(p2.x - p1.x), 0.0f, static_cast<float>(p2.y - p1.y));
+                n1 = glm::cross(glm::vec3(prevSlope.x, -prevSlope.y, prevSlope.z), edgeDir);
+                const auto len = glm::length(n1);
+                if (len > 0.0f)
+                    n1 /= len;
+                else
+                {
+                    const auto size = glm::length(edgeDir);
+                    n1 = size > 0.0f ? glm::vec3(-edgeDir.z, 0.0f, edgeDir.x) / size : upV;
+                }
+                n2 = n1;
+                vertices.append({glm::ivec2(p0.x, p0.y), zeroV, glm::vec2(total, terrainHeight), n2, colorVec});
+                roofIndices.push_back(vertexIndex++);
+            }
+            vertices.append({glm::ivec2(p2.x, p2.y), zeroV, glm::vec2(lowerY, terrainHeight), n2, colorVec});
+            roofIndices.push_back(vertexIndex++);
+            vertices.append({glm::ivec2(p1.x, p1.y), zeroV, glm::vec2(lowerY, terrainHeight), n1, colorVec});
+            roofIndices.push_back(vertexIndex++);
+        }
+        cutMeshForTile(
+            roofIndices,
+            vertices,
+            indices,
+            currentVertexOffset,
+            minTile31,
+            maxTile31);
+    }
+    else
+    {
+        // Construct flat top side of the mesh
+        std::vector<std::vector<std::array<int32_t, 2>>> topPolygon;
+        std::vector<std::array<int32_t, 2>> outerRing;
+        for (int i = 0; i < edgePointsCount; ++i)
+        {
+            const auto& p = points31[i];
+            vertices.append({glm::ivec2(p.x, p.y), zeroV, glm::vec2(height, terrainHeight), upV, colorVec});
+            outerRing.push_back({p.x, p.y});
+        }
+        topPolygon.push_back(std::move(outerRing));
+        for (const auto& innerPoly : innerPolygons)
+        {
+            std::vector<std::array<int32_t, 2>> innerRing;
+            for (const auto& p : innerPoly)
+            {
+                vertices.append({glm::ivec2(p.x, p.y), zeroV, glm::vec2(height, terrainHeight), upV, colorVec});
+                innerRing.push_back({p.x, p.y});
+            }
+            topPolygon.push_back(std::move(innerRing));
+        }
+        cutMeshForTile(
+            mapbox::earcut<uint16_t>(topPolygon),
+            vertices,
+            indices,
+            currentVertexOffset,
+            minTile31,
+            maxTile31);
+    }
 
     // Construct walls of the mesh
     const bool withPassages = !passages.isEmpty();
@@ -995,7 +1173,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         int segCount = points31.size() - 1;
         if (segCount == 1)
         {
-            uint32_t baseVertexOffset = vertices.size();
+            uint16_t baseVertexOffset = vertices.size();
 
             auto n = calculateNormalFrom2Points(
                 PointI(passage->startTopLeft.location31.x, passage->startTopLeft.location31.y),
@@ -1097,8 +1275,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                     prev = next;
                 }
 
-
-                uint32_t baseVertexOffset = vertices.size();
+                uint16_t baseVertexOffset = vertices.size();
 
                 auto n = calculateNormalFrom2Points(
                     PointI(startTopLeft.location31.x, startTopLeft.location31.y),
@@ -1495,10 +1672,7 @@ glm::vec3 Map3DObjectsTiledProvider_P::calculateNormalFrom2Points(PointI point31
 
     glm::vec3 n(-dz, 0.0f, dx);
     const float len = glm::length(n);
-    if (len > 0.0f)
-        n /= len;
-    else
-        n = glm::vec3(0.0f, 0.0f, 1.0f);
+    n = len > 0.0f ? n / len : glm::vec3(0.0f, 0.0f, 1.0f);
 
     return n;
 }
@@ -1522,7 +1696,7 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     const glm::vec4& colorVec,
     QList<PassagePrimitive*>& passagePrimitives) const
 {
-    const uint32_t baseVertexOffset = vertices.size();
+    const uint16_t baseVertexOffset = vertices.size();
 
     // Should match the side order (counter-clockwise)
     const auto hSize = prevCurved || nextCurved ? -width31 * 2.0f : width31;

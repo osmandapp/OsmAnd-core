@@ -23,6 +23,15 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(Map3DObjectsTiledProvider_P);
 
     public:
+        enum RoofShape : int32_t {
+            Flat = 0,
+            Pyramidal,
+            Cone,
+            Dome,
+            Skillion,
+            Gabled
+        };
+
         struct BuildingPrimitive
         {
             std::shared_ptr<const MapPrimitiviser::Primitive> primitive;
@@ -30,8 +39,11 @@ namespace OsmAnd
             float minHeight;
             float levels;
             float levelHeight;
+            float roofHeight;
+            RoofShape roofShape;
             bool heightFound;
             bool levelsFound;
+            bool roofHeightFound = false;
             bool isNotPart;
             bool isEmbedded;
             mutable std::shared_ptr<const OsmAnd::ObfMapObject> parentSourceObject;
@@ -90,21 +102,22 @@ namespace OsmAnd
             QList<const BuildingPrimitive*>* primaryBuildings = nullptr) const;
 
         void collectFromPolyline(const std::shared_ptr<const MapPrimitiviser::Primitive>& polylinePrimitive,
-            const bool show3DbuildingParts,
+            const bool isHighDetail,
             QSet<BuildingPrimitive>& outBuildings,
             QSet<BuildingPrimitive>& outBuildingParts,
             QSet<PassagePrimitive>& outBuildingPassages) const;
 
         void collectFromPolygons(const std::shared_ptr<const MapPrimitiviser::Primitive>& polygonPrimitive,
-            const bool show3DbuildingParts,
+            const bool isHighDetail,
             QSet<BuildingPrimitive>& outBuildings,
             QSet<BuildingPrimitive>& outBuildingParts) const;
 
         void filterBuildings(QSet<BuildingPrimitive>& buildings,
             QSet<BuildingPrimitive>& buildingParts) const;
 
-        void insertOrUpdateBuildingPrimitive(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
-            const OsmAnd::ObfMapObject& sourceObject, bool isPart, QSet<BuildingPrimitive>& outCollection) const;
+        void insertOrUpdateBuildingPrimitive(
+            const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive, const OsmAnd::ObfMapObject& sourceObject,
+            bool isPart, bool isHighDetail, QSet<BuildingPrimitive>& outCollection) const;
         void insertOrUpdatePassage(const PassagePrimitive& primitive, QSet<PassagePrimitive>& outCollection) const;
 
         inline BuildingVertex getIntersection(
