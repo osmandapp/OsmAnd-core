@@ -711,6 +711,7 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
                 }
                 if (allPresent)
                 {
+                    pUnderscaledTileIdN = underscaledTileIdsN.constData();
                     for (auto tileIdx = 0; tileIdx < subtilesCount; tileIdx++)
                     {
                         const auto& underscaledTileId = *(pUnderscaledTileIdN++);
