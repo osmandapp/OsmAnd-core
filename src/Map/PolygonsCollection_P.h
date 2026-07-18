@@ -41,6 +41,7 @@ namespace OsmAnd
         ImplementationInterface<PolygonsCollection> owner;
 
         QList< std::shared_ptr<Polygon> > getPolygons() const;
+        bool setPolygonPoints(const int polygonId, const QVector<PointI>& points);
         bool removePolygon(const std::shared_ptr<Polygon>& polygon);
         void removeAllPolygons();
 
