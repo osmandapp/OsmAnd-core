@@ -361,71 +361,13 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
         vertices->push_back(vertex);
     }
 
-    // A flat map repeats horizontally. Polygons whose source ring touches both world edges need
-    // adjacent mesh copies when the viewport crosses the antimeridian. Keep the original anchor
-    // and tessellation intact: changing either one changes the ring topology at the world edge.
-    int minX = INT32_MAX;
-    int maxX = 0;
-    int minY = INT32_MAX;
-    int maxY = 0;
-    int northEdgeMinX = INT32_MAX;
-    int northEdgeMaxX = 0;
-    int southEdgeMinX = INT32_MAX;
-    int southEdgeMaxX = 0;
-    int northEdgePoints = 0;
-    int southEdgePoints = 0;
-    for (const auto& point : _points)
-    {
-        minX = qMin(minX, point.x);
-        maxX = qMax(maxX, point.x);
-        minY = qMin(minY, point.y);
-        maxY = qMax(maxY, point.y);
-        if (point.y == 0)
-        {
-            northEdgeMinX = qMin(northEdgeMinX, point.x);
-            northEdgeMaxX = qMax(northEdgeMaxX, point.x);
-            northEdgePoints++;
-        }
-        else if (point.y == INT32_MAX)
-        {
-            southEdgeMinX = qMin(southEdgeMinX, point.x);
-            southEdgeMaxX = qMax(southEdgeMaxX, point.x);
-            southEdgePoints++;
-        }
-    }
-    const bool closesNorthPole = northEdgePoints > 1 && northEdgeMinX < northEdgeMaxX;
-    const bool closesSouthPole = southEdgePoints > 1 && southEdgeMinX < southEdgeMaxX;
-    const int64_t worldSize31 = 1ll + INT32_MAX;
-    const bool touchesBothWorldEdges = minX == 0 && maxX == INT32_MAX;
-    if (_flatEarth && touchesBothWorldEdges && !baseVertices.empty())
-    {
-        const auto singleWorldVertices = baseVertices;
-        baseVertices.clear();
-        baseVertices.reserve(singleWorldVertices.size() * 3);
-        const int64_t worldOffsets[] = { -worldSize31, 0, worldSize31 };
-        for (const auto worldOffset : worldOffsets)
-        {
-            for (auto vertexCopy : singleWorldVertices)
-            {
-                vertexCopy.positionXYZD[0] += static_cast<float>(worldOffset);
-                baseVertices.push_back(vertexCopy);
-            }
-        }
-    }
-
     auto partSizes =
         std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>);
     const auto zoomLevel = _mapZoomLevel < MaxZoomLevel ? static_cast<ZoomLevel>(_mapZoomLevel + 1) : _mapZoomLevel;
 
     bool tesselated = false;
-    // On a globe, projecting only the three corners of a large planar triangle cuts through the
-    // sphere. Subdivide only multi-tile polygons; tessellating every polygon caused zoom stutter.
-    const auto cellsPerTileSize =
-        _mapZoomLevel < ZoomLevel3 ? 4 : (_mapZoomLevel < ZoomLevel6 ? 2 : (_mapZoomLevel < ZoomLevel8 ? 1 : 0));
-    const auto tileSize31 = Utilities::getPowZoom(ZoomLevel31 - zoomLevel);
-    const bool spansMultipleTiles =
-        static_cast<int64_t>(maxX) - minX > tileSize31 || static_cast<int64_t>(maxY) - minY > tileSize31;
-    if (!_flatEarth && cellsPerTileSize > 0 && spansMultipleTiles)
+/* Disabled to avoid stutter during map gestures
+    if (!_flatEarth)
     {
         tesselated = GeometryModifiers::cutMeshWithGrid(
                 *vertices,
@@ -434,31 +376,15 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
                 partSizes,
                 zoomLevel,
                 Utilities::convert31toDouble(*(verticesAndIndices->position31), zoomLevel),
-                cellsPerTileSize,
+                // Use selective granularity to avoid collisions with the surface
+                _mapZoomLevel < 3 ? 4 : (_mapZoomLevel < 6 ? 2 : (_mapZoomLevel < 8 ? 1 : 0)),
                 0.5f, 0.01f,
                 false, false,
                 tessVertices);
     }
+*/
     if (tesselated)
         vertices = &tessVertices;
-
-    // Latitude is saturated at the Mercator edge in 31-bit coordinates. A polygon edge with
-    // multiple saturated vertices is a pole closure, so converge that edge on the globe instead
-    // of rendering it as a visible circle at the Mercator limit (about 85 degrees).
-    if (!_flatEarth && (closesNorthPole || closesSouthPole))
-    {
-        const double edgeTolerance31 = 256.0;
-        const auto northPoleY = static_cast<float>(-worldSize31 - polygon->position31.y);
-        const auto southPoleY = static_cast<float>(2 * worldSize31 - polygon->position31.y);
-        for (auto& poleVertex : *vertices)
-        {
-            const double absoluteY = polygon->position31.y + poleVertex.positionXYZD[2];
-            if (closesNorthPole && qAbs(absoluteY) <= edgeTolerance31)
-                poleVertex.positionXYZD[2] = northPoleY;
-            else if (closesSouthPole && qAbs(absoluteY - INT32_MAX) <= edgeTolerance31)
-                poleVertex.positionXYZD[2] = southPoleY;
-        }
-    }
 
     verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
     verticesAndIndices->zoomLevel = tesselated ? zoomLevel : InvalidZoomLevel;
