@@ -20,6 +20,21 @@ QList< std::shared_ptr<OsmAnd::Polygon> > OsmAnd::PolygonsCollection_P::getPolyg
     return _polygons.values();
 }
 
+bool OsmAnd::PolygonsCollection_P::setPolygonPoints(const int polygonId, const QVector<PointI>& points)
+{
+    QReadLocker scopedLocker(&_polygonsLock);
+
+    for (const auto& polygon : constOf(_polygons))
+    {
+        if (polygon->polygonId == polygonId)
+        {
+            polygon->setPoints(points);
+            return true;
+        }
+    }
+    return false;
+}
+
 bool OsmAnd::PolygonsCollection_P::addPolygon(const std::shared_ptr<Polygon>& polygon)
 {
     QWriteLocker scopedLocker(&_polygonsLock);

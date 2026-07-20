@@ -21,6 +21,11 @@ QList< std::shared_ptr<OsmAnd::Polygon> > OsmAnd::PolygonsCollection::getPolygon
     return _p->getPolygons();
 }
 
+bool OsmAnd::PolygonsCollection::setPolygonPoints(const int polygonId, const QVector<PointI>& points)
+{
+    return _p->setPolygonPoints(polygonId, points);
+}
+
 bool OsmAnd::PolygonsCollection::removePolygon(const std::shared_ptr<Polygon>& polygon)
 {
     return _p->removePolygon(polygon);
