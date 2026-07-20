@@ -257,6 +257,25 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
 {
     int order = owner->baseOrder;
     int pointsCount = _points.size();
+    const int64_t worldSize31 = 1ll + INT32_MAX;
+    const auto halfWorldSize31 = worldSize31 >> 1;
+    static const auto northMercatorEdge31 = Utilities::get31TileNumberY(90.0);
+    static const auto southMercatorEdge31 = Utilities::get31TileNumberY(-90.0);
+
+    // Latitude is saturated near the Mercator limits in 31-bit coordinates. Treat two adjacent,
+    // distinct points on the same limit as the artificial edge that closes a polygon over a pole.
+    bool closesNorthPole = false;
+    bool closesSouthPole = false;
+    for (int pointIdx = 0; pointIdx < pointsCount; pointIdx++)
+    {
+        const auto& point = _points.at(pointIdx);
+        const auto& nextPoint = _points.at((pointIdx + 1) % pointsCount);
+        if (point.x == nextPoint.x)
+            continue;
+
+        closesNorthPole |= point.y <= northMercatorEdge31 && nextPoint.y <= northMercatorEdge31;
+        closesSouthPole |= point.y >= southMercatorEdge31 && nextPoint.y >= southMercatorEdge31;
+    }
     
     polygon->order = order++;
     polygon->position31 = _points[0];
@@ -366,8 +385,9 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
     const auto zoomLevel = _mapZoomLevel < MaxZoomLevel ? static_cast<ZoomLevel>(_mapZoomLevel + 1) : _mapZoomLevel;
 
     bool tesselated = false;
-/* Disabled to avoid stutter during map gestures
-    if (!_flatEarth)
+    const auto cellsPerTileSize =
+        _mapZoomLevel < ZoomLevel3 ? 4 : (_mapZoomLevel < ZoomLevel6 ? 2 : (_mapZoomLevel < ZoomLevel8 ? 1 : 0));
+    if (!_flatEarth && (closesNorthPole || closesSouthPole) && cellsPerTileSize > 0)
     {
         tesselated = GeometryModifiers::cutMeshWithGrid(
                 *vertices,
@@ -376,15 +396,33 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
                 partSizes,
                 zoomLevel,
                 Utilities::convert31toDouble(*(verticesAndIndices->position31), zoomLevel),
-                // Use selective granularity to avoid collisions with the surface
-                _mapZoomLevel < 3 ? 4 : (_mapZoomLevel < 6 ? 2 : (_mapZoomLevel < 8 ? 1 : 0)),
+                cellsPerTileSize,
                 0.5f, 0.01f,
                 false, false,
                 tessVertices);
     }
-*/
     if (tesselated)
         vertices = &tessVertices;
+
+    if (!_flatEarth && (closesNorthPole || closesSouthPole))
+    {
+        // Use the same extended Mercator pole limits as VectorLine after grid cutting. This keeps
+        // the polygon tessellated against the valid map grid while its saturated closing edge
+        // converges at the corresponding pole.
+        const double edgeTolerance31 = 256.0;
+        const auto northPoleOffsetY = static_cast<float>(-halfWorldSize31 - polygon->position31.y);
+        const auto southPoleOffsetY =
+            static_cast<float>(worldSize31 + halfWorldSize31 - 1 - polygon->position31.y);
+        for (auto& poleVertex : *vertices)
+        {
+            const double absoluteY = static_cast<double>(polygon->position31.y) +
+                static_cast<double>(poleVertex.positionXYZD[2]);
+            if (closesNorthPole && absoluteY <= northMercatorEdge31 + edgeTolerance31)
+                poleVertex.positionXYZD[2] = northPoleOffsetY;
+            else if (closesSouthPole && absoluteY >= southMercatorEdge31 - edgeTolerance31)
+                poleVertex.positionXYZD[2] = southPoleOffsetY;
+        }
+    }
 
     verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
     verticesAndIndices->zoomLevel = tesselated ? zoomLevel : InvalidZoomLevel;
