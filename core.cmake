@@ -59,6 +59,45 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/boost" "core/externals/boost")
 # External: harfbuzz
 add_subdirectory("${OSMAND_ROOT}/core/externals/harfbuzz" "core/externals/harfbuzz")
 
+function(osmand_suppress_external_warnings)
+	foreach(target ${ARGN})
+		if (TARGET ${target})
+			if (CMAKE_GENERATOR STREQUAL "Xcode")
+				set_target_properties(${target}
+					PROPERTIES
+						XCODE_ATTRIBUTE_GCC_WARN_INHIBIT_ALL_WARNINGS YES
+						XCODE_ATTRIBUTE_OTHER_LIBTOOLFLAGS "-no_warning_for_no_symbols")
+			endif()
+
+			if (CMAKE_C_COMPILER_ID MATCHES "Clang|AppleClang|GNU" OR
+				CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU")
+				target_compile_options(${target}
+					PRIVATE
+						-w)
+			elseif (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
+				target_compile_options(${target}
+					PRIVATE
+						/W0)
+			endif()
+		endif()
+	endforeach()
+endfunction()
+
+osmand_suppress_external_warnings(
+	archive_static
+	expat_static
+	gdal_static
+	gif_static
+	harfbuzz_static
+	icu4c_static
+	jpeg_static
+	png_static
+	proj_static
+	protobuf_static
+	skia_static
+	sqlite_static
+	z_static)
+
 # OsmAnd Core
 add_subdirectory("${OSMAND_ROOT}/core" "core")
 
