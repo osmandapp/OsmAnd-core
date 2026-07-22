@@ -25,12 +25,23 @@ namespace OsmAnd
     public:
         enum RoofShape : int32_t {
             Flat = 0,
+            Pyramidal,
             Cone,
             Dome,
-            Round,
-            Pyramidal,
+            Onion,
+            Saltbox,
             Skillion,
-            Gabled
+            Sawtooth,
+            Gabled,
+            Gambrel,
+            Round,
+            Hipped,
+            HalfHipped,
+            Mansard
+        };
+        enum RoofOrientation : int32_t {
+            Along = 0,
+            Across
         };
 
         struct BuildingPrimitive
@@ -41,7 +52,10 @@ namespace OsmAnd
             float levels;
             float levelHeight;
             float roofHeight;
+            float roofAngle;
+            float roofDirection;
             RoofShape roofShape;
+            RoofOrientation roofOrientation;
             bool heightFound;
             bool levelsFound;
             bool roofHeightFound = false;
@@ -207,6 +221,7 @@ namespace OsmAnd
             const glm::vec3& nextNormal,
             bool prevCurved,
             bool nextCurved,
+            bool withRoof,
             float minHeight,
             float height,
             float baseTerrainHeight,

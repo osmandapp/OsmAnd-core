@@ -27,7 +27,15 @@
 
 // Minimum cosine of the angle between adjacent walls that must be drawn seamlessly
 #define MIN_COSINE_CURVED_WALL 0.76 // ~40deg
-#define MIN_POINTS_CURVED_WALL 9 // ~40deg
+
+// Maximum number of segments for roof to be drawn pyramidal
+#define MAX_SEGMENTS_FOR_PYRAMIDAL_ROOF 9 // ~40deg
+
+// Roof shape parameters
+#define BOTTOM_PART_HEIGHT 0.6f
+#define ONION_ROOF_ANGLE_SPAN 4.188790321f // 240deg
+#define ONION_ROOF_ANGLE_OFFSET 0.7853981853f // 45deg
+#define ONION_ROOF_RADIUS_SCALE 0.66f
 
 #define PASSAGE_DEFAULT_WIDTH 6.0f
 #define PASSAGE_DEFAULT_HEIGHT 6.0f
@@ -349,24 +357,51 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
 
     float roofLevels = 0.0f;
     float roofHeight = 0.0f;
+    float roofAngle = NAN;
+    float roofDirection = NAN;
 
     auto roofShape = RoofShape::Flat;
+    auto roofOrientation = RoofOrientation::Along;
     if (isHighDetail)
     {
         const auto shapeTag = QStringLiteral("roof:shape");
         const auto shapeValue = sourceObject.getResolvedAttribute(QStringRef(&shapeTag));
-        if (shapeValue.startsWith(QStringLiteral("cone")))
-            roofShape = RoofShape::Cone;
-        else if (shapeValue.startsWith(QStringLiteral("dome")))
-            roofShape = RoofShape::Dome;
-        else if (shapeValue.startsWith(QStringLiteral("round")))
-            roofShape = RoofShape::Round;
-        else if (shapeValue == QStringLiteral("pyramidal"))
+        if (shapeValue == QStringLiteral("pyramidal"))
             roofShape = RoofShape::Pyramidal;
+        else if (shapeValue == QStringLiteral("cone"))
+            roofShape = RoofShape::Cone;
+        else if (shapeValue == QStringLiteral("dome"))
+            roofShape = RoofShape::Dome;
+        else if (shapeValue == QStringLiteral("onion"))
+            roofShape = RoofShape::Onion;
+        else if (shapeValue == QStringLiteral("saltbox"))
+            roofShape = RoofShape::Saltbox;
         else if (shapeValue == QStringLiteral("skillion"))
             roofShape = RoofShape::Skillion;
-        else if (shapeValue == QStringLiteral("gabled"))
-            roofShape = RoofShape::Gabled;
+        else if (shapeValue == QStringLiteral("sawtooth"))
+            roofShape = RoofShape::Sawtooth;
+        else
+        {
+            if (shapeValue == QStringLiteral("gabled"))
+                roofShape = RoofShape::Gabled;
+            else if (shapeValue == QStringLiteral("gambrel"))
+                roofShape = RoofShape::Gambrel;
+            else if (shapeValue == QStringLiteral("round"))
+                roofShape = RoofShape::Round;
+            else if (shapeValue == QStringLiteral("hipped"))
+                roofShape = RoofShape::Hipped;
+            else if (shapeValue == QStringLiteral("half-hipped"))
+                roofShape = RoofShape::HalfHipped;
+            else if (shapeValue == QStringLiteral("mansard"))
+                roofShape = RoofShape::Mansard;
+            if (roofShape != RoofShape::Flat)
+            {
+                const auto orientationTag = QStringLiteral("roof:orientation");
+                const auto orientationValue = sourceObject.getResolvedAttribute(QStringRef(&orientationTag));
+                if (orientationValue == QStringLiteral("across"))
+                    roofOrientation = RoofOrientation::Across;
+            }
+        }
     }
 
     bool heightFound = false;
@@ -375,6 +410,8 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
     bool minLevelFound = false;
     bool roofLevelsFound = false;
     bool roofHeightFound = false;
+    bool roofAngleFound = false;
+    bool roofDirectionFound = false;
 
     for (const auto& captionAttributeId : constOf(sourceObject.captionsOrder))
     {
@@ -421,6 +458,39 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
             roofHeight = OsmAnd::Utilities::parseLength(caption, roofHeight, &roofHeightFound);
             continue;
         }
+
+        if (isHighDetail && !roofAngleFound && captionTag == QStringLiteral("roof:angle"))
+        {
+            roofAngleFound = true;
+            roofAngle = caption.toFloat();
+            continue;
+        }
+
+        if (isHighDetail && !roofDirectionFound && captionTag == QStringLiteral("roof:direction"))
+        {
+            roofDirectionFound = true;
+            bool isNumeric = false;
+            roofDirection = caption.toFloat(&isNumeric);
+            if (!isNumeric)
+            {
+                roofDirection = 0.0f;
+                const auto direction = caption.trimmed().toUpper();
+                static const QString compassDirections[] = {
+                    QStringLiteral("N"), QStringLiteral("NNE"), QStringLiteral("NE"), QStringLiteral("ENE"),
+                    QStringLiteral("E"), QStringLiteral("ESE"), QStringLiteral("SE"), QStringLiteral("SSE"),
+                    QStringLiteral("S"), QStringLiteral("SSW"), QStringLiteral("SW"), QStringLiteral("WSW"),
+                    QStringLiteral("W"), QStringLiteral("WNW"), QStringLiteral("NW"), QStringLiteral("NNW")
+                };
+                for (int directionIndex = 0; directionIndex < 16; directionIndex++)
+                {
+                    if (direction == compassDirections[directionIndex])
+                    {
+                        roofDirection = directionIndex * 22.5f;
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     if (isPart && !heightFound && !levelsFound)
@@ -428,6 +498,8 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
 
     if (heightFound && height == 0.0f)
         return;
+
+    roofAngleFound = roofAngleFound && roofAngle >= 10.0f && roofAngle <= 80.0f;
 
     if (heightFound && roofShape != RoofShape::Flat)
     {
@@ -454,6 +526,8 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
     {
         if (roofLevelsFound && roofLevels > 0.0f)
             roofHeight = levelHeight * roofLevels;
+        else if (roofAngleFound)
+            roofHeight = 0.0f;
         else
             roofHeight = levelHeight;
     }
@@ -468,7 +542,10 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
     buildingPrimitive.levels = levels;
     buildingPrimitive.levelHeight = levelHeight;
     buildingPrimitive.roofHeight = roofHeight;
+    buildingPrimitive.roofAngle = roofAngleFound ? roofAngle : NAN;
+    buildingPrimitive.roofDirection = roofDirection;
     buildingPrimitive.roofShape = roofShape;
+    buildingPrimitive.roofOrientation = roofOrientation;
     buildingPrimitive.heightFound = heightFound;
     buildingPrimitive.levelsFound = levelsFound;
     buildingPrimitive.roofHeightFound = roofHeightFound;
@@ -565,8 +642,8 @@ void Map3DObjectsTiledProvider_P::collectFromPolygons(
     if (!sourceObject || sourceObject->points31.size() < 3)
         return;
 
-    // TODO: only "building" tag should be checked here!
-    if (sourceObject->containsTag(QStringLiteral("building"))
+        // TODO: only "building" tag should be checked here!
+        if (sourceObject->containsTag(QStringLiteral("building"))
         || sourceObject->containsAttribute(QStringLiteral("man_made"), QStringLiteral("tower")))
     {
         const auto layer = QStringLiteral("layer");
@@ -761,70 +838,288 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     const PointD minTile31(tileId.x << zoomLevelDelta, tileId.y << zoomLevelDelta);
     const PointD maxTile31((tileId.x + 1) << zoomLevelDelta, (tileId.y + 1) << zoomLevelDelta);
 
-    glm::vec4 zeroV(0.0f);
+    glm::vec4 zV(0.0f);
     glm::vec3 upV(0.0f, 1.0f, 0.0f);
-    const auto roofHeight = primitive.roofHeight;
+    auto roofHeight = primitive.roofHeight;
+    const auto roofAngle = primitive.roofAngle;
+    const auto roofDirection = primitive.roofDirection;
+    const auto roofOrientation = primitive.roofOrientation;
     bool isPyramidal = primitive.roofShape == RoofShape::Pyramidal;
     bool isCone = primitive.roofShape == RoofShape::Cone;
     bool isDome = primitive.roofShape == RoofShape::Dome;
-    if (isPyramidal && edgePointsCount > MIN_POINTS_CURVED_WALL)
+    bool isOnion = primitive.roofShape == RoofShape::Onion;
+    bool isSaltbox = primitive.roofShape == RoofShape::Saltbox;
+    bool isSkillion = primitive.roofShape == RoofShape::Skillion;
+    bool isSawtooth = primitive.roofShape == RoofShape::Sawtooth;
+    bool isGabled = primitive.roofShape == RoofShape::Gabled;
+    bool isGambrel = primitive.roofShape == RoofShape::Gambrel;
+    bool isRound = primitive.roofShape == RoofShape::Round;
+    bool isHipped = primitive.roofShape == RoofShape::Hipped;
+    bool isHalfHipped = primitive.roofShape == RoofShape::HalfHipped;
+    bool isMansard = primitive.roofShape == RoofShape::Mansard;
+    if (isPyramidal && edgePointsCount > MAX_SEGMENTS_FOR_PYRAMIDAL_ROOF)
     {
         isPyramidal = false;
         isCone = true;
     }
-    if (roofHeight > 0.0f && (isPyramidal || isCone || isDome))
+    const bool useAngle = roofHeight <= 0.0f && !qIsNaN(roofAngle);
+    const bool withRoof =
+        innerPolygons.isEmpty() && (roofHeight > 0.0f || useAngle) && primitive.roofShape != RoofShape::Flat;
+    if (withRoof)
     {
-        // Construct pyramidal/cone top side of the mesh
         std::vector<uint16_t> roofIndices;
         uint16_t vertexIndex = 0;
         const auto p0 = sourceObject->bbox31.center();
-        const auto vSize = roofHeight / static_cast<float>(Utilities::getMetersPer31Coordinate(p0));
+        glm::vec3 prevSlope, nextSlope, n1, n2;
+        float sqRadius1, sqRadius2;
+        float ridgeOffset = 0.0f;
+        glm::vec2 ridge(0.0f);
+        glm::vec2 ridgeShift(0.0f);
+        if (!isPyramidal && !isCone && !isDome && !isOnion)
+        {
+            const auto topLeft = sourceObject->bbox31.topLeft;
+            const auto bottomRight = sourceObject->bbox31.bottomRight;
+            const auto boxWidth = bottomRight.x - topLeft.x;
+            const auto boxHeight = bottomRight.y - topLeft.y;
+            const bool alongY = boxHeight > boxWidth;
+            ridge = alongY ? glm::vec2(0.0f, 1.0f) : glm::vec2(1.0f, 0.0f);
+            PointI top(-1, -1);
+            PointI left(-1, -1);
+            PointI bottom(-1, -1);
+            PointI right(-1, -1);
+            PointI prevSeg, nextSeg, old;
+            bool skip = false;
+            auto p1 = points31[0];
+            for (int i = 0; i < edgePointsCount; ++i)
+            {
+                const auto& p2 = points31[(i + 1) % edgePointsCount];
+                if (p2 == p1)
+                    continue;
+                auto seg = p2 - p1;
+                if ((alongY && abs(seg.y) == boxHeight) || (!alongY && abs(seg.x) == boxWidth))
+                {
+                    ridge = glm::normalize(glm::vec2(static_cast<float>(seg.x) , static_cast<float>(seg.y)));
+                    skip = true;
+                    break;
+                }
+                if (p1.x == topLeft.x)
+                {
+                    if (left.y == -1)
+                    {
+                        left = p1;
+                        prevSeg = old;
+                        nextSeg = seg;
+                    }
+                    else
+                    {
+                        skip = true;
+                        break;
+                    }
+                }
+                else if (p1.x == bottomRight.x)
+                {
+                    if (right.y == -1)
+                    {
+                        right = p1;
+                        prevSeg = old;
+                        nextSeg = seg;
+                    }
+                    else
+                    {
+                        skip = true;
+                        break;
+                    }
+                }
+                if (p1.y == topLeft.y)
+                {
+                    if (top.y == -1)
+                    {
+                        top = p1;
+                        prevSeg = old;
+                        nextSeg = seg;
+                    }
+                    else
+                    {
+                        skip = true;
+                        break;
+                    }
+                }
+                else if (p1.y == bottomRight.y)
+                {
+                    if (bottom.y == -1)
+                    {
+                        bottom = p1;
+                        prevSeg = old;
+                        nextSeg = seg;
+                    }
+                    else
+                    {
+                        skip = true;
+                        break;
+                    }
+                }
+                p1 = p2;
+                old = seg;
+            }
+            if (!skip)
+            {
+                if ((top.x == left.x && bottom.x != right.x)
+                    || (top.x == right.x && bottom.x != left.x)
+                    || (bottom.x == right.x && top.x != left.x)
+                    || (bottom.x == left.x && top.x != right.x))
+                {
+                    PointF v(alongY ? right - left : bottom - top);
+                    ridge = glm::normalize(glm::vec2(v.x , v.y));
+                }
+                else
+                {
+                    if ((top.x == left.x && bottom.x == right.x)
+                        || (top.x == right.x && bottom.x == left.x))
+                    {
+                        PointF v1 = PointF(prevSeg);
+                        PointF v2 = PointF(nextSeg);
+                        const auto v1s = v1.x * v1.x + v1.y * v1.y;
+                        const auto v2s = v2.x * v2.x + v2.y * v2.y;
+                        ridge = v1s > v2s ? glm::vec2(v1.x , v1.y) / sqrt(v1s) : glm::vec2(v2.x , v2.y) / sqrt(v2s);
+                    }
+                    else
+                    {
+                        const bool toBottomLeft = (alongY && left.y < p0.y && right.y > p0.y)
+                            || (!alongY && top.x < p0.x && bottom.x > p0.x);
+                        auto v = PointF(toBottomLeft ? bottom - left : top - left)
+                            + PointF(toBottomLeft ? right - top : right - bottom);
+                        ridge = glm::normalize(glm::vec2(v.x , v.y));
+                    }
+                }
+            }
+            if (roofOrientation == RoofOrientation::Across)
+                ridge = glm::vec2(-ridge.y, ridge.x);
+        }
+        const auto metersPer31 = static_cast<float>(Utilities::getMetersPer31Coordinate(p0));
+        if (isSaltbox || isSkillion || isSawtooth || useAngle)
+        {
+            glm::vec2 n(-ridge.y, ridge.x);
+            if (isSaltbox || isSkillion || isSawtooth)
+            {
+                if (!qIsNaN(roofDirection))
+                {
+                    const auto directionAngle = qDegreesToRadians(roofDirection);
+                    ridge = glm::vec2(-std::cos(directionAngle), -std::sin(directionAngle));
+                    n = glm::vec2(-ridge.y, ridge.x);
+                }
+            }
+            auto minD = std::numeric_limits<float>::infinity();
+            auto maxD = -std::numeric_limits<float>::infinity();
+            for (int i = 0; i < edgePointsCount; ++i)
+            {
+                const auto& p = points31[i];
+                const auto d = glm::dot(n, glm::vec2(static_cast<float>(p.x - p0.x), static_cast<float>(p.y - p0.y)));
+                if (d < minD)
+                    minD = d;
+                if (d > maxD)
+                    maxD = d;
+            }
+            const auto span = (maxD - minD) / 2.0;
+            if (isSaltbox || isSkillion || isSawtooth)
+            {
+                ridgeOffset = isSaltbox ? -span / 3.0f : -span;
+                ridgeShift = n * ridgeOffset;
+            }
+            if (useAngle)
+                roofHeight = span * qTan(qDegreesToRadians(roofAngle)) * metersPer31;
+        }
+        const auto vSize = roofHeight / metersPer31;
         const auto total = height + roofHeight;
-        glm::vec3 prevSlope, n1, n2;
-        if (!isPyramidal)
+        if (isCone || isDome || isOnion)
         {
             vertices.append({glm::ivec2(p0.x, p0.y),
-                zeroV, glm::vec2(total, terrainHeight), isCone ? zeroV.xyz() : upV, colorVec});
+                zV, glm::vec2(total, terrainHeight), isCone ? zV.xyz() : upV, colorVec});
             vertexIndex++;
         }
-        for (int i = 0; i < edgePointsCount; ++i)
+        const auto pointsCount = edgePointsCount + (isPyramidal || isCone || isDome || isOnion ? 0 : 1);
+        bool wasCut = false;
+        glm::vec2 cutApex;
+        float apexOffset;
+        for (int i = 0; i < pointsCount; i++)
         {
-            auto p1 = points31[i];
+            auto p1 = points31[i % edgePointsCount];
             auto p2 = points31[(i + 1) % edgePointsCount];
-            if (i == 0)
-                prevSlope = glm::vec3(static_cast<float>(p1.x - p0.x), vSize, static_cast<float>(p1.y - p0.y));
-            const glm::vec3 nextSlope(static_cast<float>(p2.x - p0.x), vSize, static_cast<float>(p2.y - p0.y));
-            auto lowerY = height;
-            if (isDome)
+            if (i == 0 && (isPyramidal || isCone || isDome || isOnion))
             {
-                auto sqRadius1 = prevSlope.x * prevSlope.x + prevSlope.z * prevSlope.z;
-                n1 = sqRadius1 > 0.0f ? glm::vec3(prevSlope.x, 0.0f, prevSlope.z) / sqrt(sqRadius1) : upV;
-                auto sqRadius2 = nextSlope.x * nextSlope.x + nextSlope.z * nextSlope.z;
-                n2 = sqRadius2 > 0.0f ? glm::vec3(nextSlope.x, 0.0f, nextSlope.z) / sqrt(sqRadius2) : upV;
+                prevSlope = glm::vec3(static_cast<float>(p0.x - p1.x), vSize, static_cast<float>(p0.y - p1.y));
+                sqRadius1 = prevSlope.x * prevSlope.x + prevSlope.z * prevSlope.z;
+                if (isCone)
+                {
+                    if (sqRadius1 > 0.0f)
+                    {
+                        const auto len = sqrt(sqRadius1 + vSize * vSize);
+                        const auto f = vSize / sqrt(sqRadius1);
+                        const auto fXY = f / len;
+                        n1 = glm::vec3(-prevSlope.x * fXY, prevSlope.y / (f * len), -prevSlope.z * fXY);
+                    }
+                    else
+                        n1 = upV;
+                }
+            }
+            if (p2 == p1)
+                continue;
+            if (isPyramidal || isCone || isDome || isOnion)
+                nextSlope = glm::vec3(static_cast<float>(p0.x - p2.x), vSize, static_cast<float>(p0.y - p2.y));
+            auto lowerY = height;
+            if (isPyramidal)
+            {
+                glm::vec3 edge(static_cast<float>(p2.x - p1.x), 0.0f, static_cast<float>(p2.y - p1.y));
+                n1 = glm::cross(edge, prevSlope);
+                const auto sqLen = glm::dot(n1, n1);
+                if (sqLen > 0.0f)
+                    n1 /= sqrt(sqLen);
+                else
+                {
+                    const auto sqSize = glm::dot(edge, edge);
+                    n1 = sqSize > 0.0f ? glm::vec3(-edge.z, 0.0f, edge.x) / sqrt(sqSize) : upV;
+                }
+                n2 = n1;
+                vertices.append({glm::ivec2(p0.x, p0.y), zV, glm::vec2(total, terrainHeight), n2, colorVec});
+                roofIndices.push_back(vertexIndex++);
+            }
+            else if (isDome || isOnion)
+            {
+                n1 = isOnion ? -upV : glm::vec3(-prevSlope.x * vSize, 0.0f, -prevSlope.z * vSize);
+                auto sqLen = glm::dot(n1, n1);
+                n1 = sqLen > 0.0f ? n1 / sqrt(sqLen) : upV;
+                sqRadius2 = nextSlope.x * nextSlope.x + nextSlope.z * nextSlope.z;
+                n2 = isOnion ? -upV : glm::vec3(-nextSlope.x * vSize, 0.0f, -nextSlope.z * vSize);
+                sqLen = glm::dot(n2, n2);
+                n2 = sqLen > 0.0f ? n2 / sqrt(sqLen) : upV;
                 const auto roundCount = qRound(roofHeight);
                 const auto ringCount = roundCount - 1;
                 for (int j = 0; j < ringCount; j++)
                 {
                     const auto factorY = static_cast<float>(j + 1) / roundCount;
-                    const auto factorXZ = sqrt(1.0f - factorY * factorY);
+                    const auto onionAngle = factorY * ONION_ROOF_ANGLE_SPAN - ONION_ROOF_ANGLE_OFFSET;
+                    const auto factorP = isOnion
+                        ? ONION_ROOF_RADIUS_SCALE * (1.0f + std::cos(onionAngle))
+                        : sqrt(1.0f - factorY * factorY);
+                    const auto factorN = isOnion
+                        ? factorP * ONION_ROOF_RADIUS_SCALE * ONION_ROOF_ANGLE_SPAN * std::sin(onionAngle)
+                        : factorY;
                     const auto upperY = factorY * roofHeight + height;
-                    auto p3 = p0 + PointI(qRound(prevSlope.x * factorXZ), qRound(prevSlope.z * factorXZ));
-                    auto p4 = p0 + PointI(qRound(nextSlope.x * factorXZ), qRound(nextSlope.z *factorXZ));
-                    
-                    glm::vec3 n3(vSize * factorXZ * prevSlope.x, sqRadius1 * factorY, vSize * factorXZ * prevSlope.z);
-                    auto sqLen = n3.x * n3.x + n3.y * n3.y + n3.z * n3.z;
+                    const auto p3 = p0 - PointI(qRound(prevSlope.x * factorP), qRound(prevSlope.z * factorP));
+                    const auto p4 = p0 - PointI(qRound(nextSlope.x * factorP), qRound(nextSlope.z * factorP));
+                    glm::vec3 n3(-prevSlope.x * vSize * factorP, sqRadius1 * factorN, -prevSlope.z * vSize * factorP);
+                    sqLen = glm::dot(n3, n3);
                     n3 = sqLen > 0.0f ? n3 / sqrt(sqLen) : upV;
-                    glm::vec3 n4(vSize * factorXZ * nextSlope.x, sqRadius2 * factorY, vSize * factorXZ * nextSlope.z);
-                    sqLen = n4.x * n4.x + n4.y * n4.y + n4.z * n4.z;
+                    glm::vec3 n4(-nextSlope.x * vSize * factorP, sqRadius2 * factorN, -nextSlope.z * vSize * factorP);
+                    sqLen = glm::dot(n4, n4);
                     n4 = sqLen > 0.0f ? n4 / sqrt(sqLen) : upV;
                     
-                    vertices.append({glm::ivec2(p4.x, p4.y), zeroV, glm::vec2(upperY, terrainHeight), n4, colorVec});
+                    vertices.append({glm::ivec2(p4.x, p4.y), zV, glm::vec2(upperY, terrainHeight), n4, colorVec});
                     const auto idx4 = vertexIndex++;
-                    vertices.append({glm::ivec2(p3.x, p3.y), zeroV, glm::vec2(upperY, terrainHeight), n3, colorVec});
+                    vertices.append({glm::ivec2(p3.x, p3.y), zV, glm::vec2(upperY, terrainHeight), n3, colorVec});
                     const auto idx3 = vertexIndex++;
-                    vertices.append({glm::ivec2(p2.x, p2.y), zeroV, glm::vec2(lowerY, terrainHeight), n2, colorVec});
+                    vertices.append({glm::ivec2(p2.x, p2.y), zV, glm::vec2(lowerY, terrainHeight), n2, colorVec});
                     const auto idx2 = vertexIndex++;
-                    vertices.append({glm::ivec2(p1.x, p1.y), zeroV, glm::vec2(lowerY, terrainHeight), n1, colorVec});
+                    vertices.append({glm::ivec2(p1.x, p1.y), zV, glm::vec2(lowerY, terrainHeight), n1, colorVec});
                     const auto idx1 = vertexIndex++;
                     
                     roofIndices.push_back(idx3);
@@ -845,23 +1140,13 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             }
             else if (isCone)
             {
-                auto sqRadius = prevSlope.x * prevSlope.x + prevSlope.z * prevSlope.z;
-                if (sqRadius > 0.0f)
+                sqRadius2 = nextSlope.x * nextSlope.x + nextSlope.z * nextSlope.z;
+                if (sqRadius2 > 0.0f)
                 {
-                    const auto len = sqrt(sqRadius + vSize * vSize);
-                    const auto f = vSize / sqrt(sqRadius);
+                    const auto len = sqrt(sqRadius2 + vSize * vSize);
+                    const auto f = vSize / sqrt(sqRadius2);
                     const auto fXY = f / len;
-                    n1 = prevSlope * glm::vec3(fXY, 1.0f / (f * len), fXY);
-                }
-                else
-                    n1 = upV;
-                sqRadius = nextSlope.x * nextSlope.x + nextSlope.z * nextSlope.z;
-                if (sqRadius > 0.0f)
-                {
-                    const auto len = sqrt(sqRadius + vSize * vSize);
-                    const auto f = vSize / sqrt(sqRadius);
-                    const auto fXY = f / len;
-                    n2 = nextSlope * glm::vec3(fXY, 1.0f / (f * len), fXY);
+                    n2 = glm::vec3(-nextSlope.x * fXY, nextSlope.y / (f * len), -nextSlope.z * fXY);
                 }
                 else
                     n2 = upV;
@@ -869,25 +1154,302 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             }
             else
             {
-                glm::vec3 edgeDir(static_cast<float>(p2.x - p1.x), 0.0f, static_cast<float>(p2.y - p1.y));
-                n1 = glm::cross(glm::vec3(prevSlope.x, -prevSlope.y, prevSlope.z), edgeDir);
-                const auto len = glm::length(n1);
-                if (len > 0.0f)
-                    n1 /= len;
+                glm::vec2 n(-ridge.y, ridge.x);
+                const glm::vec2 pt1(static_cast<float>(p1.x - p0.x), static_cast<float>(p1.y - p0.y));
+                const glm::vec2 pt2(static_cast<float>(p2.x - p0.x), static_cast<float>(p2.y - p0.y));
+                const auto shift = isSawtooth ? glm::vec2(0.0f) : ridgeShift;
+                const auto d1 = glm::dot(pt1, n);
+                const auto d2 = glm::dot(pt2, n);
+                const bool isCut = d1 * d2 < 0.0f;
+                const bool isSawBack = isSawtooth && (d1 * ridgeOffset) < 0.0f && (d2 * ridgeOffset) < 0.0f;
+                glm::vec2 pt3 = wasCut ? cutApex : ridge * glm::dot(pt1, ridge) + shift;
+                glm::vec2 pt4 = ridge * glm::dot(pt2, ridge) + shift;
+                float offset3 = wasCut ? apexOffset : 0.0f;
+                float offset4 = 0.0f;
+                wasCut = isCut;
+                if (isCut)
+                {
+                    const auto f1 = d1 - ridgeOffset;
+                    const auto f2 = d2 - ridgeOffset;
+                    cutApex = pt3 + (pt4 - pt3) * (f1 / (f1 - f2));
+                    if (isHipped || isHalfHipped || isMansard)
+                    {
+                        apexOffset = (d1 - d2) / (isHalfHipped ? 4.0f : 2.0f);
+                        cutApex -= ridge * apexOffset;
+                    }
+                    else
+                        apexOffset = 0.0f;
+                }
+                if (i == 0)
+                    continue;
+                if (isCut)
+                {
+                    pt3 = cutApex;
+                    pt4 = cutApex;
+                }
                 else
                 {
-                    const auto size = glm::length(edgeDir);
-                    n1 = size > 0.0f ? glm::vec3(-edgeDir.z, 0.0f, edgeDir.x) / size : upV;
+                    auto pt5 = points31[(i + 2) % edgePointsCount];
+                    if (pt5 == p2)
+                        pt5 = points31[(i + 3) % edgePointsCount];
+                    const glm::vec2 v3(static_cast<float>(pt5.x - p0.x), static_cast<float>(pt5.y - p0.y));
+                    const auto d4 = glm::dot(pt2, n);
+                    const auto d5 = glm::dot(v3, n);
+                    if (d4 * d5 < 0.0f)
+                    {
+                        const auto f4 = d4 - ridgeOffset;
+                        const auto f5 = d5 - ridgeOffset;
+                        pt4 = pt4 + (ridge * glm::dot(v3, ridge) + shift - pt4) * (f4 / (f4 - f5));
+                        if (isHipped || isHalfHipped || isMansard)
+                        {
+                            offset4 = (d4 - d5) / (isHalfHipped ? 4.0f : 2.0f);
+                            pt4 -= ridge * offset4;
+                        }
+                    }
+                }
+
+                const auto p3 = p0 + PointI(qRound(pt3.x), qRound(pt3.y));
+                const auto p4 = p0 + PointI(qRound(pt4.x), qRound(pt4.y));
+                prevSlope = glm::vec3(static_cast<float>(p3.x - p1.x), vSize, static_cast<float>(p3.y - p1.y));
+                glm::vec3 edge(static_cast<float>(p2.x - p1.x), 0.0f, static_cast<float>(p2.y - p1.y));
+
+                // Prepare initial normals
+                if (isCut || isRound)
+                    n1 = isHipped || isMansard ? glm::cross(edge, prevSlope) : glm::vec3(-edge.z, 0.0f, edge.x);
+                else if (isSawBack)
+                    n1 = glm::cross(edge, glm::vec3(prevSlope.x, -vSize, prevSlope.z));
+                else if (isGambrel || isHalfHipped || isMansard)
+                {
+                    // Roof surface with two vertically equal parts
+                    const auto factorY = BOTTOM_PART_HEIGHT;
+                    const auto factorP = 1.0f - sqrt(1.0f - factorY * factorY);
+                    const glm::vec3 slope(prevSlope.x * factorP, vSize * factorY, prevSlope.z * factorP);
+                    n1 = glm::cross(edge, slope);
+                }
+                else
+                    n1 = glm::cross(edge, prevSlope);
+                const auto sqLen = glm::dot(n1, n1);
+                if (sqLen > 0.0f)
+                    n1 /= sqrt(sqLen);
+                else
+                {
+                    const auto sqSize = glm::dot(edge, edge);
+                    n1 = sqSize > 0.0f ? glm::vec3(-edge.z, 0.0f, edge.x) / sqrt(sqSize) : upV;
                 }
                 n2 = n1;
-                vertices.append({glm::ivec2(p0.x, p0.y), zeroV, glm::vec2(total, terrainHeight), n2, colorVec});
-                roofIndices.push_back(vertexIndex++);
+
+                if (isGambrel || isRound || isMansard)
+                {
+                    if (!isCut && isRound)
+                    {
+                        n = n1.xz();
+                        sqRadius1 = glm::dot(pt1, n) - glm::dot((pt3 + pt4) / 2.0f, n);
+                        n *= sqRadius1;
+                        sqRadius1 *= sqRadius1;
+                    }
+                    nextSlope = glm::vec3(static_cast<float>(p4.x - p2.x), vSize, static_cast<float>(p4.y - p2.y));
+                    const auto stepCount = isRound ? qRound(roofHeight) : 2;
+                    const auto stripeCount = stepCount - 1;
+                    for (int j = 0; j < stripeCount; j++)
+                    {
+                        const auto factorY = isRound ? static_cast<float>(j + 1) / stepCount : BOTTOM_PART_HEIGHT;
+                        const auto factorP = sqrt(1.0f - factorY * factorY);
+                        const auto upperY = factorY * roofHeight + height;
+                        const auto t3 = p3 - PointI(qRound(prevSlope.x * factorP), qRound(prevSlope.z * factorP));
+                        const auto t4 = p4 - PointI(qRound(nextSlope.x * factorP), qRound(nextSlope.z * factorP));
+                        if (!isCut && isRound)
+                        {
+                            n2 = glm::vec3(n.x * vSize * factorP, sqRadius1 * factorY, n.y * vSize * factorP);
+                            const auto sqLen = glm::dot(n2, n2);
+                            n2 = sqLen > 0.0f ? n2 / sqrt(sqLen) : upV;
+                        }
+                        
+                        vertices.append({glm::ivec2(t4.x, t4.y), zV, glm::vec2(upperY, terrainHeight), n2, colorVec});
+                        const auto idx4 = vertexIndex++;
+                        vertices.append({glm::ivec2(t3.x, t3.y), zV, glm::vec2(upperY, terrainHeight), n2, colorVec});
+                        const auto idx3 = vertexIndex++;
+                        vertices.append({glm::ivec2(p2.x, p2.y), zV, glm::vec2(lowerY, terrainHeight), n1, colorVec});
+                        const auto idx2 = vertexIndex++;
+                        vertices.append({glm::ivec2(p1.x, p1.y), zV, glm::vec2(lowerY, terrainHeight), n1, colorVec});
+                        const auto idx1 = vertexIndex++;
+                        
+                        roofIndices.push_back(idx3);
+                        roofIndices.push_back(idx2);
+                        roofIndices.push_back(idx1);
+                        
+                        roofIndices.push_back(idx4);
+                        roofIndices.push_back(idx2);
+                        roofIndices.push_back(idx3);
+
+                        if (!isCut && !isRound && j < 1)
+                        {
+                            const glm::vec3 slope(prevSlope.x * factorP, vSize * factorY, prevSlope.z * factorP);
+                            n2 = glm::cross(edge, slope);
+                            const auto sqLen = glm::dot(n2, n2);
+                            n2 = sqLen > 0.0f ? n2 / sqrt(sqLen) : upV;
+                        }
+
+                        p1 = t3;
+                        p2 = t4;
+                        lowerY = upperY;
+                        if (!isCut)
+                            n1 = n2;
+                    }
+                    if (isRound && !isCut)
+                        n2 = upV;
+                }
+                else if (isHalfHipped)
+                {
+                    const auto factorY = BOTTOM_PART_HEIGHT;
+                    const auto factorP = sqrt(1.0f - factorY * factorY);
+                    const auto upperY = factorY * roofHeight + height;
+                    PointI t3, t4;
+                    if (isCut)
+                    {
+                        const auto factor3 = (1.0f - factorP) / 2.0f;
+                        const auto factor4 = 1.0f - factor3;
+                        t3 = p1 + PointI(qRound(edge.x * factor3), qRound(edge.z * factor3));
+                        t4 = p1 + PointI(qRound(edge.x * factor4), qRound(edge.z * factor4));
+                        n1 = glm::vec3(-edge.z, 0.0f, edge.x);
+                    }
+                    else
+                    {
+                        pt3 += ridge * offset3;
+                        pt4 += ridge * offset4;
+                        const auto p5 = p0 + PointI(qRound(pt3.x), qRound(pt3.y));
+                        const auto p6 = p0 + PointI(qRound(pt4.x), qRound(pt4.y));
+                        const auto h = vSize * factorY;
+                        const auto s1 = glm::vec3(static_cast<float>(p5.x - p1.x), h, static_cast<float>(p5.y - p1.y));
+                        const auto s2 = glm::vec3(static_cast<float>(p6.x - p2.x), h, static_cast<float>(p6.y - p2.y));
+                        t3 = p5 - PointI(qRound(s1.x * factorP), qRound(s1.z * factorP));
+                        t4 = p6 - PointI(qRound(s2.x * factorP), qRound(s2.z * factorP));
+                        const glm::vec3 slope(static_cast<float>(t3.x - p1.x), h, static_cast<float>(t3.y - p1.y));
+                        n1 = glm::cross(edge, slope);
+                        const auto sqLen = glm::dot(n1, n1);
+                        n1 = sqLen > 0.0f ? n1 / sqrt(sqLen) : upV;
+                    }
+
+                    vertices.append({glm::ivec2(t4.x, t4.y), zV, glm::vec2(upperY, terrainHeight), n1, colorVec});
+                    const auto idx4 = vertexIndex++;
+                    vertices.append({glm::ivec2(t3.x, t3.y), zV, glm::vec2(upperY, terrainHeight), n1, colorVec});
+                    const auto idx3 = vertexIndex++;
+                    vertices.append({glm::ivec2(p2.x, p2.y), zV, glm::vec2(lowerY, terrainHeight), n1, colorVec});
+                    const auto idx2 = vertexIndex++;
+                    vertices.append({glm::ivec2(p1.x, p1.y), zV, glm::vec2(lowerY, terrainHeight), n1, colorVec});
+                    const auto idx1 = vertexIndex++;
+                    
+                    roofIndices.push_back(idx3);
+                    roofIndices.push_back(idx2);
+                    roofIndices.push_back(idx1);
+                    
+                    roofIndices.push_back(idx4);
+                    roofIndices.push_back(idx2);
+                    roofIndices.push_back(idx3);
+
+                    const auto h = vSize * (1.0f - factorY);
+                    const glm::vec3 slope(static_cast<float>(p3.x - t3.x), h, static_cast<float>(p3.y - t3.y));
+                    n2 = glm::cross(edge, slope);
+                    const auto sqLen = glm::dot(n2, n2);
+                    n2 = sqLen > 0.0f ? n2 / sqrt(sqLen) : upV;
+
+                    p1 = t3;
+                    p2 = t4;
+                    lowerY = upperY;
+                    n1 = n2;
+                }
+                else if (isSawtooth)
+                {
+                    if (isCut)
+                    {
+                        vertices.append({glm::ivec2(p3.x, p3.y), zV, glm::vec2(lowerY, terrainHeight), n1, colorVec});
+                        const auto idxCenter = vertexIndex++;
+                        vertices.append({glm::ivec2(p2.x, p2.y), zV, glm::vec2(lowerY, terrainHeight), n1, colorVec});
+                        const auto idx2 = vertexIndex++;
+                        vertices.append({glm::ivec2(p1.x, p1.y), zV, glm::vec2(lowerY, terrainHeight), n1, colorVec});
+                        const auto idx1 = vertexIndex++;
+                        vertices.append({glm::ivec2(p3.x, p3.y), zV, glm::vec2(total, terrainHeight), n1, colorVec});
+                        const auto idxCenterTop = vertexIndex++;
+                        const auto& hp = d1 > 0.0f ? p1 : p2;
+                        vertices.append({glm::ivec2(hp.x, hp.y), zV, glm::vec2(total, terrainHeight), n1, colorVec});
+                        const auto idxSideTop = vertexIndex++;
+
+                        roofIndices.push_back(d1 < 0.0f ? idxCenterTop : idxSideTop);
+                        roofIndices.push_back(idxCenter);
+                        roofIndices.push_back(idx1);
+
+                        roofIndices.push_back(d2 < 0.0f ? idxCenterTop : idxSideTop);
+                        roofIndices.push_back(idx2);
+                        roofIndices.push_back(idxCenter);
+
+                        continue;
+                    }
+                    else if (isSawBack)
+                    {
+                        const auto n3 = glm::vec3(-edge.z, 0.0f, edge.x);
+                        vertices.append({glm::ivec2(p2.x, p2.y), zV, glm::vec2(total, terrainHeight), n3, colorVec});
+                        auto idx4 = vertexIndex++;
+                        vertices.append({glm::ivec2(p1.x, p1.y), zV, glm::vec2(total, terrainHeight), n3, colorVec});
+                        auto idx3 = vertexIndex++;
+                        vertices.append({glm::ivec2(p2.x, p2.y), zV, glm::vec2(lowerY, terrainHeight), n3, colorVec});
+                        auto idx2 = vertexIndex++;
+                        vertices.append({glm::ivec2(p1.x, p1.y), zV, glm::vec2(lowerY, terrainHeight), n3, colorVec});
+                        auto idx1 = vertexIndex++;
+                        
+                        roofIndices.push_back(idx3);
+                        roofIndices.push_back(idx2);
+                        roofIndices.push_back(idx1);
+                        
+                        roofIndices.push_back(idx4);
+                        roofIndices.push_back(idx2);
+                        roofIndices.push_back(idx3);
+
+                        vertices.append({glm::ivec2(p4.x, p4.y), zV, glm::vec2(total, terrainHeight), n3, colorVec});
+                        idx4 = vertexIndex++;
+                        vertices.append({glm::ivec2(p3.x, p3.y), zV, glm::vec2(total, terrainHeight), n3, colorVec});
+                        idx3 = vertexIndex++;
+                        vertices.append({glm::ivec2(p4.x, p4.y), zV, glm::vec2(lowerY, terrainHeight), n3, colorVec});
+                        idx2 = vertexIndex++;
+                        vertices.append({glm::ivec2(p3.x, p3.y), zV, glm::vec2(lowerY, terrainHeight), n3, colorVec});
+                        idx1 = vertexIndex++;
+                        
+                        roofIndices.push_back(idx3);
+                        roofIndices.push_back(idx2);
+                        roofIndices.push_back(idx1);
+                        
+                        roofIndices.push_back(idx4);
+                        roofIndices.push_back(idx2);
+                        roofIndices.push_back(idx3);
+                    }
+                }
+
+                const auto top = isSawBack ? lowerY : total;
+                const auto bottom = isSawBack ? total : lowerY;
+                vertices.append({glm::ivec2(p4.x, p4.y), zV, glm::vec2(top, terrainHeight), n2, colorVec});
+                const auto idx4 = vertexIndex++;
+                vertices.append({glm::ivec2(p3.x, p3.y), zV, glm::vec2(top, terrainHeight), n2, colorVec});
+                const auto idx3 = vertexIndex++;
+                vertices.append({glm::ivec2(p2.x, p2.y), zV, glm::vec2(bottom, terrainHeight), n1, colorVec});
+                const auto idx2 = vertexIndex++;
+                vertices.append({glm::ivec2(p1.x, p1.y), zV, glm::vec2(bottom, terrainHeight), n1, colorVec});
+                const auto idx1 = vertexIndex++;
+                
+                roofIndices.push_back(idx3);
+                roofIndices.push_back(idx2);
+                roofIndices.push_back(idx1);
+                
+                roofIndices.push_back(idx4);
+                roofIndices.push_back(idx2);
+                roofIndices.push_back(idx3);
+
+                continue;
             }
-            vertices.append({glm::ivec2(p2.x, p2.y), zeroV, glm::vec2(lowerY, terrainHeight), n2, colorVec});
+            vertices.append({glm::ivec2(p2.x, p2.y), zV, glm::vec2(lowerY, terrainHeight), n2, colorVec});
             roofIndices.push_back(vertexIndex++);
-            vertices.append({glm::ivec2(p1.x, p1.y), zeroV, glm::vec2(lowerY, terrainHeight), n1, colorVec});
+            vertices.append({glm::ivec2(p1.x, p1.y), zV, glm::vec2(lowerY, terrainHeight), n1, colorVec});
             roofIndices.push_back(vertexIndex++);
             prevSlope = nextSlope;
+            sqRadius1 = sqRadius2;
+            n1 = n2;
         }
         cutMeshForTile(
             roofIndices,
@@ -905,7 +1467,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         for (int i = 0; i < edgePointsCount; ++i)
         {
             const auto& p = points31[i];
-            vertices.append({glm::ivec2(p.x, p.y), zeroV, glm::vec2(height, terrainHeight), upV, colorVec});
+            vertices.append({glm::ivec2(p.x, p.y), zV, glm::vec2(height, terrainHeight), upV, colorVec});
             outerRing.push_back({p.x, p.y});
         }
         topPolygon.push_back(std::move(outerRing));
@@ -914,7 +1476,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             std::vector<std::array<int32_t, 2>> innerRing;
             for (const auto& p : innerPoly)
             {
-                vertices.append({glm::ivec2(p.x, p.y), zeroV, glm::vec2(height, terrainHeight), upV, colorVec});
+                vertices.append({glm::ivec2(p.x, p.y), zV, glm::vec2(height, terrainHeight), upV, colorVec});
                 innerRing.push_back({p.x, p.y});
             }
             topPolygon.push_back(std::move(innerRing));
@@ -1157,6 +1719,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                     nextNormal,
                     prevCurved,
                     nextCurved,
+                    withRoof,
                     minHeight,
                     height,
                     baseTerrainHeight,
@@ -1677,8 +2240,8 @@ glm::vec3 Map3DObjectsTiledProvider_P::calculateNormalFrom2Points(PointI point31
     const float dz = static_cast<float>(point31_next.y - point31_i.y);
 
     glm::vec3 n(-dz, 0.0f, dx);
-    const float len = glm::length(n);
-    n = len > 0.0f ? n / len : glm::vec3(0.0f, 0.0f, 1.0f);
+    const float sqLen = glm::dot(n, n);
+    n = sqLen > 0.0f ? n / sqrt(sqLen) : glm::vec3(0.0f, 0.0f, 1.0f);
 
     return n;
 }
@@ -1692,6 +2255,7 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     const glm::vec3& nextNormal,
     bool prevCurved,
     bool nextCurved,
+    bool withRoof,
     float minHeight,
     float height,
     float baseTerrainHeight,
@@ -1708,16 +2272,16 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     const auto hSize = prevCurved || nextCurved ? -width31 * 2.0f : width31;
     const auto vSize = height - minHeight;
     vertices.append({glm::ivec2(point31_next.x, point31_next.y),
-        glm::vec4(nextCurved ? 0.5f : 1.0f, 0.0f, hSize, vSize),
+        glm::vec4(nextCurved ? 0.5f : 1.0f, withRoof ? 0.5f : 0.0f, hSize, vSize),
         glm::vec2(minHeight, baseTerrainHeight), nextNormal, colorVec});
     vertices.append({glm::ivec2(point31_next.x, point31_next.y),
-        glm::vec4(nextCurved ? 0.5f : 1.0f, 1.0f, hSize, vSize),
+        glm::vec4(nextCurved ? 0.5f : 1.0f, withRoof ? 0.5f : 1.0f, hSize, vSize),
         glm::vec2(height, terrainHeight), nextNormal, colorVec});
     vertices.append({glm::ivec2(point31_i.x, point31_i.y),
-        glm::vec4(prevCurved ? 0.5f : 0.0f, 1.0f, hSize, vSize),
+        glm::vec4(prevCurved ? 0.5f : 0.0f, withRoof ? 0.5f : 1.0f, hSize, vSize),
         glm::vec2(height, terrainHeight), prevNormal, colorVec});
     vertices.append({glm::ivec2(point31_i.x, point31_i.y),
-        glm::vec4(prevCurved ? 0.5f : 0.0f, 0.0f, hSize, vSize),
+        glm::vec4(prevCurved ? 0.5f : 0.0f, withRoof ? 0.5f : 0.0f, hSize, vSize),
         glm::vec2(minHeight, baseTerrainHeight), prevNormal, colorVec});
 
     if (!passagePrimitives.isEmpty())
