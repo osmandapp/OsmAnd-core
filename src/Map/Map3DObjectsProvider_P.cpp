@@ -286,7 +286,8 @@ void Map3DObjectsTiledProvider_P::filterBuildings(
             std::dynamic_pointer_cast<const OsmAnd::ObfMapObject>(building.primitive->sourceObject))
         {
             bool isHidden = false;
-            bool isOutline = buildingSource->containsTag(QStringLiteral("role_outline"), true);
+            bool withRoof = building.roofHeight > 0.0f;
+            bool isOutline = buildingSource->containsTag(QStringLiteral("role_outline"), true) && !withRoof;
             const AreaI buildingArea(
                 building.bbox31.top() - MAX_COORDINATE_DELTA,
                 building.bbox31.left() - MAX_COORDINATE_DELTA,
@@ -304,13 +305,13 @@ void Map3DObjectsTiledProvider_P::filterBuildings(
                     if (building.polygonColor != 0)
                         buildingPart.polygonColor = building.polygonColor;
                     if (building.levelsFound && building.heightFound && !buildingPart.heightFound)
-                        buildingPart.height = buildingPart.levels * building.levelHeight;
+                        buildingPart.height = buildingPart.levels * building.levelHeight + buildingPart.roofHeight;
                     if (!isOutline && !isHidden && !buildingPart.isEmbedded)
                     {
                         if (building.heightFound || building.levelsFound)
                         {
                             if ((building.heightFound || !buildingPart.levelsFound
-                                    ? buildingPart.height < building.height + MAX_HEIGHT_DELTA
+                                    ? buildingPart.height < building.height - building.roofHeight + MAX_HEIGHT_DELTA
                                     : buildingPart.levels <= building.levels)
                                 && buildingPart.minHeight > building.minHeight - MAX_HEIGHT_DELTA)
                                 isHidden = true;
@@ -493,13 +494,13 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
         }
     }
 
-    if (isPart && !heightFound && !levelsFound)
+    roofAngleFound = roofAngleFound && roofAngle >= 10.0f && roofAngle <= 80.0f;
+
+    if (isPart && !heightFound && !levelsFound && !roofAngleFound)
         return;
 
     if (heightFound && height == 0.0f)
         return;
-
-    roofAngleFound = roofAngleFound && roofAngle >= 10.0f && roofAngle <= 80.0f;
 
     if (heightFound && roofShape != RoofShape::Flat)
     {
@@ -715,7 +716,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     if (!sourceObject)
         return;
 
-    float height = primitive.height - primitive.roofHeight;
+    float height = qMax(primitive.height - primitive.roofHeight, 0.0f);
     float minHeight = primitive.minHeight;
     float terrainHeight = 0.0f;
     float baseTerrainHeight = 0.0f;
@@ -875,155 +876,194 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         float ridgeOffset = 0.0f;
         glm::vec2 ridge(0.0f);
         glm::vec2 ridgeShift(0.0f);
-        if (!isPyramidal && !isCone && !isDome && !isOnion)
+        const float metersPer31 = static_cast<float>(Utilities::getMetersPer31Coordinate(p0));
+        const auto isCentric = isPyramidal || isCone || isDome || isOnion;
+        if (useAngle || !isCentric)
         {
-            const auto topLeft = sourceObject->bbox31.topLeft;
-            const auto bottomRight = sourceObject->bbox31.bottomRight;
-            const auto boxWidth = bottomRight.x - topLeft.x;
-            const auto boxHeight = bottomRight.y - topLeft.y;
-            const bool alongY = boxHeight > boxWidth;
-            ridge = alongY ? glm::vec2(0.0f, 1.0f) : glm::vec2(1.0f, 0.0f);
-            PointI top(-1, -1);
-            PointI left(-1, -1);
-            PointI bottom(-1, -1);
-            PointI right(-1, -1);
-            PointI prevSeg, nextSeg, old;
-            bool skip = false;
-            auto p1 = points31[0];
-            for (int i = 0; i < edgePointsCount; ++i)
+            PointI longest;
+            if (isCentric)
+                ridge = glm::vec2(1.0f, 0.0f);
+            else if (qIsNaN(roofDirection))
             {
-                const auto& p2 = points31[(i + 1) % edgePointsCount];
-                if (p2 == p1)
-                    continue;
-                auto seg = p2 - p1;
-                if ((alongY && abs(seg.y) == boxHeight) || (!alongY && abs(seg.x) == boxWidth))
+                const auto topLeft = sourceObject->bbox31.topLeft;
+                const auto bottomRight = sourceObject->bbox31.bottomRight;
+                const auto boxWidth = bottomRight.x - topLeft.x;
+                const auto boxHeight = bottomRight.y - topLeft.y;
+                const bool alongY = boxHeight > boxWidth;
+                ridge = alongY ? glm::vec2(0.0f, 1.0f) : glm::vec2(1.0f, 0.0f);
+                PointI top(-1, -1);
+                PointI left(-1, -1);
+                PointI bottom(-1, -1);
+                PointI right(-1, -1);
+                PointI prevSeg, nextSeg, old;
+                bool skip = false;
+                auto p1 = points31[0];
+                uint64_t maxSqLength = 0;
+                for (int i = 0; i < edgePointsCount; ++i)
                 {
-                    ridge = glm::normalize(glm::vec2(static_cast<float>(seg.x) , static_cast<float>(seg.y)));
-                    skip = true;
-                    break;
+                    const auto& p2 = points31[(i + 1) % edgePointsCount];
+                    if (p2 == p1)
+                        continue;
+                    auto seg = p2 - p1;
+                    const auto sqLength = static_cast<uint64_t>(seg.x) * seg.x + static_cast<uint64_t>(seg.y) * seg.y;
+                    if (sqLength > maxSqLength)
+                    {
+                        maxSqLength = sqLength;
+                        longest = seg;
+                    }
+                    if (!skip)
+                    {
+                        if ((alongY && abs(seg.y) == boxHeight) || (!alongY && abs(seg.x) == boxWidth))
+                        {
+                            ridge = glm::normalize(glm::vec2(static_cast<float>(seg.x) , static_cast<float>(seg.y)));
+                            skip = true;
+                        }
+                        if (p1.x == topLeft.x)
+                        {
+                            if (left.y == -1)
+                            {
+                                left = p1;
+                                prevSeg = old;
+                                nextSeg = seg;
+                            }
+                            else
+                                skip = true;
+                        }
+                        else if (p1.x == bottomRight.x)
+                        {
+                            if (right.y == -1)
+                            {
+                                right = p1;
+                                prevSeg = old;
+                                nextSeg = seg;
+                            }
+                            else
+                                skip = true;
+                        }
+                        if (p1.y == topLeft.y)
+                        {
+                            if (top.y == -1)
+                            {
+                                top = p1;
+                                prevSeg = old;
+                                nextSeg = seg;
+                            }
+                            else
+                                skip = true;
+                        }
+                        else if (p1.y == bottomRight.y)
+                        {
+                            if (bottom.y == -1)
+                            {
+                                bottom = p1;
+                                prevSeg = old;
+                                nextSeg = seg;
+                            }
+                            else
+                                skip = true;
+                        }
+                        old = seg;
+                    }
+                    p1 = p2;
                 }
-                if (p1.x == topLeft.x)
+                if (!skip)
                 {
-                    if (left.y == -1)
+                    if ((top.x == left.x && bottom.x != right.x)
+                        || (top.x == right.x && bottom.x != left.x)
+                        || (bottom.x == right.x && top.x != left.x)
+                        || (bottom.x == left.x && top.x != right.x))
                     {
-                        left = p1;
-                        prevSeg = old;
-                        nextSeg = seg;
-                    }
-                    else
-                    {
-                        skip = true;
-                        break;
-                    }
-                }
-                else if (p1.x == bottomRight.x)
-                {
-                    if (right.y == -1)
-                    {
-                        right = p1;
-                        prevSeg = old;
-                        nextSeg = seg;
-                    }
-                    else
-                    {
-                        skip = true;
-                        break;
-                    }
-                }
-                if (p1.y == topLeft.y)
-                {
-                    if (top.y == -1)
-                    {
-                        top = p1;
-                        prevSeg = old;
-                        nextSeg = seg;
-                    }
-                    else
-                    {
-                        skip = true;
-                        break;
-                    }
-                }
-                else if (p1.y == bottomRight.y)
-                {
-                    if (bottom.y == -1)
-                    {
-                        bottom = p1;
-                        prevSeg = old;
-                        nextSeg = seg;
-                    }
-                    else
-                    {
-                        skip = true;
-                        break;
-                    }
-                }
-                p1 = p2;
-                old = seg;
-            }
-            if (!skip)
-            {
-                if ((top.x == left.x && bottom.x != right.x)
-                    || (top.x == right.x && bottom.x != left.x)
-                    || (bottom.x == right.x && top.x != left.x)
-                    || (bottom.x == left.x && top.x != right.x))
-                {
-                    PointF v(alongY ? right - left : bottom - top);
-                    ridge = glm::normalize(glm::vec2(v.x , v.y));
-                }
-                else
-                {
-                    if ((top.x == left.x && bottom.x == right.x)
-                        || (top.x == right.x && bottom.x == left.x))
-                    {
-                        PointF v1 = PointF(prevSeg);
-                        PointF v2 = PointF(nextSeg);
-                        const auto v1s = v1.x * v1.x + v1.y * v1.y;
-                        const auto v2s = v2.x * v2.x + v2.y * v2.y;
-                        ridge = v1s > v2s ? glm::vec2(v1.x , v1.y) / sqrt(v1s) : glm::vec2(v2.x , v2.y) / sqrt(v2s);
-                    }
-                    else
-                    {
-                        const bool toBottomLeft = (alongY && left.y < p0.y && right.y > p0.y)
-                            || (!alongY && top.x < p0.x && bottom.x > p0.x);
-                        auto v = PointF(toBottomLeft ? bottom - left : top - left)
-                            + PointF(toBottomLeft ? right - top : right - bottom);
+                        PointF v(alongY ? right - left : bottom - top);
                         ridge = glm::normalize(glm::vec2(v.x , v.y));
                     }
+                    else
+                    {
+                        if ((top.x == left.x && bottom.x == right.x)
+                            || (top.x == right.x && bottom.x == left.x))
+                        {
+                            PointF v1 = PointF(prevSeg);
+                            PointF v2 = PointF(nextSeg);
+                            const auto s1 = v1.x * v1.x + v1.y * v1.y;
+                            const auto s2 = v2.x * v2.x + v2.y * v2.y;
+                            ridge = s1 > s2 ? glm::vec2(v1.x , v1.y) / sqrt(s1) : glm::vec2(v2.x , v2.y) / sqrt(s2);
+                        }
+                        else
+                        {
+                            const bool toBottomLeft = (alongY && left.y < p0.y && right.y > p0.y)
+                                || (!alongY && top.x < p0.x && bottom.x > p0.x);
+                            auto v = PointF(toBottomLeft ? bottom - left : top - left)
+                                + PointF(toBottomLeft ? right - top : right - bottom);
+                            ridge = glm::normalize(glm::vec2(v.x , v.y));
+                        }
+                    }
                 }
             }
-            if (roofOrientation == RoofOrientation::Across)
-                ridge = glm::vec2(-ridge.y, ridge.x);
-        }
-        const auto metersPer31 = static_cast<float>(Utilities::getMetersPer31Coordinate(p0));
-        if (isSaltbox || isSkillion || isSawtooth || useAngle)
-        {
-            glm::vec2 n(-ridge.y, ridge.x);
-            if (isSaltbox || isSkillion || isSawtooth)
+            else
             {
-                if (!qIsNaN(roofDirection))
-                {
-                    const auto directionAngle = qDegreesToRadians(roofDirection);
-                    ridge = glm::vec2(-std::cos(directionAngle), -std::sin(directionAngle));
-                    n = glm::vec2(-ridge.y, ridge.x);
-                }
+                const auto directionAngle = qDegreesToRadians(roofDirection);
+                ridge = glm::vec2(-std::cos(directionAngle), -std::sin(directionAngle));
             }
-            auto minD = std::numeric_limits<float>::infinity();
-            auto maxD = -std::numeric_limits<float>::infinity();
+            const auto altR = glm::normalize(glm::vec2(static_cast<float>(longest.x) , static_cast<float>(longest.y)));
+            glm::vec2 altN(-altR.y, altR.x);
+            glm::vec2 ridgeN(-ridge.y, ridge.x);
+            auto minL = std::numeric_limits<float>::infinity();
+            auto maxL = -minL;
+            auto minS = minL;
+            auto maxS = maxL;
+            auto minAltL = minL;
+            auto maxAltL = maxL;
+            auto minAltS = minL;
+            auto maxAltS = maxL;
+            float d;
+            glm::vec2 v;
             for (int i = 0; i < edgePointsCount; ++i)
             {
                 const auto& p = points31[i];
-                const auto d = glm::dot(n, glm::vec2(static_cast<float>(p.x - p0.x), static_cast<float>(p.y - p0.y)));
-                if (d < minD)
-                    minD = d;
-                if (d > maxD)
-                    maxD = d;
+                v.x = p.x - p0.x;
+                v.y = p.y - p0.y;
+                d = glm::dot(ridge, v);
+                if (d < minL)
+                    minL = d;
+                if (d > maxL)
+                    maxL = d;
+                d = glm::dot(ridgeN, v);
+                if (d < minS)
+                    minS = d;
+                if (d > maxS)
+                    maxS = d;
+                d = glm::dot(altR, v);
+                if (d < minAltL)
+                    minAltL = d;
+                if (d > maxAltL)
+                    maxAltL = d;
+                d = glm::dot(altN, v);
+                if (d < minAltS)
+                    minAltS = d;
+                if (d > maxAltS)
+                    maxAltS = d;
             }
-            const auto span = (maxD - minD) / 2.0;
+            const auto altL = maxAltL - minAltL;
+            const auto altS = maxAltS - minAltS;
+            const bool useAlt = altL * altS < (maxS - minS) * (maxL - minL);
+            bool r = roofOrientation == RoofOrientation::Across;
+            if (useAlt && altL < altS)
+                r = !r;
+            if (useAlt)
+            {
+                ridge = r ? altN : altR;
+                ridgeN = r ? altR : altN;
+            }
+            else if (r)
+            {
+                altN = ridgeN;
+                ridgeN = ridge;
+                ridge = altN;
+            }
+            auto span = useAlt ? (r ? altL : altS) : (r ? maxL - minL : maxS - minS) / 2.0f;
             if (isSaltbox || isSkillion || isSawtooth)
             {
                 ridgeOffset = isSaltbox ? -span / 3.0f : -span;
-                ridgeShift = n * ridgeOffset;
+                ridgeShift = ridgeN * ridgeOffset;
             }
             if (useAngle)
                 roofHeight = span * qTan(qDegreesToRadians(roofAngle)) * metersPer31;
@@ -1036,7 +1076,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                 zV, glm::vec2(total, terrainHeight), isCone ? zV.xyz() : upV, colorVec});
             vertexIndex++;
         }
-        const auto pointsCount = edgePointsCount + (isPyramidal || isCone || isDome || isOnion ? 0 : 1);
+        const auto pointsCount = edgePointsCount + (!isCentric ? 1 : 0);
         bool wasCut = false;
         glm::vec2 cutApex;
         float apexOffset;
@@ -1044,7 +1084,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         {
             auto p1 = points31[i % edgePointsCount];
             auto p2 = points31[(i + 1) % edgePointsCount];
-            if (i == 0 && (isPyramidal || isCone || isDome || isOnion))
+            if (i == 0 && isCentric)
             {
                 prevSlope = glm::vec3(static_cast<float>(p0.x - p1.x), vSize, static_cast<float>(p0.y - p1.y));
                 sqRadius1 = prevSlope.x * prevSlope.x + prevSlope.z * prevSlope.z;
@@ -1063,7 +1103,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             }
             if (p2 == p1)
                 continue;
-            if (isPyramidal || isCone || isDome || isOnion)
+            if (isCentric)
                 nextSlope = glm::vec3(static_cast<float>(p0.x - p2.x), vSize, static_cast<float>(p0.y - p2.y));
             auto lowerY = height;
             if (isPyramidal)
