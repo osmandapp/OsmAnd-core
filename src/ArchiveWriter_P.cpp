@@ -98,6 +98,7 @@ bool OsmAnd::ArchiveWriter_P::writeFiles(struct archive *a, const QList<QString>
         stat(filename, &st);
         entry = archive_entry_new();
         auto fileNameReplacedArray = fileName.replace(basePath + QStringLiteral("/"), QStringLiteral("")).toUtf8();
+        archive_entry_copy_stat(entry, &st);
         archive_entry_set_pathname_utf8(entry, fileNameReplacedArray.data());
         archive_entry_set_size(entry, st.st_size);
         archive_entry_set_filetype(entry, AE_IFREG);
