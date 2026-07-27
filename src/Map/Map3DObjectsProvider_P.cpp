@@ -876,8 +876,11 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         float ridgeOffset = 0.0f;
         glm::vec2 ridge(0.0f);
         glm::vec2 ridgeShift(0.0f);
+        auto maxDistance = NAN;
+        auto minDistance = NAN;
         const float metersPer31 = static_cast<float>(Utilities::getMetersPer31Coordinate(p0));
         const auto isCentric = isPyramidal || isCone || isDome || isOnion;
+        const auto isClipped = isHipped || isHalfHipped || isMansard;
         if (useAngle || !isCentric)
         {
             PointI longest;
@@ -1060,13 +1063,45 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                 ridge = altN;
             }
             auto span = useAlt ? (r ? altL : altS) : (r ? maxL - minL : maxS - minS) / 2.0f;
+            if (useAngle)
+                roofHeight = span * qTan(qDegreesToRadians(roofAngle)) * metersPer31;
             if (isSaltbox || isSkillion || isSawtooth)
             {
                 ridgeOffset = isSaltbox ? -span / 3.0f : -span;
                 ridgeShift = ridgeN * ridgeOffset;
             }
-            if (useAngle)
-                roofHeight = span * qTan(qDegreesToRadians(roofAngle)) * metersPer31;
+            else if (isClipped)
+            {
+                PointI pp;
+                float pd;
+                glm::vec2 pv;
+                for (int i = 0; i < edgePointsCount + 1; ++i)
+                {
+                    const auto& p = points31[i % edgePointsCount];
+                    v.x = p.x - p0.x;
+                    v.y = p.y - p0.y;
+                    d = glm::dot(ridgeN, v);
+                    if (i > 0)
+                    {
+                        if (p == pp)
+                            continue;
+                        if (pd * d < 0.0f)
+                        {
+                            auto s = pd - d;
+                            const auto xv = pv + (v - pv) * (pd / s);
+                            s = fabs(s) / (isHalfHipped ? 4.0f : 2.0f);
+                            const auto l = glm::dot(xv, ridge);
+                            if (l > 0.0f)
+                                maxDistance = qMax(qIsNaN(maxDistance) ? 0.0f : maxDistance, qMax(0.0f, l - s));
+                            else
+                                minDistance = qMin(qIsNaN(minDistance) ? 0.0f : minDistance, qMin(0.0f, l + s));
+                        }
+                    }
+                    pp = p;
+                    pv = v;
+                    pd = d;
+                }
+            }
         }
         const auto vSize = roofHeight / metersPer31;
         const auto total = height + roofHeight;
@@ -1206,22 +1241,24 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                 glm::vec2 pt4 = ridge * glm::dot(pt2, ridge) + shift;
                 float offset3 = wasCut ? apexOffset : 0.0f;
                 float offset4 = 0.0f;
-                wasCut = isCut;
+                bool willCut = false;
                 if (isCut)
                 {
-                    const auto f1 = d1 - ridgeOffset;
-                    const auto f2 = d2 - ridgeOffset;
-                    cutApex = pt3 + (pt4 - pt3) * (f1 / (f1 - f2));
-                    if (isHipped || isHalfHipped || isMansard)
+                    const auto s = d1 - d2;
+                    cutApex = pt3 + (pt4 - pt3) * ((d1 - ridgeOffset) / s);
+                    if (isClipped)
                     {
-                        apexOffset = (d1 - d2) / (isHalfHipped ? 4.0f : 2.0f);
+                        apexOffset = s / (isHalfHipped ? 4.0f : 2.0f);
                         cutApex -= ridge * apexOffset;
                     }
                     else
                         apexOffset = 0.0f;
                 }
                 if (i == 0)
+                {
+                    wasCut = isCut;
                     continue;
+                }
                 if (isCut)
                 {
                     pt3 = cutApex;
@@ -1237,16 +1274,30 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                     const auto d5 = glm::dot(v3, n);
                     if (d4 * d5 < 0.0f)
                     {
-                        const auto f4 = d4 - ridgeOffset;
-                        const auto f5 = d5 - ridgeOffset;
-                        pt4 = pt4 + (ridge * glm::dot(v3, ridge) + shift - pt4) * (f4 / (f4 - f5));
-                        if (isHipped || isHalfHipped || isMansard)
+                        const auto s = d4 - d5;
+                        pt4 = pt4 + (ridge * glm::dot(v3, ridge) + shift - pt4) * ((d4 - ridgeOffset) / s);
+                        if (isClipped)
                         {
-                            offset4 = (d4 - d5) / (isHalfHipped ? 4.0f : 2.0f);
+                            offset4 = s / (isHalfHipped ? 4.0f : 2.0f);
                             pt4 -= ridge * offset4;
+                            willCut = true;
                         }
                     }
                 }
+                if (isClipped && !isCut)
+                {
+                    if (!wasCut)
+                    {
+                        const auto s = glm::dot(pt3, ridge);
+                        pt3 -= ridge * (s - qBound(minDistance, s, maxDistance));
+                    }
+                    if (!willCut)
+                    {
+                        const auto s = glm::dot(pt4, ridge);
+                        pt4 -= ridge * (s - qBound(minDistance, s, maxDistance));
+                    }
+                }
+                wasCut = isCut;
 
                 const auto p3 = p0 + PointI(qRound(pt3.x), qRound(pt3.y));
                 const auto p4 = p0 + PointI(qRound(pt4.x), qRound(pt4.y));
@@ -1254,8 +1305,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                 glm::vec3 edge(static_cast<float>(p2.x - p1.x), 0.0f, static_cast<float>(p2.y - p1.y));
 
                 // Prepare initial normals
-                if (isCut || isRound)
-                    n1 = isHipped || isMansard ? glm::cross(edge, prevSlope) : glm::vec3(-edge.z, 0.0f, edge.x);
+                if ((isCut && !isMansard) || isRound)
+                    n1 = isHipped ? glm::cross(edge, prevSlope) : glm::vec3(-edge.z, 0.0f, edge.x);
                 else if (isSawBack)
                     n1 = glm::cross(edge, glm::vec3(prevSlope.x, -vSize, prevSlope.z));
                 else if (isGambrel || isHalfHipped || isMansard)
@@ -1321,12 +1372,13 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                         roofIndices.push_back(idx2);
                         roofIndices.push_back(idx3);
 
-                        if (!isCut && !isRound && j < 1)
+                        if ((!isCut && !isRound) || isMansard)
                         {
                             const glm::vec3 slope(prevSlope.x * factorP, vSize * factorY, prevSlope.z * factorP);
                             n2 = glm::cross(edge, slope);
                             const auto sqLen = glm::dot(n2, n2);
                             n2 = sqLen > 0.0f ? n2 / sqrt(sqLen) : upV;
+                            n1 = n2;
                         }
 
                         p1 = t3;
