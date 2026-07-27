@@ -48,10 +48,10 @@ namespace OsmAnd
         {
             std::shared_ptr<const MapPrimitiviser::Primitive> primitive;
             mutable float height;
+            mutable float roofHeight;
             float minHeight;
             float levels;
             float levelHeight;
-            float roofHeight;
             float roofAngle;
             float roofDirection;
             RoofShape roofShape;

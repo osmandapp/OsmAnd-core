@@ -304,8 +304,15 @@ void Map3DObjectsTiledProvider_P::filterBuildings(
                     buildingPart.parentSourceObject = buildingSource;
                     if (building.polygonColor != 0)
                         buildingPart.polygonColor = building.polygonColor;
-                    if (building.levelsFound && building.heightFound && !buildingPart.heightFound)
+                    if (building.levelsFound && building.heightFound
+                        && !buildingPart.heightFound && buildingPart.levelsFound)
                         buildingPart.height = buildingPart.levels * building.levelHeight + buildingPart.roofHeight;
+                    if (buildingPart.isEmbedded && !buildingPart.heightFound && !buildingPart.levelsFound)
+                    {
+                        buildingPart.height = building.height;
+                        if (buildingPart.roofHeight == 0.0f && building.roofHeightFound)
+                            buildingPart.roofHeight = building.roofHeight;
+                    }
                     if (!isOutline && !isHidden && !buildingPart.isEmbedded)
                     {
                         if (building.heightFound || building.levelsFound)
@@ -494,13 +501,21 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
         }
     }
 
-    roofAngleFound = roofAngleFound && roofAngle >= 10.0f && roofAngle <= 80.0f;
-
-    if (isPart && !heightFound && !levelsFound && !roofAngleFound)
-        return;
-
     if (heightFound && height == 0.0f)
         return;
+
+    roofAngleFound = roofAngleFound && roofAngle >= 10.0f && roofAngle <= 80.0f;
+
+    if (isPart && !heightFound && !levelsFound)
+    {
+        if (roofAngleFound && !roofHeightFound && !roofLevelsFound)
+        {
+            height = 0.0f;
+            isEmbedded = true;
+        }
+        else
+            return;
+    }
 
     if (heightFound && roofShape != RoofShape::Flat)
     {
@@ -523,13 +538,13 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
             levelHeight = height / levels;
     }
 
-    if (roofShape != RoofShape::Flat && (!roofHeightFound || roofHeight <= 0.0f))
+    if (!roofHeightFound || roofHeight <= 0.0f)
     {
         if (roofLevelsFound && roofLevels > 0.0f)
             roofHeight = levelHeight * roofLevels;
         else if (roofAngleFound)
             roofHeight = 0.0f;
-        else
+        else if (roofShape != RoofShape::Flat)
             roofHeight = levelHeight;
     }
 
@@ -549,7 +564,7 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
     buildingPrimitive.roofOrientation = roofOrientation;
     buildingPrimitive.heightFound = heightFound;
     buildingPrimitive.levelsFound = levelsFound;
-    buildingPrimitive.roofHeightFound = roofHeightFound;
+    buildingPrimitive.roofHeightFound = roofHeightFound || roofLevelsFound;
     buildingPrimitive.isNotPart = isNotPart;
     buildingPrimitive.isEmbedded = isEmbedded;
 
