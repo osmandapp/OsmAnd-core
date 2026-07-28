@@ -342,18 +342,17 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
     const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive, const OsmAnd::ObfMapObject& sourceObject,
     bool isPart, bool isHighDetail, QSet<BuildingPrimitive>& outCollection) const
 {
-    bool isNotPart = true;
     bool isEmbedded = false;
+    const auto partTag = QStringLiteral("building:part");
+    const auto partValue = sourceObject.getResolvedAttribute(QStringRef(&partTag));
+    const bool isNotPart = partValue.isEmpty() || partValue == QStringLiteral("no");
     if (isPart)
     {
-        const auto partTag = QStringLiteral("building:part");
-        const auto partValue = sourceObject.getResolvedAttribute(QStringRef(&partTag));
-        if (partValue == QStringLiteral("no"))
+        if (isNotPart)
             return;
         if (partValue == QStringLiteral("tower")
             || sourceObject.containsAttribute(QStringLiteral("man_made"), QStringLiteral("tower")))
             isEmbedded = true;
-        isNotPart = false;
     }
 
     float levelHeight = getDefaultBuildingsLevelHeight();
