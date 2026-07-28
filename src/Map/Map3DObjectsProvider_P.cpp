@@ -885,7 +885,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     {
         std::vector<uint16_t> roofIndices;
         uint16_t vertexIndex = 0;
-        const auto p0 = sourceObject->bbox31.center();
+        auto p0 = sourceObject->bbox31.center();
         glm::vec3 prevSlope, nextSlope, n1, n2;
         float sqRadius1, sqRadius2;
         float ridgeOffset = 0.0f;
@@ -1077,7 +1077,13 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                 ridgeN = ridge;
                 ridge = altN;
             }
-            auto span = useAlt ? (r ? altL : altS) : (r ? maxL - minL : maxS - minS) / 2.0f;
+            const auto maxSpan = useAlt ? (r ? maxAltL : maxAltS) : (r ? maxL : maxS);
+            const auto minSpan = useAlt ? (r ? minAltL : minAltS) : (r ? minL : minS);
+            const auto shiftedCenter =
+                glm::vec2(static_cast<float>(p0.x), static_cast<float>(p0.y)) + ridgeN * ((maxSpan + minSpan) / 2.0f);
+            p0.x = qRound(shiftedCenter.x);
+            p0.y = qRound(shiftedCenter.y);
+            const auto span = (maxSpan - minSpan) / 2.0;
             if (useAngle)
                 roofHeight = span * qTan(qDegreesToRadians(roofAngle)) * metersPer31;
             if (isSaltbox || isSkillion || isSawtooth)
@@ -1242,7 +1248,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                     n2 = upV;
                 roofIndices.push_back(0);
             }
-            else
+            else // Roof shapes with ridge
             {
                 glm::vec2 n(-ridge.y, ridge.x);
                 const glm::vec2 pt1(static_cast<float>(p1.x - p0.x), static_cast<float>(p1.y - p0.y));
@@ -1257,6 +1263,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                 float offset3 = wasCut ? apexOffset : 0.0f;
                 float offset4 = 0.0f;
                 bool willCut = false;
+                const auto prevApex = cutApex;
                 if (isCut)
                 {
                     const auto s = d1 - d2;
@@ -1276,6 +1283,22 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                 }
                 if (isCut)
                 {
+                    if (wasCut)
+                    {
+                        const auto p3 = p0 + PointI(qRound(prevApex.x), qRound(prevApex.y));
+                        const auto p4 = p0 + PointI(qRound(cutApex.x), qRound(cutApex.y));
+                        glm::vec3 slope(static_cast<float>(p3.x - p1.x), vSize, static_cast<float>(p3.y - p1.y));
+                        glm::vec3 edge(static_cast<float>(p4.x - p3.x), 0.0f, static_cast<float>(p4.y - p3.y));
+                        n1 = glm::cross(edge, slope);
+                        const auto sqLen = glm::dot(n1, n1);
+                        n1 = sqLen > 0.0f ? n1 / sqrt(sqLen) : upV;
+                        vertices.append({glm::ivec2(p3.x, p3.y), zV, glm::vec2(total, terrainHeight), n1, colorVec});
+                        roofIndices.push_back(vertexIndex++);
+                        vertices.append({glm::ivec2(p4.x, p4.y), zV, glm::vec2(total, terrainHeight), n1, colorVec});
+                        roofIndices.push_back(vertexIndex++);
+                        vertices.append({glm::ivec2(p1.x, p1.y), zV, glm::vec2(lowerY, terrainHeight), n1, colorVec});
+                        roofIndices.push_back(vertexIndex++);
+                    }
                     pt3 = cutApex;
                     pt4 = cutApex;
                 }
@@ -1413,8 +1436,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                     PointI t3, t4;
                     if (isCut)
                     {
-                        const auto factor3 = (1.0f - factorP) / 2.0f;
-                        const auto factor4 = 1.0f - factor3;
+                        const auto factor3 = (1.0f - factorP) * d1 / (d1 - d2);
+                        const auto factor4 = factorP + factor3;
                         t3 = p1 + PointI(qRound(edge.x * factor3), qRound(edge.z * factor3));
                         t4 = p1 + PointI(qRound(edge.x * factor4), qRound(edge.z * factor4));
                         n1 = glm::vec3(-edge.z, 0.0f, edge.x);
