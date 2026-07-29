@@ -1030,11 +1030,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     const auto& entry = itStringOrDataValue.next();
 
                     const auto& tag = subtypes->subtypes[entry.first]->tagName;
-                    if (tag.contains(QLatin1String("_name")))
-                    {
-                        additionalNames.append(entry.second.toString());
-                    }
-                    else if (tag == QLatin1String("name"))
+                    if (tag == QLatin1String("name"))
                     {
                         nativeName = entry.second.toString();
                         itStringOrDataValue.remove();

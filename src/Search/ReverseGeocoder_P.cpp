@@ -72,7 +72,7 @@ void addWord(QStringList &ls, QString word, bool addCommonWords)
 {
     const QString w = word.trimmed().toLower();
     if (!w.isEmpty()) {
-        if (!addCommonWords && OsmAnd::CommonWords::getCommonGeocoding(w) != -1)
+        if (!addCommonWords && OsmAnd::CommonWords::getInstance().getCommonGeocoding(w) != -1)
             return;
         
         ls << w;
@@ -168,7 +168,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
     bool addCommonWords = false;
     for (const auto& word : streetNamesUsed)
     {
-        if (OsmAnd::CommonWords::isNumber2Letters(word))
+        if (OsmAnd::SearchAlgorithms::isNumber2Letters(word))
         {
             addCommonWords = true;
             break;

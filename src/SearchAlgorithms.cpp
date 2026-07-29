@@ -82,6 +82,20 @@ QString OsmAnd::SearchAlgorithms::canonicalizePunctuation(QString s)
     return s;
 }
 
+QString OsmAnd::SearchAlgorithms::alignChars(QString fullText)
+{
+    if (OsmAnd::ArabicNormalizer::isSpecialArabic(fullText))
+    {
+        QString normalized = OsmAnd::ArabicNormalizer::normalize(fullText);
+        fullText = normalized.isEmpty() ? fullText : normalized;
+    }
+    fullText = OsmAnd::SearchAlgorithms::removeApostrophes(fullText);
+    fullText = OsmAnd::SearchAlgorithms::replaceGermanSS(fullText);
+    fullText = OsmAnd::SearchAlgorithms::removeQuotes(fullText);
+    fullText = OsmAnd::ICU::stripDiacritics(fullText);
+    return fullText;
+}
+
 QString OsmAnd::SearchAlgorithms::removeQuotes(QString s)
 {
     if (!s.contains(QChar(u'«')) && !s.contains(QChar(u'»')))
@@ -382,3 +396,43 @@ bool OsmAnd::SearchAlgorithms::isApostropheLike(QChar ch)
     }
 }
 
+int OsmAnd::SearchAlgorithms::letters(const QString& s)
+{
+    int count = 0;
+    for (int i = 0; i < s.length(); i++)
+    {
+        if (!s[i].isDigit() && s[i].isLetter())
+        {
+            count++;
+        }
+    }
+    return count;
+}
+
+bool OsmAnd::SearchAlgorithms::isNumber2Letters(const QString& name)
+{
+    if (name.isEmpty())
+    {
+        return false;
+    }
+    return startsWithDigit(name) && letters(name) < 2;
+}
+
+bool OsmAnd::SearchAlgorithms::startsWithDigit(const QString& name)
+{
+    // it used to be inconcinstent check for Character.isDigit(name.charAt(0)) - '#3'
+    bool startsWithDigit = false;
+    for (int i = 0; i < name.length(); i++)
+    {
+        if (name.at(i).isDigit())
+        {
+            startsWithDigit = true;
+            break;
+        }
+        else if (name.at(i).isLetter())
+        {
+            break;
+        }
+    }
+    return startsWithDigit;
+}
