@@ -1085,14 +1085,13 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             auto shiftedCenter = glm::dvec2(p0.x, p0.y) + glm::dvec2(ridgeN.x, ridgeN.y) * (0.5 * (maxSpan + minSpan));
             p0.x = qRound(shiftedCenter.x);
             p0.y = qRound(shiftedCenter.y);
-            ridgeOffset = (minSpan - maxSpan) / 2.0;
+            const auto span = (minSpan - maxSpan) / 2.0;
             auto incline = useAngle ? -static_cast<float>(qTan(qDegreesToRadians(roofAngle))) : 1.0f;
             if (useAngle)
-                roofHeight = ridgeOffset * incline * metersPer31;
+                roofHeight = span * incline * metersPer31;
             if (isSaltbox || isSkillion || isSawtooth)
             {
-                if (isSaltbox)
-                    ridgeOffset /= 3.0f;
+                ridgeOffset = isSaltbox ? span / 3.0f : span;
                 ridgeShift = ridgeN * ridgeOffset;
                 if (isSkillion)
                 {
