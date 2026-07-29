@@ -211,6 +211,7 @@ namespace OsmAnd
 
         glm::vec3 calculateNormalFrom2Points(PointI point31_i, PointI point31_next) const;
         uint32_t getPolygonColor(const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive) const;
+        inline float getSkillionHeight(const PointI& p1, const PointI& p0, const glm::vec2& n, const float& f) const;
 
         void generateBuildingWall(
             QVector<BuildingVertex>& vertices,
@@ -223,7 +224,8 @@ namespace OsmAnd
             bool nextCurved,
             bool withRoof,
             float minHeight,
-            float height,
+            float height1,
+            float height2,
             float baseTerrainHeight,
             float terrainHeight,
             float width31,

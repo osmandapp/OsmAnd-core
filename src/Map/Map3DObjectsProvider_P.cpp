@@ -855,6 +855,9 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
 
     glm::vec4 zV(0.0f);
     glm::vec3 upV(0.0f, 1.0f, 0.0f);
+    glm::vec2 ridgeN;
+    PointI base;
+    float factor = 0.0f;
     auto roofHeight = primitive.roofHeight;
     const auto roofAngle = primitive.roofAngle;
     const auto roofDirection = primitive.roofDirection;
@@ -878,9 +881,9 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
         isCone = true;
     }
     const bool useAngle = roofHeight <= 0.0f && !qIsNaN(roofAngle);
-    const bool withRoof =
-        innerPolygons.isEmpty() && (roofHeight > 0.0f || useAngle) && primitive.roofShape != RoofShape::Flat;
-    if (withRoof)
+    bool withRoof = (roofHeight > 0.0f || useAngle) && primitive.roofShape != RoofShape::Flat;
+    const bool withSeparateRoof = withRoof && !isSkillion && innerPolygons.isEmpty();
+    if (withSeparateRoof || isSkillion)
     {
         std::vector<uint16_t> roofIndices;
         uint16_t vertexIndex = 0;
@@ -1022,7 +1025,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             }
             const auto altR = glm::normalize(glm::vec2(static_cast<float>(longest.x) , static_cast<float>(longest.y)));
             glm::vec2 altN(-altR.y, altR.x);
-            glm::vec2 ridgeN(-ridge.y, ridge.x);
+            ridgeN.x = -ridge.y;
+            ridgeN.y = ridge.x;
             auto minL = std::numeric_limits<float>::infinity();
             auto maxL = -minL;
             auto minS = minL;
@@ -1078,17 +1082,27 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             }
             const auto maxSpan = useAlt ? (r ? maxAltL : maxAltS) : (r ? maxL : maxS);
             const auto minSpan = useAlt ? (r ? minAltL : minAltS) : (r ? minL : minS);
-            const auto shiftedCenter =
-                glm::vec2(static_cast<float>(p0.x), static_cast<float>(p0.y)) + ridgeN * ((maxSpan + minSpan) / 2.0f);
+            auto shiftedCenter = glm::dvec2(p0.x, p0.y) + glm::dvec2(ridgeN.x, ridgeN.y) * (0.5 * (maxSpan + minSpan));
             p0.x = qRound(shiftedCenter.x);
             p0.y = qRound(shiftedCenter.y);
-            const auto span = (maxSpan - minSpan) / 2.0;
+            ridgeOffset = (minSpan - maxSpan) / 2.0;
+            auto incline = useAngle ? -static_cast<float>(qTan(qDegreesToRadians(roofAngle))) : 1.0f;
             if (useAngle)
-                roofHeight = span * qTan(qDegreesToRadians(roofAngle)) * metersPer31;
+                roofHeight = ridgeOffset * incline * metersPer31;
             if (isSaltbox || isSkillion || isSawtooth)
             {
-                ridgeOffset = isSaltbox ? -span / 3.0f : -span;
+                if (isSaltbox)
+                    ridgeOffset /= 3.0f;
                 ridgeShift = ridgeN * ridgeOffset;
+                if (isSkillion)
+                {
+                    incline = useAngle ? incline / 2.0 : roofHeight / (metersPer31 * ridgeOffset * 2.0);
+                    factor = metersPer31 * incline;
+                    shiftedCenter -= glm::dvec2(ridgeShift.x, ridgeShift.y);
+                    base.x = qRound(shiftedCenter.x);
+                    base.y = qRound(shiftedCenter.y);
+                    upV = glm::normalize(glm::vec3(-ridgeN.x * incline, 1.0f, -ridgeN.y * incline));
+                }
             }
             else if (isClipped)
             {
@@ -1131,7 +1145,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                 zV, glm::vec2(total, terrainHeight), isCone ? zV.xyz() : upV, colorVec});
             vertexIndex++;
         }
-        const auto pointsCount = edgePointsCount + (!isCentric ? 1 : 0);
+        const auto pointsCount = isSkillion ? 0 : (isCentric ? edgePointsCount : edgePointsCount + 1);
         bool wasCut = false;
         glm::vec2 cutApex;
         float apexOffset;
@@ -1588,15 +1602,18 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             minTile31,
             maxTile31);
     }
-    else
+
+    withRoof = withRoof && isSkillion && roofHeight > 0.0f;
+
+    if (!withSeparateRoof || isSkillion)
     {
         // Construct flat top side of the mesh
         std::vector<std::vector<std::array<int32_t, 2>>> topPolygon;
         std::vector<std::array<int32_t, 2>> outerRing;
-        for (int i = 0; i < edgePointsCount; ++i)
+        for (const auto& p : points31)
         {
-            const auto& p = points31[i];
-            vertices.append({glm::ivec2(p.x, p.y), zV, glm::vec2(height, terrainHeight), upV, colorVec});
+            const auto h = withRoof ? height + getSkillionHeight(p, base, ridgeN, factor) : height;
+            vertices.append({glm::ivec2(p.x, p.y), zV, glm::vec2(h, terrainHeight), upV, colorVec});
             outerRing.push_back({p.x, p.y});
         }
         topPolygon.push_back(std::move(outerRing));
@@ -1605,7 +1622,8 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             std::vector<std::array<int32_t, 2>> innerRing;
             for (const auto& p : innerPoly)
             {
-                vertices.append({glm::ivec2(p.x, p.y), zV, glm::vec2(height, terrainHeight), upV, colorVec});
+                const auto h = withRoof ? height + getSkillionHeight(p, base, ridgeN, factor) : height;
+                vertices.append({glm::ivec2(p.x, p.y), zV, glm::vec2(h, terrainHeight), upV, colorVec});
                 innerRing.push_back({p.x, p.y});
             }
             topPolygon.push_back(std::move(innerRing));
@@ -1619,7 +1637,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             maxTile31);
     }
 
-    if (height <= 0.0f)
+    if (height <= 0.0f && !withRoof)
         return;
 
     // Construct walls of the mesh
@@ -1848,9 +1866,10 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
                     nextNormal,
                     prevCurved,
                     nextCurved,
-                    withRoof,
+                    withSeparateRoof,
                     minHeight,
-                    height,
+                    withRoof ? height + getSkillionHeight(point31_i, base, ridgeN, factor) : height,
+                    withRoof ? height + getSkillionHeight(point31_next, base, ridgeN, factor) : height,
                     baseTerrainHeight,
                     terrainHeight,
                     width31,
@@ -2386,7 +2405,8 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
     bool nextCurved,
     bool withRoof,
     float minHeight,
-    float height,
+    float height1,
+    float height2,
     float baseTerrainHeight,
     float terrainHeight,
     float width31,
@@ -2399,18 +2419,19 @@ void Map3DObjectsTiledProvider_P::generateBuildingWall(
 
     // Should match the side order (counter-clockwise)
     const auto hSize = prevCurved || nextCurved ? -width31 * 2.0f : width31;
-    const auto vSize = height - minHeight;
+    const auto vSize1 = height1 - minHeight;
+    const auto vSize2 = height2 - minHeight;
     vertices.append({glm::ivec2(point31_next.x, point31_next.y),
-        glm::vec4(nextCurved ? 0.5f : 1.0f, withRoof ? 0.5f : 0.0f, hSize, vSize),
+        glm::vec4(nextCurved ? 0.5f : 1.0f, withRoof ? 0.5f : 0.0f, hSize, vSize2),
         glm::vec2(minHeight, baseTerrainHeight), nextNormal, colorVec});
     vertices.append({glm::ivec2(point31_next.x, point31_next.y),
-        glm::vec4(nextCurved ? 0.5f : 1.0f, withRoof ? 0.5f : 1.0f, hSize, vSize),
-        glm::vec2(height, terrainHeight), nextNormal, colorVec});
+        glm::vec4(nextCurved ? 0.5f : 1.0f, withRoof ? 0.5f : 1.0f, hSize, vSize2),
+        glm::vec2(height2, terrainHeight), nextNormal, colorVec});
     vertices.append({glm::ivec2(point31_i.x, point31_i.y),
-        glm::vec4(prevCurved ? 0.5f : 0.0f, withRoof ? 0.5f : 1.0f, hSize, vSize),
-        glm::vec2(height, terrainHeight), prevNormal, colorVec});
+        glm::vec4(prevCurved ? 0.5f : 0.0f, withRoof ? 0.5f : 1.0f, hSize, vSize1),
+        glm::vec2(height1, terrainHeight), prevNormal, colorVec});
     vertices.append({glm::ivec2(point31_i.x, point31_i.y),
-        glm::vec4(prevCurved ? 0.5f : 0.0f, withRoof ? 0.5f : 0.0f, hSize, vSize),
+        glm::vec4(prevCurved ? 0.5f : 0.0f, withRoof ? 0.5f : 0.0f, hSize, vSize1),
         glm::vec2(minHeight, baseTerrainHeight), prevNormal, colorVec});
 
     if (!passagePrimitives.isEmpty())
@@ -2513,4 +2534,10 @@ uint32_t Map3DObjectsTiledProvider_P::getPolygonColor(const std::shared_ptr<cons
     uint32_t colorARGB = 0;
     primitive->evaluationResult.getIntegerValue(_environment->styleBuiltinValueDefs->id_OUTPUT_COLOR, colorARGB);
     return colorARGB;
+}
+
+inline float Map3DObjectsTiledProvider_P::getSkillionHeight(
+    const PointI& p1, const PointI& p0, const glm::vec2& n, const float& f) const
+{
+    return f * glm::dot(n, glm::vec2(static_cast<float>(p1.x - p0.x), static_cast<float>(p1.y - p0.y)));
 }
