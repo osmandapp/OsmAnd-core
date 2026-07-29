@@ -740,8 +740,8 @@ namespace OsmAnd
             e.z = f * pow(t, e.y);
             auto sinAlpha = sin(scaleFactorAndAzimuth.y);
             auto cosAlpha = cos(scaleFactorAndAzimuth.y);
-            auto gamma = asin(sinAlpha / d);
-            e.w = refLonLat.x - asin(0.5 * (f - 1.0 / f) * tan(gamma)) / e.y;
+            auto gamma = asin(qBound(-1.0, sinAlpha / d, 1.0));
+            e.w = refLonLat.x - asin(qBound(-1.0, 0.5 * (f - 1.0 / f) * tan(gamma), 1.0)) / e.y;
             auto uc =
                 r / e.y * sign * (abs(cosAlpha) < 1e-11 ? M_PI_2 : atan(sqrt(d * d - 1.0) / cosAlpha));
             falseEastingAndNorthing.x -= uc * sinAlpha;

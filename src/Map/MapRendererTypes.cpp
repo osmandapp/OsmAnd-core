@@ -1175,10 +1175,10 @@ bool OsmAnd::CoordinateTransformer_P::getConstants(
     }
     if (projection == GridConfiguration::Projection::HOMV2)
     {
-        scaleFactor.y = target_crs.GetProjParm(SRS_PT_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER, 0.0, &err) * radFactor;
+        scaleFactor.y = target_crs.GetProjParm(SRS_PP_AZIMUTH, 0.0, &err) * radFactor;
         if (err != OGRERR_NONE)
         {
-            LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to get CRS constant: azimuth center.");
+            LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to get CRS constant: azimuth.");
             return false;
         }
     }
