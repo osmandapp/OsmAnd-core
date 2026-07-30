@@ -34,8 +34,11 @@ namespace OsmAnd
         OSMAND_CORE_API QString OSMAND_CORE_CALL stripAccentsAndDiacritics(const QString& input);
         OSMAND_CORE_API QString OSMAND_CORE_CALL stripDiacritics(const QString& input);
         OSMAND_CORE_API bool OSMAND_CORE_CALL cmatches(const QString& _fullName, const QString& _part, StringMatcherMode _mode);
+        OSMAND_CORE_API bool OSMAND_CORE_CALL cmatchesNormalized(const QString& _fullName, const QString& _part, StringMatcherMode _mode);
         OSMAND_CORE_API bool OSMAND_CORE_CALL ccontains(const QString& _base, const QString& _part);
         OSMAND_CORE_API bool OSMAND_CORE_CALL cstartsWith(const QString& _searchInParam, const QString& _theStart,
+                                bool checkBeginning, bool checkSpaces, bool equals);
+        OSMAND_CORE_API bool OSMAND_CORE_CALL cstartsWithNormalized(const QString& _searchInParam, const QString& _theStart,
                                 bool checkBeginning, bool checkSpaces, bool equals);
         OSMAND_CORE_API int OSMAND_CORE_CALL ccompare(const QString& _base, const QString& _part);
         OSMAND_CORE_API QString OSMAND_CORE_CALL toNFC(const QString& s);

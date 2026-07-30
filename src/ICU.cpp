@@ -680,6 +680,33 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cmatches(const QString& _base
             return false;
     }
 }
+
+OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cmatchesNormalized(
+    const QString& _base,
+    const QString& _part,
+    StringMatcherMode _mode)
+{
+    switch (_mode)
+    {
+        case StringMatcherMode::CHECK_CONTAINS:
+            return ccontains(_base, _part);
+        case StringMatcherMode::CHECK_EQUALS_FROM_SPACE:
+            return cstartsWithNormalized(_base, _part, true, true, true);
+        case StringMatcherMode::CHECK_STARTS_FROM_SPACE:
+            return cstartsWithNormalized(_base, _part, true, true, false);
+        case StringMatcherMode::CHECK_STARTS_FROM_SPACE_NOT_BEGINNING:
+            return cstartsWithNormalized(_base, _part, false, true, false);
+        case StringMatcherMode::CHECK_ONLY_STARTS_WITH:
+            return cstartsWithNormalized(_base, _part, true, false, false);
+        case StringMatcherMode::CHECK_EQUALS:
+            return cstartsWithNormalized(_base, _part, false, false, true);
+        case StringMatcherMode::MULTISEARCH:
+            return cstartsWithNormalized(_part, _base, true, true, true);
+        default:
+            return false;
+    }
+}
+
 OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::ccontains(const QString& _base, const QString& _part)
 {
     UErrorCode icuError = U_ZERO_ERROR;
@@ -723,6 +750,18 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::ccontains(const QString& _bas
 OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _searchInParam, const QString& _theStart,
                                                   bool checkBeginning, bool checkSpaces, bool equals)
 {
+    QString searchInParam = OsmAnd::CollatorStringMatcher::lowercaseAndAlignChars(_searchInParam);
+    QString theStartParam = OsmAnd::CollatorStringMatcher::alignChars(_theStart);
+    return cstartsWithNormalized(searchInParam, theStartParam, checkBeginning, checkSpaces, equals);
+}
+
+OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWithNormalized(
+    const QString& _searchInParam,
+    const QString& _theStart,
+    bool checkBeginning,
+    bool checkSpaces,
+    bool equals)
+{
     UErrorCode icuError = U_ZERO_ERROR;
     bool result = false;
     QReadLocker icuReadLocker(&icuResourcesLock);
@@ -736,10 +775,8 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
     }
     else
     {
-        // FUTURE: This is not effective code, it runs on each comparision
-        // It would be more efficient to normalize all strings in file and normalize search string before collator
-        QString searchInParam = OsmAnd::CollatorStringMatcher::lowercaseAndAlignChars(_searchInParam);
-        QString theStartParam = OsmAnd::CollatorStringMatcher::alignChars(_theStart);
+        QString searchInParam = _searchInParam;
+        QString theStartParam = _theStart;
         UnicodeString searchIn = qStrToUniStr(searchInParam.replace("-", " "));
         UnicodeString theStart = qStrToUniStr(theStartParam.replace("-", " "));
 
