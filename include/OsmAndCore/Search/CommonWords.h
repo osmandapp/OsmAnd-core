@@ -148,7 +148,6 @@ namespace OsmAnd
         
         
     public:
-        // called after parseRegionNames(osmandRegions.getWorldRegion(), names);
         void addRegionNames(const QStringList& names)
         {
             for (const QString& name : names)
@@ -173,13 +172,7 @@ namespace OsmAnd
                 cw.addCalculatedPoiCommonWords();
                 cw.addAbbrevationsToCommon(); // common words
                 cw.addManualAbbrevationsToFrequent();
-
-                // original android line
-                // cw.addRegionNames(); // to be deleted
-
-                // in ios this function will be started later:
-                // OsmAndAppImpl.addRegionNamesToCommonWords() -> CommonWords.getInstance().addRegionNames()
-
+                // cw.addRegionNames(); // init in OsmAndAppImpl.addRegionNamesToCommonWords()
                 cw.addCalculatedAddrFrequentWords();
                 cw.addCalculatedPoiFrequentWords();
                 return cw;
@@ -187,36 +180,6 @@ namespace OsmAnd
             return instance;
         }
 
-        static CommonWords& getPoiInstance()
-        {
-            static CommonWords instance = []()
-            {
-                CommonWords cw;
-                cw.addCommon(NUMBER_WITH_LESS_THAN_2_LETTERS);
-                cw.addCalculatedPoiCommonWords();
-                cw.addAbbrevationsToCommon(); // common words
-                cw.addManualAbbrevationsToFrequent();
-                cw.addCalculatedPoiFrequentWords();
-                return cw;
-            }();
-            return instance;
-        }
-
-        static CommonWords& getAddrInstance()
-        {
-            static CommonWords instance = []()
-            {
-                CommonWords cw;
-                cw.addCommon(NUMBER_WITH_LESS_THAN_2_LETTERS);
-                cw.addCalculatedAddrCommonWords();
-                cw.addAbbrevationsToCommon(); // common words
-                cw.addManualAbbrevationsToFrequent();
-                cw.addCalculatedAddrFrequentWords();
-                return cw;
-            }();
-            return instance;
-        }
-        
         void addManualAbbrevationsToFrequent()
         {
             // manually maintained - could be "mc" or "mc."
@@ -8705,36 +8668,6 @@ namespace OsmAnd
             addFrequent(QStringLiteral("palmas")); // 3880. 3,259, indx 3259, Mexico (F:1504, I:1504), Carribean-archipelago-all_centralamerica (F:390, I:390)
             addFrequent(QStringLiteral("xu")); // 3881. 2,183, indx 2183, China (F:1504, I:1504), China_shandong (F:255, I:255)
         }
-
-    public:
-        static void mainFilterFrequentWords(const QStringList& args)
-        {
-            Q_UNUSED(args);
-
-            // algorithm to find missing frequent words
-            static const QStringList array = {
-                // retrieved from https://taginfo.openstreetmap.org/api/4/key/values?key=name&page=1&rp=999&sortorder=desc&sortname=count
-                QStringLiteral("Hauptstraße"),
-                QStringLiteral("Центральная улица"),
-                QStringLiteral("Советская улица"),
-                QStringLiteral("улица Ленина"),
-                QStringLiteral("Main Street"),
-                //. ....
-            };
-            CommonWords& instance = getInstance();
-            for (const QString& name : array)
-            {
-                const QStringList tokens = SearchAlgorithms::splitAndNormalize(name);
-                for (const QString& token : tokens)
-                {
-                    if (instance.getCommonSearch(token) < 0)
-                    {
-                        LogPrintf(LogSeverityLevel::Info, "Missing %s", qPrintable(token));
-                    }
-                }
-            }
-        }
-
     };
 }
 
