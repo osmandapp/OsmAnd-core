@@ -40,7 +40,7 @@ namespace OsmAnd
         static bool likelyPartOfBuilding(const QString& word, const QSet<QString>* wordSplit = nullptr);
 
         // search-v2
-        static const QHash<QString, QString>& getSearchabbreviations();
+        static const QHash<QString, QString>& getSearchAbbreviations();
 
         // search-v2
         static bool isCommonSkipOtherCnt(const QString& lowerCase);

@@ -151,7 +151,7 @@ bool OsmAnd::Abbreviations::likelyPartOfBuilding(const QString& word, const QSet
 }
 
 // search-v2
-const QHash<QString, QString>& OsmAnd::Abbreviations::getSearchabbreviations()
+const QHash<QString, QString>& OsmAnd::Abbreviations::getSearchAbbreviations()
 {
     initialize();
     return searchAbbreviations;
