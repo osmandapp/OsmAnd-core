@@ -85,3 +85,20 @@ QString OsmAnd::BinaryMapObject::debugInfo(long i, bool all) const
     }
     return s;    
 }
+
+bool OsmAnd::BinaryMapObject::isDeleted() const
+{
+    if (attributeMapping && attributeIds.size() > 0)
+    {
+        for (int i = 0; i < attributeIds.size(); i++)
+        {
+            uint32_t t = attributeIds[i];
+            const AttributeMapping::TagValue* tagVal = attributeMapping->decodeMap.getRef(t);
+            if (tagVal->tag == QStringLiteral("osmand_change"))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
