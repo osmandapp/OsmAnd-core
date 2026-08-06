@@ -17,12 +17,16 @@ namespace OsmAnd
 
         static QStringList splitAndNormalize(const QString& query);
         static QString canonicalizePunctuation(QString s);
+        static QString alignChars(QString fullText);
         static QString removeQuotes(QString s);
         static QString removeApostrophes(QString s);
         static QString replaceGermanSS(QString fullText);
         static QString nameIndexDecodeDictionarySuffix(const QString& previousSuffix, const QString& encodedSuffix);
         static QString nameIndexEncodeSuffix(const QString& suffix, const QString& previousSuffix = QString());
         static QString normalizeToken(const QString& token);
+        static int letters(const QString& s);
+        static bool isNumber2Letters(const QString& name);
+        static bool startsWithDigit(const QString& name);
 
     private:
         SearchAlgorithms() = delete;

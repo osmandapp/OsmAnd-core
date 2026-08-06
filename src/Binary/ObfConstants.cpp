@@ -4,7 +4,18 @@ bool OsmAnd::ObfConstants::isTagIndexedForSearchAsName(const QString& tag)
 {
     if (!tag.isNull())
     {
-        if (tag.startsWith(QStringLiteral("route_name")))
+        // search related but not direct
+        if (tag.startsWith(QStringLiteral("route_name"))
+            || tag == QStringLiteral("shield_stub_name"))
+        {
+            return false;
+        }
+        // some popular tags ignored as name
+        if (tag.startsWith(QStringLiteral("tiger:"))
+            || tag.startsWith(QStringLiteral("noname"))
+            || tag.startsWith(QStringLiteral("name:etymology"))
+            || tag.startsWith(QStringLiteral("artist_name"))
+            || tag.startsWith(QStringLiteral("addr:"))) // housename, street name
         {
             return false;
         }
