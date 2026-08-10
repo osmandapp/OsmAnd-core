@@ -574,7 +574,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "vec2 toEllipsoid(in vec2 lonlat, in vec2 semiMajorAxisInvFlat, in vec4 t, in vec4 r)                               ""\n"
             "{                                                                                                                  ""\n"
             "    vec2 res = lonlat;                                                                                             ""\n"
-            "    if (t.w > 0.0)                                                                                                 ""\n"
+            "    if (t.w > 1.0)                                                                                                 ""\n"
             "    {                                                                                                              ""\n"
             "        vec2 sncslat = vec2(sin(lonlat.y), cos(lonlat.y));                                                         ""\n"
             "        float wgse2 = 0.006694379990141316461;                                                                     ""\n"
@@ -903,12 +903,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    vec2 coords = toEllipsoid(lonlat, param_vs_primaryGridConstants.xy,                                            ""\n"
             "        param_vs_primaryGridHelmertTranslations, param_vs_primaryGridHelmertRotations);                            ""\n"
             "    vec2 crd;                                                                                                      ""\n"
-            "    if (param_vs_primaryGridHelmertTranslations.w > 2.0)                                                           ""\n"
+            "    if (param_vs_primaryGridHelmertTranslations.w > 3.0)                                                           ""\n"
             "    {                                                                                                              ""\n"
             "        crd = getCrdHOMV2(coords, param_vs_primaryGridConstants,                                                   ""\n"
             "            param_vs_primaryGridParams, param_vs_primaryGridExtraParams);                                          ""\n"
             "    }                                                                                                              ""\n"
-            "    else if (param_vs_primaryGridHelmertTranslations.w > 1.0)                                                      ""\n"
+            "    else if (param_vs_primaryGridHelmertTranslations.w > 2.0)                                                      ""\n"
             "    {                                                                                                              ""\n"
             "        crd = getCrdOS(coords, param_vs_primaryGridRefLonLat.x, param_vs_primaryGridConstants,                     ""\n"
             "            param_vs_primaryGridParams, param_vs_primaryGridExtraParams);                                          ""\n"
@@ -938,12 +938,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    sCut = param_vs_secondaryGridRefLonLat.w > 0.0 ? zUTM : (isOut ? sCut : vec2(0.0));                            ""\n"
             "    coords = toEllipsoid(lonlat, param_vs_secondaryGridConstants.xy,                                               ""\n"
             "        param_vs_secondaryGridHelmertTranslations, param_vs_secondaryGridHelmertRotations);                        ""\n"
-            "    if (param_vs_secondaryGridHelmertTranslations.w > 2.0)                                                         ""\n"
+            "    if (param_vs_secondaryGridHelmertTranslations.w > 3.0)                                                         ""\n"
             "    {                                                                                                              ""\n"
             "        crd = getCrdHOMV2(coords, param_vs_secondaryGridConstants,                                                 ""\n"
             "            param_vs_secondaryGridParams, param_vs_secondaryGridExtraParams);                                      ""\n"
             "    }                                                                                                              ""\n"
-            "    else if (param_vs_secondaryGridHelmertTranslations.w > 1.0)                                                    ""\n"
+            "    else if (param_vs_secondaryGridHelmertTranslations.w > 2.0)                                                    ""\n"
             "    {                                                                                                              ""\n"
             "        crd = getCrdOS(coords, param_vs_secondaryGridRefLonLat.x, param_vs_secondaryGridConstants,                 ""\n"
             "            param_vs_secondaryGridParams, param_vs_secondaryGridExtraParams);                                      ""\n"
@@ -2561,10 +2561,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
             static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertTranslations.x),
             static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertTranslations.y),
             static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertTranslations.z),
-            currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::HOMV2 ? 3.0f
-                : (currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::OSTEREO ? 2.0f
-                    : (currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::TM ? 1.0f
-                        : 0.0f)));
+            currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::HOMV2 ? 4.0f
+                : (currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::OSTEREO ? 3.0f
+                : (currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::TM ? 2.0f
+                : (currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::UTM
+                    || currentState.gridConfiguration.primaryProjection == GridConfiguration::Projection::MGRS ? 1.0f
+                        : 0.0f))));
         GL_CHECK_RESULT;
         glUniform4f(program.vs.param.primaryGridHelmertRotations,
             static_cast<float>(currentState.gridConfiguration.gridParameters[0].helmertRotations.x),
@@ -2622,10 +2624,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
             static_cast<float>(currentState.gridConfiguration.gridParameters[1].helmertTranslations.x),
             static_cast<float>(currentState.gridConfiguration.gridParameters[1].helmertTranslations.y),
             static_cast<float>(currentState.gridConfiguration.gridParameters[1].helmertTranslations.z),
-            currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::HOMV2 ? 3.0f
-                : (currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::OSTEREO ? 2.0f
-                    : (currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::TM ? 1.0f
-                        : 0.0f)));
+            currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::HOMV2 ? 4.0f
+                : (currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::OSTEREO ? 3.0f
+                : (currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::TM ? 2.0f
+                : (currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::UTM
+                    || currentState.gridConfiguration.secondaryProjection == GridConfiguration::Projection::MGRS ? 1.0f
+                        : 0.0f))));
         GL_CHECK_RESULT;
         glUniform4f(program.vs.param.secondaryGridHelmertRotations,
             static_cast<float>(currentState.gridConfiguration.gridParameters[1].helmertRotations.x),
