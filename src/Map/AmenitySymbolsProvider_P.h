@@ -8,6 +8,7 @@
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QHash>
+#include <QMutex>
 #include <QReadWriteLock>
 #include <QList>
 #include <QWaitCondition>
@@ -67,6 +68,31 @@ namespace OsmAnd
             QWaitCondition loadedCondition;
         };
         mutable TiledEntriesCollection<TileEntry> _tileReferences;
+
+        enum class NameQueryCacheState
+        {
+            Loading,
+            Loaded,
+            Cancelled
+        };
+        struct NameQueryCacheEntry
+        {
+            NameQueryCacheEntry(const AreaI& bbox31_, const ZoomLevel zoom_)
+                : bbox31(bbox31_)
+                , zoom(zoom_)
+                , state(NameQueryCacheState::Loading)
+            {
+            }
+
+            const AreaI bbox31;
+            const ZoomLevel zoom;
+            NameQueryCacheState state;
+            QList<std::shared_ptr<const Amenity>> amenities;
+            QMutex stateMutex;
+            QWaitCondition stateChanged;
+        };
+        mutable QMutex _nameQueryCacheMutex;
+        std::shared_ptr<NameQueryCacheEntry> _nameQueryCacheEntry;
 
         uint32_t getTileId(const AreaI& tileBBox31, const PointI& point);
         AreaD calculateRect(double x, double y, double width, double height);

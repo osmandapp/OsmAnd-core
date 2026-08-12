@@ -23,6 +23,7 @@ namespace OsmAnd
     class OSMAND_CORE_API ObfPoiSectionReader
     {
     public:
+        // Return true when the amenity should count as accepted by the reader. This may reserve a zoom-thinning cell.
         typedef std::function<bool(const std::shared_ptr<const OsmAnd::Amenity>& amenity)> VisitorFunction;
 
     private:
