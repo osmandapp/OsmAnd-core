@@ -15,6 +15,7 @@
 #include "DataCommonTypes.h"
 #include "ObfPoiSectionReader.h"
 #include "ObfPoiSectionInfo.h"
+#include "ObfPoiSectionInfo_P.h"
 #include "QueryToken.h"
 
 namespace OsmAnd
@@ -125,20 +126,12 @@ namespace OsmAnd
             const StringMatcherMode matcherMode);
         static void readPoiNameIndexData(
             const ObfReader_P& reader,
-            QMap<uint32_t, uint32_t>& outDataOffsets,
-            const PointI* const xy31,
-            const AreaI* const bbox31,
-            const TileAcceptorFunction tileFilter,
-            const std::shared_ptr<const ObfPoiSectionInfo>& section,
+            QMap<uint32_t, ObfPoiSectionInfo_P::NameIndexDataBox>& outDataBoxes,
             const QueryToken& token,
             const QueryToken::Prefix& prefix);
         static void readPoiNameIndexDataAtom(
             const ObfReader_P& reader,
-            QMap<uint32_t, uint32_t>& outDataOffsets,
-            const PointI* const xy31,
-            const AreaI* const bbox31,
-            const TileAcceptorFunction tileFilter,
-            const std::shared_ptr<const ObfPoiSectionInfo>& section,
+            QMap<uint32_t, ObfPoiSectionInfo_P::NameIndexDataBox>& outDataBoxes,
             const QueryToken::SuffixMask & suffixMask);
 
         static bool readAmenitiesDataBox(
