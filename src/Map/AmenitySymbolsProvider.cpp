@@ -13,7 +13,8 @@ OsmAnd::AmenitySymbolsProvider::AmenitySymbolsProvider(
     const std::shared_ptr<IAmenityIconProvider>& amenityIconProvider_ /*= std::make_shared<CoreResourcesAmenityIconProvider>()*/,
     const int baseOrder_ /*= 10000*/,
     const uint32_t cacheSize_ /*= 0*/,
-    const ExternalAmenitiesProvider externalAmenitiesProvider_ /*= nullptr*/)
+    const ExternalAmenitiesProvider externalAmenitiesProvider_ /*= nullptr*/,
+    const QString& amenityNameFilter_ /*= QString()*/)
     : _p(new AmenitySymbolsProvider_P(this))
     , obfsCollection(obfsCollection_)
     , displayDensityFactor(displayDensityFactor_)
@@ -25,6 +26,7 @@ OsmAnd::AmenitySymbolsProvider::AmenitySymbolsProvider(
     , cacheSize(cacheSize_)
     , cache(std::make_shared<Cache>(cacheSize_))
     , externalAmenitiesProvider(externalAmenitiesProvider_)
+    , amenityNameFilter(amenityNameFilter_)
 {
 }
 

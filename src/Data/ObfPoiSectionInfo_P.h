@@ -7,6 +7,7 @@
 #include "ignore_warnings_on_external_includes.h"
 #include <QMutex>
 #include <QString>
+#include <QList>
 #include <QAtomicInt>
 #include "restore_internal_warnings.h"
 
@@ -36,6 +37,18 @@ namespace OsmAnd
         mutable std::shared_ptr<ObfPoiSectionSubtypes> _topIndexSubtypes;
         mutable QAtomicInt _subtypesLoaded;
         mutable QMutex _subtypesLoadMutex;
+
+        struct NameIndexDataBox
+        {
+            uint32_t dataOffset;
+            TileId tileId;
+            ZoomLevel zoom;
+        };
+        // The name index is immutable for the lifetime of the section. Cache only its
+        // query result; request-specific bounds, distance, and cancellation stay local.
+        mutable QString _nameIndexCacheKey;
+        mutable QList<NameIndexDataBox> _nameIndexCache;
+        mutable QMutex _nameIndexCacheMutex;
     public:
         virtual ~ObfPoiSectionInfo_P();
 

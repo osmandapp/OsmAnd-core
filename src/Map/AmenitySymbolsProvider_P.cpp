@@ -84,6 +84,13 @@ bool OsmAnd::AmenitySymbolsProvider_P::intersects(SymbolsQuadTree& boundIntersec
 
 namespace
 {
+    enum class AmenityProcessingResult
+    {
+        Accepted,
+        Rejected,
+        Cancelled
+    };
+
     struct AmenityCacheEntry
     {
         std::shared_ptr<const OsmAnd::Amenity> amenity;
@@ -167,6 +174,7 @@ namespace
             return zoom >= kStartZoomRouteTrack;
         return zoom >= kStartZoom;
     }
+
 }
 
 bool OsmAnd::AmenitySymbolsProvider_P::shouldDraw(const std::shared_ptr<const Amenity>& amenity, const ZoomLevel zoom) const
@@ -446,11 +454,6 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
     QSet<uint32_t> offlineSkippedTiles;
     QSet<uint64_t> offlineSearchedIds;
     const bool zoomFilter = request.zoom <= kSkipTilesZoom;
-    const auto dataInterface = owner->obfsCollection->obtainDataInterface(
-        &extendedTileBBox31,
-        request.zoom,
-        request.zoom,
-        ObfDataTypesMask().set(ObfDataType::POI));
 
     const auto processAmenityEntry =
         [this,
@@ -462,65 +465,110 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         (const std::shared_ptr<const Amenity>& amenity,
          QSet<uint32_t>& skippedTiles,
          QSet<uint64_t>& searchedIds,
-         QList<AmenityCacheEntry>& outAmenityEntries) -> bool
+         QList<AmenityCacheEntry>& outAmenityEntries) -> AmenityProcessingResult
         {
             if (queryController && queryController->isAborted())
-                return false;
+                return AmenityProcessingResult::Cancelled;
 
             const auto amenityId = static_cast<uint64_t>(amenity->id.id);
             if (owner->amentitiesFilter && !owner->amentitiesFilter(amenity))
             {
                 searchedIds.insert(amenityId);
-                return true;
+                return AmenityProcessingResult::Rejected;
             }
 
             if (searchedIds.contains(amenityId))
-                return true;
+                return AmenityProcessingResult::Rejected;
 
             const auto entry = extractAmenityCacheEntry(amenity);
             if (!::shouldDraw(entry, requestedZoom))
             {
                 searchedIds.insert(amenityId);
-                return true;
+                return AmenityProcessingResult::Rejected;
             }
 
             const auto pos31 = amenity->position31;
+            if (!tileBBox31.contains(pos31))
+                return AmenityProcessingResult::Rejected;
+
             if (zoomFilter)
             {
                 const auto skipTileId = getTileId(extendedTileBBox31, pos31);
                 if (skippedTiles.contains(skipTileId))
-                    return true;
+                    return AmenityProcessingResult::Rejected;
 
                 skippedTiles.insert(skipTileId);
             }
 
-            if (!tileBBox31.contains(pos31))
-                return true;
-
             searchedIds.insert(amenityId);
             outAmenityEntries.push_back(entry);
-            return true;
+            return AmenityProcessingResult::Accepted;
         };
     QList<AmenityCacheEntry> offlineAmenityEntries;
-    const auto visitorFunction =
-        [&processAmenityEntry,
-         &offlineSkippedTiles,
-         &offlineSearchedIds,
-         &offlineAmenityEntries]
-        (const std::shared_ptr<const Amenity>& amenity) -> bool
-        {
-            return processAmenityEntry(amenity, offlineSkippedTiles, offlineSearchedIds, offlineAmenityEntries);
-        };
-
-    dataInterface->loadAmenities(
-        nullptr,
-        &extendedTileBBox31,
-        nullptr,
-        request.zoom,
-        owner->categoriesFilter.getValuePtrOrNullptr(),
-        owner->poiAdditionalFilter.getValuePtrOrNullptr(),
-        visitorFunction,
-        nullptr);
+    const bool useNameIndex = !owner->amenityNameFilter.isEmpty();
+    if (useNameIndex)
+    {
+        // Query the name index for this tile. The reader caches only immutable index
+        // offsets, so renderer requests never share decoded amenities or cancellation.
+        const auto dataInterface = owner->obfsCollection->obtainDataInterface(
+            &extendedTileBBox31,
+            request.zoom,
+            request.zoom,
+            ObfDataTypesMask().set(ObfDataType::POI));
+        const auto visitorFunction =
+            [&processAmenityEntry,
+             &offlineSkippedTiles,
+             &offlineSearchedIds,
+             &offlineAmenityEntries]
+            (const std::shared_ptr<const Amenity>& amenity) -> bool
+            {
+                return processAmenityEntry(
+                    amenity,
+                    offlineSkippedTiles,
+                    offlineSearchedIds,
+                    offlineAmenityEntries) == AmenityProcessingResult::Accepted;
+            };
+        dataInterface->scanAmenitiesByName(
+            owner->amenityNameFilter,
+            nullptr,
+            nullptr,
+            &extendedTileBBox31,
+            nullptr,
+            owner->categoriesFilter.getValuePtrOrNullptr(),
+            owner->poiAdditionalFilter.getValuePtrOrNullptr(),
+            visitorFunction,
+            queryController);
+    }
+    else
+    {
+        const auto dataInterface = owner->obfsCollection->obtainDataInterface(
+            &extendedTileBBox31,
+            request.zoom,
+            request.zoom,
+            ObfDataTypesMask().set(ObfDataType::POI));
+        const auto visitorFunction =
+            [&processAmenityEntry,
+             &offlineSkippedTiles,
+             &offlineSearchedIds,
+             &offlineAmenityEntries]
+            (const std::shared_ptr<const Amenity>& amenity) -> bool
+            {
+                return processAmenityEntry(
+                    amenity,
+                    offlineSkippedTiles,
+                    offlineSearchedIds,
+                    offlineAmenityEntries) != AmenityProcessingResult::Cancelled;
+            };
+        dataInterface->loadAmenities(
+            nullptr,
+            &extendedTileBBox31,
+            nullptr,
+            request.zoom,
+            owner->categoriesFilter.getValuePtrOrNullptr(),
+            owner->poiAdditionalFilter.getValuePtrOrNullptr(),
+            visitorFunction,
+            queryController);
+    }
 
     if (queryController && queryController->isAborted())
     {
@@ -535,13 +583,22 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         QSet<uint64_t> searchedIds;
         for (const auto& amenity : constOf(externalAmenitiesResponse.amenities))
         {
-            if (!processAmenityEntry(amenity, skippedTiles, searchedIds, externalAmenityEntries))
+            const auto processingResult =
+                processAmenityEntry(amenity, skippedTiles, searchedIds, externalAmenityEntries);
+            if (processingResult == AmenityProcessingResult::Cancelled)
             {
                 cancelTileLoading(tileEntry);
                 tileEntry.reset();
                 return false;
             }
         }
+    }
+
+    if (queryController && queryController->isAborted())
+    {
+        cancelTileLoading(tileEntry);
+        tileEntry.reset();
+        return false;
     }
 
     QList<AmenityCacheEntry> cachedAmenityEntries;
