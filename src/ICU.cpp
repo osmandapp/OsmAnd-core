@@ -14,6 +14,7 @@
 #include <QThread>
 #include <QHash>
 #include <QReadWriteLock>
+#include <QLocale>
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
@@ -205,9 +206,12 @@ bool OsmAnd::ICU::initialize()
 
     Collator *collator = nullptr;
     icuError = U_ZERO_ERROR;
-    
+
     // romanian locale encounters diacritics as different symbols
-    Locale locale = Locale::getDefault();
+    QLocale qtLocale;
+    const QByteArray localeName = qtLocale.name().toLatin1();
+    Locale locale = Locale::createCanonical(localeName.constData());
+
     if (std::strcmp(locale.getLanguage(), "ro") == 0 ||
         std::strcmp(locale.getLanguage(), "cs") == 0 ||
         std::strcmp(locale.getLanguage(), "sk") == 0)
@@ -216,7 +220,7 @@ bool OsmAnd::ICU::initialize()
     }
     else
     {
-        collator = Collator::createInstance(icuError);
+        collator = Collator::createInstance(locale, icuError);
     }
     
     if (U_FAILURE(icuError))
