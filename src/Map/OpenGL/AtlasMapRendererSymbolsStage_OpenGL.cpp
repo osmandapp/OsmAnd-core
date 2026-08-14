@@ -396,9 +396,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
             // To provide pixel-perfect rendering of billboard raster symbols:
             // symbolOnScreen.(x|y) has to be rounded and +0.5 in case param_vs_symbolSize.(x|y) is even
             // symbolOnScreen.(x|y) has to be rounded in case param_vs_symbolSize.(x|y) is odd
-            "    symbolOnScreen = floor(symbolOnScreen);                                                                        ""\n"
-            "    symbolOnScreen.x += float(1 - param_vs_symbolSize.x & 1) * 0.5;                                                ""\n"
-            "    symbolOnScreen.y += float(1 - param_vs_symbolSize.y & 1) * 0.5;                                                ""\n"
+            // DISABLED PIXEL-PERFECT
+            //"    symbolOnScreen = floor(symbolOnScreen);                                                                        ""\n"
+            //"    symbolOnScreen.x += float(1 - param_vs_symbolSize.x & 1) * 0.5;                                                ""\n"
+            //"    symbolOnScreen.y += float(1 - param_vs_symbolSize.y & 1) * 0.5;                                                ""\n"
             "                                                                                                                   ""\n"
             // So it's possible to calculate current vertex location:
             // Initially, get location of current vertex in screen coordinates
@@ -409,7 +410,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
             "    vertexOnScreen += symbolOnScreen.xy;                                                                           ""\n"
             "                                                                                                                   ""\n"
             // To provide pixel-perfect result, vertexOnScreen needs to be rounded
-            "    vertexOnScreen = floor(vertexOnScreen + vec2(0.5, 0.5));                                                       ""\n"
+            // DISABLED PIXEL-PERFECT
+            //"    vertexOnScreen = floor(vertexOnScreen + vec2(0.5, 0.5));                                                       ""\n"
             "                                                                                                                   ""\n"
             // There's no need to perform unprojection into orthographic world space, just multiply these coordinates by
             // orthographic projection matrix (View and Model being identity), yet use Z from perspective NDC
