@@ -38,8 +38,6 @@ bool OsmAnd::CollatorStringMatcher::cmatches(const QString& _base, const QString
 
 bool OsmAnd::CollatorStringMatcher::cmatches(const QString& _base, const QString& _part, bool alignPart, StringMatcherMode _mode)
 {
-    
-    
     QString base = _base;
     if (!_base.isNull() && _base.indexOf('-') != -1)
     {
@@ -52,7 +50,7 @@ bool OsmAnd::CollatorStringMatcher::cmatches(const QString& _base, const QString
     QString part = _part;
     if (alignPart)
     {
-        part = alignChars(part);
+        part = OsmAnd::SearchAlgorithms::alignChars(part);
     }
     base = lowercaseAndAlignChars(_base);
     return OsmAnd::ICU::cmatches(base, part, _mode);
@@ -72,9 +70,4 @@ bool OsmAnd::CollatorStringMatcher::cstartsWith(const QString& _searchInParam, c
 QString OsmAnd::CollatorStringMatcher::lowercaseAndAlignChars(const QString& fullText)
 {
     return CollatorStringMatcher_P::lowercaseAndAlignChars(fullText);
-}
-
-QString OsmAnd::CollatorStringMatcher::alignChars(const QString& fullText)
-{
-    return CollatorStringMatcher_P::alignChars(fullText);
 }

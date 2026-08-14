@@ -35,18 +35,5 @@ QString OsmAnd::CollatorStringMatcher_P::lowercaseAndAlignChars(const QString& f
 {
     QLocale defaultLocale;
     QString res = defaultLocale.toLower(fullText);
-    return alignChars(res);
-}
-
-QString OsmAnd::CollatorStringMatcher_P::alignChars(const QString& fullText)
-{
-    QString normalized = fullText;
-    if (ArabicNormalizer::isSpecialArabic(fullText))
-    {
-        normalized = ArabicNormalizer::normalize(fullText);
-        normalized = normalized == "" ? fullText : normalized;
-    }
-    normalized = SearchAlgorithms::removeApostrophes(normalized);
-    normalized = SearchAlgorithms::replaceGermanSS(normalized);
-    return normalized;
+    return OsmAnd::SearchAlgorithms::alignChars(res);
 }

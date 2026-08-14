@@ -16,7 +16,6 @@ namespace OsmAnd
     {
     private:
         static QString lowercaseAndAlignChars(const QString& fullText);
-        static QString alignChars(const QString& fullText);
     protected:
         CollatorStringMatcher_P(CollatorStringMatcher* const owner);
         
