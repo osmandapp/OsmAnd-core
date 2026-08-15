@@ -1991,6 +1991,315 @@ namespace OsmAnd
                     .arg(color)));
         }
 
+        inline static int computeBorderCode(const PointI& p, const PointI& tl, const PointI& br)
+        {
+            if (p.x == tl.x)
+            {
+                if (p.y == tl.y)
+                    return 0;
+                return 3;
+            }
+            if (p.x == br.x)
+            {
+                if (p.y == br.y)
+                    return 2;
+                return 1;
+            }
+            if (p.y == tl.y)
+                return 0;
+            if (p.y == br.y)
+                return 2;
+            return 4;
+        }
+
+        inline static int getIntersectionAxisX(const PointI& p0, const PointI& p1, int limit)
+        {
+            const int64_t dx = p1.x - p0.x;
+            const auto offset = dx / 2;
+            const auto num = static_cast<int64_t>(limit - p0.x) * (p1.y - p0.y);
+            return p0.y + static_cast<int>((num + ((num ^ dx) < 0 ? -offset : offset)) / dx);
+        }
+
+        inline static int getIntersectionAxisY(const PointI& p0, const PointI& p1, int limit)
+        {
+            const int64_t dy = p1.y - p0.y;
+            const auto offset = dy / 2;
+            const auto num = static_cast<int64_t>(limit - p0.y) * (p1.x - p0.x);
+            return p0.x + static_cast<int>((num + ((num ^ dy) < 0 ? -offset : offset)) / dy);
+        }
+
+        inline static PointI getIntersection(int code, const PointI& p0, const PointI& p1,
+            const PointI& tl, const PointI& br)
+        {
+            if ((code & 1) > 0)
+                return PointI(tl.x, getIntersectionAxisX(p0, p1, tl.x));
+            if ((code & 2) > 0)
+                return PointI(br.x, getIntersectionAxisX(p0, p1, br.x));
+            if ((code & 4) > 0)
+                return PointI(getIntersectionAxisY(p0, p1, tl.y), tl.y);
+            return PointI(getIntersectionAxisY(p0, p1, br.y), br.y);
+        }
+
+        inline static int computeOutCode(const PointI& p, const PointI& tl, const PointI& br)
+        {
+            return (p.x < tl.x) | ((p.x > br.x) << 1) | ((p.y < tl.y) << 2) | ((p.y > br.y) << 3);
+        }
+
+        inline static void findClosestWinding(
+            const PointI& center, const PointI& p0, const PointI& p1, double& minSqDistance, double& distance)
+        {
+            const auto aX = static_cast<int64_t>(p1.x) - p0.x;
+            const auto aY = static_cast<int64_t>(p1.y) - p0.y;
+            const auto b = center - p0;
+            const auto sqLen = static_cast<double>(aX * aX + aY * aY);
+            const auto t = qBound(0.0, (aX * b.x + aY * b.y) / sqLen, 1.0);
+            const auto dX = center.x - t * aX - p0.x;
+            const auto dY = center.y - t * aY - p0.y;
+            const auto sqDist = dX * dX + dY * dY;
+            if (sqDist < minSqDistance * 0.9999999999) 
+            {
+                minSqDistance = sqDist;
+                distance = (static_cast<double>(aX) * b.y - static_cast<double>(aY) * b.x) / std::sqrt(sqLen);
+            }
+            else if (sqDist <= minSqDistance * 1.0000000001)
+                distance += (static_cast<double>(aX) * b.y - static_cast<double>(aY) * b.x) / std::sqrt(sqLen);
+        }
+
+        inline static void clipPolylineForTile(const PointI& center, const QVector<PointI>& polyline,
+            const PointI& topLeft, const PointI& bottomRight, QVector<QVector<PointI>>* result,
+            double& minSqDistance, double& distance)
+        {
+            if (polyline.size() < 2)
+                return;
+            QVector<PointI> segment;
+            segment.reserve(polyline.size());
+            PointI prevPoint;
+            PointI sm(INT32_MIN, INT32_MIN);
+            int prevCode;
+            bool next = false;
+            for (const auto& point : polyline)
+            {
+                int nextCode = computeOutCode(point, topLeft, bottomRight);
+                if (Q_LIKELY(next))
+                {
+                    if (point == prevPoint)
+                        continue;
+                    auto p0 = prevPoint;
+                    auto p1 = point;
+                    int code0 = prevCode;
+                    int code1 = nextCode;
+                    bool accept = false;
+                    while (true)
+                    {
+                        if ((code0 | code1) == 0)
+                        {
+                            accept = true;
+                            break;
+                        }
+                        else if ((code0 & code1) > 0)
+                            break;
+                        else if (code0 > 0)
+                        {
+                            p0 = getIntersection(code0, p0, p1, topLeft, bottomRight);
+                            code0 = computeOutCode(p0, topLeft, bottomRight);
+                        }
+                        else
+                        {
+                            p1 = getIntersection(code1, p0, p1, topLeft, bottomRight);
+                            code1 = computeOutCode(p1, topLeft, bottomRight);
+                        }
+                    }
+                    if (accept)
+                    {
+                        bool isEmpty = segment.empty();
+                        if (isEmpty)
+                        {
+                            sm.x = INT32_MIN;
+                            sm.y = INT32_MIN;
+                        }
+                        if (isEmpty || segment.back() != p0)
+                        {
+                            if (!isEmpty)
+                            {
+                                result[computeBorderCode(segment.front(), topLeft, bottomRight)].push_back(
+                                    qMove(segment));
+                                segment.reserve(polyline.size());
+                            }
+                            if (p0 != sm)
+                            {
+                                segment.push_back(p0);
+                                sm = p0;
+                            }
+                        }
+                        if (p1 != sm)
+                        {
+                            segment.push_back(p1);
+                            sm = p1;
+                        }
+                    }
+                    else if (!segment.empty())
+                    {
+                        if (segment.size() > 1)
+                            result[computeBorderCode(segment.front(), topLeft, bottomRight)].push_back(qMove(segment));
+                        segment.reserve(polyline.size());
+                    }
+                    findClosestWinding(center, prevPoint, point, minSqDistance, distance);
+                }
+                else
+                    next = true;
+                prevPoint = point;
+                prevCode = nextCode;
+            }
+            if (segment.size() > 1)
+                result[computeBorderCode(segment.front(), topLeft, bottomRight)].push_back(qMove(segment));
+        }
+
+        template<bool IsY, bool IsGreater>
+        inline static bool isOutside(const PointI& p, int limit)
+        {
+            if (IsY)
+                return IsGreater ? p.y > limit : p.y < limit;
+            return IsGreater ? p.x > limit : p.x < limit;
+        }
+
+        template<bool IsY, bool IsGreater>
+        inline static bool clipPolygonAgainstEdge(const PointI& center, const QVector<PointI>& polygon,
+            QVector<PointI>& result, int limit, double& minSqDistance, double& distance, bool& clockwise)
+        {
+            auto sp = polygon.back();
+            PointI sm(INT32_MIN, INT32_MIN);
+            PointI m;
+            bool sOutside = isOutside<IsY, IsGreater>(sp, limit);
+            double signedArea = 0.0;
+            for (const auto p : polygon)
+            {
+                if (p == sp)
+                    continue;
+                bool pOutside = isOutside<IsY, IsGreater>(p, limit);
+                if (!pOutside)
+                {
+                    if (sOutside)
+                    {
+                        if (IsY)
+                        {
+                            m.x = getIntersectionAxisY(sp, p, limit);
+                            m.y = limit;
+                        }
+                        else
+                        {
+                            m.x = limit;
+                            m.y = getIntersectionAxisX(sp, p, limit);
+                        }
+                        if (!IsY && !IsGreater)
+                        {
+                            if (m != sm)
+                            {
+                                result.push_back(m);
+                                sm = m;
+                            }
+                        }
+                        else
+                            result.push_back(m);
+                    }
+                    if (!IsY && !IsGreater)
+                    {
+                        if (p != sm)
+                        {
+                            result.push_back(p);
+                            sm = p;
+                        }
+                    }
+                    else
+                        result.push_back(p);
+                }
+                else if (!sOutside)
+                {
+                    if (IsY)
+                    {
+                        m.x = getIntersectionAxisY(sp, p, limit);
+                        m.y = limit;
+                    }
+                    else
+                    {
+                        m.x = limit;
+                        m.y = getIntersectionAxisX(sp, p, limit);
+                    }
+                    if (!IsY && !IsGreater)
+                    {
+                        if (m != sm)
+                        {
+                            result.push_back(m);
+                            sm = m;
+                        }
+                    }
+                    else
+                        result.push_back(m);
+                }
+                if (IsY && IsGreater)
+                    findClosestWinding(center, sp, p, minSqDistance, distance);
+                else if (!IsY && !IsGreater)
+                    signedArea += static_cast<double>(sp.x) * p.y - static_cast<double>(p.x) * sp.y;
+                sp = p;
+                sOutside = pOutside;
+            }
+            if (result.size() < 3)
+                return false;
+            if (!IsY && !IsGreater)
+                clockwise = signedArea >= 0.0;
+            return true;
+        }
+
+        inline static void clipPolygonForTile(const PointI& center, const QVector<PointI>& polygon,
+            const PointI& topLeft, const PointI& bottomRight, QVector<PointI>& temp, QVector<PointI>& result,
+            double& minSqD, double& distance, bool& clockwise)
+        {
+            result.clear();
+            auto size = polygon.size();
+            if (size < 3)
+                return;
+            size += 4;
+        	temp.clear();
+            temp.reserve(size);
+            if (!clipPolygonAgainstEdge<true, true>(center, polygon, temp, bottomRight.y, minSqD, distance, clockwise))
+                return;
+            result.reserve(size);
+            if (!clipPolygonAgainstEdge<false, true>(center, temp, result, bottomRight.x, minSqD, distance, clockwise))
+            {
+                result.clear();
+                return;
+            }
+            temp.clear();
+            if (!clipPolygonAgainstEdge<true, false>(center, result, temp, topLeft.y, minSqD, distance, clockwise))
+            {
+                result.clear();
+                return;
+            }
+            result.clear();
+            if (!clipPolygonAgainstEdge<false, false>(center, temp, result, topLeft.x, minSqD, distance, clockwise))
+            {
+                result.clear();
+                return;
+            }
+        }
+
+        inline static bool intersects(int code, const PointI& p0, const PointI& p1,
+            const PointI& tl, const PointI& br)
+        {
+            if ((code & 3) > 0)
+            {
+                const int y = getIntersectionAxisX(p0, p1, (code & 1) == 0 ? br.x : tl.x);
+                if (y >= tl.y && y <= br.y)
+                    return true;
+            }
+            if ((code & 12) > 0)
+            {
+                const int x = getIntersectionAxisY(p0, p1, (code & 4 == 0) ? br.y : tl.y);
+                if (x >= tl.x && x <= br.x)
+                    return true;
+            }
+            return false;
+        }
+
         // Check if point is not outside the polygon
         inline static bool includes(const QVector<PointI>& polygon, const PointI& point)
         {
