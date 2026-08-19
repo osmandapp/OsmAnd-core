@@ -9,12 +9,14 @@ OsmAnd::MapStyleEvaluationResult::MapStyleEvaluationResult(const int size /*= 0*
 
 OsmAnd::MapStyleEvaluationResult::MapStyleEvaluationResult(const MapStyleEvaluationResult& that)
     : _storage(detachedOf(that._storage))
+    , _setValueDefIds(detachedOf(that._setValueDefIds))
 {
 }
 
 #ifdef Q_COMPILER_RVALUE_REFS
 OsmAnd::MapStyleEvaluationResult::MapStyleEvaluationResult(MapStyleEvaluationResult&& that)
     : _storage(qMove(that._storage))
+    , _setValueDefIds(qMove(that._setValueDefIds))
 {
 }
 #endif // Q_COMPILER_RVALUE_REFS
@@ -26,7 +28,10 @@ OsmAnd::MapStyleEvaluationResult::~MapStyleEvaluationResult()
 OsmAnd::MapStyleEvaluationResult& OsmAnd::MapStyleEvaluationResult::operator=(const MapStyleEvaluationResult& that)
 {
     if (this != &that)
+    {
         _storage = detachedOf(that._storage);
+        _setValueDefIds = detachedOf(that._setValueDefIds);
+    }
 
     return *this;
 }
@@ -35,7 +40,10 @@ OsmAnd::MapStyleEvaluationResult& OsmAnd::MapStyleEvaluationResult::operator=(co
 OsmAnd::MapStyleEvaluationResult& OsmAnd::MapStyleEvaluationResult::operator=(MapStyleEvaluationResult&& that)
 {
     if (this != &that)
+    {
         _storage = qMove(that._storage);
+        _setValueDefIds = qMove(that._setValueDefIds);
+    }
 
     return *this;
 }
@@ -56,7 +64,11 @@ void OsmAnd::MapStyleEvaluationResult::setValue(
     if (valueDefId >= _storage.size())
         _storage.resize(valueDefId + 1);
 
-    _storage[valueDefId] = value;
+    auto& slot = _storage[valueDefId];
+    if (!slot.isValid())
+        _setValueDefIds.push_back(valueDefId);
+
+    slot = value;
 }
 
 void OsmAnd::MapStyleEvaluationResult::setBooleanValue(
@@ -199,14 +211,17 @@ void OsmAnd::MapStyleEvaluationResult::reserve(const int size)
 void OsmAnd::MapStyleEvaluationResult::reset()
 {
     _storage.clear();
+    _setValueDefIds.clear();
 }
 
 void OsmAnd::MapStyleEvaluationResult::clear()
 {
-    const auto size = _storage.size();
-    auto pValue = _storage.data();
-    for (int index = 0; index < size; index++)
-        (pValue++)->clear();
+    // Only what was written. Walking every slot meant touching hundreds of
+    // QVariants to throw away a handful.
+    for (const auto valueDefId : constOf(_setValueDefIds))
+        _storage[valueDefId].clear();
+
+    _setValueDefIds.clear();
 }
 
 bool OsmAnd::MapStyleEvaluationResult::isEmpty() const
