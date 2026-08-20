@@ -48,10 +48,10 @@ namespace OsmAnd
     protected:
         QVector<QVariant> _storage;
 
-        // Which slots were actually written since the last clear. The storage
-        // has a slot for every value definition the style declares - hundreds
-        // of them - while an evaluation fills in a handful, so clearing all of
-        // them was most of the cost of evaluating a style at all.
+        // Which slots currently contain valid values. The storage has a slot
+        // for every value definition the style declares - hundreds of them -
+        // while an evaluation fills in a handful, so sparse operations should
+        // only visit these IDs.
         QVector<IMapStyle::ValueDefinitionId> _setValueDefIds;
 
     public:

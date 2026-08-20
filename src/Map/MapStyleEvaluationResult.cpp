@@ -1,5 +1,7 @@
 #include "MapStyleEvaluationResult.h"
 
+#include <algorithm>
+
 #include "QtCommon.h"
 
 OsmAnd::MapStyleEvaluationResult::MapStyleEvaluationResult(const int size /*= 0*/)
@@ -65,8 +67,10 @@ void OsmAnd::MapStyleEvaluationResult::setValue(
         _storage.resize(valueDefId + 1);
 
     auto& slot = _storage[valueDefId];
-    if (!slot.isValid())
+    if (value.isValid() && !slot.isValid())
         _setValueDefIds.push_back(valueDefId);
+    else if (!value.isValid() && slot.isValid())
+        _setValueDefIds.removeOne(valueDefId);
 
     slot = value;
 }
@@ -216,8 +220,8 @@ void OsmAnd::MapStyleEvaluationResult::reset()
 
 void OsmAnd::MapStyleEvaluationResult::clear()
 {
-    // Only what was written. Walking every slot meant touching hundreds of
-    // QVariants to throw away a handful.
+    // Only slots holding values. Walking every slot meant touching hundreds
+    // of QVariants to throw away a handful.
     for (const auto valueDefId : constOf(_setValueDefIds))
         _storage[valueDefId].clear();
 
@@ -240,26 +244,18 @@ bool OsmAnd::MapStyleEvaluationResult::isEmpty() const
 
 void OsmAnd::MapStyleEvaluationResult::pack(Packed& packed) const
 {
-    const auto size = _storage.size();
+    // Packed entries have historically been ordered by value definition ID.
+    // Sort the handful of written IDs instead of scanning the entire storage
+    // twice to count and copy its valid slots.
+    auto valueDefIds = _setValueDefIds;
+    std::sort(valueDefIds.begin(), valueDefIds.end());
 
-    auto pValue = _storage.constData();
-    int valuesCount = 0;
-    for (int index = 0; index < size; index++)
-    {
-        if ((pValue++)->isValid())
-            valuesCount++;
-    }
-
-    packed.entries.resize(valuesCount);
-    pValue = _storage.constData();
+    packed.entries.resize(valueDefIds.size());
     auto pPackedEntry = packed.entries.data();
-    for (int index = 0; index < size; index++, pValue++)
+    for (const auto valueDefId : constOf(valueDefIds))
     {
-        if (!pValue->isValid())
-            continue;
-
-        pPackedEntry->first = index;
-        pPackedEntry->second = *pValue;
+        pPackedEntry->first = valueDefId;
+        pPackedEntry->second = _storage[valueDefId];
 
         pPackedEntry++;
     }
