@@ -1000,6 +1000,19 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     QList<QPair<int, QVariant>> stringOrDataValues;
     QHash<uint32_t, QList<QPair<QString, QString>>> tagGroupsAmenity;
     auto categoriesFilterChecked = false;
+    const auto categoriesMatchFilter = [&categories, categoriesFilter]() -> bool
+    {
+        if (!categoriesFilter)
+            return true;
+
+        for (const auto category : constOf(categories))
+        {
+            if (categoriesFilter->contains(category))
+                return true;
+        }
+
+        return false;
+    };
     const CollatorStringMatcher matcher(query, matcherMode);
     uint32_t precisionXY = 0;
     bool hasSubcategoriesField = false;
@@ -1083,12 +1096,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                         return;
                 }
 
-                if (!categoriesFilterChecked &&
-                    categoriesFilter &&
-                    categories.toSet().intersect(*categoriesFilter).isEmpty())
-                {
+                if (!categoriesFilterChecked && !categoriesMatchFilter())
                     return;
-                }
                 
                 if (poiAdditionalFilter && (!hasSubcategoriesField || !topIndexAdditonalFound))
                 {
@@ -1153,9 +1162,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
             case OBF::OsmAndPoiBoxDataAtom::kSubcategoriesFieldNumber:
             {
                 hasSubcategoriesField = true;
-                if (!categoriesFilterChecked &&
-                    categoriesFilter &&
-                    categories.toSet().intersect(*categoriesFilter).isEmpty())
+                if (!categoriesFilterChecked && !categoriesMatchFilter())
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     return;

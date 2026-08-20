@@ -3098,10 +3098,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
     const auto symbolIntersectsWithAnyClass = symbolIntersectsWithClasses.contains(intersectionClassesRegistry.anyClass);
     const auto symbolGroupPtr = symbol->groupPtr;
     const auto intersects = intersections.test(renderable->intersectionBBox, false,
-        [symbolGroupPtr, symbolIntersectsWithClasses, symbolIntersectsWithAnyClass, anyIntersectionClass, symbolGroupInstancePtr, checkIntersectionsWithinGroup]
+        [symbolGroupPtr, &symbolIntersectsWithClasses, symbolIntersectsWithAnyClass, anyIntersectionClass, symbolGroupInstancePtr, checkIntersectionsWithinGroup]
         (const std::shared_ptr<const RenderableSymbol>& otherRenderable, const ScreenQuadTree::BBox& otherBBox) -> bool
         {
             const auto& otherSymbol = otherRenderable->mapSymbol;
+            const auto& otherSymbolIntersectsWithClasses = otherSymbol->intersectsWithClasses;
 
             // Symbols never intersect anything inside own group (different instances are treated as different groups)
             if (!checkIntersectionsWithinGroup && symbolGroupPtr == otherSymbol->groupPtr)
@@ -3114,17 +3115,30 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
             }
 
             // Special case: tested symbol intersects any other symbol with at least 1 any class
-            if (symbolIntersectsWithAnyClass && !otherSymbol->intersectsWithClasses.isEmpty())
+            if (symbolIntersectsWithAnyClass && !otherSymbolIntersectsWithClasses.isEmpty())
                 return true;
 
             // Special case: other symbol intersects tested symbol with at least 1 any class (which is true already)
-            if (otherSymbol->intersectsWithClasses.contains(anyIntersectionClass))
+            if (otherSymbolIntersectsWithClasses.contains(anyIntersectionClass))
                 return true;
 
-            // General case:
-            const auto commonIntersectionClasses = symbolIntersectsWithClasses & otherSymbol->intersectsWithClasses;
-            const auto hasCommonIntersectionClasses = !commonIntersectionClasses.isEmpty();
-            return hasCommonIntersectionClasses;
+            // General case: iterate the smaller set instead of allocating a
+            // temporary set with the intersection.
+            const auto& smallerIntersectionClasses =
+                symbolIntersectsWithClasses.size() <= otherSymbolIntersectsWithClasses.size()
+                ? symbolIntersectsWithClasses
+                : otherSymbolIntersectsWithClasses;
+            const auto& largerIntersectionClasses =
+                symbolIntersectsWithClasses.size() <= otherSymbolIntersectsWithClasses.size()
+                ? otherSymbolIntersectsWithClasses
+                : symbolIntersectsWithClasses;
+            for (const auto intersectionClass : constOf(smallerIntersectionClasses))
+            {
+                if (largerIntersectionClasses.contains(intersectionClass))
+                    return true;
+            }
+
+            return false;
         });
 
     if (metric)
