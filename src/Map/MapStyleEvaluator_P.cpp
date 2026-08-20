@@ -414,11 +414,10 @@ void OsmAnd::MapStyleEvaluator_P::postprocessEvaluationResult(
     MapStyleEvaluationResult& outResultStorage,
     OnDemand<IntermediateEvaluationResult>& constantEvaluationResult) const
 {
-    IMapStyle::Value value;
-    for (IntermediateEvaluationResult::KeyType idx = 0, count = intermediateResult.size(); idx < count; idx++)
+    for (const auto idx : intermediateResult.getSetKeysRef())
     {
-        if (!intermediateResult.get(idx, value))
-            continue;
+        const auto* const pValue = intermediateResult.getRef(idx);
+        assert(pValue != nullptr);
 
         const auto valueDefId = static_cast<IMapStyle::ValueDefinitionId>(idx);
         const auto& valueDef = owner->mapStyle->getValueDefinitionRefById(valueDefId);
@@ -426,7 +425,7 @@ void OsmAnd::MapStyleEvaluator_P::postprocessEvaluationResult(
         const auto constantRuleValue = evaluateConstantValue(
             mapObject,
             valueDef->dataType,
-            value,
+            *pValue,
             inputValues,
             &intermediateResult,
             constantEvaluationResult);

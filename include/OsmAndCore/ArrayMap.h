@@ -24,6 +24,10 @@ namespace OsmAnd
     private:
     protected:
         std::vector<NullableT> _storage;
+
+        // Populated keys, kept unique so sparse operations only visit entries
+        // that currently contain a value.
+        std::vector<KeyType> _setKeys;
     public:
         inline ArrayMap(const SizeType size = 0)
         {
@@ -32,12 +36,14 @@ namespace OsmAnd
 
         inline ArrayMap(const ArrayMapT& that)
             : _storage(that._storage)
+            , _setKeys(that._setKeys)
         {
         }
 
 #ifdef Q_COMPILER_RVALUE_REFS
         inline ArrayMap(ArrayMapT&& that)
             : _storage(qMove(that._storage))
+            , _setKeys(qMove(that._setKeys))
         {
         }
 #endif // Q_COMPILER_RVALUE_REFS
@@ -49,7 +55,10 @@ namespace OsmAnd
         inline ArrayMapT& operator=(const ArrayMapT& that)
         {
             if (this != &that)
+            {
                 _storage = that._storage;
+                _setKeys = that._setKeys;
+            }
             return *this;
         }
 
@@ -57,7 +66,10 @@ namespace OsmAnd
         inline ArrayMapT& operator=(ArrayMapT&& that)
         {
             if (this != &that)
+            {
                 _storage = qMove(that._storage);
+                _setKeys = qMove(that._setKeys);
+            }
             return *this;
         }
 #endif // Q_COMPILER_RVALUE_REFS
@@ -84,7 +96,11 @@ namespace OsmAnd
             if (key >= _storage.size())
                 _storage.resize(key + 1);
 
-            _storage[key] = value;
+            auto& entry = _storage[key];
+            if (!entry.isSet())
+                _setKeys.push_back(key);
+
+            entry = value;
         }
 
         inline VALUE* insert(const KeyType key, const VALUE& value)
@@ -93,6 +109,9 @@ namespace OsmAnd
                 _storage.resize(key + 1);
 
             auto& entry = _storage[key];
+            if (!entry.isSet())
+                _setKeys.push_back(key);
+
             entry = value;
             return entry.getValuePtrOrNullptr();
         }
@@ -137,19 +156,25 @@ namespace OsmAnd
         inline void reset()
         {
             _storage.clear();
+            _setKeys.clear();
         }
 
         inline void clear()
         {
-            const auto size = _storage.size();
-            auto pValue = _storage.data();
-            for (SizeType index = 0; index < size; index++)
-                (pValue++)->unset();
+            for (const auto key : _setKeys)
+                _storage[key].unset();
+
+            _setKeys.clear();
         }
 
         inline SizeType size() const
         {
             return _storage.size();
+        }
+
+        inline const std::vector<KeyType>& getSetKeysRef() const
+        {
+            return _setKeys;
         }
 
         inline bool isEmpty() const
@@ -165,6 +190,7 @@ namespace OsmAnd
         inline void squeeze()
         {
             _storage.shrink_to_fit();
+            _setKeys.shrink_to_fit();
         }
 
         inline bool findMinKey(KeyType& outKey) const
