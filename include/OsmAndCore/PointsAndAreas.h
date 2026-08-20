@@ -1196,4 +1196,7 @@ namespace OsmAnd
     typedef OOBB<int64_t> OOBBI64;
 }
 
+Q_DECLARE_TYPEINFO(OsmAnd::PointI, Q_PRIMITIVE_TYPE);
+Q_DECLARE_TYPEINFO(OsmAnd::PointF, Q_PRIMITIVE_TYPE);
+
 #endif // !defined(_OSMAND_CORE_POINTS_AND_AREAS_H_)

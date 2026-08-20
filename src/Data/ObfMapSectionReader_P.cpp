@@ -409,6 +409,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
     MapSurfaceType& outChildrenSurfaceType,
     QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >* nodesWithData,
     const AreaI* bbox31,
+    const AreaI* surfaceBBox31,
     const std::shared_ptr<const IQueryController>& queryController,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
@@ -458,6 +459,10 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 if (metric)
                     metric->acceptedNodes++;
 
+                const auto contributesSurface =
+                    !surfaceBBox31 ||
+                    surfaceBBox31->intersects(childNode->area31);
+
                 if (nodesWithData && childNode->dataOffset > 0)
                     nodesWithData->push_back(childNode);
 
@@ -468,14 +473,23 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                     const auto oldLimit = cis->PushLimit(childNode->length);
 
                     cis->Skip(childNode->firstDataBoxInnerOffset);
-                    readTreeNodeChildren(reader, section, childNode, subchildrenSurfaceType, nodesWithData, bbox31, queryController, metric);
+                    readTreeNodeChildren(
+                        reader,
+                        section,
+                        childNode,
+                        subchildrenSurfaceType,
+                        nodesWithData,
+                        bbox31,
+                        surfaceBBox31,
+                        queryController,
+                        metric);
 
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
                     cis->PopLimit(oldLimit);
                 }
 
                 const auto surfaceTypeToMerge = (subchildrenSurfaceType != MapSurfaceType::Undefined) ? subchildrenSurfaceType : childNode->surfaceType;
-                if (surfaceTypeToMerge != MapSurfaceType::Undefined)
+                if (contributesSurface && surfaceTypeToMerge != MapSurfaceType::Undefined)
                 {
                     if (outChildrenSurfaceType == MapSurfaceType::Undefined)
                         outChildrenSurfaceType = surfaceTypeToMerge;
@@ -1066,7 +1080,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const std::shared_ptr<const ObfMapSectionInfo>& section,
     const std::shared_ptr<const MapPresentationEnvironment>& environment,
     ZoomLevel zoom,
-    const AreaI* bbox31,
+    const AreaI* requestedBBox31,
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
     MapSurfaceType* outBBoxOrSectionSurfaceType,
     const ObfMapSectionReader::FilterByIdFunction filterById,
@@ -1121,17 +1135,35 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         evaluator.setIntegerValue(environment->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
     }
 
+    // Use an OBF-grid-aligned bbox to load geometry from adjacent data blocks,
+    // but keep the requested bbox for label filtering and surface aggregation.
+    AreaI exBBox31;
+    const AreaI* bbox31 = nullptr;
+    if (requestedBBox31)
+    {
+        const auto coordinateMask = (1u << ShiftCoordinates) - 1;
+        exBBox31.topLeft.x = requestedBBox31->topLeft.x & MaskToRead;
+        exBBox31.topLeft.y = requestedBBox31->topLeft.y & MaskToRead;
+        exBBox31.bottomRight.x =
+            AreaI::safeEnlarge(requestedBBox31->bottomRight.x, coordinateMask) & MaskToRead;
+        exBBox31.bottomRight.y =
+            AreaI::safeEnlarge(requestedBBox31->bottomRight.y, coordinateMask) & MaskToRead;
+        bbox31 = &exBBox31;
+    }
+
     // Use coarse grids of tile symbols for preliminary overlap filtering
     QSet<uint> filteringGrid;
 
     const auto zoomShift = MaxZoomLevel - zoom;
-    auto tileId = bbox31 ? TileId::fromXY(bbox31->left() >> zoomShift, bbox31->top() >> zoomShift) : TileId::zero();
-    if (bbox31 && zoomShift > 0)
+    auto tileId = requestedBBox31
+        ? TileId::fromXY(requestedBBox31->left() >> zoomShift, requestedBBox31->top() >> zoomShift)
+        : TileId::zero();
+    if (requestedBBox31 && zoomShift > 0)
     {
         const auto shift = zoomShift - 1;
         const auto halfSize = 1 << shift;
-        tileId.x = ((tileId.x + (bbox31->left() >> shift & 1 ? 1 : 0)) << zoomShift) + halfSize;
-        tileId.y = ((tileId.y + (bbox31->top() >> shift & 1 ? 1 : 0)) << zoomShift) + halfSize;
+        tileId.x = ((tileId.x + (requestedBBox31->left() >> shift & 1 ? 1 : 0)) << zoomShift) + halfSize;
+        tileId.y = ((tileId.y + (requestedBBox31->top() >> shift & 1 ? 1 : 0)) << zoomShift) + halfSize;
     }
     const PointD tileCoords(static_cast<double>(tileId.x), static_cast<double>(tileId.y));
     const auto tileFactor = GRID_CELLS_PER_TILESIDE / static_cast<double>(1u << zoomShift);
@@ -1223,6 +1255,10 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             if (metric)
                 metric->acceptedNodes++;
 
+            const auto contributesSurface =
+                !requestedBBox31 ||
+                requestedBBox31->intersects(rootNode->area31);
+
             if (rootNode->dataOffset > 0)
                 treeNodesWithData.push_back(rootNode);
 
@@ -1233,14 +1269,23 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 auto oldLimit = cis->PushLimit(rootNode->length);
 
                 cis->Skip(rootNode->firstDataBoxInnerOffset);
-                readTreeNodeChildren(reader, section, rootNode, rootSubnodesSurfaceType, &treeNodesWithData, bbox31, queryController, metric);
+                readTreeNodeChildren(
+                    reader,
+                    section,
+                    rootNode,
+                    rootSubnodesSurfaceType,
+                    &treeNodesWithData,
+                    bbox31,
+                    requestedBBox31,
+                    queryController,
+                    metric);
                 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
             }
 
             const auto surfaceTypeToMerge = (rootSubnodesSurfaceType != MapSurfaceType::Undefined) ? rootSubnodesSurfaceType : rootNode->surfaceType;
-            if (surfaceTypeToMerge != MapSurfaceType::Undefined)
+            if (contributesSurface && surfaceTypeToMerge != MapSurfaceType::Undefined)
             {
                 if (bboxOrSectionSurfaceType == MapSurfaceType::Undefined)
                     bboxOrSectionSurfaceType = surfaceTypeToMerge;
