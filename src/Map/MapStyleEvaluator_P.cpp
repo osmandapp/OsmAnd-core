@@ -500,19 +500,21 @@ void OsmAnd::MapStyleEvaluator_P::setFloatValue(const int valueDefId, const floa
 
 void OsmAnd::MapStyleEvaluator_P::setStringValue(const int valueDefId, const QString& value)
 {
-    InputValue valueEntry;
-
     MapStyleConstantValue parsedValue;
     const auto ok = owner->mapStyle->parseValue(value, valueDefId, parsedValue);
-    if (!ok)
-    {
-        //LogPrintf(LogSeverityLevel::Warning,
-        //    "Map style input string '%s' was not resolved in lookup table",
-        //    qPrintable(value));
-        valueEntry.asUInt = std::numeric_limits<uint32_t>::max();
-    }
-    else
-        valueEntry.asUInt = parsedValue.asSimple.asUInt;
+    const auto stringId = ok
+        ? parsedValue.asSimple.asUInt
+        : std::numeric_limits<IMapStyle::StringId>::max();
+
+    setStringIdValue(valueDefId, stringId);
+}
+
+void OsmAnd::MapStyleEvaluator_P::setStringIdValue(
+    const int valueDefId,
+    const IMapStyle::StringId value)
+{
+    InputValue valueEntry;
+    valueEntry.asUInt = value;
 
     _inputValues->set(valueDefId, valueEntry);
     _inputValuesShadow->set(valueDefId, valueEntry);

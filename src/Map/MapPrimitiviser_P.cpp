@@ -828,8 +828,22 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
         const Stopwatch orderEvaluationStopwatch(metric != nullptr);
 
         // Setup tag+value-specific input data
-        orderEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
-        orderEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedAttribute.value);
+        MapStyleConstantValue parsedTag;
+        const auto tagStringId = env->mapStyle->parseValue(
+            decodedAttribute.tag,
+            env->styleBuiltinValueDefs->id_INPUT_TAG,
+            parsedTag)
+            ? parsedTag.asSimple.asUInt
+            : std::numeric_limits<IMapStyle::StringId>::max();
+        MapStyleConstantValue parsedValue;
+        const auto valueStringId = env->mapStyle->parseValue(
+            decodedAttribute.value,
+            env->styleBuiltinValueDefs->id_INPUT_VALUE,
+            parsedValue)
+            ? parsedValue.asSimple.asUInt
+            : std::numeric_limits<IMapStyle::StringId>::max();
+        orderEvaluator.setStringIdValue(env->styleBuiltinValueDefs->id_INPUT_TAG, tagStringId);
+        orderEvaluator.setStringIdValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, valueStringId);
 
         evaluationResult.clear();
         ok = orderEvaluator.evaluate(mapObject, MapStyleRulesetType::Order, &evaluationResult);
@@ -965,8 +979,8 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                 const Stopwatch polygonEvaluationStopwatch(metric != nullptr);
 
                 // Setup tag+value-specific input data (for Polygon)
-                polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
-                polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedAttribute.value);
+                polygonEvaluator.setStringIdValue(env->styleBuiltinValueDefs->id_INPUT_TAG, tagStringId);
+                polygonEvaluator.setStringIdValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, valueStringId);
 
                 // Evaluate style for this primitive to check if it passes (for Polygon)
                 evaluationResult.clear();
@@ -1023,8 +1037,8 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                 const Stopwatch pointEvaluationStopwatch(metric != nullptr);
 
                 // Setup tag+value-specific input data (for Point)
-                pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
-                pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedAttribute.value);
+                pointEvaluator.setStringIdValue(env->styleBuiltinValueDefs->id_INPUT_TAG, tagStringId);
+                pointEvaluator.setStringIdValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, valueStringId);
 
                 // Icon also depends on native text length
                 const auto& nativeCaption = mapObject->getCaptionInNativeLanguage();
@@ -1098,8 +1112,8 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             const Stopwatch polylineEvaluationStopwatch(metric != nullptr);
 
             // Setup tag+value-specific input data
-            polylineEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
-            polylineEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedAttribute.value);
+            polylineEvaluator.setStringIdValue(env->styleBuiltinValueDefs->id_INPUT_TAG, tagStringId);
+            polylineEvaluator.setStringIdValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, valueStringId);
 
             // Evaluate style for this primitive to check if it passes
             evaluationResult.clear();
@@ -1164,8 +1178,8 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             const Stopwatch pointEvaluationStopwatch(metric != nullptr);
 
             // Setup tag+value-specific input data
-            pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
-            pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedAttribute.value);
+            pointEvaluator.setStringIdValue(env->styleBuiltinValueDefs->id_INPUT_TAG, tagStringId);
+            pointEvaluator.setStringIdValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, valueStringId);
 
             // Icon also depends on native text length
             const auto& nativeCaption = mapObject->getCaptionInNativeLanguage();

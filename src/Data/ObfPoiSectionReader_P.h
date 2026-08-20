@@ -23,6 +23,7 @@ namespace OsmAnd
     class ObfReader_P;
     class ObfPoiSectionInfo;
     class Amenity;
+    class CollatorStringMatcher;
     class IQueryController;
 
     class ObfPoiSectionReader;
@@ -138,7 +139,7 @@ namespace OsmAnd
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
-            const QString& query,
+            const CollatorStringMatcher* const matcher,
             const AreaI* const bbox31,
             const TileAcceptorFunction tileFilter,
             const ZoomLevel zoomFilter,
@@ -147,14 +148,12 @@ namespace OsmAnd
             const QPair<int, int>* poiAdditionalFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController,
-            const StringMatcherMode matcherMode,
             const TagGroupsMap& tagGroups);
         static void readAmenity(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
             std::shared_ptr<const Amenity>& outAmenity,
-            const QString& query,
-            const StringMatcherMode matcherMode,
+            const CollatorStringMatcher* const matcher,
             const TileId boxTileId,
             const ZoomLevel boxZoom,
             const AreaI* const bbox31,

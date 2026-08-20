@@ -45,6 +45,13 @@ void OsmAnd::MapStyleEvaluator::setStringValue(const IMapStyle::ValueDefinitionI
     _p->setStringValue(valueDefId, value);
 }
 
+void OsmAnd::MapStyleEvaluator::setStringIdValue(
+    const IMapStyle::ValueDefinitionId valueDefId,
+    const IMapStyle::StringId value)
+{
+    _p->setStringIdValue(valueDefId, value);
+}
+
 bool OsmAnd::MapStyleEvaluator::evaluate(
     const std::shared_ptr<const MapObject>& mapObject,
     const MapStyleRulesetType rulesetType,

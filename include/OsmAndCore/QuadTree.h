@@ -309,7 +309,7 @@ namespace OsmAnd
                     insertNoCheck(element, bbox_.asOOBB, allowedDepthRemaining);
             }
 
-            void get(QList<ELEMENT_TYPE>& outResults, const Acceptor acceptor) const
+            void get(QList<ELEMENT_TYPE>& outResults, const Acceptor& acceptor) const
             {
                 for (const auto& entry : constOf(entries))
                 {
@@ -326,7 +326,7 @@ namespace OsmAnd
                 }
             }
 
-            void get(QList<EntryT>& outResults, const Acceptor acceptor) const
+            void get(QList<EntryT>& outResults, const Acceptor& acceptor) const
             {
                 for (const auto& entry : constOf(entries))
                 {
@@ -344,7 +344,7 @@ namespace OsmAnd
             }
 
             template<typename BBOX_TYPE>
-            void query(const BBOX_TYPE& bbox_, QList<ELEMENT_TYPE>& outResults, const bool strict, const Acceptor acceptor) const
+            void query(const BBOX_TYPE& bbox_, QList<ELEMENT_TYPE>& outResults, const bool strict, const Acceptor& acceptor) const
             {
                 // If this node can not contain the bbox and bbox doesn't intersect node,
                 // the node can not have anything that will give positive result
@@ -378,7 +378,7 @@ namespace OsmAnd
                 const BBox& bbox_,
                 QList<ELEMENT_TYPE>& outResults,
                 const bool strict,
-                const Acceptor acceptor) const
+                const Acceptor& acceptor) const
             {
                 if (bbox_.type == BBoxType::AABB)
                     query(bbox_.asAABB, outResults, strict, acceptor);
@@ -387,7 +387,7 @@ namespace OsmAnd
             }
 
             template<typename BBOX_TYPE>
-            bool test(const BBOX_TYPE& bbox_, const bool strict, const Acceptor acceptor) const
+            bool test(const BBOX_TYPE& bbox_, const bool strict, const Acceptor& acceptor) const
             {
                 // If this node can not contain the bbox and bbox doesn't intersect node,
                 // the node can not have anything that will give positive result
@@ -420,7 +420,7 @@ namespace OsmAnd
                 return false;
             }
 
-            inline bool test(const BBox& bbox_, const bool strict, const Acceptor acceptor) const
+            inline bool test(const BBox& bbox_, const bool strict, const Acceptor& acceptor) const
             {
                 if (bbox_.type == BBoxType::AABB)
                     return test(bbox_.asAABB, strict, acceptor);
@@ -428,7 +428,7 @@ namespace OsmAnd
                     return test(bbox_.asOOBB, strict, acceptor);
             }
 
-            inline void select(const PointT& point, QList<ELEMENT_TYPE>& outResults, const Acceptor acceptor) const
+            inline void select(const PointT& point, QList<ELEMENT_TYPE>& outResults, const Acceptor& acceptor) const
             {
                 // If this node can not contain the point, the node can not have anything that will give positive result
                 if (!area.contains(point))
@@ -564,7 +564,7 @@ namespace OsmAnd
                 return removedCount;
             }
 
-            inline unsigned int removeSlow(const Acceptor acceptor)
+            inline unsigned int removeSlow(const Acceptor& acceptor)
             {
                 unsigned int removedCount = 0;
 

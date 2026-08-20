@@ -100,6 +100,7 @@ namespace OsmAnd
         void setIntegerValue(const IMapStyle::ValueDefinitionId valueDefId, const unsigned int value);
         void setFloatValue(const IMapStyle::ValueDefinitionId valueDefId, const float value);
         void setStringValue(const IMapStyle::ValueDefinitionId valueDefId, const QString& value);
+        void setStringIdValue(const IMapStyle::ValueDefinitionId valueDefId, const IMapStyle::StringId value);
 
         bool evaluate(
             const std::shared_ptr<const MapObject>& mapObject,

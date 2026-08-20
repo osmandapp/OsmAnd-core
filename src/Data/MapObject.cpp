@@ -301,6 +301,9 @@ bool OsmAnd::MapObject::needsSimplification(const AreaI& nextArea) const
 
 bool OsmAnd::MapObject::updateVisibleArea(const AreaI& nextArea, int64_t nextAreaTime, QVector<PointI>* path31) const
 {
+    if (points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED)
+        return false;
+
     bool result = false;
 
     int64_t prevAreaTime;

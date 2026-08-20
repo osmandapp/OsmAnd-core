@@ -129,8 +129,13 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     }
                 }
 
+                sk_sp<const SkImage> backgroundImage;
+                if (backgroundLayers.size() == 1)
+                    backgroundImage = backgroundLayers.first();
+                else
+                    backgroundImage = SkiaUtilities::mergeImages(backgroundLayers);
                 style
-                    .setBackgroundImage(SkiaUtilities::mergeImages(backgroundLayers))
+                    .setBackgroundImage(backgroundImage)
                     .setBold(textSymbol->isBold)
                     .setItalic(textSymbol->isItalic)
                     .setColor(textSymbol->color)
@@ -357,7 +362,11 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 }
 
                 // Compose final image
-                const auto rasterizedIcon = SkiaUtilities::mergeImages(layers);
+                sk_sp<const SkImage> rasterizedIcon;
+                if (layers.size() == 1)
+                    rasterizedIcon = layers.first();
+                else
+                    rasterizedIcon = SkiaUtilities::mergeImages(layers);
 
 #if OSMAND_DUMP_SYMBOLS
                 {

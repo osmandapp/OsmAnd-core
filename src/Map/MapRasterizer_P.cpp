@@ -279,7 +279,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
             return false;
     }
 
-    const auto evalResult = primitive->evaluationResult;
+    const auto& evalResult = primitive->evaluationResult;
     if (isArea)
     {
         if (!evalResult.contains(valueDefId_color) && !evalResult.contains(env->styleBuiltinValueDefs->id_OUTPUT_SHADER))
@@ -402,9 +402,12 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     //}
     //////////////////////////////////////////////////////////////////////////
 
-    SkPaint paint = _defaultPaint;
-    if (!updatePaint(context, paint, primitive, PaintValuesSet::Layer_1, true))
+    const auto& evaluationResult = primitive->evaluationResult;
+    if (!evaluationResult.contains(context.env->styleBuiltinValueDefs->id_OUTPUT_COLOR) &&
+        !evaluationResult.contains(context.env->styleBuiltinValueDefs->id_OUTPUT_SHADER))
         return;
+
+    SkPaint paint = _defaultPaint;
 
     // Construct and test geometry against bbox area
     SkPath path;
@@ -604,22 +607,36 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
 {
     const auto& env = context.env;
 
+    const auto& evaluationResult = primitive->evaluationResult;
     SkPaint paint = _defaultPaint;
-    if (!updatePaint(context, paint, primitive, PaintValuesSet::Layer_1, false))
-        return;
-
-    bool ok;
-
     ColorARGB shadowColor;
-    ok = primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR,
-                                                     shadowColor.argb);
-    if (!ok || shadowColor == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))
-        shadowColor = context.shadowColor;
+    float shadowRadius = 0.0f;
+    if (drawOnlyShadow)
+    {
+        const auto hasShadowRadius = evaluationResult.getFloatValue(
+            env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS,
+            shadowRadius);
+        if (!hasShadowRadius || shadowRadius <= 0.0f)
+            return;
 
-    float shadowRadius;
-    ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
-    if (drawOnlyShadow && (!ok || shadowRadius <= 0.0f))
-        return;
+        if (!updatePaint(context, paint, primitive, PaintValuesSet::Layer_1, false))
+            return;
+
+        const auto hasShadowColor = evaluationResult.getIntegerValue(
+            env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR,
+            shadowColor.argb);
+        if (!hasShadowColor || shadowColor == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))
+            shadowColor = context.shadowColor;
+    }
+    else
+    {
+        float strokeWidth = 0.0f;
+        if (!evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH, strokeWidth) ||
+            strokeWidth <= 0.0f)
+        {
+            return;
+        }
+    }
 
     // Enlarge area to draw stroke if logical path is outside of original area
     const auto& area31 = context.area31;

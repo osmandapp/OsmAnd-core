@@ -746,6 +746,14 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     if (metric)
                         metric->rejectedMapObjects++;
                 }
+                else if (mapObject->points31.size() >= MIN_POINTS_TO_USE_SIMPLIFIED)
+                {
+                    // Create empty slots only for objects that can use simplified paths.
+                    mapObject->vapItems[0] = new VisibleAreaPoints(0, AreaI(), QVector<PointI>());
+                    mapObject->vapCounts[0].storeRelease(1);
+                    mapObject->vapItems[1] = new VisibleAreaPoints(0, AreaI(), QVector<PointI>());
+                    mapObject->vapCounts[1].storeRelease(1);
+                }
 
                 return;
             }
@@ -879,12 +887,6 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 assert(mapObject->bbox31.right() - treeNode->area31.right() <= 1);
                 assert(mapObject->bbox31.right() >= mapObject->bbox31.left());
                 assert(mapObject->bbox31.bottom() >= mapObject->bbox31.top());
-
-                // Create empty slots for simplified paths
-                mapObject->vapItems[0] = new VisibleAreaPoints(0, AreaI(), QVector<PointI>());
-                mapObject->vapCounts[0].storeRelease(1);
-                mapObject->vapItems[1] = new VisibleAreaPoints(0, AreaI(), QVector<PointI>());
-                mapObject->vapCounts[1].storeRelease(1);
 
                 break;
             }

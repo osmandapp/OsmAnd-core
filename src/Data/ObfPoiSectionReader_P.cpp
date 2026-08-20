@@ -485,7 +485,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                         reader,
                         section,
                         outAmenities,
-                        QString::null,
+                        nullptr,
                         bbox31,
                         tileFilter,
                         zoomToSkip,
@@ -494,7 +494,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                         poiAdditionalFilter,
                         visitor,
                         queryController,
-                        StringMatcherMode::CHECK_STARTS_FROM_SPACE,
                         tagGroups);
 
                     if (tilesToSkip && zoomFilter != InvalidZoomLevel && atLeastOneAccepted)
@@ -832,7 +831,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
     QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
-    const QString& query,
+    const CollatorStringMatcher* const matcher,
     const AreaI* const bbox31,
     const TileAcceptorFunction tileFilter,
     const ZoomLevel zoomFilter,
@@ -841,7 +840,6 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
     const QPair<int, int>* poiAdditionalFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController,
-    const StringMatcherMode matcherMode,
     const TagGroupsMap& tagGroups)
 {
     const auto cis = reader.getCodedInputStream().get();
@@ -900,6 +898,8 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
                         cis->Skip(cis->BytesUntilLimit());
                         return false;
                     }
+
+                    firstAmenityRead = true;
                 }
 
                 gpb::uint32 length;
@@ -912,8 +912,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
                     reader, 
                     section,
                     amenity,
-                    query,
-                    matcherMode,
+                    matcher,
                     tileId,
                     zoom,
                     bbox31,
@@ -973,8 +972,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
     std::shared_ptr<const Amenity>& outAmenity,
-    const QString& query,
-    const StringMatcherMode matcherMode,
+    const CollatorStringMatcher* const matcher,
     const TileId boxTileId,
     const ZoomLevel boxZoom,
     const AreaI* const bbox31,
@@ -1013,7 +1011,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
 
         return false;
     };
-    const CollatorStringMatcher matcher(query, matcherMode);
     uint32_t precisionXY = 0;
     bool hasSubcategoriesField = false;
     bool topIndexAdditonalFound = false;
@@ -1071,13 +1068,13 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     }
                 }
 
-                if (!query.isNull())
+                if (matcher)
                 {
                     bool accept = !nativeName.isEmpty() &&
-                    (matcher.matches(nativeName) || matcher.matches(OsmAnd::ICU::transliterateToLatin(nativeName)));
+                    (matcher->matches(nativeName) || matcher->matches(OsmAnd::ICU::transliterateToLatin(nativeName)));
                     for (const auto& localizedName : constOf(localizedNames))
                     {
-                        accept = accept || matcher.matches(localizedName);
+                        accept = accept || matcher->matches(localizedName);
 
                         if (accept)
                             break;
@@ -1086,7 +1083,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     {
                         for (const auto& additionalName : additionalNames)
                         {
-                            accept = accept || matcher.matches(additionalName);
+                            accept = accept || matcher->matches(additionalName);
                             
                             if (accept)
                                 break;
@@ -1327,6 +1324,10 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
     const StringMatcherMode matcherMode)
 {
     const auto cis = reader.getCodedInputStream().get();
+    std::unique_ptr<CollatorStringMatcher> matcher;
+    if (!query.isNull())
+        matcher.reset(new CollatorStringMatcher(query, matcherMode));
+
     QMap<uint32_t, uint32_t> dataBoxesOffsetsSet;
     QList<int> nameIndexCoordinates;
     QMap<uint32_t, uint64_t> dataBoxesOffsetsMap;
@@ -1422,7 +1423,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                         reader,
                         section,
                         outAmenities,
-                        query,
+                        matcher.get(),
                         bbox31,
                         tileFilter,
                         InvalidZoomLevel,
@@ -1431,7 +1432,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                         poiAdditionalFilter,
                         visitor,
                         queryController,
-                        matcherMode,
                         tagGroups);
 
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
