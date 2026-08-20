@@ -28,7 +28,7 @@ OsmAnd::CollatorStringMatcher::~CollatorStringMatcher()
 bool OsmAnd::CollatorStringMatcher::matches(const QString& name) const
 {
     QString name_ = CollatorStringMatcher_P::lowercaseAndAlignChars(name);
-    return _p->CollatorStringMatcher_P::matches(name_, _part, _mode);
+    return OsmAnd::ICU::cmatchesNormalized(name_, _part, _mode);
 }
 
 bool OsmAnd::CollatorStringMatcher::cmatches(const QString& _base, const QString& _part, StringMatcherMode _mode)
@@ -50,12 +50,16 @@ bool OsmAnd::CollatorStringMatcher::cmatches(const QString& _base, const QString
         }
     }
     QString part = _part;
-    if (alignPart)
+    if (_mode == StringMatcherMode::MULTISEARCH)
+    {
+        part = lowercaseAndAlignChars(part);
+    }
+    else if (alignPart)
     {
         part = alignChars(part);
     }
     base = lowercaseAndAlignChars(_base);
-    return OsmAnd::ICU::cmatches(base, part, _mode);
+    return OsmAnd::ICU::cmatchesNormalized(base, part, _mode);
 }
 
 bool OsmAnd::CollatorStringMatcher::ccontains(const QString& _base, const QString& _part)
