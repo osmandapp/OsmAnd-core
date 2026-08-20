@@ -1,6 +1,7 @@
 #include "ICU.h"
 #include "ICU_private.h"
 #include "CollatorStringMatcher.h"
+#include "SearchAlgorithms.h"
 
 #include <cassert>
 #include <cstring>
@@ -8,10 +9,12 @@
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QByteArray>
+#include <QStringList>
 #include <QVector>
 #include <QThread>
 #include <QHash>
 #include <QReadWriteLock>
+#include <QLocale>
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
@@ -203,16 +206,21 @@ bool OsmAnd::ICU::initialize()
 
     Collator *collator = nullptr;
     icuError = U_ZERO_ERROR;
-    Locale locale = Locale::getDefault();
-    if (std::strcmp(locale.getLanguage(), "ro") ||
-        std::strcmp(locale.getLanguage(), "cs") ||
-        std::strcmp(locale.getLanguage(), "sk"))
+
+    // romanian locale encounters diacritics as different symbols
+    QLocale qtLocale;
+    const QByteArray localeName = qtLocale.name().toLatin1();
+    Locale locale = Locale::createCanonical(localeName.constData());
+
+    if (std::strcmp(locale.getLanguage(), "ro") == 0 ||
+        std::strcmp(locale.getLanguage(), "cs") == 0 ||
+        std::strcmp(locale.getLanguage(), "sk") == 0)
     {
         collator = Collator::createInstance(Locale("en", "US"), icuError);
     }
     else
     {
-        collator = Collator::createInstance(icuError);
+        collator = Collator::createInstance(locale, icuError);
     }
     
     if (U_FAILURE(icuError))
@@ -739,7 +747,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
         // FUTURE: This is not effective code, it runs on each comparision
         // It would be more efficient to normalize all strings in file and normalize search string before collator
         QString searchInParam = OsmAnd::CollatorStringMatcher::lowercaseAndAlignChars(_searchInParam);
-        QString theStartParam = OsmAnd::CollatorStringMatcher::alignChars(_theStart);
+        QString theStartParam = OsmAnd::SearchAlgorithms::alignChars(_theStart);
         UnicodeString searchIn = qStrToUniStr(searchInParam.replace("-", " "));
         UnicodeString theStart = qStrToUniStr(theStartParam.replace("-", " "));
 
