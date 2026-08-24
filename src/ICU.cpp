@@ -731,6 +731,11 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::ccontains(const QString& _bas
 OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _searchInParam, const QString& _theStart,
                                                   bool checkBeginning, bool checkSpaces, bool equals)
 {
+    // Normalize before acquiring icuResourcesLock: alignChars() calls stripDiacritics(),
+    // which acquires the same non-recursive lock.
+    QString searchInParam = OsmAnd::CollatorStringMatcher::lowercaseAndAlignChars(_searchInParam);
+    QString theStartParam = OsmAnd::SearchAlgorithms::alignChars(_theStart);
+
     UErrorCode icuError = U_ZERO_ERROR;
     bool result = false;
     QReadLocker icuReadLocker(&icuResourcesLock);
@@ -746,8 +751,6 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
     {
         // FUTURE: This is not effective code, it runs on each comparision
         // It would be more efficient to normalize all strings in file and normalize search string before collator
-        QString searchInParam = OsmAnd::CollatorStringMatcher::lowercaseAndAlignChars(_searchInParam);
-        QString theStartParam = OsmAnd::SearchAlgorithms::alignChars(_theStart);
         UnicodeString searchIn = qStrToUniStr(searchInParam.replace("-", " "));
         UnicodeString theStart = qStrToUniStr(theStartParam.replace("-", " "));
 
