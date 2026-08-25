@@ -33,7 +33,6 @@ namespace OsmAnd
         static bool cstartsWith(const QString& _searchInParam, const QString& _theStart,
                          bool checkBeginning, bool checkSpaces, bool equals);
         static QString lowercaseAndAlignChars(const QString& fullText);
-        static QString alignChars(const QString& fullText);
     };
 }
 
