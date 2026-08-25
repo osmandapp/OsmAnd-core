@@ -112,6 +112,13 @@ namespace OsmAnd
                 observers = detachedOf(_observers);
             }
 
+            if (observers.isEmpty())
+                return;
+
+            QThreadPool* const threadPool = QThreadPool::globalInstance();
+            if (!threadPool)
+                return;
+
 #if defined(__GNUC__) && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 9)) && !defined(__clang__)
             //WORKAROUND: Ugly workaround for https://gcc.gnu.org/bugzilla/show_bug.cgi?id=41933
             const auto runnableFunction =
@@ -122,9 +129,9 @@ namespace OsmAnd
                         handler(wrappedArgs...);
                 };
             const std::function<void ()> workaroudHandler = std::bind(runnableFunction, args...);
-            QThreadPool::globalInstance()->start(new NotifyRunnable(workaroudHandler));
+            threadPool->start(new NotifyRunnable(workaroudHandler));
 #else
-            QThreadPool::globalInstance()->start(new NotifyRunnable(
+            threadPool->start(new NotifyRunnable(
                 [observers, args...]
                 ()
                 {
