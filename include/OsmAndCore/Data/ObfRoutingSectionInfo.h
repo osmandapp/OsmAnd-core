@@ -86,6 +86,7 @@ namespace OsmAnd
                 TrafficSignals = 6,
                 RailwayCrossing = 7,
                 Lanes = 8,
+                Hazard = 9,
             };
             
             QString t;
