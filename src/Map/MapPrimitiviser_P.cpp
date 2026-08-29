@@ -26,6 +26,8 @@
 #include "Logging.h"
 #include "multipolygons.h"
 
+#define USE_V1_COASTLINES 0
+
 //#define OSMAND_VERBOSE_MAP_PRIMITIVISER 1
 #if !defined(OSMAND_VERBOSE_MAP_PRIMITIVISER)
 #   define OSMAND_VERBOSE_MAP_PRIMITIVISER 0
@@ -261,114 +263,143 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > polygonizedCoastlineObjects;
     const auto basemapCoastlinesPresent = !basemapCoastlineObjects.isEmpty();
     const auto detailedmapCoastlinesPresent = !detailedmapCoastlineObjects.isEmpty();
-    const auto detailedLandDataPresent = detailedBinaryMapObjectsPresent && !hasContourLinesObjectOnly;
-    auto fillEntireArea = true;
-    bool detailCoastlineBroken = false;
-    
-    if (detailedmapCoastlinesPresent && zoom >= MapPrimitiviser::DetailedLandDataMinZoom)
-    {
-        const bool coastlinesWereAdded = polygonizeCoastlines(
-            getWidenArea(area31, zoom),
-            zoom,
-            detailedmapCoastlineObjects,
-            polygonizedCoastlineObjects);
-        fillEntireArea = !coastlinesWereAdded;
-        
-        if (!coastlinesWereAdded)
-        {
-            //detect if broken coastline inside area31 (tile bbox)
-            for (auto obj : detailedmapCoastlineObjects)
-            {
-                for (auto point : obj->points31)
-                {
-                    if (area31.contains(point))
-                    {
-                        detailCoastlineBroken = true;
-                        break;
-                    }
-                }
-                if (detailCoastlineBroken)
-                    break;
-            }
-        }
-    }
-    
-    
-    bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
-    bool shouldAddBasemapCoastlines = !detailedmapCoastlinesPresent
-                                 && !hasExtraCoastlines
-                                 //&& !detailedLandDataPresent
-                                 && basemapCoastlinesPresent;
-    
-    if (detailCoastlineBroken && basemapCoastlinesPresent)
-    {
-        shouldAddBasemapCoastlines = true;
-        polygonizedCoastlineObjects.clear();
-    }
-    
-    shouldAddBasemapCoastlines = shouldAddBasemapCoastlines || zoom < MapPrimitiviser::DetailedLandDataMinZoom;
-    
-    if (shouldAddBasemapCoastlines)
-    {
-        const bool coastlinesWereAdded = polygonizeCoastlines(
-            area31,
-            zoom,
-            basemapCoastlineObjects,
-            polygonizedCoastlineObjects);
-        fillEntireArea = !coastlinesWereAdded && fillEntireArea;
-    }
-
-    // In case zoom is higher than ObfMapSectionLevel::MaxBasemapZoomLevel and coastlines were not used
-    // due to none of them intersect current zoom tile edge, look for the nearest coastline segment
-    // to determine use FullLand or FullWater as surface type
     auto surfaceType = surfaceType_;
-    if (zoom > ObfMapSectionLevel::MaxBasemapZoomLevel && fillEntireArea)
+    auto fillEntireArea = true;
+    if (USE_V1_COASTLINES)
     {
-        const auto center = area31.center();
-        assert(area31.contains(center));
-        bool isDeterminedSurfaceType = false;
+        bool detailCoastlineBroken = false;
         
-        if (hasExtraCoastlines)
+        if (detailedmapCoastlinesPresent && zoom >= MapPrimitiviser::DetailedLandDataMinZoom)
         {
-            AreaI bboxZoom13 = Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel14);
-            bboxZoom13.right()++;
-            bboxZoom13.bottom()++;
-            bboxZoom13 = bboxZoom13.getEnlargedBy(bboxZoom13.width() / 2);
-            bboxZoom13.right()--;
-            bboxZoom13.bottom()--;
-            MapSurfaceType surfaceTypeOverscaled = MapSurfaceType::Undefined;
-            QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
-            polygonizeCoastlines(
-                bboxZoom13,
-                ZoomLevel::ZoomLevel13,
-                extraCoastlineObjects,
-                polygonizedCoastlines);
-            surfaceTypeOverscaled = determineSurfaceType(area31, polygonizedCoastlines);
-            if (surfaceTypeOverscaled != MapSurfaceType::Undefined)
+            const bool coastlinesWereAdded = polygonizeCoastlines(
+                getWidenArea(area31, zoom),
+                zoom,
+                detailedmapCoastlineObjects,
+                polygonizedCoastlineObjects);
+            fillEntireArea = !coastlinesWereAdded;
+            
+            if (!coastlinesWereAdded)
             {
-                isDeterminedSurfaceType = true;
-                surfaceType = surfaceTypeOverscaled;
+                //detect if broken coastline inside area31 (tile bbox)
+                for (auto obj : detailedmapCoastlineObjects)
+                {
+                    for (auto point : obj->points31)
+                    {
+                        if (area31.contains(point))
+                        {
+                            detailCoastlineBroken = true;
+                            break;
+                        }
+                    }
+                    if (detailCoastlineBroken)
+                        break;
+                }
             }
         }
         
-        if (!isDeterminedSurfaceType && basemapCoastlinesPresent)
+        
+        bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
+        bool shouldAddBasemapCoastlines = !detailedmapCoastlinesPresent
+                                    && !hasExtraCoastlines
+                                    //&& !detailedLandDataPresent
+                                    && basemapCoastlinesPresent;
+        
+        if (detailCoastlineBroken && basemapCoastlinesPresent)
         {
-            ZoomLevel basemapZoom = static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel);
-            AreaI bboxBasemap = Utilities::roundBoundingBox31(area31, basemapZoom);
-            QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
-            MapSurfaceType surfaceTypeBasemap = MapSurfaceType::Undefined;
-            polygonizeCoastlines(
-                bboxBasemap,
-                basemapZoom,
+            shouldAddBasemapCoastlines = true;
+            polygonizedCoastlineObjects.clear();
+        }
+        
+        shouldAddBasemapCoastlines = shouldAddBasemapCoastlines || zoom < MapPrimitiviser::DetailedLandDataMinZoom;
+        
+        if (shouldAddBasemapCoastlines)
+        {
+            const bool coastlinesWereAdded = polygonizeCoastlines(
+                area31,
+                zoom,
                 basemapCoastlineObjects,
-                polygonizedCoastlines);
-            surfaceTypeBasemap = determineSurfaceType(area31, polygonizedCoastlines);
-            if (surfaceTypeBasemap != MapSurfaceType::Undefined)
+                polygonizedCoastlineObjects);
+            fillEntireArea = !coastlinesWereAdded && fillEntireArea;
+        }
+
+        // In case zoom is higher than ObfMapSectionLevel::MaxBasemapZoomLevel and coastlines were not used
+        // due to none of them intersect current zoom tile edge, look for the nearest coastline segment
+        // to determine use FullLand or FullWater as surface type
+        auto surfaceType = surfaceType_;
+        if (zoom > ObfMapSectionLevel::MaxBasemapZoomLevel && fillEntireArea)
+        {
+            const auto center = area31.center();
+            assert(area31.contains(center));
+            bool isDeterminedSurfaceType = false;
+            
+            if (hasExtraCoastlines)
             {
-                isDeterminedSurfaceType = true;
-                surfaceType = surfaceTypeBasemap;
+                AreaI bboxZoom13 = Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel14);
+                bboxZoom13.right()++;
+                bboxZoom13.bottom()++;
+                bboxZoom13 = bboxZoom13.getEnlargedBy(bboxZoom13.width() / 2);
+                bboxZoom13.right()--;
+                bboxZoom13.bottom()--;
+                MapSurfaceType surfaceTypeOverscaled = MapSurfaceType::Undefined;
+                QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
+                polygonizeCoastlines(
+                    bboxZoom13,
+                    ZoomLevel::ZoomLevel13,
+                    extraCoastlineObjects,
+                    polygonizedCoastlines);
+                surfaceTypeOverscaled = determineSurfaceType(area31, polygonizedCoastlines);
+                if (surfaceTypeOverscaled != MapSurfaceType::Undefined)
+                {
+                    isDeterminedSurfaceType = true;
+                    surfaceType = surfaceTypeOverscaled;
+                }
+            }
+            
+            if (!isDeterminedSurfaceType && basemapCoastlinesPresent)
+            {
+                ZoomLevel basemapZoom = static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel);
+                AreaI bboxBasemap = Utilities::roundBoundingBox31(area31, basemapZoom);
+                QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
+                MapSurfaceType surfaceTypeBasemap = MapSurfaceType::Undefined;
+                polygonizeCoastlines(
+                    bboxBasemap,
+                    basemapZoom,
+                    basemapCoastlineObjects,
+                    polygonizedCoastlines);
+                surfaceTypeBasemap = determineSurfaceType(area31, polygonizedCoastlines);
+                if (surfaceTypeBasemap != MapSurfaceType::Undefined)
+                {
+                    isDeterminedSurfaceType = true;
+                    surfaceType = surfaceTypeBasemap;
+                }
             }
         }
+    }
+    else
+    {
+        auto coastlinesWereAdded = false;
+        bool isLand = false;
+        if (detailedmapCoastlinesPresent && zoom >= MapPrimitiviser::DetailedLandDataMinZoom)
+        {
+            coastlinesWereAdded =
+                getCoastlines(area31, detailedmapCoastlineObjects, polygonizedCoastlineObjects, isLand);
+            surfaceType = isLand ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
+        }
+        bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
+        bool shouldAddBasemapCoastlines = !detailedmapCoastlinesPresent && !hasExtraCoastlines;
+        if (!coastlinesWereAdded && basemapCoastlinesPresent
+            && (shouldAddBasemapCoastlines || zoom < MapPrimitiviser::DetailedLandDataMinZoom))
+        {
+            coastlinesWereAdded = getCoastlines(area31, basemapCoastlineObjects, polygonizedCoastlineObjects, isLand);
+            surfaceType = isLand ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
+        }
+        if (!coastlinesWereAdded && hasExtraCoastlines && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
+        {
+            QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
+            getCoastlines(area31, extraCoastlineObjects, polygonizedCoastlines, isLand);
+            surfaceType = isLand ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
+        }
+        fillEntireArea = !coastlinesWereAdded;
     }
 
     if (metric)
@@ -2425,6 +2456,221 @@ OsmAnd::MapPrimitiviser_P::Context::Context(
     roadsDensityLimitPerTile = env->getRoadsDensityLimitPerTile(zoom);
     defaultSymbolPathSpacing = env->getDefaultSymbolPathSpacing();
     defaultBlockPathSpacing = env->getDefaultBlockPathSpacing();
+}
+
+bool OsmAnd::MapPrimitiviser_P::getCoastlines(
+    const AreaI area31,
+    const QList< std::shared_ptr<const MapObject> >& coastlines,
+    QList< std::shared_ptr<const MapObject> >& outVectorized,
+    bool& isLand)
+{
+    outVectorized.clear();
+    bool withCoastlines = false;
+    QVector<PointI> temp;
+    QVector<int> polylineIndices;
+    polylineIndices.reserve(coastlines.size());
+    const auto mask = static_cast<uint32_t>(-1) << 5;
+    const PointI topLeft(area31.topLeft.x & mask, area31.topLeft.y & mask);
+    const PointI bottomRight(
+        area31.safeEnlarge(area31.bottomRight.x, 31) & mask, area31.safeEnlarge(area31.bottomRight.y, 31) & mask);
+    const PointI center(topLeft.x + (bottomRight.x - topLeft.x) / 2, topLeft.y + (bottomRight.y - topLeft.y) / 2);
+    double minSqDistance = std::numeric_limits<double>::max();
+    double distance = 0.0;
+    int idx = 0;
+    auto cend = coastlines.cend();
+    for (auto it = coastlines.cbegin(); it != cend; it++, idx++)
+    {
+        const auto& coastline = *it;
+        const auto& points = coastline->points31;
+        if (points.front() != points.back())
+        {
+            polylineIndices.push_back(idx);
+            continue;
+        }
+        if (points.size() < 3)
+            continue;
+
+        // Get already polygonized coastline
+        QVector<PointI> polygon;
+        bool isClockwise;
+        Utilities::clipPolygonForTile(
+            center, points, area31.topLeft, area31.bottomRight, temp, polygon, minSqDistance, distance, isClockwise);
+        if (polygon.size() < 3)
+            continue;
+        const auto& first = polygon.front();
+        if (first != polygon.back())
+            polygon.push_back(first);
+        if (polygon.size() < 4)
+            continue;
+        const auto mapObject = std::make_shared<CoastlineMapObject>();
+        mapObject->points31 = qMove(polygon);
+        mapObject->isArea = coastline->isArea;
+        if (isClockwise)
+        {
+            mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineAttributeId);
+            withCoastlines = true;
+        }
+        else
+            mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalLandAttributeId);
+        outVectorized.push_back(mapObject);
+    }
+
+    if (!polylineIndices.isEmpty())
+    {
+        QVector<QVector<PointI>> polylineGroups[5];
+        for (int i : polylineIndices)
+        {
+            Utilities::clipPolylineForTile(
+                center, coastlines[i]->points31, topLeft, bottomRight, polylineGroups, minSqDistance, distance);
+        }
+
+        // Combine polylines into polygons
+        for (int startSide = 0; startSide < 4; startSide++)
+        {
+            auto& polylines = polylineGroups[startSide];
+            while (!polylines.empty())
+            {
+                auto polygon = polylines.takeLast();
+                auto lastPoint = polygon.back();
+                int endSide = Utilities::computeBorderCode(lastPoint, topLeft, bottomRight);
+                int prevSide;
+                int i = -2;
+                int lastSide = 0;
+                while (++i <= lastSide)
+                {
+                    if (endSide != 4 && i < 0)
+                    {
+                        i = endSide;
+                        lastSide = endSide + 7;
+                    }
+                    while (endSide == 4)
+                    {
+                        auto& nextPolylines = polylineGroups[endSide];
+                        int segIdx;
+                        const auto segCount = nextPolylines.size();
+                        for (segIdx = 0; segIdx < segCount; segIdx++)
+                        {
+                            if (nextPolylines[segIdx].front() == lastPoint)
+                            {
+                                const auto lastIdx = nextPolylines.size() - 1;
+                                if (segIdx < lastIdx)
+                                    nextPolylines.swapItemsAt(segIdx, lastIdx);
+                                auto nextPolyline = nextPolylines.takeLast();
+                                polygon.pop_back();
+                                polygon.append(nextPolyline);
+                                break;
+                            }
+                        }
+                        if (segIdx == segCount)
+                            break;
+                        lastPoint = polygon.back();
+                        const auto nextSide = Utilities::computeBorderCode(lastPoint, topLeft, bottomRight);
+                        if (nextSide < 4)
+                        {
+                            if (i < 0)
+                            {
+                                i = nextSide;
+                                lastSide = nextSide + 7;
+                            }
+                            else
+                                i += (nextSide < prevSide ? 4 : 0) + nextSide - prevSide;
+                        }
+                        endSide = nextSide;
+                    }
+                    if (endSide == 4)
+                        break;
+                    const auto side = i % 4;
+                    auto& nextPolylines = polylineGroups[side];
+                    const auto segCount = nextPolylines.size();
+                    int minDistance = INT32_MAX;
+                    int minIdx = -1;
+                    int segTotal = side == startSide ? segCount + 1 : segCount;
+                    for (int segIdx = 0; segIdx < segTotal; segIdx++)
+                    {
+                        const auto& p = segIdx < segCount ? nextPolylines[segIdx].front() : polygon.front();
+                        int d = (side & 1) > 0 ? p.y - lastPoint.y : p.x - lastPoint.x;
+                        if (side > 1)
+                            d = -d;
+                        if (d >= 0 && d < minDistance)
+                        {
+                            minDistance = d;
+                            minIdx = segIdx;
+                        }
+                    }
+                    if (minIdx >= 0)
+                    {
+                        if (minIdx < segCount)
+                        {
+                            const auto lastIdx = nextPolylines.size() - 1;
+                            if (minIdx < lastIdx)
+                                nextPolylines.swapItemsAt(minIdx, lastIdx);
+                            auto nextPolyline = nextPolylines.takeLast();
+                            if (nextPolyline.front() == lastPoint)
+                                polygon.pop_back();
+                            polygon.append(nextPolyline);
+                            lastPoint = polygon.back();
+                            const auto nextSide = Utilities::computeBorderCode(lastPoint, topLeft, bottomRight);
+                            if (nextSide < 4)
+                                i += (nextSide < endSide ? 4 : 0) + nextSide - endSide - 1;
+                            else
+                            {
+                                prevSide = endSide;
+                                i -= 1;
+                            }
+                            endSide = nextSide;
+                            continue;
+                        }
+                        break;
+                    }
+                    if (i < lastSide)
+                    {
+                        lastPoint.x = side > 1 ? topLeft.x : bottomRight.x;
+                        lastPoint.y = side > 0 && side < 3 ? bottomRight.y : topLeft.y;
+                        polygon.push_back(lastPoint);
+                        endSide = (endSide + 1) % 4;
+                    }
+                }
+                if (endSide == 4 || polygon.size() < 3)
+                    continue;
+                const auto& first = polygon.front();
+                if (first != polygon.back())
+                    polygon.push_back(first);
+                if (polygon.size() < 4)
+                    continue;
+
+                withCoastlines = true;
+
+                const auto mapObject = std::make_shared<CoastlineMapObject>();
+                mapObject->points31 = qMove(polygon);
+                mapObject->isArea = true;
+                mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineAttributeId);
+                outVectorized.push_back(mapObject);
+            }
+        }
+    }
+
+    isLand = distance < 0.0;
+
+    if (outVectorized.isEmpty())
+        return false;
+
+    if (!withCoastlines)
+    {
+        QVector<PointI> polygon;
+        polygon.reserve(5);
+        polygon.push_back(topLeft);
+        polygon.push_back(PointI(bottomRight.x, topLeft.y));
+        polygon.push_back(bottomRight);
+        polygon.push_back(PointI(topLeft.x, bottomRight.y));
+        polygon.push_back(topLeft);
+        const auto mapObject = std::make_shared<CoastlineMapObject>();
+        mapObject->points31 = qMove(polygon);
+        mapObject->isArea = true;
+        mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineAttributeId);
+        outVectorized.push_back(mapObject);
+    }
+
+    return true;
 }
 
 bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
