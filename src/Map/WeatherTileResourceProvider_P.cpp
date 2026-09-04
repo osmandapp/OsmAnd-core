@@ -290,7 +290,7 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTileTime(
         int64_t& outTime)
 {
     auto geoDb = getGeoTilesDatabase();
-    if (geoDb->isOpened())
+    if (geoDb && geoDb->isOpened())
     {
         geoDb->obtainTileTime(tileId, zoom, outTime, dateTime);
         return true;
@@ -321,7 +321,7 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
         withLock = preLockGeoTile(tileId, zoom);
 
     auto geoDb = getGeoTilesDatabase();
-    if (geoDb->isOpened())
+    if (geoDb && geoDb->isOpened())
     {
         int64_t timestamp = 0;
         const auto currentTime = QDateTime::currentMSecsSinceEpoch();
@@ -578,20 +578,34 @@ void OsmAnd::WeatherTileResourceProvider_P::downloadGeoTilesAsync(
 
 std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::getGeoTilesDatabase()
 {
-    QReadLocker geoScopedLocker(&_geoDbLock);
-    
-    auto currentWeatherSource = getWeatherSource();
-    const auto citGeoDb = _geoTilesDbMap.constFind(currentWeatherSource);
-    if (citGeoDb != _geoTilesDbMap.cend())
-        return *citGeoDb;
-    
-    return nullptr;
+    auto currentWeatherSource = getStorageWeatherSource();
+
+    {
+        QReadLocker geoScopedLocker(&_geoDbLock);
+
+        const auto citGeoDb = _geoTilesDbMap.constFind(currentWeatherSource);
+        if (citGeoDb != _geoTilesDbMap.cend())
+            return *citGeoDb;
+    }
+    {
+        QWriteLocker geoScopedLocker(&_geoDbLock);
+
+        const auto citGeoDb = _geoTilesDbMap.constFind(currentWeatherSource);
+        if (citGeoDb != _geoTilesDbMap.cend())
+            return *citGeoDb;
+
+        auto db = createGeoTilesDatabase(currentWeatherSource);
+        if (db)
+            _geoTilesDbMap.insert(currentWeatherSource, db);
+
+        return db;
+    }
 }
 
 std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::getRasterTilesDatabase(
     BandIndex band)
 {
-    auto currentWeatherSource = getWeatherSource();
+    auto currentWeatherSource = getStorageWeatherSource();
     auto key = QPair<WeatherSource, BandIndex>(currentWeatherSource, band);
     
     {
@@ -620,7 +634,7 @@ bool OsmAnd::WeatherTileResourceProvider_P::isEmpty()
 {
     QWriteLocker geoScopedLocker(&_geoDbLock);
     
-    auto currentWeatherSource = getWeatherSource();
+    auto currentWeatherSource = getStorageWeatherSource();
     const auto citGeoDb = _geoTilesDbMap.constFind(currentWeatherSource);
     if (citGeoDb != _geoTilesDbMap.cend())
         return (*citGeoDb)->isEmpty();
@@ -1686,5 +1700,20 @@ QString OsmAnd::WeatherTileResourceProvider_P::getWeatherSourcePrefix(WeatherSou
             return QStringLiteral("ecmwf_");
         default:
             return QStringLiteral("gfs_");
+    }
+}
+
+OsmAnd::WeatherSource OsmAnd::WeatherTileResourceProvider_P::getStorageWeatherSource() const
+{
+    // Keep in sync with getWeatherSourcePrefix(): every source that shares a cache file prefix
+    // has to share the very same database instance, so unknown sources fall back to GFS
+    const auto weatherSource = getWeatherSource();
+    switch (weatherSource)
+    {
+        case WeatherSource::GFS:
+        case WeatherSource::ECMWF:
+            return weatherSource;
+        default:
+            return WeatherSource::GFS;
     }
 }
