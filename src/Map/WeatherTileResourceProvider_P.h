@@ -232,6 +232,7 @@ namespace OsmAnd
         
         QString getWeatherTilesUrlPrefix() const;
         QString getWeatherSourcePrefix(WeatherSource weatherSource) const;
+        WeatherSource getStorageWeatherSource() const;
 
         int getCurrentRequestVersion() const;
         int getAndUpdateRequestVersion(
