@@ -1349,7 +1349,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
     const auto cellsPerTileSize =
         _hasElevationDataResources ? (AtlasMapRenderer::HeixelsPerTileSide - 1) / (1 << (zoomLevel - _mapZoomLevel))
         // Use selective granularity to avoid collisions with the surface
-        : (_flatEarth ? 0 : (_mapZoomLevel < 3 ? 4 : (_mapZoomLevel < 6 ? 2 : 1)));
+        : (_flatEarth ? (withHeights ? 1 : 0) : (_mapZoomLevel < 3 ? 4 : (_mapZoomLevel < 6 ? 2 : 1)));
     bool tesselated = true;
 
     const auto startPos = PointD(startPoint);
