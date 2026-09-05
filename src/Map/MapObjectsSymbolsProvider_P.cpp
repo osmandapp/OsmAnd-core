@@ -926,6 +926,14 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::СombinedPath::isAttachAllowed(
     const float maxGapBetweenPaths,
     float& outGapBetweenPaths) const
 {
+    // A path of less than two points has no direction, so nothing can be attached along it. Such a
+    // path does reach here - the points are taken from the map object as they are, and a degenerate
+    // way of a single point is not filtered anywhere - and the penultimate point below used to be
+    // read at index -1 for it, which is an out of range assert in a Qt with asserts and an out of
+    // bounds read in one without.
+    if (_points.size() < 2 || other->_points.size() < 2)
+        return false;
+
     const auto lastPoint = _points.back();
     const auto otherFirstPoint = other->_points.front();
     const auto gapVector = otherFirstPoint - lastPoint;
