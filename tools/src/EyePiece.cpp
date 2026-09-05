@@ -3,6 +3,8 @@
 #include <OsmAndCore/stdlib_common.h>
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <iomanip>
+#include <limits>
+#include <QRegularExpression>
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
@@ -1045,14 +1047,109 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
             break;
         }
 
+        // Batch tile mode: instead of one frame (or an interpolated animation of them) render the
+        // "z/x/y" tiles of a list, one image per tile. The whole point of it is that the obf
+        // collection, the style and the GL context are set up once for the entire list - a process
+        // per tile costs seconds of start up alone and makes a run of thousands of tiles pointless.
+        const bool tilesMode = !configuration.tilesFilename.isEmpty();
+        const bool tilesFromStdin = tilesMode && configuration.tilesFilename == QLatin1String("-");
+        QFile tilesListFile;
+        if (tilesMode && !tilesFromStdin)
+        {
+            tilesListFile.setFileName(configuration.tilesFilename);
+            if (!tilesListFile.open(QIODevice::ReadOnly | QIODevice::Text))
+            {
+                output << xT("Failed to open tiles list '")
+                    << QStringToStlString(configuration.tilesFilename) << xT("'") << std::endl;
+
+                success = false;
+                break;
+            }
+        }
+
+        // Reads the next non empty line of the tile list, false means there are no more tiles
+        const auto readTileLine =
+            [&tilesListFile, tilesFromStdin]
+            (QString& outLine) -> bool
+            {
+                for (;;)
+                {
+                    if (tilesFromStdin)
+                    {
+                        std::string line;
+                        if (!std::getline(std::cin, line))
+                            return false;
+                        outLine = QString::fromStdString(line).trimmed();
+                    }
+                    else
+                    {
+                        if (tilesListFile.atEnd())
+                            return false;
+                        outLine = QString::fromUtf8(tilesListFile.readLine()).trimmed();
+                    }
+                    if (!outLine.isEmpty())
+                        return true;
+                }
+            };
+
+        // Center of the tile in 31 bit coordinates - with the window sized to one tile and the
+        // camera straight above it, that is exactly the tile the map server means by z/x/y
+        const auto tileTarget31 =
+            []
+            (const int zoom, const int64_t x, const int64_t y) -> OsmAnd::PointI
+            {
+                const auto shift = 31 - zoom;
+                const int64_t half = shift > 0 ? (static_cast<int64_t>(1) << (shift - 1)) : 0;
+                const int64_t maxCoordinate = std::numeric_limits<int32_t>::max();
+                return OsmAnd::PointI(
+                    static_cast<int32_t>(qMin((x << shift) + half, maxCoordinate)),
+                    static_cast<int32_t>(qMin((y << shift) + half, maxCoordinate)));
+            };
+
         // Repeat processing and rendering until everything is complete
         if (configuration.verbose)
             output << xT("Rendering frames...") << std::endl;
         OsmAnd::Stopwatch renderingStopwatch(true);
+        OsmAnd::Stopwatch frameStopwatch(true);
         auto framesCounter = 1u;
         bool wasInterrupted = false;
+        int tileZoom = 0;
+        int64_t tileX = 0;
+        int64_t tileY = 0;
         for (;; framesCounter++)
         {
+            frameStopwatch.start();
+            if (tilesMode)
+            {
+                QString line;
+                if (!readTileLine(line))
+                    break;
+
+                const auto parts = line.split(QRegularExpression(QLatin1String("[\\s/,]+")),
+                    Qt::SkipEmptyParts);
+                bool parsed = parts.size() == 3;
+                if (parsed)
+                {
+                    bool okZoom = false, okX = false, okY = false;
+                    tileZoom = parts[0].toInt(&okZoom);
+                    tileX = parts[1].toLongLong(&okX);
+                    tileY = parts[2].toLongLong(&okY);
+                    parsed = okZoom && okX && okY
+                        && tileZoom >= OsmAnd::MinZoomLevel && tileZoom <= OsmAnd::MaxZoomLevel
+                        && tileX >= 0 && tileX < (static_cast<int64_t>(1) << tileZoom)
+                        && tileY >= 0 && tileY < (static_cast<int64_t>(1) << tileZoom);
+                }
+                if (!parsed)
+                {
+                    output << xT("TILE ") << QStringToStlString(line) << xT(" ERROR not a z/x/y tile")
+                        << std::endl;
+                    continue;
+                }
+
+                mapRenderer->setTarget(tileTarget31(tileZoom, tileX, tileY));
+                mapRenderer->setZoom(static_cast<float>(tileZoom));
+            }
+
             for (;;)
             {
                 // Update must be performed before each frame
@@ -1077,7 +1174,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
                 if (mapRenderer->isIdle())
                     break;
 
-                if (renderingStopwatch.elapsed() > (10 * 60 /* 10 minutes */))
+                // In tiles mode the run is a list of independent tiles, so the limit is per tile
+                if ((tilesMode ? frameStopwatch : renderingStopwatch).elapsed() > (10 * 60 /* 10 minutes */))
                 {
                     wasInterrupted = true;
                     break;
@@ -1117,10 +1215,19 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
             }
 
             // Save bitmap to image (if required)
-            if (!configuration.outputImageFilename.isEmpty())
+            QString savedImageFilename;
+            if (tilesMode || !configuration.outputImageFilename.isEmpty())
             {
                 auto fileName = configuration.outputImageFilename;
-                if (configuration.frames > 1)
+                if (tilesMode)
+                {
+                    fileName = QStringLiteral("%1/%2/%3/%4")
+                        .arg(configuration.tilesOutputDir)
+                        .arg(tileZoom)
+                        .arg(tileX)
+                        .arg(tileY);
+                }
+                else if (configuration.frames > 1)
                     fileName += (QStringLiteral("000") + QString::number(framesCounter)).right(4);
                 auto encodedImageFormat = SkEncodedImageFormat::kBMP;
                 switch (configuration.outputImageFormat)
@@ -1183,6 +1290,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
                                 break;
                             }
                             imageFile.close();
+                            savedImageFilename = fileName;
                         }
                     }
                 }
@@ -1233,6 +1341,19 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
                         jsonFile.close();
                     }
                 }
+            }
+
+            if (tilesMode)
+            {
+                // One line per tile, so that a driver process can consume the tiles as a stream.
+                // Everything the renderer prints goes to the same stream, hence the "TILE " prefix.
+                output << xT("TILE ") << tileZoom << xT("/") << tileX << xT("/") << tileY << xT(" ");
+                if (savedImageFilename.isEmpty())
+                    output << xT("ERROR not written");
+                else
+                    output << QStringToStlString(savedImageFilename);
+                output << std::endl;
+                continue;
             }
 
             if (framesCounter >= configuration.frames)
@@ -1357,6 +1478,7 @@ OsmAndTools::EyePiece::Configuration::Configuration()
     , outputRasterWidth(0)
     , outputRasterHeight(0)
     , outputImageFormat(ImageFormat::PNG)
+    , tileSize(256)
     , target31(OsmAnd::Utilities::convertLatLonTo31(OsmAnd::LatLon(46.95, 7.45)))
     , zoom(15.0f)
     , azimuth(0.0f)
@@ -1390,6 +1512,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
     bool useEndZoom = false;
     bool useEndAzimuth = false;
     bool useEndElevationAngle = false;
+    bool useReferenceTileSize = false;
 
     const std::shared_ptr<OsmAnd::ObfsCollection> obfsCollection(new OsmAnd::ObfsCollection());
     outConfiguration.obfsCollection = obfsCollection;
@@ -1767,6 +1890,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-referenceTileSize=")));
 
             bool ok = false;
+            useReferenceTileSize = true;
             outConfiguration.referenceTileSize = value.toUInt(&ok);
             if (!ok)
             {
@@ -1816,6 +1940,36 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
 
             outConfiguration.locale = value;
         }
+        else if (arg.startsWith(QLatin1String("-tiles=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-tiles=")));
+
+            // "-" is the stdin stream and not a path, so it must not be resolved
+            outConfiguration.tilesFilename = (value == QLatin1String("-"))
+                ? value
+                : Utilities::resolvePath(value);
+            if (outConfiguration.tilesFilename.isEmpty())
+            {
+                outError = QLatin1String("'tiles' can not be empty");
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-tilesOutputDir=")))
+        {
+            outConfiguration.tilesOutputDir = Utilities::resolvePath(arg.mid(strlen("-tilesOutputDir=")));
+        }
+        else if (arg.startsWith(QLatin1String("-tileSize=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-tileSize=")));
+
+            bool ok = false;
+            outConfiguration.tileSize = value.toUInt(&ok);
+            if (!ok || outConfiguration.tileSize == 0)
+            {
+                outError = QString("'%1' can not be parsed as tile size in pixels").arg(value);
+                return false;
+            }
+        }
         else if (arg == QLatin1String("-verbose"))
         {
             outConfiguration.verbose = true;
@@ -1842,8 +1996,27 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
     if (!useEndElevationAngle)
         outConfiguration.endElevationAngle = outConfiguration.elevationAngle;
 
+    // Batch tile mode drives the window size and the scale from the tile size, so that one tile of
+    // the requested zoom is exactly one output image - see the tile loop of rasterize()
+    const bool tilesMode = !outConfiguration.tilesFilename.isEmpty();
+    if (tilesMode)
+    {
+        if (outConfiguration.tilesOutputDir.isEmpty())
+        {
+            outError = QLatin1String("'tilesOutputDir' should be specified together with 'tiles'");
+            return false;
+        }
+        if (outConfiguration.outputRasterWidth == 0)
+            outConfiguration.outputRasterWidth = outConfiguration.tileSize;
+        if (outConfiguration.outputRasterHeight == 0)
+            outConfiguration.outputRasterHeight = outConfiguration.tileSize;
+        if (!useReferenceTileSize)
+            outConfiguration.referenceTileSize = outConfiguration.tileSize;
+    }
+
     // Validate
-    if (outConfiguration.outputImageFilename.isEmpty() && outConfiguration.outputJSONFilename.isEmpty())
+    if (!tilesMode
+        && outConfiguration.outputImageFilename.isEmpty() && outConfiguration.outputJSONFilename.isEmpty())
     {
         outError = QLatin1String("output filename should be specified");
         return false;
