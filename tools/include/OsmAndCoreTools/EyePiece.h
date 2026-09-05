@@ -49,6 +49,11 @@ namespace OsmAndTools
             QString outputImageFilename;
             QString outputJSONFilename;
             ImageFormat outputImageFormat;
+            /** Batch tile mode: file with the "z/x/y" tiles to render, "-" reads them from stdin. */
+            QString tilesFilename;
+            /** Where the batch tile mode writes "<z>/<x>/<y>.png". */
+            QString tilesOutputDir;
+            unsigned int tileSize;
             OsmAnd::PointI target31;
             bool targetOnRelief = false;
             float zoom;
