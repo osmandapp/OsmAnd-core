@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <limits>
 #include <QRegularExpression>
+#include <QThread>
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
@@ -1029,7 +1030,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         // Add providers
         if (configuration.verbose)
             output << xT("Adding providers to map renderer...") << std::endl;
-        mapRenderer->addSymbolsProvider(binaryMapStaticSymbolProvider);
+        if (!configuration.noSymbols)
+            mapRenderer->addSymbolsProvider(binaryMapStaticSymbolProvider);
         mapRenderer->setMapLayerProvider(0, binaryMapRasterTileProvider);
 
         if (configuration.geotiffCollection)
@@ -1116,9 +1118,14 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         int tileZoom = 0;
         int64_t tileX = 0;
         int64_t tileY = 0;
+        // How many times in a row the renderer has to report idle before the frame is read back
+        const auto idleConfirmationsRequired = 3u;
+        const auto idleConfirmationIntervalMs = 10u;
+        auto idleConfirmations = 0u;
         for (;; framesCounter++)
         {
             frameStopwatch.start();
+            idleConfirmations = 0;
             if (tilesMode)
             {
                 QString line;
@@ -1170,9 +1177,20 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
                 glFlush();
                 glVerifyResult(output);
 
-                // Check if map renderer finished processing
+                // Check if map renderer finished processing. One idle poll is not enough: right
+                // after a target change there is a window where the state has been applied but the
+                // resource requests of the new location are not registered yet, and the renderer
+                // reports idle while the frame still holds nothing but the background. Rendering a
+                // list of scattered tiles hits that window often enough to write blank tiles, so
+                // idle has to hold over several polls before the frame is taken.
                 if (mapRenderer->isIdle())
-                    break;
+                {
+                    if (++idleConfirmations >= idleConfirmationsRequired)
+                        break;
+                    QThread::msleep(idleConfirmationIntervalMs);
+                }
+                else
+                    idleConfirmations = 0;
 
                 // In tiles mode the run is a list of independent tiles, so the limit is per tile
                 if ((tilesMode ? frameStopwatch : renderingStopwatch).elapsed() > (10 * 60 /* 10 minutes */))
@@ -1969,6 +1987,10 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
                 outError = QString("'%1' can not be parsed as tile size in pixels").arg(value);
                 return false;
             }
+        }
+        else if (arg == QLatin1String("-noSymbols"))
+        {
+            outConfiguration.noSymbols = true;
         }
         else if (arg == QLatin1String("-verbose"))
         {
