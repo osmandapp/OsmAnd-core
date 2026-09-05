@@ -445,8 +445,9 @@ public abstract class MapRendererView extends FrameLayout {
         synchronized (_mapRenderer) {
             stopRenderingView();
             if (isSuspended) {
+                // Renderer may be suspended in advance, for example when the activity is being
+                // recreated on a configuration change. Still hand it over to the new view.
                 Log.v(TAG, "Renderer was already suspended");
-                return null;
             } else {
                 Log.v(TAG, "Suspending renderer to reuse it in other view");
                 isSuspended = true;
