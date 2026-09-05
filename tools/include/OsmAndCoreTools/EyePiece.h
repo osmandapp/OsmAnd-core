@@ -70,6 +70,7 @@ namespace OsmAndTools
             float mapScale;
             float symbolsScale;
             QString locale;
+            bool noSymbols = false;
             bool verbose = false;
 #if defined(OSMAND_TARGET_OS_linux)
             bool useLegacyContext;
