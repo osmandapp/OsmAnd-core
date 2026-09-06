@@ -199,6 +199,10 @@ bool OsmAnd::GPUAPI_OpenGLES2plus::initialize()
     glVersionRegExp.indexIn(QString(QLatin1String(reinterpret_cast<const char*>(glVersionString))));
     _glVersion = glVersionRegExp.cap(1).toUInt() * 10 + glVersionRegExp.cap(2).toUInt();
     LogPrintf(LogSeverityLevel::Info, "OpenGLES version %d [%s]", glVersion, glVersionString);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES vendor [%s]", glGetString(GL_VENDOR));
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES renderer [%s]", glGetString(GL_RENDERER));
+    GL_CHECK_RESULT;
     if (glVersion < 30)
     {
         LogPrintf(LogSeverityLevel::Info, "This OpenGLES version is not supported");
