@@ -54,6 +54,7 @@ OsmAnd::MapRenderer::MapRenderer(
     , _gpuWorkerThreadId(nullptr)
     , _gpuWorkerThreadIsAlive(false)
     , _gpuWorkerIsSuspended(0)
+    , _gpuWorkerYieldRequested(0)
     , _renderThreadId(nullptr)
     , _currentDebugSettings(baseDebugSettings_->createCopy())
     , _currentDebugSettingsAsConst(_currentDebugSettings)
@@ -289,14 +290,32 @@ void OsmAnd::MapRenderer::processGpuWorker()
         unsigned int resourcesUploadedCount = 0u;
         unsigned int resourcesUnloadedCount = 0u;
 
-        // In every layer we have, upload pending resources to GPU without limiting
+        // Upload pending resources to GPU. Draining the whole queue in one call keeps
+        // _gpuWorkerThreadActiveMutex held for as long as that takes, and a frame that wants to
+        // suspend the worker before encoding then waits for all of it. Slicing lets the worker be
+        // stopped between resources - but every slice costs a full walk of all resource
+        // collections, so it stays off (0) unless the platform asked for it.
+        const auto uploadsPerSlice = _setupOptions.gpuWorkerUploadSliceSize;
         int unprocessedRequests = 0;
         do
         {
             const auto requestsToProcess = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(0);
             unsigned int resourcesUploaded = 0u;
             unsigned int resourcesUnloaded = 0u;
-            _resources->syncResourcesInGPU(0, nullptr, &resourcesUploaded, &resourcesUnloaded);
+            bool moreThanSliceAvailable = false;
+            do
+            {
+                unsigned int slicedUploaded = 0u;
+                unsigned int slicedUnloaded = 0u;
+                moreThanSliceAvailable = false;
+                _resources->syncResourcesInGPU(
+                    uploadsPerSlice, &moreThanSliceAvailable, &slicedUploaded, &slicedUnloaded);
+                resourcesUploaded += slicedUploaded;
+                resourcesUnloaded += slicedUnloaded;
+            } while (uploadsPerSlice > 0
+                && moreThanSliceAvailable
+                && _gpuWorkerThreadIsAlive
+                && _gpuWorkerYieldRequested.loadAcquire() < 1);
             if (resourcesUploaded > 0 || resourcesUnloaded > 0)
             {
                 invalidateFrame();
@@ -305,7 +324,9 @@ void OsmAnd::MapRenderer::processGpuWorker()
             }
             unprocessedRequests = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
             
-        } while (_gpuWorkerThreadIsAlive && unprocessedRequests > 0);
+        } while (_gpuWorkerThreadIsAlive
+            && unprocessedRequests > 0
+            && _gpuWorkerYieldRequested.loadAcquire() < 1);
 
         if (OsmAnd::isPerformanceMetricsEnabled())
             OsmAnd::getPerformanceMetrics().syncFinish(resourcesUploadedCount, resourcesUnloadedCount);
@@ -957,7 +978,15 @@ QString OsmAnd::MapRenderer::getNotIdleReason() const
 
 bool OsmAnd::MapRenderer::suspendGpuWorker()
 {
+    // Ask first, wait second: the worker checks this between upload slices, so by the time the
+    // mutex below is free it has stopped at a slice boundary rather than after the whole queue.
+    _gpuWorkerYieldRequested.storeRelease(1);
+
     QMutexLocker scopedLocker(&_gpuWorkerThreadActiveMutex);
+
+    // The worker is now parked and cannot restart while this mutex is held, so the request has
+    // served its purpose - leaving it set would stop the worker slicing once it resumes.
+    _gpuWorkerYieldRequested.storeRelease(0);
 
     if (_gpuWorkerIsSuspended.loadAcquire() > 0)
         return false;
