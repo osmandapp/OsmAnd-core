@@ -1550,7 +1550,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
                     _isElevatedLineVisible ? outlineThickness : 0.0f,
                     _mapZoomLevel,
                     Utilities::convert31toDouble(*(verticesAndIndices->position31), _mapZoomLevel),
-                    isOut ? 0 : AtlasMapRenderer::HeixelsPerTileSide - 1,
+                    isOut ? 0 : cellsPerTileSize,
                     0.4f, false,
                     _colorizationScheme == COLORIZATION_SOLID);
                 if (_isElevatedLineVisible)
@@ -1609,7 +1609,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
                 false, false,
                 tessVertices);
 
-    if (tesselated)
+        if (tesselated)
             vertices->clear();
     }
 
@@ -1623,6 +1623,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
         vertex.positionXYZD[2] = 0;
         vertex.positionXYZD[3] = NAN;
         vertices->push_back(vertex);
+        delete verticesAndIndices->position31;
         verticesAndIndices->position31 = new PointI(0, 0);
     }
 
