@@ -2366,8 +2366,17 @@ public abstract class MapRendererView extends FrameLayout {
             extends MapRendererSetupOptions.IFrameUpdateRequestCallback {
         @Override
         public void method(IMapRenderer mapRenderer) {
-            if (!isSuspended && _renderingView != null) {
-                _renderingView.requestRender();
+            // Renderer may request a frame before the rendering view is started, for example while
+            // the renderer is being handed over to a view of a paused activity: in that case
+            // setupRenderer() creates the rendering view, but leaves it without a renderer until
+            // handleOnResume(). Nothing may be thrown into the native caller either: an exception
+            // thrown out of a director method terminates the process.
+            try {
+                if (isViewStarted && !isSuspended && _renderingView != null) {
+                    _renderingView.requestRender();
+                }
+            } catch (Throwable e) {
+                Log.e(TAG, "Failed to request a frame", e);
             }
         }
     }
@@ -2380,6 +2389,12 @@ public abstract class MapRendererView extends FrameLayout {
             extends MapRendererSetupOptions.IGpuWorkerThreadPrologue {
         @Override
         public void method(IMapRenderer mapRenderer) {
+            EGLThread eglThread = MapRendererView.this.eglThread;
+            if (eglThread == null) {
+                Log.e(TAG, "EGL thread is missing");
+                return;
+            }
+
             if (eglThread.display == null) {
                 Log.e(TAG, "EGL display is missing");
                 return;
