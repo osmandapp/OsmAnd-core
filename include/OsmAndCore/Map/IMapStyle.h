@@ -44,6 +44,7 @@ namespace OsmAnd
                 std::shared_ptr<const IAttribute> attribute;
                 std::shared_ptr<QList<std::shared_ptr<const ISymbolClass>>> symbolClasses;
                 std::shared_ptr<QList<StringId>> symbolClassTemplates;
+                StringId tagNameId = 0u;
             } asDynamicValue;
 
             static Value fromConstantValue(const MapStyleConstantValue& input);
