@@ -272,7 +272,7 @@ public abstract class MapRendererView extends FrameLayout {
             isReinitializing = (isSuspended && _mapRenderer != null && _mapRenderer.isRenderingInitialized());
             if (!isReinitializing) {
                 Log.v(TAG, "Setting up new renderer to initialize...");
-                eglThread = new EGLThread("OpenGLThread");
+                eglThread = new EGLThread("OpenGLThread", this);
                 eglThread.start();
                 _mapRenderer = createMapRendererInstance();
                 isInitializing = true;
@@ -301,6 +301,7 @@ public abstract class MapRendererView extends FrameLayout {
 
             // Take all EGL references from old map renderer view
             eglThread = oldView.eglThread;
+            eglThread.rendererView = this;
 
             // Reset rendering options for current view
             if (eglThread.gpuWorkerContext != null && eglThread.gpuWorkerFakeSurface != null) {
@@ -2541,7 +2542,13 @@ public abstract class MapRendererView extends FrameLayout {
         }
     }
 
-    private class EGLThread extends Thread {
+    private static class EGLThread extends Thread {
+
+        /**
+         * View that owns the thread now. The thread outlives a view that hands its renderer
+         * over, so it must never keep an implicit reference to the view that created it
+         */
+        protected volatile MapRendererView rendererView;
 
         private EGL10 egl;
         private EGLDisplay display;
@@ -2591,8 +2598,9 @@ public abstract class MapRendererView extends FrameLayout {
         public volatile boolean ok;
         public volatile long preFlushTime = SystemClock.uptimeMillis();
 
-        public EGLThread(String name) {
+        public EGLThread(String name, MapRendererView rendererView) {
             super(name);
+            this.rendererView = rendererView;
         }
 
         // NOTE: It needs to be called from synchronized block
@@ -2812,13 +2820,13 @@ public abstract class MapRendererView extends FrameLayout {
                         case RENDER_FRAME:
                         mapRenderer.update();
                         boolean isReady = mapRenderer.prepareFrame();
-                        _isRenderingActive = isReady ? mapRenderer.renderFrame() : false;
+                        rendererView._isRenderingActive = isReady ? mapRenderer.renderFrame() : false;
                         preFlushTime = SystemClock.uptimeMillis();
                         if (isReady) {
                             gl.glFlush();
                             if (byteBuffer != null) {
                                 gl.glFinish();
-                                if (_frameReadingMode) {
+                                if (rendererView._frameReadingMode) {
                                     egl.eglSwapBuffers(display, surface);
                                 }
                                 synchronized (byteBuffer) {
@@ -2834,10 +2842,10 @@ public abstract class MapRendererView extends FrameLayout {
                         break;
 
                         case RELEASE_RENDERING:
-                        _mapAnimationFinished = true;
-                        _mapMarkersAnimationFinished = true;
+                        rendererView._mapAnimationFinished = true;
+                        rendererView._mapMarkersAnimationFinished = true;
                         mapRenderer.releaseRendering(true);
-                        _isRenderingActive = false;
+                        rendererView._isRenderingActive = false;
                         break;
 
                         case DESTROY_SURFACE:
