@@ -526,7 +526,7 @@ void OsmAnd::MapMarkersAnimator_P::positionSetter(const Key key, const PointI64 
         // position, so it has to follow the marker for the whole animation. It must not depend on
         // the circle being visible: the sector is drawn from the same position and stays visible
         // when the accuracy circle is switched off.
-        if (marker->isAccuracyCircleSupported)
+        if (marker->isAccuracyCircleSupported && !marker->isHidden())
             _renderer->setMyLocation31(location31);
     }
 }
