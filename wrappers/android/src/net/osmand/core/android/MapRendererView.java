@@ -59,8 +59,12 @@ import java.util.List;
 public abstract class MapRendererView extends FrameLayout {
     private static final String TAG = "OsmAndCore:Android/MapRendererView";
 
-    private final static long RELEASE_STOP_TIMEOUT = 4000;
-    private final static long RELEASE_WAIT_TIMEOUT = 50;
+    /**
+     * Maximum time the calling thread is allowed to be blocked while waiting for the EGL
+     * thread to release rendering or to stop. The EGL thread is abandoned when it doesn't
+     * manage to do that in time, so that the main thread never hangs on a stalled GPU driver
+     */
+    private final static long RELEASE_STOP_TIMEOUT = 1500;
 
     /**
      * Reference to OsmAndCore::IMapRenderer instance
@@ -212,9 +216,6 @@ public abstract class MapRendererView extends FrameLayout {
      */
     private volatile boolean initOnResume;
 
-    private volatile Runnable releaseTask;
-    private volatile boolean waitRelease;
-
     private List<MapRendererViewListener> listeners = new ArrayList<>();
 
     public interface MapRendererViewListener {
@@ -244,7 +245,7 @@ public abstract class MapRendererView extends FrameLayout {
                 stopRenderingView();
                 if (!isSuspended && _mapRenderer.isRenderingInitialized()) {
                     Log.v(TAG, "Rendering release due to setupRenderer()");
-                    releaseRendering();
+                    releaseRendering(RELEASE_STOP_TIMEOUT);
                 }
                 removeRenderingView();
             }
@@ -285,10 +286,7 @@ public abstract class MapRendererView extends FrameLayout {
 
             if (_mapRenderer != oldRenderer && isSuspended && _mapRenderer.isRenderingInitialized()) {
                 Log.v(TAG, "Releasing suspended renderer...");
-                synchronized (eglThread) {
-                    eglThread.mapRenderer = _mapRenderer;
-                    eglThread.startAndCompleteOperation(EGLThreadOperation.RELEASE_RENDERING);
-                }
+                releaseSuspendedRenderer();
             }
 
             // Use previous frame rate limit for battery saving mode
@@ -475,15 +473,12 @@ public abstract class MapRendererView extends FrameLayout {
             if (isSuspended) {
                 if (_mapRenderer.isRenderingInitialized()) {
                     Log.v(TAG, "Stopping suspended renderer...");
-                    synchronized (eglThread) {
-                        eglThread.mapRenderer = _mapRenderer;
-                        eglThread.startAndCompleteOperation(EGLThreadOperation.RELEASE_RENDERING);
-                    }
+                    releaseSuspendedRenderer();
                 }
             } else {
                 Log.v(TAG, "Stopping active renderer...");
                 stopRenderingView();
-                releaseRendering();
+                releaseRendering(RELEASE_STOP_TIMEOUT);
                 removeRenderingView();
             }
             // Clean up data
@@ -492,31 +487,94 @@ public abstract class MapRendererView extends FrameLayout {
             _mapMarkersAnimator = null;
         }
 
-        if (eglThread != null) {
-            synchronized (eglThread) {
-                eglThread.stopThread = true;
-                eglThread.notifyAll();
-                while (!eglThread.isStopped) {
-                    try {
-                        eglThread.wait();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-                }
+        stopEglThread();
+    }
+
+    // NOTE: Zero timeout means waiting for the rendering to be released indefinitely. That's
+    // only safe for the calls made from the rendering view thread, which has no frame in flight
+    // while it creates or destroys an EGL context
+    private void releaseRendering() {
+        releaseRendering(0);
+    }
+
+    private void releaseRendering(long timeout) {
+        Log.v(TAG, "releaseRendering()");
+        EGLThread thread = eglThread;
+        if (thread != null && !isSuspended && _mapRenderer != null
+                && _mapRenderer.isRenderingInitialized()) {
+            Log.v(TAG, "Release rendering...");
+            boolean released;
+            synchronized (thread) {
+                thread.mapRenderer = _mapRenderer;
+                released = thread.startAndCompleteOperation(
+                    EGLThreadOperation.RELEASE_RENDERING, timeout);
             }
-            eglThread = null;
+            if (!released && timeout > 0) {
+                abandonEglThread(thread);
+            }
         }
     }
 
-    private void releaseRendering() {
-        Log.v(TAG, "releaseRendering()");
-        if (!isSuspended && _mapRenderer != null && _mapRenderer.isRenderingInitialized()) {
-            Log.v(TAG, "Release rendering...");
-            synchronized (eglThread) {
-                eglThread.mapRenderer = _mapRenderer;
-                eglThread.startAndCompleteOperation(EGLThreadOperation.RELEASE_RENDERING);
+    // NOTE: Rendering of a suspended renderer is released by the EGL thread that keeps it,
+    // since the rendering view of this view is already gone
+    private void releaseSuspendedRenderer() {
+        EGLThread thread = eglThread;
+        if (thread == null) {
+            return;
+        }
+        boolean released;
+        synchronized (thread) {
+            thread.mapRenderer = _mapRenderer;
+            released = thread.startAndCompleteOperation(
+                EGLThreadOperation.RELEASE_RENDERING, RELEASE_STOP_TIMEOUT);
+        }
+        if (!released) {
+            abandonEglThread(thread);
+        }
+    }
+
+    private void stopEglThread() {
+        EGLThread thread = eglThread;
+        if (thread == null) {
+            return;
+        }
+        eglThread = null;
+        synchronized (thread) {
+            thread.stopThread = true;
+            thread.notifyAll();
+            long deadline = SystemClock.uptimeMillis() + RELEASE_STOP_TIMEOUT;
+            while (!thread.isStopped) {
+                long timeToWait = deadline - SystemClock.uptimeMillis();
+                if (timeToWait <= 0) {
+                    Log.e(TAG, "EGL thread didn't stop in time, abandoning it");
+                    break;
+                }
+                try {
+                    thread.wait(timeToWait);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
             }
         }
+    }
+
+    /**
+     * Gives up on an EGL thread that is stuck inside a GPU driver call. It stops and destroys
+     * its EGL resources by itself once that call returns. The renderer is left to it, because
+     * the operation that didn't complete may still be using it
+     */
+    private void abandonEglThread(EGLThread thread) {
+        Log.e(TAG, "EGL thread didn't complete the operation in time, abandoning it");
+        synchronized (thread) {
+            thread.stopThread = true;
+            thread.notifyAll();
+        }
+        if (eglThread == thread) {
+            eglThread = null;
+        }
+        _exportableMapRenderer = null;
+        _mapRenderer = null;
     }
 
     public void startRenderingView(Context context) {
@@ -588,7 +646,7 @@ public abstract class MapRendererView extends FrameLayout {
             // Surface and context are going to be destroyed, thus try to release rendering
             // before that will happen
             Log.v(TAG, "Rendering release due to onDetachedFromWindow()");
-            releaseRendering();
+            releaseRendering(RELEASE_STOP_TIMEOUT);
         }
 
         super.onDetachedFromWindow();
@@ -614,7 +672,7 @@ public abstract class MapRendererView extends FrameLayout {
             // Map renderer will be automatically deleted by GC anyways. But queue
             // action to release rendering
             Log.v(TAG, "Rendering release due to handleOnDestroy()");
-            releaseRendering();
+            releaseRendering(RELEASE_STOP_TIMEOUT);
         }
     }
 
@@ -2539,23 +2597,81 @@ public abstract class MapRendererView extends FrameLayout {
 
         // NOTE: It needs to be called from synchronized block
         public void startAndCompleteOperation(EGLThreadOperation operation) {
+            startAndCompleteOperation(operation, 0);
+        }
+
+        /**
+         * Starts an operation on the EGL thread and waits for it to be completed.
+         *
+         * NOTE: It needs to be called from synchronized block
+         *
+         * @param operation operation to be performed
+         * @param timeout maximum time to wait for the operation to be completed, in
+         *                milliseconds. Zero means waiting for it indefinitely, which is
+         *                only safe when the calling thread is not the main one
+         * @return whether the operation was completed
+         */
+        public boolean startAndCompleteOperation(EGLThreadOperation operation, long timeout) {
+            long deadline = timeout > 0 ? SystemClock.uptimeMillis() + timeout : 0;
+            // Another operation may still be in flight, since the monitor is released
+            // while the EGL thread performs one
+            while (eglThreadOperation != EGLThreadOperation.NO_OPERATION) {
+                if (!awaitOperation(deadline)) {
+                    return false;
+                }
+            }
+            if (stopThread || isStopped) {
+                Log.w(TAG, "Can't perform an operation on the stopped EGL thread");
+                return false;
+            }
             eglThreadOperation = operation;
             notifyAll();
             while (eglThreadOperation != EGLThreadOperation.NO_OPERATION) {
-                try {
-                    wait();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+                if (!awaitOperation(deadline)) {
+                    return false;
                 }
             }
+            return true;
+        }
+
+        // NOTE: It needs to be called from synchronized block
+        private boolean awaitOperation(long deadline) {
+            long timeToWait = 0;
+            if (deadline > 0) {
+                timeToWait = deadline - SystemClock.uptimeMillis();
+                if (timeToWait <= 0) {
+                    return false;
+                }
+            }
+            try {
+                wait(timeToWait);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+            return true;
         }
 
         @Override
         public void run() {
             egl = (EGL10) EGLContext.getEGL();
             while (!stopThread) {
+                EGLThreadOperation operation;
                 synchronized (this) {
-                    switch (eglThreadOperation) {
+                    while (eglThreadOperation == EGLThreadOperation.NO_OPERATION && !stopThread) {
+                        try {
+                            wait();
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                    }
+                    operation = eglThreadOperation;
+                }
+                if (operation != EGLThreadOperation.NO_OPERATION) {
+                    // NOTE: An operation is performed with the monitor released, so that a
+                    // caller that gave up waiting for it is able to return, instead of being
+                    // blocked on the monitor until a stalled GPU driver call returns
+                    switch (operation) {
                         case CHOOSE_CONFIG:
                         if (display == null) {
                             display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
@@ -2735,44 +2851,58 @@ public abstract class MapRendererView extends FrameLayout {
                         break;
 
                         case DESTROY_CONTEXTS:
-                        if (display != null) {
-                            // Destroy main context
-                            if (context != null) {
-                                egl.eglDestroyContext(display, context);
-                                context = null;
-                            }
-                            // Destroy GPU-worker EGL surface (if present)
-                            if (gpuWorkerFakeSurface != null) {
-                                egl.eglDestroySurface(display, gpuWorkerFakeSurface);
-                                gpuWorkerFakeSurface = null;
-                            }
-                            // Destroy GPU-worker EGL context (if present)
-                            if (gpuWorkerContext != null) {
-                                egl.eglDestroyContext(display, gpuWorkerContext);
-                                gpuWorkerContext = null;
-                            }
-                            // Remove EGL config
-                            if (config != null) {
-                                config = null;
-                            }
-                            // Terminate connection to EGL display
-                            egl.eglTerminate(display);
-                            display = null;
-                        }
+                        destroyEglResources();
+                        break;
                     }
-                    eglThreadOperation = EGLThreadOperation.NO_OPERATION;
-                    notifyAll();
-                    try {
-                        wait();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
+                    synchronized (this) {
+                        eglThreadOperation = EGLThreadOperation.NO_OPERATION;
+                        notifyAll();
                     }
                 }
             }
+            // An abandoned thread is the only owner of its EGL resources left
+            destroyEglResources();
             synchronized (this) {
                 isStopped = true;
                 notifyAll();
             }
+        }
+
+        // NOTE: It's called from the EGL thread only
+        private void destroyEglResources() {
+            if (display == null) {
+                return;
+            }
+            // Destroy rendering surface (if present)
+            if (surface != null) {
+                egl.eglMakeCurrent(display, EGL10.EGL_NO_SURFACE,
+                    EGL10.EGL_NO_SURFACE,
+                    EGL10.EGL_NO_CONTEXT);
+                egl.eglDestroySurface(display, surface);
+                surface = null;
+            }
+            // Destroy main context
+            if (context != null) {
+                egl.eglDestroyContext(display, context);
+                context = null;
+            }
+            // Destroy GPU-worker EGL surface (if present)
+            if (gpuWorkerFakeSurface != null) {
+                egl.eglDestroySurface(display, gpuWorkerFakeSurface);
+                gpuWorkerFakeSurface = null;
+            }
+            // Destroy GPU-worker EGL context (if present)
+            if (gpuWorkerContext != null) {
+                egl.eglDestroyContext(display, gpuWorkerContext);
+                gpuWorkerContext = null;
+            }
+            // Remove EGL config
+            if (config != null) {
+                config = null;
+            }
+            // Terminate connection to EGL display
+            egl.eglTerminate(display);
+            display = null;
         }
     }
 }
