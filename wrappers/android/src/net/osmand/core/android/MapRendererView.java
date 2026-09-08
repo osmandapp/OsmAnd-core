@@ -244,11 +244,6 @@ public abstract class MapRendererView extends FrameLayout {
         Log.v(TAG, "setupRenderer()");
         NativeCore.checkIfLoaded();
 
-        // The view owns a renderer again, whether it's a new one or one that is taken over.
-        // A view that handed its renderer over may well be set up again, as it happens when
-        // rendering comes back from Android Auto to the phone
-        isHandedOver = false;
-
         if (_mapRenderer != null) {
             synchronized (_mapRenderer) {
                 _exportableMapRenderer = null;
@@ -259,6 +254,17 @@ public abstract class MapRendererView extends FrameLayout {
                 }
                 removeRenderingView();
             }
+        }
+
+        if (isHandedOver) {
+            // The renderer and the EGL thread belong to the view that took them over, so they
+            // must be neither reused nor stopped here. The view owns a renderer again from now
+            // on: a new one, or one taken over in its turn, as it happens when rendering comes
+            // back from Android Auto to the phone
+            _mapRenderer = null;
+            eglThread = null;
+            isSuspended = false;
+            isHandedOver = false;
         }
 
         _inWindow = (bitmapWidth == 0 || bitmapHeight == 0);
@@ -282,6 +288,9 @@ public abstract class MapRendererView extends FrameLayout {
             isReinitializing = (isSuspended && _mapRenderer != null && _mapRenderer.isRenderingInitialized());
             if (!isReinitializing) {
                 Log.v(TAG, "Setting up new renderer to initialize...");
+                // Nothing of the present renderer is reused: its rendering is released by now,
+                // and its thread would otherwise be left waiting forever
+                stopEglThread();
                 eglThread = new EGLThread("OpenGLThread", this);
                 eglThread.start();
                 _mapRenderer = createMapRendererInstance();
@@ -297,6 +306,11 @@ public abstract class MapRendererView extends FrameLayout {
             if (_mapRenderer != oldRenderer && isSuspended && _mapRenderer.isRenderingInitialized()) {
                 Log.v(TAG, "Releasing suspended renderer...");
                 releaseSuspendedRenderer();
+            }
+            if (eglThread != oldView.eglThread) {
+                // The present thread is replaced by the one of the old view, so it has to be
+                // stopped, or it would be left waiting forever with its EGL contexts alive
+                stopEglThread();
             }
 
             // Use previous frame rate limit for battery saving mode
