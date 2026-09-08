@@ -522,7 +522,11 @@ void OsmAnd::MapMarkersAnimator_P::positionSetter(const Key key, const PointI64 
     {
         const auto location31 = Utilities::normalizeCoordinates(newValue, ZoomLevel31);
         marker->setPosition(location31);
-        if (marker->isAccuracyCircleSupported && marker->isAccuracyCircleVisible())
+        // Renderer draws the accuracy circle and the view-angle sector at its own "my location"
+        // position, so it has to follow the marker for the whole animation. It must not depend on
+        // the circle being visible: the sector is drawn from the same position and stays visible
+        // when the accuracy circle is switched off.
+        if (marker->isAccuracyCircleSupported)
             _renderer->setMyLocation31(location31);
     }
 }
