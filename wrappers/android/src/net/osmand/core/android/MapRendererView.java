@@ -197,6 +197,11 @@ public abstract class MapRendererView extends FrameLayout {
     private volatile boolean isSuspended;
 
     /**
+     * Renderer was handed over to another view, which owns it from now on
+     */
+    private volatile boolean isHandedOver;
+
+    /**
      * Target surface is present and ready for drawing
      */
     private volatile boolean isSurfaceReady;
@@ -251,6 +256,17 @@ public abstract class MapRendererView extends FrameLayout {
             }
         }
 
+        if (isHandedOver) {
+            // The renderer and the EGL thread belong to the view that took them over, so they
+            // must be neither reused nor stopped here. The view owns a renderer again from now
+            // on: a new one, or one taken over in its turn, as it happens when rendering comes
+            // back from Android Auto to the phone
+            _mapRenderer = null;
+            eglThread = null;
+            isSuspended = false;
+            isHandedOver = false;
+        }
+
         _inWindow = (bitmapWidth == 0 || bitmapHeight == 0);
 
         _windowWidth = bitmapWidth;
@@ -266,12 +282,18 @@ public abstract class MapRendererView extends FrameLayout {
 
         // Get already present renderer if available
         IMapRenderer oldRenderer = oldView != null ? oldView.suspendRenderer() : null;
+        if (oldRenderer != null) {
+            oldView.rendererWasHandedOver();
+        }
 
         if (oldRenderer == null) {
 
             isReinitializing = (isSuspended && _mapRenderer != null && _mapRenderer.isRenderingInitialized());
             if (!isReinitializing) {
                 Log.v(TAG, "Setting up new renderer to initialize...");
+                // Nothing of the present renderer is reused: its rendering is released by now,
+                // and its thread would otherwise be left waiting forever
+                stopEglThread();
                 eglThread = new EGLThread("OpenGLThread");
                 eglThread.start();
                 _mapRenderer = createMapRendererInstance();
@@ -288,6 +310,12 @@ public abstract class MapRendererView extends FrameLayout {
                 Log.v(TAG, "Releasing suspended renderer...");
                 releaseSuspendedRenderer();
             }
+            if (eglThread != oldView.eglThread) {
+                // The present thread is replaced by the one of the old view, so it has to be
+                // stopped, or it would be left waiting forever with its EGL contexts alive
+                stopEglThread();
+            }
+
             // Use previous frame rate limit for battery saving mode
             setMaximumFrameRate(oldView.getMaximumFrameRate());
 
@@ -460,11 +488,29 @@ public abstract class MapRendererView extends FrameLayout {
         return _exportableMapRenderer.isRenderingInitialized() ? _exportableMapRenderer : null;
     }
 
+    /**
+     * Marks a view whose renderer has just been taken over by another one. Its renderer and its
+     * EGL thread belong to that view from now on, so {@link #stopRenderer()} must not release
+     * them, and the same renderer can't be handed over a second time
+     */
+    private synchronized void rendererWasHandedOver() {
+        _exportableMapRenderer = null;
+        isHandedOver = true;
+    }
+
     public synchronized void stopRenderer() {
         Log.v(TAG, "stopRenderer()");
 
         if (_mapRenderer == null) {
             Log.w(TAG, "Can't stop absent renderer");
+            return;
+        }
+
+        if (isHandedOver) {
+            // Renderer and EGL thread are owned by the view that took them over
+            Log.w(TAG, "Can't stop the renderer that was handed over");
+            _mapRenderer = null;
+            eglThread = null;
             return;
         }
 
