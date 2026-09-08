@@ -99,6 +99,21 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
+        // Maximal number of resources the GPU worker uploads before it re-checks whether it has
+        // been asked to stop. 0 means "drain the queue in one go", which is cheapest - each slice
+        // costs a full walk of every resource collection - but leaves anyone waiting on the worker
+        // waiting for the whole queue. Set it only where a frame must be able to interrupt uploads.
+        unsigned int gpuWorkerUploadSliceSize;
+#if !defined(SWIG)
+        inline MapRendererSetupOptions& setGpuWorkerUploadSliceSize(
+            const unsigned int newGpuWorkerUploadSliceSize)
+        {
+            gpuWorkerUploadSliceSize = newGpuWorkerUploadSliceSize;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
         QString pathToOpenGLShadersCache;
 #if !defined(SWIG)
         inline MapRendererSetupOptions& setPathToOpenGLShadersCache(

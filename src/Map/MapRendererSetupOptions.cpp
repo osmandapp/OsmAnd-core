@@ -6,6 +6,7 @@ OsmAnd::MapRendererSetupOptions::MapRendererSetupOptions()
     , gpuWorkerThreadEpilogue(nullptr)
     , frameUpdateRequestCallback(nullptr)
     , maxNumberOfRasterMapLayersInBatch(0)
+    , gpuWorkerUploadSliceSize(0)
     , displayDensityFactor(1.0f)
     , elevationVisualizationEnabled(true)
 {

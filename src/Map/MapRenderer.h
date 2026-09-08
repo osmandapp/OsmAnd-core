@@ -146,6 +146,10 @@ namespace OsmAnd
         QMutex _gpuWorkerThreadWakeupMutex;
         QWaitCondition _gpuWorkerThreadWakeup;
         QAtomicInt _gpuWorkerIsSuspended;
+        // Asks the worker to stop between upload slices. It holds _gpuWorkerThreadActiveMutex for
+        // the whole of processGpuWorker(), so without this anyone waiting on that mutex waits for
+        // however many resources happened to be queued - which is what a frame cannot afford.
+        QAtomicInt _gpuWorkerYieldRequested;
         mutable QMutex _gpuWorkerThreadActiveMutex;
         void gpuWorkerThreadProcedure();
         void processGpuWorker();
