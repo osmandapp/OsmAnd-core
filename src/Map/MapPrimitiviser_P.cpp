@@ -2336,7 +2336,12 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     //NOTE: a magic shifting of icon order. This is needed to keep icons less important than anything else
     icon->order += 1000000;
 
-    evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_MIN_DISTANCE, icon->minDistance);
+    if (primitive->evaluationResult.getFloatValue(
+        env->styleBuiltinValueDefs->id_OUTPUT_ICON_MIN_DISTANCE, icon->minDistance))
+    {
+        // Style value is in dip, same as every other size in the style
+        icon->minDistance *= env->displayDensityFactor * env->symbolsScaleFactor;
+    }
 
     primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_SHIELD, icon->shieldResourceName);
 
