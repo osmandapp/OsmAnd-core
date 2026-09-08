@@ -197,6 +197,11 @@ public abstract class MapRendererView extends FrameLayout {
     private volatile boolean isSuspended;
 
     /**
+     * Renderer was handed over to another view, which owns it from now on
+     */
+    private volatile boolean isHandedOver;
+
+    /**
      * Target surface is present and ready for drawing
      */
     private volatile boolean isSurfaceReady;
@@ -239,6 +244,11 @@ public abstract class MapRendererView extends FrameLayout {
         Log.v(TAG, "setupRenderer()");
         NativeCore.checkIfLoaded();
 
+        // The view owns a renderer again, whether it's a new one or one that is taken over.
+        // A view that handed its renderer over may well be set up again, as it happens when
+        // rendering comes back from Android Auto to the phone
+        isHandedOver = false;
+
         if (_mapRenderer != null) {
             synchronized (_mapRenderer) {
                 _exportableMapRenderer = null;
@@ -265,7 +275,7 @@ public abstract class MapRendererView extends FrameLayout {
         setMaximumFrameRate(0);
 
         // Get already present renderer if available
-        IMapRenderer oldRenderer = oldView != null ? oldView.suspendRenderer() : null;
+        IMapRenderer oldRenderer = oldView != null ? oldView.exportRenderer() : null;
 
         if (oldRenderer == null) {
 
@@ -434,32 +444,59 @@ public abstract class MapRendererView extends FrameLayout {
 		return _frameReadingMode ? _flippedBitmap : _resultBitmap;
 	}
 
-    public synchronized IMapRenderer suspendRenderer() {
+    /**
+     * Suspends this view, keeping its renderer and EGL contexts initialized for a handover to
+     * another view. It has to be called before the view is detached, otherwise
+     * onDetachedFromWindow() releases rendering. Repeated calls are allowed until the renderer
+     * is exported. If no handover follows, the owner has to call {@link #stopRenderer()}
+     *
+     * @return whether a renderer is kept for a handover
+     */
+    public synchronized boolean suspendRenderer() {
         Log.v(TAG, "suspendRenderer()");
 
-        if (_mapRenderer == null || !_mapRenderer.isRenderingInitialized() || _exportableMapRenderer == null) {
-            return null;
+        if (_mapRenderer == null || !_mapRenderer.isRenderingInitialized()
+                || _exportableMapRenderer == null) {
+            return false;
         }
 
         synchronized (_mapRenderer) {
             stopRenderingView();
             if (isSuspended) {
                 Log.v(TAG, "Renderer was already suspended");
-                return null;
             } else {
                 Log.v(TAG, "Suspending renderer to reuse it in other view");
                 isSuspended = true;
                 isInitializing = false;
                 isReinitializing = false;
-            }
-            removeRenderingView();
+                removeRenderingView();
 
-            // Clean up data
-            listeners = new ArrayList<>();
-            _mapAnimator = null;
-            _mapMarkersAnimator = null;
+                // Clean up data
+                listeners = new ArrayList<>();
+                _mapAnimator = null;
+                _mapMarkersAnimator = null;
+            }
         }
-        return _exportableMapRenderer.isRenderingInitialized() ? _exportableMapRenderer : null;
+        return _exportableMapRenderer.isRenderingInitialized();
+    }
+
+    /**
+     * Hands the renderer of a suspended view over to another view. It's only possible once:
+     * the receiving view publishes an exportable renderer of its own after it initializes
+     * rendering on its surface
+     *
+     * @return renderer that is ready to be reused, or null if there's none
+     */
+    public synchronized IMapRenderer exportRenderer() {
+        Log.v(TAG, "exportRenderer()");
+
+        if (!suspendRenderer()) {
+            return null;
+        }
+        IMapRenderer renderer = _exportableMapRenderer;
+        _exportableMapRenderer = null;
+        isHandedOver = true;
+        return renderer;
     }
 
     public synchronized void stopRenderer() {
@@ -467,6 +504,14 @@ public abstract class MapRendererView extends FrameLayout {
 
         if (_mapRenderer == null) {
             Log.w(TAG, "Can't stop absent renderer");
+            return;
+        }
+
+        if (isHandedOver) {
+            // Renderer and EGL thread are owned by the view that took them over
+            Log.w(TAG, "Can't stop the renderer that was handed over");
+            _mapRenderer = null;
+            eglThread = null;
             return;
         }
 
