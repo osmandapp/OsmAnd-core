@@ -378,26 +378,33 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     else
     {
         auto coastlinesWereAdded = false;
-        bool isLand = false;
         if (detailedmapCoastlinesPresent && zoom >= MapPrimitiviser::DetailedLandDataMinZoom)
         {
             coastlinesWereAdded =
-                getCoastlines(area31, detailedmapCoastlineObjects, polygonizedCoastlineObjects, isLand);
-            surfaceType = isLand ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
+                getCoastlines(area31, area31, detailedmapCoastlineObjects, polygonizedCoastlineObjects, surfaceType);
         }
         bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
         bool shouldAddBasemapCoastlines = !detailedmapCoastlinesPresent && !hasExtraCoastlines;
         if (!coastlinesWereAdded && basemapCoastlinesPresent
             && (shouldAddBasemapCoastlines || zoom < MapPrimitiviser::DetailedLandDataMinZoom))
         {
-            coastlinesWereAdded = getCoastlines(area31, basemapCoastlineObjects, polygonizedCoastlineObjects, isLand);
-            surfaceType = isLand ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
+            const auto basemapZoom = static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel);
+            const auto basemapArea = zoom > ObfMapSectionLevel::MaxBasemapZoomLevel
+                ? Utilities::roundBoundingBox31(area31, basemapZoom)
+                : area31;            
+            coastlinesWereAdded =
+                getCoastlines(area31, basemapArea, basemapCoastlineObjects, polygonizedCoastlineObjects, surfaceType);
         }
         if (!coastlinesWereAdded && hasExtraCoastlines && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
         {
+            AreaI bboxZoom13 = Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel14);
+            bboxZoom13.right()++;
+            bboxZoom13.bottom()++;
+            bboxZoom13 = bboxZoom13.getEnlargedBy(bboxZoom13.width() / 2);
+            bboxZoom13.right()--;
+            bboxZoom13.bottom()--;
             QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
-            getCoastlines(area31, extraCoastlineObjects, polygonizedCoastlines, isLand);
-            surfaceType = isLand ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
+            getCoastlines(area31, bboxZoom13, extraCoastlineObjects, polygonizedCoastlines, surfaceType);
         }
         fillEntireArea = !coastlinesWereAdded;
     }
@@ -2446,9 +2453,10 @@ OsmAnd::MapPrimitiviser_P::Context::Context(
 
 bool OsmAnd::MapPrimitiviser_P::getCoastlines(
     const AreaI area31,
+    const AreaI coastlineArea31,
     const QList< std::shared_ptr<const MapObject> >& coastlines,
     QList< std::shared_ptr<const MapObject> >& outVectorized,
-    bool& isLand)
+    MapSurfaceType& surfaceType)
 {
     outVectorized.clear();
     bool withCoastlines = false;
@@ -2460,7 +2468,11 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
     const PointI bottomRight(
         area31.safeEnlarge(area31.bottomRight.x, 31) & mask, area31.safeEnlarge(area31.bottomRight.y, 31) & mask);
     const PointI center(topLeft.x + (bottomRight.x - topLeft.x) / 2, topLeft.y + (bottomRight.y - topLeft.y) / 2);
-    double minSqDistance = std::numeric_limits<double>::max();
+    const auto radius = qMin(
+        qMin(center.x - coastlineArea31.left(), coastlineArea31.right() - center.x),
+        qMin(center.y - coastlineArea31.top(), coastlineArea31.bottom() - center.y)) & mask;
+    const auto maxSqDistance = static_cast<double>(radius) * radius;
+    auto minSqDistance = std::numeric_limits<double>::max();
     double distance = 0.0;
     int idx = 0;
     auto cend = coastlines.cend();
@@ -2479,8 +2491,8 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         // Get already polygonized coastline
         QVector<PointI> polygon;
         bool isClockwise;
-        Utilities::clipPolygonForTile(
-            center, points, area31.topLeft, area31.bottomRight, temp, polygon, minSqDistance, distance, isClockwise);
+        Utilities::clipPolygonForTile(center, points, area31.topLeft, area31.bottomRight, temp, polygon,
+            maxSqDistance, minSqDistance, distance, isClockwise);
         if (polygon.size() < 3)
             continue;
         const auto& first = polygon.front();
@@ -2506,8 +2518,8 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         QVector<QVector<PointI>> polylineGroups[5];
         for (int i : polylineIndices)
         {
-            Utilities::clipPolylineForTile(
-                center, coastlines[i]->points31, topLeft, bottomRight, polylineGroups, minSqDistance, distance);
+            Utilities::clipPolylineForTile(center, coastlines[i]->points31, topLeft, bottomRight, polylineGroups,
+                maxSqDistance, minSqDistance, distance);
         }
 
         // Combine polylines into polygons
@@ -2635,7 +2647,8 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         }
     }
 
-    isLand = distance < 0.0;
+    if (minSqDistance < maxSqDistance && distance != 0.0)
+        surfaceType = distance < 0.0 ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
 
     if (outVectorized.isEmpty())
         return false;

@@ -75,9 +75,10 @@ namespace OsmAnd
 
         static bool getCoastlines(
             const AreaI area31,
+            const AreaI coastlineArea31,
             const QList< std::shared_ptr<const MapObject> >& coastlines,
             QList< std::shared_ptr<const MapObject> >& outVectorized,
-            bool& isLand);
+            MapSurfaceType& surfaceType);
 
         static bool polygonizeCoastlines(
             const AreaI area31,

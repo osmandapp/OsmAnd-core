@@ -2046,16 +2046,21 @@ namespace OsmAnd
         }
 
         inline static void findClosestWinding(
-            const PointI& center, const PointI& p0, const PointI& p1, double& minSqDistance, double& distance)
+            const PointI& center, const PointI& p0, const PointI& p1,
+            const double maxSqDistance, double& minSqDistance, double& distance)
         {
             const auto aX = static_cast<int64_t>(p1.x) - p0.x;
             const auto aY = static_cast<int64_t>(p1.y) - p0.y;
             const auto b = center - p0;
             const auto sqLen = static_cast<double>(aX * aX + aY * aY);
+            if (sqLen == 0.0)
+                return;
             const auto t = qBound(0.0, (aX * b.x + aY * b.y) / sqLen, 1.0);
             const auto dX = center.x - t * aX - p0.x;
             const auto dY = center.y - t * aY - p0.y;
             const auto sqDist = dX * dX + dY * dY;
+            if (sqDist >= maxSqDistance)
+                return;
             if (sqDist < minSqDistance * 0.9999999999) 
             {
                 minSqDistance = sqDist;
@@ -2067,7 +2072,7 @@ namespace OsmAnd
 
         inline static void clipPolylineForTile(const PointI& center, const QVector<PointI>& polyline,
             const PointI& topLeft, const PointI& bottomRight, QVector<QVector<PointI>>* result,
-            double& minSqDistance, double& distance)
+            const double maxSqDistance, double& minSqDistance, double& distance)
         {
             if (polyline.size() < 2)
                 return;
@@ -2143,7 +2148,7 @@ namespace OsmAnd
                             result[computeBorderCode(segment.front(), topLeft, bottomRight)].push_back(qMove(segment));
                         segment.reserve(polyline.size());
                     }
-                    findClosestWinding(center, prevPoint, point, minSqDistance, distance);
+                    findClosestWinding(center, prevPoint, point, maxSqDistance, minSqDistance, distance);
                 }
                 else
                     next = true;
@@ -2164,7 +2169,8 @@ namespace OsmAnd
 
         template<bool IsY, bool IsGreater>
         inline static bool clipPolygonAgainstEdge(const PointI& center, const QVector<PointI>& polygon,
-            QVector<PointI>& result, int limit, double& minSqDistance, double& distance, bool& clockwise)
+            QVector<PointI>& result, int limit, const double maxSqDistance,
+            double& minSqDistance, double& distance, bool& clockwise)
         {
             auto sp = polygon.back();
             PointI sm(INT32_MIN, INT32_MIN);
@@ -2236,7 +2242,7 @@ namespace OsmAnd
                         result.push_back(m);
                 }
                 if (IsY && IsGreater)
-                    findClosestWinding(center, sp, p, minSqDistance, distance);
+                    findClosestWinding(center, sp, p, maxSqDistance, minSqDistance, distance);
                 else if (!IsY && !IsGreater)
                     signedArea += static_cast<double>(sp.x) * p.y - static_cast<double>(p.x) * sp.y;
                 sp = p;
@@ -2251,7 +2257,7 @@ namespace OsmAnd
 
         inline static void clipPolygonForTile(const PointI& center, const QVector<PointI>& polygon,
             const PointI& topLeft, const PointI& bottomRight, QVector<PointI>& temp, QVector<PointI>& result,
-            double& minSqD, double& distance, bool& clockwise)
+            const double maxSqDistance, double& minSqDistance, double& distance, bool& clockwise)
         {
             result.clear();
             auto size = polygon.size();
@@ -2260,22 +2266,26 @@ namespace OsmAnd
             size += 4;
         	temp.clear();
             temp.reserve(size);
-            if (!clipPolygonAgainstEdge<true, true>(center, polygon, temp, bottomRight.y, minSqD, distance, clockwise))
+            if (!clipPolygonAgainstEdge<true, true>(
+                center, polygon, temp, bottomRight.y, maxSqDistance, minSqDistance, distance, clockwise))
                 return;
             result.reserve(size);
-            if (!clipPolygonAgainstEdge<false, true>(center, temp, result, bottomRight.x, minSqD, distance, clockwise))
+            if (!clipPolygonAgainstEdge<false, true>(
+                center, temp, result, bottomRight.x, maxSqDistance, minSqDistance, distance, clockwise))
             {
                 result.clear();
                 return;
             }
             temp.clear();
-            if (!clipPolygonAgainstEdge<true, false>(center, result, temp, topLeft.y, minSqD, distance, clockwise))
+            if (!clipPolygonAgainstEdge<true, false>(
+                center, result, temp, topLeft.y, maxSqDistance, minSqDistance, distance, clockwise))
             {
                 result.clear();
                 return;
             }
             result.clear();
-            if (!clipPolygonAgainstEdge<false, false>(center, temp, result, topLeft.x, minSqD, distance, clockwise))
+            if (!clipPolygonAgainstEdge<false, false>(
+                center, temp, result, topLeft.x, maxSqDistance, minSqDistance, distance, clockwise))
             {
                 result.clear();
                 return;
