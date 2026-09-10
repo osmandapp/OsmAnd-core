@@ -5,6 +5,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.FrameLayout;
@@ -646,6 +648,7 @@ public abstract class MapRendererView extends FrameLayout {
             _renderingView.setRenderer(new RendererProxy());
             _renderingView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
             isViewStarted = true;
+            _renderingView.setRenderRequestsEnabled(true);
             if (_inWindow) {
                 addView(_renderingView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
             } else {
@@ -657,6 +660,9 @@ public abstract class MapRendererView extends FrameLayout {
 
     public void stopRenderingView() {
         Log.v(TAG, "stopRenderingView()");
+        if (_renderingView != null) {
+            _renderingView.setRenderRequestsEnabled(false);
+        }
         if (isViewStarted) {
             isViewStarted = false;
             if (_renderingView != null) {
@@ -671,6 +677,7 @@ public abstract class MapRendererView extends FrameLayout {
         Log.v(TAG, "removeRenderingView()");
         isSurfaceReady = false;
         if (_renderingView != null) {
+            _renderingView.setRenderRequestsEnabled(false);
             if (_renderingView.isOffscreen) {
                 _renderingView.removeView();
             } else {
@@ -2573,8 +2580,54 @@ public abstract class MapRendererView extends FrameLayout {
 
         public boolean isOffscreen = false;
 
+        // Use the main queue even for offscreen views that are not attached to a window.
+        private final Handler renderHandler = new Handler(Looper.getMainLooper());
+        private final Object renderRequestLock = new Object();
+        private boolean renderRequestsEnabled;
+        private boolean renderRequestPending;
+
+        private final Runnable renderRequest = () -> {
+            synchronized (renderRequestLock) {
+                renderRequestPending = false;
+                if (!renderRequestsEnabled) {
+                    return;
+                }
+            }
+
+            // The view may have stopped or been replaced while the request was queued.
+            if (_renderingView != this || !isViewStarted || isSuspended) {
+                return;
+            }
+
+            try {
+                RenderingView.super.requestRender();
+            } catch (Throwable e) {
+                Log.e(TAG, "Failed to request a frame", e);
+            }
+        };
+
         public RenderingView(Context context) {
             super(context);
+        }
+
+        @Override
+        public void requestRender() {
+            synchronized (renderRequestLock) {
+                if (renderRequestsEnabled && !renderRequestPending) {
+                    renderRequestPending = renderHandler.post(renderRequest);
+                }
+            }
+        }
+
+        private void setRenderRequestsEnabled(boolean enabled) {
+            synchronized (renderRequestLock) {
+                renderRequestsEnabled = enabled;
+                if (!enabled) {
+                    // Serialize cancellation with posting so workers cannot enqueue after cleanup.
+                    renderHandler.removeCallbacks(renderRequest);
+                    renderRequestPending = false;
+                }
+            }
         }
 
         public void initializeView(int bitmapWidth, int bitmapHeight) {
