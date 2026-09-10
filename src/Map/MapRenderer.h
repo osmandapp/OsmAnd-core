@@ -151,7 +151,9 @@ namespace OsmAnd
         void processGpuWorker();
 
         // General:
+        class RequestedStateLock;
         void invalidateFrame();
+        void requestFrameUpdate() const;
         Qt::HANDLE _renderThreadId;
         Concurrent::Dispatcher _renderThreadDispatcher;
         Concurrent::Dispatcher _gpuThreadDispatcher;

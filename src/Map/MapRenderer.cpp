@@ -225,11 +225,64 @@ bool OsmAnd::MapRenderer::updateInternalState(
     return true;
 }
 
+// Locks the requested state and postpones frame requests made under the lock until it is released.
+// The frame update request callback leaves native code (a JNI up-call on Android), and whatever
+// stalls it there must not keep other threads, the main one included, waiting for the state.
+class OsmAnd::MapRenderer::RequestedStateLock
+{
+public:
+    explicit RequestedStateLock(const MapRenderer* const renderer)
+        : _renderer(renderer)
+        , _locker(&renderer->_requestedStateMutex)
+        , _outer(_current)
+    {
+        _current = this;
+    }
+
+    ~RequestedStateLock()
+    {
+        _current = _outer;
+        _locker.unlock();
+        if (_frameRequested)
+            _renderer->requestFrameUpdate();
+    }
+
+    static bool postponeFrameRequest(const MapRenderer* const renderer)
+    {
+        for (auto lock = _current; lock; lock = lock->_outer)
+        {
+            if (lock->_renderer == renderer)
+            {
+                lock->_frameRequested = true;
+                return true;
+            }
+        }
+        return false;
+    }
+
+private:
+    const MapRenderer* const _renderer;
+    QMutexLocker _locker;
+    RequestedStateLock* const _outer;
+    bool _frameRequested = false;
+
+    static thread_local RequestedStateLock* _current;
+};
+
+thread_local OsmAnd::MapRenderer::RequestedStateLock* OsmAnd::MapRenderer::RequestedStateLock::_current = nullptr;
+
 void OsmAnd::MapRenderer::invalidateFrame()
 {
     // Increment frame-invalidated counter by 1
     _frameInvalidatesCounter.fetchAndAddOrdered(1);
 
+    // Request frame right away, unless this thread holds the requested state
+    if (!RequestedStateLock::postponeFrameRequest(this))
+        requestFrameUpdate();
+}
+
+void OsmAnd::MapRenderer::requestFrameUpdate() const
+{
     QReadLocker scopedLocker(&_setupOptionsLock);
 
     // Request frame, if such callback is defined
@@ -338,7 +391,7 @@ void OsmAnd::MapRenderer::processGpuWorker()
 
 OsmAnd::MapRendererState OsmAnd::MapRenderer::getFreshState(bool& isFresh) const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (isFresh = _requestedState.isChanged)
         _requestedState.isChanged = false;
@@ -589,7 +642,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
 
     // Set corrected map target in case heightmap data became available
     {
-        QMutexLocker scopedLocker(&_requestedStateMutex);
+        RequestedStateLock scopedLocker(this);
 
         bool adjustTarget =
         _requestedState.fixedPixel.x >= 0 && _requestedState.fixedPixel.y >= 0
@@ -608,7 +661,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
     unsigned int requestedStateUpdatedMask;
     if ((requestedStateUpdatedMask = _requestedStateUpdatedMask.fetchAndStoreOrdered(0)) != 0)
     {
-        QMutexLocker scopedLocker(&_requestedStateMutex);
+        RequestedStateLock scopedLocker(this);
 
         // Update internal state, that is derived from requested state and configuration
         isNew = updateInternalState(*getInternalStateRef(), _requestedState, *currentConfiguration);
@@ -1417,35 +1470,35 @@ bool OsmAnd::MapRenderer::isSymbolsLoadingActive()
 
 OsmAnd::MapRendererState OsmAnd::MapRenderer::getState() const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     return _requestedState;
 }
 
 OsmAnd::MapState OsmAnd::MapRenderer::getMapState() const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     return currentState.getMapState();
 }
 
 OsmAnd::MapState OsmAnd::MapRenderer::getFutureState() const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     return _requestedState.getMapState();
 }
 
 void OsmAnd::MapRenderer::getGridConfiguration(GridConfiguration* gridConfiguration) const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     currentState.getGridConfiguration(gridConfiguration);
 }
 
 OsmAnd::ZoomLevel OsmAnd::MapRenderer::getVisibleArea(AreaI* visibleBBoxShifted, PointI* target31) const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     float minVisualZoom;
     const auto result = qMax(currentState.getVisibleArea(visibleBBoxShifted, target31),
@@ -1483,7 +1536,7 @@ bool OsmAnd::MapRenderer::setMapLayerProvider(
     const std::shared_ptr<IMapLayerProvider>& provider,
     bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!provider)
         return false;
@@ -1507,7 +1560,7 @@ bool OsmAnd::MapRenderer::setMapLayerProvider(
 
 bool OsmAnd::MapRenderer::resetMapLayerProvider(const int layerIndex, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     const auto itMapLayerProvider = _requestedState.mapLayersProviders.find(layerIndex);
 
@@ -1527,7 +1580,7 @@ bool OsmAnd::MapRenderer::setMapLayerConfiguration(
     const MapLayerConfiguration& configuration,
     bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!configuration.isValid())
         return false;
@@ -1553,7 +1606,7 @@ bool OsmAnd::MapRenderer::setElevationDataProvider(
     const std::shared_ptr<IMapElevationDataProvider>& provider,
     bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!provider)
         return false;
@@ -1585,7 +1638,7 @@ bool OsmAnd::MapRenderer::setElevationDataProvider(
 
 bool OsmAnd::MapRenderer::resetElevationDataProvider(bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update = forcedUpdate || static_cast<bool>(_requestedState.elevationDataProvider);
     if (!update)
@@ -1631,7 +1684,7 @@ bool OsmAnd::MapRenderer::setMap3DObjectsProvider(
     const std::shared_ptr<IMapTiledDataProvider>& provider,
     bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!provider)
         return false;
@@ -1654,7 +1707,7 @@ bool OsmAnd::MapRenderer::setMap3DObjectsProvider(
 
 bool OsmAnd::MapRenderer::resetMap3DObjectsProvider(bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update = forcedUpdate || static_cast<bool>(_requestedState.map3DObjectsProvider);
     if (!update)
@@ -1668,7 +1721,7 @@ bool OsmAnd::MapRenderer::resetMap3DObjectsProvider(bool forcedUpdate /*= false*
 
 bool OsmAnd::MapRenderer::add3DObjectColor(const PointI& location31, const FColorRGB& color)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (_requestedState.map3DObjectsProvider)
     {
@@ -1684,7 +1737,7 @@ bool OsmAnd::MapRenderer::add3DObjectColor(const PointI& location31, const FColo
 
 bool OsmAnd::MapRenderer::remove3DObjectColor(const PointI& location31)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (_requestedState.map3DObjectsProvider)
     {
@@ -1700,7 +1753,7 @@ bool OsmAnd::MapRenderer::remove3DObjectColor(const PointI& location31)
 
 bool OsmAnd::MapRenderer::removeAll3DObjectColors()
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (_requestedState.map3DObjectsProvider)
     {
@@ -1718,7 +1771,7 @@ bool OsmAnd::MapRenderer::setElevationConfiguration(
     const ElevationConfiguration& configuration,
     bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!configuration.isValid())
         return false;
@@ -1736,7 +1789,7 @@ bool OsmAnd::MapRenderer::setElevationConfiguration(
 
 bool OsmAnd::MapRenderer::setElevationScaleFactor(const float scaleFactor, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!_requestedState.elevationConfiguration.isValid())
         return false;
@@ -1754,7 +1807,7 @@ bool OsmAnd::MapRenderer::setElevationScaleFactor(const float scaleFactor, bool 
 
 float OsmAnd::MapRenderer::getElevationScaleFactor()
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!_requestedState.elevationConfiguration.isValid())
         return NAN;
@@ -1766,7 +1819,7 @@ bool OsmAnd::MapRenderer::setGridConfiguration(
     const GridConfiguration& configuration,
     bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!configuration.isValid())
         return false;
@@ -1789,7 +1842,7 @@ bool OsmAnd::MapRenderer::addSymbolsProvider(
     const std::shared_ptr<IMapTiledSymbolsProvider>& provider,
     bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!provider)
         return false;
@@ -1831,7 +1884,7 @@ bool OsmAnd::MapRenderer::addSymbolsProvider(
     const std::shared_ptr<IMapKeyedSymbolsProvider>& provider,
     bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!provider)
         return false;
@@ -1885,7 +1938,7 @@ bool OsmAnd::MapRenderer::addSymbolsProvider(
 bool OsmAnd::MapRenderer::hasSymbolsProvider(
     const std::shared_ptr<IMapTiledSymbolsProvider>& provider)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!provider)
         return false;
@@ -1899,7 +1952,7 @@ bool OsmAnd::MapRenderer::hasSymbolsProvider(
 bool OsmAnd::MapRenderer::hasSymbolsProvider(
     const std::shared_ptr<IMapKeyedSymbolsProvider>& provider)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!provider)
         return false;
@@ -1913,7 +1966,7 @@ bool OsmAnd::MapRenderer::hasSymbolsProvider(
 int OsmAnd::MapRenderer::getSymbolsProviderSubsection(
     const std::shared_ptr<IMapTiledSymbolsProvider>& provider)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!provider)
         return 0;
@@ -1927,7 +1980,7 @@ int OsmAnd::MapRenderer::getSymbolsProviderSubsection(
 int OsmAnd::MapRenderer::getSymbolsProviderSubsection(
     const std::shared_ptr<IMapKeyedSymbolsProvider>& provider)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!provider)
         return 0;
@@ -1942,7 +1995,7 @@ bool OsmAnd::MapRenderer::removeSymbolsProvider(
     const std::shared_ptr<IMapTiledSymbolsProvider>& provider,
     bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!provider)
         return false;
@@ -1970,7 +2023,7 @@ bool OsmAnd::MapRenderer::removeSymbolsProvider(
     const std::shared_ptr<IMapKeyedSymbolsProvider>& provider,
     bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!provider)
         return false;
@@ -2023,7 +2076,7 @@ bool OsmAnd::MapRenderer::removeSymbolsProvider(
 
 bool OsmAnd::MapRenderer::removeAllSymbolsProviders(bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     const auto update =
         forcedUpdate ||
@@ -2061,7 +2114,7 @@ bool OsmAnd::MapRenderer::setSymbolSubsectionConfiguration(
     const SymbolSubsectionConfiguration& configuration,
     bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (!configuration.isValid())
         return false;
@@ -2085,7 +2138,7 @@ bool OsmAnd::MapRenderer::setSymbolSubsectionConfiguration(
 
 bool OsmAnd::MapRenderer::setWindowSize(const PointI& windowSize, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (windowSize.x <= 0 || windowSize.y <= 0)
         return false;
@@ -2106,7 +2159,7 @@ bool OsmAnd::MapRenderer::setWindowSize(const PointI& windowSize, bool forcedUpd
 
 bool OsmAnd::MapRenderer::setViewport(const AreaI& viewport, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update = forcedUpdate || (_requestedState.viewport != viewport);
     if (!update)
@@ -2126,7 +2179,7 @@ bool OsmAnd::MapRenderer::setViewportScale(double scale, bool forcedUpdate /*= f
 {
     scale = std::max(scale, 1.0);
 
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     const bool update = forcedUpdate || qFuzzyCompare(glViewportScale, scale) || scale <= getMaxViewportScale();
     if (!update)
@@ -2160,7 +2213,7 @@ glm::vec2 OsmAnd::MapRenderer::getViewportShift() const
 
 bool OsmAnd::MapRenderer::setFlip(bool flip, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update = forcedUpdate || (_requestedState.flip != flip);
     if (!update)
@@ -2177,7 +2230,7 @@ bool OsmAnd::MapRenderer::setFlip(bool flip, bool forcedUpdate /*= false*/)
 
 bool OsmAnd::MapRenderer::setFlatEarth(bool flatEarth, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update = forcedUpdate || (_requestedState.flatEarth != flatEarth);
     if (!update)
@@ -2225,7 +2278,7 @@ bool OsmAnd::MapRenderer::setFlatEarth(bool flatEarth, bool forcedUpdate /*= fal
 
 bool OsmAnd::MapRenderer::setFieldOfView(const float fieldOfView, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (fieldOfView <= 0.0f || fieldOfView >= 90.0f)
         return false;
@@ -2246,7 +2299,7 @@ bool OsmAnd::MapRenderer::setFieldOfView(const float fieldOfView, bool forcedUpd
 
 bool OsmAnd::MapRenderer::setVisibleDistance(const float visibleDistance, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (visibleDistance < 0.0f)
         return false;
@@ -2265,7 +2318,7 @@ bool OsmAnd::MapRenderer::setVisibleDistance(const float visibleDistance, bool f
 
 bool OsmAnd::MapRenderer::setDetailedDistance(const float detailedDistance, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (detailedDistance < 0.0f)
         return false;
@@ -2284,7 +2337,7 @@ bool OsmAnd::MapRenderer::setDetailedDistance(const float detailedDistance, bool
 
 bool OsmAnd::MapRenderer::setSkyColor(const FColorRGB& color, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update = forcedUpdate || _requestedState.skyColor != color;
     if (!update)
@@ -2300,14 +2353,14 @@ bool OsmAnd::MapRenderer::setSkyColor(const FColorRGB& color, bool forcedUpdate 
 bool OsmAnd::MapRenderer::setAzimuth(const float azimuth,
     bool forcedUpdate /*= false*/, const bool disableUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     return setAzimuthToState(_requestedState, azimuth, forcedUpdate, disableUpdate);
 }
 
 bool OsmAnd::MapRenderer::setElevationAngle(const float elevationAngle, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (elevationAngle <= 0.0f || elevationAngle > 90.0f)
         return false;
@@ -2334,7 +2387,7 @@ bool OsmAnd::MapRenderer::setElevationAngle(const float elevationAngle, bool for
 bool OsmAnd::MapRenderer::setTarget(
     const PointI& target31_, bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     const auto target31 = Utilities::normalizeCoordinates(target31_, ZoomLevel31);
     bool update = forcedUpdate || (_requestedState.target31 != target31);
@@ -2358,7 +2411,7 @@ bool OsmAnd::MapRenderer::setTarget(
 bool OsmAnd::MapRenderer::setTargetWithFlatZoom(const PointI& target31_, const ZoomLevel zoomLevel,
     const float visualZoom, bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     const auto target31 = Utilities::normalizeCoordinates(target31_, ZoomLevel31);
     bool update = forcedUpdate
@@ -2388,7 +2441,7 @@ bool OsmAnd::MapRenderer::setTargetWithFlatZoom(const PointI& target31_, const Z
 bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI& location31_,
     bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (screenPoint_.x < 0 || screenPoint_.y < 0)
     {
@@ -2722,7 +2775,7 @@ bool OsmAnd::MapRenderer::resetMapTarget()
     PointI location31;
     PointI screenPoint;
     {
-        QMutexLocker scopedLocker(&_requestedStateMutex);
+        RequestedStateLock scopedLocker(this);
 
         if (_requestedState.fixedPixel.x < 0 || _requestedState.fixedPixel.y < 0)
             return false;
@@ -2733,7 +2786,7 @@ bool OsmAnd::MapRenderer::resetMapTarget()
     float height = 0.0f;
     bool found = getLocationFromElevatedPoint(screenPoint, location31, &height);
 
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     _requestedState.fixedLocation31 = location31;
     _requestedState.fixedHeight = found ? getWorldElevationOfLocation(_requestedState, height, location31) : 0.0f;
@@ -2752,7 +2805,7 @@ bool OsmAnd::MapRenderer::resetMapTargetPixelCoordinates(const PointI& screenPoi
         return false;
     else
     {
-        QMutexLocker scopedLocker(&_requestedStateMutex);
+        RequestedStateLock scopedLocker(this);
 
         if (_requestedState.fixedPixel == screenPoint_)
             return true;
@@ -2762,7 +2815,7 @@ bool OsmAnd::MapRenderer::resetMapTargetPixelCoordinates(const PointI& screenPoi
     float height = 0.0f;
     bool found = getLocationFromElevatedPoint(screenPoint_, location31, &height);
 
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     _requestedState.fixedPixel = screenPoint_;
     _requestedState.fixedLocation31 = location31;
@@ -2778,7 +2831,7 @@ bool OsmAnd::MapRenderer::resetMapTargetPixelCoordinates(const PointI& screenPoi
 bool OsmAnd::MapRenderer::setMapTargetPixelCoordinates(const PointI& screenPoint_,
     bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (screenPoint_.x < 0 || screenPoint_.y < 0)
     {
@@ -2830,7 +2883,7 @@ bool OsmAnd::MapRenderer::setMapTargetPixelCoordinates(const PointI& screenPoint
 bool OsmAnd::MapRenderer::setMapTargetLocation(const PointI& location31_,
     bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     return setMapTargetLocationToState(_requestedState, location31_, forcedUpdate, disableUpdate);
 }
@@ -3004,7 +3057,7 @@ bool OsmAnd::MapRenderer::setSecondaryTarget(MapRendererState& state,
 bool OsmAnd::MapRenderer::setSecondaryTarget(const PointI& screenPoint_, const PointI& location31_,
     bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (screenPoint_.x < 0 || screenPoint_.y < 0)
     {
@@ -3043,7 +3096,7 @@ bool OsmAnd::MapRenderer::setSecondaryTarget(const PointI& screenPoint_, const P
 bool OsmAnd::MapRenderer::setSecondaryTargetPixelCoordinates(const PointI& screenPoint_,
     bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (screenPoint_.x < 0 || screenPoint_.y < 0)
     {
@@ -3070,7 +3123,7 @@ bool OsmAnd::MapRenderer::setSecondaryTargetPixelCoordinates(const PointI& scree
 bool OsmAnd::MapRenderer::setSecondaryTargetLocation(const PointI& location31_,
     bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (_requestedState.aimPixel.x < 0 || _requestedState.aimPixel.y < 0)
         return false;
@@ -3095,14 +3148,14 @@ bool OsmAnd::MapRenderer::setSecondaryTargetLocation(const PointI& location31_,
 
 int OsmAnd::MapRenderer::getAimingActions()
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     return static_cast<int>(_requestedState.aimingActions.to_ulong());
 }
 
 bool OsmAnd::MapRenderer::setAimingActions(const int actionBits, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     const auto aimingActions = AimingActions(actionBits);
 
@@ -3119,7 +3172,7 @@ bool OsmAnd::MapRenderer::setAimingActions(const int actionBits, bool forcedUpda
 
 bool OsmAnd::MapRenderer::setFlatZoom(const float zoom, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     return setFlatZoomToState(_requestedState, zoom, forcedUpdate);
 }
@@ -3127,14 +3180,14 @@ bool OsmAnd::MapRenderer::setFlatZoom(const float zoom, bool forcedUpdate /*= fa
 bool OsmAnd::MapRenderer::setFlatZoom(const ZoomLevel zoomLevel, const float visualZoom,
     bool forcedUpdate /*= false*/, const bool disableUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     return setFlatZoomToState(_requestedState, zoomLevel, visualZoom, forcedUpdate, disableUpdate);
 }
 
 bool OsmAnd::MapRenderer::setFlatZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update =
         forcedUpdate ||
@@ -3173,7 +3226,7 @@ bool OsmAnd::MapRenderer::setFlatZoomLevel(const ZoomLevel zoomLevel, bool force
 
 bool OsmAnd::MapRenderer::setFlatVisualZoom(const float visualZoom, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update =
         forcedUpdate ||
@@ -3210,7 +3263,7 @@ bool OsmAnd::MapRenderer::setFlatVisualZoom(const float visualZoom, bool forcedU
 
 float OsmAnd::MapRenderer::getZoom()
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     auto result = static_cast<float>(_requestedState.surfaceZoomLevel)
         + Utilities::visualZoomToFraction(_requestedState.surfaceVisualZoom);
@@ -3220,28 +3273,28 @@ float OsmAnd::MapRenderer::getZoom()
 
 bool OsmAnd::MapRenderer::setZoom(const float zoom, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     return setZoomToState(_requestedState, zoom, forcedUpdate);
 }
 
 bool OsmAnd::MapRenderer::setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     return setZoomToState(_requestedState, zoomLevel, visualZoom, forcedUpdate);
 }
 
 OsmAnd::ZoomLevel OsmAnd::MapRenderer::getZoomLevel()
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     return _requestedState.surfaceZoomLevel;
 }
 
 bool OsmAnd::MapRenderer::setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update =
         forcedUpdate ||
@@ -3273,14 +3326,14 @@ bool OsmAnd::MapRenderer::setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpd
 
 float OsmAnd::MapRenderer::getVisualZoom()
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     return _requestedState.surfaceVisualZoom;
 }
 
 bool OsmAnd::MapRenderer::setVisualZoom(const float visualZoom, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update =
         forcedUpdate ||
@@ -3310,7 +3363,7 @@ bool OsmAnd::MapRenderer::setVisualZoom(const float visualZoom, bool forcedUpdat
 
 bool OsmAnd::MapRenderer::setVisualZoomShift(const float visualZoomShift, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update =
         forcedUpdate ||
@@ -3334,7 +3387,7 @@ bool OsmAnd::MapRenderer::restoreFlatZoom(const float heightInMeters, bool force
 
     if (_requestedState.elevationDataProvider)
     {
-        QMutexLocker scopedLocker(&_requestedStateMutex);
+        RequestedStateLock scopedLocker(this);
 
         // Store current zoom level
         const auto zoom = _requestedState.zoomLevel; 
@@ -3361,7 +3414,7 @@ bool OsmAnd::MapRenderer::restoreFlatZoom(const float heightInMeters, bool force
 
 bool OsmAnd::MapRenderer::setStubsStyle(const MapStubStyle style, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (style == MapStubStyle::Unspecified)
         return false;
@@ -3379,7 +3432,7 @@ bool OsmAnd::MapRenderer::setStubsStyle(const MapStubStyle style, bool forcedUpd
 
 bool OsmAnd::MapRenderer::setBackgroundColor(const FColorRGB& color, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update = forcedUpdate || _requestedState.backgroundColor != color;
     if (!update)
@@ -3394,7 +3447,7 @@ bool OsmAnd::MapRenderer::setBackgroundColor(const FColorRGB& color, bool forced
 
 bool OsmAnd::MapRenderer::setFogColor(const FColorRGB& color, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update = forcedUpdate || _requestedState.fogColor != color;
     if (!update)
@@ -3409,7 +3462,7 @@ bool OsmAnd::MapRenderer::setFogColor(const FColorRGB& color, bool forcedUpdate 
 
 bool OsmAnd::MapRenderer::setMyLocationColor(const FColorARGB& color, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update = forcedUpdate || _requestedState.myLocationColor != color;
     if (!update)
@@ -3424,7 +3477,7 @@ bool OsmAnd::MapRenderer::setMyLocationColor(const FColorARGB& color, bool force
 
 bool OsmAnd::MapRenderer::setMyLocation31(const PointI& location31, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     const auto myLocation31 = Utilities::normalizeCoordinates(location31, ZoomLevel31);
     bool update = forcedUpdate || _requestedState.myLocation31 != myLocation31;
@@ -3440,7 +3493,7 @@ bool OsmAnd::MapRenderer::setMyLocation31(const PointI& location31, bool forcedU
 
 bool OsmAnd::MapRenderer::setMyLocationRadiusInMeters(const float radius, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update = forcedUpdate || _requestedState.myLocationRadiusInMeters != radius;
     if (!update)
@@ -3455,7 +3508,7 @@ bool OsmAnd::MapRenderer::setMyLocationRadiusInMeters(const float radius, bool f
 
 bool OsmAnd::MapRenderer::setMyDirection(const float directionAngle, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update = forcedUpdate || _requestedState.myDirection != directionAngle;
     if (!update)
@@ -3470,7 +3523,7 @@ bool OsmAnd::MapRenderer::setMyDirection(const float directionAngle, bool forced
 
 bool OsmAnd::MapRenderer::setMyDirectionRadius(const float radius, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update = forcedUpdate || _requestedState.myDirectionRadius != radius;
     if (!update)
@@ -3485,7 +3538,7 @@ bool OsmAnd::MapRenderer::setMyDirectionRadius(const float radius, bool forcedUp
 
 bool OsmAnd::MapRenderer::setSymbolsOpacity(const float opacityFactor, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update = forcedUpdate || _requestedState.symbolsOpacity != opacityFactor;
     if (!update)
@@ -3500,7 +3553,7 @@ bool OsmAnd::MapRenderer::setSymbolsOpacity(const float opacityFactor, bool forc
 
 float OsmAnd::MapRenderer::getSymbolsOpacity() const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     return _requestedState.symbolsOpacity;
 }
@@ -3512,7 +3565,7 @@ bool OsmAnd::MapRenderer::hitSurface() const
 
 bool OsmAnd::MapRenderer::set3DBuildingsAlpha(const float alpha, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     float clampedAlpha = qBound(0.0f, alpha, 1.0f);
 
@@ -3527,14 +3580,14 @@ bool OsmAnd::MapRenderer::set3DBuildingsAlpha(const float alpha, bool forcedUpda
 
 float OsmAnd::MapRenderer::get3DBuildingsAlpha() const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     return _buildings3DAlpha;
 }
 
 bool OsmAnd::MapRenderer::set3DBuildingsDetalization(const int detalization, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     int clampedDetalization = detalization;
     if (clampedDetalization < 0)
@@ -3553,14 +3606,14 @@ bool OsmAnd::MapRenderer::set3DBuildingsDetalization(const int detalization, boo
 
 int OsmAnd::MapRenderer::get3DBuildingsDetalization() const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     return _buildings3DDetalization;
 }
 
 bool OsmAnd::MapRenderer::setDateTime(const int64_t dateTime, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     bool update = forcedUpdate || _requestedState.dateTime != dateTime;
     if (!update)
@@ -3582,7 +3635,7 @@ bool OsmAnd::MapRenderer::changeTimePeriod()
 
 bool OsmAnd::MapRenderer::getMapTargetLocation(PointI& location31) const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (_requestedState.fixedPixel.x < 0 || _requestedState.fixedPixel.y < 0)
         location31 = _requestedState.target31;
@@ -3593,7 +3646,7 @@ bool OsmAnd::MapRenderer::getMapTargetLocation(PointI& location31) const
 
 bool OsmAnd::MapRenderer::getSecondaryTargetLocation(PointI& location31) const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     location31 = _requestedState.aimLocation31;
 
@@ -3602,7 +3655,7 @@ bool OsmAnd::MapRenderer::getSecondaryTargetLocation(PointI& location31) const
 
 float OsmAnd::MapRenderer::getMapTargetHeightInMeters() const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (_requestedState.fixedPixel.x < 0 || _requestedState.fixedPixel.y < 0)
         return 0.0f;
@@ -3665,7 +3718,7 @@ float OsmAnd::MapRenderer::getSurfaceZoomAfterPinchWithParams(
 
 float OsmAnd::MapRenderer::getMinZoomLevel() const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     float minVisualZoom;
     const auto minZoomLevelLimit = getMinZoomLimit(_requestedState, _requestedState.target31, minVisualZoom);
@@ -3676,7 +3729,7 @@ float OsmAnd::MapRenderer::getMinZoomLevel() const
 
 float OsmAnd::MapRenderer::getMaxZoomLevel() const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     const auto result = static_cast<float>(_requestedState.maxZoomLimit);
 
@@ -3685,7 +3738,7 @@ float OsmAnd::MapRenderer::getMaxZoomLevel() const
 
 bool OsmAnd::MapRenderer::setMinZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (zoomLevel < MinZoomLevel || zoomLevel > MaxZoomLevel)
         return false;
@@ -3734,7 +3787,7 @@ bool OsmAnd::MapRenderer::setMinZoomLevel(const ZoomLevel zoomLevel, bool forced
 
 bool OsmAnd::MapRenderer::setMaxZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (zoomLevel < MinZoomLevel || zoomLevel > MaxZoomLevel)
         return false;
@@ -3771,7 +3824,7 @@ OsmAnd::ZoomLevel OsmAnd::MapRenderer::getDetailedZoomLevel() const
 
 OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMinimalZoomLevelsRangeLowerBound() const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (_requestedState.mapLayersProviders.isEmpty())
         return _requestedState.minZoomLimit;
@@ -3784,7 +3837,7 @@ OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMinimalZoomLevelsRangeLowerBound() con
 
 OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMinimalZoomLevelsRangeUpperBound() const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (_requestedState.mapLayersProviders.isEmpty())
         return _requestedState.maxZoomLimit;
@@ -3797,7 +3850,7 @@ OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMinimalZoomLevelsRangeUpperBound() con
 
 OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMaximalZoomLevelsRangeLowerBound() const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (_requestedState.mapLayersProviders.isEmpty())
         return _requestedState.minZoomLimit;
@@ -3810,7 +3863,7 @@ OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMaximalZoomLevelsRangeLowerBound() con
 
 OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMaximalZoomLevelsRangeUpperBound() const
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
+    RequestedStateLock scopedLocker(this);
 
     if (_requestedState.mapLayersProviders.isEmpty())
         return _requestedState.maxZoomLimit;
