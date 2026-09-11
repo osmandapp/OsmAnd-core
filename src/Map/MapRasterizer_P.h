@@ -124,13 +124,19 @@ namespace OsmAnd
             const QVector<PointI>& points31,
             const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
             const PaintValuesSet valueSetSelector,
-            const IMapStyle::ValueDefinitionId hMarginId);
+            const IMapStyle::ValueDefinitionId hMarginId,
+            const IMapStyle::ValueDefinitionId hMarginEndId);
+        float polylineLengthInPixels(
+            const Context& context,
+            const QVector<PointI>& points31) const;
+
         bool calculateLinePath(
             const Context& context,
             const QVector<PointI>& points31,
             const AreaI& area31,
             SkPath& outPath,
-            float offset) const;
+            float offset,
+            float offsetEnd) const;
         inline void calculateVertex(const Context& context, const PointI& point31, PointF& vertex) const;
         inline float lineEquation(float x1, float y1, float x2, float y2, float x) const;
         inline void simplifyVertexToDirection(const Context& , const PointF& , const PointF& , PointF&) const;
