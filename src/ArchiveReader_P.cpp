@@ -9,6 +9,8 @@
 
 #include <libarchive/archive_entry.h>
 
+#include "Logging.h"
+
 OsmAnd::ArchiveReader_P::ArchiveReader_P(ArchiveReader* const owner_)
     : owner(owner_)
 {
@@ -45,6 +47,42 @@ QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* con
     return result;
 }
 
+bool OsmAnd::ArchiveReader_P::extractItemsTo(
+    const QHash<QString, QString>& destinationByItemName,
+    QStringList* const failedItemNames_,
+    uint64_t* const extractedBytes_) const
+{
+    uint64_t extractedBytes = 0;
+    QStringList failedItemNames;
+
+    const auto ok = processArchive(
+        [&destinationByItemName, &extractedBytes, &failedItemNames]
+        (archive* archive, archive_entry* entry, bool& /*doStop*/, bool& /*match*/) -> bool
+        {
+            const auto itemName = QString::fromUtf8(archive_entry_pathname_utf8(entry));
+            const auto citDestination = destinationByItemName.constFind(itemName);
+            if (citDestination == destinationByItemName.cend())
+                return true;
+
+            uint64_t itemExtractedBytes = 0;
+            if (!extractArchiveEntryAsFile(archive, entry, *citDestination, itemExtractedBytes))
+            {
+                // A bad entry costs only itself, the rest of the archive is still readable
+                failedItemNames.push_back(itemName);
+                return true;
+            }
+
+            extractedBytes += itemExtractedBytes;
+            return true;
+        });
+
+    if (failedItemNames_ != nullptr)
+        *failedItemNames_ = failedItemNames;
+    if (extractedBytes_ != nullptr)
+        *extractedBytes_ = extractedBytes;
+    return ok;
+}
+
 bool OsmAnd::ArchiveReader_P::extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure, uint64_t* const extractedBytes) const
 {
     const auto fileName = QDir(destinationPath).absoluteFilePath(keepDirectoryStructure ? itemName : QFileInfo(itemName).fileName());
@@ -54,8 +92,9 @@ bool OsmAnd::ArchiveReader_P::extractItemToDirectory(const QString& itemName, co
 bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const QString& fileName, uint64_t* const extractedBytes_, const bool isGzip) const
 {
     uint64_t extractedBytes = 0;
+    bool found = false;
     bool ok = processArchive(
-        [itemName, fileName, &extractedBytes]
+        [itemName, fileName, &extractedBytes, &found]
         (archive* archive, archive_entry* entry, bool& doStop, bool& match) -> bool
         {
             const auto currentItemName = QString::fromUtf8(archive_entry_pathname_utf8(entry));
@@ -65,10 +104,19 @@ bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const Q
 
             // Item was found, so stop on this item regardless of result
             doStop = true;
+            found = true;
             return extractArchiveEntryAsFile(archive, entry, fileName, extractedBytes);
         }, isGzip);
     if (!ok)
+    {
+        if (!found)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Item '%s' was not found while scanning archive '%s'",
+                qPrintable(itemName), qPrintable(owner->fileName));
+        }
         return false;
+    }
 
     if (extractedBytes_ != nullptr)
         *extractedBytes_ = extractedBytes;
@@ -161,7 +209,10 @@ bool OsmAnd::ArchiveReader_P::processArchive(const ArchiveEntryHander handler, c
     {
         QFile archiveFile(fileName);
         if (!archiveFile.exists())
+        {
+            LogPrintf(LogSeverityLevel::Error, "Archive '%s' is gone", qPrintable(fileName));
             return false;
+        }
 
         ok = processArchive(&archiveFile, handler, isGzip);
 
@@ -257,9 +308,33 @@ bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const Ar
     bool doStop = false;
     bool match = true;
     archive_entry* archiveEntry = nullptr;
-    while (!doStop && (archive_read_next_header(archive, &archiveEntry) == ARCHIVE_OK))
+    while (!doStop)
+    {
+        const auto readResult = archive_read_next_header(archive, &archiveEntry);
+        if (readResult == ARCHIVE_EOF)
+            break;
+
+        if (readResult < ARCHIVE_WARN)
+        {
+            // Nothing past this point can be read, so the archive is only partially enumerated
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to read archive entry: %s",
+                archive_error_string(archive));
+            ok = false;
+            break;
+        }
+
+        if (readResult != ARCHIVE_OK)
+        {
+            // The entry itself is still usable, keep going instead of taking this for end-of-archive
+            LogPrintf(LogSeverityLevel::Warning,
+                "Archive entry read with a warning: %s",
+                archive_error_string(archive));
+        }
+
         ok = handler(archive, archiveEntry, doStop, match) && ok;
-    
+    }
+
     ok = ok && match;
 
     // Close archive
@@ -283,7 +358,11 @@ bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archiv
 
     QFile targetFile(fileName);
     if (!QDir(QFileInfo(targetFile).absolutePath()).mkpath("."))
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to create directory for '%s'", qPrintable(fileName));
         return false;
+    }
 
     uint64_t bytesExtracted = 0;
     bool ok;
@@ -291,13 +370,23 @@ bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archiv
     {
         ok = targetFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
         if (!ok)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to open '%s' for writing: %s",
+                qPrintable(fileName), qPrintable(targetFile.errorString()));
             break;
+        }
 
         if (fileSize > 0)
         {
             ok = targetFile.resize(fileSize);
             if (!ok)
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to resize '%s' to %llu bytes: %s",
+                    qPrintable(fileName), fileSize, qPrintable(targetFile.errorString()));
                 break;
+            }
         }
 
         const auto buffer = new uint8_t[BufferSize];
@@ -307,6 +396,12 @@ bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archiv
             if (bytesRead <= 0)
             {
                 ok = (bytesRead == 0);
+                if (!ok)
+                {
+                    LogPrintf(LogSeverityLevel::Error,
+                        "Failed to read data for '%s': %s",
+                        qPrintable(fileName), archive_error_string(archive));
+                }
                 break;
             }
 
@@ -318,6 +413,9 @@ bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archiv
                     bytesRead - bytesWritten);
                 if (writtenChunkSize <= 0)
                 {
+                    LogPrintf(LogSeverityLevel::Error,
+                        "Failed to write '%s': %s",
+                        qPrintable(fileName), qPrintable(targetFile.errorString()));
                     ok = false;
                     break;
                 }
@@ -428,6 +526,12 @@ int OsmAnd::ArchiveReader_P::archiveOpen(archive *, void *_client_data)
     const auto archiveData = reinterpret_cast<ArchiveData*>(_client_data);
 
     const auto ok = archiveData->ioDevice->open(QIODevice::ReadOnly);
+    if (!ok)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to open archive for reading: %s",
+            qPrintable(archiveData->ioDevice->errorString()));
+    }
     return ok ? ARCHIVE_OK : ARCHIVE_FATAL;
 }
 
@@ -466,7 +570,7 @@ __LA_INT64_T OsmAnd::ArchiveReader_P::archiveSeek(archive *, void *_client_data,
         archiveData->ioDevice->seek(archiveData->ioDevice->pos() + offset);
         break;
     case SEEK_END:
-        archiveData->ioDevice->seek(archiveData->ioDevice->size() - offset);
+        archiveData->ioDevice->seek(archiveData->ioDevice->size() + offset);
         break;
     }
     

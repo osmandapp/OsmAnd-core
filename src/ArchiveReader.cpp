@@ -26,6 +26,14 @@ QList<OsmAnd::ArchiveReader::Item> OsmAnd::ArchiveReader::getItems(bool* const o
     return _p->getItems(ok, isGzip);
 }
 
+bool OsmAnd::ArchiveReader::extractItemsTo(
+    const QHash<QString, QString>& destinationByItemName,
+    QStringList* const failedItemNames /*= nullptr*/,
+    uint64_t* const extractedBytes /*= nullptr*/) const
+{
+    return _p->extractItemsTo(destinationByItemName, failedItemNames, extractedBytes);
+}
+
 bool OsmAnd::ArchiveReader::extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure /*= false*/, uint64_t* const extractedBytes /*= nullptr*/) const
 {
     return _p->extractItemToDirectory(itemName, destinationPath, keepDirectoryStructure, extractedBytes);
