@@ -1991,6 +1991,11 @@ namespace OsmAnd
                     .arg(color)));
         }
 
+        inline static int64_t intCrossProduct2D(const PointI& p0, const PointI& p1)
+        {
+            return static_cast<int64_t>(p0.x) * p1.y - static_cast<int64_t>(p1.x) * p0.y;
+        }
+
         inline static int computeBorderCode(const PointI& p, const PointI& tl, const PointI& br)
         {
             if (p.x == tl.x)
@@ -2072,7 +2077,7 @@ namespace OsmAnd
 
         inline static void clipPolylineForTile(const PointI& center, const QVector<PointI>& polyline,
             const PointI& topLeft, const PointI& bottomRight, QVector<QVector<PointI>>* result,
-            const double maxSqDistance, double& minSqDistance, double& distance)
+            QVector<int64_t>* windings, const double maxSqDistance, double& minSqDistance, double& distance)
         {
             if (polyline.size() < 2)
                 return;
@@ -2082,6 +2087,7 @@ namespace OsmAnd
             PointI sm(INT32_MIN, INT32_MIN);
             int prevCode;
             bool next = false;
+            int64_t signedArea = 0;
             for (const auto& point : polyline)
             {
                 int nextCode = computeOutCode(point, topLeft, bottomRight);
@@ -2126,8 +2132,10 @@ namespace OsmAnd
                         {
                             if (!isEmpty)
                             {
-                                result[computeBorderCode(segment.front(), topLeft, bottomRight)].push_back(
-                                    qMove(segment));
+                                const auto borderCode = computeBorderCode(segment.front(), topLeft, bottomRight);
+                                result[borderCode].push_back(qMove(segment));
+                                windings[borderCode].push_back(signedArea);
+                                signedArea = 0;
                                 segment.reserve(polyline.size());
                             }
                             if (p0 != sm)
@@ -2138,6 +2146,7 @@ namespace OsmAnd
                         }
                         if (p1 != sm)
                         {
+                            signedArea += intCrossProduct2D(p0, p1);
                             segment.push_back(p1);
                             sm = p1;
                         }
@@ -2145,7 +2154,12 @@ namespace OsmAnd
                     else if (!segment.empty())
                     {
                         if (segment.size() > 1)
-                            result[computeBorderCode(segment.front(), topLeft, bottomRight)].push_back(qMove(segment));
+                        {
+                            const auto borderCode = computeBorderCode(segment.front(), topLeft, bottomRight);
+                            result[borderCode].push_back(qMove(segment));
+                            windings[borderCode].push_back(signedArea);
+                        }
+                        signedArea = 0;
                         segment.reserve(polyline.size());
                     }
                     findClosestWinding(center, prevPoint, point, maxSqDistance, minSqDistance, distance);
@@ -2156,7 +2170,11 @@ namespace OsmAnd
                 prevCode = nextCode;
             }
             if (segment.size() > 1)
-                result[computeBorderCode(segment.front(), topLeft, bottomRight)].push_back(qMove(segment));
+            {
+                const auto borderCode = computeBorderCode(segment.front(), topLeft, bottomRight);
+                result[borderCode].push_back(qMove(segment));
+                windings[borderCode].push_back(signedArea);
+            }
         }
 
         template<bool IsY, bool IsGreater>
@@ -2176,7 +2194,7 @@ namespace OsmAnd
             PointI sm(INT32_MIN, INT32_MIN);
             PointI m;
             bool sOutside = isOutside<IsY, IsGreater>(sp, limit);
-            double signedArea = 0.0;
+            int64_t signedArea = 0;
             for (const auto p : polygon)
             {
                 if (p == sp)
@@ -2244,14 +2262,14 @@ namespace OsmAnd
                 if (IsY && IsGreater)
                     findClosestWinding(center, sp, p, maxSqDistance, minSqDistance, distance);
                 else if (!IsY && !IsGreater)
-                    signedArea += static_cast<double>(sp.x) * p.y - static_cast<double>(p.x) * sp.y;
+                    signedArea += intCrossProduct2D(sp, p);
                 sp = p;
                 sOutside = pOutside;
             }
             if (result.size() < 3)
                 return false;
             if (!IsY && !IsGreater)
-                clockwise = signedArea >= 0.0;
+                clockwise = signedArea >= 0;
             return true;
         }
 

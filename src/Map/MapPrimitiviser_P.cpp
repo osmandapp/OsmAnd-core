@@ -2516,24 +2516,32 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
     if (!polylineIndices.isEmpty())
     {
         QVector<QVector<PointI>> polylineGroups[5];
+        QVector<int64_t> windingGroups[5];
         for (int i : polylineIndices)
         {
-            Utilities::clipPolylineForTile(center, coastlines[i]->points31, topLeft, bottomRight, polylineGroups,
-                maxSqDistance, minSqDistance, distance);
+            Utilities::clipPolylineForTile(center, coastlines[i]->points31, topLeft, bottomRight,
+                polylineGroups, windingGroups, maxSqDistance, minSqDistance, distance);
         }
 
         // Combine polylines into polygons
-        for (int startSide = 0; startSide < 4; startSide++)
+        for (int beginSide = 0; beginSide < 4; beginSide++)
         {
-            auto& polylines = polylineGroups[startSide];
+            auto& polylines = polylineGroups[beginSide];
+            auto& windings = windingGroups[beginSide];
             while (!polylines.empty())
             {
                 auto polygon = polylines.takeLast();
+                auto winding = windings.takeLast();
+                auto startPoint = polygon.front();
+                int startSide = Utilities::computeBorderCode(startPoint, topLeft, bottomRight);
                 auto lastPoint = polygon.back();
                 int endSide = Utilities::computeBorderCode(lastPoint, topLeft, bottomRight);
+                auto finishPoint = lastPoint;
+                int finishSide = endSide;
                 int prevSide;
                 int i = -2;
                 int lastSide = 0;
+                bool isComplete = false;
                 while (++i <= lastSide)
                 {
                     if (endSide != 4 && i < 0)
@@ -2544,6 +2552,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                     while (endSide == 4)
                     {
                         auto& nextPolylines = polylineGroups[endSide];
+                        auto& nextWindings = windingGroups[endSide];
                         int segIdx;
                         const auto segCount = nextPolylines.size();
                         for (segIdx = 0; segIdx < segCount; segIdx++)
@@ -2552,8 +2561,13 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                             {
                                 const auto lastIdx = nextPolylines.size() - 1;
                                 if (segIdx < lastIdx)
+                                {
                                     nextPolylines.swapItemsAt(segIdx, lastIdx);
+                                    nextWindings.swapItemsAt(segIdx, lastIdx);
+                                }
                                 auto nextPolyline = nextPolylines.takeLast();
+                                auto nextWinding = nextWindings.takeLast();
+                                winding += nextWinding;
                                 polygon.pop_back();
                                 polygon.append(nextPolyline);
                                 break;
@@ -2574,19 +2588,43 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                                 i += (nextSide < prevSide ? 4 : 0) + nextSide - prevSide;
                         }
                         endSide = nextSide;
+                        finishPoint = lastPoint;
+                        finishSide = endSide;
                     }
                     if (endSide == 4)
                         break;
                     const auto side = i % 4;
+                    auto testPoint = lastPoint;
+                    if (side == finishSide && startSide == finishSide)
+                    {
+                        startSide = -1;
+                        bool isWater = winding + Utilities::intCrossProduct2D(finishPoint, startPoint) >= 0;
+                        bool alongY = (side & 1) > 0;
+                        bool negDir = side > 1;
+                        int d = alongY ? finishPoint.y - startPoint.y : finishPoint.x - startPoint.x;
+                        if (negDir)
+                            d = -d;
+                        if (isWater && d > 0)
+                            testPoint = startPoint;
+                        else if (!isWater && d <= 0)
+                        {
+                            testPoint = startPoint;
+                            if (alongY)
+                                testPoint.y += negDir ? -1 : 1;
+                            else
+                                testPoint.x += negDir ? -1 : 1;
+                        }
+                    }
                     auto& nextPolylines = polylineGroups[side];
+                    auto& nextWindings = windingGroups[side];
                     const auto segCount = nextPolylines.size();
                     int minDistance = INT32_MAX;
                     int minIdx = -1;
-                    int segTotal = side == startSide ? segCount + 1 : segCount;
+                    int segTotal = side == beginSide ? segCount + 1 : segCount;
                     for (int segIdx = 0; segIdx < segTotal; segIdx++)
                     {
                         const auto& p = segIdx < segCount ? nextPolylines[segIdx].front() : polygon.front();
-                        int d = (side & 1) > 0 ? p.y - lastPoint.y : p.x - lastPoint.x;
+                        int d = (side & 1) > 0 ? p.y - testPoint.y : p.x - testPoint.x;
                         if (side > 1)
                             d = -d;
                         if (d >= 0 && d < minDistance)
@@ -2601,8 +2639,14 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                         {
                             const auto lastIdx = nextPolylines.size() - 1;
                             if (minIdx < lastIdx)
+                            {
                                 nextPolylines.swapItemsAt(minIdx, lastIdx);
+                                nextWindings.swapItemsAt(minIdx, lastIdx);
+                            }
                             auto nextPolyline = nextPolylines.takeLast();
+                            winding = nextWindings.takeLast();
+                            startPoint = nextPolyline.front();
+                            startSide = Utilities::computeBorderCode(startPoint, topLeft, bottomRight);
                             if (nextPolyline.front() == lastPoint)
                                 polygon.pop_back();
                             polygon.append(nextPolyline);
@@ -2616,8 +2660,11 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                                 i -= 1;
                             }
                             endSide = nextSide;
+                            finishPoint = lastPoint;
+                            finishSide = endSide;
                             continue;
                         }
+                        isComplete = true;
                         break;
                     }
                     if (i < lastSide)
@@ -2628,7 +2675,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                         endSide = (endSide + 1) % 4;
                     }
                 }
-                if (endSide == 4 || polygon.size() < 3)
+                if (!isComplete || polygon.size() < 3)
                     continue;
                 const auto& first = polygon.front();
                 if (first != polygon.back())
