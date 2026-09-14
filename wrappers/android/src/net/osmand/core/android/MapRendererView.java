@@ -149,8 +149,9 @@ public abstract class MapRendererView extends FrameLayout {
     private final GpuWorkerThreadPrologue _gpuWorkerThreadPrologue = new GpuWorkerThreadPrologue();
 
     /**
-     * Only instance of render request callback. Since reference to it is maintained,
-     * transferring ownership to native code via SWIG is not needed.
+     * Only instance of render request callback. The renderer calls it from every state setter,
+     * so it is pinned with a strong JNI reference while a renderer is set up, see
+     * {@link #pinRenderRequestCallback()}.
      */
     private final RenderRequestCallback _renderRequestCallback = new RenderRequestCallback();
 
@@ -341,6 +342,7 @@ public abstract class MapRendererView extends FrameLayout {
                 setupOptions.setGpuWorkerThreadPrologue(null);
                 setupOptions.setGpuWorkerThreadEpilogue(null);
             }
+            pinRenderRequestCallback();
             setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());
             _mapRenderer.setup(setupOptions);
         }
@@ -505,6 +507,7 @@ public abstract class MapRendererView extends FrameLayout {
 
         if (_mapRenderer == null) {
             Log.w(TAG, "Can't stop absent renderer");
+            unpinRenderRequestCallback();
             return;
         }
 
@@ -513,6 +516,7 @@ public abstract class MapRendererView extends FrameLayout {
             Log.w(TAG, "Can't stop the renderer that was handed over");
             _mapRenderer = null;
             eglThread = null;
+            unpinRenderRequestCallback();
             return;
         }
 
@@ -535,6 +539,30 @@ public abstract class MapRendererView extends FrameLayout {
         }
 
         stopEglThread();
+        unpinRenderRequestCallback();
+    }
+
+    /**
+     * Pins the Java object of the frame request callback with a strong JNI global reference.
+     *
+     * A SWIG director created from Java is held by native code through a weak global reference,
+     * and every call into it starts with NewLocalRef on that weak reference. ART blocks such a
+     * call while the GC is processing references, which takes seconds on a loaded heap. The
+     * renderer calls this callback from every state setter, so a setter called on the main
+     * thread (my location, heading, target...) waited out the reference processing of every
+     * GC, either directly or through the requested state mutex held by another thread stuck in
+     * the same call. Releasing the ownership turns the weak reference into a strong one, which
+     * is decoded without waiting.
+     *
+     * The strong reference keeps this view reachable, so it is dropped again in
+     * {@link #unpinRenderRequestCallback()} once the view has no renderer to be called from.
+     */
+    private void pinRenderRequestCallback() {
+        _renderRequestCallback.swigReleaseOwnership();
+    }
+
+    private void unpinRenderRequestCallback() {
+        _renderRequestCallback.swigTakeOwnership();
     }
 
     // NOTE: Zero timeout means waiting for the rendering to be released indefinitely. That's
@@ -2371,6 +2399,7 @@ public abstract class MapRendererView extends FrameLayout {
                     setupOptions.setGpuWorkerThreadPrologue(null);
                     setupOptions.setGpuWorkerThreadEpilogue(null);
                 }
+                pinRenderRequestCallback();
                 setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());
                 _mapRenderer.setup(setupOptions);
             }
