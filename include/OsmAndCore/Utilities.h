@@ -173,14 +173,15 @@ namespace OsmAnd
         inline static QString getOpenLocationCode(const PointD& coordinates, double gap)
         {
             static constexpr char alphabet[] = "23456789CFGHJMPQRVWX";
-            static constexpr double resolutions[] = {5.0, 0.25, 0.25 / 20.0, 0.25 / 400.0};
+            static constexpr double resolutions[] = {5.0, 0.25, 0.25 / 20.0, 0.25 / 400.0, 0.25 / 8000.0};
+            static constexpr int levelCount = sizeof(resolutions) / sizeof(double);
             
             auto lon = fmod(coordinates.x + 360.0, 360.0) / 20.0;
             auto lat = fmin(fmax(coordinates.y, 0.0), 179.9999999) / 20.0;
 
             QString code;
             code.reserve(11);
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < levelCount; i++)
             {
                 auto lonDigit = static_cast<int>(std::floor(lon));
                 auto latDigit = static_cast<int>(std::floor(lat));
