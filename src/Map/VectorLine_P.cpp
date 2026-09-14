@@ -19,6 +19,8 @@
 #include "SkiaUtilities.h"
 #include "GeometryModifiers.h"
 
+#include <new>
+
 #include <Polyline2D/Polyline2D.h>
 #include <Polyline2D/Vec2.h>
 
@@ -666,10 +668,23 @@ bool OsmAnd::VectorLine_P::applyChanges()
                 if (const auto symbol = std::dynamic_pointer_cast<OnSurfaceVectorMapSymbol>(symbol_))
                 {
                     symbol->startingDistance = _startingDistance;
-                    if (needUpdatePrimitive && (_points.size() < 2 || !generatePrimitive(symbol)))
+                    if (needUpdatePrimitive)
                     {
-                        symbol->isHidden = true;
-                        result = false;
+                        bool generated = false;
+                        try
+                        {
+                            generated = _points.size() >= 2 && generatePrimitive(symbol);
+                        }
+                        catch (const std::bad_alloc&)
+                        {
+                            LogPrintf(LogSeverityLevel::Error,
+                                "Out of memory while generating a vector line primitive, the line is hidden");
+                        }
+                        if (!generated)
+                        {
+                            symbol->isHidden = true;
+                            result = false;
+                        }
                     }
                 }
             }
@@ -699,7 +714,17 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
     symbolsGroup->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing;
 
     const auto& vectorLine = std::make_shared<OnSurfaceVectorMapSymbol>(symbolsGroup);
-    if (_points.size() < 2 || !generatePrimitive(vectorLine))
+    bool generated = false;
+    try
+    {
+        generated = _points.size() >= 2 && generatePrimitive(vectorLine);
+    }
+    catch (const std::bad_alloc&)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Out of memory while generating a vector line primitive, the line is hidden");
+    }
+    if (!generated)
     {
         vectorLine->isHidden = true;
         vectorLine->order = owner->baseOrder + 1;
@@ -1613,8 +1638,10 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
             vertices->clear();
     }
 
-    if (tesselated)
-        vertices = &tessVertices;
+    if (!tesselated)
+        return false;
+
+    vertices = &tessVertices;
 
     if (vertices->size() == 0)
     {
@@ -1627,10 +1654,10 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
         verticesAndIndices->position31 = new PointI(0, 0);
     }
 
-    verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
-    verticesAndIndices->zoomLevel = tesselated ? zoomLevel : InvalidZoomLevel;
+    verticesAndIndices->partSizes = partSizes;
+    verticesAndIndices->zoomLevel = zoomLevel;
     verticesAndIndices->isDenseObject =
-        tesselated && withHeights && _nearOutlineColor.a == 1.0f && _farOutlineColor.a == 1.0f;
+        withHeights && _nearOutlineColor.a == 1.0f && _farOutlineColor.a == 1.0f;
     verticesAndIndices->isSeenThrough = false;
 
     verticesAndIndices->verticesCount = (unsigned int) vertices->size();
