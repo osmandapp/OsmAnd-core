@@ -603,6 +603,7 @@ bool OsmAnd::GridConfiguration::getCoordinateX(const Projection projection, doub
             else if (coordinate < 0.0)
                 coordinate += 360.0;
             result = true;
+            break;
         case Projection::MLS: // Zero-based squeezed-longitude in degrees
             if (coordinate >= 180.0)
                 coordinate -= 180.0;
