@@ -343,6 +343,7 @@ public abstract class MapRendererView extends FrameLayout {
                 setupOptions.setGpuWorkerThreadEpilogue(null);
             }
             pinRenderRequestCallback();
+            pinGpuWorkerCallbacks();
             setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());
             _mapRenderer.setup(setupOptions);
         }
@@ -508,6 +509,7 @@ public abstract class MapRendererView extends FrameLayout {
         if (_mapRenderer == null) {
             Log.w(TAG, "Can't stop absent renderer");
             unpinRenderRequestCallback();
+            unpinGpuWorkerCallbacks();
             return;
         }
 
@@ -517,6 +519,7 @@ public abstract class MapRendererView extends FrameLayout {
             _mapRenderer = null;
             eglThread = null;
             unpinRenderRequestCallback();
+            unpinGpuWorkerCallbacks();
             return;
         }
 
@@ -540,6 +543,7 @@ public abstract class MapRendererView extends FrameLayout {
 
         stopEglThread();
         unpinRenderRequestCallback();
+        unpinGpuWorkerCallbacks();
     }
 
     /**
@@ -563,6 +567,22 @@ public abstract class MapRendererView extends FrameLayout {
 
     private void unpinRenderRequestCallback() {
         _renderRequestCallback.swigTakeOwnership();
+    }
+
+    /**
+     * Same as {@link #pinRenderRequestCallback()} for the GPU worker thread prologue and
+     * epilogue, which the GPU worker thread calls around every batch of uploads. A wait there
+     * stalls the uploads, and the render thread that waits for them, for the whole reference
+     * processing of a GC.
+     */
+    private void pinGpuWorkerCallbacks() {
+        _gpuWorkerThreadPrologue.swigReleaseOwnership();
+        _gpuWorkerThreadEpilogue.swigReleaseOwnership();
+    }
+
+    private void unpinGpuWorkerCallbacks() {
+        _gpuWorkerThreadPrologue.swigTakeOwnership();
+        _gpuWorkerThreadEpilogue.swigTakeOwnership();
     }
 
     // NOTE: Zero timeout means waiting for the rendering to be released indefinitely. That's
@@ -2400,6 +2420,7 @@ public abstract class MapRendererView extends FrameLayout {
                     setupOptions.setGpuWorkerThreadEpilogue(null);
                 }
                 pinRenderRequestCallback();
+                pinGpuWorkerCallbacks();
                 setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());
                 _mapRenderer.setup(setupOptions);
             }
