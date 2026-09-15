@@ -11,8 +11,10 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 		std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>& partSizes,
 		const ZoomLevel zoomLevel, const PointD& tilePosN, const int32_t cellsPerTileSize,
 		const float minDistance, const float maxBreakTangent, const bool diagonals, const bool simplify,
-        std::vector<VectorMapSymbol::Vertex>& outVertices)
+        std::vector<VectorMapSymbol::Vertex>& outVertices,
+        bool& overflowError)
 {
+    overflowError = false;
 	if (!partSizes)
         return false;
 	if (minDistance <= 0.0f)
@@ -212,10 +214,19 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 	float gridPosU = (gridPosX + gridPosY) * RSQRT2;
 	float gridStepWU = gridStepXY * RSQRT2;
 	float w, u, rod, rate, xMin, xMax, yMin, yMax, wMin, wMax, uMin, uMax;
-	int32_t prev, next, c, cell, iMinX, iMaxX, iMinY, iMaxY, iMinW, iMaxW, iMinU, iMaxU;
+	int32_t prev, next, c, cell;
+	int32_t iMinX = 0, iMaxX = 0, iMinY = 0, iMaxY = 0, iMinW = 0, iMaxW = 0, iMinU = 0, iMaxU = 0;
 	bool intoTwo;
+	// Give up instead of exhausting memory on a pathological mesh (32 bytes per vertex)
+	const size_t maxMeshVertices = 4 * 1024 * 1024;
+	size_t producedVertices = 0;
 	while (inObj.size() > 0)
 	{
+		if (outVertices.size() + producedVertices + inObj.size() > maxMeshVertices)
+		{
+            overflowError = true;
+			return false;
+		}
 		xMin = std::numeric_limits<float>::max();
 		xMax = -std::numeric_limits<float>::max();
 		yMin = xMin;
@@ -255,6 +266,7 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
         if (!tesselate)
         {
 		    putTriangle(meshes, tgl[0], tgl[1], tgl[2], std::numeric_limits<double>::infinity(), PointD(-1.0, -1.0));
+            producedVertices += 3;
             continue;
         }
 		// increase minimal distance in accordance to precision of float:
@@ -599,6 +611,7 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 			makeSignature(signature, triangle.A.g, triangle.A, triangle.C);
 			intoTwo = !fragments.insert({signature, triangle}).second;
 		}
+		producedVertices += 3;
 		if (intoTwo) putTriangle(meshes, tgl[0], tgl[1], tgl[2], tileSize, tilePosN);
 	}
 	// Merge fragments and store triangles
@@ -666,10 +679,17 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 		for (const auto& frag : fragments)
 			putTriangle(meshes, frag.second.A, frag.second.B, frag.second.C, tileSize, tilePosN);
 	}
+	size_t totalVertices = 0;
 	for (const auto& mesh : meshes)
+		totalVertices += mesh.second.size();
+	outVertices.reserve(outVertices.size() + totalVertices);
+	partSizes->reserve(partSizes->size() + meshes.size());
+	for (auto& mesh : meshes)
 	{
 		outVertices.insert(outVertices.end(), mesh.second.begin(), mesh.second.end());
-		partSizes->push_back({mesh.first, mesh.second.size()});
+		partSizes->push_back({mesh.first, static_cast<int32_t>(mesh.second.size())});
+		// Release the copied part right away to keep the peak down
+		std::vector<VectorMapSymbol::Vertex>().swap(mesh.second);
 	}
 	return true;
 }
@@ -731,7 +751,8 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
 	float gridPosU = (gridPosX + gridPosY) * RSQRT2;
 	float gridStepWU = gridStepXY * RSQRT2;
 	float w, u, rod, rate, xMin, xMax, yMin, yMax, wMin, wMax, uMin, uMax;
-	int32_t prev, next, c, iMinX, iMaxX, iMinY, iMaxY, iMinW, iMaxW, iMinU, iMaxU;
+	int32_t prev, next, c;
+	int32_t iMinX = 0, iMaxX = 0, iMinY = 0, iMaxY = 0, iMinW = 0, iMaxW = 0, iMinU = 0, iMaxU = 0;
 	bool withTraceColorMap = !traceColorizationMapping.isEmpty();
 	float noHeight = VectorMapSymbol::_absentElevation;
 	while (inObj.size() > 0)

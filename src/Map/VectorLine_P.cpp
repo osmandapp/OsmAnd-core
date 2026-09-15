@@ -666,10 +666,23 @@ bool OsmAnd::VectorLine_P::applyChanges()
                 if (const auto symbol = std::dynamic_pointer_cast<OnSurfaceVectorMapSymbol>(symbol_))
                 {
                     symbol->startingDistance = _startingDistance;
-                    if (needUpdatePrimitive && (_points.size() < 2 || !generatePrimitive(symbol)))
+                    if (needUpdatePrimitive)
                     {
-                        symbol->isHidden = true;
-                        result = false;
+                        bool generated = false;
+                        try
+                        {
+                            generated = _points.size() >= 2 && generatePrimitive(symbol);
+                        }
+                        catch (const std::bad_alloc&)
+                        {
+                            LogPrintf(LogSeverityLevel::Error,
+                                "Out of memory while generating a vector line primitive, the line is hidden");
+                        }
+                        if (!generated)
+                        {
+                            symbol->isHidden = true;
+                            result = false;
+                        }
                     }
                 }
             }
@@ -699,7 +712,17 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
     symbolsGroup->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing;
 
     const auto& vectorLine = std::make_shared<OnSurfaceVectorMapSymbol>(symbolsGroup);
-    if (_points.size() < 2 || !generatePrimitive(vectorLine))
+    bool generated = false;
+    try
+    {
+        generated = _points.size() >= 2 && generatePrimitive(vectorLine);
+    }
+    catch (const std::bad_alloc&)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Out of memory while generating a vector line primitive, the line is hidden");
+    }
+    if (!generated)
     {
         vectorLine->isHidden = true;
         vectorLine->order = owner->baseOrder + 1;
@@ -1596,6 +1619,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
             }
         }
 
+        bool overflowError = false;
         tesselated = tesselated &&
             GeometryModifiers::cutMeshWithGrid(
                 *vertices,
@@ -1607,10 +1631,18 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
                 isOut ? 0 : cellsPerTileSize,
                 0.5f, 0.01f,
                 false, false,
-                tessVertices);
+                tessVertices,
+                overflowError);
 
         if (tesselated)
             vertices->clear();
+        else if (overflowError)
+        {
+            LogPrintf(LogSeverityLevel::Warning,
+            "cutMeshWithGrid: mesh overflow (zoom %d, cells %d, %u input vertices), tesselation skipped",
+            static_cast<int>(zoomLevel), cellsPerTileSize, static_cast<unsigned>(vertices->size()));
+            return false;
+        }
     }
 
     if (tesselated)
