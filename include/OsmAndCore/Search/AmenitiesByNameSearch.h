@@ -20,6 +20,7 @@
 namespace OsmAnd
 {
     class Amenity;
+    class ObfFile;
 
     class OSMAND_CORE_API AmenitiesByNameSearch Q_DECL_FINAL : public BaseSearch
     {
@@ -62,6 +63,14 @@ namespace OsmAnd
         
         virtual void performTravelGuidesSearch(
             const QString filename,
+            const ISearch::Criteria& criteria,
+            const NewResultEntryCallback newResultEntryCallback,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
+
+        // Searches a single obf, for callers that already hold it - unlike the filename variant,
+        // which has to scan the whole collection to find the file back
+        virtual void performSearchInFile(
+            const std::shared_ptr<const ObfFile>& obfFile,
             const ISearch::Criteria& criteria,
             const NewResultEntryCallback newResultEntryCallback,
             const std::shared_ptr<const IQueryController>& queryController = nullptr) const;

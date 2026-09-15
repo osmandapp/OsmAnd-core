@@ -51,11 +51,9 @@ void OsmAnd::AmenitiesInAreaSearch::performTravelGuidesSearch(
     const NewResultEntryCallback newResultEntryCallback,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/) const
 {
-    const auto criteria = *dynamic_cast<const Criteria*>(&criteria_);
-    
-    QList< std::shared_ptr<const OsmAnd::ObfFile> > files = obfsCollection->getObfFiles();
-    std::shared_ptr<const OsmAnd::ObfFile> res;
-    for (std::shared_ptr<const OsmAnd::ObfFile> file : files)
+    const QList< std::shared_ptr<const ObfFile> > files = obfsCollection->getObfFiles();
+    std::shared_ptr<const ObfFile> res;
+    for (const auto& file : files)
     {
         if (file->filePath.contains(filename, Qt::CaseInsensitive))
         {
@@ -63,7 +61,21 @@ void OsmAnd::AmenitiesInAreaSearch::performTravelGuidesSearch(
             break;
         }
     }
-    std::shared_ptr<OsmAnd::ObfDataInterface> dataInterface = obfsCollection->obtainDataInterface(res);
+
+    performSearchInFile(res, criteria_, newResultEntryCallback, queryController);
+}
+
+void OsmAnd::AmenitiesInAreaSearch::performSearchInFile(
+    const std::shared_ptr<const ObfFile>& obfFile,
+    const ISearch::Criteria& criteria_,
+    const NewResultEntryCallback newResultEntryCallback,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/) const
+{
+    if (!obfFile)
+        return;
+
+    const auto criteria = *dynamic_cast<const Criteria*>(&criteria_);
+    const auto dataInterface = obfsCollection->obtainDataInterface(obfFile);
 
     const ObfPoiSectionReader::VisitorFunction visitorFunction =
         [newResultEntryCallback, criteria_]
