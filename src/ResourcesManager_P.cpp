@@ -1601,28 +1601,37 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const std::shared_ptr<const O
 
 bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
 {
+    std::shared_ptr<const LocalResource> resource;
+    {
+        // Lookup and removal must be serialized against readers iterating _localResources
+        QWriteLocker scopedLocker(&_localResourcesLock);
 
-    const auto itResource = _localResources.find(id);
-    if (itResource == _localResources.end())
-        return false;
+        const auto itResource = _localResources.find(id);
+        if (itResource == _localResources.end())
+            return false;
 
-    const auto resource = *itResource;
-    if (resource->origin != ResourceOrigin::Installed)
-        return false;
-    const auto& installedResource = std::static_pointer_cast<const InstalledResource>(resource);
-    
-    _localResources.erase(itResource);
-    
+        resource = *itResource;
+        if (resource->origin != ResourceOrigin::Installed)
+            return false;
+
+        _localResources.erase(itResource);
+    }
+
+    // Lock must be released here: the overload below notifies observers, which may read local resources
+    const auto installedResource = std::static_pointer_cast<const InstalledResource>(resource);
+
     return uninstallResource(installedResource, resource);
 }
 
 bool OsmAnd::ResourcesManager_P::uninstallTilesResource(const QString& name)
 {
-    const auto itResource = _localResources.find(QStringLiteral("online_tiles"));
-    if (itResource == _localResources.end())
+    QReadLocker scopedLocker(&_localResourcesLock);
+
+    const auto citResource = _localResources.constFind(QStringLiteral("online_tiles"));
+    if (citResource == _localResources.cend())
         return false;
     
-    const auto& resource = *itResource;
+    const auto& resource = *citResource;
     const auto& onlineTileSources = std::static_pointer_cast<const OsmAnd::ResourcesManager::OnlineTileSourcesMetadata>(resource->metadata)->sources;
     const auto& sourcesList = std::const_pointer_cast<OnlineTileSources>(onlineTileSources);
     sourcesList->removeSource(name);
@@ -1631,11 +1640,13 @@ bool OsmAnd::ResourcesManager_P::uninstallTilesResource(const QString& name)
 
 bool OsmAnd::ResourcesManager_P::installTilesResource(const std::shared_ptr<const IOnlineTileSources::Source>& source)
 {
-    const auto itResource = _localResources.find(QStringLiteral("online_tiles"));
-    if (itResource == _localResources.end())
+    QReadLocker scopedLocker(&_localResourcesLock);
+
+    const auto citResource = _localResources.constFind(QStringLiteral("online_tiles"));
+    if (citResource == _localResources.cend())
         return false;
     
-    const auto& resource = *itResource;
+    const auto& resource = *citResource;
     const auto& onlineTileSources = std::static_pointer_cast<const OsmAnd::ResourcesManager::OnlineTileSourcesMetadata>(resource->metadata)->sources;
     const auto& sourcesList = std::const_pointer_cast<OnlineTileSources>(onlineTileSources);
     sourcesList->addSource(source);
@@ -1881,7 +1892,10 @@ bool OsmAnd::ResourcesManager_P::addLocalResource(const QString& filePath)
         obfFile->obfInfo->creationTimestamp);
     pLocalResource->_metadata.reset(new ObfMetadata(obfFile));
     std::shared_ptr<const LocalResource> localResource(pLocalResource);
+
+    QWriteLocker scopedLocker(&_localResourcesLock);
     _localResources.insert(resourceId, qMove(localResource));
+
     return true;
 }
 
