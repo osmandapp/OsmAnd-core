@@ -1,0 +1,53 @@
+--- upstream.original/gdal/gcore/gdalnodatamaskband.cpp
++++ upstream.patched/gdal/gcore/gdalnodatamaskband.cpp
+@@ -237,6 +237,10 @@
+         return CE_None;
+     }
+ 
++    // Guards the block-based fallbacks below against unbounded recursion:
++    // GDALRasterBand::IRasterIO() re-enters this method through IReadBlock().
++    static thread_local bool bInBlockBasedFallback = false;
++
+     if( eBufType == GDT_Byte )
+     {
+         const int nWrkDTSize = GDALGetDataTypeSizeBytes(eWrkDT);
+@@ -244,12 +248,17 @@
+             VSI_MALLOC3_VERBOSE( nWrkDTSize, nBufXSize, nBufYSize );
+         if (pTemp == nullptr)
+         {
+-            return GDALRasterBand::IRasterIO(
++            if( bInBlockBasedFallback )
++                return CE_Failure;
++            bInBlockBasedFallback = true;
++            const CPLErr eFallbackErr = GDALRasterBand::IRasterIO(
+                                       eRWFlag, nXOff, nYOff, nXSize, nYSize,
+-                                      pTemp, nBufXSize, nBufYSize,
+-                                      eWrkDT,
+-                                      nWrkDTSize, nBufXSize * nWrkDTSize,
++                                      pData, nBufXSize, nBufYSize,
++                                      eBufType,
++                                      nPixelSpace, nLineSpace,
+                                       psExtraArg );
++            bInBlockBasedFallback = false;
++            return eFallbackErr;
+         }
+ 
+         const CPLErr eErr =
+@@ -373,10 +382,16 @@
+         VSI_MALLOC2_VERBOSE( nBufXSize, nBufYSize ));
+     if( pabyBuf == nullptr )
+     {
+-        return GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
++        if( bInBlockBasedFallback )
++            return CE_Failure;
++        bInBlockBasedFallback = true;
++        const CPLErr eFallbackErr =
++            GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                         pData, nBufXSize, nBufYSize,
+                                         eBufType,
+                                         nPixelSpace, nLineSpace, psExtraArg );
++        bInBlockBasedFallback = false;
++        return eFallbackErr;
+     }
+     const CPLErr eErr = IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                    pabyBuf, nBufXSize, nBufYSize,
