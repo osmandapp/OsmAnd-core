@@ -402,6 +402,20 @@ std::shared_ptr<OsmAnd::TransportStop> OsmAnd::ObfTransportSectionReader_P::read
                 referencesToRoutes.push_back(stopOffset - ObfReaderUtilities::readLength(cis));
                 break;
             }
+            case OBF::TransportStop::kRoutesIdsFieldNumber:
+            {
+                gpb::uint64 routeId;
+                cis->ReadVarint64(&routeId);
+                outTransportStop->routesIds.push_back(routeId);
+                break;
+            }
+            case OBF::TransportStop::kDeletedRoutesIdsFieldNumber:
+            {
+                gpb::uint64 routeId;
+                cis->ReadVarint64(&routeId);
+                outTransportStop->deletedRoutesIds.push_back(routeId);
+                break;
+            }
             case OBF::TransportStop::kNameEnFieldNumber:
             {
                 if (stringTable)

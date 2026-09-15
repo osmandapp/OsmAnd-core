@@ -207,6 +207,17 @@ namespace OsmAnd
             const std::shared_ptr<const IQueryController>& queryController = nullptr,
             const bool skipGeometry = false);
 
+        // Reads only the given routes of the stop, for callers that merge stops across files
+        // and already know which routes another copy has supplied
+        bool getTransportRoutes(
+            const std::shared_ptr<const TransportStop>& transportStop,
+            const QVector<uint32_t>& filePointers,
+            QList< std::shared_ptr<const TransportRoute> >* resultOut = nullptr,
+            ObfSectionInfo::StringTable* const stringTable = nullptr,
+            const ObfTransportSectionReader::TransportRouteVisitorFunction visitor = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr,
+            const bool skipGeometry = false);
+
         // Re-reads a route that was loaded with skipGeometry, this time with its geometry
         std::shared_ptr<const TransportRoute> getTransportRouteWithGeometry(
             const std::shared_ptr<const TransportRoute>& transportRoute);

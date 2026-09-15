@@ -1364,11 +1364,30 @@ bool OsmAnd::ObfDataInterface::getTransportRoutes(
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
     const bool skipGeometry /*= false*/)
 {
+    return getTransportRoutes(
+        transportStop,
+        transportStop->referencesToRoutes,
+        resultOut,
+        stringTable,
+        visitor,
+        queryController,
+        skipGeometry);
+}
+
+bool OsmAnd::ObfDataInterface::getTransportRoutes(
+    const std::shared_ptr<const TransportStop>& transportStop,
+    const QVector<uint32_t>& filePointers,
+    QList< std::shared_ptr<const TransportRoute> >* resultOut /*= nullptr*/,
+    ObfSectionInfo::StringTable* const stringTable /*= nullptr*/,
+    const ObfTransportSectionReader::TransportRouteVisitorFunction visitor /*= nullptr*/,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
+    const bool skipGeometry /*= false*/)
+{
     QHash<uint32_t, std::shared_ptr<TransportRoute>> result;
     QHash<const int, QList<uint32_t>> groupPoints;
     QHash<const int, std::shared_ptr<const ObfReader>> readers;
     QHash<const int, std::shared_ptr<const ObfTransportSectionInfo>> sections;
-    for (auto filePointer : transportStop->referencesToRoutes)
+    for (auto filePointer : filePointers)
     {
         for (const auto& obfReader : constOf(obfReaders))
         {
