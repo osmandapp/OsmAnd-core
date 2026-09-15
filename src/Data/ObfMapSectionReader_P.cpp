@@ -1141,13 +1141,18 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const AreaI* bbox31 = nullptr;
     if (requestedBBox31)
     {
-        const auto coordinateMask = (1u << ShiftCoordinates) - 1;
-        exBBox31.topLeft.x = requestedBBox31->topLeft.x & MaskToRead;
-        exBBox31.topLeft.y = requestedBBox31->topLeft.y & MaskToRead;
-        exBBox31.bottomRight.x =
-            AreaI::safeEnlarge(requestedBBox31->bottomRight.x, coordinateMask) & MaskToRead;
-        exBBox31.bottomRight.y =
-            AreaI::safeEnlarge(requestedBBox31->bottomRight.y, coordinateMask) & MaskToRead;
+        if (section->isBasemapWithCoastlines && zoom == ObfMapSectionLevel::MaxBasemapZoomLevel)
+            exBBox31 = Utilities::getEnlargedCoastlineArea31(*requestedBBox31, zoom);
+        else
+        {
+            const auto coordinateMask = (1u << ShiftCoordinates) - 1;
+            exBBox31.topLeft.x = requestedBBox31->topLeft.x & MaskToRead;
+            exBBox31.topLeft.y = requestedBBox31->topLeft.y & MaskToRead;
+            exBBox31.bottomRight.x =
+                AreaI::safeEnlarge(requestedBBox31->bottomRight.x, coordinateMask) & MaskToRead;
+            exBBox31.bottomRight.y =
+                AreaI::safeEnlarge(requestedBBox31->bottomRight.y, coordinateMask) & MaskToRead;
+        }
         bbox31 = &exBBox31;
     }
 

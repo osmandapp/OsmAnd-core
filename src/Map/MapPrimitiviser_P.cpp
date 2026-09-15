@@ -388,9 +388,9 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         if (!coastlinesWereAdded && basemapCoastlinesPresent
             && (shouldAddBasemapCoastlines || zoom < MapPrimitiviser::DetailedLandDataMinZoom))
         {
-            const auto basemapZoom = static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel);
+            const auto baseZoom = static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel);
             const auto basemapArea = zoom > ObfMapSectionLevel::MaxBasemapZoomLevel
-                ? Utilities::roundBoundingBox31(area31, basemapZoom)
+                ? Utilities::getEnlargedCoastlineArea31(Utilities::roundBoundingBox31(area31, baseZoom), baseZoom)
                 : area31;            
             coastlinesWereAdded =
                 getCoastlines(area31, basemapArea, basemapCoastlineObjects, polygonizedCoastlineObjects, surfaceType);
@@ -2464,9 +2464,9 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
     QVector<int> polylineIndices;
     polylineIndices.reserve(coastlines.size());
     const auto mask = static_cast<uint32_t>(-1) << 5;
-    const PointI topLeft(area31.topLeft.x & mask, area31.topLeft.y & mask);
+    const PointI topLeft(area31.left() & mask, area31.top() & mask);
     const PointI bottomRight(
-        area31.safeEnlarge(area31.bottomRight.x, 31) & mask, area31.safeEnlarge(area31.bottomRight.y, 31) & mask);
+        area31.safeEnlarge(area31.right(), 31) & mask, area31.safeEnlarge(area31.bottom(), 31) & mask);
     const PointI center(topLeft.x + (bottomRight.x - topLeft.x) / 2, topLeft.y + (bottomRight.y - topLeft.y) / 2);
     const auto radius = qMin(
         qMin(center.x - coastlineArea31.left(), coastlineArea31.right() - center.x),
