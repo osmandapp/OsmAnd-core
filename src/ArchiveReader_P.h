@@ -57,6 +57,10 @@ namespace OsmAnd
 
         QList<Item> getItems(bool* const ok, const bool isGzip) const;
 
+        bool extractItemsTo(
+            const QHash<QString, QString>& destinationByItemName,
+            QStringList* const failedItemNames,
+            uint64_t* const extractedBytes) const;
         bool extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure, uint64_t* const extractedBytes) const;
         bool extractItemToFile(const QString& itemName, const QString& fileName, uint64_t* const extractedBytes, const bool isGzip = false) const;
         QByteArray extractItemToArray(const QString& itemName, uint64_t* const extractedBytes_, const bool isGzip = false) const;
