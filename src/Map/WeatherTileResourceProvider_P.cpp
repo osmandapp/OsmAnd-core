@@ -1072,8 +1072,15 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::crea
             if (band != static_cast<BandIndex>(WeatherBand::WindWestToEast)
                 && band != static_cast<BandIndex>(WeatherBand::WindSouthToNorth))
             {
+                const auto citSettings = bandSettings.constFind(band);
+                if (citSettings == bandSettings.cend() || !*citSettings)
+                {
+                    LogPrintf(LogSeverityLevel::Error,
+                        "Failed to create tile image of weather tile. Band %d has no settings.", band);
+                    return nullptr;
+                }
                 topImages << *citImage;
-                alphas << bandSettings[band]->opacity;
+                alphas << (*citSettings)->opacity;
             }
             else
                 bottomImages << *citImage;
