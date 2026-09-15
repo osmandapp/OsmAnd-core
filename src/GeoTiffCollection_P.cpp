@@ -79,7 +79,7 @@ namespace
 
         void clear()
         {
-            for (const auto dataset : constOf(_datasets))
+            for (const auto dataset : OsmAnd::constOf(_datasets))
                 GDALClose(dataset);
             _datasets.clear();
             _order.clear();
