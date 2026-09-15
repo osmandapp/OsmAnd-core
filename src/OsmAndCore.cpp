@@ -15,6 +15,8 @@
 
 #include "ignore_warnings_on_external_includes.h"
 #include <gdal.h>
+#include <cpl_conv.h>
+#include <cpl_vsi.h>
 #include "restore_internal_warnings.h"
 
 #include "Common.h"
@@ -138,6 +140,19 @@ OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::InitializeCore(
     std::setlocale(LC_NUMERIC, "C");
 #endif // defined(OSMAND_TARGET_OS_linux) || defined(OSMAND_TARGET_OS_macosx) || defined(OSMAND_TARGET_OS_windows)
 
+    // Default is 5% of physical RAM, which far exceeds what a mobile app may hold.
+    // 256 MB is the smallest cache that keeps hillshade responsive; devices below
+    // 4 GB can't afford that, so there keep GDAL's default, which is smaller
+    int gdalCacheMaxMB = 256;
+    const auto usablePhysicalRAM = CPLGetUsablePhysicalRAM();
+    if (usablePhysicalRAM > 0 && usablePhysicalRAM < 4LL * 1024 * 1024 * 1024)
+    {
+        gdalCacheMaxMB = qMax(64,
+            static_cast<int>(usablePhysicalRAM / 20 / (1024 * 1024)));
+    }
+    char gdalCacheMax[16];
+    snprintf(gdalCacheMax, sizeof(gdalCacheMax), "%d", gdalCacheMaxMB);
+    CPLSetConfigOption("GDAL_CACHEMAX", gdalCacheMax);
     GDALAllRegister();
     if (!SKIA::initialize())
         return 0;
