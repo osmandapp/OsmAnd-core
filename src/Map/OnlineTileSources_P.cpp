@@ -248,7 +248,11 @@ bool OsmAnd::OnlineTileSources_P::deserializeFrom(QXmlStreamReader& xmlReader)
         return false;
     }
 
-    _collection = collection;
+    {
+        QWriteLocker scopedLocker(&_collectionLock);
+
+        _collection = collection;
+    }
 
     return true;
 }
@@ -279,11 +283,15 @@ bool OsmAnd::OnlineTileSources_P::saveTo(QIODevice& ioDevice) const
 
 QHash< QString, std::shared_ptr<const OsmAnd::OnlineTileSources_P::Source> > OsmAnd::OnlineTileSources_P::getCollection() const
 {
+    QReadLocker scopedLocker(&_collectionLock);
+
     return _collection;
 }
 
 std::shared_ptr<const OsmAnd::OnlineTileSources_P::Source> OsmAnd::OnlineTileSources_P::getSourceByName(const QString& sourceName) const
 {
+    QReadLocker scopedLocker(&_collectionLock);
+
     const auto citSource = _collection.constFind(sourceName);
     if (citSource == _collection.cend())
         return nullptr;
@@ -292,6 +300,8 @@ std::shared_ptr<const OsmAnd::OnlineTileSources_P::Source> OsmAnd::OnlineTileSou
 
 bool OsmAnd::OnlineTileSources_P::addSource(const std::shared_ptr<const Source>& source)
 {
+    QWriteLocker scopedLocker(&_collectionLock);
+
     if (_collection.constFind(source->name) != _collection.cend())
         return false;
 
@@ -302,6 +312,8 @@ bool OsmAnd::OnlineTileSources_P::addSource(const std::shared_ptr<const Source>&
 
 bool OsmAnd::OnlineTileSources_P::removeSource(const QString& sourceName)
 {
+    QWriteLocker scopedLocker(&_collectionLock);
+
     return (_collection.remove(sourceName) > 0);
 }
 

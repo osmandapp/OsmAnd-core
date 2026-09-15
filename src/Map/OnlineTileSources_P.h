@@ -5,6 +5,7 @@
 
 #include "QtExtensions.h"
 #include <QHash>
+#include <QReadWriteLock>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
 
@@ -36,6 +37,7 @@ namespace OsmAnd
         bool deserializeFrom(QXmlStreamReader& xmlReader);
         bool serializeTo(QXmlStreamWriter& xmlWriter) const;
 
+        mutable QReadWriteLock _collectionLock;
         QHash< QString, std::shared_ptr<const Source> > _collection;
     public:
         virtual ~OnlineTileSources_P();
