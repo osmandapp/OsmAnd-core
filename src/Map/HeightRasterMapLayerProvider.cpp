@@ -2,6 +2,7 @@
 #include "HeightRasterMapLayerProvider_P.h"
 
 #include "QtExtensions.h"
+#include <QThread>
 #include <QThreadPool>
 
 #include "OsmAndCore.h"
@@ -25,6 +26,8 @@ OsmAnd::HeightRasterMapLayerProvider::HeightRasterMapLayerProvider(
     , _maxVisibleZoom(maxZoom)
     , _priority(0)
 {
+    // GDAL reads contend for one global block cache, so leave room for other work
+    _threadPool->setMaxThreadCount(qMax(1, QThread::idealThreadCount() / 2));
 }
 
 OsmAnd::HeightRasterMapLayerProvider::~HeightRasterMapLayerProvider()
