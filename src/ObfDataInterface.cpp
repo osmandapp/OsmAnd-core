@@ -1361,7 +1361,8 @@ bool OsmAnd::ObfDataInterface::getTransportRoutes(
     QList< std::shared_ptr<const TransportRoute> >* resultOut /*= nullptr*/,
     ObfSectionInfo::StringTable* const stringTable /*= nullptr*/,
     const ObfTransportSectionReader::TransportRouteVisitorFunction visitor /*= nullptr*/,
-    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
+    const bool skipGeometry /*= false*/)
 {
     QHash<uint32_t, std::shared_ptr<TransportRoute>> result;
     QHash<const int, QList<uint32_t>> groupPoints;
@@ -1376,7 +1377,8 @@ bool OsmAnd::ObfDataInterface::getTransportRoutes(
 
             const auto& obfInfo = obfReader->obtainInfo();
             const auto section = getTransportSectionInfo(constOf(obfInfo->transportSections), filePointer);
-            if (section)
+            if (section &&
+                (!transportStop->obfSection || section->runtimeGeneratedId == transportStop->obfSection->runtimeGeneratedId))
             {
                 if (!groupPoints.contains(section->runtimeGeneratedId))
                 {
@@ -1403,7 +1405,7 @@ bool OsmAnd::ObfDataInterface::getTransportRoutes(
         auto stringTable = std::make_shared<ObfSectionInfo::StringTable>();
         for (const auto& filePointer : pointers)
         {
-            auto transportRoute = OsmAnd::ObfTransportSectionReader::getTransportRoute(reader, section, filePointer, stringTable.get(), false);
+            auto transportRoute = OsmAnd::ObfTransportSectionReader::getTransportRoute(reader, section, filePointer, stringTable.get(), false, skipGeometry);
             result[filePointer] = transportRoute;
         }
         OsmAnd::ObfTransportSectionReader::initializeStringTable(reader, section, stringTable.get());
@@ -1420,6 +1422,36 @@ bool OsmAnd::ObfDataInterface::getTransportRoutes(
         }
     }
     return true;
+}
+
+std::shared_ptr<const OsmAnd::TransportRoute> OsmAnd::ObfDataInterface::getTransportRouteWithGeometry(
+    const std::shared_ptr<const TransportRoute>& transportRoute)
+{
+    if (!transportRoute || !transportRoute->obfSection)
+        return nullptr;
+
+    for (const auto& obfReader : constOf(obfReaders))
+    {
+        const auto& obfInfo = obfReader->obtainInfo();
+        for (const auto& transportSection : constOf(obfInfo->transportSections))
+        {
+            if (transportSection->runtimeGeneratedId != transportRoute->obfSection->runtimeGeneratedId)
+                continue;
+
+            const std::shared_ptr<const ObfTransportSectionInfo> section = transportSection.shared_ptr();
+            auto stringTable = std::make_shared<ObfSectionInfo::StringTable>();
+            const auto route = OsmAnd::ObfTransportSectionReader::getTransportRoute(
+                obfReader, section, transportRoute->offset, stringTable.get(), false, false);
+            if (!route)
+                return nullptr;
+
+            OsmAnd::ObfTransportSectionReader::initializeStringTable(obfReader, section, stringTable.get());
+            OsmAnd::ObfTransportSectionReader::initializeNames(false, stringTable.get(), route);
+            return route;
+        }
+    }
+
+    return nullptr;
 }
 
 bool OsmAnd::ObfDataInterface::transportStopBelongsTo(const std::shared_ptr<const TransportStop>& s)

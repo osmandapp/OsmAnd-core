@@ -498,7 +498,8 @@ std::shared_ptr<OsmAnd::TransportRoute> OsmAnd::ObfTransportSectionReader_P::get
     const std::shared_ptr<const ObfTransportSectionInfo>& section,
     const uint32_t routeOffset,
     ObfSectionInfo::StringTable* const stringTable,
-    bool onlyDescription)
+    bool onlyDescription,
+    bool skipGeometry)
 {
     const auto cis = reader.getCodedInputStream().get();
     
@@ -516,6 +517,7 @@ std::shared_ptr<OsmAnd::TransportRoute> OsmAnd::ObfTransportSectionReader_P::get
     int32_t ry = 0;
     
     dataObject->offset = routeOffset;
+    dataObject->obfSection = section;
     while (!end)
     {
         const auto t = cis->ReadTag();
@@ -561,6 +563,11 @@ std::shared_ptr<OsmAnd::TransportRoute> OsmAnd::ObfTransportSectionReader_P::get
             {
                 gpb::uint32 sizeL;
                 cis->ReadVarint32(&sizeL);
+                if (skipGeometry)
+                {
+                    cis->Skip(sizeL);
+                    break;
+                }
                 const auto pold = cis->PushLimit(sizeL);
                 int32_t px = 0;
                 int32_t py = 0;

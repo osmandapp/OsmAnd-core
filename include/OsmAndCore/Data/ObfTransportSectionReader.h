@@ -49,7 +49,8 @@ namespace OsmAnd {
             const std::shared_ptr<const ObfTransportSectionInfo>& section,
             const uint32_t routeOffset,
             ObfSectionInfo::StringTable* const stringTable,
-            bool onlyDescription);
+            bool onlyDescription,
+            bool skipGeometry = false);
         
         static void searchTransportStops(
             const std::shared_ptr<const ObfReader>& reader,
