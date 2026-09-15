@@ -22,6 +22,75 @@
 #define TIFF_NODATA (-32768.0)
 #endif
 
+namespace
+{
+    // Bumped whenever sources change, so that per-thread caches drop datasets
+    // for files that could have been replaced or removed
+    QAtomicInteger<uint32_t> gDatasetsGeneration(1);
+
+    // GDALDataset is not thread-safe, and closing one drops every raster block it
+    // has decoded. Keeping datasets open per thread is what lets GDAL's block cache
+    // survive between tile requests instead of being rebuilt for each of them.
+    class GeoTiffDatasetCache Q_DECL_FINAL
+    {
+    public:
+        GeoTiffDatasetCache()
+            : _generation(gDatasetsGeneration.loadAcquire())
+        {
+        }
+
+        ~GeoTiffDatasetCache()
+        {
+            clear();
+        }
+
+        GDALDataset* obtain(const QString& filePath)
+        {
+            const auto generation = gDatasetsGeneration.loadAcquire();
+            if (generation != _generation)
+            {
+                clear();
+                _generation = generation;
+            }
+
+            const auto itDataset = _datasets.find(filePath);
+            if (itDataset != _datasets.end())
+            {
+                _order.removeOne(filePath);
+                _order.append(filePath);
+                return itDataset.value();
+            }
+
+            const auto dataset = static_cast<GDALDataset*>(GDALOpen(qPrintable(filePath), GA_ReadOnly));
+            if (!dataset)
+                return nullptr;
+
+            while (_order.size() >= maxDatasetsPerThread)
+                GDALClose(_datasets.take(_order.takeFirst()));
+
+            _datasets.insert(filePath, dataset);
+            _order.append(filePath);
+            return dataset;
+        }
+
+    private:
+        // A tile at the corner of the source grid draws from four files at once
+        static constexpr int maxDatasetsPerThread = 4;
+
+        void clear()
+        {
+            for (const auto dataset : constOf(_datasets))
+                GDALClose(dataset);
+            _datasets.clear();
+            _order.clear();
+        }
+
+        uint32_t _generation;
+        QHash<QString, GDALDataset*> _datasets;
+        QList<QString> _order;
+    };
+}
+
 OsmAnd::GeoTiffCollection_P::GeoTiffCollection_P(
     GeoTiffCollection* owner_,
     bool useFileWatcher /*= true*/)
@@ -61,6 +130,7 @@ OsmAnd::GeoTiffCollection_P::~GeoTiffCollection_P()
 void OsmAnd::GeoTiffCollection_P::invalidateCollectedSources()
 {
     _pixelSize31.storeRelease(0);
+    gDatasetsGeneration.fetchAndAddOrdered(1);
     _collectedSourcesInvalidated.fetchAndAddOrdered(1);
 }
 
@@ -1099,7 +1169,8 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                     bool empty = false;
 
                     bool result = false;
-                    if (const auto dataset = (GDALDataset*) GDALOpen(qPrintable(filePath), GA_ReadOnly))
+                    static thread_local GeoTiffDatasetCache datasetCache;
+                    if (const auto dataset = datasetCache.obtain(filePath))
                     {
                         // Read raster data from source Geotiff file
                         const auto rasterBandCount = dataset->GetRasterCount();
@@ -1355,7 +1426,6 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                                 }
                             }
                         }
-                        GDALClose(dataset);
                     }
                     if (!compose && !empty)
                     {
