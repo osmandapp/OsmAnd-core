@@ -83,7 +83,8 @@ namespace OsmAnd {
             const std::shared_ptr<const ObfTransportSectionInfo>& section,
             const uint32_t routeOffset,
             ObfSectionInfo::StringTable* const stringTable,
-            bool onlyDescription);
+            bool onlyDescription,
+            bool skipGeometry);
         
         static std::shared_ptr<TransportStop> readTransportRouteStop(
             const ObfReader_P& reader,

@@ -2,6 +2,8 @@
 #include "TransportStopExit.h"
 #include <ICU.h>
 
+#include <limits>
+
 OsmAnd::TransportStop::TransportStop(const std::shared_ptr<const ObfTransportSectionInfo>& obfSection_)
     : obfSection(obfSection_)
     , id(ObfObjectId::invalidId())
@@ -39,6 +41,28 @@ QString OsmAnd::TransportStop::getName(const QString lang, bool transliterate) c
 void OsmAnd::TransportStop::addExit(std::shared_ptr<OsmAnd::TransportStopExit> &exit)
 {
     exits.append(exit);
+}
+
+bool OsmAnd::TransportStop::isDeleted() const
+{
+    // A removed stop is written as a single reference resolving to -1
+    return referencesToRoutes.size() == 1 && referencesToRoutes.first() == std::numeric_limits<uint32_t>::max();
+}
+
+bool OsmAnd::TransportStop::isMissingStop() const
+{
+    const auto missingStopName = QStringLiteral("#Missing Stop");
+    return localizedName == missingStopName || enName == missingStopName;
+}
+
+bool OsmAnd::TransportStop::hasRoute(const uint64_t routeId) const
+{
+    return routesIds.contains(routeId);
+}
+
+bool OsmAnd::TransportStop::isRouteDeleted(const uint64_t routeId) const
+{
+    return deletedRoutesIds.contains(routeId);
 }
 
 bool OsmAnd::TransportStop::compareStop(const std::shared_ptr<OsmAnd::TransportStop>& thatObj)

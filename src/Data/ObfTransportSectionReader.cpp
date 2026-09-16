@@ -39,9 +39,10 @@ std::shared_ptr<OsmAnd::TransportRoute> OsmAnd::ObfTransportSectionReader::getTr
     const std::shared_ptr<const ObfTransportSectionInfo>& section,
     const uint32_t routeOffset,
     ObfSectionInfo::StringTable* const stringTable,
-    bool onlyDescription)
+    bool onlyDescription,
+    bool skipGeometry /*= false*/)
 {
-    return ObfTransportSectionReader_P::getTransportRoute(*reader->_p, section, routeOffset, stringTable, onlyDescription);
+    return ObfTransportSectionReader_P::getTransportRoute(*reader->_p, section, routeOffset, stringTable, onlyDescription, skipGeometry);
 }
 
 void OsmAnd::ObfTransportSectionReader::searchTransportStops(
