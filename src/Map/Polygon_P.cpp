@@ -389,6 +389,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
         _mapZoomLevel < ZoomLevel3 ? 4 : (_mapZoomLevel < ZoomLevel6 ? 2 : (_mapZoomLevel < ZoomLevel8 ? 1 : 0));
     if (!_flatEarth && (closesNorthPole || closesSouthPole) && cellsPerTileSize > 0)
     {
+        bool overflowError = false;
         tesselated = GeometryModifiers::cutMeshWithGrid(
                 *vertices,
                 nullptr,
@@ -399,7 +400,14 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
                 cellsPerTileSize,
                 0.5f, 0.01f,
                 false, false,
-                tessVertices);
+                tessVertices,
+                overflowError);
+        if (overflowError)
+        {
+            LogPrintf(LogSeverityLevel::Debug,
+            "cutMeshWithGrid: mesh overflow (zoom %d, cells %d, %u input vertices), tesselation skipped",
+            static_cast<int>(zoomLevel), cellsPerTileSize, static_cast<unsigned>(vertices->size()));
+        }
     }
     if (tesselated)
         vertices = &tessVertices;
