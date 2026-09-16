@@ -13,6 +13,7 @@
 
 namespace OsmAnd
 {
+    class ObfTransportSectionInfo;
     class TransportStop;
     class Way;
     
@@ -29,6 +30,7 @@ namespace OsmAnd
         virtual QString getName(const QString lang, bool transliterate) const;
         
         uint32_t offset;
+        std::shared_ptr<const ObfTransportSectionInfo> obfSection;
 
         ObfObjectId id;
         QString enName;

@@ -33,6 +33,9 @@ namespace OsmAnd
 
         uint32_t offset;
         QVector<uint32_t> referencesToRoutes;
+        // Ids of the routes in referencesToRoutes, same order; absent in files older than 08/2019
+        QVector<uint64_t> routesIds;
+        QVector<uint64_t> deletedRoutesIds;
         QList<std::shared_ptr<TransportStopExit>> exits;
 
         ObfObjectId id;
@@ -42,6 +45,11 @@ namespace OsmAnd
         
         void addExit(std::shared_ptr<TransportStopExit> &exit);
         bool compareStop(const std::shared_ptr<OsmAnd::TransportStop>& thatObj);
+        // A live update marks a stop that is gone, or one it only references from a route
+        bool isDeleted() const;
+        bool isMissingStop() const;
+        bool hasRoute(const uint64_t routeId) const;
+        bool isRouteDeleted(const uint64_t routeId) const;
     };
 }
 

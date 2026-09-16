@@ -123,7 +123,43 @@ bool OsmAnd::IncrementalChangesManager_P::addValidIncrementalUpdates(QHash< QStr
                 _resourcesManager->uninstallResource(liveResource, liveRes);
         }
     }
-    
+
+    // A monthly update supersedes the daily updates of that month, drop them like
+    // IncrementalChangesManager.indexMainMap does on Android, otherwise they pile up until the
+    // region map itself is updated
+    const auto regionNames = regionMaps.keys();
+    for (const auto& regionName : regionNames)
+    {
+        const auto& regionUpdateFiles = _updatesStructure.value(regionName);
+        if (!regionUpdateFiles)
+            continue;
+
+        const auto dates = regionUpdateFiles->dailyUpdates.keys();
+        for (const auto& date : dates)
+        {
+            const auto& monthlyUpdate = regionUpdateFiles->monthlyUpdates.value(date.left(5) + QStringLiteral("_00"));
+            if (!monthlyUpdate)
+                continue;
+
+            QList< std::shared_ptr<const ResourcesManager::InstalledResource> > keptUpdates;
+            for (const auto& dailyUpdate : constOf(regionUpdateFiles->dailyUpdates.value(date)))
+            {
+                if (dailyUpdate->timestamp < monthlyUpdate->timestamp)
+                {
+                    mapResources.remove(dailyUpdate->id);
+                    _resourcesManager->uninstallResource(dailyUpdate, dailyUpdate);
+                }
+                else
+                    keptUpdates.append(dailyUpdate);
+            }
+
+            if (keptUpdates.isEmpty())
+                regionUpdateFiles->dailyUpdates.remove(date);
+            else
+                regionUpdateFiles->dailyUpdates.insert(date, keptUpdates);
+        }
+    }
+
     return true;
 }
 
