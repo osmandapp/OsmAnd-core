@@ -873,10 +873,19 @@ bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
         }
 
         // Wait until thread will exit
-        REPEAT_UNTIL(_gpuWorkerThread->wait());
+        const auto maxWaitTime = _setupOptions.maxTeardownWaitTime;
+        bool stopped = true;
+        if (maxWaitTime > 0)
+            stopped = _gpuWorkerThread->wait(static_cast<unsigned long>(maxWaitTime));
+        else
+            REPEAT_UNTIL(_gpuWorkerThread->wait());
 
-        // And destroy thread object
-        _gpuWorkerThread.reset();
+        // A thread that did not stop is abandoned rather than destroyed: destroying a running
+        // QThread aborts the process, and it may still be inside a driver call
+        if (stopped)
+            _gpuWorkerThread.reset();
+        else
+            _gpuWorkerThread.release();
     }
 
     _resources->releaseDefaultResources(gpuContextLost);

@@ -110,6 +110,20 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
+        // Teardown runs on the platform's main thread, and the waits below have no deadline of their
+        // own, so a stuck worker can outlive the time the OS gives the process to exit. A positive
+        // value (milliseconds) makes those waits give up and abandon the workers instead. Zero, the
+        // default, keeps waiting indefinitely.
+        int maxTeardownWaitTime;
+#if !defined(SWIG)
+        inline MapRendererSetupOptions& setMaxTeardownWaitTime(const int newMaxTeardownWaitTime)
+        {
+            maxTeardownWaitTime = newMaxTeardownWaitTime;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
         bool isValid() const;
     };
 }
