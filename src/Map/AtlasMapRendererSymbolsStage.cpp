@@ -2429,6 +2429,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         return;
     }
 
+    // Glyph widths are required to lay out the symbol along the path
+    if (Q_UNLIKELY(onPathMapSymbol->glyphsWidth.isEmpty()))
+        return;
+
     const auto& internalState = getInternalState();
 
     const auto& pinPointOnPath =

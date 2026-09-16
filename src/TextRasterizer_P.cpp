@@ -542,6 +542,15 @@ bool OsmAnd::TextRasterizer_P::rasterize(
 
     if (outGlyphWidths)
     {
+        // Text without glyphs can't be placed on path
+        if (outGlyphWidths->isEmpty())
+        {
+            LogPrintf(LogSeverityLevel::Warning,
+                "Failed to rasterize text '%s': no glyphs found in any typeface",
+                qPrintable(text));
+            return false;
+        }
+
         outGlyphWidths->front() += 1.0f + leftGap;
         outGlyphWidths->back() += 1.0f + rightGap;
     }
