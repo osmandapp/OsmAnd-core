@@ -1638,7 +1638,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
             vertices->clear();
         else if (overflowError)
         {
-            LogPrintf(LogSeverityLevel::Warning,
+            LogPrintf(LogSeverityLevel::Debug,
             "cutMeshWithGrid: mesh overflow (zoom %d, cells %d, %u input vertices), tesselation skipped",
             static_cast<int>(zoomLevel), cellsPerTileSize, static_cast<unsigned>(vertices->size()));
             return false;
