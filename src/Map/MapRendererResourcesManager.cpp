@@ -3401,18 +3401,20 @@ void OsmAnd::MapRendererResourcesManager::requestResourcesUploadOrUnload()
     renderer->requestResourcesUploadOrUnload();
 }
 
-void OsmAnd::MapRendererResourcesManager::releaseAllResources(bool gpuContextLost)
+// Returns whether everything was released. A false means workers were abandoned mid-flight, and the
+// manager must then be leaked rather than destructed: its destructor waits for those same workers.
+bool OsmAnd::MapRendererResourcesManager::releaseAllResources(bool gpuContextLost)
 {
     // Workers that outlive the limit are abandoned instead of waited out: what they still touch is
     // left alone, because the alternative is releasing it from under them
     const auto maxWaitTime = renderer->setupOptions.maxTeardownWaitTime;
     if (!stopWorkerThread(maxWaitTime))
-        return;
+        return false;
 
     _requestedResourcesTasks.clear();
     _resourcesRequestWorkerPool.dequeueAll();
     if (!_resourcesRequestWorkerPool.waitForDone(maxWaitTime > 0 ? maxWaitTime : -1))
-        return;
+        return false;
 
     QWriteLocker scopedLocker(&_resourcesStoragesLock);
 
@@ -3438,6 +3440,8 @@ void OsmAnd::MapRendererResourcesManager::releaseAllResources(bool gpuContextLos
         bindings.providersToCollections.clear();
         bindings.collectionsToProviders.clear();
     }
+
+    return true;
 }
 
 void OsmAnd::MapRendererResourcesManager::syncResourcesInGPU(
