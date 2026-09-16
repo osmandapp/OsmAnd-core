@@ -1655,8 +1655,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
         vertex.positionXYZD[2] = 0;
         vertex.positionXYZD[3] = NAN;
         vertices->push_back(vertex);
-        delete verticesAndIndices->position31;
-        verticesAndIndices->position31 = new PointI(0, 0);
+        *verticesAndIndices->position31 = PointI(0, 0);
     }
 
     verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
