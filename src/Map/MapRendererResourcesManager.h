@@ -241,7 +241,7 @@ namespace OsmAnd
             bool& atLeastOneUploadFailed);
         void blockingReleaseResourcesFrom(const std::shared_ptr<MapRendererBaseResourcesCollection>& collection, bool gpuContextLost);
         void requestResourcesUploadOrUnload();
-        void releaseAllResources(bool gpuContextLost);
+        bool releaseAllResources(bool gpuContextLost);
 
         // Worker thread:
         volatile bool _workerThreadIsAlive;
@@ -255,6 +255,7 @@ namespace OsmAnd
         std::array<std::shared_ptr<const GPUAPI::ResourceInGPU>, MapStubStylesCount> _processingTileStubs;
         std::array<std::shared_ptr<const GPUAPI::ResourceInGPU>, MapStubStylesCount> _unavailableTileStubs;
         void stopWorkerThread();
+        bool stopWorkerThread(const int maxWaitTime);
         bool initializeDefaultResources();
         bool initializeTileStub(const QString& resourceName, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResource);
         bool initializeEmptyStub(std::shared_ptr<const GPUAPI::ResourceInGPU>& outResource);
