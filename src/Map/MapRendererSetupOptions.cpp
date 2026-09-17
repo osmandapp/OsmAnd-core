@@ -8,7 +8,6 @@ OsmAnd::MapRendererSetupOptions::MapRendererSetupOptions()
     , maxNumberOfRasterMapLayersInBatch(0)
     , displayDensityFactor(1.0f)
     , elevationVisualizationEnabled(true)
-    , maxTeardownWaitTime(0)
 {
 }
 
