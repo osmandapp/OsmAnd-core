@@ -851,7 +851,7 @@ bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
     }
 
     // Release resources (to let all resources be released)
-    const bool releasedAllResources = _resources->releaseAllResources(gpuContextLost);
+    _resources->releaseAllResources(gpuContextLost);
 
     // GPU worker should not be suspended afterwards
     {
@@ -873,33 +873,13 @@ bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
         }
 
         // Wait until thread will exit
-        const auto maxWaitTime = _setupOptions.maxTeardownWaitTime;
-        bool stopped = true;
-        if (maxWaitTime > 0)
-            stopped = _gpuWorkerThread->wait(static_cast<unsigned long>(maxWaitTime));
-        else
-            REPEAT_UNTIL(_gpuWorkerThread->wait());
+        REPEAT_UNTIL(_gpuWorkerThread->wait());
 
-        // A thread that did not stop is abandoned rather than destroyed: destroying a running
-        // QThread aborts the process, and it may still be inside a driver call
-        if (stopped)
-            _gpuWorkerThread.reset();
-        else
-            _gpuWorkerThread.release();
+        // And destroy thread object
+        _gpuWorkerThread.reset();
     }
 
-    if (releasedAllResources)
-    {
-        _resources->releaseDefaultResources(gpuContextLost);
-    }
-    else
-    {
-        // The manager's destructor holds until every hosted task is released, and the workers that
-        // would release them have been abandoned. It is kept alive for the rest of the process
-        // instead: dropping the last reference here would run exactly the wait that was bounded.
-        static QList< std::shared_ptr<MapRendererResourcesManager> > abandonedResources;
-        abandonedResources.push_back(_resources);
-    }
+    _resources->releaseDefaultResources(gpuContextLost);
     _resources.reset();
     if (resourcesAreInUse.try_lock_for(std::chrono::seconds(2)))
         resourcesAreInUse.unlock();

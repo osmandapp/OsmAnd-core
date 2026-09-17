@@ -114,25 +114,15 @@ OsmAnd::MapRendererResourcesManager::~MapRendererResourcesManager()
 
 void OsmAnd::MapRendererResourcesManager::stopWorkerThread()
 {
-    stopWorkerThread(0);
-}
-
-// Returns whether the thread actually stopped. With no limit set it always does.
-bool OsmAnd::MapRendererResourcesManager::stopWorkerThread(const int maxWaitTime)
-{
-    if (!_workerThreadIsAlive)
-        return true;
-
-    _workerThreadIsAlive = false;
+    if (_workerThreadIsAlive)
     {
-        QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
-        _workerThreadWakeup.wakeAll();
+        _workerThreadIsAlive = false;
+        {
+            QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
+            _workerThreadWakeup.wakeAll();
+        }
+        REPEAT_UNTIL(_workerThread->wait());
     }
-    if (maxWaitTime > 0)
-        return _workerThread->wait(static_cast<unsigned long>(maxWaitTime));
-
-    REPEAT_UNTIL(_workerThread->wait());
-    return true;
 }
 
 bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
@@ -3401,20 +3391,12 @@ void OsmAnd::MapRendererResourcesManager::requestResourcesUploadOrUnload()
     renderer->requestResourcesUploadOrUnload();
 }
 
-// Returns whether everything was released. A false means workers were abandoned mid-flight, and the
-// manager must then be leaked rather than destructed: its destructor waits for those same workers.
-bool OsmAnd::MapRendererResourcesManager::releaseAllResources(bool gpuContextLost)
+void OsmAnd::MapRendererResourcesManager::releaseAllResources(bool gpuContextLost)
 {
-    // Workers that outlive the limit are abandoned instead of waited out: what they still touch is
-    // left alone, because the alternative is releasing it from under them
-    const auto maxWaitTime = renderer->setupOptions.maxTeardownWaitTime;
-    if (!stopWorkerThread(maxWaitTime))
-        return false;
-
+    stopWorkerThread();
     _requestedResourcesTasks.clear();
     _resourcesRequestWorkerPool.dequeueAll();
-    if (!_resourcesRequestWorkerPool.waitForDone(maxWaitTime > 0 ? maxWaitTime : -1))
-        return false;
+    _resourcesRequestWorkerPool.waitForDone();
 
     QWriteLocker scopedLocker(&_resourcesStoragesLock);
 
@@ -3440,8 +3422,6 @@ bool OsmAnd::MapRendererResourcesManager::releaseAllResources(bool gpuContextLos
         bindings.providersToCollections.clear();
         bindings.collectionsToProviders.clear();
     }
-
-    return true;
 }
 
 void OsmAnd::MapRendererResourcesManager::syncResourcesInGPU(

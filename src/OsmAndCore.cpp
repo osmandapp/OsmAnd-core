@@ -206,22 +206,12 @@ OSMAND_CORE_API const QString& OSMAND_CORE_CALL OsmAnd::getFontDirectory()
     return fontPath;
 }
 
-OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore(const int maxWaitTimeMs /*= -1*/)
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
 {
     if (_qCoreApplicationThread)
     {
         QCoreApplication::exit();
-        bool stopped = true;
-        if (maxWaitTimeMs >= 0)
-            stopped = _qCoreApplicationThread->wait(static_cast<unsigned long>(maxWaitTimeMs));
-        else
-            REPEAT_UNTIL(_qCoreApplicationThread->wait());
-
-        // A thread still running owns everything released below, so give up on the whole teardown
-        // rather than pull it out from under it. The caller is on its way out of the process.
-        if (!stopped)
-            return;
-
+        REPEAT_UNTIL(_qCoreApplicationThread->wait());
         _qCoreApplicationThread.reset();
     }
     else
