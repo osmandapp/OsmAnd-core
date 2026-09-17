@@ -822,6 +822,14 @@ bool OsmAnd::MapRenderer::doReleaseRendering(const bool gpuContextLost)
 
 bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
 {
+    // Resume the worker before anything waits on it: a suspended one skips processGpuWorker(), and
+    // with it the dispatcher that the wait below expects to be run
+    {
+        QMutexLocker scopedLocker(&_gpuWorkerThreadActiveMutex);
+
+        _gpuWorkerIsSuspended.storeRelease(0);
+    }
+
     // Wait for GPU worker to finish its job
     if (_gpuWorkerThread)
     {
@@ -852,13 +860,6 @@ bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
 
     // Release resources (to let all resources be released)
     _resources->releaseAllResources(gpuContextLost);
-
-    // GPU worker should not be suspended afterwards
-    {
-        QMutexLocker scopedLocker(&_gpuWorkerThreadActiveMutex);
-
-        _gpuWorkerIsSuspended.storeRelease(0);
-    }
 
     // Stop GPU worker if it exists
     if (_gpuWorkerThread)
