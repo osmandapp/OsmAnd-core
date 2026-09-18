@@ -7,6 +7,7 @@
 #include <QReadWriteLock>
 #include <QHash>
 #include <QVector>
+#include <array>
 #include <SkPath.h>
 
 #include "OsmAndCore.h"
@@ -77,6 +78,7 @@ namespace OsmAnd
         bool _hasUnappliedChanges;
         bool _hasUnappliedPrimitiveChanges;
         bool _hasUnappliedStartingDistance;
+        bool _hasPendingZoomUpdate;
 
         bool _isHidden;
         float _startingDistance;
@@ -111,6 +113,7 @@ namespace OsmAnd
         float _mapVisualZoom;
         float _surfaceVisualZoom;
         float _mapVisualZoomShift;
+        std::array<double, 5> _lastObservedZoomState{{-1.0, -1.0, -1.0, -1.0, -1.0}};
         bool _hasElevationDataProvider;
         bool _hasElevationDataResources;
         bool _flatEarth;
@@ -242,6 +245,7 @@ namespace OsmAnd
         void setOwnerIsLost();
         bool hasUnappliedChanges() const;
         bool hasUnappliedPrimitiveChanges() const;
+        bool hasPendingZoomUpdate() const;
 
         std::shared_ptr<VectorLine::SymbolsGroup> createSymbolsGroup(const MapState& mapState);
 
