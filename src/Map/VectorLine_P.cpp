@@ -42,6 +42,7 @@ OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
     , _hasUnappliedChanges(false)
     , _hasUnappliedPrimitiveChanges(false)
     , _hasUnappliedStartingDistance(false)
+    , _hasPendingZoomUpdate(false)
     , _isHidden(false)
     , _startingDistance(0.0f)
     , _isApproximationEnabled(true)
@@ -561,6 +562,13 @@ bool OsmAnd::VectorLine_P::hasUnappliedPrimitiveChanges() const
     return _hasUnappliedPrimitiveChanges;
 }
 
+bool OsmAnd::VectorLine_P::hasPendingZoomUpdate() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _hasPendingZoomUpdate;
+}
+
 bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
 {
     bool changed = _mapZoomLevel != mapState.zoomLevel;
@@ -614,6 +622,7 @@ bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
 
 void OsmAnd::VectorLine_P::applyMapState(const MapState& mapState)
 {
+    _hasPendingZoomUpdate = false;
     _metersPerPixel = mapState.metersPerPixel;
     _visibleBBoxShifted = mapState.visibleBBoxShifted;
     _target31 = mapState.target31;
@@ -631,7 +640,17 @@ bool OsmAnd::VectorLine_P::update(const MapState& mapState)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    bool mapStateChanged = isMapStateChanged(mapState);
+    const std::array<double, 5> zoomState{{
+        static_cast<double>(mapState.zoomLevel), mapState.visualZoom,
+        static_cast<double>(mapState.surfaceZoomLevel), mapState.surfaceVisualZoom, mapState.visualZoomShift}};
+    const std::array<double, 5> cachedZoomState{{
+        static_cast<double>(_mapZoomLevel), _mapVisualZoom,
+        static_cast<double>(_surfaceZoomLevel), _surfaceVisualZoom, _mapVisualZoomShift}};
+    const bool zoomChanged = _lastObservedZoomState != zoomState;
+    const bool finalZoomUpdate = _hasPendingZoomUpdate && !zoomChanged;
+    const bool mapStateChanged = isMapStateChanged(mapState) || finalZoomUpdate;
+    _hasPendingZoomUpdate = !mapStateChanged && cachedZoomState != zoomState;
+    _lastObservedZoomState = zoomState;
     if (mapStateChanged)
         applyMapState(mapState);
 

@@ -304,7 +304,7 @@ const OsmAnd::VectorLine* OsmAnd::VectorLine::SymbolsGroup::getVectorLine() cons
 bool OsmAnd::VectorLine::SymbolsGroup::updatesPresent()
 {
     if (_vectorLineP)
-        return _vectorLineP->hasUnappliedChanges();
+        return _vectorLineP->hasUnappliedChanges() || _vectorLineP->hasPendingZoomUpdate();
 
     return false;
 }
