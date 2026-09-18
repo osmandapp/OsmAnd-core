@@ -2533,7 +2533,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                 auto polygon = polylines.takeLast();
                 auto winding = windings.takeLast();
                 auto startPoint = polygon.front();
-                int startSide = Utilities::computeBorderCode(startPoint, topLeft, bottomRight);
+                int startSide = beginSide;
                 auto lastPoint = polygon.back();
                 int endSide = Utilities::computeBorderCode(lastPoint, topLeft, bottomRight);
                 auto finishPoint = lastPoint;
@@ -2547,7 +2547,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                     if (endSide != 4 && i < 0)
                     {
                         i = endSide;
-                        lastSide = endSide + 7;
+                        lastSide = beginSide + (beginSide <= endSide ? 4 : 0);
                     }
                     while (endSide == 4)
                     {
@@ -2582,7 +2582,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                             if (i < 0)
                             {
                                 i = nextSide;
-                                lastSide = nextSide + 7;
+                                lastSide = beginSide + (beginSide <= nextSide ? 4 : 0);
                             }
                             else
                                 i += (nextSide < prevSide ? 4 : 0) + nextSide - prevSide;
