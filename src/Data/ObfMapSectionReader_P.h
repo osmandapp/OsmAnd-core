@@ -86,6 +86,7 @@ namespace OsmAnd
             MapSurfaceType& outChildrenSurfaceType,
             QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >* nodesWithData,
             const AreaI* bbox31,
+            const AreaI* surfaceBBox31,
             const std::shared_ptr<const IQueryController>& queryController,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 

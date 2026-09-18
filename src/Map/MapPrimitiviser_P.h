@@ -73,6 +73,13 @@ namespace OsmAnd
             Q_DISABLE_COPY_AND_MOVE(Context);
         };
 
+        static bool getCoastlines(
+            const AreaI area31,
+            const AreaI coastlineArea31,
+            const QList< std::shared_ptr<const MapObject> >& coastlines,
+            QList< std::shared_ptr<const MapObject> >& outVectorized,
+            MapSurfaceType& surfaceType);
+
         static bool polygonizeCoastlines(
             const AreaI area31,
             const ZoomLevel zoom,
