@@ -62,5 +62,8 @@ sk_sp<SkImage> OsmAnd::MapRasterLayerProvider_GPU_P::rasterize(
         metric ? metric->findOrAddSubmetricOfType<MapRasterizer_Metrics::Metric_rasterize>().get() : nullptr,
         request.queryController);
 
+    // asImage() copies every pixel of a mutable bitmap. Nothing writes to this one after
+    // rasterization, so hand the pixels over instead of paying for a second full buffer.
+    bitmap.setImmutable();
     return bitmap.asImage();
 }
