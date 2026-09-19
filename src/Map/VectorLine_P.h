@@ -67,6 +67,33 @@ namespace OsmAnd
         bool hasOutlineColorizationMapping() const;
         bool hasHeights() const;
     protected:
+        // Zoom-dependent part of the map state the line geometry is built for
+        struct ZoomState
+        {
+            ZoomLevel mapZoomLevel;
+            ZoomLevel surfaceZoomLevel;
+            float mapVisualZoom;
+            float surfaceVisualZoom;
+            float mapVisualZoomShift;
+
+            ZoomState();
+
+            static ZoomState fromMapState(const MapState& mapState);
+
+            // False until the renderer reports a usable zoom
+            bool isValid() const;
+
+            // Zoom moved onto another grid step, the geometry has to be rebuilt
+            bool geometryDiffers(const ZoomState& that) const;
+
+            float mapZoom() const;
+            float surfaceZoom() const;
+
+            // Zoom the geometry is built for: the live zoom snapped to the grid
+            float geometryZoom() const;
+            float surfaceGeometryZoom() const;
+        };
+
         VectorLine_P(VectorLine* const owner);
         
         QVector<std::shared_ptr<MapMarker>> _attachedMarkers;
@@ -106,17 +133,11 @@ namespace OsmAnd
         double _metersPerPixel;
         AreaI _visibleBBoxShifted;
         PointI _target31;
-        ZoomLevel _mapZoomLevel;
-        ZoomLevel _surfaceZoomLevel;
-        float _mapVisualZoom;
-        float _surfaceVisualZoom;
-        float _mapVisualZoomShift;
+        ZoomState _zoomState;
         bool _hasElevationDataProvider;
         bool _hasElevationDataResources;
         bool _flatEarth;
         AreaI64 _bboxShifted;
-
-        float zoom() const;
 
         bool update(const MapState& mapState);
 
