@@ -703,9 +703,17 @@ OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabase_P::getMaxZoom() const
 
 bool OsmAnd::TileSqliteDatabase_P::recomputeMinMaxZoom()
 {
+    // For an online source, minZoom/maxZoom describe what the remote server supports, not what
+    // happens to be cached locally right now. Deriving them from the (typically sparse, still
+    // growing) local "tiles" table would keep shrinking/expanding the declared zoom range as
+    // tiles are fetched or evicted, which is wrong for a live cache - only offline (no URL)
+    // sources, where minZoom/maxZoom must reflect the actual baked-in tile inventory, need this.
+    if (isOnlineTileSource())
+        return true;
+
     auto minZoom = ZoomLevel::InvalidZoomLevel;
     auto maxZoom = ZoomLevel::InvalidZoomLevel;
-    
+
     {
         QReadLocker scopedLocker(&_lock);
         int res;
