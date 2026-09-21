@@ -63,6 +63,11 @@ namespace OsmAnd
             const int64_t dateTimeNext;
 
             virtual void lostRefInGPU() const;
+
+            // Size of the data this resource keeps in GPU memory, for getMemoryStats()
+            void setSizeInBytes(const int64_t sizeInBytes) const;
+        private:
+            mutable int64_t _sizeInBytes;
         };
 
         class MetaResourceInGPU : public ResourceInGPU
@@ -299,6 +304,10 @@ namespace OsmAnd
         QAtomicInt _allocatedResourcesCounter;
 #endif
 
+        static const int ResourceTypesCount = 5;
+        mutable QAtomicInteger<qint64> _resourcesSizeInBytes[ResourceTypesCount];
+        mutable QAtomicInt _resourcesCount[ResourceTypesCount];
+
         QHash< AtlasTypeId, std::shared_ptr<AtlasTexturesPool> > _atlasTexturesPools;
     protected:
         GPUAPI();
@@ -317,6 +326,10 @@ namespace OsmAnd
         virtual bool releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU) = 0;
     public:
         virtual ~GPUAPI();
+
+        // Data kept in GPU memory by resource type, as "tex:<MB>/<count>,slot:..,vbo:..,ibo:..,mesh:.."
+        // (atlas slots and meshes own no data themselves: slots live in textures, meshes in vbo + ibo)
+        QString getMemoryStats() const;
 
         virtual bool initialize() = 0;
         virtual int checkElementVisibility(int queryIndex, float pointSize) = 0;

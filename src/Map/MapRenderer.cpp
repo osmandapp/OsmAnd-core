@@ -939,6 +939,11 @@ bool OsmAnd::MapRenderer::isIdle() const
     return !isNotIdle;
 }
 
+QString OsmAnd::MapRenderer::getGpuMemoryStats() const
+{
+    return gpuAPI->getMemoryStats();
+}
+
 QString OsmAnd::MapRenderer::getNotIdleReason() const
 {
     QStringList notIdleReasons;

@@ -369,6 +369,7 @@ namespace OsmAnd
 
         virtual bool isIdle() const Q_DECL_OVERRIDE;
         virtual QString getNotIdleReason() const Q_DECL_OVERRIDE;
+        virtual QString getGpuMemoryStats() const Q_DECL_OVERRIDE;
 
         virtual bool suspendGpuWorker() Q_DECL_OVERRIDE;
         virtual bool resumeGpuWorker() Q_DECL_OVERRIDE;
