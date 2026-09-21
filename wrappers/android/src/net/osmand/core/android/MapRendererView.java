@@ -1200,7 +1200,7 @@ public abstract class MapRendererView extends FrameLayout {
     public final float getAzimuth() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getState().getAzimuth();
+        return _mapRenderer.getAzimuth();
     }
 
     public final boolean setAzimuth(float azimuth, boolean forcedUpdate, boolean disableUpdate) {
@@ -1218,7 +1218,7 @@ public abstract class MapRendererView extends FrameLayout {
     public final float getElevationAngle() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getState().getElevationAngle();
+        return _mapRenderer.getElevationAngle();
     }
 
     public final boolean setElevationAngle(float elevationAngle) {
@@ -1230,18 +1230,15 @@ public abstract class MapRendererView extends FrameLayout {
     public final PointI getTarget() {
         NativeCore.checkIfLoaded();
 
-        PointI fixedPixel = _mapRenderer.getState().getFixedPixel();
-        if (fixedPixel.getX() >= 0 && fixedPixel.getY() >= 0) {
-            return _mapRenderer.getState().getFixedLocation31();
-        } else {
-            return _mapRenderer.getState().getTarget31();
-        }
+        PointI target31 = new PointI();
+        _mapRenderer.getMapTargetLocation(target31);
+        return target31;
     }
 
     public final PointI getTargetScreenPosition() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getState().getFixedPixel();
+        return _mapRenderer.getFutureState().getFixedPixel();
     }
 
     public final boolean setTarget(PointI target31) {
@@ -1318,13 +1315,13 @@ public abstract class MapRendererView extends FrameLayout {
     public final PointI getSecondaryTarget() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getState().getAimLocation31();
+        return _mapRenderer.getFutureState().getAimLocation31();
     }
 
     public final PointI getSecondaryTargetScreenPosition() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getState().getFixedPixel();
+        return _mapRenderer.getFutureState().getFixedPixel();
     }
 
     public final boolean setSecondaryTarget(PointI screenPoint, PointI location31) {
@@ -1429,7 +1426,7 @@ public abstract class MapRendererView extends FrameLayout {
     public final ZoomLevel getFlatZoomLevel() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getState().getZoomLevel();
+        return _mapRenderer.getFutureState().getZoomLevel();
     }
 
     public final boolean setFlatZoomLevel(ZoomLevel zoomLevel) {
@@ -1453,7 +1450,7 @@ public abstract class MapRendererView extends FrameLayout {
     public final float getFlatVisualZoom() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getState().getVisualZoom();
+        return _mapRenderer.getFutureState().getVisualZoom();
     }
 
     public final boolean setFlatVisualZoom(float visualZoom) {

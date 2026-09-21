@@ -743,6 +743,10 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     }
 
     bool addDuplicates = zoom <= ObfMapObjectsProvider::AddDuplicatedMapObjectsMaxZoom;
+
+    // Date of each map section, found once: getObfSectionDate() copies the section name and compiles
+    // a regular expression, and the sort below used to call it twice per comparison
+    QHash<const ObfSectionInfo*, QString> sectionDates;
     for (auto& duplicates : duplicatedMapObjects.values())
     {
         if (queryController->isAborted())
@@ -751,9 +755,16 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             return false;
         }
 
+        for (const auto& duplicate : constOf(duplicates))
+        {
+            const auto sectionInfo = duplicate->obfSection.get();
+            if (!sectionDates.contains(sectionInfo))
+                sectionDates.insert(sectionInfo, getObfSectionDate(duplicate->obfSection));
+        }
+
         // Sort duplicated ObfMapObjects by maps date and data completeness
         std::sort(duplicates.begin(), duplicates.end(),
-            []
+            [&sectionDates]
             (const std::shared_ptr<const ObfMapObject>& o1, const std::shared_ptr<const ObfMapObject>& o2)
             {
                 if (std::dynamic_pointer_cast<const BinaryMapObject>(o1) && std::dynamic_pointer_cast<const Road>(o2))
@@ -761,8 +772,8 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
                 else if (std::dynamic_pointer_cast<const Road>(o1) && std::dynamic_pointer_cast<const BinaryMapObject>(o2))
                     return false;
 
-                const auto& sectionDate1 = getObfSectionDate(o1->obfSection);
-                const auto& sectionDate2 = getObfSectionDate(o2->obfSection);
+                const auto& sectionDate1 = *sectionDates.constFind(o1->obfSection.get());
+                const auto& sectionDate2 = *sectionDates.constFind(o2->obfSection.get());
 
                 return sectionDate1.compare(sectionDate2) > 0;
             });

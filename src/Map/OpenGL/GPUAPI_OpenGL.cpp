@@ -39,6 +39,28 @@
 #   define GL_GET_AND_CHECK_RESULT glGetError()
 #endif
 
+// With texture storage the format is a sized internal one, which getTextureFormatPixelSize() does not know
+static size_t getSizedTextureFormatPixelSize(const GLenum internalFormat)
+{
+    switch (internalFormat)
+    {
+        case 0x8058: // GL_RGBA8
+        case 0x822E: // GL_R32F
+        case 0x8818: // GL_LUMINANCE32F
+            return 4;
+        case 0x8056: // GL_RGBA4
+        case 0x8D62: // GL_RGB565
+        case 0x822D: // GL_R16F
+        case 0x881E: // GL_LUMINANCE16F
+            return 2;
+        case 0x8229: // GL_R8
+        case 0x8040: // GL_LUMINANCE8
+            return 1;
+        default:
+            return 0;
+    }
+}
+
 static int64_t getTextureSizeInBytes(unsigned int width, unsigned int height, unsigned int mipmapLevels, size_t pixelSize)
 {
     int64_t sizeInBytes = 0;
@@ -1302,7 +1324,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
             dateTimePrevious,
             dateTimeNext);
         textureInGPU->setSizeInBytes(
-            getTextureSizeInBytes(textureSize, textureSize, mipmapLevels, getTextureFormatPixelSize(textureFormat)));
+            getTextureSizeInBytes(textureSize, textureSize, mipmapLevels, getTexturePixelSize(textureFormat)));
 
         if (waitForGPU)
             waitUntilUploadIsComplete(gpuContextLost);
@@ -1371,7 +1393,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
                 mipmapLevels,
                 atlasTexturesPool);
             atlasTexture->setSizeInBytes(
-                getTextureSizeInBytes(textureSize, textureSize, mipmapLevels, getTextureFormatPixelSize(textureFormat)));
+                getTextureSizeInBytes(textureSize, textureSize, mipmapLevels, getTexturePixelSize(textureFormat)));
             return atlasTexture;
         });
 
@@ -1511,7 +1533,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
         1,
         alphaChannelType);
     textureInGPU->setSizeInBytes(
-        getTextureSizeInBytes(image->width(), image->height(), 1, getTextureFormatPixelSize(textureFormat)));
+        getTextureSizeInBytes(image->width(), image->height(), 1, getTexturePixelSize(textureFormat)));
 
     if (waitForGPU)
         waitUntilUploadIsComplete(gpuContextLost);
@@ -1727,6 +1749,15 @@ OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat_flo
     GLenum type = GL_UNSIGNED_BYTE;
 
     return TextureFormat::Make(type, format);
+}
+
+size_t OsmAnd::GPUAPI_OpenGL::getTexturePixelSize(const TextureFormat textureFormat) const
+{
+    const auto sizedFormatPixelSize = getSizedTextureFormatPixelSize(static_cast<GLenum>(textureFormat.format));
+    if (sizedFormatPixelSize > 0 || static_cast<GLenum>(textureFormat.type) == static_cast<uint16_t>(GL_INVALID_ENUM))
+        return sizedFormatPixelSize;
+
+    return getTextureFormatPixelSize(textureFormat);
 }
 
 size_t OsmAnd::GPUAPI_OpenGL::getTextureFormatPixelSize(const TextureFormat textureFormat) const
