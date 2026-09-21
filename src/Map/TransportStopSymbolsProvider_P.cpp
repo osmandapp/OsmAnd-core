@@ -56,7 +56,7 @@ bool OsmAnd::TransportStopSymbolsProvider_P::obtainData(
     [this, requestedZoom, &mapSymbolsGroups, bbox31]
     (const std::shared_ptr<const OsmAnd::TransportStop>& transportStop) -> bool
     {
-        if (!owner->transportRouteIconProvider)
+        if (!owner->transportRouteIconProvider || transportStop->isSynthetic())
             return false;
         
         const auto position31 = Utilities::convertLatLonTo31(transportStop->location);

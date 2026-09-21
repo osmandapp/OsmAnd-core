@@ -36,6 +36,11 @@ QString OsmAnd::TransportStop::getName(const QString lang, bool transliterate) c
     return name;
 }
 
+bool OsmAnd::TransportStop::isSynthetic() const
+{
+    return localizedNames.contains(QStringLiteral("osmand_ferry_synthetic"));
+}
+
 void OsmAnd::TransportStop::addExit(std::shared_ptr<OsmAnd::TransportStopExit> &exit)
 {
     exits.append(exit);

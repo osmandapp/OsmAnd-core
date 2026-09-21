@@ -195,6 +195,15 @@ void OsmAnd::ObfTransportSectionReader_P::initializeNames(
     
     if (!s->enName.isEmpty())
         s->enName = stringTable->value(s->enName[0].unicode());
+
+    if (!s->localizedNames.isEmpty())
+    {
+        QHash<QString, QString> names;
+        for (auto itName = s->localizedNames.cbegin(); itName != s->localizedNames.cend(); ++itName)
+            names.insert(stringTable->value(itName.key()[0].unicode()),
+                         stringTable->value(itName.value()[0].unicode()));
+        s->localizedNames = names;
+    }
 }
 
 void OsmAnd::ObfTransportSectionReader_P::searchTransportStops(
@@ -417,6 +426,25 @@ std::shared_ptr<OsmAnd::TransportStop> OsmAnd::ObfTransportSectionReader_P::read
                     outTransportStop->localizedName = regStr(reader, stringTable);
                 else
                     ObfReaderUtilities::skipUnknownField(cis, tag);
+
+                break;
+            }
+            case OBF::TransportStop::kAdditionalNamePairsFieldNumber:
+            {
+                if (stringTable)
+                {
+                    gpb::uint32 length;
+                    cis->ReadVarint32(&length);
+                    const auto oldLimit = cis->PushLimit(length);
+                    while (cis->BytesUntilLimit() > 0)
+                    {
+                        const auto tagName = regStr(reader, stringTable);
+                        outTransportStop->localizedNames.insert(tagName, regStr(reader, stringTable));
+                    }
+                    cis->PopLimit(oldLimit);
+                }
+                else
+                    ObfReaderUtilities::skipUnknownField(cis, t);
 
                 break;
             }
