@@ -2,12 +2,12 @@
 #define _OSMAND_CORE_MAP_LINE_P_H_
 
 #include "stdlib_common.h"
+#include <chrono>
 
 #include "QtExtensions.h"
 #include <QReadWriteLock>
 #include <QHash>
 #include <QVector>
-#include <array>
 #include <SkPath.h>
 
 #include "OsmAndCore.h"
@@ -30,6 +30,22 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(VectorLine_P);
 
     private:
+        struct ZoomState
+        {
+            ZoomState();
+
+            ZoomLevel mapZoomLevel;
+            ZoomLevel surfaceZoomLevel;
+            float mapVisualZoom;
+            float surfaceVisualZoom;
+            float visualZoomShift;
+
+            static ZoomState fromMapState(const MapState& mapState);
+            bool isValid() const;
+            bool differsFrom(const ZoomState& that, float tolerance) const;
+            bool differsBeyondThreshold(const ZoomState& that) const;
+        };
+
         void createVertices(
             std::vector<VectorMapSymbol::Vertex> &vertices,
             VectorMapSymbol::Vertex &vertex,
@@ -78,7 +94,7 @@ namespace OsmAnd
         bool _hasUnappliedChanges;
         bool _hasUnappliedPrimitiveChanges;
         bool _hasUnappliedStartingDistance;
-        bool _hasPendingZoomUpdate;
+        bool _hasUnappliedZoomChange;
 
         bool _isHidden;
         float _startingDistance;
@@ -108,12 +124,9 @@ namespace OsmAnd
         double _metersPerPixel;
         AreaI _visibleBBoxShifted;
         PointI _target31;
-        ZoomLevel _mapZoomLevel;
-        ZoomLevel _surfaceZoomLevel;
-        float _mapVisualZoom;
-        float _surfaceVisualZoom;
-        float _mapVisualZoomShift;
-        std::array<double, 5> _lastObservedZoomState{{-1.0, -1.0, -1.0, -1.0, -1.0}};
+        ZoomState _zoomState;
+        ZoomState _zoomStabilityAnchor;
+        std::chrono::steady_clock::time_point _zoomStableSince;
         bool _hasElevationDataProvider;
         bool _hasElevationDataResources;
         bool _flatEarth;
@@ -125,6 +138,7 @@ namespace OsmAnd
 
         bool applyChanges();
 
+        void observeZoomState(const ZoomState& zoomState);
         bool isMapStateChanged(const MapState& mapState) const;
         void applyMapState(const MapState& mapState);
         
@@ -245,7 +259,7 @@ namespace OsmAnd
         void setOwnerIsLost();
         bool hasUnappliedChanges() const;
         bool hasUnappliedPrimitiveChanges() const;
-        bool hasPendingZoomUpdate() const;
+        bool updatesPresent() const;
 
         std::shared_ptr<VectorLine::SymbolsGroup> createSymbolsGroup(const MapState& mapState);
 

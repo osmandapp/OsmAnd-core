@@ -37,12 +37,62 @@
 #define MIN_ALPHA_DELTA 0.1f
 #define MIN_RGB_DELTA 0.075f
 
+namespace
+{
+    constexpr float ZoomStabilityTolerance = 0.0001f;
+    constexpr std::chrono::milliseconds ZoomSettleDelay(250);
+}
+
+OsmAnd::VectorLine_P::ZoomState::ZoomState()
+    : mapZoomLevel(InvalidZoomLevel)
+    , surfaceZoomLevel(InvalidZoomLevel)
+    , mapVisualZoom(0.0f)
+    , surfaceVisualZoom(0.0f)
+    , visualZoomShift(0.0f)
+{
+}
+
+OsmAnd::VectorLine_P::ZoomState OsmAnd::VectorLine_P::ZoomState::fromMapState(const MapState& mapState)
+{
+    ZoomState state;
+    state.mapZoomLevel = mapState.zoomLevel;
+    state.surfaceZoomLevel = mapState.surfaceZoomLevel;
+    state.mapVisualZoom = mapState.visualZoom;
+    state.surfaceVisualZoom = mapState.surfaceVisualZoom;
+    state.visualZoomShift = mapState.visualZoomShift;
+    return state;
+}
+
+bool OsmAnd::VectorLine_P::ZoomState::isValid() const
+{
+    return mapZoomLevel >= MinZoomLevel && mapZoomLevel <= MaxZoomLevel
+        && surfaceZoomLevel >= MinZoomLevel && surfaceZoomLevel <= MaxZoomLevel
+        && qIsFinite(mapVisualZoom) && mapVisualZoom > 0.0f
+        && qIsFinite(surfaceVisualZoom) && surfaceVisualZoom > 0.0f
+        && qIsFinite(visualZoomShift) && visualZoomShift > -1.0f;
+}
+
+bool OsmAnd::VectorLine_P::ZoomState::differsFrom(const ZoomState& that, float tolerance) const
+{
+    return !isValid() || !that.isValid()
+        || mapZoomLevel != that.mapZoomLevel
+        || surfaceZoomLevel != that.surfaceZoomLevel
+        || qAbs(mapVisualZoom - that.mapVisualZoom) > tolerance
+        || qAbs(surfaceVisualZoom - that.surfaceVisualZoom) > tolerance
+        || qAbs(visualZoomShift - that.visualZoomShift) > tolerance;
+}
+
+bool OsmAnd::VectorLine_P::ZoomState::differsBeyondThreshold(const ZoomState& that) const
+{
+    return differsFrom(that, 0.25f);
+}
+
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
     : _ownerIsLost(false)
     , _hasUnappliedChanges(false)
     , _hasUnappliedPrimitiveChanges(false)
     , _hasUnappliedStartingDistance(false)
-    , _hasPendingZoomUpdate(false)
+    , _hasUnappliedZoomChange(false)
     , _isHidden(false)
     , _startingDistance(0.0f)
     , _isApproximationEnabled(true)
@@ -53,11 +103,9 @@ OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
     , _specialPathIconStep(-1.0f)
     , _metersPerPixel(1.0)
     , _target31(PointI(INT32_MIN, INT32_MIN))
-    , _mapZoomLevel(InvalidZoomLevel)
-    , _surfaceZoomLevel(InvalidZoomLevel)
-    , _mapVisualZoom(0.f)
-    , _surfaceVisualZoom(0.f)
-    , _mapVisualZoomShift(0.f)
+    , _zoomState()
+    , _zoomStabilityAnchor()
+    , _zoomStableSince()
     , _isElevatedLineVisible(true)
     , _isSurfaceLineVisible(false)
     , _elevationScaleFactor(1.0f)
@@ -562,20 +610,22 @@ bool OsmAnd::VectorLine_P::hasUnappliedPrimitiveChanges() const
     return _hasUnappliedPrimitiveChanges;
 }
 
-bool OsmAnd::VectorLine_P::hasPendingZoomUpdate() const
+bool OsmAnd::VectorLine_P::updatesPresent() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _hasPendingZoomUpdate;
+    return _hasUnappliedChanges || _hasUnappliedStartingDistance || _hasUnappliedZoomChange;
 }
 
 bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
 {
-    bool changed = _mapZoomLevel != mapState.zoomLevel;
-    changed |= _surfaceZoomLevel != mapState.surfaceZoomLevel;
-    changed |= qAbs(_mapVisualZoom - mapState.visualZoom) > 0.25;
-    changed |= qAbs(_surfaceVisualZoom - mapState.surfaceVisualZoom) > 0.25;
-    changed |= qAbs(_mapVisualZoomShift - mapState.visualZoomShift) > 0.25;
+    const auto zoomState = ZoomState::fromMapState(mapState);
+    if (!zoomState.isValid())
+        return false;
+
+    const bool zoomSettled = std::chrono::steady_clock::now() - _zoomStableSince >= ZoomSettleDelay;
+    bool changed = _zoomState.differsBeyondThreshold(zoomState)
+        || (_hasUnappliedZoomChange && zoomSettled);
     changed |= _hasElevationDataProvider != mapState.hasElevationDataProvider;
     changed |= _hasElevationDataResources != mapState.hasElevationDataResources;
     changed |= _flatEarth != mapState.flatEarth;
@@ -622,37 +672,38 @@ bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
 
 void OsmAnd::VectorLine_P::applyMapState(const MapState& mapState)
 {
-    _hasPendingZoomUpdate = false;
+    _hasUnappliedZoomChange = false;
     _metersPerPixel = mapState.metersPerPixel;
     _visibleBBoxShifted = mapState.visibleBBoxShifted;
     _target31 = mapState.target31;
-    _mapZoomLevel = mapState.zoomLevel;
-    _mapVisualZoom = mapState.visualZoom;
-    _surfaceZoomLevel = mapState.surfaceZoomLevel;
-    _surfaceVisualZoom = mapState.surfaceVisualZoom;
-    _mapVisualZoomShift = mapState.visualZoomShift;
+    _zoomState = ZoomState::fromMapState(mapState);
+    _zoomStabilityAnchor = _zoomState;
+    _zoomStableSince = std::chrono::steady_clock::now();
     _hasElevationDataProvider = mapState.hasElevationDataProvider;
     _hasElevationDataResources = mapState.hasElevationDataResources;
     _flatEarth = mapState.flatEarth;
+}
+
+void OsmAnd::VectorLine_P::observeZoomState(const ZoomState& zoomState)
+{
+    if (zoomState.differsFrom(_zoomStabilityAnchor, ZoomStabilityTolerance))
+    {
+        _zoomStabilityAnchor = zoomState;
+        _zoomStableSince = std::chrono::steady_clock::now();
+    }
 }
 
 bool OsmAnd::VectorLine_P::update(const MapState& mapState)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    const std::array<double, 5> zoomState{{
-        static_cast<double>(mapState.zoomLevel), mapState.visualZoom,
-        static_cast<double>(mapState.surfaceZoomLevel), mapState.surfaceVisualZoom, mapState.visualZoomShift}};
-    const std::array<double, 5> cachedZoomState{{
-        static_cast<double>(_mapZoomLevel), _mapVisualZoom,
-        static_cast<double>(_surfaceZoomLevel), _surfaceVisualZoom, _mapVisualZoomShift}};
-    const bool zoomChanged = _lastObservedZoomState != zoomState;
-    const bool finalZoomUpdate = _hasPendingZoomUpdate && !zoomChanged;
-    const bool mapStateChanged = isMapStateChanged(mapState) || finalZoomUpdate;
-    _hasPendingZoomUpdate = !mapStateChanged && cachedZoomState != zoomState;
-    _lastObservedZoomState = zoomState;
+    const auto zoomState = ZoomState::fromMapState(mapState);
+    observeZoomState(zoomState);
+    const bool mapStateChanged = isMapStateChanged(mapState);
     if (mapStateChanged)
         applyMapState(mapState);
+    else
+        _hasUnappliedZoomChange = zoomState.isValid() && zoomState.differsFrom(_zoomState, ZoomStabilityTolerance);
 
     _hasUnappliedPrimitiveChanges |= mapStateChanged;
     return mapStateChanged;
@@ -765,7 +816,11 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
 
 std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::createSymbolsGroup(const MapState& mapState)
 {
-    applyMapState(mapState);
+    {
+        QWriteLocker scopedLocker(&_lock);
+
+        applyMapState(mapState);
+    }
 
     const auto inflatedSymbolsGroup = inflateSymbolsGroup();
     if (inflatedSymbolsGroup)
@@ -1308,7 +1363,7 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
 
 float OsmAnd::VectorLine_P::zoom() const
 {
-    return _mapZoomLevel + (_mapVisualZoom >= 1.0f ? _mapVisualZoom - 1.0f : (_mapVisualZoom - 1.0f) * 2.0f);
+    return _zoomState.mapZoomLevel + (_zoomState.mapVisualZoom >= 1.0f ? _zoomState.mapVisualZoom - 1.0f : (_zoomState.mapVisualZoom - 1.0f) * 2.0f);
 }
 
 bool OsmAnd::VectorLine_P::generatePrimitive(
@@ -1348,12 +1403,12 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
         return false;
 
     const bool withHeights = _hasElevationDataProvider && hasHeights();
-    float zoom = !_hasElevationDataProvider ? this->zoom() : _surfaceZoomLevel +
-        (_surfaceVisualZoom >= 1.0f ? _surfaceVisualZoom - 1.0f : (_surfaceVisualZoom - 1.0f) * 2.0f);
+    float zoom = !_hasElevationDataProvider ? this->zoom() : _zoomState.surfaceZoomLevel +
+        (_zoomState.surfaceVisualZoom >= 1.0f ? _zoomState.surfaceVisualZoom - 1.0f : (_zoomState.surfaceVisualZoom - 1.0f) * 2.0f);
     double scale = Utilities::getPowZoom(31 - zoom) * qSqrt(zoom) /
         (AtlasMapRenderer::TileSize3D * AtlasMapRenderer::TileSize3D); // TODO: this should come from renderer
 
-    double visualShiftCoef = 1 / (1 + _mapVisualZoomShift);
+    double visualShiftCoef = 1 / (1 + _zoomState.visualZoomShift);
     double thickness = _lineWidth * scale * visualShiftCoef * 2.0;
     double outlineThickness = _outlineWidth * scale * visualShiftCoef * 2.0;
     bool approximate = _isApproximationEnabled;
@@ -1387,11 +1442,11 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
 
     auto partSizes =
         std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>);
-    const auto zoomLevel = _mapZoomLevel < MaxZoomLevel ? static_cast<ZoomLevel>(_mapZoomLevel + 1) : _mapZoomLevel;
+    const auto zoomLevel = _zoomState.mapZoomLevel < MaxZoomLevel ? static_cast<ZoomLevel>(_zoomState.mapZoomLevel + 1) : _zoomState.mapZoomLevel;
     const auto cellsPerTileSize =
-        _hasElevationDataResources ? (AtlasMapRenderer::HeixelsPerTileSide - 1) / (1 << (zoomLevel - _mapZoomLevel))
+        _hasElevationDataResources ? (AtlasMapRenderer::HeixelsPerTileSide - 1) / (1 << (zoomLevel - _zoomState.mapZoomLevel))
         // Use selective granularity to avoid collisions with the surface
-        : (_flatEarth ? (withHeights ? 1 : 0) : (_mapZoomLevel < 3 ? 4 : (_mapZoomLevel < 6 ? 2 : 1)));
+        : (_flatEarth ? (withHeights ? 1 : 0) : (_zoomState.mapZoomLevel < 3 ? 4 : (_zoomState.mapZoomLevel < 6 ? 2 : 1)));
     bool tesselated = true;
 
     const auto startPos = PointD(startPoint);
@@ -1590,8 +1645,8 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
                     _fillColor, _nearOutlineColor, _farOutlineColor,
                     filteredColorsMap, filteredOutlineColorsMap,
                     _isElevatedLineVisible ? outlineThickness : 0.0f,
-                    _mapZoomLevel,
-                    Utilities::convert31toDouble(*(verticesAndIndices->position31), _mapZoomLevel),
+                    _zoomState.mapZoomLevel,
+                    Utilities::convert31toDouble(*(verticesAndIndices->position31), _zoomState.mapZoomLevel),
                     isOut ? 0 : cellsPerTileSize,
                     0.4f, false,
                     _colorizationScheme == COLORIZATION_SOLID);
@@ -1884,18 +1939,18 @@ bool OsmAnd::VectorLine_P::useSpecialArrow() const
 
 double OsmAnd::VectorLine_P::getPointStepPx() const
 {
-    if (_mapZoomLevel == InvalidZoomLevel
-        || _surfaceZoomLevel == InvalidZoomLevel
-        || !qIsFinite(_mapVisualZoom)
-        || !qIsFinite(_surfaceVisualZoom)
-        || qFuzzyIsNull(_mapVisualZoom)
-        || qFuzzyIsNull(_surfaceVisualZoom))
+    if (_zoomState.mapZoomLevel == InvalidZoomLevel
+        || _zoomState.surfaceZoomLevel == InvalidZoomLevel
+        || !qIsFinite(_zoomState.mapVisualZoom)
+        || !qIsFinite(_zoomState.surfaceVisualZoom)
+        || qFuzzyIsNull(_zoomState.mapVisualZoom)
+        || qFuzzyIsNull(_zoomState.surfaceVisualZoom))
     {
         return 0.0;
     }
 
-    double result = static_cast<double>(1u << static_cast<int>(_mapZoomLevel)) * _mapVisualZoom
-        / (static_cast<double>(1u << static_cast<int>(_surfaceZoomLevel)) * _surfaceVisualZoom);
+    double result = static_cast<double>(1u << static_cast<int>(_zoomState.mapZoomLevel)) * _zoomState.mapVisualZoom
+        / (static_cast<double>(1u << static_cast<int>(_zoomState.surfaceZoomLevel)) * _zoomState.surfaceVisualZoom);
     if (useSpecialArrow())
     {
         result *= _specialPathIconStep > 0
