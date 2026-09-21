@@ -492,6 +492,7 @@ sk_sp<SkImage> OsmAnd::TextRasterizer_P::rasterize(
         outFontAscent);
     if (!ok)
         return nullptr;
+    target.setImmutable();
     return target.asImage();
 }
 
