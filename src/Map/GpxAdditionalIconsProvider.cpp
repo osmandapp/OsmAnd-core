@@ -111,6 +111,7 @@ sk_sp<SkImage> OsmAnd::GpxAdditionalIconsProvider::getSplitIconForValue(const Sp
         
         canvas.flush();
         
+        bitmap.setImmutable();
         return bitmap.asImage();
     }
     return textBmp;

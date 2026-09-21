@@ -841,6 +841,7 @@ sk_sp<SkImage> OsmAnd::GeoTileRasterizer_P::rasterizeBandContours(
         canvas.drawPath(linePath, linePaint);
     
     canvas.flush();
+    target.setImmutable();
     return target.asImage();
 }
 
