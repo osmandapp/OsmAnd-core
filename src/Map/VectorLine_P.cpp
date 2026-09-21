@@ -32,6 +32,10 @@
 // integer zooms; a smaller step means less drift inside a gesture but more rebuilds
 #define GEOMETRY_ZOOM_STEP 0.5f
 
+// Live zoom has to leave the grid step by this much before the geometry moves to the next
+// one, otherwise jitter on a boundary rebuilds on every update
+#define GEOMETRY_ZOOM_HYSTERESIS 0.01f
+
 // Colorization shemes
 #define COLORIZATION_NONE 0
 #define COLORIZATION_GRADIENT 1
@@ -567,6 +571,8 @@ OsmAnd::VectorLine_P::ZoomState::ZoomState()
     , mapVisualZoom(0.0f)
     , surfaceVisualZoom(0.0f)
     , mapVisualZoomShift(0.0f)
+    , geometryZoom(0.0f)
+    , surfaceGeometryZoom(0.0f)
 {
 }
 
@@ -578,8 +584,22 @@ OsmAnd::VectorLine_P::ZoomState OsmAnd::VectorLine_P::ZoomState::fromMapState(co
     zoomState.mapVisualZoom = mapState.visualZoom;
     zoomState.surfaceVisualZoom = mapState.surfaceVisualZoom;
     zoomState.mapVisualZoomShift = mapState.visualZoomShift;
+    zoomState.geometryZoom = snapToGrid(zoomState.mapZoom());
+    zoomState.surfaceGeometryZoom = snapToGrid(zoomState.surfaceZoom());
 
     return zoomState;
+}
+
+float OsmAnd::VectorLine_P::ZoomState::snapToGrid(const float zoom)
+{
+    return qRound(zoom / GEOMETRY_ZOOM_STEP) * GEOMETRY_ZOOM_STEP;
+}
+
+double OsmAnd::VectorLine_P::ZoomState::rendererScale(const float zoom)
+{
+    const auto zoomLevel = qFloor(zoom);
+
+    return Utilities::getPowZoom(zoomLevel) * (1.0 + (zoom - zoomLevel));
 }
 
 bool OsmAnd::VectorLine_P::ZoomState::isValid() const
@@ -593,12 +613,14 @@ bool OsmAnd::VectorLine_P::ZoomState::isValid() const
         && !qFuzzyIsNull(surfaceVisualZoom);
 }
 
-bool OsmAnd::VectorLine_P::ZoomState::geometryDiffers(const ZoomState& that) const
+bool OsmAnd::VectorLine_P::ZoomState::needsRebuildFor(const ZoomState& that) const
 {
+    const auto band = GEOMETRY_ZOOM_STEP / 2.0f + GEOMETRY_ZOOM_HYSTERESIS;
+
     return mapZoomLevel != that.mapZoomLevel
         || surfaceZoomLevel != that.surfaceZoomLevel
-        || geometryZoom() != that.geometryZoom()
-        || surfaceGeometryZoom() != that.surfaceGeometryZoom()
+        || qAbs(that.mapZoom() - geometryZoom) > band
+        || qAbs(that.surfaceZoom() - surfaceGeometryZoom) > band
         || mapVisualZoomShift != that.mapVisualZoomShift;
 }
 
@@ -613,19 +635,9 @@ float OsmAnd::VectorLine_P::ZoomState::surfaceZoom() const
         + (surfaceVisualZoom >= 1.0f ? surfaceVisualZoom - 1.0f : (surfaceVisualZoom - 1.0f) * 2.0f);
 }
 
-float OsmAnd::VectorLine_P::ZoomState::geometryZoom() const
-{
-    return qRound(mapZoom() / GEOMETRY_ZOOM_STEP) * GEOMETRY_ZOOM_STEP;
-}
-
-float OsmAnd::VectorLine_P::ZoomState::surfaceGeometryZoom() const
-{
-    return qRound(surfaceZoom() / GEOMETRY_ZOOM_STEP) * GEOMETRY_ZOOM_STEP;
-}
-
 bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
 {
-    bool changed = _zoomState.geometryDiffers(ZoomState::fromMapState(mapState));
+    bool changed = _zoomState.needsRebuildFor(ZoomState::fromMapState(mapState));
     changed |= _hasElevationDataProvider != mapState.hasElevationDataProvider;
     changed |= _hasElevationDataResources != mapState.hasElevationDataResources;
     changed |= _flatEarth != mapState.flatEarth;
@@ -677,8 +689,9 @@ void OsmAnd::VectorLine_P::applyMapState(const MapState& mapState)
     // Arrows are spaced by metersPerPixel, so it has to match the zoom the geometry is built for
     const auto liveZoom = mapState.hasElevationDataProvider ? _zoomState.surfaceZoom() : _zoomState.mapZoom();
     const auto geometryZoom =
-        mapState.hasElevationDataProvider ? _zoomState.surfaceGeometryZoom() : _zoomState.geometryZoom();
-    _metersPerPixel = mapState.metersPerPixel * Utilities::getPowZoom(liveZoom - geometryZoom);
+        mapState.hasElevationDataProvider ? _zoomState.surfaceGeometryZoom : _zoomState.geometryZoom;
+    _metersPerPixel = mapState.metersPerPixel
+        * ZoomState::rendererScale(liveZoom) / ZoomState::rendererScale(geometryZoom);
 
     _visibleBBoxShifted = mapState.visibleBBoxShifted;
     _target31 = mapState.target31;
@@ -1384,7 +1397,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
         return false;
 
     const bool withHeights = _hasElevationDataProvider && hasHeights();
-    float zoom = !_hasElevationDataProvider ? _zoomState.geometryZoom() : _zoomState.surfaceGeometryZoom();
+    float zoom = !_hasElevationDataProvider ? _zoomState.geometryZoom : _zoomState.surfaceGeometryZoom;
     double scale = Utilities::getPowZoom(31 - zoom) * qSqrt(zoom) /
         (AtlasMapRenderer::TileSize3D * AtlasMapRenderer::TileSize3D); // TODO: this should come from renderer
 

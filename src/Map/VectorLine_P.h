@@ -75,23 +75,25 @@ namespace OsmAnd
             float mapVisualZoom;
             float surfaceVisualZoom;
             float mapVisualZoomShift;
+            // Live zoom snapped to the grid: the geometry is built for these, not for the live values
+            float geometryZoom;
+            float surfaceGeometryZoom;
 
             ZoomState();
 
             static ZoomState fromMapState(const MapState& mapState);
+            static float snapToGrid(float zoom);
+            // Screen scale the renderer applies at a zoom: 2^level * visualZoom, linear in the fraction
+            static double rendererScale(float zoom);
 
             // False until the renderer reports a usable zoom
             bool isValid() const;
 
-            // Zoom moved onto another grid step, the geometry has to be rebuilt
-            bool geometryDiffers(const ZoomState& that) const;
+            // Live zoom in `that` left the hysteresis band around this state's grid step
+            bool needsRebuildFor(const ZoomState& that) const;
 
             float mapZoom() const;
             float surfaceZoom() const;
-
-            // Zoom the geometry is built for: the live zoom snapped to the grid
-            float geometryZoom() const;
-            float surfaceGeometryZoom() const;
         };
 
         VectorLine_P(VectorLine* const owner);
