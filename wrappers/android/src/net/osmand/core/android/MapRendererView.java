@@ -905,6 +905,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.getNotIdleReason();
     }
 
+    public final String getGpuMemoryStats() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getGpuMemoryStats();
+    }
+
     public final void reloadEverything() {
         NativeCore.checkIfLoaded();
 

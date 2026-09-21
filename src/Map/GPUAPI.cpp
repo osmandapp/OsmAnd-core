@@ -98,7 +98,10 @@ OsmAnd::GPUAPI::ResourceInGPU::ResourceInGPU(const Type type_, GPUAPI* api_, con
     , dateTimeLast(dateTimeLast_)
     , dateTimePrevious(dateTimePrevious_)
     , dateTimeNext(dateTimeNext_)
+    , _sizeInBytes(0)
 {
+    api->_resourcesCount[static_cast<int>(type)].ref();
+
     // Add this object to allocated resources list
     {
 #if OSMAND_DEBUG
@@ -112,6 +115,9 @@ OsmAnd::GPUAPI::ResourceInGPU::ResourceInGPU(const Type type_, GPUAPI* api_, con
 
 OsmAnd::GPUAPI::ResourceInGPU::~ResourceInGPU()
 {
+    api->_resourcesCount[static_cast<int>(type)].deref();
+    api->_resourcesSizeInBytes[static_cast<int>(type)].fetchAndAddOrdered(-_sizeInBytes);
+
     // If we have reference to
     if (_refInGPU)
         api->releaseResourceInGPU(type, _refInGPU);
@@ -125,6 +131,29 @@ OsmAnd::GPUAPI::ResourceInGPU::~ResourceInGPU()
         api->_allocatedResourcesCounter.deref();
 #endif
     }
+}
+
+void OsmAnd::GPUAPI::ResourceInGPU::setSizeInBytes(const int64_t sizeInBytes) const
+{
+    api->_resourcesSizeInBytes[static_cast<int>(type)].fetchAndAddOrdered(sizeInBytes - _sizeInBytes);
+    _sizeInBytes = sizeInBytes;
+}
+
+QString OsmAnd::GPUAPI::getMemoryStats() const
+{
+    static const char* const names[ResourceTypesCount] = { "tex", "slot", "vbo", "ibo", "mesh" };
+
+    QString stats;
+    for (int type = 0; type < ResourceTypesCount; type++)
+    {
+        if (type > 0)
+            stats += QLatin1Char(',');
+        stats += QStringLiteral("%1:%2/%3")
+            .arg(QLatin1String(names[type]))
+            .arg(_resourcesSizeInBytes[type].loadAcquire() >> 20)
+            .arg(_resourcesCount[type].loadAcquire());
+    }
+    return stats;
 }
 
 void OsmAnd::GPUAPI::ResourceInGPU::lostRefInGPU() const

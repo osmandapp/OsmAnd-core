@@ -39,6 +39,14 @@
 #   define GL_GET_AND_CHECK_RESULT glGetError()
 #endif
 
+static int64_t getTextureSizeInBytes(unsigned int width, unsigned int height, unsigned int mipmapLevels, size_t pixelSize)
+{
+    int64_t sizeInBytes = 0;
+    for (auto level = 0u; level < qMax(mipmapLevels, 1u); level++)
+        sizeInBytes += static_cast<int64_t>(qMax(width >> level, 1u)) * qMax(height >> level, 1u) * pixelSize;
+    return sizeInBytes;
+}
+
 OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     : _vaoSimulationLastUnusedId(1)
     , _glVersion(0)
@@ -963,6 +971,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadDataAsMeshToGPU(
     // Create ArrayBuffer resource
     const auto vertexBufferResource =
         std::make_shared<ArrayBufferInGPU>(this, reinterpret_cast<RefInGPU>(vertexBuffer), verticesCount);
+    vertexBufferResource->setSizeInBytes(static_cast<int64_t>(verticesCount) * vertexSize);
 
     // Object may have no index buffer, so check if it needs to be created
     std::shared_ptr<ElementArrayBufferInGPU> indexBufferResource;
@@ -990,6 +999,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadDataAsMeshToGPU(
             this,
             reinterpret_cast<RefInGPU>(indexBuffer),
             indicesCount));
+        indexBufferResource->setSizeInBytes(static_cast<int64_t>(indicesCount) * indexSize);
     }
     
     // Create resource-in-GPU descriptor
@@ -1291,6 +1301,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
             dateTimeLast,
             dateTimePrevious,
             dateTimeNext);
+        textureInGPU->setSizeInBytes(
+            getTextureSizeInBytes(textureSize, textureSize, mipmapLevels, getTextureFormatPixelSize(textureFormat)));
 
         if (waitForGPU)
             waitUntilUploadIsComplete(gpuContextLost);
@@ -1352,12 +1364,15 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
             glBindTexture(GL_TEXTURE_2D, 0);
             GL_CHECK_RESULT;
 
-            return new AtlasTextureInGPU(
+            const auto atlasTexture = new AtlasTextureInGPU(
                 this,
                 reinterpret_cast<RefInGPU>(texture),
                 textureSize,
                 mipmapLevels,
                 atlasTexturesPool);
+            atlasTexture->setSizeInBytes(
+                getTextureSizeInBytes(textureSize, textureSize, mipmapLevels, getTextureFormatPixelSize(textureFormat)));
+            return atlasTexture;
         });
 
     // Upload tile to allocated slot in atlas texture
@@ -1495,6 +1510,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
         image->height(),
         1,
         alphaChannelType);
+    textureInGPU->setSizeInBytes(
+        getTextureSizeInBytes(image->width(), image->height(), 1, getTextureFormatPixelSize(textureFormat)));
 
     if (waitForGPU)
         waitUntilUploadIsComplete(gpuContextLost);
@@ -1551,6 +1568,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
     const std::shared_ptr<ArrayBufferInGPU> vertexBufferResource(new ArrayBufferInGPU(
         this,
         reinterpret_cast<RefInGPU>(vertexBuffer), verticesAndIndices->verticesCount));
+    vertexBufferResource->setSizeInBytes(
+        static_cast<int64_t>(verticesAndIndices->verticesCount) * sizeof(VectorMapSymbol::VertexWithNormals));
 
     // Primitive map symbol may have no index buffer, so check if it needs to be created
     std::shared_ptr<ElementArrayBufferInGPU> indexBufferResource;
@@ -1582,6 +1601,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
         indexBufferResource.reset(new ElementArrayBufferInGPU(
             this,
             reinterpret_cast<RefInGPU>(indexBuffer), verticesAndIndices->indicesCount));
+        indexBufferResource->setSizeInBytes(
+            static_cast<int64_t>(verticesAndIndices->indicesCount) * sizeof(VectorMapSymbol::Index));
     }
 
     PointI* position31 = nullptr;
