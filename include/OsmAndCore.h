@@ -77,9 +77,7 @@ namespace OsmAnd
     OSMAND_CORE_API const std::shared_ptr<const ICoreResourcesProvider>& OSMAND_CORE_CALL getCoreResourcesProvider();
     OSMAND_CORE_API const QString& OSMAND_CORE_CALL getFontDirectory();
     OSMAND_CORE_API IMemoryManager* OSMAND_CORE_CALL getMemoryManager();
-    // maxWaitTimeMs bounds the wait for the Qt application thread. A negative value, the default,
-    // waits indefinitely.
-    OSMAND_CORE_API void OSMAND_CORE_CALL ReleaseCore(const int maxWaitTimeMs = -1);
+    OSMAND_CORE_API void OSMAND_CORE_CALL ReleaseCore();
 }
 
 #endif // !defined(_OSMAND_CORE_OSMAND_CORE_H_)

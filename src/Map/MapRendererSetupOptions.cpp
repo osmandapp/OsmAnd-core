@@ -9,7 +9,6 @@ OsmAnd::MapRendererSetupOptions::MapRendererSetupOptions()
     , gpuWorkerUploadSliceSize(0)
     , displayDensityFactor(1.0f)
     , elevationVisualizationEnabled(true)
-    , maxTeardownWaitTime(0)
 {
 }
 

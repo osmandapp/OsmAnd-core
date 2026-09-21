@@ -62,5 +62,6 @@ sk_sp<SkImage> OsmAnd::MapRasterLayerProvider_GPU_P::rasterize(
         metric ? metric->findOrAddSubmetricOfType<MapRasterizer_Metrics::Metric_rasterize>().get() : nullptr,
         request.queryController);
 
+    bitmap.setImmutable();
     return bitmap.asImage();
 }

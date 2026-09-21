@@ -27,6 +27,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::getEmptyImage(int width, int height)
     if (bitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(width, height)))
     {
         bitmap.eraseColor(SK_ColorTRANSPARENT);
+        bitmap.setImmutable();
         return bitmap.asImage();
     }
     return nullptr;
@@ -76,6 +77,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromVectorData(const QByteArray
     
     SkCanvas canvas(bitmap);
     svgDom->render(&canvas);
+    bitmap.setImmutable();
     return bitmap.asImage();
 }
 
@@ -106,6 +108,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromVectorData(const QByteArray
 
     SkCanvas canvas(bitmap);
     svgDom->render(&canvas);
+    bitmap.setImmutable();
     return bitmap.asImage();
 }
 
@@ -211,6 +214,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::scaleImage(
     if (!original->scalePixels(target.pixmap(), {}))
         return nullptr;
 
+    target.setImmutable();
     return target.asImage();
 }
 
@@ -234,6 +238,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::offsetImage(
     canvas.drawImage(original.get(), xOffset > 0.0f ? xOffset : 0, yOffset > 0.0f ? yOffset : 0);
     canvas.flush();
 
+    target.setImmutable();
     return target.asImage();
 }
 
@@ -264,6 +269,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::createTileImage(
         canvas.drawImage(second.get(), 0, -yOffset + imageInfo.height());
     canvas.flush();
 
+    target.setImmutable();
     return target.asImage();
 }
 
@@ -375,6 +381,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::stackImages(
         }
     }
 
+    target.setImmutable();
     return target.asImage();
 }
 
@@ -401,6 +408,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::joinImages(
     canvas.drawImage(right.get(), left->width(), 0);
     canvas.flush();
 
+    target.setImmutable();
     return target.asImage();
 }
 
@@ -487,6 +495,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::mergeImages(const QList<sk_sp<const SkImag
     }
     canvas.flush();
 
+    target.setImmutable();
     return target.asImage();
 }
 
@@ -530,5 +539,6 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::mergeImages(const QList<sk_sp<const SkImag
     }
     canvas.flush();
 
+    target.setImmutable();
     return target.asImage();
 }
