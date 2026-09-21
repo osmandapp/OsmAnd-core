@@ -319,6 +319,7 @@ namespace OsmAnd
         virtual TextureFormat getTextureFormat(const SkColorType colorType) const;
         virtual TextureFormat getTextureFormat_float() const;
         virtual size_t getTextureFormatPixelSize(const TextureFormat textureFormat) const;
+        size_t getTexturePixelSize(const TextureFormat textureFormat) const;
         virtual GLenum getBaseInternalTextureFormat(const TextureFormat textureFormat) const;
 
         virtual SourceFormat getSourceFormat(const SkColorType colorType) const;
