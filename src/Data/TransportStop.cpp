@@ -2,6 +2,9 @@
 #include "TransportStopExit.h"
 #include <ICU.h>
 
+// net.osmand.router.TransportFerryHelper.SYNTHETIC_STOP_TAG
+static const QString kSyntheticStopTag = QStringLiteral("osmand_ferry_synthetic");
+
 OsmAnd::TransportStop::TransportStop(const std::shared_ptr<const ObfTransportSectionInfo>& obfSection_)
     : obfSection(obfSection_)
     , id(ObfObjectId::invalidId())
@@ -38,7 +41,7 @@ QString OsmAnd::TransportStop::getName(const QString lang, bool transliterate) c
 
 bool OsmAnd::TransportStop::isSynthetic() const
 {
-    return localizedNames.contains(QStringLiteral("osmand_ferry_synthetic"));
+    return localizedNames.contains(kSyntheticStopTag);
 }
 
 void OsmAnd::TransportStop::addExit(std::shared_ptr<OsmAnd::TransportStopExit> &exit)

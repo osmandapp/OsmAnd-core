@@ -196,14 +196,10 @@ void OsmAnd::ObfTransportSectionReader_P::initializeNames(
     if (!s->enName.isEmpty())
         s->enName = stringTable->value(s->enName[0].unicode());
 
-    if (!s->localizedNames.isEmpty())
-    {
-        QHash<QString, QString> names;
-        for (auto itName = s->localizedNames.cbegin(); itName != s->localizedNames.cend(); ++itName)
-            names.insert(stringTable->value(itName.key()[0].unicode()),
-                         stringTable->value(itName.value()[0].unicode()));
-        s->localizedNames = names;
-    }
+    QHash<QString, QString> names;
+    for (auto it = s->localizedNames.cbegin(); it != s->localizedNames.cend(); ++it)
+        names.insert(stringTable->value(it.key()[0].unicode()), stringTable->value(it.value()[0].unicode()));
+    s->localizedNames = names;
 }
 
 void OsmAnd::ObfTransportSectionReader_P::searchTransportStops(
@@ -433,13 +429,12 @@ std::shared_ptr<OsmAnd::TransportStop> OsmAnd::ObfTransportSectionReader_P::read
             {
                 if (stringTable)
                 {
-                    gpb::uint32 length;
-                    cis->ReadVarint32(&length);
-                    const auto oldLimit = cis->PushLimit(length);
+                    const auto oldLimit = cis->PushLimit(ObfReaderUtilities::readLength(cis));
                     while (cis->BytesUntilLimit() > 0)
                     {
-                        const auto tagName = regStr(reader, stringTable);
-                        outTransportStop->localizedNames.insert(tagName, regStr(reader, stringTable));
+                        const auto tag = regStr(reader, stringTable);
+                        const auto value = regStr(reader, stringTable);
+                        outTransportStop->localizedNames.insert(tag, value);
                     }
                     cis->PopLimit(oldLimit);
                 }
