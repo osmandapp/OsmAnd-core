@@ -401,6 +401,13 @@ using namespace OsmAnd;
 	%rename(equals) operator==;
 	%rename(notEquals) operator!=;
 	%rename(method) operator();
+
+	// Callbacks that receive the renderer itself (frame update request, GPU worker prologue and
+	// epilogue, observers) are called hundreds of times per second, and by default each call
+	// allocates a shared_ptr holder plus a Java proxy with a finalizer. No Java implementation
+	// uses that argument, so pass null instead.
+	%typemap(directorin, descriptor="Lnet/osmand/core/jni/IMapRenderer;") const OsmAnd::IMapRenderer* mapRenderer, OsmAnd::IMapRenderer* mapRenderer "$input = 0;"
+	%typemap(javadirectorin) const OsmAnd::IMapRenderer* mapRenderer, OsmAnd::IMapRenderer* mapRenderer "null"
 #endif
 %include <swig/OsmAndCore_Stubs.h>
 %include <OsmAndCore/SingleSkImage.h>

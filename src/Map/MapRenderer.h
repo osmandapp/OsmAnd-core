@@ -429,6 +429,8 @@ namespace OsmAnd
         virtual bool setAzimuth(const float azimuth,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual float getAzimuth() const Q_DECL_OVERRIDE;
+        virtual float getElevationAngle() const Q_DECL_OVERRIDE;
         virtual bool setTarget(const PointI& target31,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setTargetWithFlatZoom(const PointI& target31, const ZoomLevel zoomLevel, const float visualZoom,

@@ -2305,6 +2305,20 @@ bool OsmAnd::MapRenderer::setAzimuth(const float azimuth,
     return setAzimuthToState(_requestedState, azimuth, forcedUpdate, disableUpdate);
 }
 
+float OsmAnd::MapRenderer::getAzimuth() const
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    return _requestedState.azimuth;
+}
+
+float OsmAnd::MapRenderer::getElevationAngle() const
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    return _requestedState.elevationAngle;
+}
+
 bool OsmAnd::MapRenderer::setElevationAngle(const float elevationAngle, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);

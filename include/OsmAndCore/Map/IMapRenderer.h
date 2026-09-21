@@ -157,6 +157,8 @@ namespace OsmAnd
         virtual bool setAzimuth(const float azimuth,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false) = 0;
+        virtual float getAzimuth() const = 0;
+        virtual float getElevationAngle() const = 0;
         virtual bool setTarget(const PointI& target31,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setTargetWithFlatZoom(const PointI& target31, const ZoomLevel zoomLevel, const float visualZoom,
