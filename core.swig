@@ -162,6 +162,50 @@ using namespace OsmAnd;
 #if defined(SWIG_JAVA) || defined(SWIG_CSHARP)
 	%include <enums.swg>
 #endif
+#if defined(SWIG_JAVA)
+	// The default swigToEnum of enums.swg calls Class.getEnumConstants() on every conversion, and that
+	// checks isEnum() through the dex annotations and clones the array each time. Enum values are
+	// returned from native calls in the render loop, so the constants are looked up once instead.
+	%typemap(javabody) enum SWIGTYPE %{
+  public final int swigValue() {
+    return swigValue;
+  }
+
+  public static $javaclassname swigToEnum(int swigValue) {
+    if (swigValue < swigValues.length && swigValue >= 0 && swigValues[swigValue].swigValue == swigValue)
+      return swigValues[swigValue];
+    for ($javaclassname swigEnum : swigValues)
+      if (swigEnum.swigValue == swigValue)
+        return swigEnum;
+    throw new IllegalArgumentException("No enum " + $javaclassname.class + " with value " + swigValue);
+  }
+
+  @SuppressWarnings("unused")
+  private $javaclassname() {
+    this.swigValue = SwigNext.next++;
+  }
+
+  @SuppressWarnings("unused")
+  private $javaclassname(int swigValue) {
+    this.swigValue = swigValue;
+    SwigNext.next = swigValue+1;
+  }
+
+  @SuppressWarnings("unused")
+  private $javaclassname($javaclassname swigEnum) {
+    this.swigValue = swigEnum.swigValue;
+    SwigNext.next = this.swigValue+1;
+  }
+
+  private final int swigValue;
+
+  private static final $javaclassname[] swigValues = $javaclassname.values();
+
+  private static class SwigNext {
+    private static int next = 0;
+  }
+%}
+#endif
 %include <typemaps.i>
 %include <carrays.i>
 #if defined(SWIG_JAVA)
