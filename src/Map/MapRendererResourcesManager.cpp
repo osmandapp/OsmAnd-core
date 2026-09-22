@@ -64,10 +64,12 @@
 OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* const owner_)
     : _taskHostBridge(this)
     , _resourcesRequestWorkerPool(Concurrent::WorkerPool::Order::LIFO)
+    , _isLeftToProcessExit(false)
     , _workerThreadIsAlive(false)
     , _workerThreadId(nullptr)
     , _workerThread(new Concurrent::Thread(std::bind(&MapRendererResourcesManager::workerThreadProcedure, this)))
     , renderer(owner_)
+    , isLeftToProcessExit(_isLeftToProcessExit)
     , processingTileStubs(_processingTileStubs)
     , unavailableTileStubs(_unavailableTileStubs)
 {
@@ -3391,12 +3393,18 @@ void OsmAnd::MapRendererResourcesManager::requestResourcesUploadOrUnload()
     renderer->requestResourcesUploadOrUnload();
 }
 
-void OsmAnd::MapRendererResourcesManager::releaseAllResources(bool gpuContextLost)
+// Stops the threads that produce resources: the worker thread and the request pool
+void OsmAnd::MapRendererResourcesManager::stopResourceWorkers()
 {
     stopWorkerThread();
     _requestedResourcesTasks.clear();
     _resourcesRequestWorkerPool.dequeueAll();
     _resourcesRequestWorkerPool.waitForDone();
+}
+
+void OsmAnd::MapRendererResourcesManager::releaseAllResources(bool gpuContextLost)
+{
+    stopResourceWorkers();
 
     QWriteLocker scopedLocker(&_resourcesStoragesLock);
 
@@ -3422,6 +3430,33 @@ void OsmAnd::MapRendererResourcesManager::releaseAllResources(bool gpuContextLos
         bindings.providersToCollections.clear();
         bindings.collectionsToProviders.clear();
     }
+}
+
+// For a process that is about to exit: drops the GPU references of every resource and leaves the
+// rest in place. Nothing may run against the resources any more, and the manager is not destructed
+// afterwards, since its collections stay populated
+void OsmAnd::MapRendererResourcesManager::leaveAllResources()
+{
+    QWriteLocker scopedLocker(&_resourcesStoragesLock);
+
+    const auto dropDataInGPU =
+        []
+        (const std::shared_ptr<MapRendererBaseResource>& resource, bool& cancel)
+        {
+            resource->lostDataInGPU();
+        };
+    for (const auto& resourcesCollections : _storageByType)
+    {
+        for (const auto& resourcesCollection : constOf(resourcesCollections))
+        {
+            if (resourcesCollection)
+                resourcesCollection->forEachResourceExecute(dropDataInGPU);
+        }
+    }
+    for (const auto& resourcesCollection : _pendingRemovalResourcesCollections)
+        resourcesCollection->forEachResourceExecute(dropDataInGPU);
+
+    _isLeftToProcessExit = true;
 }
 
 void OsmAnd::MapRendererResourcesManager::syncResourcesInGPU(

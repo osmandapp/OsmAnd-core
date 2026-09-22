@@ -426,7 +426,14 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
 
     // Create resources
     assert(!static_cast<bool>(_resources));
-    _resources.reset(new MapRendererResourcesManager(this));
+    // A manager left to the process exit keeps its resources, so it is never destructed
+    _resources.reset(new MapRendererResourcesManager(this),
+        []
+        (MapRendererResourcesManager* const resources)
+        {
+            if (!resources->isLeftToProcessExit)
+                delete resources;
+        });
     if (!_resources->initializeDefaultResources())
         return false;
 
@@ -858,8 +865,13 @@ bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
         }
     }
 
+    const bool leaveResources = _setupOptions.leaveResourcesToProcessExit;
+
     // Release resources (to let all resources be released)
-    _resources->releaseAllResources(gpuContextLost);
+    if (leaveResources)
+        _resources->stopResourceWorkers();
+    else
+        _resources->releaseAllResources(gpuContextLost);
 
     // Stop GPU worker if it exists
     if (_gpuWorkerThread)
@@ -880,9 +892,15 @@ bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
         _gpuWorkerThread.reset();
     }
 
+    // With every worker gone nothing runs against the resources, so their GPU references can be
+    // dropped without unloading and the rest left for the process exit to reclaim
+    if (leaveResources)
+        _resources->leaveAllResources();
+
     _resources->releaseDefaultResources(gpuContextLost);
     _resources.reset();
-    if (resourcesAreInUse.try_lock_for(std::chrono::seconds(2)))
+    // The manager unlocks this from its destructor, which a left one never runs
+    if (!leaveResources && resourcesAreInUse.try_lock_for(std::chrono::seconds(2)))
         resourcesAreInUse.unlock();
 
     _isRenderingInitialized = false;

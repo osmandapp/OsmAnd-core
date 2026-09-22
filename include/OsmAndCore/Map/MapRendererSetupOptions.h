@@ -99,6 +99,20 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
+        // Leave the loaded resources to the process exit instead of destroying them one by one on
+        // the thread that calls releaseRendering(). Their GPU objects go with the context, so only
+        // for a platform whose process exits right after
+        bool leaveResourcesToProcessExit;
+#if !defined(SWIG)
+        inline MapRendererSetupOptions& setLeaveResourcesToProcessExit(
+            const bool newLeaveResourcesToProcessExit)
+        {
+            leaveResourcesToProcessExit = newLeaveResourcesToProcessExit;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
         QString pathToOpenGLShadersCache;
 #if !defined(SWIG)
         inline MapRendererSetupOptions& setPathToOpenGLShadersCache(
