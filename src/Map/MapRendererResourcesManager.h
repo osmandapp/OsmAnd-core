@@ -241,7 +241,10 @@ namespace OsmAnd
             bool& atLeastOneUploadFailed);
         void blockingReleaseResourcesFrom(const std::shared_ptr<MapRendererBaseResourcesCollection>& collection, bool gpuContextLost);
         void requestResourcesUploadOrUnload();
+        void stopResourceWorkers();
         void releaseAllResources(bool gpuContextLost);
+        bool _isLeftToProcessExit;
+        void leaveAllResources();
 
         // Worker thread:
         volatile bool _workerThreadIsAlive;
@@ -308,6 +311,9 @@ namespace OsmAnd
         ~MapRendererResourcesManager();
 
         MapRenderer* const renderer;
+
+        // Set once the resources were left to the process exit; the manager is not destructed then
+        const bool& isLeftToProcessExit;
 
         // Default resources:
         const std::array<std::shared_ptr<const GPUAPI::ResourceInGPU>, MapStubStylesCount>& processingTileStubs;
