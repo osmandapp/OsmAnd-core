@@ -2515,33 +2515,72 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
 
     if (!polylineIndices.isEmpty())
     {
-        QVector<QVector<PointI>> polylineGroups[5];
-        QVector<int64_t> windingGroups[5];
+        QVector<Utilities::Coastline> coastlineGroups[5];
+        QVector<PointI> finishPoints[5];
+
         for (int i : polylineIndices)
         {
-            Utilities::clipPolylineForTile(center, coastlines[i]->points31, topLeft, bottomRight,
-                polylineGroups, windingGroups, maxSqDistance, minSqDistance, distance);
+            Utilities::clipCoastlineForTile(center, coastlines[i]->points31, topLeft, bottomRight,
+                coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+        }
+
+        // Find possible crossed coastline and prepare to start a polygon from it
+        int minProximity = INT32_MAX;
+        int fromSide = 0;
+        int fromIndex = -1;
+        for (int side = 0; side < 4; side++)
+        {
+            int i = 0;
+            for (auto& coastline : coastlineGroups[side])
+            {
+                const auto& startPoint = coastline.points.front();
+                for (const auto& finishPoint : finishPoints[side])
+                {
+                    const auto proximity = abs(Utilities::getOffsetOnBorder(finishPoint, startPoint, side));
+                    if (proximity < coastline.proximity)
+                        coastline.proximity = proximity;
+                }
+                if (coastline.proximity > 0 && coastline.proximity < minProximity)
+                {
+                    minProximity = coastline.proximity;
+                    fromSide = side;
+                    fromIndex = i;
+                }
+                i++;
+            }
+        }
+        if (fromIndex >= 0)
+        {
+            const auto lastIdx = coastlineGroups[fromSide].size() - 1;
+            if (fromIndex < lastIdx)
+                coastlineGroups[fromSide].swapItemsAt(fromIndex, lastIdx);
         }
 
         // Combine polylines into polygons
-        for (int beginSide = 0; beginSide < 4; beginSide++)
+        const auto tillSide = fromSide + 4;
+        for (int border = fromSide; border < tillSide; border++)
         {
-            auto& polylines = polylineGroups[beginSide];
-            auto& windings = windingGroups[beginSide];
+            const auto beginSide = border % 4;
+            auto& polylines = coastlineGroups[beginSide];
             while (!polylines.empty())
             {
-                auto polygon = polylines.takeLast();
-                auto winding = windings.takeLast();
+                auto polyline = polylines.takeLast();
+                auto polygon = qMove(polyline.points);
+                auto winding = polyline.winding;
+                auto windingFull = winding;
                 auto startPoint = polygon.front();
-                int startSide = beginSide;
+                auto startSide = beginSide;
+                auto startPointFull = startPoint;
+                auto startSideFull = beginSide;
                 auto lastPoint = polygon.back();
-                int endSide = Utilities::computeBorderCode(lastPoint, topLeft, bottomRight);
+                auto endSide = Utilities::computeBorderCode(lastPoint, topLeft, bottomRight);
                 auto finishPoint = lastPoint;
-                int finishSide = endSide;
+                auto finishSide = endSide;
                 int prevSide;
                 int i = -2;
                 int lastSide = 0;
                 bool isComplete = false;
+                bool withExtraCycle = false;
                 while (++i <= lastSide)
                 {
                     if (endSide != 4 && i < 0)
@@ -2551,25 +2590,21 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                     }
                     while (endSide == 4)
                     {
-                        auto& nextPolylines = polylineGroups[endSide];
-                        auto& nextWindings = windingGroups[endSide];
+                        auto& nextPolylines = coastlineGroups[endSide];
                         int segIdx;
                         const auto segCount = nextPolylines.size();
                         for (segIdx = 0; segIdx < segCount; segIdx++)
                         {
-                            if (nextPolylines[segIdx].front() == lastPoint)
+                            if (nextPolylines[segIdx].points.front() == lastPoint)
                             {
                                 const auto lastIdx = nextPolylines.size() - 1;
                                 if (segIdx < lastIdx)
-                                {
                                     nextPolylines.swapItemsAt(segIdx, lastIdx);
-                                    nextWindings.swapItemsAt(segIdx, lastIdx);
-                                }
-                                auto nextPolyline = nextPolylines.takeLast();
-                                auto nextWinding = nextWindings.takeLast();
-                                winding += nextWinding;
+                                const auto nextPolyline = nextPolylines.takeLast();
+                                winding += nextPolyline.winding;
+                                windingFull += nextPolyline.winding;
                                 polygon.pop_back();
-                                polygon.append(nextPolyline);
+                                polygon.append(nextPolyline.points);
                                 break;
                             }
                         }
@@ -2599,37 +2634,51 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                     {
                         startSide = -1;
                         bool isWater = winding + Utilities::intCrossProduct2D(finishPoint, startPoint) >= 0;
-                        bool alongY = (side & 1) > 0;
-                        bool negDir = side > 1;
-                        int d = alongY ? finishPoint.y - startPoint.y : finishPoint.x - startPoint.x;
-                        if (negDir)
-                            d = -d;
-                        if (isWater && d > 0)
+                        const auto offset = Utilities::getOffsetOnBorder(finishPoint, startPoint, side);
+                        if (isWater && offset > 0)
                             testPoint = startPoint;
-                        else if (!isWater && d <= 0)
+                        else if (!isWater && offset <= 0)
                         {
                             testPoint = startPoint;
-                            if (alongY)
-                                testPoint.y += negDir ? -1 : 1;
+                            if ((side & 1) > 0)
+                                testPoint.y += side > 1 ? -1 : 1;
                             else
-                                testPoint.x += negDir ? -1 : 1;
+                                testPoint.x += side > 1 ? -1 : 1;
                         }
                     }
-                    auto& nextPolylines = polylineGroups[side];
-                    auto& nextWindings = windingGroups[side];
+                    else if (side == endSide && startSideFull == endSide)
+                    {
+                        startSideFull = -1;
+                        bool isWater = windingFull + Utilities::intCrossProduct2D(lastPoint, startPointFull) >= 0;
+                        const auto offset = Utilities::getOffsetOnBorder(lastPoint, startPointFull, side);
+                        if (isWater && offset > 0)
+                            testPoint = startPointFull;
+                        else if (!isWater && offset <= 0)
+                        {
+                            testPoint = startPointFull;
+                            if ((side & 1) > 0)
+                                testPoint.y += side > 1 ? -1 : 1;
+                            else
+                                testPoint.x += side > 1 ? -1 : 1;
+                        }
+                    }
+                    auto& nextPolylines = coastlineGroups[side];
                     const auto segCount = nextPolylines.size();
                     int minDistance = INT32_MAX;
                     int minIdx = -1;
                     int segTotal = side == beginSide ? segCount + 1 : segCount;
                     for (int segIdx = 0; segIdx < segTotal; segIdx++)
                     {
-                        const auto& p = segIdx < segCount ? nextPolylines[segIdx].front() : polygon.front();
-                        int d = (side & 1) > 0 ? p.y - testPoint.y : p.x - testPoint.x;
-                        if (side > 1)
-                            d = -d;
-                        if (d >= 0 && d < minDistance)
+                        const auto& p = segIdx < segCount ? nextPolylines[segIdx].points.front() : polygon.front();
+                        const auto offset = Utilities::getOffsetOnBorder(p, testPoint, side);
+                        if (!withExtraCycle && offset == 0 && testPoint == lastPoint)
                         {
-                            minDistance = d;
+                            lastSide += 4;
+                            withExtraCycle = true;
+                        }
+                        if (offset >= 0 && offset < minDistance)
+                        {
+                            minDistance = offset;
                             minIdx = segIdx;
                         }
                     }
@@ -2639,17 +2688,15 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                         {
                             const auto lastIdx = nextPolylines.size() - 1;
                             if (minIdx < lastIdx)
-                            {
                                 nextPolylines.swapItemsAt(minIdx, lastIdx);
-                                nextWindings.swapItemsAt(minIdx, lastIdx);
-                            }
-                            auto nextPolyline = nextPolylines.takeLast();
-                            winding = nextWindings.takeLast();
-                            startPoint = nextPolyline.front();
+                            const auto nextPolyline = nextPolylines.takeLast();
+                            winding = nextPolyline.winding;
+                            startPoint = nextPolyline.points.front();
+                            windingFull += Utilities::intCrossProduct2D(lastPoint, startPoint) + winding;
                             startSide = Utilities::computeBorderCode(startPoint, topLeft, bottomRight);
-                            if (nextPolyline.front() == lastPoint)
+                            if (nextPolyline.points.front() == lastPoint)
                                 polygon.pop_back();
-                            polygon.append(nextPolyline);
+                            polygon.append(nextPolyline.points);
                             lastPoint = polygon.back();
                             const auto nextSide = Utilities::computeBorderCode(lastPoint, topLeft, bottomRight);
                             if (nextSide < 4)
@@ -2669,10 +2716,12 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                     }
                     if (i < lastSide)
                     {
+                        const auto previousPoint = lastPoint;
                         lastPoint.x = side > 1 ? topLeft.x : bottomRight.x;
                         lastPoint.y = side > 0 && side < 3 ? bottomRight.y : topLeft.y;
                         polygon.push_back(lastPoint);
                         endSide = (endSide + 1) % 4;
+                        windingFull += Utilities::intCrossProduct2D(previousPoint, lastPoint);
                     }
                 }
                 if (!isComplete || polygon.size() < 3)

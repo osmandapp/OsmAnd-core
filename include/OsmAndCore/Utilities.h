@@ -2029,6 +2029,12 @@ namespace OsmAnd
             return 4;
         }
 
+        inline static int getOffsetOnBorder(const PointI& point, const PointI& startPoint, const int borderCode)
+        {
+            int offset = (borderCode & 1) > 0 ? point.y - startPoint.y : point.x - startPoint.x;
+            return borderCode > 1 ? -offset : offset;
+        }
+
         inline static int getIntersectionAxisX(const PointI& p0, const PointI& p1, int limit)
         {
             const int64_t dx = p1.x - p0.x;
@@ -2087,20 +2093,27 @@ namespace OsmAnd
                 distance += (static_cast<double>(aX) * b.y - static_cast<double>(aY) * b.x) / std::sqrt(sqLen);
         }
 
-        inline static void clipPolylineForTile(const PointI& center, const QVector<PointI>& polyline,
-            const PointI& topLeft, const PointI& bottomRight, QVector<QVector<PointI>>* result,
-            QVector<int64_t>* windings, const double maxSqDistance, double& minSqDistance, double& distance)
+        struct Coastline
         {
-            if (polyline.size() < 2)
+            QVector<PointI> points;
+            int64_t winding;
+            int proximity;
+        };
+
+        inline static void clipCoastlineForTile(const PointI& center, const QVector<PointI>& coastline,
+            const PointI& topLeft, const PointI& bottomRight, QVector<Coastline>* result,
+            QVector<PointI>* finishPoints, const double maxSqDistance, double& minSqDistance, double& distance)
+        {
+            if (coastline.size() < 2)
                 return;
             QVector<PointI> segment;
-            segment.reserve(polyline.size());
+            segment.reserve(coastline.size());
             PointI prevPoint;
             PointI sm(INT32_MIN, INT32_MIN);
             int prevCode;
             bool next = false;
             int64_t signedArea = 0;
-            for (const auto& point : polyline)
+            for (const auto& point : coastline)
             {
                 int nextCode = computeOutCode(point, topLeft, bottomRight);
                 if (Q_LIKELY(next))
@@ -2132,9 +2145,9 @@ namespace OsmAnd
                             code1 = computeOutCode(p1, topLeft, bottomRight);
                         }
                     }
-                    if (accept)
+                    const bool isEmpty = segment.empty();
+                    if (accept && p0 != p1)
                     {
-                        bool isEmpty = segment.empty();
                         if (isEmpty)
                         {
                             sm.x = INT32_MIN;
@@ -2145,10 +2158,11 @@ namespace OsmAnd
                             if (!isEmpty)
                             {
                                 const auto borderCode = computeBorderCode(segment.front(), topLeft, bottomRight);
-                                result[borderCode].push_back(qMove(segment));
-                                windings[borderCode].push_back(signedArea);
+                                const auto lastBorderCode = computeBorderCode(segment.back(), topLeft, bottomRight);
+                                finishPoints[lastBorderCode].push_back(segment.back());
+                                result[borderCode].push_back({qMove(segment), signedArea, INT32_MAX});
                                 signedArea = 0;
-                                segment.reserve(polyline.size());
+                                segment.reserve(coastline.size());
                             }
                             if (p0 != sm)
                             {
@@ -2163,16 +2177,17 @@ namespace OsmAnd
                             sm = p1;
                         }
                     }
-                    else if (!segment.empty())
+                    else if (!isEmpty)
                     {
                         if (segment.size() > 1)
                         {
                             const auto borderCode = computeBorderCode(segment.front(), topLeft, bottomRight);
-                            result[borderCode].push_back(qMove(segment));
-                            windings[borderCode].push_back(signedArea);
+                            const auto lastBorderCode = computeBorderCode(segment.back(), topLeft, bottomRight);
+                            finishPoints[lastBorderCode].push_back(segment.back());
+                            result[borderCode].push_back({qMove(segment), signedArea, INT32_MAX});
                         }
                         signedArea = 0;
-                        segment.reserve(polyline.size());
+                        segment.reserve(coastline.size());
                     }
                     findClosestWinding(center, prevPoint, point, maxSqDistance, minSqDistance, distance);
                 }
@@ -2184,8 +2199,9 @@ namespace OsmAnd
             if (segment.size() > 1)
             {
                 const auto borderCode = computeBorderCode(segment.front(), topLeft, bottomRight);
-                result[borderCode].push_back(qMove(segment));
-                windings[borderCode].push_back(signedArea);
+                const auto lastBorderCode = computeBorderCode(segment.back(), topLeft, bottomRight);
+                finishPoints[lastBorderCode].push_back(segment.back());
+                result[borderCode].push_back({qMove(segment), signedArea, INT32_MAX});
             }
         }
 
