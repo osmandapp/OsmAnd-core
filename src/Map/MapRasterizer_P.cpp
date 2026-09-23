@@ -1259,6 +1259,19 @@ bool OsmAnd::MapRasterizer_P::computeRoadLayout(
     outLayout.lanesBackward = backward;
     outLayout.shiftStart = outLayout.shift;
     outLayout.shiftEnd = outLayout.shift;
+    const auto& points31 = mapObject->points31;
+    double length31 = 0.0;
+    for (int i = 1; i < points31.size(); i++)
+    {
+        const double dx = static_cast<double>(points31[i].x) - points31[i - 1].x;
+        const double dy = static_cast<double>(points31[i].y) - points31[i - 1].y;
+        length31 += std::sqrt(dx * dx + dy * dy);
+    }
+    if (!points31.isEmpty())
+    {
+        const auto latitude = Utilities::get31LatitudeY(points31.first().y);
+        outLayout.length = static_cast<float>(length31 * 40075016.686 * std::cos(latitude * M_PI / 180.0) / 2147483648.0);
+    }
     return true;
 }
 
@@ -1326,10 +1339,26 @@ void OsmAnd::MapRasterizer_P::resolveRoadTransitions(Context& context)
         {
             const auto wayShift = e.reversed ? -shift : shift;
             if (e.atWayStart)
+            {
                 e.layout->shiftStart = wayShift;
+                e.layout->startFixed = true;
+            }
             else
+            {
                 e.layout->shiftEnd = wayShift;
+                e.layout->endFixed = true;
+            }
         };
+    const auto fix =
+        [](const End& e)
+        {
+            if (e.atWayStart)
+                e.layout->startFixed = true;
+            else
+                e.layout->endFixed = true;
+        };
+    // Joins of equal roads without a rule: a taper started before goes on across them
+    QVector<QPair<const End*, const End*>> freeJoins;
     const auto setTaper =
         [](const End& e, const bool onLeft, const int lanes)
         {
@@ -1441,7 +1470,10 @@ void OsmAnd::MapRasterizer_P::resolveRoadTransitions(Context& context)
                 setShift(*follower, alignLeft
                     ? anchorLeft + lanesWidth(*follower) / 2.0f
                     : anchorLeft + lanesWidth(*anchor) - lanesWidth(*follower) / 2.0f);
+                fix(*anchor);
             }
+            else if (!a.reversed && !b.reversed)
+                freeJoins.push_back(qMakePair(&a, &b));
             if (a.lanes != b.lanes)
                 setTaper(wider, !alignLeft, qAbs(a.lanes - b.lanes));
 
@@ -1464,6 +1496,7 @@ void OsmAnd::MapRasterizer_P::resolveRoadTransitions(Context& context)
 
             // All ends are cut straight across the parent
             setNormal(parent, parentRight);
+            fix(parent);
             int branchLanes = 0;
             for (const auto branch : constOf(branches))
             {
@@ -1498,6 +1531,36 @@ void OsmAnd::MapRasterizer_P::resolveRoadTransitions(Context& context)
                     branches[i]->layout->goreLast = branches[i - 1]->object;
             }
         }
+    }
+
+    // Carry unfinished tapers across free joins, forward from the start of a road and backward from its end
+    const float taperLength = RealisticRoadsTaperLength;
+    for (int iteration = 0; iteration < 16; iteration++)
+    {
+        bool changed = false;
+        for (const auto& join : constOf(freeJoins))
+        {
+            auto& a = *join.first->layout;
+            auto& b = *join.second->layout;
+            const bool aStartShifted = qAbs(a.shiftStart - a.shift) > 0.01f;
+            if (aStartShifted && !a.endFixed && !b.startFixed && a.shiftStartDone + a.length < taperLength
+                && qAbs(b.shiftStart - b.shift - (a.shiftStart - a.shift)) > 0.01f)
+            {
+                b.shiftStart = b.shift + (a.shiftStart - a.shift);
+                b.shiftStartDone = a.shiftStartDone + a.length;
+                changed = true;
+            }
+            const bool bEndShifted = qAbs(b.shiftEnd - b.shift) > 0.01f;
+            if (bEndShifted && !b.startFixed && !a.endFixed && b.shiftEndDone + b.length < taperLength
+                && qAbs(a.shiftEnd - a.shift - (b.shiftEnd - b.shift)) > 0.01f)
+            {
+                a.shiftEnd = a.shift + (b.shiftEnd - b.shift);
+                a.shiftEndDone = b.shiftEndDone + b.length;
+                changed = true;
+            }
+        }
+        if (!changed)
+            break;
     }
 
     for (const auto& duplicate : constOf(duplicates))
@@ -1593,7 +1656,8 @@ bool OsmAnd::MapRasterizer_P::computeRoadGeometry(
     const auto lanes = layout.lanesForward + layout.lanesBackward;
     const auto laneWidth = layout.laneWidth * m;
     const auto shoulder = qMax(0.0f, (layout.width - lanes * layout.laneWidth) * m / 2.0f);
-    const auto shifts = interpolateShifts(g.distances, layout.shiftStart * m, layout.shiftEnd * m, RealisticRoadsTaperLength * m);
+    const auto shifts = interpolateShifts(g.distances, layout.shift * m, layout.shiftStart * m, layout.shiftStartDone * m,
+        layout.shiftEnd * m, layout.shiftEndDone * m, RealisticRoadsTaperLength * m);
 
     // Lanes that open or end at the ends of the way
     g.laneFactors = QVector<QVector<float>>(lanes, QVector<float>(count, 1.0f));
@@ -1662,31 +1726,38 @@ void OsmAnd::MapRasterizer_P::getPixelVertices(
 
 QVector<float> OsmAnd::MapRasterizer_P::interpolateShifts(
     const QVector<float>& distances,
+    const float own,
     const float start,
+    const float startDone,
     const float end,
+    const float endDone,
     const float taperLength)
 {
+    // Same in RouteLaneLine.java (OsmAnd), so that the route line stays on the lanes
     const auto count = distances.size();
-    QVector<float> result(count, start);
-    if (count < 2 || qAbs(end - start) < 0.01f)
+    const auto startDelta = start - own;
+    const auto endDelta = end - own;
+    QVector<float> result(count, own);
+    if (count < 2 || (qAbs(startDelta) < 0.01f && qAbs(endDelta) < 0.01f))
         return result;
     const auto total = distances.last();
-    const auto smoothstep = [](const float t) { return t * t * (3.0f - 2.0f * t); };
+    const auto smoothstep = [](const float t) { const auto c = qBound(0.0f, t, 1.0f); return c * c * (3.0f - 2.0f * c); };
+    const auto startValue = own + startDelta * (1.0f - smoothstep(startDone / taperLength));
+    const auto endValue = own + endDelta * (1.0f - smoothstep(endDone / taperLength));
+    const bool bothShifted = qAbs(startDelta) >= 0.01f && qAbs(endDelta) >= 0.01f;
     for (int i = 0; i < count; i++)
     {
-        if (total <= 2.0f * taperLength)
+        const auto d = distances[i];
+        if (bothShifted && total <= 2.0f * taperLength)
         {
-            // Smooth taper between the two ends
-            const auto t = total > 0.0f ? distances[i] / total : 0.0f;
-            result[i] = start + (end - start) * smoothstep(t);
+            // Short road between two joins: from one end to the other
+            result[i] = startValue + (endValue - startValue) * smoothstep(total > 0.0f ? d / total : 0.0f);
         }
         else
         {
-            // Long road: each end tapers into the middle within its own reach, so that a tile only
-            // depends on the roads joined within the neighbours area
-            const auto fromStart = qMin(1.0f, distances[i] / taperLength);
-            const auto fromEnd = qMin(1.0f, (total - distances[i]) / taperLength);
-            result[i] = start * (1.0f - smoothstep(fromStart)) + end * (1.0f - smoothstep(fromEnd));
+            // Each end tapers into the own position within the taper length from its join
+            result[i] = own + startDelta * (1.0f - smoothstep((startDone + d) / taperLength))
+                + endDelta * (1.0f - smoothstep((endDone + total - d) / taperLength));
         }
     }
     return result;

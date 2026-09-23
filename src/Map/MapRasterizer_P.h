@@ -50,9 +50,18 @@ namespace OsmAnd
             // Explicit placement: constant shift of the carriageway centre to the right of the way line
             bool hasPlacement = false;
             float shift = 0.0f;
-            // Resolved shift at the first and the last point of the way
+            // Resolved shift at the first and the last point of the way. A shift other than the own one tapers
+            // into the own one within the taper length from the node where it is set; "done" is the part of that
+            // length already passed on the roads before (the taper goes on across joins of equal roads)
             float shiftStart = 0.0f;
             float shiftEnd = 0.0f;
+            float shiftStartDone = 0.0f;
+            float shiftEndDone = 0.0f;
+            // The shift at the end is set or used by a join rule
+            bool startFixed = false;
+            bool endFixed = false;
+            // Length of the way in meters
+            float length = 0.0f;
             // Lanes that narrow down to nothing at the first or the last point of the way,
             // counted from the left or the right edge in the way direction
             int taperFirstLeft = 0;
@@ -206,8 +215,11 @@ namespace OsmAnd
         void getPixelVertices(const Context& context, const QVector<PointI>& points31, QVector<PointF>& outVertices) const;
         static QVector<float> interpolateShifts(
             const QVector<float>& distances,
+            const float own,
             const float start,
+            const float startDone,
             const float end,
+            const float endDone,
             const float taperLength);
         static void drawLaneArrows(
             SkCanvas& canvas,
