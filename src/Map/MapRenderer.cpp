@@ -71,6 +71,7 @@ OsmAnd::MapRenderer::MapRenderer(
     , _maxResourceThreadsLimit(0)
     , _buildings3DAlpha(0.8f)
     , _buildings3DDetalization(1)
+    , _buildings3DShadows(false)
 {
 }
 
@@ -3623,6 +3624,26 @@ int OsmAnd::MapRenderer::get3DBuildingsDetalization() const
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     return _buildings3DDetalization;
+}
+
+bool OsmAnd::MapRenderer::set3DBuildingsShadows(const bool enabled, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update = forcedUpdate || _buildings3DShadows != enabled;
+    if (!update)
+        return false;
+
+    _buildings3DShadows = enabled;
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::get3DBuildingsShadows() const
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    return _buildings3DShadows;
 }
 
 bool OsmAnd::MapRenderer::setDateTime(const int64_t dateTime, bool forcedUpdate /*= false*/)
