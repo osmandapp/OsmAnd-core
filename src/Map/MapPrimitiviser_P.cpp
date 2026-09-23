@@ -325,7 +325,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         // In case zoom is higher than ObfMapSectionLevel::MaxBasemapZoomLevel and coastlines were not used
         // due to none of them intersect current zoom tile edge, look for the nearest coastline segment
         // to determine use FullLand or FullWater as surface type
-        auto surfaceType = surfaceType_;
         if (zoom > ObfMapSectionLevel::MaxBasemapZoomLevel && fillEntireArea)
         {
             const auto center = area31.center();
@@ -384,17 +383,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
                 getCoastlines(area31, area31, detailedmapCoastlineObjects, polygonizedCoastlineObjects, surfaceType);
         }
         bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
-        bool shouldAddBasemapCoastlines = !detailedmapCoastlinesPresent && !hasExtraCoastlines;
-        if (!coastlinesWereAdded && basemapCoastlinesPresent
-            && (shouldAddBasemapCoastlines || zoom < MapPrimitiviser::DetailedLandDataMinZoom))
-        {
-            const auto baseZoom = static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel);
-            const auto basemapArea = zoom > ObfMapSectionLevel::MaxBasemapZoomLevel
-                ? Utilities::getEnlargedCoastlineArea31(Utilities::roundBoundingBox31(area31, baseZoom), baseZoom)
-                : area31;            
-            coastlinesWereAdded =
-                getCoastlines(area31, basemapArea, basemapCoastlineObjects, polygonizedCoastlineObjects, surfaceType);
-        }
         if (!coastlinesWereAdded && hasExtraCoastlines && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
         {
             AreaI bboxZoom13 = Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel14);
@@ -404,7 +392,22 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             bboxZoom13.right()--;
             bboxZoom13.bottom()--;
             QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
-            getCoastlines(area31, bboxZoom13, extraCoastlineObjects, polygonizedCoastlines, surfaceType);
+            auto extraSurfaceType = MapSurfaceType::Undefined;
+            getCoastlines(area31, bboxZoom13, extraCoastlineObjects, polygonizedCoastlines, extraSurfaceType);
+            if (extraSurfaceType == MapSurfaceType::Undefined)
+                hasExtraCoastlines = false;
+            else
+                surfaceType = extraSurfaceType;
+        }
+        if (!coastlinesWereAdded && basemapCoastlinesPresent
+            && (!hasExtraCoastlines || zoom < MapPrimitiviser::DetailedLandDataMinZoom))
+        {
+            const auto baseZoom = static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel);
+            const auto basemapArea = zoom > ObfMapSectionLevel::MaxBasemapZoomLevel
+                ? Utilities::getEnlargedCoastlineArea31(Utilities::roundBoundingBox31(area31, baseZoom), baseZoom)
+                : area31;            
+            coastlinesWereAdded =
+                getCoastlines(area31, basemapArea, basemapCoastlineObjects, polygonizedCoastlineObjects, surfaceType);
         }
         fillEntireArea = !coastlinesWereAdded;
     }

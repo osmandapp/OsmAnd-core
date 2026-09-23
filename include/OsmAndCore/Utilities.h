@@ -1260,7 +1260,7 @@ namespace OsmAnd
 
         inline static AreaI getEnlargedCoastlineArea31(const AreaI bbox31, const ZoomLevel zoom)
         {
-            const auto maxRadius = static_cast<int32_t>((1u << (ZoomLevel31 - zoom)) >> 1);
+            const auto maxRadius = static_cast<int32_t>(1u << (ZoomLevel31 - zoom));
             auto enlarged = bbox31.getEnlargedBy(maxRadius);
             const auto mask = static_cast<uint32_t>(-1) << 5;
             enlarged.topLeft.x = qMax(0, enlarged.topLeft.x) & mask;
