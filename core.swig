@@ -11,6 +11,9 @@
 #include <OsmAndCore/Nullable.h>
 #include <OsmAndCore/IWebClient.h>
 #include <OsmAndCore/Color.h>
+#ifdef SWIG_JAVA
+	%include <swig/java/Points.i>
+#endif
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/Bitmask.h>
