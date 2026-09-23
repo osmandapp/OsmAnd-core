@@ -379,13 +379,13 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         auto coastlinesWereAdded = false;
         if (detailedmapCoastlinesPresent && zoom >= MapPrimitiviser::DetailedLandDataMinZoom)
         {
-            coastlinesWereAdded =
-                getCoastlines(area31, area31, detailedmapCoastlineObjects, polygonizedCoastlineObjects, surfaceType);
+            coastlinesWereAdded = getCoastlines(
+                area31, AreaI64(area31), detailedmapCoastlineObjects, polygonizedCoastlineObjects, surfaceType);
         }
         bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
         if (!coastlinesWereAdded && hasExtraCoastlines && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
         {
-            AreaI bboxZoom13 = Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel14);
+            auto bboxZoom13 = AreaI64(Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel14));
             bboxZoom13.right()++;
             bboxZoom13.bottom()++;
             bboxZoom13 = bboxZoom13.getEnlargedBy(bboxZoom13.width() / 2);
@@ -403,9 +403,14 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             && (!hasExtraCoastlines || zoom < MapPrimitiviser::DetailedLandDataMinZoom))
         {
             const auto baseZoom = static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel);
-            const auto basemapArea = zoom > ObfMapSectionLevel::MaxBasemapZoomLevel
-                ? Utilities::getEnlargedCoastlineArea31(Utilities::roundBoundingBox31(area31, baseZoom), baseZoom)
-                : area31;            
+            AreaI64 basemapArea(area31);
+            if (zoom > baseZoom)
+            {
+                basemapArea = AreaI64(Utilities::roundBoundingBox31(area31, baseZoom));
+                basemapArea.right()++;
+                basemapArea.bottom()++;
+                basemapArea = basemapArea.getEnlargedBy(1ll << (ZoomLevel31 - baseZoom));
+            }
             coastlinesWereAdded =
                 getCoastlines(area31, basemapArea, basemapCoastlineObjects, polygonizedCoastlineObjects, surfaceType);
         }
@@ -2456,7 +2461,7 @@ OsmAnd::MapPrimitiviser_P::Context::Context(
 
 bool OsmAnd::MapPrimitiviser_P::getCoastlines(
     const AreaI area31,
-    const AreaI coastlineArea31,
+    const AreaI64 coastlineArea31,
     const QList< std::shared_ptr<const MapObject> >& coastlines,
     QList< std::shared_ptr<const MapObject> >& outVectorized,
     MapSurfaceType& surfaceType)

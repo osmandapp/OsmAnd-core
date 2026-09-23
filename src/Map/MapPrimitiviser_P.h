@@ -75,7 +75,7 @@ namespace OsmAnd
 
         static bool getCoastlines(
             const AreaI area31,
-            const AreaI coastlineArea31,
+            const AreaI64 coastlineArea31,
             const QList< std::shared_ptr<const MapObject> >& coastlines,
             QList< std::shared_ptr<const MapObject> >& outVectorized,
             MapSurfaceType& surfaceType);
