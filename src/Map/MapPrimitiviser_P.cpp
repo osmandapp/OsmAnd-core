@@ -176,6 +176,12 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     int contourLinesObjectsCount = 0;
 
     const auto enlargedArea31 = Utilities::getEnlargedPrimitivesArea(area31);
+    // Roads further away are kept for realistic roads: their lanes decide where the visible roads lie
+    const bool keepNeighbourRoads = zoom >= ZoomLevel17 && owner->environment->isRealisticRoadsEnabled();
+    const auto neighbourRoadsArea31 = area31.getEnlargedBy(PointI(
+        static_cast<int32_t>(Utilities::metersToX31(REALISTIC_ROADS_NEIGHBOURS_AREA_METERS)),
+        static_cast<int32_t>(Utilities::metersToY31(REALISTIC_ROADS_NEIGHBOURS_AREA_METERS))));
+    const QString highwayTag(QStringLiteral("highway"));
 
     for (const auto& mapObject : constOf(objects))
     {
@@ -204,6 +210,9 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         }
         else
             isInArea = mapObject->intersectedOrContainedBy(enlargedArea31, visibleArea31, visibleAreaTime, nullptr);
+
+        if (!isInArea && keepNeighbourRoads && mapObject->containsTag(highwayTag))
+            isInArea = mapObject->intersectedOrContainedBy(neighbourRoadsArea31, visibleArea31, visibleAreaTime, nullptr);
 
         if(!isInArea && !mapObject->containsAttribute(mapObject->attributeMapping->naturalCoastlineAttributeId))
         {
