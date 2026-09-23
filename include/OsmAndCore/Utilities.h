@@ -2326,24 +2326,6 @@ namespace OsmAnd
             }
         }
 
-        inline static bool intersects(int code, const PointI& p0, const PointI& p1,
-            const PointI& tl, const PointI& br)
-        {
-            if ((code & 3) > 0)
-            {
-                const int y = getIntersectionAxisX(p0, p1, (code & 1) == 0 ? br.x : tl.x);
-                if (y >= tl.y && y <= br.y)
-                    return true;
-            }
-            if ((code & 12) > 0)
-            {
-                const int x = getIntersectionAxisY(p0, p1, (code & 4 == 0) ? br.y : tl.y);
-                if (x >= tl.x && x <= br.x)
-                    return true;
-            }
-            return false;
-        }
-
         // Check if point is not outside the polygon
         inline static bool includes(const QVector<PointI>& polygon, const PointI& point)
         {
