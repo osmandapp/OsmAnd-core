@@ -2192,6 +2192,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         if (primitive->type == PrimitiveType::Polyline)
         {
             evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, text->drawOnPath);
+            evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_TOP_SIDE, text->topSide);
             text->drawAlongPath = !text->drawOnPath;
         }
 

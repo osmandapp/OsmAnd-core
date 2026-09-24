@@ -58,6 +58,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_COLOR, Output, Color, "textColor", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_BOLD, Output, Boolean, "textBold", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_ITALIC, Output, Boolean, "textItalic", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_ON_PATH, Output, Boolean, "textOnPath", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_TOP_SIDE, Output, String, "textTopSide", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_PLACEMENT, Output, String, "textPlacement", false)
 
 // Icon properties

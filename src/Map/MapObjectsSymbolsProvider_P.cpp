@@ -295,6 +295,13 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                 onPathSymbol->shareablePath31 = shareablePath31;
                 assert(shareablePath31->size() >= 2);
                 onPathSymbol->glyphsWidth = rasterizedOnPathSymbol->glyphsWidth;
+                if (const auto textSymbol = std::dynamic_pointer_cast<const MapPrimitiviser::TextSymbol>(rasterizedOnPathSymbol->primitiveSymbol))
+                {
+                    if (textSymbol->topSide == QLatin1String("left"))
+                        onPathSymbol->textTopSide = OnPathRasterMapSymbol::TextTopSide::Left;
+                    else if (textSymbol->topSide == QLatin1String("right"))
+                        onPathSymbol->textTopSide = OnPathRasterMapSymbol::TextTopSide::Right;
+                }
                 for (const auto& intersectsWithClass : constOf(rasterizedOnPathSymbol->primitiveSymbol->intersectsWith))
                 {
                     onPathSymbol->intersectsWithClasses.insert(mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(intersectsWithClass));

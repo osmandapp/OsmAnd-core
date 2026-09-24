@@ -3,6 +3,7 @@
 OsmAnd::OnPathRasterMapSymbol::OnPathRasterMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_)
     : RasterMapSymbol(group_)
+    , textTopSide(TextTopSide::Readable)
 {
 }
 

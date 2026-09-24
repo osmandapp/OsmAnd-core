@@ -28,7 +28,16 @@ namespace OsmAnd
             const std::shared_ptr<MapSymbolsGroup>& group);
         virtual ~OnPathRasterMapSymbol();
 
+        // Side of the path direction the text top faces; Readable flips text to stay upright
+        enum class TextTopSide
+        {
+            Readable,
+            Left,
+            Right
+        };
+
         QVector<float> glyphsWidth;
+        TextTopSide textTopSide;
         std::shared_ptr< const QVector<PointI> > shareablePath31;
         PinPoint pinPointOnPath;
 
