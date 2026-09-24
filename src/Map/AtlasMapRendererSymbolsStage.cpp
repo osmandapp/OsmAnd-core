@@ -2654,6 +2654,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         is2D ? offsetFromStartPathPoint2D : offsetFromStartPathPoint3D,
         subpathEndIndex,
         originalPathDirectionOnScreen,
+        onPathMapSymbol->textTopSide,
         onPathMapSymbol->glyphsWidth,
         pathOffsets,
         symmetricOffset);
@@ -2741,6 +2742,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
             is2D,
             directionInWorld,
             directionOnScreen,
+            onPathMapSymbol->textTopSide,
             onPathMapSymbol->glyphsWidth,
             onPathMapSymbol->size.y,
             checkVisibility,
@@ -3708,6 +3710,7 @@ QVector<unsigned int> OsmAnd::AtlasMapRendererSymbolsStage::computePathForGlyphs
     const float offsetFromStartPathPoint,
     const unsigned int endPathPointIndex,
     const glm::vec2& directionOnScreen,
+    const OnPathRasterMapSymbol::TextTopSide textTopSide,
     const QVector<float>& glyphsWidths,
     QVector<float>& pathOffsets,
     float& symmetricOffset) const
@@ -3753,8 +3756,7 @@ QVector<unsigned int> OsmAnd::AtlasMapRendererSymbolsStage::computePathForGlyphs
         return result;
     }
 
-    const glm::vec2 directionOnScreenN(-directionOnScreen.y, directionOnScreen.x);
-    const auto shouldInvert = directionOnScreenN.y < 0; // For text readability
+    const auto shouldInvert = shouldInvertGlyphs(directionOnScreen, textTopSide);
 
     auto pGlyphWidth = glyphsWidths.constData();
     if (shouldInvert)
@@ -3944,12 +3946,24 @@ QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::getPathInWorldToWorld(
     return result;
 }
 
+bool OsmAnd::AtlasMapRendererSymbolsStage::shouldInvertGlyphs(
+    const glm::vec2& directionOnScreen,
+    const OnPathRasterMapSymbol::TextTopSide textTopSide)
+{
+    if (textTopSide == OnPathRasterMapSymbol::TextTopSide::Left)
+        return false;
+    if (textTopSide == OnPathRasterMapSymbol::TextTopSide::Right)
+        return true;
+    return directionOnScreen.x < 0.0f; // For text readability
+}
+
 bool OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
     const float pathPixelSizeInWorld,
     const ComputedPathData& computedPathData,
     const bool is2D,
     const glm::vec2& directionInWorld,
     const glm::vec2& directionOnScreen,
+    const OnPathRasterMapSymbol::TextTopSide textTopSide,
     const QVector<float>& glyphsWidths,
     const float glyphHeight,
     bool checkVisibility,
@@ -3961,8 +3975,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
     const auto screenToWorldFlatFactor = internalState.sizeOfPixelInWorld;
 
     const auto projectionScale = is2D ? 1.0f : pathPixelSizeInWorld;
-    const glm::vec2 directionOnScreenN(-directionOnScreen.y, directionOnScreen.x);
-    const auto shouldInvert = directionOnScreenN.y < 0; // For readability
+    const auto shouldInvert = shouldInvertGlyphs(directionOnScreen, textTopSide);
 
     // Initialize glyph input and output pointers
     const auto glyphsCount = glyphsWidths.size();

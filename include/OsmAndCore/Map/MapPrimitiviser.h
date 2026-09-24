@@ -219,6 +219,7 @@ namespace OsmAnd
             QString value;
             LanguageId languageId;
             bool drawOnPath;
+            QString topSide;
             Placement placement;
             QList<Placement> additionalPlacements;
             int verticalOffset;

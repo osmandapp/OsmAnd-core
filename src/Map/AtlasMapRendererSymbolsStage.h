@@ -19,6 +19,7 @@
 #include "AtlasMapRendererStage.h"
 #include "GPUAPI.h"
 #include "SkPath.h"
+#include "OnPathRasterMapSymbol.h"
 
 namespace OsmAnd
 {
@@ -390,11 +391,16 @@ namespace OsmAnd
             const float offsetFromStartPathPoint,
             const unsigned int endPathPointIndex,
             const glm::vec2& directionOnScreen,
+            const OnPathRasterMapSymbol::TextTopSide textTopSide,
             const QVector<float>& glyphsWidths,
             QVector<float>& pathOffsets,
             float& symmetricOffset) const;
 
         glm::vec2 computePathDirection(const QVector<glm::vec2>& path) const;
+
+        static bool shouldInvertGlyphs(
+            const glm::vec2& directionOnScreen,
+            const OnPathRasterMapSymbol::TextTopSide textTopSide);
 
         double computeDistanceFromCameraToPath(const QVector<glm::vec2>& pathInWorld) const;
 
@@ -423,6 +429,7 @@ namespace OsmAnd
             const bool is2D,
             const glm::vec2& directionInWorld,
             const glm::vec2& directionOnScreen,
+            const OnPathRasterMapSymbol::TextTopSide textTopSide,
             const QVector<float>& glyphsWidths,
             const float glyphHeight,
             bool checkVisibility,
