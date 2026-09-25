@@ -134,8 +134,9 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
             // Save basemap reader for later use
             basemapReader = obfReader;
 
-            // In case requested zoom is more detailed than basemap max zoom, skip basemap processing for now
-            if (zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel))
+            // In case requested zoom is more detailed than basemap max zoom, skip basemap processing for now.
+            // Coastline-only loads are the detailed coastlines around a tile, the basemap never belongs there
+            if (coastlineOnly || zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel))
                 continue;
         }
 

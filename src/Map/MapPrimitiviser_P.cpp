@@ -385,15 +385,15 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
         if (!coastlinesWereAdded && hasExtraCoastlines && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
         {
-            auto bboxZoom12wide = AreaI64(Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel12));
-            bboxZoom12wide.right()++;
-            bboxZoom12wide.bottom()++;
-            bboxZoom12wide = bboxZoom12wide.getEnlargedBy(bboxZoom12wide.width() / 2);
-            bboxZoom12wide.right()--;
-            bboxZoom12wide.bottom()--;
+            auto coastlineBBox = AreaI64(Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel10)); // the coastline tile of ObfMapObjectsProvider_P::_coastlineZoom
+            coastlineBBox.right()++;
+            coastlineBBox.bottom()++;
+            coastlineBBox = coastlineBBox.getEnlargedBy(coastlineBBox.width() / 2);
+            coastlineBBox.right()--;
+            coastlineBBox.bottom()--;
             QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
             auto extraSurfaceType = MapSurfaceType::Undefined;
-            getCoastlines(area31, bboxZoom12wide, extraCoastlineObjects, polygonizedCoastlines, extraSurfaceType);
+            getCoastlines(area31, coastlineBBox, extraCoastlineObjects, polygonizedCoastlines, extraSurfaceType);
             if (extraSurfaceType == MapSurfaceType::Undefined)
                 hasExtraCoastlines = false;
             else

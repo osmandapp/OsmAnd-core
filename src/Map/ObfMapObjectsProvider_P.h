@@ -188,7 +188,7 @@ namespace OsmAnd
             QReadWriteLock loadedConditionLock;
             QWaitCondition loadedCondition;
         };
-        const ZoomLevel _coastlineZoom = ZoomLevel::ZoomLevel12;
+        const ZoomLevel _coastlineZoom = ZoomLevel::ZoomLevel10;
         mutable TiledEntriesCollection<TileSharedEntry> _coastlineReferences;
 
         typedef OsmAnd::Link<ObfMapObjectsProvider_P*> Link;
