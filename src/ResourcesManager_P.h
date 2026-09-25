@@ -9,6 +9,7 @@
 #include <QHash>
 #include <QString>
 #include <QReadWriteLock>
+#include <QMutex>
 #include <QFileSystemWatcher>
 #include <QXmlStreamReader>
 
@@ -112,6 +113,8 @@ namespace OsmAnd
         std::shared_ptr<const ObfFile> _miniBasemapObfFile;
 
         mutable QReadWriteLock _resourcesInRepositoryLock;
+        // Serializes repository updates without holding _resourcesInRepositoryLock during the download
+        mutable QMutex _repositoryUpdateMutex;
         mutable QHash< QString, std::shared_ptr<const ResourceInRepository> > _resourcesInRepository;
         mutable bool _resourcesInRepositoryLoaded;
         bool parseRepository(

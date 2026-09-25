@@ -1417,7 +1417,10 @@ bool OsmAnd::ResourcesManager_P::isRepositoryAvailable() const
 
 bool OsmAnd::ResourcesManager_P::updateRepository() const
 {
-    QWriteLocker scopedLocker(&_resourcesInRepositoryLock);
+    // Concurrent updates are serialized here, while the repository stays readable: the write lock is
+    // taken only to publish the parsed index, so UI threads calling getResourceInRepository() never
+    // wait for the network (a stalled download used to hold the lock for the whole request timeout)
+    QMutexLocker updateLocker(&_repositoryUpdateMutex);
 
     // Download content of the index
     const auto tmpFilePath = QDir(owner->localTemporaryPath).absoluteFilePath(QStringLiteral("indexes.xml"));
@@ -1467,19 +1470,23 @@ bool OsmAnd::ResourcesManager_P::updateRepository() const
         return false;
     }
 
-    // Save repository locally
-    QFile repositoryCache(QDir(owner->localStoragePath).absoluteFilePath("repository.cache.xml"));
-    if (repositoryCache.exists())
-        repositoryCache.remove();
-    
-    if (!indexesFile.rename(repositoryCache.fileName()))
-        indexesFile.remove();
+    {
+        QWriteLocker scopedLocker(&_resourcesInRepositoryLock);
 
-    // Update repository in memory
-    _resourcesInRepository.clear();
-    for (auto& entry : resources)
-        _resourcesInRepository.insert(entry->id, qMove(entry));
-    _resourcesInRepositoryLoaded = true;
+        // Save repository locally
+        QFile repositoryCache(QDir(owner->localStoragePath).absoluteFilePath("repository.cache.xml"));
+        if (repositoryCache.exists())
+            repositoryCache.remove();
+
+        if (!indexesFile.rename(repositoryCache.fileName()))
+            indexesFile.remove();
+
+        // Update repository in memory
+        _resourcesInRepository.clear();
+        for (auto& entry : resources)
+            _resourcesInRepository.insert(entry->id, qMove(entry));
+        _resourcesInRepositoryLoaded = true;
+    }
 
     owner->repositoryUpdateObservable.postNotify(owner);
 
