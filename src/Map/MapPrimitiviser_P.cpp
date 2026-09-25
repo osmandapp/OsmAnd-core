@@ -333,16 +333,16 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             
             if (hasExtraCoastlines)
             {
-                AreaI bboxZoom12 = Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel13);
-                bboxZoom12.right()++;
-                bboxZoom12.bottom()++;
-                bboxZoom12 = bboxZoom12.getEnlargedBy(bboxZoom12.width() / 2);
-                bboxZoom12.right()--;
-                bboxZoom12.bottom()--;
+                AreaI bboxZoom12wide = Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel12);
+                bboxZoom12wide.right()++;
+                bboxZoom12wide.bottom()++;
+                bboxZoom12wide = bboxZoom12wide.getEnlargedBy(bboxZoom12wide.width() / 2);
+                bboxZoom12wide.right()--;
+                bboxZoom12wide.bottom()--;
                 MapSurfaceType surfaceTypeOverscaled = MapSurfaceType::Undefined;
                 QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
                 polygonizeCoastlines(
-                    bboxZoom12,
+                    bboxZoom12wide,
                     ZoomLevel::ZoomLevel13,
                     extraCoastlineObjects,
                     polygonizedCoastlines);
@@ -385,15 +385,15 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
         if (!coastlinesWereAdded && hasExtraCoastlines && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
         {
-            auto bboxZoom12 = AreaI64(Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel13));
-            bboxZoom12.right()++;
-            bboxZoom12.bottom()++;
-            bboxZoom12 = bboxZoom12.getEnlargedBy(bboxZoom12.width() / 2);
-            bboxZoom12.right()--;
-            bboxZoom12.bottom()--;
+            auto bboxZoom12wide = AreaI64(Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel12));
+            bboxZoom12wide.right()++;
+            bboxZoom12wide.bottom()++;
+            bboxZoom12wide = bboxZoom12wide.getEnlargedBy(bboxZoom12wide.width() / 2);
+            bboxZoom12wide.right()--;
+            bboxZoom12wide.bottom()--;
             QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
             auto extraSurfaceType = MapSurfaceType::Undefined;
-            getCoastlines(area31, bboxZoom12, extraCoastlineObjects, polygonizedCoastlines, extraSurfaceType);
+            getCoastlines(area31, bboxZoom12wide, extraCoastlineObjects, polygonizedCoastlines, extraSurfaceType);
             if (extraSurfaceType == MapSurfaceType::Undefined)
                 hasExtraCoastlines = false;
             else
