@@ -51,6 +51,7 @@ namespace OsmAnd
             mutable float roofHeight;
             float minHeight;
             float levels;
+            float minLevels;
             float levelHeight;
             float roofAngle;
             float roofDirection;

@@ -318,8 +318,10 @@ void Map3DObjectsTiledProvider_P::filterBuildings(
                         if (building.heightFound || building.levelsFound)
                         {
                             if ((building.heightFound || !buildingPart.levelsFound
-                                    ? buildingPart.height < building.height - building.roofHeight + MAX_HEIGHT_DELTA
-                                    : buildingPart.levels <= building.levels)
+                                ? buildingPart.height < building.height - building.roofHeight + MAX_HEIGHT_DELTA
+                                && buildingPart.minHeight < building.height - building.roofHeight - MAX_HEIGHT_DELTA
+                                : buildingPart.levels <= building.levels
+                                && buildingPart.minLevels < building.levels)
                                 && buildingPart.minHeight > building.minHeight - MAX_HEIGHT_DELTA)
                                 isHidden = true;
                         }
@@ -555,6 +557,7 @@ void Map3DObjectsTiledProvider_P::insertOrUpdateBuildingPrimitive(
     buildingPrimitive.height = height + roofHeight;
     buildingPrimitive.minHeight = minHeight;
     buildingPrimitive.levels = levels;
+    buildingPrimitive.minLevels = minLevels;
     buildingPrimitive.levelHeight = levelHeight;
     buildingPrimitive.roofHeight = roofHeight;
     buildingPrimitive.roofAngle = roofAngleFound ? roofAngle : NAN;
@@ -824,8 +827,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
     QVector<PointI> points31 = sourceObject->points31;
 
     // Reverse points if needed
-    double area = Utilities::computeSignedArea(points31);
-    if (area >= 0.0)
+    if (!Utilities::isNegativeSignedArea(points31))
         std::reverse(points31.begin(), points31.end());
 
     QVector<QVector<PointI>> innerPolygons;
@@ -839,8 +841,7 @@ void Map3DObjectsTiledProvider_P::processPrimitive(
             }
 
             QVector<PointI> innerPoints = innerPolygon;
-            double innerArea = Utilities::computeSignedArea(innerPoints);
-            if (innerArea < 0.0)
+            if (Utilities::isNegativeSignedArea(innerPoints))
                 std::reverse(innerPoints.begin(), innerPoints.end());
 
             innerPolygons.append(innerPoints);
