@@ -53,6 +53,46 @@ OsmAnd::MapStyleConstantValue OsmAnd::MapStyleEvaluator_P::evaluateConstantValue
         || resolvedValue.asDynamicValue.symbolClasses || resolvedValue.asDynamicValue.symbolClassTemplates)
         return resolvedValue.asConstantValue;
 
+    // Handle $$tag syntax - read value from object's tag
+    if (resolvedValue.asDynamicValue.tagNameId != 0u)
+    {
+        if (!mapObject)
+        {
+            MapStyleConstantValue emptyValue;
+            return emptyValue;
+        }
+        
+        const auto tagName = owner->mapStyle->getStringById(resolvedValue.asDynamicValue.tagNameId);
+        if (tagName.isEmpty())
+        {
+            MapStyleConstantValue emptyValue;
+            return emptyValue;
+        }
+        
+        const auto allTags = mapObject->getResolvedAttributes();
+        const auto itTag = allTags.constFind(tagName);
+        const auto tagValue = (itTag != allTags.cend()) ? *itTag : QString();
+        if (tagValue.isEmpty())
+        {
+            MapStyleConstantValue emptyValue;
+            return emptyValue;
+        }
+
+        MapStyleConstantValue parsedValue;
+        if (MapStyleConstantValue::parse(tagValue, dataType, false, parsedValue))
+        {
+            return parsedValue;
+        }
+
+        MapStyleConstantValue emptyValue;
+        return emptyValue;
+    }
+
+    if (!resolvedValue.asDynamicValue.attribute)
+    {
+        return resolvedValue.asConstantValue;
+    }
+
     bool wasDisabled = false;
     intermediateEvaluationResult->clear();
     OnDemand<IntermediateEvaluationResult> innerConstantEvaluationResult(intermediateEvaluationResultAllocator);

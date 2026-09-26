@@ -135,6 +135,26 @@ bool OsmAnd::ResolvedMapStyle_P::resolveValue(
     const bool isComplex,
     ResolvedValue& outValue)
 {
+    // Handle $$tag syntax
+    if (input.startsWith(QLatin1String("$$")))
+    {
+        const auto tagName = input.mid(2);
+        if (tagName.isEmpty())
+        {
+            LogPrintf(LogSeverityLevel::Error, "Empty tag name in '$$' syntax");
+            return false;
+        }
+
+        const auto tagNameId = addStringToLUT(tagName);
+        outValue.isDynamic = true;
+        outValue.asDynamicValue.tagNameId = tagNameId;
+        outValue.asDynamicValue.attribute.reset();
+        outValue.asDynamicValue.symbolClasses.reset();
+        outValue.asDynamicValue.symbolClassTemplates.reset();
+
+        return true;
+    }
+    
     if (input.startsWith(QLatin1Char('$')))
     {
         const auto constantOrAttributeName = input.mid(1);
