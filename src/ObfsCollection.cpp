@@ -81,7 +81,8 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection::obtainDataInte
     const AreaI* const pBbox31 /*= nullptr*/,
     const ZoomLevel minZoomLevel /*= MinZoomLevel*/,
     const ZoomLevel maxZoomLevel /*= MaxZoomLevel*/,
-    const ObfDataTypesMask desiredDataTypes /*= fullObfDataTypesMask()*/) const
+    const ObfDataTypesMask desiredDataTypes /*= fullObfDataTypesMask()*/,
+    const bool waitForResourceChanges /*= true*/) const
 {
     return _p->obtainDataInterface(pBbox31, minZoomLevel, maxZoomLevel, desiredDataTypes);
 }

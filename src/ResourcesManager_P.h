@@ -63,11 +63,12 @@ namespace OsmAnd
         // Copy of _localResources for the getters, so they never wait for an install, update or uninstall
         mutable QMutex _localResourcesSnapshotMutex;
         mutable QHash< QString, std::shared_ptr<const LocalResource> > _localResourcesSnapshot;
-        QHash< QString, std::shared_ptr<const LocalResource> > getLocalResourcesSnapshot() const;
+        mutable int _localResourcesWriteDepth;
 
-        // Write lock on _localResources that publishes the snapshot when released
+        // Write lock on _localResources that publishes the snapshot when the outermost one is released
         class LocalResourcesWriteLocker Q_DECL_FINAL
         {
+            Q_DISABLE_COPY_AND_MOVE(LocalResourcesWriteLocker);
         private:
             const ResourcesManager_P* const owner;
             bool _locked;
@@ -244,6 +245,12 @@ namespace OsmAnd
         {
         private:
             void sortReaders(QList<std::shared_ptr<const ObfReader> > &obfReaders) const;
+            std::shared_ptr<ObfDataInterface> obtainDataInterfaceFrom(
+                const QHash< QString, std::shared_ptr<const LocalResource> >& localResources,
+                const AreaI* const pBbox31,
+                const ZoomLevel minZoomLevel,
+                const ZoomLevel maxZoomLevel,
+                const ObfDataTypesMask desiredDataTypes) const;
         protected:
             ObfsCollectionProxy(ResourcesManager_P* owner);
         public:
@@ -260,7 +267,8 @@ namespace OsmAnd
                 const AreaI* const pBbox31 = nullptr,
                 const ZoomLevel minZoomLevel = MinZoomLevel,
                 const ZoomLevel maxZoomLevel = MaxZoomLevel,
-                const ObfDataTypesMask desiredDataTypes = fullObfDataTypesMask()) const;
+                const ObfDataTypesMask desiredDataTypes = fullObfDataTypesMask(),
+                const bool waitForResourceChanges = true) const;
 
         friend class OsmAnd::ResourcesManager_P;
         };

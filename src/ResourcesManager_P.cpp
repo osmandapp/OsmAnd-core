@@ -33,6 +33,7 @@ OsmAnd::ResourcesManager_P::ResourcesManager_P(
     : owner(owner_)
     , _fileSystemWatcher(new QFileSystemWatcher())
     , _localResourcesLock(QReadWriteLock::Recursive)
+    , _localResourcesWriteDepth(0)
     , _resourcesInRepositoryLoaded(false)
     , _webClient(webClient_)
     , changesManager(new IncrementalChangesManager(webClient_, owner_))
@@ -948,6 +949,7 @@ OsmAnd::ResourcesManager_P::LocalResourcesWriteLocker::LocalResourcesWriteLocker
     , _locked(true)
 {
     owner->_localResourcesLock.lockForWrite();
+    owner->_localResourcesWriteDepth++;
 }
 
 OsmAnd::ResourcesManager_P::LocalResourcesWriteLocker::~LocalResourcesWriteLocker()
@@ -959,25 +961,22 @@ void OsmAnd::ResourcesManager_P::LocalResourcesWriteLocker::unlock()
 {
     if (!_locked)
         return;
+    _locked = false;
 
+    // Destroyed after both locks are released: it may hold the last reference to a replaced resource
+    QHash< QString, std::shared_ptr<const LocalResource> > replacedSnapshot;
+    if (--owner->_localResourcesWriteDepth == 0)
     {
         QMutexLocker snapshotLocker(&owner->_localResourcesSnapshotMutex);
+        replacedSnapshot.swap(owner->_localResourcesSnapshot);
         owner->_localResourcesSnapshot = owner->_localResources;
     }
     owner->_localResourcesLock.unlock();
-    _locked = false;
-}
-
-QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> > OsmAnd::ResourcesManager_P::getLocalResourcesSnapshot() const
-{
-    QMutexLocker scopedLocker(&_localResourcesSnapshotMutex);
-
-    return _localResourcesSnapshot;
 }
 
 QList< std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> > OsmAnd::ResourcesManager_P::getSortedLocalResources() const
 {
-    auto resources = getLocalResourcesSnapshot().values();
+    auto resources = getLocalResources().values();
     std::sort(resources.begin(), resources.end(), [](const std::shared_ptr<const LocalResource> first, std::shared_ptr<const LocalResource> second) -> bool
     {
         QFileInfo firstInfo(first->localPath);
@@ -990,13 +989,15 @@ QList< std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> > OsmAnd
 
 QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> > OsmAnd::ResourcesManager_P::getLocalResources() const
 {
-    return getLocalResourcesSnapshot();
+    QMutexLocker scopedLocker(&_localResourcesSnapshotMutex);
+
+    return _localResourcesSnapshot;
 }
 
 std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> OsmAnd::ResourcesManager_P::getLocalResource(
     const QString& id) const
 {
-    const auto localResources = getLocalResourcesSnapshot();
+    const auto localResources = getLocalResources();
 
     const auto citResource = localResources.constFind(id);
     if (citResource == localResources.cend())
@@ -1006,7 +1007,7 @@ std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> OsmAnd::Resourc
 
 bool OsmAnd::ResourcesManager_P::isLocalResource(const QString& id) const
 {
-    return getLocalResourcesSnapshot().contains(id);
+    return getLocalResources().contains(id);
 }
 
 bool OsmAnd::ResourcesManager_P::isLocalResourceHidden(const QString& id) const
@@ -1371,12 +1372,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
 
 #if OSMAND_DEBUG
         {
-            QReadLocker scopedLocker(&_localResourcesLock);
-
-            const auto& citLocalResource = _localResources.constFind(resourceId);
-            if (citLocalResource != _localResources.cend())
+            if (const auto localResource = getLocalResource(resourceId))
             {
-                const auto& localResource = *citLocalResource;
                 if (localResource->origin == ResourceOrigin::Installed)
                 {
                     const auto& installedResource = std::static_pointer_cast<const InstalledResource>(localResource);
@@ -1643,13 +1640,10 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
 
 bool OsmAnd::ResourcesManager_P::uninstallTilesResource(const QString& name)
 {
-    QReadLocker scopedLocker(&_localResourcesLock);
-
-    const auto citResource = _localResources.constFind(QStringLiteral("online_tiles"));
-    if (citResource == _localResources.cend())
+    const auto resource = getLocalResource(QStringLiteral("online_tiles"));
+    if (!resource)
         return false;
-    
-    const auto& resource = *citResource;
+
     const auto& onlineTileSources = std::static_pointer_cast<const OsmAnd::ResourcesManager::OnlineTileSourcesMetadata>(resource->metadata)->sources;
     const auto& sourcesList = std::const_pointer_cast<OnlineTileSources>(onlineTileSources);
     sourcesList->removeSource(name);
@@ -1658,13 +1652,10 @@ bool OsmAnd::ResourcesManager_P::uninstallTilesResource(const QString& name)
 
 bool OsmAnd::ResourcesManager_P::installTilesResource(const std::shared_ptr<const IOnlineTileSources::Source>& source)
 {
-    QReadLocker scopedLocker(&_localResourcesLock);
-
-    const auto citResource = _localResources.constFind(QStringLiteral("online_tiles"));
-    if (citResource == _localResources.cend())
+    const auto resource = getLocalResource(QStringLiteral("online_tiles"));
+    if (!resource)
         return false;
-    
-    const auto& resource = *citResource;
+
     const auto& onlineTileSources = std::static_pointer_cast<const OsmAnd::ResourcesManager::OnlineTileSourcesMetadata>(resource->metadata)->sources;
     const auto& sourcesList = std::const_pointer_cast<OnlineTileSources>(onlineTileSources);
     sourcesList->addSource(source);
@@ -2281,7 +2272,7 @@ bool OsmAnd::ResourcesManager_P::isInstalledResourceOutdated(const QString& id) 
 QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> >
 OsmAnd::ResourcesManager_P::getOutdatedInstalledResources() const
 {
-    const auto localResources = getLocalResourcesSnapshot();
+    const auto localResources = getLocalResources();
 
     QHash< QString, std::shared_ptr<const LocalResource> > resourcesWithUpdates;
     for (const auto& localResource : constOf(localResources))
@@ -2308,7 +2299,7 @@ OsmAnd::ResourcesManager_P::getOutdatedInstalledResources() const
 QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> >
 OsmAnd::ResourcesManager_P::getUnsupportedResources() const
 {
-    const auto localResources = getLocalResourcesSnapshot();
+    const auto localResources = getLocalResources();
 
     QHash< QString, std::shared_ptr<const LocalResource> > unsupportedResources;
     for (const auto& localResource : constOf(localResources))
@@ -2470,7 +2461,7 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(
     owner->localResourcesChangeObservable.postNotify(owner,
         QList<QString>(),
         QList<QString>(),
-        QList<QString>() << localResource->id);
+        QList<QString>() << id);
 
     return true;
 }
@@ -2524,9 +2515,9 @@ OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::getCollection() const
     QHash< QString, std::shared_ptr<const OnlineTileSourcesProxy::Source> > result;
 
     {
-        QReadLocker scopedLocker(&owner->_localResourcesLock);
+        const auto localResources = owner->getLocalResources();
 
-        for (const auto& localResource : constOf(owner->_localResources))
+        for (const auto& localResource : constOf(localResources))
         {
             if (localResource->type != ResourceType::OnlineTileSources)
                 continue;
@@ -2552,9 +2543,9 @@ std::shared_ptr<const OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::Source
 OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::getSourceByName(const QString& sourceName) const
 {
     {
-        QReadLocker scopedLocker(&owner->_localResourcesLock);
+        const auto localResources = owner->getLocalResources();
 
-        for (const auto& localResource : constOf(owner->_localResources))
+        for (const auto& localResource : constOf(localResources))
         {
             if (localResource->type != ResourceType::OnlineTileSources)
                 continue;
@@ -2568,7 +2559,7 @@ OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::getSourceByName(const QStrin
                 return result;
         }
 
-        for (const auto& localResource : constOf(owner->_localResources))
+        for (const auto& localResource : constOf(localResources))
         {
             if (localResource->type != ResourceType::OnlineTileSources)
                 continue;
@@ -2622,13 +2613,11 @@ OsmAnd::ResourcesManager_P::ObfsCollectionProxy::~ObfsCollectionProxy()
 
 QList< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::ObfsCollectionProxy::getObfFiles() const
 {
-    // Called from the UI thread, so it must not wait for an install, update or uninstall:
-    // resources locked for writing are being replaced or removed and are skipped
-    const auto localResources = owner->getLocalResourcesSnapshot();
+    QReadLocker scopedLocker(&owner->_localResourcesLock);
 
     bool otherBasemapPresent = false;
     QList< std::shared_ptr<const ObfFile> > obfFiles;
-    for (const auto& localResource : constOf(localResources))
+    for (const auto& localResource : constOf(owner->_localResources))
     {
         if (localResource->type != ResourceType::MapRegion &&
             localResource->type != ResourceType::LiveUpdateRegion &&
@@ -2640,13 +2629,6 @@ QList< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::Obfs
             localResource->type != ResourceType::Travel)
         {
             continue;
-        }
-
-        if (const auto installedResource = std::dynamic_pointer_cast<const InstalledResource>(localResource))
-        {
-            if (!installedResource->_lock.tryLockForReading())
-                continue;
-            installedResource->_lock.unlockFromReading();
         }
 
         const auto& obfMetadata = std::static_pointer_cast<const ObfMetadata>(localResource->_metadata);
@@ -2734,14 +2716,28 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
     const AreaI* const pBbox31 /*= nullptr*/,
     const ZoomLevel minZoomLevel /*= MinZoomLevel*/,
     const ZoomLevel maxZoomLevel /*= MaxZoomLevel*/,
-    const ObfDataTypesMask desiredDataTypes /*= fullObfDataTypesMask()*/) const
+    const ObfDataTypesMask desiredDataTypes /*= fullObfDataTypesMask()*/,
+    const bool waitForResourceChanges /*= true*/) const
 {
+    if (!waitForResourceChanges)
+        return obtainDataInterfaceFrom(owner->getLocalResources(), pBbox31, minZoomLevel, maxZoomLevel, desiredDataTypes);
+
     QReadLocker scopedLocker(&owner->_localResourcesLock);
 
+    return obtainDataInterfaceFrom(owner->_localResources, pBbox31, minZoomLevel, maxZoomLevel, desiredDataTypes);
+}
+
+std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollectionProxy::obtainDataInterfaceFrom(
+    const QHash< QString, std::shared_ptr<const LocalResource> >& localResources,
+    const AreaI* const pBbox31,
+    const ZoomLevel minZoomLevel,
+    const ZoomLevel maxZoomLevel,
+    const ObfDataTypesMask desiredDataTypes) const
+{
     bool otherBasemapPresent = false;
     QList< std::shared_ptr<const InstalledResource> > lockedResources;
     QList< std::shared_ptr<const ObfReader> > obfReaders;
-    for (const auto& localResource : constOf(owner->_localResources))
+    for (const auto& localResource : constOf(localResources))
     {
         if (localResource->type != ResourceType::MapRegion &&
             localResource->type != ResourceType::LiveUpdateRegion &&
@@ -2805,9 +2801,9 @@ OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::getCollection() const
     QList< std::shared_ptr<const UnresolvedMapStyle> > result;
 
     {
-        QReadLocker scopedLocker(&owner->_localResourcesLock);
+        const auto localResources = owner->getLocalResources();
 
-        for (const auto& localResource : constOf(owner->_localResources))
+        for (const auto& localResource : constOf(localResources))
         {
             if (localResource->type != ResourceType::MapStyle)
                 continue;
@@ -2833,10 +2829,10 @@ QList<std::shared_ptr<OsmAnd::UnresolvedMapStyle>> OsmAnd::ResourcesManager_P::M
 {
     QList<std::shared_ptr<OsmAnd::UnresolvedMapStyle>> res;
     {
-        QReadLocker scopedLocker(&owner->_localResourcesLock);
+        const auto localResources = owner->getLocalResources();
 
         // Unmanaged resources override installed resources
-        for (const auto& localResource : constOf(owner->_localResources))
+        for (const auto& localResource : constOf(localResources))
         {
             if (localResource->type != ResourceType::MapStyle)
                 continue;
@@ -2873,10 +2869,10 @@ std::shared_ptr<OsmAnd::UnresolvedMapStyle> OsmAnd::ResourcesManager_P::MapStyle
     const auto resourceId = normalizeStyleName(styleName);
 
     {
-        QReadLocker scopedLocker(&owner->_localResourcesLock);
+        const auto localResources = owner->getLocalResources();
 
         // Unmanaged resources override installed resources
-        for (const auto& localResource : constOf(owner->_localResources))
+        for (const auto& localResource : constOf(localResources))
         {
             if (localResource->type != ResourceType::MapStyle)
                 continue;
@@ -2892,7 +2888,7 @@ std::shared_ptr<OsmAnd::UnresolvedMapStyle> OsmAnd::ResourcesManager_P::MapStyle
         }
 
         // Installed resources override built-in resources
-        for (const auto& localResource : constOf(owner->_localResources))
+        for (const auto& localResource : constOf(localResources))
         {
             if (localResource->type != ResourceType::MapStyle)
                 continue;
