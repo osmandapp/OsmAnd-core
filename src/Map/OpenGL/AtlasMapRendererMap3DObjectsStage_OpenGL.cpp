@@ -19,6 +19,15 @@
 #include "Logging.h"
 
 #define BUILDINGS_FADE_ANIMATION_PERIOD 500
+// Shadows fade in while the sun rises from the horizon up to this angle (degrees)
+#define BUILDINGS_SHADOW_FADE_SUN_ANGLE 6.0f
+#define BUILDINGS_SHADOW_MAX_ALPHA 0.3f
+// Soft shadow edges: the shadow is drawn several times with the sun shifted around a small disc
+#define BUILDINGS_SHADOW_SAMPLES 10
+#define BUILDINGS_SHADOW_SPREAD_ANGLE 2.5f
+// Shadows of buildings on buildings: depth texture seen from the sun
+#define BUILDINGS_SHADOW_MAP_SIZE 2048
+#define BUILDINGS_SHADOW_MAP_RANGE_FACTOR 1.5f
 
 using namespace OsmAnd;
 
@@ -57,6 +66,8 @@ namespace
                 return offset;
             }
 
+            %ShadowMapDeclaration%
+
             void main()
             {
                 float vertexHeight = in_vs_heights.x / param_vs_metersPerUnit;
@@ -69,10 +80,59 @@ namespace
                 vec3 worldPos = vec3(offsetFromTarget.x, elevation, offsetFromTarget.y);
 
                 %ColorCalculation%
+
+                %ShadowMapCalculation%
                 
                 vec4 v = param_vs_mPerspectiveProjectionView * vec4(worldPos, 1.0);
                 gl_Position = v * param_vs_resultScale;
             }
+        )");
+}
+
+namespace
+{
+    const QString shadowMapVertexDeclaration = QString(R"(
+            uniform mat4 param_vs_lightMatrix;
+            uniform float param_vs_shadowNormalOffset;
+            PARAM_OUTPUT highp vec4 v2f_shadowCoord;
+        )");
+    const QString shadowMapVertexCalculation = QString(R"(
+                // Normal offset keeps a surface from shadowing itself in the coarse shadow map
+                v2f_shadowCoord = param_vs_lightMatrix
+                    * vec4(worldPos + normalize(in_vs_normal) * param_vs_shadowNormalOffset, 1.0);
+        )");
+    const QString shadowMapFragmentDeclaration = QString(R"(
+            PARAM_INPUT highp vec4 v2f_shadowCoord;
+            uniform float param_fs_shadowStrength;
+        #if __VERSION__ >= 130
+            uniform highp sampler2D param_fs_shadowMap;
+
+            float sunVisibilityAt(highp vec2 uv, highp float depth)
+            {
+                return depth <= texture(param_fs_shadowMap, uv).r ? 1.0 : 0.0;
+            }
+
+            // 1.0 when the sun sees this point, 0.0 when another building covers it
+            float sunVisibility()
+            {
+                highp vec3 c = v2f_shadowCoord.xyz;
+                if (param_fs_shadowStrength <= 0.0 || c.x <= 0.0 || c.x >= 1.0 || c.y <= 0.0 || c.y >= 1.0 || c.z >= 1.0)
+                    return 1.0;
+                highp float t = 1.0 / %ShadowMapSize%.0;
+                float v = sunVisibilityAt(c.xy + vec2(-t, -t), c.z);
+                v += sunVisibilityAt(c.xy + vec2(t, -t), c.z);
+                v += sunVisibilityAt(c.xy + vec2(-t, t), c.z);
+                v += sunVisibilityAt(c.xy + vec2(t, t), c.z);
+                // Fade out at the border of the shadow map
+                float edge = min(min(c.x, 1.0 - c.x), min(c.y, 1.0 - c.y));
+                return mix(1.0, v * 0.25, clamp(edge * 20.0, 0.0, 1.0));
+            }
+        #else
+            float sunVisibility()
+            {
+                return 1.0;
+            }
+        #endif
         )");
 }
 
@@ -83,6 +143,11 @@ AtlasMapRendererMap3DObjectsStage_OpenGL::AtlasMapRendererMap3DObjectsStage_Open
     , actualSpace(&_firstSpace)
     , oldTiles(&_secondTiles)
     , oldSpace(&_secondSpace)
+    , _shadowMapTexture(0)
+    , _shadowMapFramebuffer(0)
+    , _shadowMapFailed(false)
+    , _shadowMapStrength(0.0f)
+    , _shadowMapNormalOffset(0.0f)
 {
 }
 
@@ -125,18 +190,24 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeSimpleProgram()
         auto vertexShader = vertexShaderBase;
         vertexShader.replace("%ColorInOutDeclaration%", colorInOutDeclaration);
         vertexShader.replace("%ColorCalculation%", colorCalculation);
+        vertexShader.replace("%ShadowMapDeclaration%", shadowMapVertexDeclaration);
+        vertexShader.replace("%ShadowMapCalculation%", shadowMapVertexCalculation);
 
-        const QString fragmentShader = R"(
+        QString fragmentShader = R"(
             PARAM_INPUT highp vec3 v2f_pointNormal;
             PARAM_INPUT highp vec4 v2f_pointColor;
             
             uniform float param_fs_alpha;
             uniform vec3 param_fs_lightDirection;
+
+            %ShadowMapDeclaration%
             
             void main()
             {
                 vec3 n = normalize(v2f_pointNormal);
                 float d = dot(-param_fs_lightDirection, n);
+                // A sunlit side hidden behind another building gets the light of a side turned away
+                d = d > 0.0 ? d * mix(1.0, sunVisibility(), param_fs_shadowStrength) : d;
                 d = ((d < 0.0 ? -(d * d) : d * d) + 1.0) * 0.5 + 0.1;
                 vec3 color = v2f_pointColor.rgb * d;
                 FRAGMENT_COLOR_OUTPUT = vec4(clamp(color, 0.0, 1.0), param_fs_alpha);
@@ -147,6 +218,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeSimpleProgram()
         gpuAPI->preprocessVertexShader(preprocessedVertexShader);
         gpuAPI->optimizeVertexShader(preprocessedVertexShader);
 
+        fragmentShader.replace("%ShadowMapDeclaration%", shadowMapFragmentDeclaration);
+        fragmentShader.replace("%ShadowMapSize%", QString::number(BUILDINGS_SHADOW_MAP_SIZE));
         auto preprocessedFragmentShader = fragmentShader;
         gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
         gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
@@ -214,6 +287,11 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeSimpleProgram()
     ok = ok && lookup->lookupLocation(_program.vs.param.zScaleFactor, "param_vs_zScaleFactor", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.alpha, "param_fs_alpha", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.lightDirection, "param_fs_lightDirection", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.lightMatrix, "param_vs_lightMatrix", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.shadowNormalOffset, "param_vs_shadowNormalOffset", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.fs.param.shadowStrength, "param_fs_shadowStrength", GlslVariableType::Uniform);
+    // Absent without GLSL ES 3.0: the shaders then ignore shadows of buildings on buildings
+    _program.withShadowMap = ok && lookup->lookupLocation(_program.fs.param.shadowMap, "param_fs_shadowMap", GlslVariableType::Uniform);
 
     if (!ok)
     {
@@ -293,8 +371,10 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
         auto vertexShader = vertexShaderBase;
         vertexShader.replace("%ColorInOutDeclaration%", colorInOutDeclaration);
         vertexShader.replace("%ColorCalculation%", colorCalculation);
+        vertexShader.replace("%ShadowMapDeclaration%", shadowMapVertexDeclaration);
+        vertexShader.replace("%ShadowMapCalculation%", shadowMapVertexCalculation);
 
-        const QString fragmentShader = R"(
+        QString fragmentShader = R"(
             PARAM_INPUT highp vec3 v2f_pointPosition;
             PARAM_INPUT highp vec3 v2f_pointNormal;
             PARAM_INPUT highp vec4 v2f_pointColor;
@@ -305,9 +385,12 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
             uniform float param_fs_fadeHeight;
             uniform vec3 param_fs_cameraPosition;
             uniform vec3 param_fs_lightDirection;
+
+            %ShadowMapDeclaration%
             
             void main()
             {
+                float sunVisible = mix(1.0, sunVisibility(), param_fs_shadowStrength);
                 vec3 v = normalize(param_fs_cameraPosition - v2f_pointPosition);
                 vec3 n = normalize(v2f_pointNormal);
                 bool top = abs(n.y) > 0.0;
@@ -317,10 +400,12 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
                 g.x = dot(-param_fs_lightDirection, n) < 0.0 ? -g.x : g.x;
                 n = top ? n : normalize(vec3(sin(a + g.x), sin(g.y), cos(a + g.x)));
                 vec3 r = reflect(param_fs_lightDirection, n);
-                float h = pow((clamp(dot(r, v), 0.5, 1.0) - 0.5) * 2.0, 3.0) * 0.2;
+                float h = pow((clamp(dot(r, v), 0.5, 1.0) - 0.5) * 2.0, 3.0) * 0.2 * sunVisible;
                 float qa = floor(a * 2.0) * 0.5;
                 vec2 s = top ? vec2(0.0, 0.0) : vec2(sin(qa), cos(qa)) + v2f_pointColor.a;
                 float d = dot(-param_fs_lightDirection, n);
+                // A sunlit side hidden behind another building gets the light of a side turned away
+                d = d > 0.0 ? d * sunVisible : d;
                 d = ((d < 0.0 ? -(d * d) : d * d) + 1.0) * 0.5 + 0.1;
                 d *= !top && v2f_sizes.z > 0.0 ? fract(sin(dot(s, vec2(12.9898, 78.233))) * 43758.5453) * 0.14 + 0.93 : 1.0;
                 d /= 1.0 + exp(-v2f_height * 0.05) * 0.2;
@@ -335,6 +420,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
         gpuAPI->preprocessVertexShader(preprocessedVertexShader);
         gpuAPI->optimizeVertexShader(preprocessedVertexShader);
 
+        fragmentShader.replace("%ShadowMapDeclaration%", shadowMapFragmentDeclaration);
+        fragmentShader.replace("%ShadowMapSize%", QString::number(BUILDINGS_SHADOW_MAP_SIZE));
         auto preprocessedFragmentShader = fragmentShader;
         gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
         gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
@@ -405,6 +492,11 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
     ok = ok && lookup->lookupLocation(_colorProgram.fs.param.fadeHeight, "param_fs_fadeHeight", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_colorProgram.fs.param.cameraPosition, "param_fs_cameraPosition", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_colorProgram.fs.param.lightDirection, "param_fs_lightDirection", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_colorProgram.vs.param.lightMatrix, "param_vs_lightMatrix", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_colorProgram.vs.param.shadowNormalOffset, "param_vs_shadowNormalOffset", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_colorProgram.fs.param.shadowStrength, "param_fs_shadowStrength", GlslVariableType::Uniform);
+    // Absent without GLSL ES 3.0: the shaders then ignore shadows of buildings on buildings
+    _colorProgram.withShadowMap = ok && lookup->lookupLocation(_colorProgram.fs.param.shadowMap, "param_fs_shadowMap", GlslVariableType::Uniform);
 
     if (!ok)
     {
@@ -462,6 +554,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeDepthProgram()
         auto vertexShader = vertexShaderBase;
         vertexShader.replace("%ColorInOutDeclaration%", "");
         vertexShader.replace("%ColorCalculation%", "");
+        vertexShader.replace("%ShadowMapDeclaration%", "");
+        vertexShader.replace("%ShadowMapCalculation%", "");
 
         const QString fragmentShader = R"(
             void main()
@@ -566,6 +660,155 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeDepthProgram()
     return true;
 }
 
+bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeShadowProgram()
+{
+    const auto nextInit3DobjectsType = static_cast<Init3DObjectsType>(static_cast<int>(_init3DObjectsType) + 1);
+    _init3DObjectsType = Init3DObjectsType::Incomplete;
+
+    const auto gpuAPI = getGPUAPI();
+
+    QHash<QString, GPUAPI_OpenGL::GlslProgramVariable> variablesMap;
+    _shadowProgram.id = 0;
+
+    if (!_shadowProgram.binaryCache.isEmpty())
+    {
+        _shadowProgram.id = gpuAPI->linkProgram(
+            0, nullptr, _shadowProgram.binaryCache, _shadowProgram.cacheFormat, true, &variablesMap);
+    }
+
+    if (!_shadowProgram.id.isValid())
+    {
+        const QString shadowInOutDeclaration = QString(R"(
+            uniform vec3 param_vs_lightDirection;
+        )");
+        // Slide every vertex down along the sun rays until it reaches the ground under the building.
+        // Sun elevation is limited to ~3 degrees, so a shadow is never longer than 20 building heights.
+        const QString shadowCalculation = QString(R"(
+                float sunSin = max(-param_vs_lightDirection.y, 0.05);
+                worldPos.xz += param_vs_lightDirection.xz * (vertexHeight / sunSin);
+                worldPos.y = terrainElevation;
+        )");
+
+        auto vertexShader = vertexShaderBase;
+        vertexShader.replace("%ColorInOutDeclaration%", shadowInOutDeclaration);
+        vertexShader.replace("%ColorCalculation%", shadowCalculation);
+        vertexShader.replace("%ShadowMapDeclaration%", "");
+        vertexShader.replace("%ShadowMapCalculation%", "");
+
+        const QString fragmentShader = R"(
+            uniform float param_fs_shadowAlpha;
+            uniform highp float param_fs_noiseSeed;
+
+            void main()
+            {
+                // Per-sample grain: it averages out inside the shadow and dithers the soft edge
+                highp vec2 p = gl_FragCoord.xy + vec2(param_fs_noiseSeed * 37.0, param_fs_noiseSeed * 91.0);
+                highp float noise = fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+                // Cool blue-grey, so the shadow does not merge with the neutral grey of the buildings
+                FRAGMENT_COLOR_OUTPUT = vec4(0.10, 0.14, 0.30, param_fs_shadowAlpha * (0.4 + 1.2 * noise));
+            }
+        )";
+
+        auto preprocessedVertexShader = vertexShader;
+        gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+        gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+
+        auto preprocessedFragmentShader = fragmentShader;
+        gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+        gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+
+        _shadowProgram.binaryCache = gpuAPI->readProgramBinary(preprocessedVertexShader,
+            preprocessedFragmentShader, setupOptions.pathToOpenGLShadersCache, _shadowProgram.cacheFormat);
+
+        if (!_shadowProgram.binaryCache.isEmpty())
+        {
+            _shadowProgram.id = gpuAPI->linkProgram(
+                0, nullptr, _shadowProgram.binaryCache, _shadowProgram.cacheFormat, true, &variablesMap);
+        }
+        if (_shadowProgram.binaryCache.isEmpty() || !_shadowProgram.id.isValid())
+        {
+            const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+            if (vsId == 0)
+            {
+                LogPrintf(LogSeverityLevel::Error, "Failed to compile Map3DObjects shadow vertex shader");
+                return false;
+            }
+
+            const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+            if (fsId == 0)
+            {
+                glDeleteShader(vsId);
+                GL_CHECK_RESULT;
+
+                LogPrintf(LogSeverityLevel::Error, "Failed to compile Map3DObjects shadow fragment shader");
+                return false;
+            }
+
+            const GLuint shaders[] = { vsId, fsId };
+            _shadowProgram.id = gpuAPI->linkProgram(
+                2, shaders, _shadowProgram.binaryCache, _shadowProgram.cacheFormat, true, &variablesMap);
+            if (_shadowProgram.id.isValid() && !_shadowProgram.binaryCache.isEmpty())
+            {
+                gpuAPI->writeProgramBinary(
+                    preprocessedVertexShader,
+                    preprocessedFragmentShader,
+                    setupOptions.pathToOpenGLShadersCache,
+                    _shadowProgram.binaryCache,
+                    _shadowProgram.cacheFormat);
+            }
+        }
+    }
+
+    if (!_shadowProgram.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link Map3DObjects shadow shader program");
+        return false;
+    }
+
+    const auto lookup = gpuAPI->obtainVariablesLookupContext(_shadowProgram.id, variablesMap);
+    bool ok = true;
+    ok = ok && lookup->lookupLocation(_shadowProgram.vs.in.location31, "in_vs_location31", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_shadowProgram.vs.in.heights, "in_vs_heights", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_shadowProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_shadowProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_shadowProgram.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_shadowProgram.vs.param.zoomLevel, "param_vs_zoomLevel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_shadowProgram.vs.param.metersPerUnit, "param_vs_metersPerUnit", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_shadowProgram.vs.param.zScaleFactor, "param_vs_zScaleFactor", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_shadowProgram.vs.param.lightDirection, "param_vs_lightDirection", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_shadowProgram.fs.param.shadowAlpha, "param_fs_shadowAlpha", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_shadowProgram.fs.param.noiseSeed, "param_fs_noiseSeed", GlslVariableType::Uniform);
+
+    if (!ok)
+    {
+        glDeleteProgram(_shadowProgram.id);
+        GL_CHECK_RESULT;
+
+        _shadowProgram.id.reset();
+
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find variable in Map3DObjects shadow shader program");
+        return false;
+    }
+
+    if (_shadowVao.isValid())
+    {
+        gpuAPI->useVAO(_shadowVao);
+
+        glEnableVertexAttribArray(*_shadowProgram.vs.in.location31);
+        GL_CHECK_RESULT;
+        glEnableVertexAttribArray(*_shadowProgram.vs.in.heights);
+        GL_CHECK_RESULT;
+
+        gpuAPI->initializeVAO(_shadowVao);
+        gpuAPI->unuseVAO();
+    }
+
+    _init3DObjectsType = nextInit3DobjectsType;
+    return true;
+}
+
 bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
 {
     const auto gpuAPI = getGPUAPI();
@@ -592,6 +835,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initialize()
     _colorVao = gpuAPI->allocateUninitializedVAO();
 
     _depthVao = gpuAPI->allocateUninitializedVAO();
+
+    _shadowVao = gpuAPI->allocateUninitializedVAO();
 
     _init3DObjectsType = Init3DObjectsType::Objects3DDepth;
 
@@ -940,6 +1185,263 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDe
     return StageResult::Success;
 }
 
+MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderShadows()
+{
+    const auto gpuAPI = getGPUAPI();
+    const auto& internalState = getInternalState();
+
+    const float sunAngle = currentState.elevationConfiguration.hillshadeSunAngle;
+    const float sunFactor = qBound(0.0f, sunAngle / BUILDINGS_SHADOW_FADE_SUN_ANGLE, 1.0f);
+    const float shadowAlpha = BUILDINGS_SHADOW_MAX_ALPHA * sunFactor;
+    if (shadowAlpha <= 0.0f)
+        return StageResult::Success;
+
+    glUseProgram(_shadowProgram.id);
+    GL_CHECK_RESULT;
+    glUniformMatrix4fv(*_shadowProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE,
+        glm::value_ptr(internalState.mPerspectiveProjectionView));
+    GL_CHECK_RESULT;
+    glUniform4f(*_shadowProgram.vs.param.resultScale, 1.0f, currentState.flip ? -1.0f : 1.0f, 1.0f, 1.0f);
+    GL_CHECK_RESULT;
+    glUniform2i(*_shadowProgram.vs.param.target31, currentState.target31.x, currentState.target31.y);
+    GL_CHECK_RESULT;
+    glUniform1i(*_shadowProgram.vs.param.zoomLevel, (int)currentState.zoomLevel);
+    GL_CHECK_RESULT;
+    glUniform1f(*_shadowProgram.vs.param.metersPerUnit, static_cast<float>(internalState.metersPerUnit));
+    GL_CHECK_RESULT;
+    glUniform1f(*_shadowProgram.vs.param.zScaleFactor, currentState.elevationConfiguration.zScaleFactor);
+    GL_CHECK_RESULT;
+    // Every sample adds the same share, so the umbra where all of them overlap gets the full shadowAlpha
+    const float sampleAlpha = 1.0f - std::pow(1.0f - shadowAlpha, 1.0f / BUILDINGS_SHADOW_SAMPLES);
+    glUniform1f(*_shadowProgram.fs.param.shadowAlpha, sampleAlpha);
+    GL_CHECK_RESULT;
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GL_CHECK_RESULT;
+
+    // Projected triangles of walls and roofs overlap: every sample darkens a pixel once using stencil bit 0x02
+    glStencilMask(0x02);
+    glStencilFunc(GL_NOTEQUAL, 0x02, 0x02);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    // Shadows lie on the ground, so pull them towards the camera to win the depth test against it
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    GL_CHECK_RESULT;
+    glPolygonOffset(-2.0f, -4.0f);
+    GL_CHECK_RESULT;
+
+    gpuAPI->useVAO(_shadowVao);
+
+    for (int sample = 0; sample < BUILDINGS_SHADOW_SAMPLES; sample++)
+    {
+        const auto angle = 2.0f * static_cast<float>(M_PI) * sample / BUILDINGS_SHADOW_SAMPLES;
+        const float zenith = glm::radians(qMax(1.0f, sunAngle + BUILDINGS_SHADOW_SPREAD_ANGLE * std::sin(angle)));
+        const float azimuth = glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth
+            + BUILDINGS_SHADOW_SPREAD_ANGLE * std::cos(angle));
+        const auto cosZenith = qCos(zenith);
+        glUniform3f(*_shadowProgram.vs.param.lightDirection,
+            -qSin(azimuth) * cosZenith,
+            -qSin(zenith),
+            qCos(azimuth) * cosZenith);
+        GL_CHECK_RESULT;
+        glUniform1f(*_shadowProgram.fs.param.noiseSeed, static_cast<float>(sample + 1));
+        GL_CHECK_RESULT;
+
+        if (sample > 0)
+        {
+            glClear(GL_STENCIL_BUFFER_BIT);
+            GL_CHECK_RESULT;
+        }
+
+        for (const auto& resource : resourcesInGPU)
+        {
+            if (!resource->indexBuffer || resource->indexBuffer->itemsCount <= 0)
+                continue;
+
+            glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(
+                resource->vertexBuffer->refInGPU)));
+            GL_CHECK_RESULT;
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(
+                resource->indexBuffer->refInGPU)));
+            GL_CHECK_RESULT;
+
+            glVertexAttribIPointer(*_shadowProgram.vs.in.location31, 2, GL_INT,
+                sizeof(BuildingVertex), reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, location31)));
+            GL_CHECK_RESULT;
+            glVertexAttribPointer(*_shadowProgram.vs.in.heights, 2, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+                reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, heights)));
+            GL_CHECK_RESULT;
+
+            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(resource->indexBuffer->itemsCount),
+                GL_UNSIGNED_SHORT, nullptr);
+            GL_CHECK_RESULT;
+        }
+    }
+    gpuAPI->unuseVAO();
+
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    GL_CHECK_RESULT;
+
+    // Drop the shadow bit so that it does not leak into buildings and symbols
+    glClear(GL_STENCIL_BUFFER_BIT);
+    GL_CHECK_RESULT;
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glStencilMask(0x00);
+
+    return StageResult::Success;
+}
+
+bool AtlasMapRendererMap3DObjectsStage_OpenGL::renderShadowMap()
+{
+    const auto gpuAPI = getGPUAPI();
+    const auto& internalState = getInternalState();
+
+    if (_shadowMapFailed)
+        return false;
+
+    if (_shadowMapTexture == 0)
+    {
+        glGenTextures(1, &_shadowMapTexture);
+        GL_CHECK_RESULT;
+        glBindTexture(GL_TEXTURE_2D, _shadowMapTexture);
+        GL_CHECK_RESULT;
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, BUILDINGS_SHADOW_MAP_SIZE, BUILDINGS_SHADOW_MAP_SIZE, 0,
+            GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
+        GL_CHECK_RESULT;
+        // Plain depth reads compared in the shader: hardware depth comparison is not reliable on every driver
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+        GL_CHECK_RESULT;
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        glGenFramebuffers(1, &_shadowMapFramebuffer);
+        GL_CHECK_RESULT;
+    }
+
+    GLint previousFramebuffer = 0;
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previousFramebuffer);
+    GLint previousViewport[4];
+    glGetIntegerv(GL_VIEWPORT, previousViewport);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, _shadowMapFramebuffer);
+    GL_CHECK_RESULT;
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _shadowMapTexture, 0);
+    GL_CHECK_RESULT;
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        LogPrintf(LogSeverityLevel::Error, "Map3DObjects shadow map framebuffer is incomplete");
+        glBindFramebuffer(GL_FRAMEBUFFER, previousFramebuffer);
+        _shadowMapFailed = true;
+        return false;
+    }
+
+    // Sun looks along its rays at the square around the map target that the camera sees best
+    const float sunAngle = currentState.elevationConfiguration.hillshadeSunAngle;
+    const auto zenith = glm::radians(qBound(1.0f, sunAngle, 89.0f));
+    const auto azimuth = glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth);
+    const glm::vec3 lightDirection(
+        -std::sin(azimuth) * std::cos(zenith), -std::sin(zenith), std::cos(azimuth) * std::cos(zenith));
+    const float range = internalState.distanceFromCameraToTarget * BUILDINGS_SHADOW_MAP_RANGE_FACTOR;
+    const float maxBuildingHeight = 600.0f / static_cast<float>(internalState.metersPerUnit);
+    const float depth = range + maxBuildingHeight;
+    const glm::vec3 center(0.0f);
+    const auto mLightView = glm::lookAt(center - lightDirection * depth, center, glm::vec3(0.0f, 1.0f, 0.0f));
+    const auto mLightProjection = glm::ortho(-range, range, -range, range, 0.0f, 2.0f * depth);
+    const auto mLightProjectionView = mLightProjection * mLightView;
+    // From clip space [-1, 1] to texture coordinates and depth [0, 1], with a small bias against self-shadowing
+    const float depthBias = (0.5f / static_cast<float>(internalState.metersPerUnit)) / (2.0f * depth);
+    _shadowMapMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f - depthBias))
+        * glm::scale(glm::mat4(1.0f), glm::vec3(0.5f)) * mLightProjectionView;
+
+    _shadowMapNormalOffset = 1.5f * 2.0f * range / BUILDINGS_SHADOW_MAP_SIZE;
+    glViewport(0, 0, BUILDINGS_SHADOW_MAP_SIZE, BUILDINGS_SHADOW_MAP_SIZE);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    glDisable(GL_BLEND);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LEQUAL);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    GL_CHECK_RESULT;
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(2.0f, 4.0f);
+
+    glUseProgram(_depthProgram.id);
+    GL_CHECK_RESULT;
+    glUniformMatrix4fv(*_depthProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE,
+        glm::value_ptr(mLightProjectionView));
+    glUniform4f(*_depthProgram.vs.param.resultScale, 1.0f, 1.0f, 1.0f, 1.0f);
+    glUniform2i(*_depthProgram.vs.param.target31, currentState.target31.x, currentState.target31.y);
+    glUniform1i(*_depthProgram.vs.param.zoomLevel, (int)currentState.zoomLevel);
+    glUniform1f(*_depthProgram.vs.param.metersPerUnit, static_cast<float>(internalState.metersPerUnit));
+    glUniform1f(*_depthProgram.vs.param.zScaleFactor, currentState.elevationConfiguration.zScaleFactor);
+    GL_CHECK_RESULT;
+
+    gpuAPI->useVAO(_depthVao);
+    for (const auto& resource : resourcesInGPU)
+    {
+        if (!resource->indexBuffer || resource->indexBuffer->itemsCount <= 0)
+            continue;
+
+        glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(
+            resource->vertexBuffer->refInGPU)));
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<uintptr_t>(
+            resource->indexBuffer->refInGPU)));
+        glVertexAttribIPointer(*_depthProgram.vs.in.location31, 2, GL_INT,
+            sizeof(BuildingVertex), reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, location31)));
+        glVertexAttribPointer(*_depthProgram.vs.in.heights, 2, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
+            reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, heights)));
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(resource->indexBuffer->itemsCount),
+            GL_UNSIGNED_SHORT, nullptr);
+        GL_CHECK_RESULT;
+    }
+    gpuAPI->unuseVAO();
+    glDisable(GL_POLYGON_OFFSET_FILL);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, previousFramebuffer);
+    GL_CHECK_RESULT;
+    glViewport(previousViewport[0], previousViewport[1], previousViewport[2], previousViewport[3]);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glEnable(GL_BLEND);
+    GL_CHECK_RESULT;
+
+    return true;
+}
+
+void AtlasMapRendererMap3DObjectsStage_OpenGL::setupShadowMapSampling(const Model3DProgram& program, float strength)
+{
+    const bool withShadowMap = program.withShadowMap && strength > 0.0f && _shadowMapTexture != 0;
+    glUniform1f(*program.fs.param.shadowStrength, withShadowMap ? strength : 0.0f);
+    GL_CHECK_RESULT;
+    glUniformMatrix4fv(*program.vs.param.lightMatrix, 1, GL_FALSE, glm::value_ptr(_shadowMapMatrix));
+    GL_CHECK_RESULT;
+    glUniform1f(*program.vs.param.shadowNormalOffset, _shadowMapNormalOffset);
+    GL_CHECK_RESULT;
+    if (program.withShadowMap)
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, withShadowMap ? _shadowMapTexture : 0);
+        glUniform1i(*program.fs.param.shadowMap, 0);
+        GL_CHECK_RESULT;
+    }
+}
+
+void AtlasMapRendererMap3DObjectsStage_OpenGL::releaseShadowMap(bool gpuContextLost)
+{
+    if (!gpuContextLost)
+    {
+        if (_shadowMapFramebuffer != 0)
+            glDeleteFramebuffers(1, &_shadowMapFramebuffer);
+        if (_shadowMapTexture != 0)
+            glDeleteTextures(1, &_shadowMapTexture);
+    }
+    _shadowMapFramebuffer = 0;
+    _shadowMapTexture = 0;
+    _shadowMapFailed = false;
+}
+
 MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderSimple(bool primaryOnly)
 {
     const auto gpuAPI = getGPUAPI();
@@ -968,6 +1470,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderSi
     GL_CHECK_RESULT;
     glUniform1f(*_program.fs.param.alpha, buildingAlpha);
     GL_CHECK_RESULT;
+    setupShadowMapSampling(_program, _shadowMapStrength);
     glUniform3f(*_program.fs.param.lightDirection,
         -qSin(azimuth) * cosZenith,
         -qSin(zenith),
@@ -1058,6 +1561,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
     GL_CHECK_RESULT;
     glUniform1f(*_colorProgram.fs.param.alpha, buildingAlpha);
     GL_CHECK_RESULT;
+    setupShadowMapSampling(_colorProgram, _shadowMapStrength);
     glUniform3f(*_colorProgram.fs.param.cameraPosition,
         internalState.worldCameraPosition.x,
         internalState.worldCameraPosition.y,
@@ -1143,6 +1647,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
         ok = ok && (init3DObjectsType != Init3DObjectsType::Objects3DDepth || initializeDepthProgram());
         ok = ok && (init3DObjectsType != Init3DObjectsType::Objects3DSimple || initializeSimpleProgram());
         ok = ok && (init3DObjectsType != Init3DObjectsType::Objects3DColor || initializeColorProgram());
+        ok = ok && (init3DObjectsType != Init3DObjectsType::Objects3DShadow || initializeShadowProgram());
 
         if (!ok || _init3DObjectsType == Init3DObjectsType::Incomplete)
             return StageResult::Fail;
@@ -1204,6 +1709,47 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
 
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
+
+    StageResult shadowsResult = StageResult::Success;
+    _shadowMapStrength = 0.0f;
+    if (renderer->get3DBuildingsShadows() && currentState.elevationConfiguration.hillshadeSunAngle > 0.0f
+        && (_program.withShadowMap || _colorProgram.withShadowMap) && renderShadowMap())
+    {
+        _shadowMapStrength = qBound(0.0f,
+            currentState.elevationConfiguration.hillshadeSunAngle / BUILDINGS_SHADOW_FADE_SUN_ANGLE, 1.0f);
+    }
+    if (renderer->get3DBuildingsShadows())
+    {
+        // Buildings depth goes first, so that shadows stay on the open ground
+        // and never show through semi-transparent buildings
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        GL_CHECK_RESULT;
+        glDisable(GL_BLEND);
+        GL_CHECK_RESULT;
+        glEnable(GL_CULL_FACE);
+        GL_CHECK_RESULT;
+        glCullFace(currentState.flip ? GL_BACK : GL_FRONT);
+        GL_CHECK_RESULT;
+        glDepthMask(GL_TRUE);
+        GL_CHECK_RESULT;
+        shadowsResult = renderDepth(true);
+        if (shadowsResult != StageResult::Fail)
+            shadowsResult = renderDepth(false);
+        glDisable(GL_CULL_FACE);
+        GL_CHECK_RESULT;
+        glEnable(GL_BLEND);
+        GL_CHECK_RESULT;
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        GL_CHECK_RESULT;
+
+        glDepthMask(GL_FALSE);
+        GL_CHECK_RESULT;
+        if (shadowsResult != StageResult::Fail)
+            shadowsResult = renderShadows();
+        // Back to the building-hole test for important symbols
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    }
+
     glDepthMask(GL_TRUE);
     GL_CHECK_RESULT;
     glEnable(GL_CULL_FACE);
@@ -1275,10 +1821,17 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     glDisable(GL_CULL_FACE);
     GL_CHECK_RESULT;
 
+    if (_shadowMapStrength > 0.0f)
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
     // Disable testing stencil buffer
     glStencilFunc(GL_ALWAYS, 0, 0xFF);
 
-    if (depthPrepassResult == StageResult::Fail || colorPassResult == StageResult::Fail)
+    if (depthPrepassResult == StageResult::Fail || colorPassResult == StageResult::Fail
+        || shadowsResult == StageResult::Fail)
     {
         return StageResult::Fail;
     }
@@ -1332,6 +1885,21 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::release(bool gpuContextLost)
         glDeleteProgram(_depthProgram.id);
         GL_CHECK_RESULT;
         _depthProgram.id = 0;
+    }
+
+    releaseShadowMap(gpuContextLost);
+
+    if (_shadowVao.isValid())
+    {
+        gpuAPI->releaseVAO(_shadowVao, gpuContextLost);
+        _shadowVao.reset();
+    }
+
+    if (_shadowProgram.id)
+    {
+        glDeleteProgram(_shadowProgram.id);
+        GL_CHECK_RESULT;
+        _shadowProgram.id = 0;
     }
     
     return true;
