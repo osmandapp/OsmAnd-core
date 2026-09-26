@@ -60,6 +60,24 @@ namespace OsmAnd
 
         mutable QReadWriteLock _localResourcesLock;
         mutable QHash< QString, std::shared_ptr<const LocalResource> > _localResources;
+        // Copy of _localResources for the getters, so they never wait for an install, update or uninstall
+        mutable QMutex _localResourcesSnapshotMutex;
+        mutable QHash< QString, std::shared_ptr<const LocalResource> > _localResourcesSnapshot;
+        QHash< QString, std::shared_ptr<const LocalResource> > getLocalResourcesSnapshot() const;
+
+        // Write lock on _localResources that publishes the snapshot when released
+        class LocalResourcesWriteLocker Q_DECL_FINAL
+        {
+        private:
+            const ResourcesManager_P* const owner;
+            bool _locked;
+        public:
+            explicit LocalResourcesWriteLocker(const ResourcesManager_P* const owner);
+            ~LocalResourcesWriteLocker();
+
+            void unlock();
+        };
+
         bool loadLocalResourcesFromPath(
             const QString& storagePath,
             const bool isUnmanagedStorage,
