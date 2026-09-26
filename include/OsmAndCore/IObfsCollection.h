@@ -35,11 +35,14 @@ namespace OsmAnd
             const QList< std::shared_ptr<const ResourcesManager::LocalResource> > localResources) const = 0;
         virtual std::shared_ptr<OsmAnd::ObfDataInterface> obtainDataInterface(
             const std::shared_ptr<const ObfFile> obfFile) const = 0;
+        // With waitForResourceChanges == false a resource that is being installed, updated or uninstalled is left out
+        // instead of waited for. Included resources stay locked for reading while the interface exists
         virtual std::shared_ptr<ObfDataInterface> obtainDataInterface(
             const AreaI* const pBbox31 = nullptr,
             const ZoomLevel minZoomLevel = MinZoomLevel,
             const ZoomLevel maxZoomLevel = MaxZoomLevel,
-            const ObfDataTypesMask desiredDataTypes = fullObfDataTypesMask()) const = 0;
+            const ObfDataTypesMask desiredDataTypes = fullObfDataTypesMask(),
+            const bool waitForResourceChanges = true) const = 0;
     };
 }
 
