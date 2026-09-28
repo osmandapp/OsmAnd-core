@@ -949,18 +949,18 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
-        inline static double computeSignedArea(const QVector<PointI>& points)
+        inline static bool isNegativeSignedArea(const QVector<PointI>& points)
         {
-            double area = 0.0;
+            int64_t area = 0;
             const int n = points.size();
             for (int i = 0; i < n; ++i)
             {
                 const auto& p0 = points[i];
                 const auto& p1 = points[(i + 1) % n];
-                area += static_cast<double>(p0.x) * p1.y - static_cast<double>(p1.x) * p0.y;
+                area += static_cast<int64_t>(p0.x) * p1.y - static_cast<int64_t>(p1.x) * p0.y;
             }
 
-            return 0.5 * area;
+            return area < 0;
         }
 
         inline static double polygonArea(const QVector<PointI>& points)
