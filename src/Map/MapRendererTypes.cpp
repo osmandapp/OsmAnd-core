@@ -177,6 +177,8 @@ OsmAnd::GridConfiguration& OsmAnd::GridConfiguration::setProjectionParameters(
             parameters->falseEastingAndNorthing.x = 500.0; // False easting (km)
             parameters->falseEastingAndNorthing.y = 10000.0; // False northing (km)
             parameters->scaleFactor = 0.9996; // Grid scale factor
+            Utilities::getIntermediateConstantsTM(parameters->semiMajorAxisAndInverseFlattening,
+                parameters->scaleFactor, parameters->constants1, parameters->constants2);
         case Projection::HOMV2:
         case Projection::OSTEREO:
         case Projection::TM:
