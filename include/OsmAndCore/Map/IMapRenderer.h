@@ -211,6 +211,8 @@ namespace OsmAnd
         virtual float get3DBuildingsAlpha() const = 0;
         virtual bool set3DBuildingsDetalization(const int detalization, bool forcedUpdate = false) = 0;
         virtual int get3DBuildingsDetalization() const = 0;
+        virtual bool set3DBuildingsShadows(const bool enabled, bool forcedUpdate = false) = 0;
+        virtual bool get3DBuildingsShadows() const = 0;
         virtual bool setDateTime(const int64_t dateTime, bool forcedUpdate = false) = 0;
         virtual bool changeTimePeriod() = 0;
         virtual bool getMapTargetLocation(PointI& location31) const = 0;

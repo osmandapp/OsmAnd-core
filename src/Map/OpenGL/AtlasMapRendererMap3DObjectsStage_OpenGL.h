@@ -24,6 +24,7 @@ namespace OsmAnd
         GLname _vao;
         GLname _colorVao;
         GLname _depthVao;
+        GLname _shadowVao;
 
         Init3DObjectsType _init3DObjectsType;
 
@@ -55,6 +56,8 @@ namespace OsmAnd
                     GLlocation zoomLevel;
                     GLlocation metersPerUnit;
                     GLlocation zScaleFactor;
+                    GLlocation lightMatrix;
+                    GLlocation shadowNormalOffset;
                 } param;
             } vs;
             // Vertex data
@@ -67,11 +70,60 @@ namespace OsmAnd
                     GLlocation fadeHeight;
                     GLlocation cameraPosition;
                     GLlocation lightDirection;
+                    GLlocation shadowMap;
+                    GLlocation shadowStrength;
                 } param;
             } fs;
+            // Shadow map sampling compiles only with GLSL ES 3.0 or desktop GLSL 1.30+
+            bool withShadowMap;
         } _program;
         Model3DProgram _colorProgram;
         Model3DProgram _depthProgram;
+
+        // Buildings projected onto the ground along the sun direction
+        struct ShadowProgram
+        {
+            GLname id;
+            QByteArray binaryCache;
+            GLenum cacheFormat;
+
+            struct
+            {
+                struct
+                {
+                    GLlocation location31;
+                    GLlocation heights;
+                } in;
+
+                struct
+                {
+                    GLlocation mPerspectiveProjectionView;
+                    GLlocation resultScale;
+                    GLlocation target31;
+                    GLlocation zoomLevel;
+                    GLlocation metersPerUnit;
+                    GLlocation zScaleFactor;
+                    GLlocation lightDirection;
+                } param;
+            } vs;
+
+            struct
+            {
+                struct
+                {
+                    GLlocation shadowAlpha;
+                    GLlocation noiseSeed;
+                } param;
+            } fs;
+        } _shadowProgram;
+
+        // Depth of the buildings as seen from the sun: shadows cast onto walls and roofs
+        GLuint _shadowMapTexture;
+        GLuint _shadowMapFramebuffer;
+        bool _shadowMapFailed;
+        float _shadowMapStrength;
+        float _shadowMapNormalOffset;
+        glm::mat4 _shadowMapMatrix;
 
         QList<std::shared_ptr<const GPUAPI::MeshInGPU>> resourcesInGPU;
         QMap<int, QSet<TileId>> _firstTiles;
@@ -86,6 +138,7 @@ namespace OsmAnd
         bool initializeSimpleProgram();
         bool initializeColorProgram();
         bool initializeDepthProgram();
+        bool initializeShadowProgram();
         void occupySpace(TileId tileIdN, int zoomLevel, int minZoomLevel,
             QMap<int, QSet<TileId>>& presentTiles, QMap<int, QSet<TileId>>& occupiedSpace) const;
         bool spaceAlreadyOccupied(TileId tileIdN, int zoomLevel, QMap<int, QSet<TileId>>& presentTiles,
@@ -94,6 +147,10 @@ namespace OsmAnd
             const int viewableDetalizationLevel, bool& highDetalizationLevel,
             const int64_t appearTime, bool& shouldInvalidateFrame);
         StageResult renderDepth(bool primaryOnly);
+        StageResult renderShadows();
+        bool renderShadowMap();
+        void releaseShadowMap(bool gpuContextLost);
+        void setupShadowMapSampling(const Model3DProgram& program, float strength);
         StageResult renderSimple(bool primaryOnly);
         StageResult renderColor(bool primaryOnly, int64_t currentTime);
         std::shared_ptr<const GPUAPI::MeshInGPU> captureResourceInGPU(
