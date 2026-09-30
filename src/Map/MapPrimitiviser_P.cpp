@@ -260,6 +260,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const Stopwatch polygonizeCoastlinesStopwatch(metric != nullptr);
 
     // Polygonize coastlines
+    bool coastlineMistake = false;
     QList< std::shared_ptr<const MapObject> > polygonizedCoastlineObjects;
     const auto basemapCoastlinesPresent = !basemapCoastlineObjects.isEmpty();
     const auto detailedmapCoastlinesPresent = !detailedmapCoastlineObjects.isEmpty();
@@ -413,9 +414,12 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             }
             coastlinesWereAdded =
                 getCoastlines(area31, basemapArea, basemapCoastlineObjects, polygonizedCoastlineObjects, surfaceType);
+            coastlineMistake = zoom > ObfMapSectionLevel::MaxBasemapZoomLevel && coastlinesWereAdded;
         }
         fillEntireArea = !coastlinesWereAdded;
     }
+
+    primitivisedObjects->coastlineMistake = coastlineMistake;
 
     if (metric)
     {

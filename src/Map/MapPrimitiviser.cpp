@@ -440,6 +440,7 @@ OsmAnd::MapPrimitiviser::PrimitivisedObjects::PrimitivisedObjects(
     , mapPresentationEnvironment(mapPresentationEnvironment_)
     , zoom(zoom_)
     , scaleDivisor31ToPixel(scaleDivisor31ToPixel_)
+    , coastlineMistake(false)
 {
 }
 

@@ -314,6 +314,11 @@ namespace OsmAnd
             const ZoomLevel zoom;
             const PointD scaleDivisor31ToPixel;
 
+            // Basemap coastlines were needed above the basemap zoom, either to add
+            // coastlines or to reverse a full-land/full-water surface classification.
+            // Set by primitiviseWithSurface(); false for the other entry points.
+            bool coastlineMistake;
+
             PrimitivesGroupsCollection primitivesGroups;
             PrimitivesCollection polygons;
             PrimitivesCollection polylines;
