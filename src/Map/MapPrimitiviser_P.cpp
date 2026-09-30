@@ -2487,7 +2487,6 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
 {
     outVectorized.clear();
     bool withCoastlines = false;
-    QVector<PointI> temp;
     QVector<int> polylineIndices;
     polylineIndices.reserve(coastlines.size());
     const auto mask = static_cast<uint32_t>(-1) << 5;
@@ -2515,16 +2514,18 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         if (points.size() < 3)
             continue;
 
+        // Process already polygonized big coastlines
+        // (workaround "lake inside the continent")
+        if (!area31.contains(coastline->bbox31))
+        {
+            polylineIndices.push_back(idx);
+            continue;
+        }
+
         // Get already polygonized coastline
         QVector<PointI> polygon;
         bool isClockwise;
-        Utilities::clipPolygonForTile(center, points, area31.topLeft, area31.bottomRight, temp, polygon,
-            maxSqDistance, minSqDistance, distance, isClockwise);
-        if (polygon.size() < 3)
-            continue;
-        const auto& first = polygon.front();
-        if (first != polygon.back())
-            polygon.push_back(first);
+        Utilities::calcPolygonInTile(center, points, polygon, maxSqDistance, minSqDistance, distance, isClockwise);
         if (polygon.size() < 4)
             continue;
         const auto mapObject = std::make_shared<CoastlineMapObject>();

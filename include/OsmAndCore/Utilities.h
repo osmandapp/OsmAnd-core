@@ -2193,137 +2193,27 @@ namespace OsmAnd
             }
         }
 
-        template<bool IsY, bool IsGreater>
-        inline static bool isOutside(const PointI& p, int limit)
-        {
-            if (IsY)
-                return IsGreater ? p.y > limit : p.y < limit;
-            return IsGreater ? p.x > limit : p.x < limit;
-        }
 
-        template<bool IsY, bool IsGreater>
-        inline static bool clipPolygonAgainstEdge(const PointI& center, const QVector<PointI>& polygon,
-            QVector<PointI>& result, int limit, const double maxSqDistance,
-            double& minSqDistance, double& distance, bool& clockwise)
-        {
-            auto sp = polygon.back();
-            PointI sm(INT32_MIN, INT32_MIN);
-            PointI m;
-            bool sOutside = isOutside<IsY, IsGreater>(sp, limit);
-            int64_t signedArea = 0;
-            for (const auto p : polygon)
-            {
-                if (p == sp)
-                    continue;
-                bool pOutside = isOutside<IsY, IsGreater>(p, limit);
-                if (!pOutside)
-                {
-                    if (sOutside)
-                    {
-                        if (IsY)
-                        {
-                            m.x = getIntersectionAxisY(sp, p, limit);
-                            m.y = limit;
-                        }
-                        else
-                        {
-                            m.x = limit;
-                            m.y = getIntersectionAxisX(sp, p, limit);
-                        }
-                        if (!IsY && !IsGreater)
-                        {
-                            if (m != sm)
-                            {
-                                result.push_back(m);
-                                sm = m;
-                            }
-                        }
-                        else
-                            result.push_back(m);
-                    }
-                    if (!IsY && !IsGreater)
-                    {
-                        if (p != sm)
-                        {
-                            result.push_back(p);
-                            sm = p;
-                        }
-                    }
-                    else
-                        result.push_back(p);
-                }
-                else if (!sOutside)
-                {
-                    if (IsY)
-                    {
-                        m.x = getIntersectionAxisY(sp, p, limit);
-                        m.y = limit;
-                    }
-                    else
-                    {
-                        m.x = limit;
-                        m.y = getIntersectionAxisX(sp, p, limit);
-                    }
-                    if (!IsY && !IsGreater)
-                    {
-                        if (m != sm)
-                        {
-                            result.push_back(m);
-                            sm = m;
-                        }
-                    }
-                    else
-                        result.push_back(m);
-                }
-                if (IsY && IsGreater)
-                    findClosestWinding(center, sp, p, maxSqDistance, minSqDistance, distance);
-                else if (!IsY && !IsGreater)
-                    signedArea += intCrossProduct2D(sp, p);
-                sp = p;
-                sOutside = pOutside;
-            }
-            if (result.size() < 3)
-                return false;
-            if (!IsY && !IsGreater)
-                clockwise = signedArea >= 0;
-            return true;
-        }
-
-        inline static void clipPolygonForTile(const PointI& center, const QVector<PointI>& polygon,
-            const PointI& topLeft, const PointI& bottomRight, QVector<PointI>& temp, QVector<PointI>& result,
+        inline static void calcPolygonInTile(
+            const PointI& center, const QVector<PointI>& polygon, QVector<PointI>& result,
             const double maxSqDistance, double& minSqDistance, double& distance, bool& clockwise)
         {
-            result.clear();
             auto size = polygon.size();
             if (size < 3)
                 return;
-            size += 4;
-        	temp.clear();
-            temp.reserve(size);
-            if (!clipPolygonAgainstEdge<true, true>(
-                center, polygon, temp, bottomRight.y, maxSqDistance, minSqDistance, distance, clockwise))
-                return;
             result.reserve(size);
-            if (!clipPolygonAgainstEdge<false, true>(
-                center, temp, result, bottomRight.x, maxSqDistance, minSqDistance, distance, clockwise))
+            auto sp = polygon.back();
+            int64_t signedArea = 0;
+            for (const auto p : polygon)
             {
-                result.clear();
-                return;
+                result.push_back(p);
+                if (p == sp)
+                    continue;
+                findClosestWinding(center, sp, p, maxSqDistance, minSqDistance, distance);
+                signedArea += intCrossProduct2D(sp, p);
+                sp = p;
             }
-            temp.clear();
-            if (!clipPolygonAgainstEdge<true, false>(
-                center, result, temp, topLeft.y, maxSqDistance, minSqDistance, distance, clockwise))
-            {
-                result.clear();
-                return;
-            }
-            result.clear();
-            if (!clipPolygonAgainstEdge<false, false>(
-                center, temp, result, topLeft.x, maxSqDistance, minSqDistance, distance, clockwise))
-            {
-                result.clear();
-                return;
-            }
+            clockwise = signedArea >= 0;
         }
 
         // Check if point is not outside the polygon
