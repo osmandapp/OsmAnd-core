@@ -90,6 +90,11 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     if (!ok)
         return false;
 
+    // GLEW is linked statically into every module that uses it, so this copy of its state is
+    // distinct from the host application's. In an OpenGL core profile glGetString(GL_EXTENSIONS)
+    // is unavailable, and without the experimental flag glewInit() leaves most function pointers
+    // NULL even though it reports success (crashes on macOS CGL core-profile contexts).
+    glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_NO_ERROR)
         return false;
     // Silence OpenGL error here, it's inside GLEW, so it's not ours
