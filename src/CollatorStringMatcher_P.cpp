@@ -33,7 +33,5 @@ bool OsmAnd::CollatorStringMatcher_P::startsWith(const QString& _searchInParam, 
 
 QString OsmAnd::CollatorStringMatcher_P::lowercaseAndAlignChars(const QString& fullText)
 {
-    QLocale defaultLocale;
-    QString res = defaultLocale.toLower(fullText);
-    return OsmAnd::SearchAlgorithms::alignChars(res);
+    return OsmAnd::SearchAlgorithms::alignChars(fullText.toLower());
 }
