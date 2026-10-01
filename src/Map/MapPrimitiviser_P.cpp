@@ -378,13 +378,15 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     else
     {
         auto coastlinesWereAdded = false;
+        bool withBrokenCoastline = false;
         if (detailedmapCoastlinesPresent && zoom >= MapPrimitiviser::DetailedLandDataMinZoom)
         {
-            coastlinesWereAdded = getCoastlines(
-                area31, AreaI64(area31), detailedmapCoastlineObjects, polygonizedCoastlineObjects, surfaceType);
+            coastlinesWereAdded = getCoastlines(area31, AreaI64(area31),
+                detailedmapCoastlineObjects, polygonizedCoastlineObjects, surfaceType, &withBrokenCoastline);
         }
         bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
-        if (!coastlinesWereAdded && hasExtraCoastlines && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
+        if (!coastlinesWereAdded && !withBrokenCoastline
+            && hasExtraCoastlines && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
         {
             auto bboxZoom12wide = AreaI64(Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel12));
             bboxZoom12wide.right()++;
@@ -394,7 +396,8 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             bboxZoom12wide.bottom()--;
             QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
             auto extraSurfaceType = MapSurfaceType::Undefined;
-            getCoastlines(area31, bboxZoom12wide, extraCoastlineObjects, polygonizedCoastlines, extraSurfaceType);
+            getCoastlines(area31, bboxZoom12wide,
+                extraCoastlineObjects, polygonizedCoastlines, extraSurfaceType, &withBrokenCoastline);
             if (extraSurfaceType == MapSurfaceType::Undefined)
                 hasExtraCoastlines = false;
             else
@@ -412,8 +415,8 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
                 basemapArea.bottom()++;
                 basemapArea = basemapArea.getEnlargedBy(1ll << (ZoomLevel31 - baseZoom));
             }
-            coastlinesWereAdded =
-                getCoastlines(area31, basemapArea, basemapCoastlineObjects, polygonizedCoastlineObjects, surfaceType);
+            coastlinesWereAdded = getCoastlines(area31, basemapArea,
+                basemapCoastlineObjects, polygonizedCoastlineObjects, surfaceType);
             coastlineMistake = zoom > ObfMapSectionLevel::MaxBasemapZoomLevel && coastlinesWereAdded;
         }
         fillEntireArea = !coastlinesWereAdded;
@@ -2483,7 +2486,8 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
     const AreaI64 coastlineArea31,
     const QList< std::shared_ptr<const MapObject> >& coastlines,
     QList< std::shared_ptr<const MapObject> >& outVectorized,
-    MapSurfaceType& surfaceType)
+    MapSurfaceType& surfaceType,
+    bool* brokenCoastlineFault /* = nullptr */)
 {
     outVectorized.clear();
     bool withCoastlines = false;
@@ -2516,7 +2520,8 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
 
         // Process already polygonized big coastlines
         // (workaround "lake inside the continent")
-        if (!area31.contains(coastline->bbox31))
+        if (coastline->bbox31.left() < topLeft.x || coastline->bbox31.right() > bottomRight.x
+            || coastline->bbox31.top() < topLeft.y || coastline->bbox31.bottom() > bottomRight.y)
         {
             polylineIndices.push_back(idx);
             continue;
@@ -2752,7 +2757,17 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                         windingFull += Utilities::intCrossProduct2D(previousPoint, lastPoint);
                     }
                 }
-                if (!isComplete || polygon.size() < 3)
+                if (!isComplete)
+                {
+                    if (brokenCoastlineFault)
+                    {
+                        *brokenCoastlineFault = true;
+                        outVectorized.clear();
+                        return false;
+                    }
+                    continue;
+                }
+                if (polygon.size() < 3)
                     continue;
                 const auto& first = polygon.front();
                 if (first != polygon.back())
