@@ -37,10 +37,12 @@ namespace OsmAnd
                 const std::shared_ptr<const ResultEntry> &b);
 
         std::shared_ptr<const ResultEntry> justifyResult(
-                QVector<std::shared_ptr<const ResultEntry>>& res) const;
+                QVector<std::shared_ptr<const ResultEntry>>& res,
+                const std::shared_ptr<const IQueryController>& queryController) const;
         QVector<std::shared_ptr<const ResultEntry>> justifyReverseGeocodingSearch(
                 const std::shared_ptr<const ResultEntry> &road,
-                double knownMinBuildingDistance) const;
+                double knownMinBuildingDistance,
+                const std::shared_ptr<const IQueryController>& queryController) const;
         QVector<std::shared_ptr<const ResultEntry>> loadStreetBuildings(
                 const std::shared_ptr<const ResultEntry> road,
                 const std::shared_ptr<const ResultEntry> street) const;

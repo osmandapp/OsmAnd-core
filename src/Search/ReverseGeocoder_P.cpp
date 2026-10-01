@@ -2,6 +2,7 @@
 
 #include "AddressesByNameSearch.h"
 #include "Building.h"
+#include "IQueryController.h"
 #include "Logging.h"
 #include "ObfDataInterface.h"
 #include "Road.h"
@@ -53,7 +54,11 @@ void OsmAnd::ReverseGeocoder_P::performSearch(
         return;
     auto searchPoint = criteria.latLon.isSet() ? *criteria.latLon : Utilities::convert31ToLatLon(*criteria.position31);
     QVector<std::shared_ptr<const ResultEntry>> roads = reverseGeocodeToRoads(searchPoint);
-    std::shared_ptr<const ResultEntry> result = justifyResult(roads);
+    if (queryController && queryController->isAborted())
+        return;
+    std::shared_ptr<const ResultEntry> result = justifyResult(roads, queryController);
+    if (queryController && queryController->isAborted())
+        return;
     newResultEntryCallback(criteria, *result);
 }
 
@@ -158,7 +163,8 @@ QString extractLongestWord(const QStringList &streetNamesUsed)
 
 QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::ReverseGeocoder_P::justifyReverseGeocodingSearch(
         const std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>& road,
-        double knownMinBuildingDistance) const
+        double knownMinBuildingDistance,
+        const std::shared_ptr<const IQueryController>& queryController) const
 {
     QVector<std::shared_ptr<ResultEntry>> streetList;
     QVector<std::shared_ptr<const ResultEntry>> result;
@@ -217,8 +223,11 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
                     }
                 }
             }
-        });
+        }, queryController);
     }
+
+    if (queryController && queryController->isAborted())
+        return result;
 
     if (streetList.isEmpty())
     {
@@ -377,13 +386,16 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
 }
 
 std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeocoder_P::justifyResult(
-        QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>>& res) const
+        QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>>& res,
+        const std::shared_ptr<const IQueryController>& queryController) const
 {
     QVector<std::shared_ptr<const ResultEntry>> complete;
     double minBuildingDistance = 0;
     for (const auto& r : res)
     {
-        auto justified = justifyReverseGeocodingSearch(r, minBuildingDistance);
+        if (queryController && queryController->isAborted())
+            break;
+        auto justified = justifyReverseGeocodingSearch(r, minBuildingDistance, queryController);
         if (!justified.isEmpty())
         {
             double md = justified[0]->getDistance();
