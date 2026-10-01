@@ -45,7 +45,8 @@ namespace OsmAnd
                 const std::shared_ptr<const IQueryController>& queryController) const;
         QVector<std::shared_ptr<const ResultEntry>> loadStreetBuildings(
                 const std::shared_ptr<const ResultEntry> road,
-                const std::shared_ptr<const ResultEntry> street) const;
+                const std::shared_ptr<const ResultEntry> street,
+                const std::shared_ptr<const IQueryController>& queryController) const;
         QVector<std::shared_ptr<const ResultEntry>> reverseGeocodeToRoads(
                 const LatLon searchPoint) const;
     protected:
