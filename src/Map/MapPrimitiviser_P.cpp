@@ -384,9 +384,8 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             coastlinesWereAdded = getCoastlines(area31, AreaI64(area31),
                 detailedmapCoastlineObjects, polygonizedCoastlineObjects, surfaceType, &withBrokenCoastline);
         }
-        bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
-        if (!coastlinesWereAdded && !withBrokenCoastline
-            && hasExtraCoastlines && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
+        bool hasExtraCoastlines = !withBrokenCoastline && !extraCoastlineObjects.isEmpty();
+        if (!coastlinesWereAdded && hasExtraCoastlines && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
         {
             auto bboxZoom12wide = AreaI64(Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel12));
             bboxZoom12wide.right()++;
@@ -417,7 +416,8 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             }
             coastlinesWereAdded = getCoastlines(area31, basemapArea,
                 basemapCoastlineObjects, polygonizedCoastlineObjects, surfaceType);
-            coastlineMistake = zoom > ObfMapSectionLevel::MaxBasemapZoomLevel && coastlinesWereAdded;
+            coastlineMistake = coastlinesWereAdded && !withBrokenCoastline
+                && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel;
         }
         fillEntireArea = !coastlinesWereAdded;
     }
