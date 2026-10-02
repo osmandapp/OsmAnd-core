@@ -2536,13 +2536,11 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         const auto mapObject = std::make_shared<CoastlineMapObject>();
         mapObject->points31 = qMove(polygon);
         mapObject->isArea = coastline->isArea;
+        mapObject->attributeIds.push_back(isClockwise
+            ? MapObject::defaultAttributeMapping->naturalCoastlineAttributeId
+            : MapObject::defaultAttributeMapping->naturalLandAttributeId);
         if (isClockwise)
-        {
-            mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineAttributeId);
             withCoastlines = true;
-        }
-        else
-            mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalLandAttributeId);
         outVectorized.push_back(mapObject);
     }
 
@@ -2591,9 +2589,10 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
 
         // Combine polylines into polygons
         const auto tillSide = fromSide + 4;
-        for (int border = fromSide; border < tillSide; border++)
+        for (int border = fromSide; border <= tillSide; border++)
         {
-            const auto beginSide = border % 4;
+            bool fromInside = border == tillSide;
+            const auto beginSide = fromInside ? 4 : border % 4;
             auto& polylines = coastlineGroups[beginSide];
             while (!polylines.empty())
             {
@@ -2607,6 +2606,16 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                 auto startSideFull = beginSide;
                 auto lastPoint = polygon.back();
                 auto endSide = Utilities::computeBorderCode(lastPoint, topLeft, bottomRight);
+                if (fromInside && endSide != 4)
+                {
+                    if (brokenCoastlineFault)
+                    {
+                        *brokenCoastlineFault = true;
+                        outVectorized.clear();
+                        return false;
+                    }
+                    continue;
+                }
                 auto finishPoint = lastPoint;
                 auto finishSide = endSide;
                 int prevSide;
@@ -2658,6 +2667,11 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                         endSide = nextSide;
                         finishPoint = lastPoint;
                         finishSide = endSide;
+                    }
+                    if (fromInside)
+                    {
+                        isComplete = endSide == 4 && polygon.size() > 3 && polygon.front() == polygon.back();
+                        break;
                     }
                     if (endSide == 4)
                         break;
@@ -2765,6 +2779,20 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                         outVectorized.clear();
                         return false;
                     }
+                    continue;
+                }
+                if (fromInside)
+                {
+                    const bool isClockwise = winding >= 0;
+                    const auto mapObject = std::make_shared<CoastlineMapObject>();
+                    mapObject->points31 = qMove(polygon);
+                    mapObject->isArea = true;
+                    mapObject->attributeIds.push_back(isClockwise
+                        ? MapObject::defaultAttributeMapping->naturalCoastlineAttributeId
+                        : MapObject::defaultAttributeMapping->naturalLandAttributeId);
+                    if (isClockwise)
+                        withCoastlines = true;
+                    outVectorized.push_back(mapObject);
                     continue;
                 }
                 if (polygon.size() < 3)
