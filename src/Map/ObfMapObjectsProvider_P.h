@@ -189,6 +189,9 @@ namespace OsmAnd
             QWaitCondition loadedCondition;
         };
         const ZoomLevel _coastlineZoom = ZoomLevel::ZoomLevel12;
+        // Coastlines of the zoom 12 tile are read from the zoom 13 level: the simplified zoom 11-12 geometry
+        // self-intersects and gives the wrong side of the nearest coastline to open sea tiles
+        const ZoomLevel _coastlineGeometryZoom = ZoomLevel::ZoomLevel13;
         mutable TiledEntriesCollection<TileSharedEntry> _coastlineReferences;
 
         typedef OsmAnd::Link<ObfMapObjectsProvider_P*> Link;
