@@ -2589,7 +2589,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
 
         // Combine polylines into polygons
         const auto tillSide = fromSide + 4;
-        for (int border = fromSide; border <= tillSide; border++)
+        for (int border = fromSide; border < tillSide; border++)
         {
             bool fromInside = border == tillSide;
             const auto beginSide = fromInside ? 4 : border % 4;
