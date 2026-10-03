@@ -2267,7 +2267,7 @@ namespace OsmAnd
             result.reserve(size);
             auto sp = polygon.back();
             int64_t signedArea = 0;
-            for (const auto p : polygon)
+            for (const auto& p : polygon)
             {
                 result.push_back(p);
                 if (p == sp)
