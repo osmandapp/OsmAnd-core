@@ -2490,6 +2490,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
     bool* brokenCoastlineFault /* = nullptr */)
 {
     outVectorized.clear();
+    const bool withoutSurfaceType = area31.left() == coastlineArea31.left();
     bool withCoastlines = false;
     QVector<int> polylineIndices;
     polylineIndices.reserve(coastlines.size());
@@ -2497,13 +2498,6 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
     const PointI topLeft(area31.left() & mask, area31.top() & mask);
     const PointI bottomRight(
         area31.safeEnlarge(area31.right(), 31) & mask, area31.safeEnlarge(area31.bottom(), 31) & mask);
-    const PointI center(topLeft.x + (bottomRight.x - topLeft.x) / 2, topLeft.y + (bottomRight.y - topLeft.y) / 2);
-    const auto radius = qMin(
-        qMin(center.x - coastlineArea31.left(), coastlineArea31.right() - center.x),
-        qMin(center.y - coastlineArea31.top(), coastlineArea31.bottom() - center.y)) & mask;
-    const auto maxSqDistance = static_cast<double>(radius) * radius;
-    auto minSqDistance = std::numeric_limits<double>::max();
-    double distance = 0.0;
     int idx = 0;
     auto cend = coastlines.cend();
     for (auto it = coastlines.cbegin(); it != cend; it++, idx++)
@@ -2530,7 +2524,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         // Get already polygonized coastline
         QVector<PointI> polygon;
         bool isClockwise;
-        Utilities::calcPolygonInTile(center, points, polygon, maxSqDistance, minSqDistance, distance, isClockwise);
+        Utilities::calcPolygonInTile(points, polygon, isClockwise);
         if (polygon.size() < 4)
             continue;
         const auto mapObject = std::make_shared<CoastlineMapObject>();
@@ -2546,13 +2540,38 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
 
     if (!polylineIndices.isEmpty())
     {
+        PointI center;
+        int64_t maxSqDistance = 0;
+        int64_t minSqDistance = INT64_MAX;
+        double distance = 0.0;
+        if (!withoutSurfaceType)
+        {
+            center = PointI(topLeft.x + (bottomRight.x - topLeft.x) / 2,
+                topLeft.y + (bottomRight.y - topLeft.y) / 2);
+            const auto radius = qMin(
+                qMin(center.x - coastlineArea31.left(), coastlineArea31.right() - center.x),
+                qMin(center.y - coastlineArea31.top(), coastlineArea31.bottom() - center.y)) & mask;
+            maxSqDistance = radius * radius;
+        }
+
         QVector<Utilities::Coastline> coastlineGroups[5];
         QVector<PointI> finishPoints[5];
 
-        for (int i : polylineIndices)
+        if (withoutSurfaceType)
         {
-            Utilities::clipCoastlineForTile(center, coastlines[i]->points31, topLeft, bottomRight,
-                coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+            for (int i : polylineIndices)
+            {
+                Utilities::clipCoastlineForTile<false>(center, coastlines[i]->points31, topLeft, bottomRight,
+                    coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+            }
+        }
+        else
+        {
+            for (int i : polylineIndices)
+            {
+                Utilities::clipCoastlineForTile<true>(center, coastlines[i]->points31, topLeft, bottomRight,
+                    coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+            }
         }
 
         // Find possible crossed coastline and prepare to start a polygon from it
@@ -2812,10 +2831,9 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                 outVectorized.push_back(mapObject);
             }
         }
+        if (!withoutSurfaceType && minSqDistance < maxSqDistance && distance != 0.0)
+            surfaceType = distance < 0.0 ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
     }
-
-    if (minSqDistance < maxSqDistance && distance != 0.0)
-        surfaceType = distance < 0.0 ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
 
     if (outVectorized.isEmpty())
         return false;

@@ -1991,9 +1991,14 @@ namespace OsmAnd
                     .arg(color)));
         }
 
+        inline static int64_t intCrossProduct2D(int64_t p0X, int64_t p0Y, int64_t p1X, int64_t p1Y)
+        {
+            return p0X * p1Y - p1X * p0Y;
+        }
+
         inline static int64_t intCrossProduct2D(const PointI& p0, const PointI& p1)
         {
-            return static_cast<int64_t>(p0.x) * p1.y - static_cast<int64_t>(p1.x) * p0.y;
+            return intCrossProduct2D(p0.x, p0.y, p1.x, p1.y);
         }
 
         inline static int computeBorderCode(const PointI& p, const PointI& tl, const PointI& br)
@@ -2058,27 +2063,27 @@ namespace OsmAnd
 
         inline static void findClosestWinding(
             const PointI& center, const PointI& p0, const PointI& p1,
-            const double maxSqDistance, double& minSqDistance, double& distance)
+            const int64_t maxSqDistance, int64_t& minSqDistance, double& distance)
         {
-            const auto aX = static_cast<int64_t>(p1.x) - p0.x;
-            const auto aY = static_cast<int64_t>(p1.y) - p0.y;
-            const auto b = center - p0;
-            const auto sqLen = static_cast<double>(aX * aX + aY * aY);
-            if (sqLen == 0.0)
+            const auto vX = static_cast<int64_t>(p1.x) - p0.x;
+            const auto vY = static_cast<int64_t>(p1.y) - p0.y;
+            const auto sqLength = static_cast<double>(vX * vX + vY * vY);
+            if (sqLength == 0.0)
                 return;
-            const auto t = qBound(0.0, (aX * b.x + aY * b.y) / sqLen, 1.0);
-            const auto dX = center.x - t * aX - p0.x;
-            const auto dY = center.y - t * aY - p0.y;
-            const auto sqDist = dX * dX + dY * dY;
-            if (sqDist >= maxSqDistance)
+            const auto t = qBound(0.0, (vX * (center.x - p0.x) + vY * (center.y - p0.y)) / sqLength, 1.0);
+            const auto dX = static_cast<int64_t>(center.x) - qRound(t * vX) - p0.x;
+            const auto dY = static_cast<int64_t>(center.y) - qRound(t * vY) - p0.y;
+            const auto sqDistance = dX * dX + dY * dY;
+            if (sqDistance >= maxSqDistance || sqDistance > minSqDistance)
                 return;
-            if (sqDist < minSqDistance * 0.9999999999) 
+            const auto d = intCrossProduct2D(vX, vY, dX, dY) / std::sqrt(sqLength);
+            if (sqDistance < minSqDistance)
             {
-                minSqDistance = sqDist;
-                distance = (static_cast<double>(aX) * b.y - static_cast<double>(aY) * b.x) / std::sqrt(sqLen);
+                minSqDistance = sqDistance;
+                distance = d;
             }
-            else if (sqDist <= minSqDistance * 1.0000000001)
-                distance += (static_cast<double>(aX) * b.y - static_cast<double>(aY) * b.x) / std::sqrt(sqLen);
+            else
+                distance += d;
         }
 
         struct Coastline
@@ -2088,9 +2093,10 @@ namespace OsmAnd
             int proximity;
         };
 
+        template<bool calculateClosestWinding>
         inline static void clipCoastlineForTile(const PointI& center, const QVector<PointI>& coastline,
             const PointI& topLeft, const PointI& bottomRight, QVector<Coastline>* result,
-            QVector<PointI>* finishPoints, const double maxSqDistance, double& minSqDistance, double& distance)
+            QVector<PointI>* finishPoints, const int64_t maxSqDistance, int64_t& minSqDistance, double& distance)
         {
             if (coastline.size() < 2)
                 return;
@@ -2098,6 +2104,8 @@ namespace OsmAnd
             segment.reserve(coastline.size());
             PointI prevPoint;
             PointI sm(INT32_MIN, INT32_MIN);
+            PointI windingPoints[3];
+            int windingPointCount = 0;
             int prevCode;
             bool next = false;
             int64_t signedArea = 0;
@@ -2177,12 +2185,69 @@ namespace OsmAnd
                         signedArea = 0;
                         segment.reserve(coastline.size());
                     }
-                    findClosestWinding(center, prevPoint, point, maxSqDistance, minSqDistance, distance);
+                    if (calculateClosestWinding)
+                    {
+                        if (windingPointCount == 3)
+                        {
+                            const auto& oldest = windingPoints[0];
+                            const auto& middle = windingPoints[1];
+                            const auto& last = windingPoints[2];
+                            bool intersects = false;
+                            if (qMax(qMin(oldest.x, middle.x), qMin(last.x, point.x))
+                                    <= qMin(qMax(oldest.x, middle.x), qMax(last.x, point.x))
+                                && qMax(qMin(oldest.y, middle.y), qMin(last.y, point.y))
+                                    <= qMin(qMax(oldest.y, middle.y), qMax(last.y, point.y)))
+                            {
+                                const auto first = middle - oldest;
+                                const auto offset = last - oldest;
+                                const auto current = point - last;
+                                const auto side0 = intCrossProduct2D(first.x, first.y, offset.x, offset.y);
+                                const auto side1 = intCrossProduct2D(
+                                    first.x, first.y, offset.x + current.x, offset.y + current.y);
+                                if ((side0 <= 0 && side1 >= 0) || (side0 >= 0 && side1 <= 0))
+                                {
+                                    const auto side2 = intCrossProduct2D(current.x, current.y, -offset.x, -offset.y);
+                                    const auto side3 = intCrossProduct2D(
+                                        current.x, current.y, first.x - offset.x, first.y - offset.y);
+                                    intersects = (side2 <= 0 && side3 >= 0) || (side2 >= 0 && side3 <= 0);
+                                }
+                            }
+                            if (intersects)
+                            {
+                                if (point != oldest)
+                                {
+                                    windingPointCount = 2;
+                                    windingPoints[1] = point;
+                                }
+                                else
+                                    windingPointCount = 1;
+                            }
+                            else
+                            {
+                                findClosestWinding(center, oldest, middle, maxSqDistance, minSqDistance, distance);
+                                windingPoints[0] = middle;
+                                windingPoints[1] = last;
+                                windingPoints[2] = point;
+                            }
+                        }
+                        else
+                            windingPoints[windingPointCount++] = point;
+                    }
                 }
                 else
+                {
                     next = true;
+                    if (calculateClosestWinding)
+                        windingPoints[windingPointCount++] = point;
+                }
                 prevPoint = point;
                 prevCode = nextCode;
+            }
+            if (calculateClosestWinding)
+            {
+                for (int i = 1; i < windingPointCount; i++)
+                    findClosestWinding(center, windingPoints[i - 1], windingPoints[i],
+                        maxSqDistance, minSqDistance, distance);
             }
             if (segment.size() > 1)
             {
@@ -2194,9 +2259,7 @@ namespace OsmAnd
         }
 
 
-        inline static void calcPolygonInTile(
-            const PointI& center, const QVector<PointI>& polygon, QVector<PointI>& result,
-            const double maxSqDistance, double& minSqDistance, double& distance, bool& clockwise)
+        inline static void calcPolygonInTile(const QVector<PointI>& polygon, QVector<PointI>& result, bool& clockwise)
         {
             auto size = polygon.size();
             if (size < 3)
@@ -2209,7 +2272,6 @@ namespace OsmAnd
                 result.push_back(p);
                 if (p == sp)
                     continue;
-                findClosestWinding(center, sp, p, maxSqDistance, minSqDistance, distance);
                 signedArea += intCrossProduct2D(sp, p);
                 sp = p;
             }
