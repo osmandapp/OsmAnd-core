@@ -2071,12 +2071,12 @@ namespace OsmAnd
             if (sqLength == 0.0)
                 return;
             const auto t = qBound(0.0, (vX * (center.x - p0.x) + vY * (center.y - p0.y)) / sqLength, 1.0);
-            const auto dX = static_cast<int64_t>(center.x) - qRound(t * vX) - p0.x;
-            const auto dY = static_cast<int64_t>(center.y) - qRound(t * vY) - p0.y;
-            const auto sqDistance = dX * dX + dY * dY;
+            const auto dX = center.x - p0.x - t * vX;
+            const auto dY = center.y - p0.y - t * vY;
+            const auto sqDistance = qRound64(dX * dX + dY * dY);
             if (sqDistance >= maxSqDistance || sqDistance > minSqDistance)
                 return;
-            const auto d = intCrossProduct2D(vX, vY, dX, dY) / std::sqrt(sqLength);
+            const auto d = intCrossProduct2D(vX, vY, qRound64(dX), qRound64(dY)) / std::sqrt(sqLength);
             if (sqDistance < minSqDistance)
             {
                 minSqDistance = sqDistance;
@@ -2084,6 +2084,37 @@ namespace OsmAnd
             }
             else
                 distance += d;
+        }
+
+        inline static bool removeWindingLoop(const PointI& point, PointI* windingPoints, int& windingPointCount)
+        {
+            int i = windingPointCount - 3;
+            const auto& oldest = windingPoints[i++];
+            const auto& middle = windingPoints[i++];
+            const auto& last = windingPoints[i++];
+            if (qMax(qMin(oldest.x, middle.x), qMin(last.x, point.x))
+                    > qMin(qMax(oldest.x, middle.x), qMax(last.x, point.x))
+                || qMax(qMin(oldest.y, middle.y), qMin(last.y, point.y))
+                    > qMin(qMax(oldest.y, middle.y), qMax(last.y, point.y)))
+                return false;
+            const auto first = middle - oldest;
+            const auto offset = last - oldest;
+            const auto current = point - last;
+            const auto side0 = intCrossProduct2D(first.x, first.y, offset.x, offset.y);
+            const auto side1 = intCrossProduct2D(first.x, first.y, offset.x + current.x, offset.y + current.y);
+            if ((side0 <= 0 && side1 >= 0) || (side0 >= 0 && side1 <= 0))
+            {
+                const auto side2 = intCrossProduct2D(current.x, current.y, -offset.x, -offset.y);
+                const auto side3 = intCrossProduct2D(current.x, current.y, first.x - offset.x, first.y - offset.y);
+                if ((side2 <= 0 && side3 >= 0) || (side2 >= 0 && side3 <= 0))
+                {
+                    windingPointCount -= 2;
+                    if (point != oldest)
+                        windingPoints[windingPointCount++] = point;
+                    return true;
+                }
+            }
+            return false;
         }
 
         struct Coastline
@@ -2104,7 +2135,7 @@ namespace OsmAnd
             segment.reserve(coastline.size());
             PointI prevPoint;
             PointI sm(INT32_MIN, INT32_MIN);
-            PointI windingPoints[3];
+            PointI windingPoints[4];
             int windingPointCount = 0;
             int prevCode;
             bool next = false;
@@ -2187,51 +2218,20 @@ namespace OsmAnd
                     }
                     if (calculateClosestWinding)
                     {
-                        if (windingPointCount == 3)
+                        if (windingPointCount < 3 || !removeWindingLoop(point, windingPoints, windingPointCount))
                         {
-                            const auto& oldest = windingPoints[0];
-                            const auto& middle = windingPoints[1];
-                            const auto& last = windingPoints[2];
-                            bool intersects = false;
-                            if (qMax(qMin(oldest.x, middle.x), qMin(last.x, point.x))
-                                    <= qMin(qMax(oldest.x, middle.x), qMax(last.x, point.x))
-                                && qMax(qMin(oldest.y, middle.y), qMin(last.y, point.y))
-                                    <= qMin(qMax(oldest.y, middle.y), qMax(last.y, point.y)))
+                            if (windingPointCount > 3)
                             {
-                                const auto first = middle - oldest;
-                                const auto offset = last - oldest;
-                                const auto current = point - last;
-                                const auto side0 = intCrossProduct2D(first.x, first.y, offset.x, offset.y);
-                                const auto side1 = intCrossProduct2D(
-                                    first.x, first.y, offset.x + current.x, offset.y + current.y);
-                                if ((side0 <= 0 && side1 >= 0) || (side0 >= 0 && side1 <= 0))
-                                {
-                                    const auto side2 = intCrossProduct2D(current.x, current.y, -offset.x, -offset.y);
-                                    const auto side3 = intCrossProduct2D(
-                                        current.x, current.y, first.x - offset.x, first.y - offset.y);
-                                    intersects = (side2 <= 0 && side3 >= 0) || (side2 >= 0 && side3 <= 0);
-                                }
-                            }
-                            if (intersects)
-                            {
-                                if (point != oldest)
-                                {
-                                    windingPointCount = 2;
-                                    windingPoints[1] = point;
-                                }
-                                else
-                                    windingPointCount = 1;
+                                findClosestWinding(center, windingPoints[0], windingPoints[1],
+                                    maxSqDistance, minSqDistance, distance);
+                                windingPoints[0] = windingPoints[1];
+                                windingPoints[1] = windingPoints[2];
+                                windingPoints[2] = windingPoints[3];
+                                windingPoints[3] = point;
                             }
                             else
-                            {
-                                findClosestWinding(center, oldest, middle, maxSqDistance, minSqDistance, distance);
-                                windingPoints[0] = middle;
-                                windingPoints[1] = last;
-                                windingPoints[2] = point;
-                            }
+                                windingPoints[windingPointCount++] = point;
                         }
-                        else
-                            windingPoints[windingPointCount++] = point;
                     }
                 }
                 else
