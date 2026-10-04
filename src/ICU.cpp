@@ -842,7 +842,8 @@ OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::ICU::ccompare(const QString& _s1, c
 
 OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::toNFC(const QString& s)
 {
-    if (!g_pIcuNFCNormalizer)
+    QReadLocker icuReadLocker(&icuResourcesLock);
+    if (!g_icuInitialized || !g_pIcuNFCNormalizer)
         return s;
     UErrorCode status = U_ZERO_ERROR;
     UnicodeString input = qStrToUniStr(s);
