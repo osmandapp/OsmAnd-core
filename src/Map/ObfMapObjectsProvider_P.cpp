@@ -511,7 +511,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             &loadedCoastlineMapObjects,
             &coastlineTileSurfaceType,
             owner->environment,
-            _coastlineZoom,
+            _coastlineGeometryZoom,
             &coastlineTileBBox31,
             coastlineObjectsFilteringFunctor,
             nullptr,
