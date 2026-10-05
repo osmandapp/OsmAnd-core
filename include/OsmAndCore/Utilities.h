@@ -2106,13 +2106,18 @@ namespace OsmAnd
             int windingPointCount = 0;
             int headPointsToSkip = 0;
             int pointsForWinding = size - 1;
-            const bool isCycle = coastline.front() == coastline.back();
-            if (calculateClosestWinding && isCycle)
+            bool isCycle = false;
+            bool oneIsTested = false;
+            if (calculateClosestWinding)
             {
-                windingPoints[0] = coastline[size - 3];
-                windingPoints[1] = coastline[size - 2];
-                windingPointCount = 2;
-                headPointsToSkip = 2;
+                isCycle = coastline.front() == coastline.back();
+                if (isCycle)
+                {
+                    windingPoints[0] = coastline[size - 3];
+                    windingPoints[1] = coastline[size - 2];
+                    windingPointCount = 2;
+                    headPointsToSkip = 2;
+                }
             }
             int prevCode;
             bool next = false;
@@ -2254,6 +2259,7 @@ namespace OsmAnd
                                     headPointsToSkip--;
                                 else
                                 {
+                                    oneIsTested = true;
                                     findClosestWinding(center, windingPoints[0], windingPoints[1],
                                         maxSqDistance, minSqDistance, distance);
                                 }
@@ -2276,7 +2282,7 @@ namespace OsmAnd
                 prevPoint = point;
                 prevCode = nextCode;
             }
-            if (calculateClosestWinding)
+            if (calculateClosestWinding && (!isCycle || oneIsTested || windingPointCount > 2))
             {
                 for (int i = 1; i < windingPointCount; i++)
                     findClosestWinding(center, windingPoints[i - 1], windingPoints[i],
