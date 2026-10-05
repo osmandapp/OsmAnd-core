@@ -2509,7 +2509,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
             polylineIndices.push_back(idx);
             continue;
         }
-        if (points.size() < 3)
+        if (points.size() < 4)
             continue;
 
         // Process already polygonized big coastlines
@@ -2525,8 +2525,6 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         QVector<PointI> polygon;
         bool isClockwise;
         Utilities::calcPolygonInTile(points, polygon, isClockwise);
-        if (polygon.size() < 4)
-            continue;
         const auto mapObject = std::make_shared<CoastlineMapObject>();
         mapObject->points31 = qMove(polygon);
         mapObject->isArea = coastline->isArea;
