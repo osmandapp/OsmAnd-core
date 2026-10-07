@@ -2,7 +2,7 @@
 #define _OSMAND_CORE_MAP_PRIMITIVISER_P_H_
 
 #include "stdlib_common.h"
-
+#include <deque>
 #include "QtExtensions.h"
 #include <QList>
 
