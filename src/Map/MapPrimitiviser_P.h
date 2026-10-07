@@ -146,6 +146,7 @@ namespace OsmAnd
                                 filteredPoints[filteredPointCount - 1], point) : PointI(-1, -1);
                             if (interPoint.x >= 0)
                             {
+                                const auto oldest = filteredPoints[filteredPointCount - 3];
                                 if (isCycle && headPointsToSkip > 0)
                                 {
                                     if (filteredPointCount > 3)
@@ -159,9 +160,8 @@ namespace OsmAnd
                                         headPointsToSkip = 0;
                                     }
                                 }
-                                filteredPointCount--;
-                                filteredPoints[filteredPointCount - 1] = interPoint;
-                                if (point != interPoint)
+                                filteredPointCount -= 2;
+                                if (point != oldest)
                                     filteredPoints[filteredPointCount++] = point;
                             }
                             else if (filteredPointCount > 3)
