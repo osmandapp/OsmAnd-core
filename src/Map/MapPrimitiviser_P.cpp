@@ -2522,100 +2522,95 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         const auto& back = points.back();
         if (front != back)
         {
-            if (withSurfaceType)
+            // Gather segment sequences to use them when searching for possible intersections
+            const auto& tailIt = tails.find(front);
+            if (tailIt != tails.end())
             {
-                // Gather segment sequences to use them when searching for possible intersections
-                const auto& tailIt = tails.find(front);
-                if (tailIt != tails.end())
+                const auto start = tailIt.value();
+                const auto& headIt = heads.find(start);
+                if (headIt != heads.end())
                 {
-                    const auto start = tailIt.value();
-                    const auto& headIt = heads.find(start);
-                    if (headIt != heads.end())
+                    auto value = headIt.value().first;
+                    if (value.x < 0)
                     {
-                        auto value = headIt.value().first;
-                        if (value.x < 0)
-                        {
-                            const auto i = -value.x - 1;
-                            sequences[i].push_back(idx);
-                            sizes[i] += points.size() - 1;
-                        }
-                        else
-                        {
-                            sequences.push_back(qMove(std::deque<int>({value.x, idx})));
-                            sizes.push_back(value.y + points.size() - 1);
-                            value.x = -sequences.size();
-                            (*headIt).first.x = value.x;
-                        }
-                        tails.erase(tailIt);
-                        const auto& hIt = heads.find(back);
-                        if (hIt != heads.end() && hIt != headIt)
-                        {
-                            const auto& head = hIt.value();
-                            const auto end = head.second;
-                            const auto& tIt = tails.find(end);
-                            if (tIt != tails.end())
-                                *tIt = start;
-                            (*headIt).second = end;
-                            const auto v = head.first;
-                            const auto s = -v.x - 1;
-                            const auto d = -value.x - 1;
-                            if (v.x < 0)
-                            {
-                                auto& src = sequences[s];
-                                auto& dst = sequences[d];
-                                dst.insert(dst.end(), src.begin(), src.end());
-                                src.clear();
-                                sizes[d] += sizes[s] - 1;
-                            }
-                            else
-                            {
-                                sequences[d].push_back(v.x);
-                                sizes[d] += v.y - 1;
-                            }
-                            heads.erase(hIt);
-                        }
-                        else
-                        {
-                            (*headIt).second = back;
-                            tails.insert(back, start);
-                        }
-                    }
-                }
-                else
-                {
-                    const auto& headIt = heads.find(back);
-                    if (headIt != heads.end())
-                    {
-                        const auto& head = headIt.value();
-                        const auto end = head.second;
-                        const auto& tailIt = tails.find(end);
-                        if (tailIt != tails.end())
-                            *tailIt = front;
-                        auto value = head.first;
-                        if (value.x < 0)
-                        {
-                            const auto i = -value.x - 1;
-                            sequences[i].push_front(idx);
-                            sizes[i] += points.size() - 1;
-                        }
-                        else
-                        {
-                            sequences.push_back(qMove(std::deque<int>({idx, value.x})));
-                            sizes.push_back(value.y + points.size() - 1);
-                            value.x = -sequences.size();
-                        }
-                        heads.erase(headIt);
-                        heads.insert(front, QPair<PointI, PointI>(value, end));
+                        const auto i = -value.x - 1;
+                        sequences[i].push_back(idx);
+                        sizes[i] += points.size() - 1;
                     }
                     else
                     {
-                        heads.insert(front, QPair<PointI, PointI>(PointI(idx, points.size()), back));
-                        tails.insert(back, front);
+                        sequences.push_back(qMove(std::deque<int>({value.x, idx})));
+                        sizes.push_back(value.y + points.size() - 1);
+                        value.x = -sequences.size();
+                        (*headIt).first.x = value.x;
+                    }
+                    tails.erase(tailIt);
+                    const auto& hIt = heads.find(back);
+                    if (hIt != heads.end() && hIt != headIt)
+                    {
+                        const auto& head = hIt.value();
+                        const auto end = head.second;
+                        const auto& tIt = tails.find(end);
+                        if (tIt != tails.end())
+                            *tIt = start;
+                        (*headIt).second = end;
+                        const auto v = head.first;
+                        const auto s = -v.x - 1;
+                        const auto d = -value.x - 1;
+                        if (v.x < 0)
+                        {
+                            auto& src = sequences[s];
+                            auto& dst = sequences[d];
+                            dst.insert(dst.end(), src.begin(), src.end());
+                            src.clear();
+                            sizes[d] += sizes[s] - 1;
+                        }
+                        else
+                        {
+                            sequences[d].push_back(v.x);
+                            sizes[d] += v.y - 1;
+                        }
+                        heads.erase(hIt);
+                    }
+                    else
+                    {
+                        (*headIt).second = back;
+                        tails.insert(back, start);
                     }
                 }
-                continue;
             }
-            polylineIndices.push_back(idx);
+            else
+            {
+                const auto& headIt = heads.find(back);
+                if (headIt != heads.end())
+                {
+                    const auto& head = headIt.value();
+                    const auto end = head.second;
+                    const auto& tailIt = tails.find(end);
+                    if (tailIt != tails.end())
+                        *tailIt = front;
+                    auto value = head.first;
+                    if (value.x < 0)
+                    {
+                        const auto i = -value.x - 1;
+                        sequences[i].push_front(idx);
+                        sizes[i] += points.size() - 1;
+                    }
+                    else
+                    {
+                        sequences.push_back(qMove(std::deque<int>({idx, value.x})));
+                        sizes.push_back(value.y + points.size() - 1);
+                        value.x = -sequences.size();
+                    }
+                    heads.erase(headIt);
+                    heads.insert(front, QPair<PointI, PointI>(value, end));
+                }
+                else
+                {
+                    heads.insert(front, QPair<PointI, PointI>(PointI(idx, points.size()), back));
+                    tails.insert(back, front);
+                }
+            }
             continue;
         }
         if (points.size() < 4)
@@ -2664,34 +2659,35 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         QVector<Coastline> coastlineGroups[5];
         QVector<PointI> finishPoints[5];
 
-        if (withSurfaceType)
+        for (int i : polylineIndices)
         {
-            for (int i : polylineIndices)
-            {
+            if (withSurfaceType)
                 clipCoastlineForTile<true>(i, 0, coastlines, center, topLeft, bottomRight,
                     coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
-            }
-            for (const auto& head : constOf(heads))
-            {
-                if (head.first.x >= 0)
-                {
-                    clipCoastlineForTile<true>(head.first.x, head.first.y, coastlines, center,
-                        topLeft, bottomRight, coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
-                }
-                else
-                {
-                    const auto i = -head.first.x - 1;
-                    clipCoastlinesForTile<true>(sequences[i], sizes[i], coastlines, center,
-                        topLeft, bottomRight, coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
-                }
-            }
-        }
-        else
-        {
-            for (int i : polylineIndices)
-            {
+            else
                 clipCoastlineForTile<false>(i, 0, coastlines, center, topLeft, bottomRight,
                     coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+        }
+        for (const auto& head : constOf(heads))
+        {
+            if (head.first.x >= 0)
+            {
+                if (withSurfaceType)
+                    clipCoastlineForTile<true>(head.first.x, head.first.y, coastlines, center,
+                        topLeft, bottomRight, coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+                else
+                    clipCoastlineForTile<false>(head.first.x, head.first.y, coastlines, center,
+                        topLeft, bottomRight, coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+            }
+            else
+            {
+                const auto i = -head.first.x - 1;
+                if (withSurfaceType)
+                    clipCoastlinesForTile<true>(sequences[i], sizes[i], coastlines, center,
+                        topLeft, bottomRight, coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+                else
+                    clipCoastlinesForTile<false>(sequences[i], sizes[i], coastlines, center,
+                        topLeft, bottomRight, coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
             }
         }
 
