@@ -40,6 +40,16 @@
 #define MAX_POLYGON_ORDER_IN_POLYGONS_LIST 10
 #define MIN_POLYLINE_ORDER_IN_POLYLINES_LIST (MAX_POLYGON_ORDER_IN_POLYGONS_LIST + 1)
 
+namespace OsmAnd
+{
+    inline uint qHash(const PointI& p, uint seed = 0) Q_DECL_NOTHROW
+    {
+        const auto key = static_cast<quint64>(static_cast<quint32>(p.x))
+            | (static_cast<quint64>(static_cast<quint32>(p.y)) << 32);
+        return ::qHash(key, seed);
+    }
+}
+
 OsmAnd::MapPrimitiviser_P::MapPrimitiviser_P(MapPrimitiviser* const owner_)
     : owner(owner_)
 {
@@ -387,15 +397,15 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         bool hasExtraCoastlines = !withBrokenCoastline && !extraCoastlineObjects.isEmpty();
         if (!coastlinesWereAdded && hasExtraCoastlines && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
         {
-            auto bboxZoom12wide = AreaI64(Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel12));
-            bboxZoom12wide.right()++;
-            bboxZoom12wide.bottom()++;
-            bboxZoom12wide = bboxZoom12wide.getEnlargedBy(bboxZoom12wide.width() / 2);
-            bboxZoom12wide.right()--;
-            bboxZoom12wide.bottom()--;
+            auto bboxZoom10wide = AreaI64(Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel10));
+            bboxZoom10wide.right()++;
+            bboxZoom10wide.bottom()++;
+            bboxZoom10wide = bboxZoom10wide.getEnlargedBy(bboxZoom10wide.width() / 2);
+            bboxZoom10wide.right()--;
+            bboxZoom10wide.bottom()--;
             QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
             auto extraSurfaceType = MapSurfaceType::Undefined;
-            getCoastlines(area31, bboxZoom12wide,
+            getCoastlines(area31, bboxZoom10wide,
                 extraCoastlineObjects, polygonizedCoastlines, extraSurfaceType, &withBrokenCoastline);
             if (extraSurfaceType == MapSurfaceType::Undefined)
                 hasExtraCoastlines = false;
@@ -2484,16 +2494,20 @@ OsmAnd::MapPrimitiviser_P::Context::Context(
 bool OsmAnd::MapPrimitiviser_P::getCoastlines(
     const AreaI area31,
     const AreaI64 coastlineArea31,
-    const QList< std::shared_ptr<const MapObject> >& coastlines,
-    QList< std::shared_ptr<const MapObject> >& outVectorized,
+    const QList<std::shared_ptr<const MapObject>>& coastlines,
+    QList<std::shared_ptr<const MapObject>>& outVectorized,
     MapSurfaceType& surfaceType,
     bool* brokenCoastlineFault /* = nullptr */)
 {
     outVectorized.clear();
-    const bool withoutSurfaceType = area31.left() == coastlineArea31.left();
+    const bool withSurfaceType = area31.left() != coastlineArea31.left();
     bool withCoastlines = false;
     QVector<int> polylineIndices;
     polylineIndices.reserve(coastlines.size());
+    QHash<PointI, QPair<PointI, PointI>> heads;
+    QHash<PointI, PointI> tails;
+    QVector<std::deque<int>> sequences;
+    QVector<int> sizes;
     const auto mask = static_cast<uint32_t>(-1) << 5;
     const PointI topLeft(area31.left() & mask, area31.top() & mask);
     const PointI bottomRight(
@@ -2504,8 +2518,103 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
     {
         const auto& coastline = *it;
         const auto& points = coastline->points31;
-        if (points.front() != points.back())
+        const auto& front = points.front();
+        const auto& back = points.back();
+        if (front != back)
         {
+            if (withSurfaceType)
+            {
+                // Gather segment sequences to use them when searching for possible intersections
+                const auto& tailIt = tails.find(front);
+                if (tailIt != tails.end())
+                {
+                    const auto start = tailIt.value();
+                    const auto& headIt = heads.find(start);
+                    if (headIt != heads.end())
+                    {
+                        auto value = headIt.value().first;
+                        if (value.x < 0)
+                        {
+                            const auto i = -value.x - 1;
+                            sequences[i].push_back(idx);
+                            sizes[i] += points.size() - 1;
+                        }
+                        else
+                        {
+                            sequences.push_back(qMove(std::deque<int>({value.x, idx})));
+                            sizes.push_back(value.y + points.size() - 1);
+                            value.x = -sequences.size();
+                            (*headIt).first.x = value.x;
+                        }
+                        tails.erase(tailIt);
+                        const auto& hIt = heads.find(back);
+                        if (hIt != heads.end() && hIt != headIt)
+                        {
+                            const auto& head = hIt.value();
+                            const auto end = head.second;
+                            const auto& tIt = tails.find(end);
+                            if (tIt != tails.end())
+                                *tIt = start;
+                            (*headIt).second = end;
+                            const auto v = head.first;
+                            const auto s = -v.x - 1;
+                            const auto d = -value.x - 1;
+                            if (v.x < 0)
+                            {
+                                auto& src = sequences[s];
+                                auto& dst = sequences[d];
+                                dst.insert(dst.end(), src.begin(), src.end());
+                                src.clear();
+                                sizes[d] += sizes[s] - 1;
+                            }
+                            else
+                            {
+                                sequences[d].push_back(v.x);
+                                sizes[d] += v.y - 1;
+                            }
+                            heads.erase(hIt);
+                        }
+                        else
+                        {
+                            (*headIt).second = back;
+                            tails.insert(back, start);
+                        }
+                    }
+                }
+                else
+                {
+                    const auto& headIt = heads.find(back);
+                    if (headIt != heads.end())
+                    {
+                        const auto& head = headIt.value();
+                        const auto end = head.second;
+                        const auto& tailIt = tails.find(end);
+                        if (tailIt != tails.end())
+                            *tailIt = front;
+                        auto value = head.first;
+                        if (value.x < 0)
+                        {
+                            const auto i = -value.x - 1;
+                            sequences[i].push_front(idx);
+                            sizes[i] += points.size() - 1;
+                        }
+                        else
+                        {
+                            sequences.push_back(qMove(std::deque<int>({idx, value.x})));
+                            sizes.push_back(value.y + points.size() - 1);
+                            value.x = -sequences.size();
+                        }
+                        heads.erase(headIt);
+                        heads.insert(front, QPair<PointI, PointI>(value, end));
+                    }
+                    else
+                    {
+                        heads.insert(front, QPair<PointI, PointI>(PointI(idx, points.size()), back));
+                        tails.insert(back, front);
+                    }
+                }
+                continue;
+            }
             polylineIndices.push_back(idx);
             continue;
         }
@@ -2536,13 +2645,13 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         outVectorized.push_back(mapObject);
     }
 
-    if (!polylineIndices.isEmpty())
+    if (!polylineIndices.isEmpty() || !heads.isEmpty())
     {
         PointI center;
         int64_t maxSqDistance = 0;
         int64_t minSqDistance = INT64_MAX;
         double distance = 0.0;
-        if (!withoutSurfaceType)
+        if (withSurfaceType)
         {
             center = PointI(topLeft.x + (bottomRight.x - topLeft.x) / 2,
                 topLeft.y + (bottomRight.y - topLeft.y) / 2);
@@ -2552,22 +2661,36 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
             maxSqDistance = radius * radius;
         }
 
-        QVector<Utilities::Coastline> coastlineGroups[5];
+        QVector<Coastline> coastlineGroups[5];
         QVector<PointI> finishPoints[5];
 
-        if (withoutSurfaceType)
+        if (withSurfaceType)
         {
             for (int i : polylineIndices)
             {
-                Utilities::clipCoastlineForTile<false>(center, coastlines[i]->points31, topLeft, bottomRight,
+                clipCoastlineForTile<true>(i, 0, coastlines, center, topLeft, bottomRight,
                     coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+            }
+            for (const auto& head : constOf(heads))
+            {
+                if (head.first.x >= 0)
+                {
+                    clipCoastlineForTile<true>(head.first.x, head.first.y, coastlines, center,
+                        topLeft, bottomRight, coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+                }
+                else
+                {
+                    const auto i = -head.first.x - 1;
+                    clipCoastlinesForTile<true>(sequences[i], sizes[i], coastlines, center,
+                        topLeft, bottomRight, coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+                }
             }
         }
         else
         {
             for (int i : polylineIndices)
             {
-                Utilities::clipCoastlineForTile<true>(center, coastlines[i]->points31, topLeft, bottomRight,
+                clipCoastlineForTile<false>(i, 0, coastlines, center, topLeft, bottomRight,
                     coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
             }
         }
@@ -2829,7 +2952,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                 outVectorized.push_back(mapObject);
             }
         }
-        if (!withoutSurfaceType && minSqDistance < maxSqDistance && distance != 0.0)
+        if (withSurfaceType && minSqDistance < maxSqDistance && distance != 0.0)
             surfaceType = distance < 0.0 ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
     }
 
