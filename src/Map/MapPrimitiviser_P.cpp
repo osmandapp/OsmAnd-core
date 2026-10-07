@@ -397,12 +397,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         bool hasExtraCoastlines = !withBrokenCoastline && !extraCoastlineObjects.isEmpty();
         if (!coastlinesWereAdded && hasExtraCoastlines && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
         {
-            auto bboxZoom10wide = AreaI64(Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel10));
-            bboxZoom10wide.right()++;
-            bboxZoom10wide.bottom()++;
-            bboxZoom10wide = bboxZoom10wide.getEnlargedBy(bboxZoom10wide.width() / 2);
-            bboxZoom10wide.right()--;
-            bboxZoom10wide.bottom()--;
+            const auto bboxZoom10wide = getEnlargedTileArea64(area31, ZoomLevel::ZoomLevel10, 1, 2);
             QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
             auto extraSurfaceType = MapSurfaceType::Undefined;
             getCoastlines(area31, bboxZoom10wide,
@@ -419,13 +414,14 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             AreaI64 basemapArea(area31);
             if (zoom > baseZoom)
             {
-                basemapArea = AreaI64(Utilities::roundBoundingBox31(area31, baseZoom));
+                basemapArea = getEnlargedTileArea64(area31, baseZoom, 1, 1);
                 basemapArea.right()++;
                 basemapArea.bottom()++;
-                basemapArea = basemapArea.getEnlargedBy(1ll << (ZoomLevel31 - baseZoom));
             }
+            // The basemap is the last resort: an open sea tile far from the coast takes the side of the nearest
+            // basemap coastline at any distance, otherwise it stays Mixed and is filled as land
             coastlinesWereAdded = getCoastlines(area31, basemapArea,
-                basemapCoastlineObjects, polygonizedCoastlineObjects, surfaceType);
+                basemapCoastlineObjects, polygonizedCoastlineObjects, surfaceType, nullptr, true);
             coastlineMistake = coastlinesWereAdded && !withBrokenCoastline
                 && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel;
         }
@@ -2491,13 +2487,30 @@ OsmAnd::MapPrimitiviser_P::Context::Context(
     defaultBlockPathSpacing = env->getDefaultBlockPathSpacing();
 }
 
+// Tiles of the zoom that cover area31, enlarged by num/den of a tile on every side, in 64 bits: the 32-bit
+// rounding of a tile at the right or bottom edge of the world (x or y = 2^31 - 1) overflows to INT_MIN.
+// Not clamped to the world: the area also sets the search radius of the nearest coastline
+OsmAnd::AreaI64 OsmAnd::MapPrimitiviser_P::getEnlargedTileArea64(
+    const AreaI area31, const ZoomLevel zoom, const int num, const int den)
+{
+    const auto shift = ZoomLevel31 - zoom;
+    const int64_t enlarge = (1ll << shift) * num / den;
+    AreaI64 result;
+    result.left() = ((static_cast<int64_t>(area31.left()) >> shift) << shift) - enlarge;
+    result.top() = ((static_cast<int64_t>(area31.top()) >> shift) << shift) - enlarge;
+    result.right() = (((static_cast<int64_t>(area31.right()) >> shift) + 1) << shift) + enlarge - 1;
+    result.bottom() = (((static_cast<int64_t>(area31.bottom()) >> shift) + 1) << shift) + enlarge - 1;
+    return result;
+}
+
 bool OsmAnd::MapPrimitiviser_P::getCoastlines(
     const AreaI area31,
     const AreaI64 coastlineArea31,
     const QList<std::shared_ptr<const MapObject>>& coastlines,
     QList<std::shared_ptr<const MapObject>>& outVectorized,
     MapSurfaceType& surfaceType,
-    bool* brokenCoastlineFault /* = nullptr */)
+    bool* brokenCoastlineFault /* = nullptr */,
+    bool anyDistance /* = false */)
 {
     outVectorized.clear();
     const bool withSurfaceType = area31.left() != coastlineArea31.left();
@@ -2658,7 +2671,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
             const auto radius = qMin(
                 qMin(center.x - coastlineArea31.left(), coastlineArea31.right() - center.x),
                 qMin(center.y - coastlineArea31.top(), coastlineArea31.bottom() - center.y)) & mask;
-            maxSqDistance = radius * radius;
+            maxSqDistance = anyDistance ? INT64_MAX : radius * radius;
         }
 
         QVector<Coastline> coastlineGroups[5];

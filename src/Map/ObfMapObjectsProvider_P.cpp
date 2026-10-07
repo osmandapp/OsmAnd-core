@@ -475,13 +475,16 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     QList< std::shared_ptr<const BinaryMapObject> > loadedCoastlineMapObjects;
     if (request.zoom >= _coastlineZoom && !coastlineTile)
     {
-        auto coastlineTileBBox31 =
-            Utilities::tileBoundingBox31(overscaledTileId, _coastlineZoom);
-        coastlineTileBBox31.right()++;
-        coastlineTileBBox31.bottom()++;
-        coastlineTileBBox31 = coastlineTileBBox31.getEnlargedBy(coastlineTileBBox31.width() / 2);
-        coastlineTileBBox31.right()--;
-        coastlineTileBBox31.bottom()--;
+        // The tile and half a tile around it, in 64 bits and clamped to the world: at the right or bottom edge
+        // of the world a 32-bit right()++ overflows and the enlarged box comes out inverted
+        const auto tileBBox31 = Utilities::tileBoundingBox31(overscaledTileId, _coastlineZoom);
+        const int64_t halfTile = (static_cast<int64_t>(tileBBox31.right()) - tileBBox31.left() + 1) / 2;
+        const int64_t worldMax = (1ll << ZoomLevel31) - 1;
+        AreaI coastlineTileBBox31;
+        coastlineTileBBox31.left() = static_cast<int32_t>(qMax<int64_t>(0, tileBBox31.left() - halfTile));
+        coastlineTileBBox31.top() = static_cast<int32_t>(qMax<int64_t>(0, tileBBox31.top() - halfTile));
+        coastlineTileBBox31.right() = static_cast<int32_t>(qMin<int64_t>(worldMax, tileBBox31.right() + halfTile));
+        coastlineTileBBox31.bottom() = static_cast<int32_t>(qMin<int64_t>(worldMax, tileBBox31.bottom() + halfTile));
         Ref<ObfMapSectionReader_Metrics::Metric_loadMapObjects> loadMapObjectsMetric;
         if (metric)
         {
@@ -511,7 +514,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             &loadedCoastlineMapObjects,
             &coastlineTileSurfaceType,
             owner->environment,
-            _coastlineZoom,
+            _coastlineGeometryZoom,
             &coastlineTileBBox31,
             coastlineObjectsFilteringFunctor,
             nullptr,

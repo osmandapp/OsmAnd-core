@@ -189,6 +189,9 @@ namespace OsmAnd
             QWaitCondition loadedCondition;
         };
         const ZoomLevel _coastlineZoom = ZoomLevel::ZoomLevel10;
+        // Geometry of the coastlines around the tile is read at this zoom: the level 9-10 geometry of _coastlineZoom
+        // turns small islands into slivers, and the open sea around them comes out as land
+        const ZoomLevel _coastlineGeometryZoom = ZoomLevel::ZoomLevel12;
         mutable TiledEntriesCollection<TileSharedEntry> _coastlineReferences;
 
         typedef OsmAnd::Link<ObfMapObjectsProvider_P*> Link;

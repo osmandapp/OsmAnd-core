@@ -66,6 +66,7 @@ namespace OsmAnd
             PointI& center, const PointI& topLeft, const PointI& bottomRight, QVector<Coastline>* result,
             QVector<PointI>* finishPoints, const int64_t maxSqDistance, int64_t& minSqDistance, double& distance)
         {
+            const auto entryMinSqDistance = minSqDistance;
             QVector<PointI> segment;
             segment.reserve(size);
             PointI prevPoint;
@@ -287,6 +288,34 @@ namespace OsmAnd
                         maxSqDistance, minSqDistance, distance);
                 }
             }
+            if (calculateClosestWinding && isCycle && minSqDistance < entryMinSqDistance)
+            {
+                // The nearest coastline is a closed ring (island or lagoon): the side of its nearest segment is noise
+                // at the needles and slivers of a simplified ring, so inside/outside of the ring and its orientation decide
+                int64_t ringArea = 0;
+                bool inside = false;
+                PointI prev = coastlines[sequence.back()]->points31.back();
+                for (const auto i : sequence)
+                {
+                    for (const auto& p : coastlines[i]->points31)
+                    {
+                        if (p == prev)
+                            continue;
+                        ringArea += Utilities::intCrossProduct2D(prev, p);
+                        if ((p.y > center.y) != (prev.y > center.y))
+                        {
+                            const double x = prev.x
+                                + static_cast<double>(center.y - prev.y) * (p.x - prev.x) / static_cast<double>(p.y - prev.y);
+                            if (center.x < x)
+                                inside = !inside;
+                        }
+                        prev = p;
+                    }
+                }
+                const bool isLand = ringArea < 0;
+                const bool isWater = inside != isLand;
+                distance = (isWater ? 1.0 : -1.0) * std::sqrt(static_cast<double>(minSqDistance));
+            }
             if (segment.size() > 1)
             {
                 const auto borderCode = Utilities::computeBorderCode(segment.front(), topLeft, bottomRight);
@@ -331,7 +360,9 @@ namespace OsmAnd
             const QList< std::shared_ptr<const MapObject> >& coastlines,
             QList< std::shared_ptr<const MapObject> >& outVectorized,
             MapSurfaceType& surfaceType,
-            bool* brokenCoastlineFault = nullptr);
+            bool* brokenCoastlineFault = nullptr,
+            bool anyDistance = false);
+        static AreaI64 getEnlargedTileArea64(const AreaI area31, const ZoomLevel zoom, const int num, const int den);
 
         static bool polygonizeCoastlines(
             const AreaI area31,
