@@ -2102,6 +2102,37 @@ namespace OsmAnd
             clockwise = signedArea >= 0;
         }
 
+        inline static PointI getIntersectionPoint(const PointI& start1, const PointI& end1,
+            const PointI& start2, const PointI& end2)
+        {
+            PointI result(-1, -1);
+            if (qMax(qMin(start1.x, end1.x), qMin(start2.x, end2.x))
+                    > qMin(qMax(start1.x, end1.x), qMax(start2.x, end2.x))
+                || qMax(qMin(start1.y, end1.y), qMin(start2.y, end2.y))
+                    > qMin(qMax(start1.y, end1.y), qMax(start2.y, end2.y)))
+                return result;
+
+            const auto first = end1 - start1;
+            const auto offset = start2 - start1;
+            const auto current = end2 - start2;
+            const auto crossFC = intCrossProduct2D(first, current);
+            const auto crossFO = intCrossProduct2D(first, offset);
+            const auto crossOC = intCrossProduct2D(offset, current); 
+            const auto side1 = crossFO + crossFC;
+            if ((crossFO < 0 && side1 < 0) || (crossFO > 0 && side1 > 0))
+                return result;
+            const auto side3 = crossOC - crossFC;
+            if ((crossOC <= 0 && side3 >= 0) || (crossOC >= 0 && side3 <= 0))
+            {
+                if (crossFC == 0)
+                    return result;
+                const auto t = static_cast<double>(crossOC) / crossFC;
+                result.x = start1.x + qRound64(t * first.x);
+                result.y = start1.y + qRound64(t * first.y);
+            }
+            return result;
+        };
+
         // Check if point is not outside the polygon
         inline static bool includes(const QVector<PointI>& polygon, const PointI& point)
         {

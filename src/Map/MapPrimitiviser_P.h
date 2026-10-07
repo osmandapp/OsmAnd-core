@@ -49,29 +49,6 @@ namespace OsmAnd
             int64_t winding;
             int proximity;
         };
-        inline static bool coastlineSegmentsIntersect(const PointI& oldest, const PointI& middle,
-            const PointI& last, const PointI& point)
-        {
-            if (qMax(qMin(oldest.x, middle.x), qMin(last.x, point.x))
-                    > qMin(qMax(oldest.x, middle.x), qMax(last.x, point.x))
-                || qMax(qMin(oldest.y, middle.y), qMin(last.y, point.y))
-                    > qMin(qMax(oldest.y, middle.y), qMax(last.y, point.y)))
-                return false;
-
-            const auto first = middle - oldest;
-            const auto offset = last - oldest;
-            const auto current = point - last;
-            const auto side0 = Utilities::intCrossProduct2D(first.x, first.y, offset.x, offset.y);
-            const auto side1 = Utilities::intCrossProduct2D(
-                first.x, first.y, offset.x + current.x, offset.y + current.y);
-            if ((side0 < 0 && side1 < 0) || (side0 > 0 && side1 > 0))
-                return false;
-
-            const auto side2 = Utilities::intCrossProduct2D(current.x, current.y, -offset.x, -offset.y);
-            const auto side3 = Utilities::intCrossProduct2D(
-                current.x, current.y, first.x - offset.x, first.y - offset.y);
-            return (side2 <= 0 && side3 >= 0) || (side2 >= 0 && side3 <= 0);
-        };
         template<bool calculateClosestWinding>
         inline static void clipCoastlineForTile(int index, int size,
             const QList<std::shared_ptr<const MapObject>>& coastlines,
@@ -164,11 +141,11 @@ namespace OsmAnd
                         else if (pointsToProcess-- > 0)
                         {
                             // Remove short self-intersecting loops before clipping or measuring winding.
-                            if (filteredPointCount > 2 && coastlineSegmentsIntersect(
+                            const auto interPoint = filteredPointCount > 2 ? Utilities::getIntersectionPoint(
                                 filteredPoints[filteredPointCount - 3], filteredPoints[filteredPointCount - 2],
-                                filteredPoints[filteredPointCount - 1], point))
+                                filteredPoints[filteredPointCount - 1], point) : PointI(-1, -1);
+                            if (interPoint.x >= 0)
                             {
-                                const auto oldest = filteredPoints[filteredPointCount - 3];
                                 if (isCycle && headPointsToSkip > 0)
                                 {
                                     if (filteredPointCount > 3)
@@ -182,8 +159,9 @@ namespace OsmAnd
                                         headPointsToSkip = 0;
                                     }
                                 }
-                                filteredPointCount -= 2;
-                                if (point != oldest)
+                                filteredPointCount--;
+                                filteredPoints[filteredPointCount - 1] = interPoint;
+                                if (point != interPoint)
                                     filteredPoints[filteredPointCount++] = point;
                             }
                             else if (filteredPointCount > 3)
