@@ -475,13 +475,20 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     QList< std::shared_ptr<const BinaryMapObject> > loadedCoastlineMapObjects;
     if (request.zoom >= _coastlineZoom && !coastlineTile)
     {
-        auto coastlineTileBBox31 =
-            Utilities::tileBoundingBox31(overscaledTileId, _coastlineZoom);
-        coastlineTileBBox31.right()++;
-        coastlineTileBBox31.bottom()++;
-        coastlineTileBBox31 = coastlineTileBBox31.getEnlargedBy(coastlineTileBBox31.width() / 2);
-        coastlineTileBBox31.right()--;
-        coastlineTileBBox31.bottom()--;
+        auto coastlineTileBBox =
+            AreaI64(Utilities::tileBoundingBox31(overscaledTileId, _coastlineZoom));
+        coastlineTileBBox.right()++;
+        coastlineTileBBox.bottom()++;
+        coastlineTileBBox = coastlineTileBBox.getEnlargedBy(coastlineTileBBox.width() / 2);
+        coastlineTileBBox.right()--;
+        coastlineTileBBox.bottom()--;
+        coastlineTileBBox.right() = qMax(coastlineTileBBox.right(), static_cast<int64_t>(INT32_MAX));
+        coastlineTileBBox.bottom() = qMax(coastlineTileBBox.bottom(), static_cast<int64_t>(INT32_MAX));
+        AreaI coastlineTileBBox31(
+            static_cast<int>(coastlineTileBBox.top()),
+            static_cast<int>(coastlineTileBBox.left()),
+            static_cast<int>(coastlineTileBBox.bottom()),
+            static_cast<int>(coastlineTileBBox.right()));
         Ref<ObfMapSectionReader_Metrics::Metric_loadMapObjects> loadMapObjectsMetric;
         if (metric)
         {
