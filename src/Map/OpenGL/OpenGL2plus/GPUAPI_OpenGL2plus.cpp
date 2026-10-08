@@ -90,6 +90,14 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     if (!ok)
         return false;
 
+    // Desktop OpenGL core profile only (e.g. macOS CGL 3.2+ contexts): glGetString(GL_EXTENSIONS)
+    // returns NULL there, and without the experimental flag glewInit() reports success while leaving
+    // most function pointers NULL. Compatibility and legacy contexts keep the previous behaviour.
+    if (!glGetString(GL_EXTENSIONS))
+    {
+        (void)glGetError();
+        glewExperimental = GL_TRUE;
+    }
     if (glewInit() != GLEW_NO_ERROR)
         return false;
     // Silence OpenGL error here, it's inside GLEW, so it's not ours
