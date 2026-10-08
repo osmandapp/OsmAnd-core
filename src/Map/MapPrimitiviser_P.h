@@ -85,7 +85,7 @@ namespace OsmAnd
             {
                 if (size < 4)
                     return;
-                useInterPoint = size == 6;
+                useInterPoint = size > 5 && size < 8;
                 const auto lastSize = lastCoastline.size();
                 if (lastSize > 2)
                     filteredPoints[0] = lastCoastline[lastSize - 3];
