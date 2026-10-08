@@ -80,13 +80,11 @@ namespace OsmAnd
             const auto& firstCoastline = coastlines[sequence.front()]->points31;
             const auto& lastCoastline = coastlines[sequence.back()]->points31;
             const bool isCycle = firstCoastline.front() == lastCoastline.back();
-            bool blockIntersections = size == 4;
             bool useInterPoint = false;
             if (isCycle)
             {
                 if (size < 4)
                     return;
-                blockIntersections = size == 5;
                 useInterPoint = size == 6;
                 const auto lastSize = lastCoastline.size();
                 if (lastSize > 2)
@@ -111,7 +109,9 @@ namespace OsmAnd
             {
                 if (idx == count)
                 {
-                    isExtra = filteredPointCount > 1 && (!isCycle || oneIsProcessed || filteredPointCount > 2);
+                    isExtra = filteredPointCount > 1 && (!isCycle || oneIsProcessed
+                        || (filteredPointCount > 3 && filteredPoints[1] != filteredPoints[3])
+                        || (filteredPointCount > 2 && filteredPoints[0] != filteredPoints[2]));
                     if (!isExtra)
                         break;
                     skipFirst = false;
@@ -150,8 +150,6 @@ namespace OsmAnd
                                 filteredPoints[filteredPointCount - 1], point) : PointI(-1, -1);
                             if (interPoint.x >= 0)
                             {
-                                if (blockIntersections)
-                                    return;
                                 if (isCycle && headPointsToSkip > 0)
                                 {
                                     if (filteredPointCount > 3)
