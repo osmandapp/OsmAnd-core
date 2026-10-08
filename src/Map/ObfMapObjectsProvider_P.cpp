@@ -482,8 +482,8 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         coastlineTileBBox = coastlineTileBBox.getEnlargedBy(coastlineTileBBox.width() / 2);
         coastlineTileBBox.right()--;
         coastlineTileBBox.bottom()--;
-        coastlineTileBBox.right() = qMax(coastlineTileBBox.right(), static_cast<int64_t>(INT32_MAX));
-        coastlineTileBBox.bottom() = qMax(coastlineTileBBox.bottom(), static_cast<int64_t>(INT32_MAX));
+        coastlineTileBBox.right() = qMin(coastlineTileBBox.right(), static_cast<int64_t>(INT32_MAX));
+        coastlineTileBBox.bottom() = qMin(coastlineTileBBox.bottom(), static_cast<int64_t>(INT32_MAX));
         AreaI coastlineTileBBox31(
             static_cast<int>(coastlineTileBBox.top()),
             static_cast<int>(coastlineTileBBox.left()),
