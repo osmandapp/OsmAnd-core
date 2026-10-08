@@ -30,7 +30,7 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(ObfMapSectionLevel);
     public:
         enum {
-            MaxBasemapZoomLevel = ZoomLevel10
+            MaxBasemapZoomLevel = ZoomLevel9
         };
 
     private:
