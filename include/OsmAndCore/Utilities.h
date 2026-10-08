@@ -2117,10 +2117,10 @@ namespace OsmAnd
             const auto current = end2 - start2;
             const auto crossFC = intCrossProduct2D(first, current);
             const auto crossFO = intCrossProduct2D(first, offset);
-            const auto crossOC = intCrossProduct2D(offset, current); 
             const auto side1 = crossFO + crossFC;
             if ((crossFO < 0 && side1 < 0) || (crossFO > 0 && side1 > 0))
                 return result;
+            const auto crossOC = intCrossProduct2D(offset, current); 
             const auto side3 = crossOC - crossFC;
             if ((crossOC <= 0 && side3 >= 0) || (crossOC >= 0 && side3 <= 0))
             {
