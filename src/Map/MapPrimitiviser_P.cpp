@@ -389,7 +389,13 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     {
         auto coastlinesWereAdded = false;
         bool withBrokenCoastline = false;
-        if (detailedmapCoastlinesPresent && zoom >= MapPrimitiviser::DetailedLandDataMinZoom)
+        // As core-legacy useDetailedCoastlines: a tile at latitude lat is 1/cos(lat) times smaller on the ground,
+        // so above ~60 degrees the basemap coastline is too coarse one zoom earlier
+        const double centerLat = Utilities::get31LatitudeY(area31.top() / 2 + area31.bottom() / 2);
+        const double groundZoom = zoom + std::log2(1.0 / qMax(0.01, std::cos(centerLat * M_PI / 180.0)));
+        const bool useDetailedLandData = zoom >= MapPrimitiviser::DetailedLandDataMinZoom
+            || groundZoom > MapPrimitiviser::DetailedLandDataMinZoom;
+        if (detailedmapCoastlinesPresent && useDetailedLandData)
         {
             coastlinesWereAdded = getCoastlines(area31, AreaI64(area31),
                 detailedmapCoastlineObjects, polygonizedCoastlineObjects, surfaceType, &withBrokenCoastline);
@@ -397,12 +403,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         bool hasExtraCoastlines = !withBrokenCoastline && !extraCoastlineObjects.isEmpty();
         if (!coastlinesWereAdded && hasExtraCoastlines && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
         {
-            auto bboxZoom11wide = AreaI64(Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel11));
-            bboxZoom11wide.right()++;
-            bboxZoom11wide.bottom()++;
-            bboxZoom11wide = bboxZoom11wide.getEnlargedBy(bboxZoom11wide.width() / 2);
-            bboxZoom11wide.right()--;
-            bboxZoom11wide.bottom()--;
+            const auto bboxZoom11wide = getEnlargedTileArea64(area31, ZoomLevel::ZoomLevel11, 1, 2);
             QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
             auto extraSurfaceType = MapSurfaceType::Undefined;
             getCoastlines(area31, bboxZoom11wide,
@@ -413,16 +414,15 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
                 surfaceType = extraSurfaceType;
         }
         if (!coastlinesWereAdded && basemapCoastlinesPresent
-            && (!hasExtraCoastlines || zoom < MapPrimitiviser::DetailedLandDataMinZoom))
+            && (!hasExtraCoastlines || !useDetailedLandData))
         {
             const auto baseZoom = static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel);
             AreaI64 basemapArea(area31);
             if (zoom > baseZoom)
             {
-                basemapArea = AreaI64(Utilities::roundBoundingBox31(area31, baseZoom));
+                basemapArea = getEnlargedTileArea64(area31, baseZoom, 1, 1);
                 basemapArea.right()++;
                 basemapArea.bottom()++;
-                basemapArea = basemapArea.getEnlargedBy(1ll << (ZoomLevel31 - baseZoom));
             }
             coastlinesWereAdded = getCoastlines(area31, basemapArea,
                 basemapCoastlineObjects, polygonizedCoastlineObjects, surfaceType);
@@ -2489,6 +2489,22 @@ OsmAnd::MapPrimitiviser_P::Context::Context(
     roadsDensityLimitPerTile = env->getRoadsDensityLimitPerTile(zoom);
     defaultSymbolPathSpacing = env->getDefaultSymbolPathSpacing();
     defaultBlockPathSpacing = env->getDefaultBlockPathSpacing();
+}
+
+// Tiles of the zoom that cover area31, enlarged by num/den of a tile on every side, in 64 bits: the 32-bit
+// rounding of a tile at the right or bottom edge of the world (x or y = 2^31 - 1) overflows to INT_MIN.
+// Not clamped to the world: the area also sets the search radius of the nearest coastline
+OsmAnd::AreaI64 OsmAnd::MapPrimitiviser_P::getEnlargedTileArea64(
+    const AreaI area31, const ZoomLevel zoom, const int num, const int den)
+{
+    const auto shift = ZoomLevel31 - zoom;
+    const int64_t enlarge = (1ll << shift) * num / den;
+    AreaI64 result;
+    result.left() = ((static_cast<int64_t>(area31.left()) >> shift) << shift) - enlarge;
+    result.top() = ((static_cast<int64_t>(area31.top()) >> shift) << shift) - enlarge;
+    result.right() = (((static_cast<int64_t>(area31.right()) >> shift) + 1) << shift) + enlarge - 1;
+    result.bottom() = (((static_cast<int64_t>(area31.bottom()) >> shift) + 1) << shift) + enlarge - 1;
+    return result;
 }
 
 bool OsmAnd::MapPrimitiviser_P::getCoastlines(

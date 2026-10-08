@@ -323,6 +323,7 @@ namespace OsmAnd
             Q_DISABLE_COPY_AND_MOVE(Context);
         };
 
+        static AreaI64 getEnlargedTileArea64(const AreaI area31, const ZoomLevel zoom, const int num, const int den);
         static bool getCoastlines(
             const AreaI area31,
             const AreaI64 coastlineArea31,
