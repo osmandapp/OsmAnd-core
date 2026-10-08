@@ -52,6 +52,7 @@ download "https://github.com/libexpat/libexpat/releases/download/R_2_5_0/expat-2
 download "http://sourceforge.net/projects/freetype/files/freetype2/2.5.0/freetype-2.5.0.1.tar.bz2/download" "$DEPENDENCIES_MIRROR/freetype-2.5.0.1.tar.bz2"
 download "http://download.osgeo.org/gdal/1.11.1/gdal-1.11.1.tar.gz" "$DEPENDENCIES_MIRROR/gdal-1.11.1.tar.gz"
 download "http://sourceforge.net/projects/glew/files/glew/1.12.0/glew-1.12.0.tgz/download" "$DEPENDENCIES_MIRROR/glew-1.12.0.tgz"
+download "https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.tgz" "$DEPENDENCIES_MIRROR/glew-2.2.0.tgz"
 download "http://sourceforge.net/projects/ogl-math/files/glm-0.9.5.3/glm-0.9.5.3.zip/download" "$DEPENDENCIES_MIRROR/glm-0.9.5.3.zip"
 
 download "https://github.com/unicode-org/icu/archive/release-52-1.tar.gz" "$DEPENDENCIES_MIRROR/icu4c-52-1.tar.gz"
