@@ -2500,21 +2500,21 @@ OsmAnd::MapPrimitiviser_P::Context::Context(
 
 template<bool calculateClosestWinding>
 inline void OsmAnd::MapPrimitiviser_P::clipCoastlineForTile(int index, int size,
-    const QList<std::shared_ptr<const MapObject>>& coastlines,
-    PointI& center, const PointI& topLeft, const PointI& bottomRight, QVector<Coastline>* result,
-    QVector<PointI>* finishPoints, const int64_t maxSqDistance, int64_t& minSqDistance, double& distance)
+    const QList<std::shared_ptr<const MapObject>>& coastlines, PointI& center,
+    const PointI& topLeft, const PointI& bottomRight, QVector<Coastline>* result, QVector<PointI>* finishPoints,
+    const int64_t maxSqDistance, int64_t& minSqDistance, double& distance, bool& isReliable)
 {
     const std::deque<int>& sequence = {index};
     clipCoastlinesForTile<calculateClosestWinding>(
         sequence, size > 0 ? size : coastlines[index]->points31.size(), coastlines, center,
-        topLeft, bottomRight, result, finishPoints, maxSqDistance, minSqDistance, distance);
+        topLeft, bottomRight, result, finishPoints, maxSqDistance, minSqDistance, distance, isReliable);
 };
 
 template<bool calculateClosestWinding>
 inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<int>& sequence, int size,
-    const QList<std::shared_ptr<const MapObject>>& coastlines,
-    PointI& center, const PointI& topLeft, const PointI& bottomRight, QVector<Coastline>* result,
-    QVector<PointI>* finishPoints, const int64_t maxSqDistance, int64_t& minSqDistance, double& distance)
+    const QList<std::shared_ptr<const MapObject>>& coastlines, PointI& center,
+    const PointI& topLeft, const PointI& bottomRight, QVector<Coastline>* result, QVector<PointI>* finishPoints,
+    const int64_t maxSqDistance, int64_t& minSqDistance, double& distance, bool& isReliable)
 {
     QVector<PointI> segment;
     segment.reserve(size);
@@ -2524,6 +2524,7 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
     bool next = false;
     int64_t signedArea = 0;
     PointI filteredPoints[4];
+    bool pointsReliable[4];
     int filteredPointCount = 0;
     int headPointsToSkip = 0;
     int pointsToProcess = size - 1;
@@ -2545,6 +2546,8 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
             filteredPoints[0] = prevCoastline[prevCoastline.size() - 2];
         }
         filteredPoints[1] = lastCoastline[lastSize - 2];
+        pointsReliable[0] = true;
+        pointsReliable[1] = true;
         filteredPointCount = 2;
         headPointsToSkip = 2;
     }
@@ -2570,6 +2573,7 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
         const auto& coastline = isExtra
             ? QVector<PointI>(filteredPoints, filteredPoints + filteredPointCount)
             : coastlines[sequence[idx]]->points31;
+        int j = 0;
         for (const auto& point : coastline)
         {
             if (Q_UNLIKELY(skipFirst))
@@ -2582,14 +2586,19 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
                 if (point == previousInputPoint)
                 {
                     pointsToProcess--;
+                    j++;
                     continue;
                 }
                 bool shouldProcess = false;
                 PointI startPoint, endPoint;
+                bool startReliable = false;
+                bool endReliable = false;
                 if (isExtra)
                 {
                     startPoint = previousInputPoint;
                     endPoint = point;
+                    startReliable = pointsReliable[j++];
+                    endReliable = pointsReliable[j];
                     shouldProcess = true;
                 }
                 else if (pointsToProcess-- > 0)
@@ -2613,11 +2622,18 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
                                 headPointsToSkip = 0;
                             }
                         }
-                        filteredPointCount -= useInterPoint ? 1 : 2;
+                        filteredPointCount -= 2;
+                        pointsReliable[filteredPointCount - 1] = false;
                         if (useInterPoint)
-                            filteredPoints[filteredPointCount - 1] = interPoint;
+                        {
+                            filteredPoints[filteredPointCount] = interPoint;
+                            pointsReliable[filteredPointCount++] = false;
+                        }
                         if (point != filteredPoints[filteredPointCount - 1])
-                            filteredPoints[filteredPointCount++] = point;
+                        {
+                            filteredPoints[filteredPointCount] = point;
+                            pointsReliable[filteredPointCount++] = false;
+                        }
                     }
                     else if (filteredPointCount > 3)
                     {
@@ -2628,15 +2644,24 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
                             oneIsProcessed = true;
                             startPoint = filteredPoints[0];
                             endPoint = filteredPoints[1];
+                            startReliable = pointsReliable[0];
+                            endReliable = pointsReliable[1];
                             shouldProcess = true;
                         }
                         filteredPoints[0] = filteredPoints[1];
                         filteredPoints[1] = filteredPoints[2];
                         filteredPoints[2] = filteredPoints[3];
                         filteredPoints[3] = point;
+                        pointsReliable[0] = pointsReliable[1];
+                        pointsReliable[1] = pointsReliable[2];
+                        pointsReliable[2] = pointsReliable[3];
+                        pointsReliable[3] = true;
                     }
                     else
-                        filteredPoints[filteredPointCount++] = point;
+                    {
+                        filteredPoints[filteredPointCount] = point;
+                        pointsReliable[filteredPointCount++] = true;
+                    }
                 }
                 if (shouldProcess)
                 {
@@ -2720,8 +2745,8 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
                     next = true;
                     if (calculateClosestWinding)
                     {
-                        Utilities::findClosestWinding(center, startPoint, endPoint,
-                            maxSqDistance, minSqDistance, distance);
+                        Utilities::findClosestWinding(center, startPoint, endPoint, startReliable, endReliable,
+                            maxSqDistance, minSqDistance, distance, isReliable);
                     }
                 }
             }
@@ -2729,7 +2754,10 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
             {
                 hasInputPoint = true;
                 if (!isExtra)
-                    filteredPoints[filteredPointCount++] = point;
+                {
+                    filteredPoints[filteredPointCount] = point;
+                    pointsReliable[filteredPointCount++] = true;
+                }
             }
             previousInputPoint = point;
         }
@@ -2899,6 +2927,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         int64_t maxSqDistance = 0;
         int64_t minSqDistance = INT64_MAX;
         double distance = 0.0;
+        bool isReliable = false;
         if (withSurfaceType)
         {
             center = PointI(topLeft.x + (bottomRight.x - topLeft.x) / 2,
@@ -2916,31 +2945,31 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         {
             if (withSurfaceType)
                 clipCoastlineForTile<true>(i, 0, coastlines, center, topLeft, bottomRight,
-                    coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+                    coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance, isReliable);
             else
                 clipCoastlineForTile<false>(i, 0, coastlines, center, topLeft, bottomRight,
-                    coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+                    coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance, isReliable);
         }
         for (const auto& head : constOf(heads))
         {
             if (head.first.x >= 0)
             {
                 if (withSurfaceType)
-                    clipCoastlineForTile<true>(head.first.x, head.first.y, coastlines, center,
-                        topLeft, bottomRight, coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+                    clipCoastlineForTile<true>(head.first.x, head.first.y, coastlines, center, topLeft, bottomRight,
+                        coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance, isReliable);
                 else
-                    clipCoastlineForTile<false>(head.first.x, head.first.y, coastlines, center,
-                        topLeft, bottomRight, coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+                    clipCoastlineForTile<false>(head.first.x, head.first.y, coastlines, center, topLeft, bottomRight,
+                        coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance, isReliable);
             }
             else
             {
                 const auto i = -head.first.x - 1;
                 if (withSurfaceType)
-                    clipCoastlinesForTile<true>(sequences[i], sizes[i], coastlines, center,
-                        topLeft, bottomRight, coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+                    clipCoastlinesForTile<true>(sequences[i], sizes[i], coastlines, center, topLeft, bottomRight,
+                        coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance, isReliable);
                 else
-                    clipCoastlinesForTile<false>(sequences[i], sizes[i], coastlines, center,
-                        topLeft, bottomRight, coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance);
+                    clipCoastlinesForTile<false>(sequences[i], sizes[i], coastlines, center, topLeft, bottomRight,
+                        coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance, isReliable);
             }
         }
 
@@ -3201,7 +3230,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                 outVectorized.push_back(mapObject);
             }
         }
-        if (withSurfaceType && minSqDistance < maxSqDistance && distance != 0.0)
+        if (withSurfaceType && isReliable && minSqDistance < maxSqDistance && distance != 0.0)
             surfaceType = distance < 0.0 ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
     }
 

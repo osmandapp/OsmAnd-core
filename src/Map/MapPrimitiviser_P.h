@@ -51,14 +51,14 @@ namespace OsmAnd
         };
         template<bool calculateClosestWinding>
         inline static void clipCoastlineForTile(int index, int size,
-            const QList<std::shared_ptr<const MapObject>>& coastlines,
-            PointI& center, const PointI& topLeft, const PointI& bottomRight, QVector<Coastline>* result,
-            QVector<PointI>* finishPoints, const int64_t maxSqDistance, int64_t& minSqDistance, double& distance);
+            const QList<std::shared_ptr<const MapObject>>& coastlines, PointI& center, const PointI& topLeft,
+            const PointI& bottomRight, QVector<Coastline>* result, QVector<PointI>* finishPoints,
+            const int64_t maxSqDistance, int64_t& minSqDistance, double& distance, bool& isReliable);
         template<bool calculateClosestWinding>
         inline static void clipCoastlinesForTile(const std::deque<int>& sequence, int size,
-            const QList<std::shared_ptr<const MapObject>>& coastlines,
-            PointI& center, const PointI& topLeft, const PointI& bottomRight, QVector<Coastline>* result,
-            QVector<PointI>* finishPoints, const int64_t maxSqDistance, int64_t& minSqDistance, double& distance);
+            const QList<std::shared_ptr<const MapObject>>& coastlines, PointI& center, const PointI& topLeft,
+            const PointI& bottomRight, QVector<Coastline>* result, QVector<PointI>* finishPoints,
+            const int64_t maxSqDistance, int64_t& minSqDistance, double& distance, bool& isReliable);
     protected:
         MapPrimitiviser_P(MapPrimitiviser* const owner);
 

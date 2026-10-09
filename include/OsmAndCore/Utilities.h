@@ -2062,8 +2062,8 @@ namespace OsmAnd
         }
 
         inline static void findClosestWinding(
-            const PointI& center, const PointI& p0, const PointI& p1,
-            const int64_t maxSqDistance, int64_t& minSqDistance, double& distance)
+            const PointI& center, const PointI& p0, const PointI& p1, bool r0, bool r1,
+            const int64_t maxSqDistance, int64_t& minSqDistance, double& distance, bool& isReliable)
         {
             const auto vX = static_cast<int64_t>(p1.x) - p0.x;
             const auto vY = static_cast<int64_t>(p1.y) - p0.y;
@@ -2084,6 +2084,7 @@ namespace OsmAnd
             }
             else
                 distance += d;
+            isReliable = t > 0.999 ? r1 : (t < 0.0001 ? r0 : r0 || r1);
         }
 
         inline static void calcPolygonInTile(const QVector<PointI>& polygon, QVector<PointI>& result, bool& clockwise)
