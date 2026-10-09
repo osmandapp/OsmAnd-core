@@ -444,18 +444,18 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
             continue;
         else
             set.insert(qMakePair(road->id, roadObf));
-        if (!road->captions.isEmpty())
+        // the name, else the ref ("D 723"); a road with neither is not an address. The ref is read through the
+        // base mapping: ObfRoutingSectionAttributeMapping::refAttributeId shadows it and is never set
+        QString name = road->getCaptionInNativeLanguage();
+        if (name.isEmpty())
+            name = road->captions.value(road->attributeMapping->refAttributeId);
+        if (!name.isEmpty())
         {
             if (distSquare == 0 || distSquare > roadDistSquare)
                 distSquare = roadDistSquare;
             std::shared_ptr<ResultEntry> entry = std::make_shared<ResultEntry>();
             entry->road = road;
-            entry->streetName = road->getCaptionInNativeLanguage();
-            if (entry->streetName.isEmpty())
-            {
-                if (!road->captions.isEmpty())
-                    entry->streetName = road->captions.values().last();
-            }
+            entry->streetName = name;
             entry->point = p.second;
             entry->searchPoint = searchPoint;
             entry->connectionPoint = LatLon(Utilities::get31LatitudeY(p.second->preciseY), Utilities::get31LongitudeX(p.second->preciseX));
