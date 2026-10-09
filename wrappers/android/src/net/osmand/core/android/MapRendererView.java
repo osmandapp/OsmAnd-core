@@ -1555,6 +1555,18 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.get3DBuildingsAlpha();
     }
 
+    public final boolean set3DBuildingsShadows(boolean enabled) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.set3DBuildingsShadows(enabled);
+    }
+
+    public final boolean get3DBuildingsShadows() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.get3DBuildingsShadows();
+    }
+
     public final boolean set3DBuildingsDetalization(int detalization) {
         NativeCore.checkIfLoaded();
 

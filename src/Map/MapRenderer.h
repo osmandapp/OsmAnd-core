@@ -177,6 +177,7 @@ namespace OsmAnd
 
         float _buildings3DAlpha;
         int _buildings3DDetalization;
+        bool _buildings3DShadows;
 
         OsmAnd::Stopwatch symbolsLoadingStart;
         float symbolsLoadingTime = 0;
@@ -488,6 +489,8 @@ namespace OsmAnd
         virtual float get3DBuildingsAlpha() const Q_DECL_OVERRIDE;
         virtual bool set3DBuildingsDetalization(const int detalization, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual int get3DBuildingsDetalization() const Q_DECL_OVERRIDE;
+        virtual bool set3DBuildingsShadows(const bool enabled, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool get3DBuildingsShadows() const Q_DECL_OVERRIDE;
         virtual bool setDateTime(const int64_t dateTime, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool changeTimePeriod() Q_DECL_OVERRIDE;
         virtual bool getMapTargetLocation(PointI& location31) const Q_DECL_OVERRIDE;
