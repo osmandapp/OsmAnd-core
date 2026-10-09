@@ -2498,6 +2498,252 @@ OsmAnd::MapPrimitiviser_P::Context::Context(
     defaultBlockPathSpacing = env->getDefaultBlockPathSpacing();
 }
 
+template<bool calculateClosestWinding>
+inline void OsmAnd::MapPrimitiviser_P::clipCoastlineForTile(int index, int size,
+    const QList<std::shared_ptr<const MapObject>>& coastlines,
+    PointI& center, const PointI& topLeft, const PointI& bottomRight, QVector<Coastline>* result,
+    QVector<PointI>* finishPoints, const int64_t maxSqDistance, int64_t& minSqDistance, double& distance)
+{
+    const std::deque<int>& sequence = {index};
+    clipCoastlinesForTile<calculateClosestWinding>(
+        sequence, size > 0 ? size : coastlines[index]->points31.size(), coastlines, center,
+        topLeft, bottomRight, result, finishPoints, maxSqDistance, minSqDistance, distance);
+};
+
+template<bool calculateClosestWinding>
+inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<int>& sequence, int size,
+    const QList<std::shared_ptr<const MapObject>>& coastlines,
+    PointI& center, const PointI& topLeft, const PointI& bottomRight, QVector<Coastline>* result,
+    QVector<PointI>* finishPoints, const int64_t maxSqDistance, int64_t& minSqDistance, double& distance)
+{
+    QVector<PointI> segment;
+    segment.reserve(size);
+    PointI prevPoint;
+    PointI sm(INT32_MIN, INT32_MIN);
+    int prevCode = 0;
+    bool next = false;
+    int64_t signedArea = 0;
+    PointI filteredPoints[4];
+    int filteredPointCount = 0;
+    int headPointsToSkip = 0;
+    int pointsToProcess = size - 1;
+    const auto& firstCoastline = coastlines[sequence.front()]->points31;
+    const auto& lastCoastline = coastlines[sequence.back()]->points31;
+    const bool isCycle = firstCoastline.front() == lastCoastline.back();
+    bool useInterPoint = false;
+    if (isCycle)
+    {
+        if (size < 4)
+            return;
+        useInterPoint = size > 5 && size < 8;
+        const auto lastSize = lastCoastline.size();
+        if (lastSize > 2)
+            filteredPoints[0] = lastCoastline[lastSize - 3];
+        else
+        {
+            const auto& prevCoastline = coastlines[sequence[sequence.size() - 2]]->points31;
+            filteredPoints[0] = prevCoastline[prevCoastline.size() - 2];
+        }
+        filteredPoints[1] = lastCoastline[lastSize - 2];
+        filteredPointCount = 2;
+        headPointsToSkip = 2;
+    }
+
+    bool oneIsProcessed = false;
+    bool skipFirst = false;
+    bool hasInputPoint = false;
+    PointI previousInputPoint;
+    const auto count = sequence.size();
+    bool isExtra = false;
+    for (int idx = 0; idx <= count; idx++)
+    {
+        if (idx == count)
+        {
+            isExtra = filteredPointCount > 1 && (!isCycle || oneIsProcessed
+                || (filteredPointCount > 3 && filteredPoints[1] != filteredPoints[3])
+                || (filteredPointCount > 2 && filteredPoints[0] != filteredPoints[2]));
+            if (!isExtra)
+                break;
+            skipFirst = false;
+            hasInputPoint = false;
+        }
+        const auto& coastline = isExtra
+            ? QVector<PointI>(filteredPoints, filteredPoints + filteredPointCount)
+            : coastlines[sequence[idx]]->points31;
+        for (const auto& point : coastline)
+        {
+            if (Q_UNLIKELY(skipFirst))
+            {
+                skipFirst = false;
+                continue;
+            }
+            if (Q_LIKELY(hasInputPoint))
+            {
+                if (point == previousInputPoint)
+                {
+                    pointsToProcess--;
+                    continue;
+                }
+                bool shouldProcess = false;
+                PointI startPoint, endPoint;
+                if (isExtra)
+                {
+                    startPoint = previousInputPoint;
+                    endPoint = point;
+                    shouldProcess = true;
+                }
+                else if (pointsToProcess-- > 0)
+                {
+                    // Remove short self-intersecting loops before clipping or measuring winding.
+                    const auto interPoint = filteredPointCount > 2 ? Utilities::getIntersectionPoint(
+                        filteredPoints[filteredPointCount - 3], filteredPoints[filteredPointCount - 2],
+                        filteredPoints[filteredPointCount - 1], point) : PointI(-1, -1);
+                    if (interPoint.x >= 0)
+                    {
+                        if (isCycle && headPointsToSkip > 0)
+                        {
+                            if (filteredPointCount > 3)
+                            {
+                                pointsToProcess--;
+                                headPointsToSkip--;
+                            }
+                            else
+                            {
+                                pointsToProcess -= headPointsToSkip;
+                                headPointsToSkip = 0;
+                            }
+                        }
+                        filteredPointCount -= useInterPoint ? 1 : 2;
+                        if (useInterPoint)
+                            filteredPoints[filteredPointCount - 1] = interPoint;
+                        if (point != filteredPoints[filteredPointCount - 1])
+                            filteredPoints[filteredPointCount++] = point;
+                    }
+                    else if (filteredPointCount > 3)
+                    {
+                        if (headPointsToSkip > 0)
+                            headPointsToSkip--;
+                        else
+                        {
+                            oneIsProcessed = true;
+                            startPoint = filteredPoints[0];
+                            endPoint = filteredPoints[1];
+                            shouldProcess = true;
+                        }
+                        filteredPoints[0] = filteredPoints[1];
+                        filteredPoints[1] = filteredPoints[2];
+                        filteredPoints[2] = filteredPoints[3];
+                        filteredPoints[3] = point;
+                    }
+                    else
+                        filteredPoints[filteredPointCount++] = point;
+                }
+                if (shouldProcess)
+                {
+                    const auto nextCode = Utilities::computeOutCode(endPoint, topLeft, bottomRight);
+                    auto p0 = startPoint;
+                    auto p1 = endPoint;
+                    int code0 = next && startPoint == prevPoint
+                        ? prevCode : Utilities::computeOutCode(startPoint, topLeft, bottomRight);
+                    int code1 = nextCode;
+                    bool accept = false;
+                    while (true)
+                    {
+                        if ((code0 | code1) == 0)
+                        {
+                            accept = true;
+                            break;
+                        }
+                        else if ((code0 & code1) > 0)
+                            break;
+                        else if (code0 > 0)
+                        {
+                            p0 = Utilities::getIntersection(code0, p0, p1, topLeft, bottomRight);
+                            code0 = Utilities::computeOutCode(p0, topLeft, bottomRight);
+                        }
+                        else
+                        {
+                            p1 = Utilities::getIntersection(code1, p0, p1, topLeft, bottomRight);
+                            code1 = Utilities::computeOutCode(p1, topLeft, bottomRight);
+                        }
+                    }
+                    const bool isEmpty = segment.empty();
+                    if (accept && p0 != p1)
+                    {
+                        if (isEmpty)
+                        {
+                            sm.x = INT32_MIN;
+                            sm.y = INT32_MIN;
+                        }
+                        if (isEmpty || segment.back() != p0)
+                        {
+                            if (!isEmpty)
+                            {
+                                const auto borderCode = Utilities::computeBorderCode(
+                                    segment.front(), topLeft, bottomRight);
+                                const auto lastBorderCode = Utilities::computeBorderCode(
+                                    segment.back(), topLeft, bottomRight);
+                                finishPoints[lastBorderCode].push_back(segment.back());
+                                result[borderCode].push_back({qMove(segment), signedArea, INT32_MAX});
+                                signedArea = 0;
+                                segment.reserve(size);
+                            }
+                            if (p0 != sm)
+                            {
+                                segment.push_back(p0);
+                                sm = p0;
+                            }
+                        }
+                        if (p1 != sm)
+                        {
+                            signedArea += Utilities::intCrossProduct2D(p0, p1);
+                            segment.push_back(p1);
+                            sm = p1;
+                        }
+                    }
+                    else if (!isEmpty)
+                    {
+                        if (segment.size() > 1)
+                        {
+                            const auto borderCode = Utilities::computeBorderCode(
+                                segment.front(), topLeft, bottomRight);
+                            const auto lastBorderCode = Utilities::computeBorderCode(
+                                segment.back(), topLeft, bottomRight);
+                            finishPoints[lastBorderCode].push_back(segment.back());
+                            result[borderCode].push_back({qMove(segment), signedArea, INT32_MAX});
+                        }
+                        signedArea = 0;
+                        segment.reserve(size);
+                    }
+                    prevPoint = endPoint;
+                    prevCode = nextCode;
+                    next = true;
+                    if (calculateClosestWinding)
+                    {
+                        Utilities::findClosestWinding(center, startPoint, endPoint,
+                            maxSqDistance, minSqDistance, distance);
+                    }
+                }
+            }
+            else
+            {
+                hasInputPoint = true;
+                if (!isExtra)
+                    filteredPoints[filteredPointCount++] = point;
+            }
+            previousInputPoint = point;
+        }
+        skipFirst = true;
+    }
+    if (segment.size() > 1)
+    {
+        const auto borderCode = Utilities::computeBorderCode(segment.front(), topLeft, bottomRight);
+        const auto lastBorderCode = Utilities::computeBorderCode(segment.back(), topLeft, bottomRight);
+        finishPoints[lastBorderCode].push_back(segment.back());
+        result[borderCode].push_back({qMove(segment), signedArea, INT32_MAX});
+    }
+};
+
 bool OsmAnd::MapPrimitiviser_P::getCoastlines(
     const AreaI area31,
     const AreaI64 coastlineArea31,
