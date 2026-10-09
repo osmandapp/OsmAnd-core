@@ -89,7 +89,7 @@ double OsmAnd::ReverseGeocoder::ResultEntry::getCityDistance() const
 
 void OsmAnd::ReverseGeocoder::ResultEntry::setDistance(double distance) const
 {
-    if (isnan(dist))
+    if (isnan(distance))
         dist = -1;
     else
         dist = distance;

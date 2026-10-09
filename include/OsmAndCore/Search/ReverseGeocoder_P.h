@@ -15,7 +15,6 @@
 #include "PrivateImplementation.h"
 #include "IRoadLocator.h"
 #include "LatLon.h"
-#include "AddressesByNameSearch.h"
 #include "ISearch.h"
 #include "ReverseGeocoder.h"
 
@@ -30,25 +29,31 @@ namespace OsmAnd
 
     private:
         const std::shared_ptr<const IRoadLocator> roadLocator;
-        const std::shared_ptr<const AddressesByNameSearch> addressByNameSearch;
 
-        static bool DISTANCE_COMPARATOR(
-                const std::shared_ptr<const ResultEntry> &a,
-                const std::shared_ptr<const ResultEntry> &b);
+        struct StreetsCache;
 
-        std::shared_ptr<const ResultEntry> justifyResult(
-                QVector<std::shared_ptr<const ResultEntry>>& res,
-                const std::shared_ptr<const IQueryController>& queryController) const;
-        QVector<std::shared_ptr<const ResultEntry>> justifyReverseGeocodingSearch(
-                const std::shared_ptr<const ResultEntry> &road,
-                double knownMinBuildingDistance,
-                const std::shared_ptr<const IQueryController>& queryController) const;
-        QVector<std::shared_ptr<const ResultEntry>> loadStreetBuildings(
-                const std::shared_ptr<const ResultEntry> road,
-                const std::shared_ptr<const ResultEntry> street,
-                const std::shared_ptr<const IQueryController>& queryController) const;
-        QVector<std::shared_ptr<const ResultEntry>> reverseGeocodeToRoads(
+        QVector<std::shared_ptr<const ResultEntry>> reverseGeocodingSearch(
                 const LatLon searchPoint) const;
+        QVector<std::shared_ptr<const ResultEntry>> findAddresses(
+                const QVector<std::shared_ptr<const ResultEntry>>& roads,
+                const std::shared_ptr<const IQueryController>& queryController) const;
+        QVector<std::shared_ptr<const ResultEntry>> findStreetAndBuildings(
+                const std::shared_ptr<const ResultEntry>& road,
+                double knownMinBuildingDistance,
+                StreetsCache& cache,
+                const std::shared_ptr<const IQueryController>& queryController) const;
+        bool addStreet(
+                const std::shared_ptr<const ResultEntry>& road,
+                const std::shared_ptr<const Street>& street,
+                bool matchWithCommonWords,
+                QVector<std::shared_ptr<ResultEntry>>& streetsList,
+                StreetsCache& cache) const;
+        QVector<std::shared_ptr<const ResultEntry>> loadStreetBuildings(
+                const std::shared_ptr<const ResultEntry>& road,
+                const std::shared_ptr<const ResultEntry>& street,
+                StreetsCache& cache,
+                const std::shared_ptr<const IQueryController>& queryController) const;
+        static void filterDuplicateRegionResults(QVector<std::shared_ptr<const ResultEntry>>& res);
     protected:
         ImplementationInterface<ReverseGeocoder> owner;
     public:
