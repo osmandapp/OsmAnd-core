@@ -387,9 +387,16 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     }
     else
     {
+        // As core-legacy useDetailedCoastlines: a tile at latitude lat is 1/cos(lat) times smaller on the ground,
+        // so above ~60 degrees the basemap coastline is too coarse one zoom earlier
+        const double centerLat = Utilities::get31LatitudeY(area31.top() / 2 + area31.bottom() / 2);
+        const double groundZoom = zoom + std::log2(1.0 / qMax(0.01, std::cos(centerLat * M_PI / 180.0)));
+        const bool useDetailedLandData = zoom >= MapPrimitiviser::DetailedLandDataMinZoom
+            || groundZoom > MapPrimitiviser::DetailedLandDataMinZoom;
+
         auto coastlinesWereAdded = false;
         bool withBrokenCoastline = false;
-        if (detailedmapCoastlinesPresent && zoom >= MapPrimitiviser::DetailedLandDataMinZoom)
+        if (detailedmapCoastlinesPresent && useDetailedLandData)
         {
             coastlinesWereAdded = getCoastlines(area31, AreaI64(area31),
                 detailedmapCoastlineObjects, polygonizedCoastlineObjects, surfaceType, &withBrokenCoastline);
@@ -413,7 +420,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
                 surfaceType = extraSurfaceType;
         }
         if (!coastlinesWereAdded && basemapCoastlinesPresent
-            && (!hasExtraCoastlines || zoom < MapPrimitiviser::DetailedLandDataMinZoom))
+            && (!hasExtraCoastlines || !useDetailedLandData))
         {
             const auto baseZoom = static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel);
             AreaI64 basemapArea(area31);
