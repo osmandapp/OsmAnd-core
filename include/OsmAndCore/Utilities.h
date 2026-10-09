@@ -2081,10 +2081,13 @@ namespace OsmAnd
             {
                 minSqDistance = sqDistance;
                 distance = d;
+                isReliable = false;
             }
             else
+            {
                 distance += d;
-            isReliable = t > 0.999 ? r1 : (t < 0.0001 ? r0 : r0 || r1);
+                isReliable = t > 0.999 ? r1 : (t < 0.0001 ? r0 : r0 || r1);
+            }
         }
 
         inline static void calcPolygonInTile(const QVector<PointI>& polygon, QVector<PointI>& result, bool& clockwise)
