@@ -2081,10 +2081,13 @@ namespace OsmAnd
             {
                 minSqDistance = sqDistance;
                 distance = d;
+                isReliable = qFuzzyIsNull(t) ? false : (qFuzzyCompare(t, 1.0) ? false : r0 || r1);
             }
             else
+            {
                 distance += d;
-            isReliable = t > 0.999 ? r1 : (t < 0.0001 ? r0 : r0 || r1);
+                isReliable = qFuzzyIsNull(t) ? r0 : (qFuzzyCompare(t, 1.0) ? r1 : r0 || r1);
+            }
         }
 
         inline static void calcPolygonInTile(const QVector<PointI>& polygon, QVector<PointI>& result, bool& clockwise)
