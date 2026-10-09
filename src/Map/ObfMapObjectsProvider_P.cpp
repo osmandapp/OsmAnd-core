@@ -482,13 +482,11 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         coastlineTileBBox = coastlineTileBBox.getEnlargedBy(coastlineTileBBox.width() / 2);
         coastlineTileBBox.right()--;
         coastlineTileBBox.bottom()--;
-        coastlineTileBBox.right() = qMin(coastlineTileBBox.right(), static_cast<int64_t>(INT32_MAX));
-        coastlineTileBBox.bottom() = qMin(coastlineTileBBox.bottom(), static_cast<int64_t>(INT32_MAX));
         AreaI coastlineTileBBox31(
-            static_cast<int>(coastlineTileBBox.top()),
-            static_cast<int>(coastlineTileBBox.left()),
-            static_cast<int>(coastlineTileBBox.bottom()),
-            static_cast<int>(coastlineTileBBox.right()));
+            static_cast<int>(qMax(coastlineTileBBox.top(), 0ll)),
+            static_cast<int>(qMax(coastlineTileBBox.left(), 0ll)),
+            static_cast<int>(qMin(coastlineTileBBox.bottom(), static_cast<int64_t>(INT32_MAX))),
+            static_cast<int>(qMin(coastlineTileBBox.right(), static_cast<int64_t>(INT32_MAX))));
         Ref<ObfMapSectionReader_Metrics::Metric_loadMapObjects> loadMapObjectsMetric;
         if (metric)
         {
