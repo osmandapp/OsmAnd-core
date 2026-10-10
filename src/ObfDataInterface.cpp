@@ -160,7 +160,8 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
                 outReferencedCacheEntries,
                 queryController,
                 metric,
-                coastlineOnly);
+                coastlineOnly,
+                bbox31);
             if (surfaceTypeToMerge != MapSurfaceType::Undefined)
             {
                 if (mergedSurfaceType == MapSurfaceType::Undefined)
@@ -209,7 +210,8 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
                 outReferencedCacheEntries,
                 queryController,
                 metric,
-                false);
+                false,
+                bbox31);
 
             // Basemap must always have a surface type defined
             assert(surfaceTypeToMerge != MapSurfaceType::Undefined);
@@ -390,7 +392,9 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 binaryMapObjectsCache,
                 outReferencedBinaryMapObjectsCacheEntries,
                 queryController,
-                binaryMapObjectsMetric);
+                binaryMapObjectsMetric,
+                false,
+                bbox31);
             if (surfaceTypeToMerge != MapSurfaceType::Undefined)
             {
                 if (mergedSurfaceType == MapSurfaceType::Undefined)
@@ -438,7 +442,9 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 binaryMapObjectsCache,
                 outReferencedBinaryMapObjectsCacheEntries,
                 queryController,
-                binaryMapObjectsMetric);
+                binaryMapObjectsMetric,
+                false,
+                bbox31);
 
             // Basemap must always have a surface type defined
             assert(surfaceTypeToMerge != MapSurfaceType::Undefined);

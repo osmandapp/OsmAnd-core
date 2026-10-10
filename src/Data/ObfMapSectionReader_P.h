@@ -157,7 +157,8 @@ namespace OsmAnd
             QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries,
             const std::shared_ptr<const IQueryController>& queryController,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric,
-            bool coastlineOnly);
+            bool coastlineOnly,
+            const AreaI* surfaceBBox31);
 
     friend class OsmAnd::ObfMapSectionReader;
     friend class OsmAnd::ObfReader_P;

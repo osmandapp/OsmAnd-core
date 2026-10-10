@@ -1091,9 +1091,13 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries,
     const std::shared_ptr<const IQueryController>& queryController,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric,
-    bool coastlineOnly)
+    bool coastlineOnly,
+    const AreaI* surfaceBBox31)
 {
     const auto cis = reader.getCodedInputStream().get();
+
+    if (!surfaceBBox31)
+        surfaceBBox31 = requestedBBox31;
     
     const auto filterReadById =
         [filterById, zoom]
@@ -1138,7 +1142,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     }
 
     // Use an OBF-grid-aligned bbox to load geometry from adjacent data blocks,
-    // but keep the requested bbox for label filtering and surface aggregation.
+    // but keep the requested bbox for label filtering and surfaceBBox31 for surface aggregation.
     AreaI exBBox31;
     const AreaI* bbox31 = nullptr;
     if (requestedBBox31)
@@ -1263,8 +1267,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 metric->acceptedNodes++;
 
             const auto contributesSurface =
-                !requestedBBox31 ||
-                requestedBBox31->intersects(rootNode->area31);
+                !surfaceBBox31 ||
+                surfaceBBox31->intersects(rootNode->area31);
 
             if (rootNode->dataOffset > 0)
                 treeNodesWithData.push_back(rootNode);
@@ -1283,7 +1287,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     rootSubnodesSurfaceType,
                     &treeNodesWithData,
                     bbox31,
-                    requestedBBox31,
+                    surfaceBBox31,
                     queryController,
                     metric);
                 
