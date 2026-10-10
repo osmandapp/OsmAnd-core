@@ -2065,6 +2065,8 @@ namespace OsmAnd
             const PointI& center, const PointI& p0, const PointI& p1, bool r0, bool r1,
             const int64_t maxSqDistance, int64_t& minSqDistance, double& distance, bool& isReliable)
         {
+            if (minSqDistance < 0)
+                return;
             const auto vX = static_cast<int64_t>(p1.x) - p0.x;
             const auto vY = static_cast<int64_t>(p1.y) - p0.y;
             const auto sqLength = static_cast<double>(vX * vX + vY * vY);

@@ -183,8 +183,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > basemapMapObjects;
     QList< std::shared_ptr<const MapObject> > basemapCoastlineObjects;
     QList< std::shared_ptr<const MapObject> > extraCoastlineObjects;
-    bool detailedBinaryMapObjectsPresent = false;
-    bool roadsPresent = false;
     int contourLinesObjectsCount = 0;
 
     const auto enlargedArea31 = Utilities::getEnlargedPrimitivesArea(area31);
@@ -229,14 +227,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         {
             isBasemapObject = binaryMapObject->section->isBasemap;
             isContourLinesObject = binaryMapObject->section->isContourLines;
-            if(!isBasemapObject) 
-            {
-                detailedBinaryMapObjectsPresent = true;
-            }
-        }
-        else if (const auto road = std::dynamic_pointer_cast<const Road>(mapObject))
-        {
-            roadsPresent = true;
         }
 
         if (mapObject->containsAttribute(mapObject->attributeMapping->naturalCoastlineAttributeId))
@@ -344,17 +334,17 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             
             if (hasExtraCoastlines)
             {
-                AreaI bboxZoom12wide = Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel12);
-                bboxZoom12wide.right()++;
-                bboxZoom12wide.bottom()++;
-                bboxZoom12wide = bboxZoom12wide.getEnlargedBy(bboxZoom12wide.width() / 2);
-                bboxZoom12wide.right()--;
-                bboxZoom12wide.bottom()--;
+                AreaI bboxZoom11 = Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel12);
+                bboxZoom11.right()++;
+                bboxZoom11.bottom()++;
+                bboxZoom11 = bboxZoom11.getEnlargedBy(bboxZoom11.width() / 2);
+                bboxZoom11.right()--;
+                bboxZoom11.bottom()--;
                 MapSurfaceType surfaceTypeOverscaled = MapSurfaceType::Undefined;
                 QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
                 polygonizeCoastlines(
-                    bboxZoom12wide,
-                    ZoomLevel::ZoomLevel13,
+                    bboxZoom11,
+                    ZoomLevel::ZoomLevel11,
                     extraCoastlineObjects,
                     polygonizedCoastlines);
                 surfaceTypeOverscaled = determineSurfaceType(area31, polygonizedCoastlines);
@@ -2530,7 +2520,9 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
     int pointsToProcess = size - 1;
     const auto& firstCoastline = coastlines[sequence.front()]->points31;
     const auto& lastCoastline = coastlines[sequence.back()]->points31;
-    const bool isCycle = firstCoastline.front() == lastCoastline.back();
+    const auto& first = firstCoastline.front();
+    const auto& last = lastCoastline.back();
+    const bool isCycle = first == last;
     bool useInterPoint = false;
     if (isCycle)
     {
@@ -2550,6 +2542,15 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
         pointsReliable[1] = true;
         filteredPointCount = 2;
         headPointsToSkip = 2;
+    }
+    else if (calculateClosestWinding)
+    {
+        if ((static_cast<int64_t>(first.x) * first.x + static_cast<int64_t>(first.y) * first.y < maxSqDistance)
+            || (static_cast<int64_t>(last.x) * last.x + static_cast<int64_t>(last.y) * last.y < maxSqDistance))
+        {
+            minSqDistance = -1;
+            isReliable = false;
+        }
     }
 
     bool oneIsProcessed = false;
