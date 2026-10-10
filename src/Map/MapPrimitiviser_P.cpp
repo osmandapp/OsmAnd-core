@@ -2524,12 +2524,12 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
     const auto& last = lastCoastline.back();
     const bool isCycle = first == last;
     bool useInterPoint = false;
-    bool checkCross = true;
+    bool skipClosestWinding = false;
     if (isCycle)
     {
         if (size < 4)
             return;
-        checkCross = size > 4;
+        skipClosestWinding = size == 4;
         useInterPoint = size > 5 && size < 8;
         const auto lastSize = lastCoastline.size();
         if (lastSize > 2)
@@ -2607,7 +2607,7 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
                 else if (pointsToProcess-- > 0)
                 {
                     // Remove short self-intersecting loops before clipping or measuring winding.
-                    const auto interPoint = checkCross && filteredPointCount > 2 ? Utilities::getIntersectionPoint(
+                    const auto interPoint = filteredPointCount > 2 ? Utilities::getIntersectionPoint(
                         filteredPoints[filteredPointCount - 3], filteredPoints[filteredPointCount - 2],
                         filteredPoints[filteredPointCount - 1], point, useInterPoint) : PointI(-1, -1);
                     if (interPoint.x >= 0)
@@ -2640,7 +2640,7 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
                     }
                     else if (filteredPointCount > 3)
                     {
-                        if (checkCross && (!isCycle || size > 7) && Utilities::getIntersectionPoint(
+                        if ((!isCycle || size > 7) && Utilities::getIntersectionPoint(
                             filteredPoints[filteredPointCount - 4], filteredPoints[filteredPointCount - 3],
                             filteredPoints[filteredPointCount - 1], point, false).x >= 0)
                         {
@@ -2766,7 +2766,7 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
                     prevPoint = endPoint;
                     prevCode = nextCode;
                     next = true;
-                    if (calculateClosestWinding)
+                    if (calculateClosestWinding && !skipClosestWinding)
                     {
                         Utilities::findClosestWinding(center, startPoint, endPoint, startReliable, endReliable,
                             maxSqDistance, minSqDistance, distance, isReliable);
