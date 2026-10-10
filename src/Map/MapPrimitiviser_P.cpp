@@ -2607,7 +2607,7 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
                     // Remove short self-intersecting loops before clipping or measuring winding.
                     const auto interPoint = filteredPointCount > 2 ? Utilities::getIntersectionPoint(
                         filteredPoints[filteredPointCount - 3], filteredPoints[filteredPointCount - 2],
-                        filteredPoints[filteredPointCount - 1], point) : PointI(-1, -1);
+                        filteredPoints[filteredPointCount - 1], point, useInterPoint) : PointI(-1, -1);
                     if (interPoint.x >= 0)
                     {
                         if (isCycle && headPointsToSkip > 0)

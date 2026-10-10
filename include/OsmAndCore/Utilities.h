@@ -2109,7 +2109,7 @@ namespace OsmAnd
         }
 
         inline static PointI getIntersectionPoint(const PointI& start1, const PointI& end1,
-            const PointI& start2, const PointI& end2)
+            const PointI& start2, const PointI& end2, bool calculateInterPoint)
         {
             PointI result(-1, -1);
             if (qMax(qMin(start1.x, end1.x), qMin(start2.x, end2.x))
@@ -2128,13 +2128,16 @@ namespace OsmAnd
                 return result;
             const auto crossOC = intCrossProduct2D(offset, current); 
             const auto side3 = crossOC - crossFC;
-            if ((crossOC <= 0 && side3 >= 0) || (crossOC >= 0 && side3 <= 0))
+            if (((crossOC <= 0 && side3 >= 0) || (crossOC >= 0 && side3 <= 0)) && crossFC != 0)
             {
-                if (crossFC == 0)
-                    return result;
-                const auto t = static_cast<double>(crossOC) / crossFC;
-                result.x = start1.x + qRound64(t * first.x);
-                result.y = start1.y + qRound64(t * first.y);
+                if (calculateInterPoint)
+                {
+                    const auto t = static_cast<double>(crossOC) / crossFC;
+                    result.x = start1.x + qRound64(t * first.x);
+                    result.y = start1.y + qRound64(t * first.y);
+                }
+                else
+                    result.x = 0;
             }
             return result;
         };
