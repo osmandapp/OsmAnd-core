@@ -194,8 +194,13 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const QVector<PointI>& points, 
         if (path31)
         {
             code = (x < left ? 1 : (x > right ? 2 : 0)) | (y < top ? 4 : (y > bottom ? 8 : 0));
+            // A run of points may be replaced by one chord only while all of them stay in one half-plane
+            // outside the area: keep the common bits of the whole run, not just of the last kept point
             if (code != 0 && (code & prevCode) != 0)
+            {
                 skipped = true;
+                prevCode &= code;
+            }
             else
             {
                 if (skipped)
@@ -213,6 +218,13 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const QVector<PointI>& points, 
             prevX = x;
             prevY = y;
         }
+    }
+    if (path31 && skipped)
+    {
+        // Keep the last point of the final run, as simplifyPathOutsideBBox does
+        path31->resize(path31->size() + 1);
+        path31->last().x = prevX;
+        path31->last().y = prevY;
     }
     if(corners == 15) // && isArea - we can't here detect area or non-area field
         return true;

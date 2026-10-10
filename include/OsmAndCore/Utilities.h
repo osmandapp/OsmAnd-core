@@ -1309,8 +1309,13 @@ namespace OsmAnd
                 x = pPoint31->x;
                 y = pPoint31->y;
                 code = (x < left ? 1 : (x > right ? 2 : 0)) | (y < top ? 4 : (y > bottom ? 8 : 0));
+                // A run of points may be replaced by one chord only while all of them stay in one half-plane
+                // outside the box: keep the common bits of the whole run, not just of the last kept point
                 if (code != 0 && (code & prevCode) != 0)
+                {
                     skipped = true;
+                    prevCode &= code;
+                }
                 else
                 {
                     if (skipped)
