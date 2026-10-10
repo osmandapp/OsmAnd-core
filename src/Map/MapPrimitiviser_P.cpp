@@ -2638,25 +2638,45 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
                     }
                     else if (filteredPointCount > 3)
                     {
-                        if (headPointsToSkip > 0)
-                            headPointsToSkip--;
+                        if ((!isCycle || size > 7) && Utilities::getIntersectionPoint(
+                            filteredPoints[filteredPointCount - 4], filteredPoints[filteredPointCount - 3],
+                            filteredPoints[filteredPointCount - 1], point, false).x >= 0)
+                        {
+                            if (isCycle && headPointsToSkip > 0)
+                            {
+                                pointsToProcess -= headPointsToSkip;
+                                headPointsToSkip = 0;
+                            }
+                            filteredPointCount -= 3;
+                            pointsReliable[filteredPointCount - 1] = false;
+                            if (point != filteredPoints[filteredPointCount - 1])
+                            {
+                                filteredPoints[filteredPointCount] = point;
+                                pointsReliable[filteredPointCount++] = false;
+                            }
+                        }
                         else
                         {
-                            oneIsProcessed = true;
-                            startPoint = filteredPoints[0];
-                            endPoint = filteredPoints[1];
-                            startReliable = pointsReliable[0];
-                            endReliable = pointsReliable[1];
-                            shouldProcess = true;
+                            if (headPointsToSkip > 0)
+                                headPointsToSkip--;
+                            else
+                            {
+                                oneIsProcessed = true;
+                                startPoint = filteredPoints[0];
+                                endPoint = filteredPoints[1];
+                                startReliable = pointsReliable[0];
+                                endReliable = pointsReliable[1];
+                                shouldProcess = true;
+                            }
+                            filteredPoints[0] = filteredPoints[1];
+                            filteredPoints[1] = filteredPoints[2];
+                            filteredPoints[2] = filteredPoints[3];
+                            filteredPoints[3] = point;
+                            pointsReliable[0] = pointsReliable[1];
+                            pointsReliable[1] = pointsReliable[2];
+                            pointsReliable[2] = pointsReliable[3];
+                            pointsReliable[3] = true;
                         }
-                        filteredPoints[0] = filteredPoints[1];
-                        filteredPoints[1] = filteredPoints[2];
-                        filteredPoints[2] = filteredPoints[3];
-                        filteredPoints[3] = point;
-                        pointsReliable[0] = pointsReliable[1];
-                        pointsReliable[1] = pointsReliable[2];
-                        pointsReliable[2] = pointsReliable[3];
-                        pointsReliable[3] = true;
                     }
                     else
                     {
