@@ -221,7 +221,9 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const QVector<PointI>& points, 
 
 inline int OsmAnd::MapObject::startReadingArea() const
 {
-    if (points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED)
+    // Coastline calculations must use the full geometry, including points outside the visible area.
+    if (isCoastline || points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED
+        || containsAttribute(attributeMapping->naturalCoastlineAttributeId))
         return -1;
 
     const auto readIndex = vapIndex;
@@ -285,7 +287,8 @@ bool OsmAnd::MapObject::needsSimplification(const AreaI& nextArea) const
     if (nextArea.isEmpty())
         return false;
 
-    if (points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED)
+    if (isCoastline || points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED
+        || containsAttribute(attributeMapping->naturalCoastlineAttributeId))
         return false;
 
     auto objectWidth = bbox31.width();
@@ -301,7 +304,8 @@ bool OsmAnd::MapObject::needsSimplification(const AreaI& nextArea) const
 
 bool OsmAnd::MapObject::updateVisibleArea(const AreaI& nextArea, int64_t nextAreaTime, QVector<PointI>* path31) const
 {
-    if (points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED)
+    if (isCoastline || points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED
+        || containsAttribute(attributeMapping->naturalCoastlineAttributeId))
         return false;
 
     bool result = false;
