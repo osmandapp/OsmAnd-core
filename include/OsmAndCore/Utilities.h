@@ -1323,8 +1323,8 @@ namespace OsmAnd
                     result.resize(result.size() + 1);
                     result.last().x = x;
                     result.last().y = y;
-                    prevCode = code;
                 }
+                prevCode = code;
                 prevX = x;
                 prevY = y;
                 pPoint31++;
