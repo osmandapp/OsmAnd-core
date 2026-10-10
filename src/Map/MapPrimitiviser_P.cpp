@@ -1012,10 +1012,6 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                 env->styleBuiltinValueDefs->id_OUTPUT_IGNORE_POLYGON_AREA,
                 ignorePolygonArea);
 
-            // Small clipped coastline polygons still define the tile's land and water surface.
-            if (std::dynamic_pointer_cast<const CoastlineMapObject>(mapObject))
-                ignorePolygonArea = true;
-
             auto ignorePolygonAsPointArea = false;
             evaluationResult.getBooleanValue(
                 env->styleBuiltinValueDefs->id_OUTPUT_IGNORE_POLYGON_AS_POINT_AREA,
