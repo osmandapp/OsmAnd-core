@@ -32,8 +32,7 @@ OsmAnd::HillshadeRasterMapLayerProvider::HillshadeRasterMapLayerProvider(
 OsmAnd::HillshadeRasterMapLayerProvider::~HillshadeRasterMapLayerProvider()
 {
      QMutexLocker scopedLocker(&_threadPoolMutex);
-    _threadPool->clear();
-    delete _threadPool;
+    MapDataProviderHelpers::deleteThreadPool(_threadPool);
 }
 
 OsmAnd::MapStubStyle OsmAnd::HillshadeRasterMapLayerProvider::getDesiredStubsStyle() const

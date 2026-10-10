@@ -40,10 +40,8 @@ OsmAnd::ImageMapLayerProvider::ImageMapLayerProvider()
 OsmAnd::ImageMapLayerProvider::~ImageMapLayerProvider()
 {
     QMutexLocker scopedLocker(&_threadPoolMutex);
-    _threadPool->clear();
-    delete _threadPool;
-    _cacheThreadPool->clear();
-    delete _cacheThreadPool;
+    MapDataProviderHelpers::deleteThreadPool(_threadPool);
+    MapDataProviderHelpers::deleteThreadPool(_cacheThreadPool);
 }
 
 bool OsmAnd::ImageMapLayerProvider::supportsObtainImage() const
