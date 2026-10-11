@@ -123,6 +123,11 @@ namespace OsmAnd
         bool showArrows() const;
         void setShowArrows(const bool showArrows);
 
+        // Arrows stay at the same places on the line: counted from its start (not its end), at a step that only
+        // doubles or halves with the zoom, so they neither crawl when the line grows nor slide when zooming
+        bool areArrowsFixedOnPath() const;
+        void setArrowsFixedOnPath(const bool fixed);
+
         bool isApproximationEnabled() const;
         void setApproximationEnabled(const bool enabled);
 

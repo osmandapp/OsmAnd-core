@@ -111,6 +111,7 @@ namespace OsmAnd
         float _startingDistance;
         bool _isApproximationEnabled;
         bool _showArrows;
+        bool _arrowsFixedOnPath;
 
         QVector<PointI> _points;
         QList<float> _heights;
@@ -202,6 +203,10 @@ namespace OsmAnd
 
         bool showArrows() const;
         void setShowArrows(const bool showArrows);
+
+        bool areArrowsFixedOnPath() const;
+        void setArrowsFixedOnPath(const bool fixed);
+        float getArrowsStep() const;
 
         bool isApproximationEnabled() const;
         void setApproximationEnabled(const bool enabled);

@@ -54,6 +54,7 @@ OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
     , _isHidden(false)
     , _startingDistance(0.0f)
     , _isApproximationEnabled(true)
+    , _arrowsFixedOnPath(false)
     , _colorizationScheme(0)
     , _lineWidth(1.0)
     , _outlineWidth(0.0)
@@ -103,7 +104,7 @@ void OsmAnd::VectorLine_P::setStartingDistance(const float distanceInMeters)
 
     if (_startingDistance != distanceInMeters)
     {
-        const auto halfGap = getPointStepPx() * _metersPerPixel * 0.5;
+        const auto halfGap = getArrowsStep() * 0.5;
         const bool hasValidHalfGap = halfGap > 0.0 && qIsFinite(halfGap);
         const bool changeArrows = hasValidHalfGap
             ? qFloor(distanceInMeters / halfGap) != qFloor(_startingDistance / halfGap)
@@ -118,7 +119,7 @@ float OsmAnd::VectorLine_P::getArrowStartingGap() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return static_cast<float>(getPointStepPx() * _metersPerPixel * 0.5);
+    return getArrowsStep() * 0.5f;
 }
 
 bool OsmAnd::VectorLine_P::showArrows() const
@@ -139,6 +140,33 @@ void OsmAnd::VectorLine_P::setShowArrows(const bool showArrows)
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
     }
+}
+
+bool OsmAnd::VectorLine_P::areArrowsFixedOnPath() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _arrowsFixedOnPath;
+}
+
+void OsmAnd::VectorLine_P::setArrowsFixedOnPath(const bool fixed)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_arrowsFixedOnPath != fixed)
+    {
+        _arrowsFixedOnPath = fixed;
+
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
+}
+
+float OsmAnd::VectorLine_P::getArrowsStep() const
+{
+    const auto step = getPointStepPx() * _metersPerPixel;
+    // fixed arrows: a power of two in meters, so a smooth zoom does not move them
+    return static_cast<float>(_arrowsFixedOnPath && step > 0.0 ? qPow(2.0, qRound(std::log2(step))) : step);
 }
 
 bool OsmAnd::VectorLine_P::isApproximationEnabled() const
@@ -1795,6 +1823,13 @@ void OsmAnd::VectorLine_P::addArrowsOnFlatSegmentPath(
     const std::vector<bool>& includedPoints,
     const PointI64& origin)
 {
+    if (_arrowsFixedOnPath)
+    {
+        // placed by the distance along the line, the same way on the flat map as on the globe
+        addArrowsOnSegmentPath(segmentPoints, segmentDistances, segmentHeights, includedPoints, segmentDistances.back());
+        return;
+    }
+
     int64_t intFull = INT32_MAX;
     intFull++;
     const auto intHalf = intFull >> 1;
@@ -1872,7 +1907,7 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
     const auto intHalf = intFull >> 1;
     const auto intTwo = intFull << 1;
     const bool withHeights = !segmentHeights.isEmpty();
-    const auto step = static_cast<float>(getPointStepPx() * _metersPerPixel);
+    const auto step = getArrowsStep();
     const auto halfStep = step / 2.0f;
     bool ok = halfStep > 0.0f;
     if (!ok)
@@ -1884,7 +1919,8 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
     float nextDistance;
     float prevHeight = withHeights ? segmentHeights[segmentPoints.size() - 1] : NAN;
     float nextHeight;
-    const auto extDistance = distance + halfStep;
+    // counted back from the end; fixed arrows from the start instead: half a step, then every step
+    const auto extDistance = _arrowsFixedOnPath ? halfStep + qCeil(distance / step) * step : distance + halfStep;
     auto prevCount = static_cast<int>(qFloor((extDistance - prevDistance) / step));
 
     QWriteLocker scopedLocker(&_arrowsOnPathLock);
