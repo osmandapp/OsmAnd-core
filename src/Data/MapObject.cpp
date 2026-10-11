@@ -214,6 +214,8 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const QVector<PointI>& points, 
             prevY = y;
         }
     }
+    if (path31 && skipped)
+        path31->append(PointI(prevX, prevY));
     if(corners == 15) // && isArea - we can't here detect area or non-area field
         return true;
     return result;
