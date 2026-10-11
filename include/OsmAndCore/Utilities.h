@@ -1289,7 +1289,48 @@ namespace OsmAnd
             outY = deinterleaveBy1(code >> 1);
         }
 
-        inline static QVector<PointI> simplifyPathOutsideBBox(const QVector<PointI>& path31, const AreaI& bbox31)
+        inline static void replaceEnclosingPolygonWithBBox(
+            const QVector<PointI>& polygon31, const AreaI& bbox31, QVector<PointI>& simplified31)
+        {
+            if (simplified31.size() != 2 || simplified31.first() != simplified31.last()
+                || polygon31.size() < 4 || polygon31.first() != polygon31.last()
+                || bbox31.width() <= 0 || bbox31.height() <= 0)
+                return;
+
+            // Local segment rejection can collapse an enclosing ring to its repeated endpoint.
+            // Its winding around the box center distinguishes enclosure from an offscreen ring.
+            const auto center = bbox31.center();
+            int winding = 0;
+            auto previous = polygon31.first();
+            for (auto pointIdx = 1; pointIdx < polygon31.size(); pointIdx++)
+            {
+                const auto& point = polygon31[pointIdx];
+                if ((previous.y <= center.y && point.y > center.y)
+                    || (previous.y > center.y && point.y <= center.y))
+                {
+                    const auto cross = (static_cast<int64_t>(point.x) - previous.x)
+                        * (static_cast<int64_t>(center.y) - previous.y)
+                        - (static_cast<int64_t>(point.y) - previous.y)
+                        * (static_cast<int64_t>(center.x) - previous.x);
+                    if (previous.y <= center.y && cross > 0)
+                        winding++;
+                    else if (previous.y > center.y && cross < 0)
+                        winding--;
+                }
+                previous = point;
+            }
+            if (winding == 0)
+                return;
+
+            simplified31 = {bbox31.topLeft,
+                winding > 0 ? bbox31.topRight() : bbox31.bottomLeft(),
+                bbox31.bottomRight,
+                winding > 0 ? bbox31.bottomLeft() : bbox31.topRight(),
+                bbox31.topLeft};
+        }
+
+        inline static QVector<PointI> simplifyPathOutsideBBox(
+            const QVector<PointI>& path31, const AreaI& bbox31, const bool isArea = false)
         {
             const auto pointsCount = path31.size();
             if (pointsCount < 2)
@@ -1335,6 +1376,8 @@ namespace OsmAnd
                 result.last().x = prevX;
                 result.last().y = prevY;
             }
+            if (isArea)
+                replaceEnclosingPolygonWithBBox(path31, bbox31, result);
             return result;
         }
 

@@ -216,6 +216,8 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const QVector<PointI>& points, 
     }
     if (path31 && skipped)
         path31->append(PointI(prevX, prevY));
+    if (path31 && isArea)
+        Utilities::replaceEnclosingPolygonWithBBox(points, nextArea, *path31);
     if(corners == 15) // && isArea - we can't here detect area or non-area field
         return true;
     return result;
@@ -337,7 +339,7 @@ bool OsmAnd::MapObject::updateVisibleArea(const AreaI& nextArea, int64_t nextAre
                     {
                         auto nextPoints31 = path31 ? qMove(*path31)
                             :(points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED ? points31
-                                : Utilities::simplifyPathOutsideBBox(points31, nextArea));
+                                : Utilities::simplifyPathOutsideBBox(points31, nextArea, isArea));
                         if (nextPoints31.size() * MIN_BBOX_FACTOR_TO_UPDATE_AREA < points31.size())
                         {
                             delete vapItems[writeIndex];
