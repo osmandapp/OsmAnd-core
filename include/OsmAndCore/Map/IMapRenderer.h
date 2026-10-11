@@ -103,6 +103,8 @@ namespace OsmAnd
         virtual bool resumeSymbolsUpdate() = 0;
         virtual int getSymbolsUpdateInterval() = 0;
         virtual void setSymbolsUpdateInterval(int interval) = 0;
+        // Symbols that come or go at a layout fade over durationMs (0 is off), timed by clockMs (negative is real time)
+        virtual void setSymbolsFade(float durationMs, double clockMs = -1.0) = 0;
         virtual void setUpdateSymbols(bool update) = 0;
         virtual bool needUpdatedSymbols() = 0;
         virtual void updateSubsection(int subsection) = 0;

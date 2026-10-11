@@ -135,6 +135,8 @@ namespace OsmAnd
         bool validatePublishedMapSymbolsIntegrity();
         QAtomicInt _suspendSymbolsUpdateCounter;
         volatile int _symbolsUpdateInterval;
+        volatile float _symbolsFadeDuration;
+        volatile double _symbolsFadeClock;
         volatile bool _updateSymbols;
         volatile bool _symbolsLoading;
         volatile bool _targetIsElevated;
@@ -526,6 +528,9 @@ namespace OsmAnd
         virtual bool resumeSymbolsUpdate() Q_DECL_OVERRIDE;
         virtual int getSymbolsUpdateInterval() Q_DECL_OVERRIDE;
         virtual void setSymbolsUpdateInterval(int interval) Q_DECL_OVERRIDE;
+        virtual void setSymbolsFade(float durationMs, double clockMs = -1.0) Q_DECL_OVERRIDE;
+        float getSymbolsFadeDuration() const { return _symbolsFadeDuration; }
+        double getSymbolsFadeClock() const { return _symbolsFadeClock; }
         virtual void setUpdateSymbols(bool update) Q_DECL_OVERRIDE;
         virtual bool needUpdatedSymbols() Q_DECL_OVERRIDE;
         virtual void updateSubsection(int subsection) Q_DECL_OVERRIDE;

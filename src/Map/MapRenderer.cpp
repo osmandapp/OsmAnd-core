@@ -49,6 +49,8 @@ OsmAnd::MapRenderer::MapRenderer(
     , _suspendSymbolsUpdateCounter(0)
     , _updateSymbols(false)
 	, _symbolsUpdateInterval(0)
+	, _symbolsFadeDuration(0.0f)
+	, _symbolsFadeClock(-1.0)
     , _symbolsLoading(false)
 	, _targetIsElevated(false)
     , _gpuWorkerThreadId(nullptr)
@@ -1404,6 +1406,12 @@ void OsmAnd::MapRenderer::setSymbolsUpdateInterval(int interval)
 {
     _symbolsUpdateInterval = interval;
     invalidateFrame();
+}
+
+void OsmAnd::MapRenderer::setSymbolsFade(float durationMs, double clockMs /*= -1.0*/)
+{
+    _symbolsFadeDuration = durationMs;
+    _symbolsFadeClock = clockMs;
 }
 
 void OsmAnd::MapRenderer::setUpdateSymbols(bool update)

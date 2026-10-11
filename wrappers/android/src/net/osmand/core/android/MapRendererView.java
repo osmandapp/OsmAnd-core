@@ -1011,6 +1011,12 @@ public abstract class MapRendererView extends FrameLayout {
         _mapRenderer.setSymbolsUpdateInterval(interval);
     }
 
+    public final void setSymbolsFade(float durationMs, double clockMs) {
+        NativeCore.checkIfLoaded();
+
+        _mapRenderer.setSymbolsFade(durationMs, clockMs);
+    }
+
     public final boolean setMapLayerProvider(
             int layerIndex,
             IMapLayerProvider provider) {

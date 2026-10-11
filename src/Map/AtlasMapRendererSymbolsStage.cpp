@@ -128,6 +128,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
 
         return;
     }
+    addFadingSymbols(intersections);
 
     Stopwatch preparedSymbolsPublishingStopwatch(metric != nullptr);
 
@@ -278,6 +279,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             clearSymbolsLongStageDebugHelper();
         }
 
+        MapRenderer::PublishedMapSymbolsByOrder previouslyAccepted;
+        if (renderer->getSymbolsFadeDuration() > 0.0f)
+            previouslyAccepted = *pLastAcceptedMapSymbolsByOrder;
         pLastAcceptedMapSymbolsByOrder->clear();
         result = obtainRenderableSymbols(
             publishedMapSymbolsByOrder,
@@ -287,6 +291,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             outIntersections,
             pLastAcceptedMapSymbolsByOrder.get(),
             metric);
+        if (result && renderer->getSymbolsFadeDuration() > 0.0f)
+            startSymbolFades(previouslyAccepted, *pLastAcceptedMapSymbolsByOrder);
 
         publishedMapSymbolsByOrderLock.unlock();
 
@@ -420,6 +426,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
         if (result)
         {
+            if (renderer->getSymbolsFadeDuration() > 0.0f)
+                startSymbolFades(*pLastAcceptedMapSymbolsByOrder, *filteredLastAcceptedMapSymbols);
             _updatedSymbolsZoomLevel = currentState.zoomLevel;
             pLastAcceptedMapSymbolsByOrder.reset(filteredLastAcceptedMapSymbols);
         }
@@ -440,6 +448,108 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     publishedMapSymbolsByOrderLock.unlock();
 
     return result;
+}
+
+double OsmAnd::AtlasMapRendererSymbolsStage::getFadeTime() const
+{
+    const auto clockMs = renderer->getSymbolsFadeClock();
+    return clockMs >= 0.0 ? clockMs : std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+
+float OsmAnd::AtlasMapRendererSymbolsStage::getFadeOpacity(
+    const SymbolFade& fade, const double nowMs, const float durationMs)
+{
+    const auto progress = static_cast<float>(qBound(0.0, (nowMs - fade.startMs) / durationMs, 1.0));
+    return fade.fadingIn ? progress : 1.0f - progress;
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage::startSymbolFades(
+    const MapRenderer::PublishedMapSymbolsByOrder& before,
+    const MapRenderer::PublishedMapSymbolsByOrder& after)
+{
+    const auto durationMs = renderer->getSymbolsFadeDuration();
+    const auto nowMs = getFadeTime();
+    const auto contains = [](const MapRenderer::PublishedMapSymbolsByOrder& symbols, const int order,
+        const std::shared_ptr<const MapSymbolsGroup>& group, const std::shared_ptr<const MapSymbol>& symbol)
+    {
+        const auto itOrder = symbols.constFind(order);
+        if (itOrder == symbols.cend())
+            return false;
+        const auto itGroup = itOrder->find(group);
+        return itGroup != itOrder->end() && itGroup->second.contains(symbol);
+    };
+    // Symbols in one set and not in the other fade in or out; one caught in the middle goes on from its opacity
+    const auto fade = [&](const MapRenderer::PublishedMapSymbolsByOrder& from,
+        const MapRenderer::PublishedMapSymbolsByOrder& to, const bool fadingIn)
+    {
+        for (auto itOrder = to.cbegin(); itOrder != to.cend(); ++itOrder)
+        {
+            for (const auto& group : itOrder.value())
+            {
+                for (auto itSymbol = group.second.cbegin(); itSymbol != group.second.cend(); ++itSymbol)
+                {
+                    if (contains(from, itOrder.key(), group.first, itSymbol.key()))
+                        continue;
+                    const auto itFade = _symbolFades.constFind(itSymbol.key());
+                    const auto opacity = itFade != _symbolFades.cend()
+                        ? getFadeOpacity(*itFade, nowMs, durationMs) : (fadingIn ? 0.0f : 1.0f);
+                    _symbolFades[itSymbol.key()] = { nowMs - (fadingIn ? opacity : 1.0f - opacity) * durationMs,
+                        fadingIn, itOrder.key(), group.first, itSymbol.value() };
+                }
+            }
+        }
+    };
+    fade(before, after, true);
+    fade(after, before, false);
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage::addFadingSymbols(const ScreenQuadTree& intersections)
+{
+    // Nothing to do unless fades are on and a layout started some
+    if (_symbolFades.isEmpty())
+        return;
+    const auto durationMs = renderer->getSymbolsFadeDuration();
+    const auto nowMs = getFadeTime();
+    MapRenderer::PublishedMapSymbolsByOrder fadingOut;
+    for (auto itFade = _symbolFades.begin(); itFade != _symbolFades.end();)
+    {
+        // over, switched off, or the clock set back for a new video
+        if (durationMs <= 0.0f || nowMs - itFade->startMs >= durationMs || nowMs < itFade->startMs)
+        {
+            itFade = _symbolFades.erase(itFade);
+            continue;
+        }
+        if (!itFade->fadingIn)
+            fadingOut[itFade->order][itFade->group].insert(itFade.key(), itFade->info);
+        ++itFade;
+    }
+    if (_symbolFades.isEmpty())
+        return;
+
+    // The symbols fading out are drawn over the new layout without taking its space
+    QList< std::shared_ptr<const RenderableSymbol> > fadingBeforeBuildings, fadingAfterBuildings;
+    ScreenQuadTree fadingIntersections(intersections.getRootArea(), intersections.maxDepth);
+    if (!fadingOut.isEmpty() && obtainRenderableSymbols(fadingOut, false, fadingBeforeBuildings,
+        fadingAfterBuildings, fadingIntersections, nullptr, nullptr))
+    {
+        renderableSymbolsBeforeBuildings.append(fadingBeforeBuildings);
+        renderableSymbolsAfterBuildings.append(fadingAfterBuildings);
+    }
+    for (const auto renderables : { &renderableSymbolsBeforeBuildings, &renderableSymbolsAfterBuildings })
+    {
+        for (const auto& renderable : constOf(*renderables))
+        {
+            const auto itFade = _symbolFades.constFind(renderable->mapSymbol);
+            if (itFade != _symbolFades.cend())
+                std::const_pointer_cast<RenderableSymbol>(renderable)->opacityFactor *=
+                    getFadeOpacity(*itFade, nowMs, durationMs);
+        }
+    }
+
+    // On the real clock the fades animate by themselves; on a set clock the caller renders each frame
+    if (renderer->getSymbolsFadeClock() < 0.0)
+        invalidateFrame();
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
