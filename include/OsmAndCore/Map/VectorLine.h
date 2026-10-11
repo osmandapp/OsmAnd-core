@@ -123,6 +123,10 @@ namespace OsmAnd
         bool showArrows() const;
         void setShowArrows(const bool showArrows);
 
+        // Arrows stay at the same places on the line: counted from its start (not its end)
+        bool areArrowsFixedOnPath() const;
+        void setArrowsFixedOnPath(const bool fixed);
+
         bool isApproximationEnabled() const;
         void setApproximationEnabled(const bool enabled);
 

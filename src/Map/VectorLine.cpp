@@ -62,6 +62,16 @@ void OsmAnd::VectorLine::setShowArrows(const bool showArrows)
     _p->setShowArrows(showArrows);
 }
 
+bool OsmAnd::VectorLine::areArrowsFixedOnPath() const
+{
+    return _p->areArrowsFixedOnPath();
+}
+
+void OsmAnd::VectorLine::setArrowsFixedOnPath(const bool fixed)
+{
+    _p->setArrowsFixedOnPath(fixed);
+}
+
 bool OsmAnd::VectorLine::isApproximationEnabled() const
 {
     return _p->isApproximationEnabled();
