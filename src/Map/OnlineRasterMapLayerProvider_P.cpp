@@ -193,7 +193,13 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
 
         // Unlock the tile
         unlockTile(tileId, zoom);
-        return false;
+
+        if (request.queryController && request.queryController->isAborted())
+            return false;
+
+        // A failed request makes the renderer request the tile again at once, so report no data instead
+        outData.reset();
+        return true;
     }
 
     if (downloadResult.isEmpty())
