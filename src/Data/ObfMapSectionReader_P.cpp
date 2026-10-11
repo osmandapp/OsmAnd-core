@@ -760,7 +760,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     if (metric)
                         metric->rejectedMapObjects++;
                 }
-                else if (mapObject->points31.size() >= MIN_POINTS_TO_USE_SIMPLIFIED)
+                else if (!mapObject->isArea && mapObject->points31.size() >= MIN_POINTS_TO_USE_SIMPLIFIED)
                 {
                     // Create empty slots only for objects that can use simplified paths.
                     mapObject->vapItems[0] = new VisibleAreaPoints(0, AreaI(), QVector<PointI>());

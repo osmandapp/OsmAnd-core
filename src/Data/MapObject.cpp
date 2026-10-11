@@ -148,6 +148,12 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const AreaI& area,
 bool OsmAnd::MapObject::intersectedOrContainedBy(const QVector<PointI>& points, const AreaI& area,
     const AreaI& nextArea, int64_t nextAreaTime, QVector<PointI>* path31 /* = nullptr */) const
 {
+    if (isArea && path31)
+    {
+        *path31 = points;
+        path31 = nullptr;
+    }
+
     // Check if any of the object points is inside area
     auto pPoint31 = points.constData();
     const auto pointsCount = points.size();
@@ -216,8 +222,6 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const QVector<PointI>& points, 
     }
     if (path31 && skipped)
         path31->append(PointI(prevX, prevY));
-    if (path31 && isArea)
-        Utilities::replaceEnclosingPolygonWithBBox(points, nextArea, *path31);
     if(corners == 15) // && isArea - we can't here detect area or non-area field
         return true;
     return result;
@@ -225,8 +229,8 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const QVector<PointI>& points, 
 
 inline int OsmAnd::MapObject::startReadingArea() const
 {
-    // Coastline calculations must use the full geometry, including points outside the visible area.
-    if (isCoastline || points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED
+    // Filled polygons and coastlines must use the full geometry, including offscreen points.
+    if (isArea || isCoastline || points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED
         || containsAttribute(attributeMapping->naturalCoastlineAttributeId))
         return -1;
 
@@ -291,7 +295,7 @@ bool OsmAnd::MapObject::needsSimplification(const AreaI& nextArea) const
     if (nextArea.isEmpty())
         return false;
 
-    if (isCoastline || points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED
+    if (isArea || isCoastline || points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED
         || containsAttribute(attributeMapping->naturalCoastlineAttributeId))
         return false;
 
@@ -308,7 +312,7 @@ bool OsmAnd::MapObject::needsSimplification(const AreaI& nextArea) const
 
 bool OsmAnd::MapObject::updateVisibleArea(const AreaI& nextArea, int64_t nextAreaTime, QVector<PointI>* path31) const
 {
-    if (isCoastline || points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED
+    if (isArea || isCoastline || points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED
         || containsAttribute(attributeMapping->naturalCoastlineAttributeId))
         return false;
 
@@ -338,8 +342,8 @@ bool OsmAnd::MapObject::updateVisibleArea(const AreaI& nextArea, int64_t nextAre
                     if (nextAreaTime > prevAreaTime && shouldChangeArea(prevArea31, nextArea))
                     {
                         auto nextPoints31 = path31 ? qMove(*path31)
-                            :(points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED ? points31
-                                : Utilities::simplifyPathOutsideBBox(points31, nextArea, isArea));
+                            :(isArea || points31.size() < MIN_POINTS_TO_USE_SIMPLIFIED ? points31
+                                : Utilities::simplifyPathOutsideBBox(points31, nextArea));
                         if (nextPoints31.size() * MIN_BBOX_FACTOR_TO_UPDATE_AREA < points31.size())
                         {
                             delete vapItems[writeIndex];
