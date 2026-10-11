@@ -169,6 +169,23 @@ namespace OsmAnd
             MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
         std::unique_ptr<MapRenderer::PublishedMapSymbolsByOrder> pLastAcceptedMapSymbolsByOrder;
+
+        // Symbols that came or went at the last layouts; the gone ones are drawn until they have faded out
+        struct SymbolFade
+        {
+            double startMs;
+            bool fadingIn;
+            int order;
+            std::shared_ptr<const MapSymbolsGroup> group;
+            MapRenderer::PublishedMapSymbolInfo info;
+        };
+        QHash<std::shared_ptr<const MapSymbol>, SymbolFade> _symbolFades;
+        double getFadeTime() const;
+        static float getFadeOpacity(const SymbolFade& fade, double nowMs, float durationMs);
+        void startSymbolFades(
+            const MapRenderer::PublishedMapSymbolsByOrder& before,
+            const MapRenderer::PublishedMapSymbolsByOrder& after);
+        void addFadingSymbols(const ScreenQuadTree& intersections);
         std::chrono::high_resolution_clock::time_point _lastResumeSymbolsUpdateTime;
         bool _previouslyInvalidated;
         ZoomLevel _updatedSymbolsZoomLevel;
