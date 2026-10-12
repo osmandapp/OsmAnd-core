@@ -140,6 +140,8 @@ namespace OsmAnd
         volatile bool _updateSymbols;
         volatile bool _symbolsLoading;
         volatile bool _targetIsElevated;
+        volatile bool _ignoreTargetElevation;
+        float getTargetHeight(const MapRendererState& state, const PointI& location31) const;
 
         // GPU worker related:
         Qt::HANDLE _gpuWorkerThreadId;
@@ -444,6 +446,7 @@ namespace OsmAnd
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setIgnoreTargetElevation(bool ignore) Q_DECL_OVERRIDE;
         virtual bool resetMapTarget() Q_DECL_OVERRIDE;
         virtual bool resetMapTargetPixelCoordinates(const PointI& screenPoint) Q_DECL_OVERRIDE;
         virtual bool setMapTargetPixelCoordinates(const PointI& screenPoint,

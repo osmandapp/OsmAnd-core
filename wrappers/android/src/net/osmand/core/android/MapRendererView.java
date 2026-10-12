@@ -1179,6 +1179,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setFlatEarth(flatEarth);
     }
 
+    public final boolean setIgnoreTargetElevation(boolean ignore) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setIgnoreTargetElevation(ignore);
+    }
+
     public final boolean setFieldOfView(float fieldOfView) {
         NativeCore.checkIfLoaded();
 
