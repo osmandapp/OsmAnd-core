@@ -893,15 +893,24 @@ public abstract class MapRendererView extends FrameLayout {
         _mapRenderer.resetResourceWorkerThreadsLimit();
     }
 
-    public final boolean isIdle() {
+    // NOTE: Both are polled from other threads (a flyover recording waits for an idle frame). Once the
+    // renderer is handed over, the view that took it may release its rendering at any moment, and the
+    // renderer has no resources to ask any more; the handover holds the lock of this view
+    public final synchronized boolean isIdle() {
         NativeCore.checkIfLoaded();
 
+        if (isHandedOver || _mapRenderer == null) {
+            return false;
+        }
         return _mapRenderer.isIdle();
     }
 
-    public final String getNotIdleReason() {
+    public final synchronized String getNotIdleReason() {
         NativeCore.checkIfLoaded();
 
+        if (isHandedOver || _mapRenderer == null) {
+            return "the renderer was handed over to another view";
+        }
         return _mapRenderer.getNotIdleReason();
     }
 
