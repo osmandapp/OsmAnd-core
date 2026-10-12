@@ -2529,7 +2529,13 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
     {
         if (size < 4)
             return;
-        skipClosestWinding = size == 4;
+        if (size == 4)
+        {
+            if (Utilities::intCrossProduct2D(
+                firstCoastline[1] - first, lastCoastline[lastCoastline.size() - 2] - first) >= 0)
+                return;
+            skipClosestWinding = true;
+        }
         useInterPoint = size > 5 && size < 8;
         const auto lastSize = lastCoastline.size();
         if (lastSize > 2)
@@ -2824,6 +2830,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         const auto& points = coastline->points31;
         const auto& front = points.front();
         const auto& back = points.back();
+        const auto size = points.size();
         if (front != back)
         {
             // Gather segment sequences to use them when searching for possible intersections
@@ -2839,12 +2846,12 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                     {
                         const auto i = -value.x - 1;
                         sequences[i].push_back(idx);
-                        sizes[i] += points.size() - 1;
+                        sizes[i] += size - 1;
                     }
                     else
                     {
                         sequences.push_back(qMove(std::deque<int>({value.x, idx})));
-                        sizes.push_back(value.y + points.size() - 1);
+                        sizes.push_back(value.y + size - 1);
                         value.x = -sequences.size();
                         (*headIt).first.x = value.x;
                     }
@@ -2898,12 +2905,12 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                     {
                         const auto i = -value.x - 1;
                         sequences[i].push_front(idx);
-                        sizes[i] += points.size() - 1;
+                        sizes[i] += size - 1;
                     }
                     else
                     {
                         sequences.push_back(qMove(std::deque<int>({idx, value.x})));
-                        sizes.push_back(value.y + points.size() - 1);
+                        sizes.push_back(value.y + size - 1);
                         value.x = -sequences.size();
                     }
                     heads.erase(headIt);
@@ -2911,13 +2918,16 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                 }
                 else
                 {
-                    heads.insert(front, QPair<PointI, PointI>(PointI(idx, points.size()), back));
+                    heads.insert(front, QPair<PointI, PointI>(PointI(idx, size), back));
                     tails.insert(back, front);
                 }
             }
             continue;
         }
-        if (points.size() < 4)
+        if (size < 4)
+            continue;
+
+        if (size == 4 && Utilities::intCrossProduct2D(points[1] - front, points[2] - front) >= 0)
             continue;
 
         // Process already polygonized big coastlines
