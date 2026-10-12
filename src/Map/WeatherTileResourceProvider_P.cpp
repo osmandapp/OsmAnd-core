@@ -14,6 +14,7 @@
 #include "ArchiveReader.h"
 #include "FunctorQueryController.h"
 #include "GeoTileEvaluator.h"
+#include "MapDataProviderHelpers.h"
 
 static const QString GFS_WEATHER_TILES_URL_PREFIX = QStringLiteral("https://osmand.net/weather/gfs/tiff/");
 static const QString ECMWF_WEATHER_TILES_URL_PREFIX = QStringLiteral("https://osmand.net/weather/ecmwf/tiff/");
@@ -118,12 +119,9 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
 
 OsmAnd::WeatherTileResourceProvider_P::~WeatherTileResourceProvider_P()
 {
-    _obtainValueThreadPool->clear();
-    delete _obtainValueThreadPool;
-    _obtainCacheDataThreadPool->clear();
-    delete _obtainCacheDataThreadPool;
-    _obtainOnlineDataThreadPool->clear();
-    delete _obtainOnlineDataThreadPool;
+    MapDataProviderHelpers::deleteThreadPool(_obtainValueThreadPool);
+    MapDataProviderHelpers::deleteThreadPool(_obtainCacheDataThreadPool);
+    MapDataProviderHelpers::deleteThreadPool(_obtainOnlineDataThreadPool);
 }
 
 int OsmAnd::WeatherTileResourceProvider_P::getAndIncreasePriority()

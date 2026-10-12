@@ -30,8 +30,7 @@ OsmAnd::HeightRasterMapLayerProvider::HeightRasterMapLayerProvider(
 OsmAnd::HeightRasterMapLayerProvider::~HeightRasterMapLayerProvider()
 {
      QMutexLocker scopedLocker(&_threadPoolMutex);
-    _threadPool->clear();
-    delete _threadPool;
+    MapDataProviderHelpers::deleteThreadPool(_threadPool);
 }
 
 OsmAnd::MapStubStyle OsmAnd::HeightRasterMapLayerProvider::getDesiredStubsStyle() const

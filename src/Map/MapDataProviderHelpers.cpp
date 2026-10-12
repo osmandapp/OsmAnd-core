@@ -6,6 +6,7 @@
 #include "QtExtensions.h"
 #include <QMutex>
 #include <QWaitCondition>
+#include <QThread>
 #include <QThreadPool>
 
 #include "OsmAndCore.h"
@@ -85,6 +86,27 @@ void OsmAnd::MapDataProviderHelpers::nonNaturalObtainDataAsync(
         };
 
     const auto taskRunnable = new QRunnableFunctor(task);
+    taskRunnable->setAutoDelete(true);
+    QThreadPool::globalInstance()->start(taskRunnable);
+}
+
+void OsmAnd::MapDataProviderHelpers::deleteThreadPool(QThreadPool* const threadPool)
+{
+    threadPool->clear();
+
+    // ~QThreadPool waits for all threads of the pool, including the current one
+    if (!threadPool->contains(QThread::currentThread()))
+    {
+        delete threadPool;
+        return;
+    }
+
+    const auto taskRunnable = new QRunnableFunctor(
+        [threadPool]
+        (const QRunnableFunctor* const runnable)
+        {
+            delete threadPool;
+        });
     taskRunnable->setAutoDelete(true);
     QThreadPool::globalInstance()->start(taskRunnable);
 }
