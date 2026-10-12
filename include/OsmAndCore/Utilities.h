@@ -2028,6 +2028,13 @@ namespace OsmAnd
             return borderCode > 1 ? -offset : offset;
         }
 
+        inline static double getOffsetOnPerimeter(
+            const PointI& point, const int borderCode, const PointI& tl, const PointI& br)
+        {
+            return static_cast<double>(getOffsetOnBorder(point, borderCode < 2 ? tl : br, borderCode))
+                / ((borderCode & 1) > 0 ? br.y - tl.y : br.x - tl.x) + borderCode;
+        }
+
         inline static int getIntersectionAxisX(const PointI& p0, const PointI& p1, int limit)
         {
             const int64_t dx = p1.x - p0.x;

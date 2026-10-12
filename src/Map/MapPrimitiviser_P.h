@@ -49,6 +49,13 @@ namespace OsmAnd
             int64_t winding;
             int proximity;
         };
+        struct Span
+        {
+            double fromOffset;
+            double toOffset;
+            int64_t area;
+            int index;
+        };
         template<bool calculateClosestWinding>
         inline static void clipCoastlineForTile(int index, int size,
             const QList<std::shared_ptr<const MapObject>>& coastlines, PointI& center, const PointI& topLeft,

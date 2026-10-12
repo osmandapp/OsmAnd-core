@@ -3039,6 +3039,11 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         }
 
         // Combine polylines into polygons
+        QVector<Span> previousSpans;
+        QVector<Span> polygonSpans;
+        previousSpans.reserve(10);
+        polygonSpans.reserve(10);
+        bool checkOverlap = true;
         const auto tillSide = fromSide + 4;
         for (int border = fromSide; border <= tillSide; border++)
         {
@@ -3047,14 +3052,18 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
             auto& polylines = coastlineGroups[beginSide];
             while (!polylines.empty())
             {
+                if (checkOverlap)
+                    polygonSpans.clear();
                 auto polyline = polylines.takeLast();
                 auto polygon = qMove(polyline.points);
                 auto winding = polyline.winding;
                 auto windingFull = winding;
                 auto startPoint = polygon.front();
                 auto startSide = beginSide;
+                bool checkOne = true;
                 auto startPointFull = startPoint;
                 auto startSideFull = beginSide;
+                bool checkFull = true;
                 auto lastPoint = polygon.back();
                 auto endSide = Utilities::computeBorderCode(lastPoint, topLeft, bottomRight);
                 if (fromInside && endSide != 4)
@@ -3121,20 +3130,23 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                     }
                     if (fromInside)
                     {
-                        isComplete = endSide == 4 && polygon.size() > 3 && polygon.front() == polygon.back();
+                        isComplete = endSide == 4 && polygon.size() > 3 && polygon.back() == startPointFull;
                         break;
                     }
                     if (endSide == 4)
                         break;
                     const auto side = i % 4;
                     auto testPoint = lastPoint;
-                    if (side == finishSide && startSide == finishSide)
+                    if (checkOne && side == finishSide && startSide == finishSide)
                     {
-                        startSide = -1;
+                        checkOne = false;
                         bool isWater = winding + Utilities::intCrossProduct2D(finishPoint, startPoint) >= 0;
                         const auto offset = Utilities::getOffsetOnBorder(finishPoint, startPoint, side);
                         if (isWater && offset > 0)
+                        {
                             testPoint = startPoint;
+                            finishPoint = testPoint;
+                        }
                         else if (!isWater && offset <= 0)
                         {
                             testPoint = startPoint;
@@ -3142,15 +3154,19 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                                 testPoint.y += side > 1 ? -1 : 1;
                             else
                                 testPoint.x += side > 1 ? -1 : 1;
+                            finishPoint = testPoint;
                         }
                     }
-                    else if (side == endSide && startSideFull == endSide)
+                    else if (checkFull && side == endSide && startSideFull == endSide)
                     {
-                        startSideFull = -1;
+                        checkFull = false;
                         bool isWater = windingFull + Utilities::intCrossProduct2D(lastPoint, startPointFull) >= 0;
                         const auto offset = Utilities::getOffsetOnBorder(lastPoint, startPointFull, side);
                         if (isWater && offset > 0)
+                        {
                             testPoint = startPointFull;
+                            finishPoint = testPoint;
+                        }
                         else if (!isWater && offset <= 0)
                         {
                             testPoint = startPointFull;
@@ -3158,6 +3174,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                                 testPoint.y += side > 1 ? -1 : 1;
                             else
                                 testPoint.x += side > 1 ? -1 : 1;
+                            finishPoint = testPoint;
                         }
                     }
                     auto& nextPolylines = coastlineGroups[side];
@@ -3167,7 +3184,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                     int segTotal = side == beginSide ? segCount + 1 : segCount;
                     for (int segIdx = 0; segIdx < segTotal; segIdx++)
                     {
-                        const auto& p = segIdx < segCount ? nextPolylines[segIdx].points.front() : polygon.front();
+                        const auto& p = segIdx < segCount ? nextPolylines[segIdx].points.front() : startPointFull;
                         const auto offset = Utilities::getOffsetOnBorder(p, testPoint, side);
                         if (!withExtraCycle && offset == 0 && testPoint == lastPoint)
                         {
@@ -3182,6 +3199,10 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                     }
                     if (minIdx >= 0)
                     {
+                        double finishOffset, startOffset;
+                        if (checkOverlap)
+                            finishOffset =
+                                Utilities::getOffsetOnPerimeter(finishPoint, finishSide, topLeft, bottomRight);
                         if (minIdx < segCount)
                         {
                             const auto lastIdx = nextPolylines.size() - 1;
@@ -3192,6 +3213,15 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                             startPoint = nextPolyline.points.front();
                             windingFull += Utilities::intCrossProduct2D(lastPoint, startPoint) + winding;
                             startSide = Utilities::computeBorderCode(startPoint, topLeft, bottomRight);
+                            checkOne = true;
+                            if (checkOverlap)
+                            {
+                                startOffset =
+                                    Utilities::getOffsetOnPerimeter(startPoint, startSide, topLeft, bottomRight);
+                                if (checkOverlap && startOffset != finishOffset)
+                                    polygonSpans.push_back({finishOffset,
+                                        startOffset < finishOffset ? startOffset + 4.0 : startOffset, 0, -1});
+                            }
                             if (nextPolyline.points.front() == lastPoint)
                                 polygon.pop_back();
                             polygon.append(nextPolyline.points);
@@ -3208,6 +3238,14 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                             finishPoint = lastPoint;
                             finishSide = endSide;
                             continue;
+                        }
+                        else if (checkOverlap)
+                        {
+                            startOffset =
+                                Utilities::getOffsetOnPerimeter(startPointFull, startSideFull, topLeft, bottomRight);
+                            if (checkOverlap && startOffset != finishOffset)
+                                polygonSpans.push_back({finishOffset,
+                                    startOffset < finishOffset ? startOffset + 4.0 : startOffset, 0, -1});
                         }
                         isComplete = true;
                         break;
@@ -3248,11 +3286,44 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                 }
                 if (polygon.size() < 3)
                     continue;
-                const auto& first = polygon.front();
+                const auto& first = startPointFull;
                 if (first != polygon.back())
                     polygon.push_back(first);
                 if (polygon.size() < 4)
                     continue;
+
+                const auto count = outVectorized.size();
+                int64_t polygonArea;
+                auto polygonIndex = count;
+                bool replacePolygon = false;
+                if (checkOverlap)
+                {
+                    polygonArea = windingFull + Utilities::intCrossProduct2D(lastPoint, startPointFull);
+                    for (const auto& previousSpan : constOf(previousSpans))
+                    {
+                        const auto fromOffset = previousSpan.fromOffset;
+                        const auto toOffset = previousSpan.toOffset;
+                        const bool prevFar = toOffset >= 4.0;
+                        for (const auto& span : constOf(polygonSpans))
+                        {
+                            const bool spanFar = span.toOffset >= 4.0;
+                            const bool outside = !(prevFar && spanFar)
+                                && ((prevFar && span.fromOffset + 4.0 > toOffset && span.toOffset < fromOffset)
+                                || (spanFar && toOffset + 4.0 > span.fromOffset && fromOffset < span.toOffset)
+                                || (!prevFar && !spanFar
+                                    && (span.fromOffset > toOffset || fromOffset > span.toOffset)));
+                            if (!outside)
+                            {
+                                checkOverlap = false;
+                                polygonIndex = previousSpan.index;
+                                replacePolygon = polygonArea < previousSpan.area;
+                                break;
+                            }
+                        }
+                        if (!checkOverlap)
+                            break;
+                    }
+                }
 
                 withCoastlines = true;
 
@@ -3260,7 +3331,19 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                 mapObject->points31 = qMove(polygon);
                 mapObject->isArea = true;
                 mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineAttributeId);
-                outVectorized.push_back(mapObject);
+                if (polygonIndex == count)
+                    outVectorized.push_back(mapObject);
+                else if (replacePolygon)
+                    outVectorized[polygonIndex] = mapObject;
+                if (checkOverlap)
+                {
+                    for (auto& span : polygonSpans)
+                    {
+                        span.area = polygonArea;
+                        span.index = polygonIndex;
+                    }
+                    previousSpans.append(polygonSpans);
+                }
             }
         }
         if (withSurfaceType && isReliable && minSqDistance < maxSqDistance && distance != 0.0)
