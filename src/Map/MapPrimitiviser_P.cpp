@@ -3157,7 +3157,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                             finishPoint = testPoint;
                         }
                     }
-                    else if (checkFull && side == endSide && startSideFull == endSide)
+                    if (checkFull && side == endSide && startSideFull == endSide)
                     {
                         checkFull = false;
                         bool isWater = windingFull + Utilities::intCrossProduct2D(lastPoint, startPointFull) >= 0;
@@ -3309,7 +3309,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                             const bool spanFar = span.toOffset >= 4.0;
                             const bool outside = !(prevFar && spanFar)
                                 && ((prevFar && span.fromOffset + 4.0 > toOffset && span.toOffset < fromOffset)
-                                || (spanFar && toOffset + 4.0 > span.fromOffset && fromOffset < span.toOffset)
+                                || (spanFar && fromOffset + 4.0 > span.toOffset && toOffset < span.fromOffset)
                                 || (!prevFar && !spanFar
                                     && (span.fromOffset > toOffset || fromOffset > span.toOffset)));
                             if (!outside)
