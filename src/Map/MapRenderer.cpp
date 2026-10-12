@@ -53,6 +53,7 @@ OsmAnd::MapRenderer::MapRenderer(
 	, _symbolsFadeClock(-1.0)
     , _symbolsLoading(false)
 	, _targetIsElevated(false)
+	, _ignoreTargetElevation(false)
     , _gpuWorkerThreadId(nullptr)
     , _gpuWorkerThreadIsAlive(false)
     , _gpuWorkerIsSuspended(0)
@@ -645,7 +646,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
 
         // Elevate and zoom out if camera is too close to the ground
         PointF zoomAndTilt;
-        if (isNew && getExtraZoomAndTiltForRelief(_requestedState, zoomAndTilt))
+        if (isNew && !_ignoreTargetElevation && getExtraZoomAndTiltForRelief(_requestedState, zoomAndTilt))
         {
             _requestedState.isChanged = true;
             const auto zoom = zoomAndTilt.x + 
@@ -2474,7 +2475,7 @@ bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI&
     const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);
     bool sameHeight = _requestedState.fixedHeight != 0.0f && _requestedState.fixedLocation31 == location31 &&
         _requestedState.fixedZoomLevel == _requestedState.zoomLevel;
-    auto height = sameHeight ? _requestedState.fixedHeight : getHeightOfLocation(_requestedState, location31);
+    auto height = sameHeight ? _requestedState.fixedHeight : getTargetHeight(_requestedState, location31);
     auto target31 = _requestedState.target31;
     auto zoomLevel = _requestedState.zoomLevel;
     auto visualZoom = _requestedState.visualZoom;
@@ -2574,7 +2575,7 @@ bool OsmAnd::MapRenderer::setMapTarget(MapRendererState& state,
         if (height == 0.0f)
         {
             zoomLevel = state.zoomLevel;
-            height = getHeightOfLocation(state, state.fixedLocation31);
+            height = getTargetHeight(state, state.fixedLocation31);
         }
         const auto pointElevation = static_cast<double>(height) / static_cast<double>(1u << zoomLevel);
         zoomLevel = getFlatZoom(state, state.surfaceZoomLevel, state.surfaceVisualZoom, pointElevation, visualZoom);
@@ -2602,6 +2603,23 @@ bool OsmAnd::MapRenderer::setMapTarget(MapRendererState& state,
     return result;
 }
 
+bool OsmAnd::MapRenderer::setIgnoreTargetElevation(bool ignore)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (_ignoreTargetElevation == ignore)
+        return false;
+
+    _ignoreTargetElevation = ignore;
+    _requestedState.fixedHeight = 0.0f;
+    return true;
+}
+
+float OsmAnd::MapRenderer::getTargetHeight(const MapRendererState& state, const PointI& location31) const
+{
+    return _ignoreTargetElevation ? 0.0f : getHeightOfLocation(state, location31);
+}
+
 bool OsmAnd::MapRenderer::setMapTargetOnly(MapRendererState& state,
     const PointI& location31, const float heightInMeters,
     bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
@@ -2611,7 +2629,7 @@ bool OsmAnd::MapRenderer::setMapTargetOnly(MapRendererState& state,
 
     bool sameHeight = state.fixedHeight != 0.0f && state.fixedLocation31 == location31 &&
         state.fixedZoomLevel == state.zoomLevel;
-    auto height = sameHeight ? state.fixedHeight : getHeightOfLocation(state, location31);
+    auto height = sameHeight ? state.fixedHeight : getTargetHeight(state, location31);
     if (height == 0.0f && heightInMeters != 0.0f)
         height = getWorldElevationOfLocation(state, heightInMeters, location31);
     if (height == 0.0f && state.fixedLocation31 == location31)
@@ -3679,7 +3697,7 @@ float OsmAnd::MapRenderer::getMapTargetHeightInMeters() const
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    if (_requestedState.fixedPixel.x < 0 || _requestedState.fixedPixel.y < 0)
+    if (_requestedState.fixedPixel.x < 0 || _requestedState.fixedPixel.y < 0 || _ignoreTargetElevation)
         return 0.0f;
     else
     {
