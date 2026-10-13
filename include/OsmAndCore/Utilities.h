@@ -1310,7 +1310,10 @@ namespace OsmAnd
                 y = pPoint31->y;
                 code = (x < left ? 1 : (x > right ? 2 : 0)) | (y < top ? 4 : (y > bottom ? 8 : 0));
                 if (code != 0 && (code & prevCode) != 0)
+                {
                     skipped = true;
+                    prevCode &= code;
+                }
                 else
                 {
                     if (skipped)

@@ -3308,10 +3308,10 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                         {
                             const bool spanFar = span.toOffset >= 4.0;
                             const bool outside = !(prevFar && spanFar)
-                                && ((prevFar && span.fromOffset + 4.0 > toOffset && span.toOffset < fromOffset)
-                                || (spanFar && fromOffset + 4.0 > span.toOffset && toOffset < span.fromOffset)
+                                && ((prevFar && span.fromOffset + 4.0 >= toOffset && span.toOffset <= fromOffset)
+                                || (spanFar && fromOffset + 4.0 >= span.toOffset && toOffset <= span.fromOffset)
                                 || (!prevFar && !spanFar
-                                    && (span.fromOffset > toOffset || fromOffset > span.toOffset)));
+                                    && (span.fromOffset >= toOffset || fromOffset >= span.toOffset)));
                             if (!outside)
                             {
                                 checkOverlap = false;
