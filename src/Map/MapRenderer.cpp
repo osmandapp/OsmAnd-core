@@ -944,21 +944,30 @@ bool OsmAnd::MapRenderer::handleStateChange(const MapRendererState& state, MapRe
 
 bool OsmAnd::MapRenderer::isIdle() const
 {
-    bool isNotIdle = false;
+    if (_resourcesGpuSyncRequestsCounter.loadAcquire() > 0)
+        return false;
+    if (_renderThreadDispatcher.queueSize() > 0)
+        return false;
+    if (_currentDebugSettingsInvalidatedCounter.loadAcquire() > 0)
+        return false;
+    if (_currentConfigurationInvalidatedMask.loadAcquire() != 0)
+        return false;
+    if (_requestedStateUpdatedMask.loadAcquire() != 0)
+        return false;
+    if (_resources->_invalidatedResourcesTypesMask.loadAcquire() != 0)
+        return false;
+    if (_resources->_resourcesRequestTasksCounter.loadAcquire() > 0)
+        return false;
+    if (_frameInvalidatesCounter.loadAcquire() > 0)
+        return false;
+    if (_resources->collectionsSnapshotsInvalidated())
+        return false;
+    if (!_resources->eachResourceIsUploadedOrUnavailable())
+        return false;
+    if (_resources->updatesPresent())
+        return false;
 
-    isNotIdle = isNotIdle || _resources->updatesPresent();
-    isNotIdle = isNotIdle || (_resourcesGpuSyncRequestsCounter.loadAcquire() > 0);
-    isNotIdle = isNotIdle || (_renderThreadDispatcher.queueSize() > 0);
-    isNotIdle = isNotIdle || (_currentDebugSettingsInvalidatedCounter.loadAcquire() > 0);
-    isNotIdle = isNotIdle || (_currentConfigurationInvalidatedMask.loadAcquire() != 0);
-    isNotIdle = isNotIdle || (_requestedStateUpdatedMask.loadAcquire() != 0);
-    isNotIdle = isNotIdle || (_resources->_invalidatedResourcesTypesMask.loadAcquire() != 0);
-    isNotIdle = isNotIdle || (_resources->_resourcesRequestTasksCounter.loadAcquire() > 0);
-    isNotIdle = isNotIdle || _resources->collectionsSnapshotsInvalidated();
-    isNotIdle = isNotIdle || (_frameInvalidatesCounter.loadAcquire() > 0);
-    isNotIdle = isNotIdle || !_resources->eachResourceIsUploadedOrUnavailable();
-
-    return !isNotIdle;
+    return true;
 }
 
 QString OsmAnd::MapRenderer::getGpuMemoryStats() const
