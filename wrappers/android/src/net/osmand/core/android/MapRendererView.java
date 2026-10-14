@@ -896,22 +896,30 @@ public abstract class MapRendererView extends FrameLayout {
     // NOTE: Both are polled from other threads (a flyover recording waits for an idle frame). Once the
     // renderer is handed over, the view that took it may release its rendering at any moment, and the
     // renderer has no resources to ask any more; the handover holds the lock of this view
-    public final synchronized boolean isIdle() {
+    public final boolean isIdle() {
         NativeCore.checkIfLoaded();
 
-        if (isHandedOver || _mapRenderer == null) {
-            return false;
+        IMapRenderer renderer;
+        synchronized (this) {
+            if (isHandedOver || _mapRenderer == null) {
+                return false;
+            }
+            renderer = _mapRenderer;
         }
-        return _mapRenderer.isIdle();
+        return renderer.isIdle();
     }
 
-    public final synchronized String getNotIdleReason() {
+    public final String getNotIdleReason() {
         NativeCore.checkIfLoaded();
 
-        if (isHandedOver || _mapRenderer == null) {
-            return "the renderer was handed over to another view";
+        IMapRenderer renderer;
+        synchronized (this) {
+            if (isHandedOver || _mapRenderer == null) {
+                return "the renderer was handed over to another view";
+            }
+            renderer = _mapRenderer;
         }
-        return _mapRenderer.getNotIdleReason();
+        return renderer.getNotIdleReason();
     }
 
     public final String getGpuMemoryStats() {
@@ -1586,6 +1594,18 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.get3DBuildingsDetalization();
+    }
+
+    public final boolean setSunShadows(boolean enableSunShadows) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setSunShadows(enableSunShadows);
+    }
+
+    public final boolean withSunShadows() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.withSunShadows();
     }
 
     public final boolean setDateTime(long dateTime) {
