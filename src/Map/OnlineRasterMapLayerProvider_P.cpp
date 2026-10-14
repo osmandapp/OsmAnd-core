@@ -214,6 +214,21 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
         "Downloaded tile from %s",
         qPrintable(tileUrl));
 
+    // Decode in-memory
+    auto image = SkiaUtilities::createImageFromData(downloadResult);
+    if (!image)
+    {
+        unlockTile(tileId, zoom);
+
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to decode tile file from '%s'",
+            qPrintable(tileUrl));
+
+        // Not an image (e.g. a login page of a captive portal): neither cache it nor request it again at once
+        outData.reset();
+        return true;
+    }
+
     // Save to a file
     QFile tileFile(localFile.absoluteFilePath());
     if (tileFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
@@ -235,17 +250,6 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
 
     // Unlock tile, since local storage work is done
     unlockTile(tileId, zoom);
-
-    // Decode in-memory
-    auto image = SkiaUtilities::createImageFromData(downloadResult);
-    if (!image)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to decode tile file from '%s'",
-            qPrintable(tileUrl));
-
-        return false;
-    }
 
     assert(image->width() == image->height());
 
