@@ -138,6 +138,14 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     // Since tile is not in local cache (or cache is disabled, which is the same),
     // the tile must be downloaded from network:
 
+    // The renderer repeats a cache-only request with network access when it gets no data
+    if (request.cacheOnly)
+    {
+        unlockTile(tileId, zoom);
+        outData.reset();
+        return true;
+    }
+
     // If network access is disallowed, return failure
     if (!_networkAccessAllowed)
     {
