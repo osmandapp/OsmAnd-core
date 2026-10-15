@@ -1596,18 +1596,6 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.get3DBuildingsDetalization();
     }
 
-    public final boolean setSunShadows(boolean enableSunShadows) {
-        NativeCore.checkIfLoaded();
-
-        return _mapRenderer.setSunShadows(enableSunShadows);
-    }
-
-    public final boolean withSunShadows() {
-        NativeCore.checkIfLoaded();
-
-        return _mapRenderer.withSunShadows();
-    }
-
     public final boolean setDateTime(long dateTime) {
         NativeCore.checkIfLoaded();
 
