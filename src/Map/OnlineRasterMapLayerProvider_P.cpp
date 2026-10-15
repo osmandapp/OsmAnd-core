@@ -214,7 +214,13 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     {
         // Unlock the tile
         unlockTile(tileId, zoom);
-        return false;
+
+        if (request.queryController && request.queryController->isAborted())
+            return false;
+
+        // An empty response is no data, the same as a failed request
+        outData.reset();
+        return true;
     }
     
     // Obtain all data
