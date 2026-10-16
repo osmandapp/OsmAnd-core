@@ -2989,7 +2989,10 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         {
             if (head.first.x >= 0)
             {
-                if (withSurfaceType)
+                const auto& points = coastlines[head.first.x]->points31;
+                if (withSurfaceType
+                    && !coastlineArea31.contains(points.front().x, points.front().y)
+                    && !coastlineArea31.contains(points.back().x, points.back().y))
                     clipCoastlineForTile<true>(head.first.x, head.first.y, coastlines, center, topLeft, bottomRight,
                         coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance, isReliable);
                 else
@@ -2999,7 +3002,11 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
             else
             {
                 const auto i = -head.first.x - 1;
-                if (withSurfaceType)
+                const auto& first = coastlines[sequences[i].front()]->points31.front();
+                const auto& last = coastlines[sequences[i].back()]->points31.back();
+                if (withSurfaceType
+                    && !coastlineArea31.contains(first.x, first.y)
+                    && !coastlineArea31.contains(last.x, last.y))
                     clipCoastlinesForTile<true>(sequences[i], sizes[i], coastlines, center, topLeft, bottomRight,
                         coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance, isReliable);
                 else
