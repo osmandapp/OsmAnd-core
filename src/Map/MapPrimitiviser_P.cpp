@@ -2963,6 +2963,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         int64_t minSqDistance = INT64_MAX;
         double distance = 0.0;
         bool isReliable = false;
+        auto innerArea = coastlineArea31;
         if (withSurfaceType)
         {
             center = PointI(topLeft.x + (bottomRight.x - topLeft.x) / 2,
@@ -2971,6 +2972,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                 qMin(center.x - coastlineArea31.left(), coastlineArea31.right() - center.x),
                 qMin(center.y - coastlineArea31.top(), coastlineArea31.bottom() - center.y)) & mask;
             maxSqDistance = radius * radius;
+            innerArea.enlargeBy(-1);
         }
 
         QVector<Coastline> coastlineGroups[5];
@@ -2991,9 +2993,8 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
             {
                 const auto& first = coastlines[head.first.x]->points31.front();
                 const auto& last = coastlines[head.first.x]->points31.back();
-                if (withSurfaceType && (first == last ||
-                    (!coastlineArea31.contains(first.x, first.y)
-                    && !coastlineArea31.contains(last.x, last.y))))
+                if (withSurfaceType && (first == last
+                    || (!innerArea.contains(first.x, first.y) && !innerArea.contains(last.x, last.y))))
                     clipCoastlineForTile<true>(head.first.x, head.first.y, coastlines, center, topLeft, bottomRight,
                         coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance, isReliable);
                 else
@@ -3005,9 +3006,8 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                 const auto i = -head.first.x - 1;
                 const auto& first = coastlines[sequences[i].front()]->points31.front();
                 const auto& last = coastlines[sequences[i].back()]->points31.back();
-                if (withSurfaceType && (first == last ||
-                    (!coastlineArea31.contains(first.x, first.y)
-                    && !coastlineArea31.contains(last.x, last.y))))
+                if (withSurfaceType && (first == last
+                    || (!innerArea.contains(first.x, first.y) && !innerArea.contains(last.x, last.y))))
                     clipCoastlinesForTile<true>(sequences[i], sizes[i], coastlines, center, topLeft, bottomRight,
                         coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance, isReliable);
                 else
