@@ -2553,8 +2553,10 @@ inline void OsmAnd::MapPrimitiviser_P::clipCoastlinesForTile(const std::deque<in
     }
     else if (calculateClosestWinding)
     {
-        if ((static_cast<int64_t>(first.x) * first.x + static_cast<int64_t>(first.y) * first.y < maxSqDistance)
-            || (static_cast<int64_t>(last.x) * last.x + static_cast<int64_t>(last.y) * last.y < maxSqDistance))
+        const auto toFirst = first - center;
+        const auto toLast = last - center;
+        if ((static_cast<int64_t>(toFirst.x) * toFirst.x + static_cast<int64_t>(toFirst.y) * toFirst.y < maxSqDistance)
+            || (static_cast<int64_t>(toLast.x) * toLast.x + static_cast<int64_t>(toLast.y) * toLast.y < maxSqDistance))
         {
             minSqDistance = -1;
             isReliable = false;
