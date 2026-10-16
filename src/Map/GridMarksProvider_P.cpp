@@ -34,9 +34,9 @@ OsmAnd::GridMarksProvider_P::~GridMarksProvider_P()
 void OsmAnd::GridMarksProvider_P::calculateGridMarks(const bool isPrimary, const bool isCell,
     const double gap, const PointD& refLonLat, QHash<int64_t, PointD>& marksX, QHash<int64_t, PointD>& marksY)
 {
-    auto marksCount = std::min(isCell ? GRID_MARKS_PER_SIDE : GRID_MARKS_PER_AXIS,
-        isPrimary ? static_cast<int>(_gridConfiguration.getPrimaryMaxMarksPerAxis(gap))
-        : static_cast<int>(_gridConfiguration.getSecondaryMaxMarksPerAxis(gap)));
+    auto marksCount = qMin(isCell ? GRID_MARKS_PER_SIDE : GRID_MARKS_PER_AXIS,
+        isPrimary ? _gridConfiguration.getPrimaryMaxMarksPerAxis(gap)
+        : _gridConfiguration.getSecondaryMaxMarksPerAxis(gap));
     double halfCount = marksCount / 2;
     auto location = (isPrimary ? _gridConfiguration.getPrimaryGridLocation(_target31, &refLonLat)
         : _gridConfiguration.getSecondaryGridLocation(_target31, &refLonLat)) / gap;

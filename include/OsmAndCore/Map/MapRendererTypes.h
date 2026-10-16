@@ -542,9 +542,9 @@ namespace OsmAnd
         bool getSecondaryGridCoordinateY(double& coordinate) const;
         bool getCoordinateX(const Projection projection, double& coordinate) const;
         bool getCoordinateY(const Projection projection, double& coordinate) const;
-        double getPrimaryMaxMarksPerAxis(const double gap) const;
-        double getSecondaryMaxMarksPerAxis(const double gap) const;
-        double getMaxMarksPerAxis(const Projection projection, const double gap) const;
+        int getPrimaryMaxMarksPerAxis(const double gap) const;
+        int getSecondaryMaxMarksPerAxis(const double gap) const;
+        int getMaxMarksPerAxis(const Projection projection, const double gap) const;
         QString getPrimaryGridMarkX(const PointD& coordinates, const int zone, const double gap) const;
         QString getPrimaryGridMarkY(const PointD& coordinates, const int zone, const double gap) const;
         QString getSecondaryGridMarkX(const PointD& coordinates, const int zone, const double gap) const;

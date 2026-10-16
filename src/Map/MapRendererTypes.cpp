@@ -670,19 +670,19 @@ bool OsmAnd::GridConfiguration::getCoordinateY(const Projection projection, doub
     return result;
 }
 
-double OsmAnd::GridConfiguration::getPrimaryMaxMarksPerAxis(const double gap) const
+int OsmAnd::GridConfiguration::getPrimaryMaxMarksPerAxis(const double gap) const
 {
     return getMaxMarksPerAxis(primaryProjection, gap);
 }
 
-double OsmAnd::GridConfiguration::getSecondaryMaxMarksPerAxis(const double gap) const
+int OsmAnd::GridConfiguration::getSecondaryMaxMarksPerAxis(const double gap) const
 {
     return getMaxMarksPerAxis(secondaryProjection, gap);
 }
 
-double OsmAnd::GridConfiguration::getMaxMarksPerAxis(const Projection projection, const double gap) const
+int OsmAnd::GridConfiguration::getMaxMarksPerAxis(const Projection projection, const double gap) const
 {
-    double result;
+    int result;
     switch (projection)
     {
         case Projection::HOMV2: // No need to limit marks
@@ -690,16 +690,16 @@ double OsmAnd::GridConfiguration::getMaxMarksPerAxis(const Projection projection
         case Projection::TM:
         case Projection::UTM:
         case Projection::MGRS:
-            result = std::numeric_limits<double>::max();
+            result = INT32_MAX;
             break;
         case Projection::Mercator: // Get maximum number of EPSG:3857 marks (gap in 100 kilometers)
             {
                 const auto earth = 2.0 * M_PI * 63.78137;
-                result = std::floor(earth / gap);
+                result = qRound(std::floor(earth / gap));
             }
             break;
         default: // Get maximum number of EPSG:4326 marks (gap in degrees)
-            result = std::floor(360.0 / gap);
+            result = qRound(std::floor(360.0 / gap));
     }
     return result;
 }
