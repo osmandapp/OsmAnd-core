@@ -2963,7 +2963,7 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         int64_t minSqDistance = INT64_MAX;
         double distance = 0.0;
         bool isReliable = false;
-        auto innerArea = coastlineArea31;
+        AreaI innerArea;
         if (withSurfaceType)
         {
             center = PointI(topLeft.x + (bottomRight.x - topLeft.x) / 2,
@@ -2972,7 +2972,10 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
                 qMin(center.x - coastlineArea31.left(), coastlineArea31.right() - center.x),
                 qMin(center.y - coastlineArea31.top(), coastlineArea31.bottom() - center.y)) & mask;
             maxSqDistance = radius * radius;
-            innerArea.enlargeBy(-1);
+            innerArea.top() = static_cast<int>(qMax(coastlineArea31.top(), static_cast<int64_t>(0))) + 1;
+            innerArea.left() = static_cast<int>(qMax(coastlineArea31.left(), static_cast<int64_t>(0))) + 1;
+            innerArea.bottom() = static_cast<int>(qMin(coastlineArea31.bottom(), static_cast<int64_t>(INT32_MAX))) - 1;
+            innerArea.right() = static_cast<int>(qMin(coastlineArea31.right(), static_cast<int64_t>(INT32_MAX))) - 1;
         }
 
         QVector<Coastline> coastlineGroups[5];
