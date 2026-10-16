@@ -2994,10 +2994,11 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
         {
             if (head.first.x >= 0)
             {
-                const auto& first = coastlines[head.first.x]->points31.front();
-                const auto& last = coastlines[head.first.x]->points31.back();
-                if (withSurfaceType && (first == last
-                    || (!innerArea.contains(first.x, first.y) && !innerArea.contains(last.x, last.y))))
+                //const auto& first = coastlines[head.first.x]->points31.front();
+                //const auto& last = coastlines[head.first.x]->points31.back();
+                //if (withSurfaceType && (first == last
+                //    || (!innerArea.contains(first.x, first.y) && !innerArea.contains(last.x, last.y))))
+                if (withSurfaceType)
                     clipCoastlineForTile<true>(head.first.x, head.first.y, coastlines, center, topLeft, bottomRight,
                         coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance, isReliable);
                 else
@@ -3007,10 +3008,11 @@ bool OsmAnd::MapPrimitiviser_P::getCoastlines(
             else
             {
                 const auto i = -head.first.x - 1;
-                const auto& first = coastlines[sequences[i].front()]->points31.front();
-                const auto& last = coastlines[sequences[i].back()]->points31.back();
-                if (withSurfaceType && (first == last
-                    || (!innerArea.contains(first.x, first.y) && !innerArea.contains(last.x, last.y))))
+                //const auto& first = coastlines[sequences[i].front()]->points31.front();
+                //const auto& last = coastlines[sequences[i].back()]->points31.back();
+                //if (withSurfaceType && (first == last
+                //    || (!innerArea.contains(first.x, first.y) && !innerArea.contains(last.x, last.y))))
+                if (withSurfaceType)
                     clipCoastlinesForTile<true>(sequences[i], sizes[i], coastlines, center, topLeft, bottomRight,
                         coastlineGroups, finishPoints, maxSqDistance, minSqDistance, distance, isReliable);
                 else
