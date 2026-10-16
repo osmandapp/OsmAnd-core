@@ -138,6 +138,14 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     // Since tile is not in local cache (or cache is disabled, which is the same),
     // the tile must be downloaded from network:
 
+    // The renderer repeats a cache-only request with network access when it gets no data
+    if (request.cacheOnly)
+    {
+        unlockTile(tileId, zoom);
+        outData.reset();
+        return true;
+    }
+
     // If network access is disallowed, return failure
     if (!_networkAccessAllowed)
     {
@@ -193,20 +201,47 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
 
         // Unlock the tile
         unlockTile(tileId, zoom);
-        return false;
+
+        if (request.queryController && request.queryController->isAborted())
+            return false;
+
+        // A failed request makes the renderer request the tile again at once, so report no data instead
+        outData.reset();
+        return true;
     }
 
     if (downloadResult.isEmpty())
     {
         // Unlock the tile
         unlockTile(tileId, zoom);
-        return false;
+
+        if (request.queryController && request.queryController->isAborted())
+            return false;
+
+        // An empty response is no data, the same as a failed request
+        outData.reset();
+        return true;
     }
     
     // Obtain all data
     LogPrintf(LogSeverityLevel::Verbose,
         "Downloaded tile from %s",
         qPrintable(tileUrl));
+
+    // Decode in-memory
+    auto image = SkiaUtilities::createImageFromData(downloadResult);
+    if (!image)
+    {
+        unlockTile(tileId, zoom);
+
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to decode tile file from '%s'",
+            qPrintable(tileUrl));
+
+        // Not an image (e.g. a login page of a captive portal): neither cache it nor request it again at once
+        outData.reset();
+        return true;
+    }
 
     // Save to a file
     QFile tileFile(localFile.absoluteFilePath());
@@ -229,17 +264,6 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
 
     // Unlock tile, since local storage work is done
     unlockTile(tileId, zoom);
-
-    // Decode in-memory
-    auto image = SkiaUtilities::createImageFromData(downloadResult);
-    if (!image)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to decode tile file from '%s'",
-            qPrintable(tileUrl));
-
-        return false;
-    }
 
     assert(image->width() == image->height());
 

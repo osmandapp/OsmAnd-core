@@ -8,6 +8,8 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/Map/IMapDataProvider.h>
 
+class QThreadPool;
+
 namespace OsmAnd
 {
     class OSMAND_CORE_API MapDataProviderHelpers Q_DECL_FINAL
@@ -48,6 +50,9 @@ namespace OsmAnd
             const IMapDataProvider::Request& request,
             const IMapDataProvider::ObtainDataAsyncCallback callback,
             const bool collectMetric = false);
+
+        // Deletes the provider's own thread pool also when called from a task of that pool
+        static void deleteThreadPool(QThreadPool* const threadPool);
     };
 }
 

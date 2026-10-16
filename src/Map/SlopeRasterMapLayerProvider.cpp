@@ -30,8 +30,7 @@ OsmAnd::SlopeRasterMapLayerProvider::SlopeRasterMapLayerProvider(
 OsmAnd::SlopeRasterMapLayerProvider::~SlopeRasterMapLayerProvider()
 {
      QMutexLocker scopedLocker(&_threadPoolMutex);
-    _threadPool->clear();
-    delete _threadPool;
+    MapDataProviderHelpers::deleteThreadPool(_threadPool);
 }
 
 OsmAnd::MapStubStyle OsmAnd::SlopeRasterMapLayerProvider::getDesiredStubsStyle() const

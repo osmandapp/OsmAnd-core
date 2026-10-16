@@ -34,8 +34,7 @@ OsmAnd::OnlineRasterMapLayerProvider::OnlineRasterMapLayerProvider(
 
 OsmAnd::OnlineRasterMapLayerProvider::~OnlineRasterMapLayerProvider()
 {
-    _threadPool->clear();
-    delete _threadPool;
+    MapDataProviderHelpers::deleteThreadPool(_threadPool);
 }
 
 void OsmAnd::OnlineRasterMapLayerProvider::setLocalCachePath(
