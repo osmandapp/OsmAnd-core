@@ -190,7 +190,12 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
             filterBuildings(buildings, buildingParts);
 
         QHash<TileId, std::shared_ptr<IMapElevationDataProvider::Data>> elevationDataMap;
-        if (_elevationProvider)
+        std::shared_ptr<IMapElevationDataProvider> elevationProvider;
+        {
+            QReadLocker scopedLocker(&_elevationProviderLock);
+            elevationProvider = _elevationProvider;
+        }
+        if (elevationProvider)
         {
             AreaI commonBbox31;
             commonBbox31.top() = INT32_MAX;
@@ -229,7 +234,7 @@ bool Map3DObjectsTiledProvider_P::obtainTiledData(
                     elevationRequest.tileId = TileId::fromXY(row, col);
                     elevationRequest.zoom = request.zoom;
                     elevationRequest.queryController = request.queryController;
-                    _elevationProvider->obtainElevationData(elevationRequest, elevationData, nullptr);
+                    elevationProvider->obtainElevationData(elevationRequest, elevationData, nullptr);
                     elevationDataMap.insert(elevationRequest.tileId, elevationData);
                 }
             }
@@ -2352,6 +2357,7 @@ void Map3DObjectsTiledProvider_P::accumulateElevationForPoint(
 void Map3DObjectsTiledProvider_P::setElevationDataProvider(
     const std::shared_ptr<IMapElevationDataProvider>& elevationProvider)
 {
+    QWriteLocker scopedLocker(&_elevationProviderLock);
     _elevationProvider = elevationProvider;
 }
 

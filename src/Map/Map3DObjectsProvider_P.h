@@ -105,6 +105,7 @@ namespace OsmAnd
         QHash<TileId, FColorRGB> _objectColors;
         mutable QReadWriteLock _objectColorsLock;
         std::shared_ptr<IMapElevationDataProvider> _elevationProvider;
+        mutable QReadWriteLock _elevationProviderLock;
 
         void processPrimitive(const BuildingPrimitive& primitive,
             QVector<BuildingVertex>& vertices,
