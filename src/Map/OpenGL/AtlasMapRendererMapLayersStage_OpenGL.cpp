@@ -2348,11 +2348,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             }
         }      
         // Perform drawing of a subtile
-        glDrawElements(
-            GL_TRIANGLES,
-            indicesPerSubtile,
-            GL_UNSIGNED_SHORT,
-            reinterpret_cast<const void*>(sizeof(uint16_t) * indicesPerSubtile * subtileIndex));
+        {
+            QMutexLocker scopedLocker(&gpuAPI->drawLock);
+
+            glDrawElements(
+                GL_TRIANGLES,
+                indicesPerSubtile,
+                GL_UNSIGNED_SHORT,
+                reinterpret_cast<const void*>(sizeof(uint16_t) * indicesPerSubtile * subtileIndex));
+        }
         GL_CHECK_RESULT;
     }
 

@@ -929,9 +929,12 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDe
             glVertexAttribPointer(*_depthProgram.vs.in.heights, 2, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
                 reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, heights)));
             GL_CHECK_RESULT;
+            {
+                QMutexLocker scopedLocker(&gpuAPI->drawLock);
 
-            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount),
-                GL_UNSIGNED_SHORT, (void*) (startIndex * sizeof(uint16_t)));
+                glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount),
+                    GL_UNSIGNED_SHORT, (void*) (startIndex * sizeof(uint16_t)));
+            }
             GL_CHECK_RESULT;
         }
     }
@@ -1018,9 +1021,12 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderSi
             glVertexAttribPointer(*_program.vs.in.color, 4, GL_FLOAT, GL_FALSE, sizeof(BuildingVertex),
                 reinterpret_cast<const GLvoid*>(offsetof(BuildingVertex, color)));
             GL_CHECK_RESULT;
+            {
+                QMutexLocker scopedLocker(&gpuAPI->drawLock);
 
-            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount),
-                GL_UNSIGNED_SHORT, (void*) (startIndex * sizeof(uint16_t)));
+                glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount),
+                    GL_UNSIGNED_SHORT, (void*) (startIndex * sizeof(uint16_t)));
+            }
             GL_CHECK_RESULT;
         }
     }
@@ -1121,9 +1127,12 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
                 * static_cast<double>(currentTime - resource->creationTime) / BUILDINGS_FADE_ANIMATION_PERIOD) - 1.0);
             glUniform1f(*_colorProgram.fs.param.fadeHeight, static_cast<float>(fadeHeight));
             GL_CHECK_RESULT;
+            {
+                QMutexLocker scopedLocker(&gpuAPI->drawLock);
 
-            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount),
-                GL_UNSIGNED_SHORT, (void*) (startIndex * sizeof(uint16_t)));
+                glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount),
+                    GL_UNSIGNED_SHORT, (void*) (startIndex * sizeof(uint16_t)));
+            }
             GL_CHECK_RESULT;
         }
     }
