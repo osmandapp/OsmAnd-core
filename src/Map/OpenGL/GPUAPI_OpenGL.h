@@ -341,9 +341,6 @@ namespace OsmAnd
         const QStringList& extensions;
         const QVector<GLint>& compressedFormats;
 
-        // Fix for issue 3392 (ANR: Galaxy A56 map renderer deadlocks in Samsung ANGLE driver)
-        mutable QMutex drawLock;
-
         const GLint& maxTextureSize;
         const GLint& maxTextureUnitsInFragmentShader;
         const GLint& maxTextureUnitsCombined;
