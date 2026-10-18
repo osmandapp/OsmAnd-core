@@ -1247,13 +1247,15 @@ namespace OsmAnd
 
             roundedBBox31.bottom() = bbox31.bottom() & ~roundingMask;
             if ((bbox31.bottom() & roundingMask) != 0)
-                roundedBBox31.bottom() += tilesCount;
-            roundedBBox31.bottom() -= 1;
+                roundedBBox31.bottom() += tilesCount - 1;
+            else
+                roundedBBox31.bottom()--;
 
             roundedBBox31.right() = bbox31.right() & ~roundingMask;
             if ((bbox31.right() & roundingMask) != 0)
-                roundedBBox31.right() += tilesCount;
-            roundedBBox31.right() -= 1;
+                roundedBBox31.right() += tilesCount - 1;
+            else
+                roundedBBox31.right()--;
 
             return roundedBBox31;
         }
