@@ -72,6 +72,7 @@ namespace OsmAnd
             Objects3DDepth,
             Objects3DSimple,
             Objects3DColor,
+            Objects3DShadow,
             Complete,
             Incomplete
         };
