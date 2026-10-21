@@ -141,7 +141,7 @@ std::shared_ptr<const OsmAnd::Model3D> OsmAnd::ObjParser::parse(const bool trans
                 else if (materialIdx == dummyMaterialIdx)
                 {
                     vertex.materialIndex = -1;
-                    vertex.color = FColorARGB(NAN, NAN, NAN, NAN);
+                    vertex.color = FColorARGB(-1, -1, -1, -1);
                 }
 
                 faceVertices.push_back(vertex);
