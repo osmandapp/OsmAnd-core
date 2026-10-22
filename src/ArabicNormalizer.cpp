@@ -42,8 +42,7 @@ bool OsmAnd::ArabicNormalizer::isSpecialArabic(const QString& text) {
         return false;
     }
 
-    QChar firstChar = text.at(0);
-    if (isArabicCharacter(firstChar)) {
+    if (startsWithArabic(text)) {
         for (const QChar& c : text) {
             if (isDiacritic(c) || isArabicDigit(c) || isNeedReplace(c)) {
                 return true;
@@ -81,8 +80,7 @@ QString OsmAnd::ArabicNormalizer::replaceDigits(const QString& text) {
         return text;
     }
 
-    QChar firstChar = text.at(0);
-    if (!isArabicCharacter(firstChar)) {
+    if (!startsWithArabic(text)) {
         return text;
     }
 
@@ -92,6 +90,10 @@ QString OsmAnd::ArabicNormalizer::replaceDigits(const QString& text) {
     }
 
     return result;
+}
+
+bool OsmAnd::ArabicNormalizer::startsWithArabic(const QString& text) {
+    return isArabicCharacter(text.at(0)) || (text.length() > 1 && isArabicCharacter(text.at(1)));
 }
 
 bool OsmAnd::ArabicNormalizer::isDiacritic(QChar c) {
