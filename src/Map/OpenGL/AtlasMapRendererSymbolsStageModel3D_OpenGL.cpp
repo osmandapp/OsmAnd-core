@@ -375,17 +375,15 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStageModel3
 
     if (gpuResource->indexBuffer)
     {
-        QMutexLocker scopedLocker(&gpuAPI->drawLock);
-
+        static_assert(sizeof(GLushort) == sizeof(VectorMapSymbol::Index), "sizeof(GLushort) == sizeof(VectorMapSymbol::Index)");
         glDrawElements(primitivesType, count, GL_UNSIGNED_SHORT, nullptr);
+        GL_CHECK_RESULT;
     }
     else
     {
-        QMutexLocker scopedLocker(&gpuAPI->drawLock);
-
         glDrawArrays(primitivesType, 0, count);
+        GL_CHECK_RESULT;
     }
-    GL_CHECK_RESULT;
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;

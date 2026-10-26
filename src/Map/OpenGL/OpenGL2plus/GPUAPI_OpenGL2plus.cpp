@@ -436,11 +436,7 @@ int OsmAnd::GPUAPI_OpenGL2plus::checkElementVisibility(int queryIndex, float poi
     if (glGetError() != GL_NO_ERROR)
         return -1;
     
-    {
-        QMutexLocker scopedLocker(&drawLock);
-
-        glDrawArrays(GL_POINTS, 0, 4);
-    }
+    glDrawArrays(GL_POINTS, 0, 4);
     GL_CHECK_RESULT;
 
     glEndQuery(GL_SAMPLES_PASSED);

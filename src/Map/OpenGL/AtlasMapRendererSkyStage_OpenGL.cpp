@@ -307,11 +307,7 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSkyStage_OpenGL::r
     GL_CHECK_RESULT;
 
     // Draw the skyplane actually
-    {
-        QMutexLocker scopedLocker(&gpuAPI->drawLock);
-
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
-    }
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
     GL_CHECK_RESULT;
 
     // Deactivate program
