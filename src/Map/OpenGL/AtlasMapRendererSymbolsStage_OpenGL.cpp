@@ -756,7 +756,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + 0);
 
     // Draw symbol actually
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+    {
+        QMutexLocker scopedLocker(&gpuAPI->drawLock);
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+    }
     GL_CHECK_RESULT;
 
     GL_POP_GROUP_MARKER;
@@ -1719,7 +1723,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
         }
 
         // Draw chain of glyphs actually
-        glDrawElements(GL_TRIANGLES, 6 * glyphsToDraw, GL_UNSIGNED_SHORT, nullptr);
+        {
+            QMutexLocker scopedLocker(&gpuAPI->drawLock);
+
+            glDrawElements(GL_TRIANGLES, 6 * glyphsToDraw, GL_UNSIGNED_SHORT, nullptr);
+        }
         GL_CHECK_RESULT;
 
         glyphsDrawn += glyphsToDraw;
@@ -1901,7 +1909,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
         }
 
         // Draw chain of glyphs actually
-        glDrawElements(GL_TRIANGLES, 6 * glyphsToDraw, GL_UNSIGNED_SHORT, nullptr);
+        {
+            QMutexLocker scopedLocker(&gpuAPI->drawLock);
+
+            glDrawElements(GL_TRIANGLES, 6 * glyphsToDraw, GL_UNSIGNED_SHORT, nullptr);
+        }
         GL_CHECK_RESULT;
 
         glyphsDrawn += glyphsToDraw;
@@ -2399,7 +2411,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + 0);
 
     // Draw symbol actually
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+    {
+        QMutexLocker scopedLocker(&gpuAPI->drawLock);
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+    }
     GL_CHECK_RESULT;
 
     GL_POP_GROUP_MARKER;
@@ -2959,15 +2975,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         }
         if (gpuResource->indexBuffer)
         {
-            static_assert(sizeof(GLushort) == sizeof(VectorMapSymbol::Index), "sizeof(GLushort) == sizeof(VectorMapSymbol::Index)");
+            QMutexLocker scopedLocker(&gpuAPI->drawLock);
+
             glDrawElements(primitivesType, count, GL_UNSIGNED_SHORT, nullptr);
-            GL_CHECK_RESULT;
         }
         else
         {
+            QMutexLocker scopedLocker(&gpuAPI->drawLock);
+
             glDrawArrays(primitivesType, 0, count);
-            GL_CHECK_RESULT;
         }
+        GL_CHECK_RESULT;
 
         // Turn off all buffers
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -3229,7 +3247,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
             GL_CHECK_RESULT;
 
             // Draw symbol actually
-            glDrawArrays(GL_TRIANGLES, 0, partSizes.second);
+            {
+                QMutexLocker scopedLocker(&gpuAPI->drawLock);
+
+                glDrawArrays(GL_TRIANGLES, 0, partSizes.second);
+            }
             GL_CHECK_RESULT;
 
             partOffset += partSizes.second * sizeof(VectorMapSymbol::Vertex);

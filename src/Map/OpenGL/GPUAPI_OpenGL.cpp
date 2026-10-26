@@ -1280,7 +1280,11 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     {
         // Create texture id
         GLuint texture;
-        glGenTextures(1, &texture);
+        {
+            QMutexLocker scopedLocker(&drawLock);
+
+            glGenTextures(1, &texture);
+        }
         GL_CHECK_RESULT;
         assert(texture != 0);
 
@@ -1367,7 +1371,11 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
         {
             // Allocate texture id
             GLuint texture;
-            glGenTextures(1, &texture);
+            {
+                QMutexLocker scopedLocker(&drawLock);
+
+                glGenTextures(1, &texture);
+            }
             GL_CHECK_RESULT;
             assert(texture != 0);
 
@@ -1497,7 +1505,11 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
 
     // Create texture id
     GLuint texture;
-    glGenTextures(1, &texture);
+    {
+        QMutexLocker scopedLocker(&drawLock);
+
+        glGenTextures(1, &texture);
+    }
     GL_CHECK_RESULT;
     assert(texture != 0);
 
