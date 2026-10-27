@@ -37,10 +37,16 @@ namespace OsmAnd
         bool _isSupported_EXT_debug_label;
         bool _isSupported_ARB_sync;
         bool _isSupported_ARB_get_program_binary;
-        QVector<GLuint> _pointVisibilityCheckQueries;
+        bool _isSupported_framebuffer_object;
 
+        GLuint _shadowmapDepthTexture = 0;
+        GLuint _shadowmapFramebuffer = 0;
+        int _shadowmapResolution = 0;
+        GLint _shadowmapPreviousDrawFramebuffer = 0;
+        GLint _shadowmapPreviousReadFramebuffer = 0;
         std::array< GLuint, SamplerTypesCount > _textureSamplers;
         QHash<GLenum, SamplerType> _textureBlocksSamplers;
+        QVector<GLuint> _pointVisibilityCheckQueries;
 
         // Groups emulation for gDEBugger
         QStringList _gdebuggerGroupsStack;
@@ -65,8 +71,12 @@ namespace OsmAnd
         virtual ~GPUAPI_OpenGL2plus();
 
         bool initialize() override;
+        bool initializeShadowmap(int resolution) override;
+        bool attachShadowmap(int resolution) override;
+        bool detachShadowmap() override;
         int checkElementVisibility(int queryIndex, float pointSize) override;
         bool elementIsVisible(int queryIndex) override;
+        bool releaseShadowmap(bool gpuContextLost) override;
         bool release(bool gpuContextLost) override;
 
         const bool& isSupported_GREMEDY_string_marker;

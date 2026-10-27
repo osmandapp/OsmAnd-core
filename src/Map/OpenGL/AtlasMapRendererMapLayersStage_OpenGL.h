@@ -108,7 +108,8 @@ namespace OsmAnd
             const QSet<TileId>& visibleTilesSet,
             const ZoomLevel zoomLevel,
             QSet<TileId>& elevatedTileset,
-            bool& withElevation);
+            bool& withElevation,
+            bool elevationOnly);
 
         static const float _particleSize;
         static const float _particleSpeedFactor;
@@ -261,6 +262,7 @@ namespace OsmAnd
             const bool isHighDetail,
             const bool withElevation,
             const bool blendingEnabled,
+            const bool forShadowmap,
             const ZoomLevel zoomLevel);
         void configureElevationData(
             const std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU>& elevationDataResource,
@@ -288,6 +290,7 @@ namespace OsmAnd
             const int programFeatures,
             const int elevationDataSamplerIndex,
             GLname& lastUsedProgram,
+            const bool forShadowmap,
             const ZoomLevel zoomLevel);
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureLayerResource(
             const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
@@ -300,7 +303,8 @@ namespace OsmAnd
         virtual ~AtlasMapRendererMapLayersStage_OpenGL();
 
         virtual bool initialize();
-        virtual MapRendererStage::StageResult render(IMapRenderer_Metrics::Metric_renderFrame* const metric);
+        virtual MapRendererStage::StageResult render(
+            IMapRenderer_Metrics::Metric_renderFrame* const metric, bool forShadowmap = false);
         virtual bool release(bool gpuContextLost);
     };
 }

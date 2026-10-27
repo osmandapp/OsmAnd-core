@@ -36,7 +36,6 @@ namespace OsmAnd
         static PFNGLLABELOBJECTEXTPROC glLabelObjectEXT;
 #endif // !OSMAND_TARGET_OS_ios
     private:
-        QVector<GLuint> _pointVisibilityCheckQueries;
         bool _isSupported_EXT_unpack_subimage;
         bool _isSupported_EXT_texture_storage;
         bool _isSupported_APPLE_texture_max_level;
@@ -58,8 +57,14 @@ namespace OsmAnd
 
         void preprocessShader(QString& code);
 
+        GLuint _shadowmapDepthTexture = 0;
+        GLuint _shadowmapFramebuffer = 0;
+        int _shadowmapResolution = 0;
+        GLint _shadowmapPreviousDrawFramebuffer = 0;
+        GLint _shadowmapPreviousReadFramebuffer = 0;
         std::array<GLuint, SamplerTypesCount> _textureSamplers;
         QHash<GLenum, SamplerType> _textureBlocksSamplers;
+        QVector<GLuint> _pointVisibilityCheckQueries;
 
         bool isShaderPrecisionFormatSupported(GLenum shaderType, GLenum precisionType);
     protected:
@@ -81,8 +86,12 @@ namespace OsmAnd
         virtual ~GPUAPI_OpenGLES2plus();
 
         bool initialize() override;
+        bool initializeShadowmap(int resolution) override;
+        bool attachShadowmap(int resolution) override;
+        bool detachShadowmap() override;
         int checkElementVisibility(int queryIndex, float pointSize) override;
         bool elementIsVisible(int queryIndex) override;
+        bool releaseShadowmap(bool gpuContextLost) override;
         bool release(bool gpuContextLost) override;
 
         const bool& isSupported_EXT_unpack_subimage;

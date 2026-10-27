@@ -40,7 +40,7 @@ namespace OsmAnd
         virtual bool initialize() = 0;
         virtual MapRendererStage::StageResult render(
             const std::shared_ptr<const RenderableModel3DSymbol>& renderable,
-            AlphaChannelType& currentAlphaChannelType) = 0 ;
+            AlphaChannelType& currentAlphaChannelType, bool forShadowmap = false) = 0;
         virtual bool release(const bool gpuContextLost) = 0;
 
         void obtainRenderables(

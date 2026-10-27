@@ -186,12 +186,94 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
 
-//    // Enable writing to color buffer
-//    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-//    GL_CHECK_RESULT;
+    bool withShadows = false;
+    if (currentState.castSunShadows)
+    {
+        const auto smSize = qMax(currentState.viewport.width(), currentState.viewport.height());
+        if (gpuAPI->attachShadowmap(smSize))
+        {
+            withShadows = true;
+
+            glViewport(0, 0, smSize, smSize);
+            GL_CHECK_RESULT;
+
+            glClear(GL_DEPTH_BUFFER_BIT);
+            GL_CHECK_RESULT;
+
+            glPolygonOffset(2.0f, 4.0f);
+            GL_CHECK_RESULT;
+
+            glEnable(GL_POLYGON_OFFSET_FILL);
+            GL_CHECK_RESULT;
+
+            if (!skip && !currentDebugSettings->disableMapLayersStage)
+            {
+                glEnable(GL_CULL_FACE);
+                GL_CHECK_RESULT;
+
+                glCullFace(currentState.flip ? GL_BACK : GL_FRONT);
+                GL_CHECK_RESULT;
+
+                Stopwatch mapLayersStageStopwatch(metric != nullptr);
+                const auto stageResult = _mapLayersStage->render(metric, true);
+                if (stageResult == MapRendererStage::StageResult::Fail)
+                    ok = false;
+                if (metric)
+                    metric->elapsedTimeForMapLayersStageToShadow = mapLayersStageStopwatch.elapsed();
+
+                glDisable(GL_CULL_FACE);
+                GL_CHECK_RESULT;
+
+                if (!ok || stageResult == MapRendererStage::StageResult::Wait)
+                    skip = true;
+            }
+
+            if (!skip && _map3DObjectsStage && !currentDebugSettings->disable3DMapObjectsStage)
+            {
+                Stopwatch map3DStageStopwatch(metric != nullptr);
+
+                const auto stageResult = _map3DObjectsStage->render(metric, true);
+
+                if (stageResult == MapRendererStage::StageResult::Fail)
+                    ok = false;
+                if (metric)
+                    metric->elapsedTimeForObjects3DStageToShadow += map3DStageStopwatch.elapsed();
+
+                if (!ok || stageResult == MapRendererStage::StageResult::Wait)
+                    skip = true;
+            }
+
+            if (!skip && !currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
+            {
+                Stopwatch symbolsStageStopwatch(metric != nullptr);
+                _symbolsStage->step = 0;
+                const auto stageResult = _symbolsStage->render(metric, true);
+                if (stageResult == MapRendererStage::StageResult::Fail)
+                    ok = false;
+                if (metric)
+                    metric->elapsedTimeForSymbolsStageToShadow = symbolsStageStopwatch.elapsed();
+
+                glDepthMask(GL_TRUE);
+                GL_CHECK_RESULT;
+
+                if (!ok || stageResult == MapRendererStage::StageResult::Wait)
+                    skip = true;
+            }
+
+            glDisable(GL_POLYGON_OFFSET_FILL);
+            GL_CHECK_RESULT;
+
+            gpuAPI->detachShadowmap();
+
+            glViewport(x, y, w, h);
+            GL_CHECK_RESULT;
+        }
+    }
+    else
+        gpuAPI->releaseShadowmap(false);
 
     // Raster map stage is rendered without blending, since it's done in fragment shader
-    if (!currentDebugSettings->disableMapLayersStage)
+    if (!skip && !currentDebugSettings->disableMapLayersStage)
     {
 
         // Don't render the inside of map surface
@@ -220,6 +302,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glEnable(GL_BLEND);
     GL_CHECK_RESULT;
 
+    // Initially, preconfigure depth buffer offset for vector symbols (against z-fighting)
+    glPolygonOffset(0.0f, -2.0f);
+    GL_CHECK_RESULT;
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    GL_CHECK_RESULT;
+
     // Render map symbols
     if (!skip && !currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
     {
@@ -227,7 +315,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
         Stopwatch symbolsStageStopwatch(metric != nullptr);
-        _symbolsStage->step = 0;
+        _symbolsStage->step = withShadows ? 1 : 0;
         const auto stageResult = _symbolsStage->render(metric);
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
@@ -267,16 +355,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
         Stopwatch symbolsStageStopwatch(metric != nullptr);
-        _symbolsStage->step = 1;
+        _symbolsStage->step = 2;
         const auto stageResult = _symbolsStage->render(metric);
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
         if (metric)
-        {
             metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
-            // Disable for now
-            //_symbolsStage->drawDebugMetricSymbol(metric);
-        }
 
         glDepthMask(GL_TRUE);
         GL_CHECK_RESULT;
@@ -705,8 +789,6 @@ OsmAnd::AtlasMapRendererInternalState_OpenGL OsmAnd::AtlasMapRenderer_OpenGL::ge
     return _requiredInternalState;
 }
 
-
-
 void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internalState, const MapRendererState& state,
     const float lowerDetail, const double tiltFactor, const CalculationSteps neededSteps) const
 {
@@ -767,6 +849,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     internalState->backVisibleEdgeD = glm::dot(backVisibleEdgeN, mTR_g.xyz());
     internalState->extraElevation = 0.0f;
     internalState->maxElevation = 0.0f;
+    internalState->minElevation = 0.0f;
 
     const auto defPoint = PointI64(INT64_MIN, INT64_MIN);
     internalState->elevatedFrustum2D31.p0 = defPoint;
@@ -774,6 +857,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     internalState->elevatedFrustum2D31.p2 = defPoint;
     internalState->elevatedFrustum2D31.p3 = defPoint;
     internalState->targetOffset = PointI64(0, 0);
+
+    glm::vec3 centralVisiblePoint(0.0f, 0.0f, 0.0f);
+    float visibleRadius = 0.0f;
 
     // Calculate visible area for plane
     if (state.flatEarth)
@@ -829,11 +915,17 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         frustum2D.p2 = PointF(intersectionPoints[2].x, intersectionPoints[2].y);
         frustum2D.p3 = PointF(intersectionPoints[3].x, intersectionPoints[3].y);
 
-        const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomLevel));
-        frustum2D31.p0 = PointI64((frustum2D.p0 / TileSize3D) * static_cast<double>(tileSize31));
-        frustum2D31.p1 = PointI64((frustum2D.p1 / TileSize3D) * static_cast<double>(tileSize31));
-        frustum2D31.p2 = PointI64((frustum2D.p2 / TileSize3D) * static_cast<double>(tileSize31));
-        frustum2D31.p3 = PointI64((frustum2D.p3 / TileSize3D) * static_cast<double>(tileSize31));
+        AreaF visibleArea;
+        visibleArea.enlargeToInclude(frustum2D.p0);
+        visibleArea.enlargeToInclude(frustum2D.p1);
+        visibleArea.enlargeToInclude(frustum2D.p2);
+        visibleArea.enlargeToInclude(frustum2D.p3);
+
+        const auto tileSize31 = static_cast<double>(1u << (ZoomLevel::MaxZoomLevel - state.zoomLevel)) / TileSize3D;
+        frustum2D31.p0 = PointI64(frustum2D.p0 * tileSize31);
+        frustum2D31.p1 = PointI64(frustum2D.p1 * tileSize31);
+        frustum2D31.p2 = PointI64(frustum2D.p2 * tileSize31);
+        frustum2D31.p3 = PointI64(frustum2D.p3 * tileSize31);
 
         internalState->globalFrustum2D31 = frustum2D31 + state.target31;
 
@@ -864,20 +956,27 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
             frustum2D.p1 = PointF(extraIntersections[1].x, extraIntersections[1].y);
             frustum2D.p2 = PointF(extraIntersections[2].x, extraIntersections[2].y);
             frustum2D.p3 = PointF(extraIntersections[3].x, extraIntersections[3].y);
-            internalState->extraFrustum2D31.p0 =
-                PointI64((frustum2D.p0 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
-            internalState->extraFrustum2D31.p1 =
-                PointI64((frustum2D.p1 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
-            internalState->extraFrustum2D31.p2 =
-                PointI64((frustum2D.p2 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
-            internalState->extraFrustum2D31.p3 =
-                PointI64((frustum2D.p3 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
+            visibleArea.enlargeToInclude(frustum2D.p0);
+            visibleArea.enlargeToInclude(frustum2D.p1);
+            visibleArea.enlargeToInclude(frustum2D.p2);
+            visibleArea.enlargeToInclude(frustum2D.p3);
+            internalState->extraFrustum2D31.p0 = PointI64(frustum2D.p0 * tileSize31) + state.target31;
+            internalState->extraFrustum2D31.p1 = PointI64(frustum2D.p1 * tileSize31) + state.target31;
+            internalState->extraFrustum2D31.p2 = PointI64(frustum2D.p2 * tileSize31) + state.target31;
+            internalState->extraFrustum2D31.p3 = PointI64(frustum2D.p3 * tileSize31) + state.target31;
         }
         else
             internalState->extraFrustum2D31 = Frustum2D31();
 
         if (neededSteps == FullGeometry)
             return;
+
+        if (state.castSunShadows)
+        {
+            centralVisiblePoint = glm::vec3(
+                visibleArea.left() + visibleArea.right(), 0.0f, visibleArea.top() + visibleArea.bottom()) * 0.5f;
+            visibleRadius = glm::distance(centralVisiblePoint, glm::vec3(visibleArea.left(), 0.0f, visibleArea.top()));
+        }
     }
 
     const auto isNotTopDownProjection = internalState->isNotTopDownProjection;
@@ -1109,7 +1208,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         auto max64 = Utilities::get64FromAngles(PointD(maxAngleX, minAngleY));
         if (max64.x == 0)
             max64.x = INT32_MAX;
-        if (min64.x >= max64.x)
+        const bool unwrap = min64.x >= max64.x;
+        if (unwrap)
             min64.x = min64.x - INT32_MAX - 1;
 
         internalState->globalFrustum2D31.p0.x = min64.x;
@@ -1122,6 +1222,15 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
 
         if (neededSteps == FullGeometry)
             return;
+
+        if (state.castSunShadows)
+        {
+            auto c = Utilities::getGlobeRadialVector(PointD(minAngleX + maxAngleX + (unwrap ? 2.0 * M_PI : 0.0),
+                (withNorthPole ? maxAngleY : minAngleY) + (withSouthPole ? minAngleY : maxAngleY)) * 0.5);
+            centralVisiblePoint = (internalState->mGlobeRotationPrecise * c - glm::dvec3(0.0, 1.0, 0.0)) * globeRadius;
+            visibleRadius = static_cast<float>(M_SQRT2 * qSqrt(1.0 - glm::dot(c, Utilities::getGlobeRadialVector(
+                PointD(minAngleX, qAbs(maxAngleY) > qAbs(minAngleY) ? minAngleY : maxAngleY)))) * globeRadius);
+        }
     }
 
     // Compute visible tileset
@@ -1704,6 +1813,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         if (isTrulyVisible)
                         {
                             internalState->maxElevation = qMax(internalState->maxElevation, maxHeightInWorld);
+                            internalState->minElevation = qMin(internalState->minElevation, minHeightInWorld);
                             if (currentZoomLevel == zoomLevel)
                             {
                                 const auto mD = static_cast<double>(maxHeightInWorld) / globeRadius + 1.0;
@@ -1996,6 +2106,27 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
             internalState->extraDetailedTiles.clear();
         }
     }
+
+    if (state.castSunShadows)
+    {
+        const auto sunAngle = glm::radians(state.elevationConfiguration.hillshadeSunAngle);
+        const auto sunAzimuth = glm::radians(state.elevationConfiguration.hillshadeSunAzimuth);
+        const auto sinAngle = static_cast<float>(qSin(sunAngle));
+        const auto cosAngle = static_cast<float>(qCos(sunAngle));
+        const auto sinAzimuth = static_cast<float>(qSin(sunAzimuth));
+        const auto cosAzimuth = static_cast<float>(qCos(sunAzimuth));
+        const glm::vec3 lightDirection(-sinAzimuth * cosAngle, -sinAngle, cosAzimuth * cosAngle);
+        const glm::vec3 lightUp(-sinAzimuth * sinAngle, cosAngle, cosAzimuth * sinAngle);
+        const auto lightView =
+            glm::lookAt(glm::vec3(0.0f), lightDirection, lightUp) * glm::translate(-centralVisiblePoint);
+        const auto pixelMargin = internalState->sizeOfPixelInWorld
+            * internalState->distanceFromCameraToTarget / _zNear;
+        const auto lightRadius = qMax(1e-3f, visibleRadius
+            + qMax(-internalState->minElevation, internalState->maxElevation) + pixelMargin);
+        internalState->mDirectSunlightProjection = glm::ortho(
+            -lightRadius, lightRadius, -lightRadius, lightRadius, -lightRadius, lightRadius) * lightView;
+    }
+
     // Compute visible area on elevated plane or bloated sphere if possible
     if (state.flatEarth)
     {

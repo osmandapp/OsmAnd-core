@@ -35,6 +35,7 @@ namespace OsmAnd
         QSet<TileId> extraDetailedTiles;
         float extraElevation;
         float maxElevation;
+        float minElevation;
 
         glm::vec4 glmViewport;
         glm::mat4 mOrthographicProjection;
@@ -44,6 +45,7 @@ namespace OsmAnd
         glm::mat4 mElevation;
         glm::mat4 mAzimuth;
         glm::mat4 mPerspectiveProjectionInv;
+        glm::mat4 mDirectSunlightProjection;
         glm::mat4 mCameraViewInv;
         glm::mat4 mDistanceInv;
         glm::mat4 mElevationInv;

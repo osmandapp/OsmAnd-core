@@ -22,9 +22,11 @@ namespace OsmAnd
                                                                                                                 \
         /* Time elapsed for map layers stage */                                                                 \
         FIELD_ACTION(float, elapsedTimeForMapLayersStage, "s");                                                 \
+        FIELD_ACTION(float, elapsedTimeForMapLayersStageToShadow, "s");                                         \
                                                                                                                 \
         /* Time elapsed for symbols stage */                                                                    \
         FIELD_ACTION(float, elapsedTimeForSymbolsStage, "s");                                                   \
+        FIELD_ACTION(float, elapsedTimeForSymbolsStageToShadow, "s");                                           \
         FIELD_ACTION(float, elapsedTimeForPreparingSymbols, "s");                                               \
         FIELD_ACTION(float, elapsedTimeForPublishingPreparedSymbols, "s");                                      \
         FIELD_ACTION(float, elapsedTimeForObtainingRenderableSymbols, "s");                                     \
@@ -32,6 +34,7 @@ namespace OsmAnd
         FIELD_ACTION(float, elapsedTimeForObtainingRenderableSymbolsOnlyLock, "s");                             \
         FIELD_ACTION(float, elapsedTimeForObtainRenderableSymbolCalls, "s");                                    \
         FIELD_ACTION(float, elapsedTimeForObjects3DStage, "s");                                                 \
+        FIELD_ACTION(float, elapsedTimeForObjects3DStageToShadow, "s");                                         \
         FIELD_ACTION(unsigned int, obtainRenderableSymbolCalls, "");                                            \
         FIELD_ACTION(unsigned int, onPathSymbolsRejectedByFrustum, "");                                         \
         FIELD_ACTION(unsigned int, model3DSymbolsRejectedByFrustum, "");                                        \

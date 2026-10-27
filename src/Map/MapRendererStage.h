@@ -47,9 +47,11 @@ namespace OsmAnd
         const std::shared_ptr<const MapRendererDebugSettings>& debugSettings;
         QReadWriteLock& publishedMapSymbolsByOrderLock;
         const MapRenderer::PublishedMapSymbolsByOrder& publishedMapSymbolsByOrder;
+        const MapRenderer::PublishedMapSymbolsByOrder frameMapSymbolsByOrder;
 
         virtual bool initialize() = 0;
-        virtual StageResult render(IMapRenderer_Metrics::Metric_renderFrame* const metric) = 0;
+        virtual StageResult render(
+            IMapRenderer_Metrics::Metric_renderFrame* const metric, bool forShadowmap = false) = 0;
         virtual bool release(bool gpuContextLost) = 0;
     };
 }

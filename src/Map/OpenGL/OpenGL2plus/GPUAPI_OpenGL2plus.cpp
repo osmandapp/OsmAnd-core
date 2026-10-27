@@ -90,14 +90,6 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     if (!ok)
         return false;
 
-    // Desktop OpenGL core profile only (e.g. macOS CGL 3.2+ contexts): glGetString(GL_EXTENSIONS)
-    // returns NULL there, and without the experimental flag glewInit() reports success while leaving
-    // most function pointers NULL. Compatibility and legacy contexts keep the previous behaviour.
-    if (!glGetString(GL_EXTENSIONS))
-    {
-        (void)glGetError();
-        glewExperimental = GL_TRUE;
-    }
     if (glewInit() != GLEW_NO_ERROR)
         return false;
     // Silence OpenGL error here, it's inside GLEW, so it's not ours
@@ -269,6 +261,26 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
 
     _isSupported_EXT_gpu_shader4 = extensions.contains(QStringLiteral("GL_EXT_gpu_shader4"));
 
+    _isSupported_framebuffer_object =
+        glVersion >= 30 || extensions.contains(QLatin1String("GL_ARB_framebuffer_object"));
+    if (!_isSupported_framebuffer_object && extensions.contains(QLatin1String("GL_EXT_framebuffer_object")))
+    {
+        glGenFramebuffers = glGenFramebuffersEXT;
+        glBindFramebuffer = glBindFramebufferEXT;
+        glFramebufferTexture2D = glFramebufferTexture2DEXT;
+        glCheckFramebufferStatus = glCheckFramebufferStatusEXT;
+        glDeleteFramebuffers = glDeleteFramebuffersEXT;
+        _isSupported_framebuffer_object = true;
+    }
+    if (_isSupported_framebuffer_object)
+    {
+        GL_CHECK_PRESENT(glGenFramebuffers);
+        GL_CHECK_PRESENT(glBindFramebuffer);
+        GL_CHECK_PRESENT(glFramebufferTexture2D);
+        GL_CHECK_PRESENT(glCheckFramebufferStatus);
+        GL_CHECK_PRESENT(glDeleteFramebuffers);
+    }
+
     if (_glVersion < 30)
     {
         if (_isSupported_EXT_gpu_shader4)
@@ -417,6 +429,140 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     return true;
 }
 
+bool OsmAnd::GPUAPI_OpenGL2plus::initializeShadowmap(int resolution)
+{
+    if (!_isSupported_framebuffer_object || resolution <= 0 || resolution > maxTextureSize)
+        return false;
+
+    bool ok = GPUAPI_OpenGL::initializeShadowmap(resolution);
+    if (!ok)
+        return false;
+
+    const bool separateFramebuffers = glVersion >= 30 ||
+        extensions.contains(QLatin1String("GL_ARB_framebuffer_object")) ||
+        extensions.contains(QLatin1String("GL_EXT_framebuffer_blit"));
+    GLint previousTexture = 0;
+    GLint previousDrawFramebuffer = 0;
+    GLint previousReadFramebuffer = 0;
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &previousTexture);
+    GL_CHECK_RESULT;
+    glGetIntegerv(separateFramebuffers ? GL_DRAW_FRAMEBUFFER_BINDING : GL_FRAMEBUFFER_BINDING,
+        &previousDrawFramebuffer);
+    GL_CHECK_RESULT;
+    if (separateFramebuffers)
+    {
+        glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &previousReadFramebuffer);
+        GL_CHECK_RESULT;
+    }
+
+    GLuint depthTexture = 0;
+    glGenTextures(1, &depthTexture);
+    GL_CHECK_RESULT;
+    glBindTexture(GL_TEXTURE_2D, depthTexture);
+    GL_CHECK_RESULT;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, resolution, resolution, 0,
+        GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
+    GL_CHECK_RESULT;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    GL_CHECK_RESULT;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    GL_CHECK_RESULT;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    GL_CHECK_RESULT;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    GL_CHECK_RESULT;
+
+    GLuint framebuffer = 0;
+    glGenFramebuffers(1, &framebuffer);
+    GL_CHECK_RESULT;
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    GL_CHECK_RESULT;
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+    GL_CHECK_RESULT;
+    glDrawBuffer(GL_NONE);
+    GL_CHECK_RESULT;
+    glReadBuffer(GL_NONE);
+    GL_CHECK_RESULT;
+    const auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    GL_CHECK_RESULT;
+
+    glBindTexture(GL_TEXTURE_2D, previousTexture);
+    GL_CHECK_RESULT;
+    glBindFramebuffer(separateFramebuffers ? GL_DRAW_FRAMEBUFFER : GL_FRAMEBUFFER, previousDrawFramebuffer);
+    GL_CHECK_RESULT;
+    if (separateFramebuffers)
+    {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, previousReadFramebuffer);
+        GL_CHECK_RESULT;
+    }
+
+    if (depthTexture == 0 || framebuffer == 0 || status != GL_FRAMEBUFFER_COMPLETE)
+    {
+        glDeleteFramebuffers(1, &framebuffer);
+        GL_CHECK_RESULT;
+        glDeleteTextures(1, &depthTexture);
+        GL_CHECK_RESULT;
+        LogPrintf(LogSeverityLevel::Error, "Failed to initialize shadowmap framebuffer (status 0x%08x)", status);
+        return false;
+    }
+
+    if (_shadowmapFramebuffer != 0)
+    {
+        glDeleteFramebuffers(1, &_shadowmapFramebuffer);
+        GL_CHECK_RESULT;
+    }
+    if (_shadowmapDepthTexture != 0)
+    {
+        glDeleteTextures(1, &_shadowmapDepthTexture);
+        GL_CHECK_RESULT;
+    }
+    _shadowmapDepthTexture = depthTexture;
+    _shadowmapFramebuffer = framebuffer;
+    _shadowmapResolution = resolution;
+
+    return true;
+}
+
+bool OsmAnd::GPUAPI_OpenGL2plus::attachShadowmap(int resolution)
+{
+    if ((_shadowmapFramebuffer == 0 || _shadowmapResolution != resolution) && !initializeShadowmap(resolution))
+        return false;
+
+    const bool separateFramebuffers = glVersion >= 30 ||
+        extensions.contains(QLatin1String("GL_ARB_framebuffer_object")) ||
+        extensions.contains(QLatin1String("GL_EXT_framebuffer_blit"));
+    glGetIntegerv(separateFramebuffers ? GL_DRAW_FRAMEBUFFER_BINDING : GL_FRAMEBUFFER_BINDING,
+        &_shadowmapPreviousDrawFramebuffer);
+    GL_CHECK_RESULT;
+    if (separateFramebuffers)
+    {
+        glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &_shadowmapPreviousReadFramebuffer);
+        GL_CHECK_RESULT;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, _shadowmapFramebuffer);
+    GL_CHECK_RESULT;
+
+    return true;
+}
+
+bool OsmAnd::GPUAPI_OpenGL2plus::detachShadowmap()
+{
+    const bool separateFramebuffers = glVersion >= 30 ||
+        extensions.contains(QLatin1String("GL_ARB_framebuffer_object")) ||
+        extensions.contains(QLatin1String("GL_EXT_framebuffer_blit"));
+    glBindFramebuffer(separateFramebuffers ? GL_DRAW_FRAMEBUFFER : GL_FRAMEBUFFER,
+        _shadowmapPreviousDrawFramebuffer);
+    GL_CHECK_RESULT;
+    if (separateFramebuffers)
+    {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, _shadowmapPreviousReadFramebuffer);
+        GL_CHECK_RESULT;
+    }
+
+    return true;
+}
+
 int OsmAnd::GPUAPI_OpenGL2plus::checkElementVisibility(int queryIndex, float pointSize)
 {
     const auto prevSize = _pointVisibilityCheckQueries.size();
@@ -468,8 +614,35 @@ bool OsmAnd::GPUAPI_OpenGL2plus::elementIsVisible(int queryIndex)
     return queryResult == 0;
 }
 
+bool OsmAnd::GPUAPI_OpenGL2plus::releaseShadowmap(bool gpuContextLost)
+{
+    if (_shadowmapFramebuffer != 0)
+    {
+        if (!gpuContextLost)
+        {
+            glDeleteFramebuffers(1, &_shadowmapFramebuffer);
+            GL_CHECK_RESULT;
+        }
+        _shadowmapFramebuffer = 0;
+    }
+    if (_shadowmapDepthTexture != 0)
+    {
+        if (!gpuContextLost)
+        {
+            glDeleteTextures(1, &_shadowmapDepthTexture);
+            GL_CHECK_RESULT;
+        }
+        _shadowmapDepthTexture = 0;
+    }
+    _shadowmapResolution = 0;
+
+    return true;
+}
+
 bool OsmAnd::GPUAPI_OpenGL2plus::release(bool gpuContextLost)
 {
+    releaseShadowmap(gpuContextLost);
+
     if (!gpuContextLost && _pointVisibilityCheckQueries.size() > 0)
     {
         GL_CHECK_PRESENT(glDeleteQueries);

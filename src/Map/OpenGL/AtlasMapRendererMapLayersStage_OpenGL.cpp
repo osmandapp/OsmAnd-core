@@ -53,7 +53,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initialize()
 }
 
 OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(
-    IMapRenderer_Metrics::Metric_renderFrame* metric_)
+    IMapRenderer_Metrics::Metric_renderFrame* metric_, bool forShadowmap /* = false */)
 {
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 
@@ -209,7 +209,8 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererMapLayersStage_Ope
             visibleTilesSet.value(),
             zoomLevel,
             elevatedTilesSet,
-            withElevation));
+            withElevation,
+            forShadowmap));
         for (const auto& batchedLayersByTile : constOf(layers.last()))
         {
             // Any layer or layers batch after first one has to be rendered using blending,
@@ -241,6 +242,7 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererMapLayersStage_Ope
                     itTiles == internalState.visibleTiles.cend(),
                     withElevation,
                     blendingEnabled,
+                    forShadowmap,
                     zoomLevel);
             }
         }
@@ -1861,6 +1863,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     const bool isHighDetail,
     const bool withElevation,
     const bool blendingEnabled,
+    const bool forShadowmap,
     const ZoomLevel zoomLevel)
 {
     const auto gpuAPI = getGPUAPI();
@@ -1899,6 +1902,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
         programFeatures,
         elevationDataSamplerIndex,
         lastUsedProgram,
+        forShadowmap,
         zoomLevel);
     const auto& program = _rasterLayerTilePrograms[batchedLayersCount][programFeatures];
     const auto& vao = _rasterTileVAOs[batchedLayersCount][programFeatures];
@@ -2385,6 +2389,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     const int programFeatures,
     const int elevationDataSamplerIndex,
     GLname& lastUsedProgram,
+    const bool forShadowmap,
     const ZoomLevel zoomLevel)
 {
     const auto gpuAPI = getGPUAPI();
@@ -2421,7 +2426,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     GL_CHECK_RESULT;
 
     // Set matrices
-    glUniformMatrix4fv(program.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
+    glUniformMatrix4fv(program.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(
+        forShadowmap ? internalState.mDirectSunlightProjection : internalState.mPerspectiveProjectionView));
     GL_CHECK_RESULT;
 
     // Scale the result
@@ -3190,7 +3196,8 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
     const QSet<TileId>& visibleTilesSet,
     const ZoomLevel zoomLevel,
     QSet<TileId>& elevatedTileset,
-    bool& withElevation)
+    bool& withElevation,
+    bool elevationOnly)
 {
     const auto& internalState = getInternalState();
     const auto gpuAPI = getGPUAPI();
@@ -3352,7 +3359,9 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
         batch->elevationResourcesInGPU = elevationResources;
         batch->hasDynamics = false;
 
-        for (const auto& mapLayerEntry : rangeOf(constOf(currentState.mapLayersProviders)))
+        if (elevationOnly)
+            stubsStyle = MapStubStyle::Empty;
+        else for (const auto& mapLayerEntry : rangeOf(constOf(currentState.mapLayersProviders)))
         {
             const auto layerIndex = mapLayerEntry.key();
             const auto& provider = mapLayerEntry.value();

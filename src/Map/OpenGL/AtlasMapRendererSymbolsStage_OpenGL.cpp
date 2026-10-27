@@ -25,7 +25,6 @@
 #include "GlmExtensions.h"
 #include <OsmAndCore/Map/MapObjectsSymbolsProvider.h>
 #include <OsmAndCore/Data/BinaryMapObject.h>
-#include <SkCanvas.h>
 
 OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer_)
     : AtlasMapRendererSymbolsStage(renderer_)
@@ -51,7 +50,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::createSubstages()
     _model3DSubstage.reset(new AtlasMapRendererSymbolsStageModel3D_OpenGL(this));
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(bool shadowmap,
     QList< std::shared_ptr<const RenderableSymbol> >& preRenderableSymbols,
     AtlasMapRenderer_Metrics::Metric_renderFrame* metric)
 {
@@ -73,16 +72,19 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
                 const auto& gpuResource =
                     std::static_pointer_cast<const GPUAPI::MeshInGPU>(renderableOnSurfaceSymbol->gpuResource);
 
-                // Don't reserve holes in 3D buildings for dense symbols just draw them at their places
-                if (gpuResource->isDenseObject)
-                    glStencilMask(0x00);
-                else if (with3DObjects)
-                    glStencilMask(0xFF);
-                else
-                    continue;
+                if (!shadowmap)
+                {
+                    // Don't reserve holes in 3D buildings for dense symbols just draw them at their places
+                    if (gpuResource->isDenseObject)
+                        glStencilMask(0x00);
+                    else if (with3DObjects)
+                        glStencilMask(0xFF);
+                    else
+                        continue;
+                }
 
                 Stopwatch renderOnSurfaceSymbolStopwatch(metric != nullptr);
-                ok = ok && renderOnSurfaceVectorSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType);
+                ok = ok && renderOnSurfaceVectorSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType, shadowmap);
                 if (metric)
                     metric->elapsedTimeForOnSurfaceSymbolsRendering += renderOnSurfaceSymbolStopwatch.elapsed();
             }
@@ -93,9 +95,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
             if (std::dynamic_pointer_cast<const Model3DMapSymbol>(renderableModel3DSymbol->mapSymbol))
             {
                 Stopwatch renderableModel3DSymbolStopwatch(metric != nullptr);
-                glStencilMask(0xFF);
-                ok = ok && _model3DSubstage->render(
-                    renderableModel3DSymbol, currentAlphaChannelType) == MapRendererStage::StageResult::Success;
+                if (!shadowmap)
+                    glStencilMask(0xFF);
+                ok = ok && _model3DSubstage->render(renderableModel3DSymbol,
+                    currentAlphaChannelType, shadowmap) == MapRendererStage::StageResult::Success;
                 if (metric)
                     metric->elapsedTimeForModel3DSymbolsRendering += renderableModel3DSymbolStopwatch.elapsed();
             }
@@ -105,75 +108,64 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRenderWithVolume(
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRenderWithVolume(bool shadowmap,
     QList< std::shared_ptr<const RenderableSymbol> >& denseSymbolsBeforeBuildings,
     QList< std::shared_ptr<const RenderableSymbol> >& denseSymbolsAfterBuildings,
     AtlasMapRenderer_Metrics::Metric_renderFrame* metric)
 {
-    if (_initSymbolType != InitSymbolType::Complete)
-        return false;
-
-    // Disable actual drawing for symbol preparation phase
+    // Disable actual drawing for shadowmap and symbol preparation phase
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     GL_CHECK_RESULT;
 
-    // Always pass and write '1' into the stencil buffer to make holes in 3D buildings thereafter
-    glStencilFunc(GL_ALWAYS, 1, 0xFF); 
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    if (!shadowmap)
+    {
+        // Always pass and write '1' into the stencil buffer to make holes in 3D buildings thereafter
+        glStencilFunc(GL_ALWAYS, 1, 0xFF); 
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    }
 
-    bool ok = preRender(denseSymbolsBeforeBuildings, metric) && preRender(denseSymbolsAfterBuildings, metric);
+    bool ok = preRender(shadowmap, denseSymbolsBeforeBuildings, metric)
+        && preRender(shadowmap, denseSymbolsAfterBuildings, metric);
 
-    // Disable testing and modifying stencil buffer
-    glStencilFunc(GL_ALWAYS, 0, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    glStencilMask(0x00);
-    
+    if (shadowmap)
+    {
+        // Resume drawing
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        GL_CHECK_RESULT;
+    }
+    else
+    {
+        // Disable testing and modifying stencil buffer
+        glStencilFunc(GL_ALWAYS, 0, 0xFF);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+        glStencilMask(0x00);
+    }
+
     return ok;
 }
 
-OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(
-    IMapRenderer_Metrics::Metric_renderFrame* metric_)
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderSymbols(
+    AtlasMapRenderer_Metrics::Metric_renderFrame* metric)
 {
-    const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
-
     bool ok = true;
-
-    if (_initSymbolType != InitSymbolType::Complete)
-    {
-        const auto initSymbolType = _initSymbolType;
-        ok = ok && (initSymbolType != InitSymbolType::BillboardRaster || initializeBillboardRaster());
-        ok = ok && (initSymbolType != InitSymbolType::OnPath2D || initializeOnPath2D());
-        ok = ok && (initSymbolType != InitSymbolType::OnPath3D || initializeOnPath3D());
-        ok = ok && (initSymbolType != InitSymbolType::OnSurfaceRaster || initializeOnSurfaceRaster());
-        ok = ok && (initSymbolType != InitSymbolType::OnSurfaceVector || initializeOnSurfaceVector());
-        ok = ok && (initSymbolType != InitSymbolType::Model3D || _model3DSubstage->initialize());
-        ok = ok && (initSymbolType != InitSymbolType::VisibilityCheck || initializeVisibilityCheck());
-
-        if (!ok || _initSymbolType == InitSymbolType::Incomplete)
-            return StageResult::Fail;
-
-        return StageResult::Wait;
-    }
-
-    const auto gpuAPI = getGPUAPI();
-    auto currentAlphaChannelType = AlphaChannelType::Straight;
-
-    prepareSymbolsDrawing();
-
-    if (step == 0)
-        prepare(metric);
 
     // Resume drawing
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     GL_CHECK_RESULT;
 
+    // Initially, configure for straight alpha channel type
+    auto currentAlphaChannelType = AlphaChannelType::Straight;
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GL_CHECK_RESULT;
+
     // Prepare JSON report
     bool withJson = renderer->withJSON();
 
-    if (withJson && step == 0)
+    if (withJson && step < 2)
         jsonArray = QJsonArray();
 
-    const auto renderableSymbols = step == 0 ? &renderableSymbolsBeforeBuildings : &renderableSymbolsAfterBuildings;
+    const auto renderableSymbols =
+        step < 2 ? &renderableSymbolsBeforeBuildings : &renderableSymbolsAfterBuildings;
     for (const auto& renderableSymbol : constOf(*renderableSymbols))
     {
         if (const auto& renderableBillboardSymbol =
@@ -188,8 +180,10 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
                 const auto& symbol =
                     std::static_pointer_cast<const BillboardRasterMapSymbol>(renderableBillboardSymbol->mapSymbol);
                 const auto& position31 = renderableBillboardSymbol->position31;
-                jsonObject.insert(QStringLiteral("lat"), Utilities::getLatitudeFromTile(ZoomLevel31, position31.y));
-                jsonObject.insert(QStringLiteral("lon"), Utilities::getLongitudeFromTile(ZoomLevel31, position31.x));
+                jsonObject.insert(
+                    QStringLiteral("lat"), Utilities::getLatitudeFromTile(ZoomLevel31, position31.y));
+                jsonObject.insert(
+                    QStringLiteral("lon"), Utilities::getLongitudeFromTile(ZoomLevel31, position31.x));
                 reportCommonParameters(jsonObject, *renderableSymbol);
                 jsonArray.append(jsonObject);
             }
@@ -215,8 +209,10 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
                     && renderableOnPathSymbol->instanceParameters->overridesPinPointOnPath)
                     ? renderableOnPathSymbol->instanceParameters->pinPointOnPath.point31
                     : symbol->pinPointOnPath.point31;
-                jsonObject.insert(QStringLiteral("lat"), Utilities::getLatitudeFromTile(ZoomLevel31, position31.y));
-                jsonObject.insert(QStringLiteral("lon"), Utilities::getLongitudeFromTile(ZoomLevel31, position31.x));
+                jsonObject.insert(
+                    QStringLiteral("lat"), Utilities::getLatitudeFromTile(ZoomLevel31, position31.y));
+                jsonObject.insert(
+                    QStringLiteral("lon"), Utilities::getLongitudeFromTile(ZoomLevel31, position31.x));
                 reportCommonParameters(jsonObject, *renderableSymbol);
                 jsonArray.append(jsonObject);
             }
@@ -242,7 +238,7 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
             std::dynamic_pointer_cast<const RenderableOnSurfaceSymbol>(renderableSymbol))
         {
             Stopwatch renderOnSurfaceSymbolStopwatch(metric != nullptr);
-            ok = ok && renderOnSurfaceSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType);
+            ok = ok && renderOnSurfaceSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType, false);
             if (metric)
             {
                 metric->elapsedTimeForOnSurfaceSymbolsRendering += renderOnSurfaceSymbolStopwatch.elapsed();
@@ -251,14 +247,64 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
         }
     }
 
-    if (withJson && step > 0)
+    if (withJson && step > 1)
     {
         auto jsonDocument = new QJsonDocument();
         jsonDocument->setArray(jsonArray);
         renderer->setJSON(jsonDocument);
     }
 
-    endSymbolsDrawing(gpuAPI);
+    return ok;
+}
+
+OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(
+    IMapRenderer_Metrics::Metric_renderFrame* metric_, bool forShadowmap /* = false */)
+{
+    const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
+
+    bool ok = true;
+
+    if (_initSymbolType != InitSymbolType::Complete)
+    {
+        const auto initSymbolType = _initSymbolType;
+        ok = ok && (initSymbolType != InitSymbolType::BillboardRaster || initializeBillboardRaster());
+        ok = ok && (initSymbolType != InitSymbolType::OnPath2D || initializeOnPath2D());
+        ok = ok && (initSymbolType != InitSymbolType::OnPath3D || initializeOnPath3D());
+        ok = ok && (initSymbolType != InitSymbolType::OnSurfaceRaster || initializeOnSurfaceRaster());
+        ok = ok && (initSymbolType != InitSymbolType::OnSurfaceVector || initializeOnSurfaceVector());
+        ok = ok && (initSymbolType != InitSymbolType::Model3D || _model3DSubstage->initialize());
+        ok = ok && (initSymbolType != InitSymbolType::VisibilityCheck || initializeVisibilityCheck());
+
+        if (!ok || _initSymbolType == InitSymbolType::Incomplete)
+            return StageResult::Fail;
+
+        return StageResult::Wait;
+    }
+
+    GL_PUSH_GROUP_MARKER(QLatin1String("symbols"));
+
+    GL_CHECK_PRESENT(glUseProgram);
+    GL_CHECK_PRESENT(glActiveTexture);
+
+    const auto gpuAPI = getGPUAPI();
+
+    _lastUsedProgram = 0;
+
+    ok = drawSymbols(forShadowmap, metric);
+
+    // Unbind symbol texture from texture sampler
+    glActiveTexture(GL_TEXTURE0 + 0);
+    GL_CHECK_RESULT;
+    glBindTexture(GL_TEXTURE_2D, 0);
+    GL_CHECK_RESULT;
+
+    // Deactivate program
+    glUseProgram(0);
+    GL_CHECK_RESULT;
+
+    gpuAPI->unuseVAO();
+
+    GL_POP_GROUP_MARKER;
 
     return ok ? StageResult::Success : StageResult::Fail;
 }
@@ -298,7 +344,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-    AlphaChannelType &currentAlphaChannelType)
+    AlphaChannelType &currentAlphaChannelType,
+    bool forShadowmap)
 {
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
     {
@@ -310,7 +357,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     {
         return renderOnSurfaceVectorSymbol(
             renderable,
-            currentAlphaChannelType);
+            currentAlphaChannelType,
+            forShadowmap);
     }
 
     return false;
@@ -2729,7 +2777,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-    AlphaChannelType &currentAlphaChannelType)
+    AlphaChannelType &currentAlphaChannelType,
+    bool forShadowmap)
 {
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
@@ -2755,7 +2804,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         GL_CHECK_RESULT;
 
         // Set perspective projection-view matrix
-        glUniformMatrix4fv(_onSurfaceVectorProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
+        glUniformMatrix4fv(_onSurfaceVectorProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(
+            forShadowmap ? internalState.mDirectSunlightProjection : internalState.mPerspectiveProjectionView));
         GL_CHECK_RESULT;
 
         // Set globe positioning matrix
@@ -3848,115 +3898,4 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::reportCommonParameters(
             jsonObject.insert(QStringLiteral("id"), static_cast<long long>(binaryMapObject->id.getOsmId() >> 1));
         }
     }
-}
-
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::drawDebugMetricSymbol(IMapRenderer_Metrics::Metric_renderFrame* metric_)
-{
-    const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
-
-    if (metric && isLongPrepareStage)
-    {
-        const auto gpuAPI = getGPUAPI();
-        prepareSymbolsDrawing();
-        
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        GL_CHECK_RESULT;
-
-        const int totalSymbolsDrawn = metric->billboardSymbolsRendered + metric->onPathSymbolsRendered +
-            metric->model3DSymbolsRendered + metric->onSurfaceSymbolsRendered;
-
-        const int totalSymbols = renderer->getSymbolsCount();
-
-        auto symbolGroup = std::make_shared<MapSymbolsGroup>();
-        auto symbol = std::make_shared<BillboardRasterMapSymbol>(symbolGroup);
-
-        symbol->content = QString::asprintf("Symbols  %.4fs  [ %d of %d labels ]",
-            metric->elapsedTimeForSymbolsStage, totalSymbolsDrawn, totalSymbols);
-
-        TextRasterizer::Style style;
-        style.size = 48;
-
-        const auto textImage = TextRasterizer::getDefault()->rasterize(symbol->content, style);
-        
-        if (textImage)
-        {
-            const int bgWidth = textImage->width() + 20;
-            const int bgHeight = textImage->height() + 20;
-
-            SkBitmap backgroundBitmap;
-            if (backgroundBitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(bgWidth, bgHeight)))
-            {
-                backgroundBitmap.eraseColor(SK_ColorTRANSPARENT);
-                
-                SkCanvas canvas(backgroundBitmap);
-                SkPaint paint;
-                paint.setStyle(SkPaint::kFill_Style);
-                paint.setColor(SkColorSetARGB(200, 0, 0, 0));
-
-                SkRect rect = SkRect::MakeLTRB(2, 2, bgWidth - 2, bgHeight - 2);
-                canvas.drawRoundRect(rect, 8, 8, paint);
-                
-                style.setBackgroundImage(backgroundBitmap.asImage());
-            }
-
-            symbol->position31 = currentState.target31;
-            symbol->image = TextRasterizer::getDefault()->rasterize(symbol->content, style);
-
-            std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
-            bool gpuContextLost = false;
-            getGPUAPI()->uploadSymbolToGPU(symbol, gpuResource, true, &gpuContextLost);
-
-            auto renderable = std::make_shared<RenderableBillboardSymbol>();
-            renderable->mapSymbolGroup = symbolGroup;
-            renderable->mapSymbol = symbol;
-            renderable->position31 = symbol->position31;
-            renderable->elevationInWorld = 10.0f;
-            renderable->mRotate = glm::mat2(1.0f);
-            renderable->opacityFactor = 1.0f;
-            renderable->gpuResource = gpuResource;
-
-            AlphaChannelType alphaChannelType = AlphaChannelType::Invalid;
-            renderBillboardSymbol(renderable, alphaChannelType);
-        }
-
-        endSymbolsDrawing(gpuAPI);
-    }
-}
-
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::prepareSymbolsDrawing()
-{
-    GL_PUSH_GROUP_MARKER(QLatin1String("symbols"));
-
-    GL_CHECK_PRESENT(glUseProgram);
-    GL_CHECK_PRESENT(glActiveTexture);
-    GL_CHECK_PRESENT(glPolygonOffset);
-
-    _lastUsedProgram = 0;
-
-    // Initially, configure for straight alpha channel type
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    GL_CHECK_RESULT;
-
-    // Initially, configure depth buffer offset for vector symbols (against z-fighting)
-    glPolygonOffset(0.0f, -2.0f);
-    GL_CHECK_RESULT;
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    GL_CHECK_RESULT;
-}
-
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::endSymbolsDrawing(OsmAnd::GPUAPI_OpenGL* api)
-{
-    // Unbind symbol texture from texture sampler
-    glActiveTexture(GL_TEXTURE0 + 0);
-    GL_CHECK_RESULT;
-    glBindTexture(GL_TEXTURE_2D, 0);
-    GL_CHECK_RESULT;
-
-    // Deactivate program
-    glUseProgram(0);
-    GL_CHECK_RESULT;
-
-    api->unuseVAO();
-
-    GL_POP_GROUP_MARKER;
 }

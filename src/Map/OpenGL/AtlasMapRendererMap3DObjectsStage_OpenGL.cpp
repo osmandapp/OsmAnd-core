@@ -873,15 +873,15 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
     }
 }
 
-MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDepth(bool primaryOnly)
+void AtlasMapRendererMap3DObjectsStage_OpenGL::renderDepth(bool primaryOnly, bool forShadowmap)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
 
     glUseProgram(_depthProgram.id);
     GL_CHECK_RESULT;
-    glUniformMatrix4fv(*_depthProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE,
-        glm::value_ptr(internalState.mPerspectiveProjectionView));
+    glUniformMatrix4fv(*_depthProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(
+        forShadowmap ? internalState.mDirectSunlightProjection : internalState.mPerspectiveProjectionView));
     GL_CHECK_RESULT;
     glUniform4f(*_depthProgram.vs.param.resultScale, 1.0f, currentState.flip ? -1.0f : 1.0f, 1.0f, 1.0f);
     GL_CHECK_RESULT;
@@ -939,11 +939,9 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDe
         }
     }
     gpuAPI->unuseVAO();
-
-    return StageResult::Success;
 }
 
-MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderSimple(bool primaryOnly)
+void AtlasMapRendererMap3DObjectsStage_OpenGL::renderSimple(bool primaryOnly)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -1031,11 +1029,9 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderSi
         }
     }
     gpuAPI->unuseVAO();
-
-    return StageResult::Success;
 }
 
-MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderColor(
+void AtlasMapRendererMap3DObjectsStage_OpenGL::renderColor(
     bool primaryOnly, int64_t currentTime)
 {
     const auto gpuAPI = getGPUAPI();
@@ -1137,12 +1133,10 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
         }
     }
     gpuAPI->unuseVAO();
-
-    return StageResult::Success;
 }
 
 MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
-    IMapRenderer_Metrics::Metric_renderFrame* const metric)
+    IMapRenderer_Metrics::Metric_renderFrame* const metric, bool forShadowmap /* = false */)
 {
     bool ok = true;
 
@@ -1206,10 +1200,11 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     if (shouldInvalidateFrame)
         invalidateFrame();
 
-    const bool needsDepthPrepass = buildingsAlpha > 0.0 && buildingsAlpha < 1.0f;
+    const bool needsDepthPrepass = forShadowmap || (buildingsAlpha > 0.0 && buildingsAlpha < 1.0f);
 
     // Only draw where the stencil value is NOT 1 to make certain important symbols could be clearly seen through
-    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    if (!forShadowmap)
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
 
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
@@ -1220,8 +1215,6 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     glCullFace(currentState.flip ? GL_BACK : GL_FRONT);
     GL_CHECK_RESULT;
 
-    StageResult depthPrepassResult = StageResult::Success;
-
     if (needsDepthPrepass)
     {
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -1230,7 +1223,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
         glDisable(GL_BLEND);
         GL_CHECK_RESULT;
 
-        depthPrepassResult = renderDepth(true);
+        renderDepth(true, forShadowmap);
 
         glEnable(GL_BLEND);
         GL_CHECK_RESULT;
@@ -1242,7 +1235,10 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     GL_CHECK_RESULT;
 
-    auto colorPassResult = highDetalizationLevel ? renderColor(true, currentTime) : renderSimple(true);
+    if (!forShadowmap && highDetalizationLevel)
+        renderColor(true, currentTime);
+    else if (!forShadowmap)
+        renderSimple(true);
 
     if (needsDepthPrepass)
     {
@@ -1250,9 +1246,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
         GL_CHECK_RESULT;
     }
 
-    bool failed = depthPrepassResult == StageResult::Fail || colorPassResult == StageResult::Fail;
-
-    if (needsDepthPrepass && !failed)
+    if (needsDepthPrepass)
     {
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
         GL_CHECK_RESULT;
@@ -1260,7 +1254,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
         glDisable(GL_BLEND);
         GL_CHECK_RESULT;
 
-        depthPrepassResult = renderDepth(false);
+        renderDepth(false, forShadowmap);
 
         glEnable(GL_BLEND);
         GL_CHECK_RESULT;
@@ -1272,8 +1266,10 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     GL_CHECK_RESULT;
 
-    if (!failed)
-        colorPassResult = highDetalizationLevel ? renderColor(false, currentTime) : renderSimple(false);
+    if (!forShadowmap && highDetalizationLevel)
+        renderColor(false, currentTime);
+    else if (!forShadowmap)
+        renderSimple(false);
 
     if (needsDepthPrepass)
     {
@@ -1285,17 +1281,8 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     GL_CHECK_RESULT;
 
     // Disable testing stencil buffer
-    glStencilFunc(GL_ALWAYS, 0, 0xFF);
-
-    if (depthPrepassResult == StageResult::Fail || colorPassResult == StageResult::Fail)
-    {
-        return StageResult::Fail;
-    }
-
-    if (depthPrepassResult == StageResult::Wait || colorPassResult == StageResult::Wait)
-    {
-        return StageResult::Wait;
-    }
+    if (!forShadowmap)
+        glStencilFunc(GL_ALWAYS, 0, 0xFF);
 
     return StageResult::Success;
 }

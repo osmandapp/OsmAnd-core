@@ -93,9 +93,9 @@ namespace OsmAnd
         void getResourcesInGPU(const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
             const int viewableDetalizationLevel, bool& highDetalizationLevel,
             const int64_t appearTime, bool& shouldInvalidateFrame);
-        StageResult renderDepth(bool primaryOnly);
-        StageResult renderSimple(bool primaryOnly);
-        StageResult renderColor(bool primaryOnly, int64_t currentTime);
+        void renderDepth(bool primaryOnly, bool forShadowmap);
+        void renderSimple(bool primaryOnly);
+        void renderColor(bool primaryOnly, int64_t currentTime);
         std::shared_ptr<const GPUAPI::MeshInGPU> captureResourceInGPU(
             const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
             TileId normalizedTileId,
@@ -104,9 +104,10 @@ namespace OsmAnd
         explicit AtlasMapRendererMap3DObjectsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer);
         ~AtlasMapRendererMap3DObjectsStage_OpenGL() override;
 
-        bool initialize() override;
-        StageResult render(IMapRenderer_Metrics::Metric_renderFrame* const metric) override;
-        bool release(bool gpuContextLost) override;
+        virtual bool initialize();
+        virtual MapRendererStage::StageResult render(
+            IMapRenderer_Metrics::Metric_renderFrame* const metric, bool forShadowmap = false);
+        virtual bool release(bool gpuContextLost);
     };
 }
 

@@ -64,7 +64,7 @@ namespace OsmAnd
         bool initialize() override;
         MapRendererStage::StageResult render(
             const std::shared_ptr<const RenderableModel3DSymbol>& renderable,
-            AlphaChannelType& currentAlphaChannelType) override;
+            AlphaChannelType& currentAlphaChannelType, bool forShadowmap = false) override;
         bool release(const bool gpuContextLost) override;
     };
 }
