@@ -1324,22 +1324,31 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::release(bool gpuContextLost)
 
     if (_program.id)
     {
-        glDeleteProgram(_program.id);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteProgram(_program.id);
+            GL_CHECK_RESULT;
+        }
         _program.id = 0;
     }
 
     if (_colorProgram.id)
     {
-        glDeleteProgram(_colorProgram.id);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteProgram(_colorProgram.id);
+            GL_CHECK_RESULT;
+        }
         _colorProgram.id = 0;
     }
 
     if (_depthProgram.id)
     {
-        glDeleteProgram(_depthProgram.id);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteProgram(_depthProgram.id);
+            GL_CHECK_RESULT;
+        }
         _depthProgram.id = 0;
     }
     
