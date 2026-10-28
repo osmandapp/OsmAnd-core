@@ -420,9 +420,13 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
         GL_CHECK_RESULT;
         glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
-        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         GL_CHECK_RESULT;
-        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_FUNC, GL_GEQUAL);
         GL_CHECK_RESULT;
     }
 
@@ -463,9 +467,13 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initializeShadowmap(int resolution)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, resolution, resolution, 0,
         GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
     GL_CHECK_RESULT;
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     GL_CHECK_RESULT;
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GL_CHECK_RESULT;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+    GL_CHECK_RESULT;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_GEQUAL);
     GL_CHECK_RESULT;
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL_CHECK_RESULT;
@@ -561,6 +569,16 @@ bool OsmAnd::GPUAPI_OpenGL2plus::detachShadowmap()
     }
 
     return true;
+}
+
+GLuint OsmAnd::GPUAPI_OpenGL2plus::getShadowmapDepthTexture() const
+{
+    return _shadowmapDepthTexture;
+}
+
+int OsmAnd::GPUAPI_OpenGL2plus::getShadowmapResolution() const
+{
+    return _shadowmapResolution;
 }
 
 int OsmAnd::GPUAPI_OpenGL2plus::checkElementVisibility(int queryIndex, float pointSize)
@@ -927,6 +945,7 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
             // Features definitions
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D texture                                                                                  ""\n"
+            "#define SAMPLE_TEXTURE_2D_SHADOW texture                                                                           ""\n"
             "#define SAMPLE_TEXTURE_2D_LOD textureLod                                                                           ""\n"
             "                                                                                                                   ""\n");
     }
@@ -946,6 +965,7 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
             // Features definitions
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D texture2D                                                                                ""\n"
+            "#define SAMPLE_TEXTURE_2D_SHADOW texture                                                                           ""\n"
             "#define SAMPLE_TEXTURE_2D_LOD texture2DLod                                                                         ""\n"
             "                                                                                                                   ""\n");
     }
@@ -965,6 +985,7 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
             // Features definitions
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D texture2D                                                                                ""\n"
+            "#define SAMPLE_TEXTURE_2D_SHADOW texture                                                                           ""\n"
             "#define SAMPLE_TEXTURE_2D_LOD texture2DLod                                                                         ""\n"
             "                                                                                                                   ""\n");
     }
@@ -989,6 +1010,7 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
             // Features definitions
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D texture2D                                                                                ""\n"
+            "#define SAMPLE_TEXTURE_2D_SHADOW(sampler, position) shadow2D(sampler, position).r                                    ""\n"
             "#define SAMPLE_TEXTURE_2D_LOD texture2DLod                                                                         ""\n"
             "                                                                                                                   ""\n");
     }
@@ -1170,9 +1192,13 @@ void OsmAnd::GPUAPI_OpenGL2plus::applyTextureBlockToTexture(const GLenum texture
             GL_CHECK_RESULT;
             glTexParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             GL_CHECK_RESULT;
-            glTexParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             GL_CHECK_RESULT;
-            glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_COMPARE_FUNC, GL_GEQUAL);
             GL_CHECK_RESULT;
         }
     }

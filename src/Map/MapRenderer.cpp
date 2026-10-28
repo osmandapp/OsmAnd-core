@@ -811,8 +811,6 @@ bool OsmAnd::MapRenderer::releaseRendering(bool gpuContextLost)
         QWriteLocker scopedLocker(&_setupOptionsLock);
 
         _setupOptions.gpuWorkerThreadEnabled = false;
-        _setupOptions.gpuWorkerThreadPrologue = nullptr;
-        _setupOptions.gpuWorkerThreadEpilogue = nullptr;
         _setupOptions.frameUpdateRequestCallback = nullptr;
     }
 
@@ -914,6 +912,14 @@ bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
 
         // And destroy thread object
         _gpuWorkerThread.reset();
+    }
+
+    // Keep the worker callbacks until its epilogue has completed.
+    {
+        QWriteLocker scopedLocker(&_setupOptionsLock);
+
+        _setupOptions.gpuWorkerThreadPrologue = nullptr;
+        _setupOptions.gpuWorkerThreadEpilogue = nullptr;
     }
 
     // With every worker gone nothing runs against the resources, so their GPU references can be

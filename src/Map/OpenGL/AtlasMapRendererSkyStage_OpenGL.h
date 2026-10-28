@@ -60,7 +60,7 @@ namespace OsmAnd
 
         virtual bool initialize();
         virtual MapRendererStage::StageResult render(
-            IMapRenderer_Metrics::Metric_renderFrame* const metric, bool forShadowmap = false);
+            IMapRenderer_Metrics::Metric_renderFrame* const metric, ShadowMode shadowMode = ShadowMode::None);
         virtual bool release(bool gpuContextLost);
     };
 }

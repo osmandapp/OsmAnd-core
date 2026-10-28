@@ -98,7 +98,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(bool shadowmap,
                 if (!shadowmap)
                     glStencilMask(0xFF);
                 ok = ok && _model3DSubstage->render(renderableModel3DSymbol,
-                    currentAlphaChannelType, shadowmap) == MapRendererStage::StageResult::Success;
+                    currentAlphaChannelType, shadowmap ? ShadowMode::Build : ShadowMode::None)
+                    == MapRendererStage::StageResult::Success;
                 if (metric)
                     metric->elapsedTimeForModel3DSymbolsRendering += renderableModel3DSymbolStopwatch.elapsed();
             }
@@ -258,7 +259,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderSymbols(
 }
 
 OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(
-    IMapRenderer_Metrics::Metric_renderFrame* metric_, bool forShadowmap /* = false */)
+    IMapRenderer_Metrics::Metric_renderFrame* metric_, ShadowMode shadowMode /* = ShadowMode::None */)
 {
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 
@@ -290,7 +291,7 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStage_OpenG
 
     _lastUsedProgram = 0;
 
-    ok = drawSymbols(forShadowmap, metric);
+    ok = drawSymbols(shadowMode == ShadowMode::Build, metric);
 
     // Unbind symbol texture from texture sampler
     glActiveTexture(GL_TEXTURE0 + 0);

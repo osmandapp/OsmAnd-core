@@ -53,8 +53,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initialize()
 }
 
 OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(
-    IMapRenderer_Metrics::Metric_renderFrame* metric_, bool forShadowmap /* = false */)
+    IMapRenderer_Metrics::Metric_renderFrame* metric_, ShadowMode shadowMode /* = ShadowMode::None */)
 {
+    const bool forShadowmap = shadowMode == ShadowMode::Build;
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 
     if (_maxNumberOfRasterMapLayersInBatch < 1)
@@ -359,6 +360,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         2 /*v2f_texCoordsPerLayer_%rasterLayerIndex%*/;
     const auto otherVaryingFloats =
         1 /*v2f_metersPerUnit*/ +
+        1 /*v2f_forShadowmap*/ +
         (gpuAPI->isSupported_textureLod ? 1 : 0) /*v2f_mipmapLOD*/ +
         (setupOptions.elevationVisualizationEnabled
             ? 12 : 0) /*v2f_hsTL + v2f_hsTR + v2f_hsBL + v2f_hsBR + v2f_hsCoordsDir + v2f_hsCoords*/ +
@@ -374,6 +376,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*v2f_texCoordsPerLayer_%rasterLayerIndex%*/;
     const auto otherVaryingVectors =
         1 /*v2f_metersPerUnit*/ +
+        1 /*v2f_forShadowmap*/ +
         (gpuAPI->isSupported_textureLod ? 1 : 0) /*v2f_mipmapLOD*/ +
         (setupOptions.elevationVisualizationEnabled
             ? 6 : 0) /*v2f_hsTL + v2f_hsTR + v2f_hsBL + v2f_hsBR + v2f_hsCoordsDir + v2f_hsCoords*/ +
@@ -448,6 +451,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "%UnrolledPerRasterLayerTexCoordsDeclarationCode%                                                                   ""\n"
             "PARAM_OUTPUT highp float v2f_metersPerUnit;                                                                        ""\n"
             "PARAM_OUTPUT highp float v2f_colorIntensity;                                                                       ""\n"
+            "PARAM_FLAT_OUTPUT lowp float v2f_forShadowmap;                                                                      ""\n"
             "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
             "    PARAM_OUTPUT float v2f_mipmapLOD;                                                                              ""\n"
             "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n");
@@ -472,7 +476,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "uniform vec4 param_vs_resultScale;                                                                                 ""\n"
             "uniform mat3 param_vs_mGlobeRotation;                                                                              ""\n"
             "uniform vec2 param_vs_targetInTilePosN;                                                                            ""\n"
-            "uniform vec3 param_vs_objectSizes;                                                                                 ""\n"
+            "uniform vec4 param_vs_objectSizes;                                                                                 ""\n"
             "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
             "    uniform float param_vs_distanceFromCameraToTarget;                                                             ""\n"
             "    uniform float param_vs_cameraElevationAngleN;                                                                  ""\n"
@@ -663,6 +667,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "                                                                                                                   ""\n"
             "void main()                                                                                                        ""\n"
             "{                                                                                                                  ""\n"
+            "    v2f_forShadowmap = param_vs_objectSizes.w;                                                                     ""\n"
             //   Define needed constants
             "    const float M_PI = 3.1415926535897932384626433832795;                                                          ""\n"
             "    const float M_PI_2 = M_PI / 2.0;                                                                               ""\n"
@@ -1019,6 +1024,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "%UnrolledPerRasterLayerTexCoordsDeclarationCode%                                                                   ""\n"
             "PARAM_INPUT highp float v2f_metersPerUnit;                                                                         ""\n"
             "PARAM_INPUT highp float v2f_colorIntensity;                                                                        ""\n"
+            "PARAM_FLAT_INPUT lowp float v2f_forShadowmap;                                                                       ""\n"
             "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
             "    PARAM_INPUT highp float v2f_mipmapLOD;                                                                         ""\n"
             "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n");
@@ -1205,6 +1211,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "                                                                                                                   ""\n"
             "void main()                                                                                                        ""\n"
             "{                                                                                                                  ""\n"
+            "    if (v2f_forShadowmap > 0.5)                                                                                   ""\n"
+            "    {                                                                                                              ""\n"
+            "        FRAGMENT_COLOR_OUTPUT = vec4(0.0);                                                                         ""\n"
+            "        return;                                                                                                    ""\n"
+            "    }                                                                                                              ""\n"
             "    lowp vec4 finalColor;                                                                                          ""\n"
             "                                                                                                                   ""\n"
             //   Calculate color of accuracy circle
@@ -2450,10 +2461,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     GL_CHECK_RESULT;
 
     // Set tile and globe sizes
-    glUniform3f(program.vs.param.objectSizes,
+    glUniform4f(program.vs.param.objectSizes,
         AtlasMapRenderer::TileSize3D * (1 << currentState.zoomLevel - zoomLevel),
         static_cast<float>(internalState.globeRadius),
-        currentState.flatEarth ? -1.0f : (currentState.zoomLevel < ZoomLevel9 ? 1.0f : 0.0f));
+        currentState.flatEarth ? -1.0f : (currentState.zoomLevel < ZoomLevel9 ? 1.0f : 0.0f),
+        forShadowmap ? 1.0 : 0.0);
     GL_CHECK_RESULT;
 
     if (gpuAPI->isSupported_textureLod)

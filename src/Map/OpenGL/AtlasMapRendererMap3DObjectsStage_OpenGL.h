@@ -50,6 +50,7 @@ namespace OsmAnd
                 struct
                 {
                     GLlocation mPerspectiveProjectionView;
+                    GLlocation mDirectSunlightProjection;
                     GLlocation resultScale;
                     GLlocation target31;
                     GLlocation zoomLevel;
@@ -67,6 +68,9 @@ namespace OsmAnd
                     GLlocation fadeHeight;
                     GLlocation cameraPosition;
                     GLlocation lightDirection;
+                    GLlocation shadowmap;
+                    GLlocation shadowmapEnabled;
+                    GLlocation shadowmapTexelSize;
                 } param;
             } fs;
         } _program;
@@ -94,8 +98,9 @@ namespace OsmAnd
             const int viewableDetalizationLevel, bool& highDetalizationLevel,
             const int64_t appearTime, bool& shouldInvalidateFrame);
         void renderDepth(bool primaryOnly, bool forShadowmap);
-        void renderSimple(bool primaryOnly);
-        void renderColor(bool primaryOnly, int64_t currentTime);
+        void configureShadowmap(const Model3DProgram& program, ShadowMode shadowMode);
+        void renderSimple(bool primaryOnly, ShadowMode shadowMode);
+        void renderColor(bool primaryOnly, int64_t currentTime, ShadowMode shadowMode);
         std::shared_ptr<const GPUAPI::MeshInGPU> captureResourceInGPU(
             const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
             TileId normalizedTileId,
@@ -106,7 +111,7 @@ namespace OsmAnd
 
         virtual bool initialize();
         virtual MapRendererStage::StageResult render(
-            IMapRenderer_Metrics::Metric_renderFrame* const metric, bool forShadowmap = false);
+            IMapRenderer_Metrics::Metric_renderFrame* const metric, ShadowMode shadowMode = ShadowMode::None);
         virtual bool release(bool gpuContextLost);
     };
 }

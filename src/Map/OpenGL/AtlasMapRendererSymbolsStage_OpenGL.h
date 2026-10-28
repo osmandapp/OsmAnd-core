@@ -376,7 +376,7 @@ namespace OsmAnd
         bool renderSymbols(
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) override;
         MapRendererStage::StageResult render(
-            IMapRenderer_Metrics::Metric_renderFrame* metric, bool forShadowmap = false) override;
+            IMapRenderer_Metrics::Metric_renderFrame* metric, ShadowMode shadowMode = ShadowMode::None) override;
         bool release(bool gpuContextLost) override;
 
     friend class AtlasMapRendererSymbolsStageModel3D_OpenGL;

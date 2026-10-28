@@ -35,6 +35,13 @@ namespace OsmAnd
             Success
         };
 
+        enum class ShadowMode : int
+        {
+            None,
+            Build,
+            Use
+        };
+
         MapRenderer* const renderer;
 
         const MapRendererResourcesManager& getResources() const;
@@ -51,7 +58,7 @@ namespace OsmAnd
 
         virtual bool initialize() = 0;
         virtual StageResult render(
-            IMapRenderer_Metrics::Metric_renderFrame* const metric, bool forShadowmap = false) = 0;
+            IMapRenderer_Metrics::Metric_renderFrame* const metric, ShadowMode shadowMode = ShadowMode::None) = 0;
         virtual bool release(bool gpuContextLost) = 0;
     };
 }

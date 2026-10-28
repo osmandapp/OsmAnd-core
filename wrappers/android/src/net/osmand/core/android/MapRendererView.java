@@ -2657,6 +2657,17 @@ public abstract class MapRendererView extends FrameLayout {
             } catch (Exception e) {
                 Log.e(TAG, "Failed to wait for GPU-worker EGL context", e);
             }
+
+            try {
+                EGLDisplay display = egl.eglGetCurrentDisplay();
+                if (display != EGL10.EGL_NO_DISPLAY && !egl.eglMakeCurrent(
+                        display, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT)) {
+                    Log.e(TAG, "Failed to release GPU-worker EGL context: " +
+                            getEglErrorString(egl.eglGetError()));
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to release GPU-worker EGL context", e);
+            }
         }
     }
 

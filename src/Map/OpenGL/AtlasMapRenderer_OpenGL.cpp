@@ -39,6 +39,8 @@
 #include <TargetConditionals.h>
 #endif
 
+#define MAX_SHADOWMAP_RESOLUTION 1024
+
 #define MIN_VISUAL_ZOOM_AT_ZERO_LEVEL 0.75
 
 #define MIN_COS_SURFACE 0.03
@@ -189,12 +191,14 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     bool withShadows = false;
     if (currentState.castSunShadows)
     {
-        const auto smSize = qMax(currentState.viewport.width(), currentState.viewport.height());
-        if (gpuAPI->attachShadowmap(smSize))
+        auto mapResolution = qMin(MAX_SHADOWMAP_RESOLUTION, static_cast<int32_t>(
+            Utilities::getNextPowerOfTwo(qMax(currentState.viewport.width(), currentState.viewport.height()) / 2)));
+        
+        if (gpuAPI->attachShadowmap(mapResolution))
         {
             withShadows = true;
 
-            glViewport(0, 0, smSize, smSize);
+            glViewport(0, 0, mapResolution, mapResolution);
             GL_CHECK_RESULT;
 
             glClear(GL_DEPTH_BUFFER_BIT);
@@ -215,7 +219,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
                 GL_CHECK_RESULT;
 
                 Stopwatch mapLayersStageStopwatch(metric != nullptr);
-                const auto stageResult = _mapLayersStage->render(metric, true);
+                const auto stageResult = _mapLayersStage->render(metric, MapRendererStage::ShadowMode::Build);
                 if (stageResult == MapRendererStage::StageResult::Fail)
                     ok = false;
                 if (metric)
@@ -232,7 +236,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
             {
                 Stopwatch map3DStageStopwatch(metric != nullptr);
 
-                const auto stageResult = _map3DObjectsStage->render(metric, true);
+                const auto stageResult = _map3DObjectsStage->render(metric, MapRendererStage::ShadowMode::Build);
 
                 if (stageResult == MapRendererStage::StageResult::Fail)
                     ok = false;
@@ -247,7 +251,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
             {
                 Stopwatch symbolsStageStopwatch(metric != nullptr);
                 _symbolsStage->step = 0;
-                const auto stageResult = _symbolsStage->render(metric, true);
+                const auto stageResult = _symbolsStage->render(metric, MapRendererStage::ShadowMode::Build);
                 if (stageResult == MapRendererStage::StageResult::Fail)
                     ok = false;
                 if (metric)
@@ -272,6 +276,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     else
         gpuAPI->releaseShadowmap(false);
 
+    const auto shadowMode = withShadows ? MapRendererStage::ShadowMode::Use : MapRendererStage::ShadowMode::None;
+
     // Raster map stage is rendered without blending, since it's done in fragment shader
     if (!skip && !currentDebugSettings->disableMapLayersStage)
     {
@@ -284,7 +290,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         GL_CHECK_RESULT;
 
         Stopwatch mapLayersStageStopwatch(metric != nullptr);
-        const auto stageResult = _mapLayersStage->render(metric);
+        const auto stageResult = _mapLayersStage->render(metric, shadowMode);
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
         if (metric)
@@ -316,7 +322,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
 
         Stopwatch symbolsStageStopwatch(metric != nullptr);
         _symbolsStage->step = withShadows ? 1 : 0;
-        const auto stageResult = _symbolsStage->render(metric);
+        const auto stageResult = _symbolsStage->render(metric, shadowMode);
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
         if (metric)
@@ -337,7 +343,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     {
         Stopwatch map3DStageStopwatch(metric != nullptr);
 
-        const auto stageResult = _map3DObjectsStage->render(metric);
+        const auto stageResult = _map3DObjectsStage->render(metric, shadowMode);
 
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
@@ -356,7 +362,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
 
         Stopwatch symbolsStageStopwatch(metric != nullptr);
         _symbolsStage->step = 2;
-        const auto stageResult = _symbolsStage->render(metric);
+        const auto stageResult = _symbolsStage->render(metric, shadowMode);
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
         if (metric)
@@ -849,7 +855,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     internalState->backVisibleEdgeD = glm::dot(backVisibleEdgeN, mTR_g.xyz());
     internalState->extraElevation = 0.0f;
     internalState->maxElevation = 0.0f;
-    internalState->minElevation = 0.0f;
+    internalState->minElevation = std::numeric_limits<float>::max();
 
     const auto defPoint = PointI64(INT64_MIN, INT64_MIN);
     internalState->elevatedFrustum2D31.p0 = defPoint;
@@ -858,7 +864,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     internalState->elevatedFrustum2D31.p3 = defPoint;
     internalState->targetOffset = PointI64(0, 0);
 
-    glm::vec3 centralVisiblePoint(0.0f, 0.0f, 0.0f);
+    glm::dvec3 radialVector(0.0);
+    glm::vec3 centralVisiblePoint(0.0f);
     float visibleRadius = 0.0f;
 
     // Calculate visible area for plane
@@ -1225,11 +1232,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
 
         if (state.castSunShadows)
         {
-            auto c = Utilities::getGlobeRadialVector(PointD(minAngleX + maxAngleX + (unwrap ? 2.0 * M_PI : 0.0),
+            radialVector = Utilities::getGlobeRadialVector(PointD(minAngleX + maxAngleX + (unwrap ? 2.0 * M_PI : 0.0),
                 (withNorthPole ? maxAngleY : minAngleY) + (withSouthPole ? minAngleY : maxAngleY)) * 0.5);
-            centralVisiblePoint = (internalState->mGlobeRotationPrecise * c - glm::dvec3(0.0, 1.0, 0.0)) * globeRadius;
-            visibleRadius = static_cast<float>(M_SQRT2 * qSqrt(1.0 - glm::dot(c, Utilities::getGlobeRadialVector(
-                PointD(minAngleX, qAbs(maxAngleY) > qAbs(minAngleY) ? minAngleY : maxAngleY)))) * globeRadius);
+            visibleRadius =
+                static_cast<float>(M_SQRT2 * qSqrt(1.0 - glm::dot(radialVector, Utilities::getGlobeRadialVector(
+                    PointD(minAngleX, qAbs(maxAngleY) > qAbs(minAngleY) ? minAngleY : maxAngleY)))) * globeRadius);
         }
     }
 
@@ -1999,6 +2006,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
             std::swap(procTiles, nextTiles);
         }
     }
+    if (internalState->minElevation == std::numeric_limits<float>::max())
+        internalState->minElevation = 0.0f;
     // Normalize and make unique visible tiles
     internalState->visibleTilesCount = 0;
     internalState->visibleTiles.clear();
@@ -2117,12 +2126,21 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         const auto cosAzimuth = static_cast<float>(qCos(sunAzimuth));
         const glm::vec3 lightDirection(-sinAzimuth * cosAngle, -sinAngle, cosAzimuth * cosAngle);
         const glm::vec3 lightUp(-sinAzimuth * sinAngle, cosAngle, cosAzimuth * sinAngle);
+        const auto midElevation = (internalState->minElevation + internalState->maxElevation) / 2.0f;
+        const auto extraDistance = internalState->maxElevation - midElevation
+            + qMin(static_cast<float>(1000.0 / internalState->metersPerUnit),
+            qMax(internalState->distanceFromCameraToGround - internalState->maxElevation, 0.0f));
+        if (state.flatEarth)
+            centralVisiblePoint.y += midElevation;
+        else
+            centralVisiblePoint = internalState->mGlobeRotationPrecise * radialVector * (globeRadius + midElevation)
+                - glm::dvec3(0.0, globeRadius, 0.0);
         const auto lightView =
             glm::lookAt(glm::vec3(0.0f), lightDirection, lightUp) * glm::translate(-centralVisiblePoint);
         const auto pixelMargin = internalState->sizeOfPixelInWorld
             * internalState->distanceFromCameraToTarget / _zNear;
-        const auto lightRadius = qMax(1e-3f, visibleRadius
-            + qMax(-internalState->minElevation, internalState->maxElevation) + pixelMargin);
+        const auto lightRadius =
+            qMax(1e-3f, std::sqrt(visibleRadius * visibleRadius + extraDistance * extraDistance) + pixelMargin);
         internalState->mDirectSunlightProjection = glm::ortho(
             -lightRadius, lightRadius, -lightRadius, lightRadius, -lightRadius, lightRadius) * lightView;
     }

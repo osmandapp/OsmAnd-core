@@ -190,7 +190,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
 
 OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::render(
     const std::shared_ptr<const RenderableModel3DSymbol>& renderable,
-    AlphaChannelType& currentAlphaChannelType, bool forShadowmap /* = false */)
+    AlphaChannelType& currentAlphaChannelType,
+    MapRendererStage::ShadowMode shadowMode /* = MapRendererStage::ShadowMode::None */)
 {
     const auto symbolsStage = getSymbolsStage();
     const auto gpuAPI = getGPUAPI();
@@ -210,7 +211,8 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStageModel3
 
         // Set perspective projection-view matrix
         glUniformMatrix4fv(_program.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(
-            forShadowmap ? internalState.mDirectSunlightProjection : internalState.mPerspectiveProjectionView));
+            shadowMode == MapRendererStage::ShadowMode::Build
+                ? internalState.mDirectSunlightProjection : internalState.mPerspectiveProjectionView));
         GL_CHECK_RESULT;
 
         // Scale the result

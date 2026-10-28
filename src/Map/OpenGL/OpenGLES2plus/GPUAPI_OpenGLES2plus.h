@@ -89,6 +89,8 @@ namespace OsmAnd
         bool initializeShadowmap(int resolution) override;
         bool attachShadowmap(int resolution) override;
         bool detachShadowmap() override;
+        GLuint getShadowmapDepthTexture() const override;
+        int getShadowmapResolution() const override;
         int checkElementVisibility(int queryIndex, float pointSize) override;
         bool elementIsVisible(int queryIndex) override;
         bool releaseShadowmap(bool gpuContextLost) override;
