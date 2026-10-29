@@ -160,6 +160,7 @@ namespace OsmAnd
                 struct {
                     // Common data
                     GLlocation mPerspectiveProjectionView;
+                    GLlocation mDirectSunlightProjection;
                     GLlocation resultScale;
                     GLlocation mGlobeRotation;
                     GLlocation targetInTilePosN;
@@ -227,6 +228,7 @@ namespace OsmAnd
                     GLlocation myLocationColor;
                     GLlocation myLocation;
                     GLlocation myDirection;
+                    GLlocation elevation_scale;
                     GLlocation hillshade;
                     GLlocation gridParameters;
                     GLlocation primaryGridColor;
@@ -234,6 +236,8 @@ namespace OsmAnd
                     GLlocation worldCameraPosition;
                     GLlocation mistConfiguration;
                     GLlocation mistColor;
+                    GLlocation shadowmap;
+                    GLlocation shadowmapParameters;
                     // Per-tile-per-layer data
                     struct FsPerTilePerLayerParameters
                     {
@@ -262,7 +266,7 @@ namespace OsmAnd
             const bool isHighDetail,
             const bool withElevation,
             const bool blendingEnabled,
-            const bool forShadowmap,
+            const ShadowMode shadowMode,
             const ZoomLevel zoomLevel);
         void configureElevationData(
             const std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU>& elevationDataResource,
@@ -290,7 +294,7 @@ namespace OsmAnd
             const int programFeatures,
             const int elevationDataSamplerIndex,
             GLname& lastUsedProgram,
-            const bool forShadowmap,
+            const ShadowMode shadowMode,
             const ZoomLevel zoomLevel);
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureLayerResource(
             const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,

@@ -95,13 +95,25 @@ namespace
 
             float inShadow()
             {
-                if (param_fs_shadowmapEnabled < 0.5 || v2f_shadowPosition.w <= 0.0)
+                if (param_fs_shadowmapEnabled < 0.5)
                     return 0.0;
 
-                highp vec3 p = v2f_shadowPosition.xyz / v2f_shadowPosition.w;
+                highp vec3 p = v2f_shadowPosition.xyz / max(v2f_shadowPosition.w, 1e-8);
                 p = p * 0.5 + 0.5;
-                if (any(lessThan(p, vec3(0.0))) || any(greaterThan(p, vec3(1.0))))
+                highp vec3 dx = dFdx(p);
+                highp vec3 dy = dFdy(p);
+                if (v2f_shadowPosition.w <= 0.0 || !all(greaterThanEqual(p, vec3(0.0))) ||
+                    !all(lessThanEqual(p, vec3(1.0))))
                     return 0.0;
+
+                highp vec3 plane = cross(dx, dy);
+                highp float scale = dot(dx.xy, dx.xy) + dot(dy.xy, dy.xy);
+                if (!(scale > 0.0 && abs(plane.z) > 1e-4 * scale))
+                    return SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, p);
+                highp vec2 gradient = -plane.xy / plane.z;
+                if (!all(lessThan(abs(gradient), vec2(1e20))))
+                    return SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, p);
+                highp float filterBias = param_fs_shadowmapTexelSize * (abs(gradient.x) + abs(gradient.y));
 
                 float shadow = 0.0;
                 for (int y = -1; y <= 1; y++)
@@ -109,7 +121,8 @@ namespace
                     for (int x = -1; x <= 1; x++)
                     {
                         highp vec2 offset = vec2(float(x), float(y)) * param_fs_shadowmapTexelSize;
-                        shadow += SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, vec3(p.xy + offset, p.z));
+                        highp float depth = p.z + dot(gradient, offset) - filterBias;
+                        shadow += SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, vec3(p.xy + offset, depth));
                     }
                 }
 
@@ -182,7 +195,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeSimpleProgram()
             {
                 vec3 n = normalize(v2f_pointNormal);
                 float d = dot(-param_fs_lightDirection, n);
-                d = ((d < 0.0 ? -(d * d) : mix(d * d, 0.0, inShadow())) + 1.0) * 0.5 + 0.1;
+                float shadowed = inShadow();
+                d = ((d < 0.0 ? -(d * d) : mix(d * d, 0.0, shadowed)) + 1.0) * 0.5 + 0.1;
                 vec3 color = v2f_pointColor.rgb * d;
                 FRAGMENT_COLOR_OUTPUT = vec4(clamp(color, 0.0, 1.0), param_fs_alpha);
             }
