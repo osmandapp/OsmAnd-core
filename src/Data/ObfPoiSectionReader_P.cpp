@@ -1578,8 +1578,15 @@ void OsmAnd::ObfPoiSectionReader_P::readPoiNameIndex(
         PointI position31;
         position31.x = dataBox.tileId.x << (31 - dataBox.zoom);
         position31.y = dataBox.tileId.y << (31 - dataBox.zoom);
-        if (bbox31 && !bbox31->contains(position31))
-            continue;
+        if (bbox31)
+        {
+            // Data box may be larger than bbox31 (e.g. a render tile), so check overlap, not the box corner
+            const auto dataBoxBBox31 = Utilities::tileBoundingBox31(dataBox.tileId, dataBox.zoom);
+            if (!bbox31->contains(dataBoxBBox31)
+                && !dataBoxBBox31.contains(*bbox31)
+                && !bbox31->intersects(dataBoxBBox31))
+                continue;
+        }
 
         uint32_t distance = 0;
         if (xy31)
