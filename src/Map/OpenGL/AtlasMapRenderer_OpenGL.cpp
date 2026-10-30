@@ -1018,25 +1018,21 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     {
         const auto backP = backN * (1.0 / cameraDistance);
         const auto backD = glm::dot(backN, backP);
-        double length;
-        auto rayD = camTL;
-        if (!rayIntersectPlane(backN, backP, rayD, camPos, length) || length < 0.0)
-        {
-            rayD = glm::normalize((camTL + camBL) / 2.0);
-            rayIntersectPlane(backN, backP, rayD, camPos, length);
-        }
-        const auto MTL = camPos + rayD * length;
-        rayD = camTR;
-        if (!rayIntersectPlane(backN, backP, rayD, camPos, length) || length < 0.0)
-        {
-            rayD = glm::normalize((camTR + camBR) / 2.0);
-            rayIntersectPlane(backN, backP, rayD, camPos, length);
-        }
-        const auto MTR = camPos + rayD * length;
-        rayIntersectPlane(backN, backP, camBL, camPos, length);
-        const auto MBL = camPos + camBL * length;
-        rayIntersectPlane(backN, backP, camBR, camPos, length);
-        const auto MBR = camPos + camBR * length;
+        double lengthL, lengthR;
+        const auto camML = glm::normalize(camTL + camBL);
+        const auto camMR = glm::normalize(camTR + camBR);
+        rayIntersectPlane(backN, backP, camML, camPos, lengthL);
+        rayIntersectPlane(backN, backP, camMR, camPos, lengthR);
+        const auto CTL = camPos + camML * lengthL;
+        const auto CTR = camPos + camMR * lengthR;
+        bool useMiddle = !rayIntersectPlane(backN, backP, camTL, camPos, lengthL) || lengthL < 0.0
+            || !rayIntersectPlane(backN, backP, camTR, camPos, lengthR) || lengthR < 0.0;
+        const auto MTL = useMiddle ? CTL : camPos + camTL * lengthL;
+        const auto MTR = useMiddle ? CTR : camPos + camTR * lengthR;
+        rayIntersectPlane(backN, backP, camBL, camPos, lengthL);
+        rayIntersectPlane(backN, backP, camBR, camPos, lengthR);
+        const auto MBL = camPos + camBL * lengthL;
+        const auto MBR = camPos + camBR * lengthR;
         auto minVectorX = glm::dvec2(0.0, 0.0);
         auto maxVectorX = minVectorX;
         auto minCoordY = std::numeric_limits<double>::infinity();
@@ -1065,19 +1061,31 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         else if (withFBL && withFBR)
         {
             planeIntersectsSphere(bottomN, bottomD, minVectorX, maxVectorX, minCoordY, maxCoordY, &FBL, &FBR);
-            auto& p = FBR;
+            auto p = FBR;
             if (rayIntersectsSphere(MTR, -BRTR, 1.0, VTR, true))
             {
                 planeIntersectsSphere(rightN, rightD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTR);
                 p = VTR;
             }
-            if (rayIntersectsSphere(MTR, TRTL, 1.0, HTR, true))
+            if (!useMiddle && rayIntersectsSphere(MTR, TRTL, 1.0, HTR, true))
             {
                 planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
                 p = HTR;
                 if (rayIntersectsSphere(MTL, -TRTL, 1.0, HTL, true))
                 {
                     planeIntersectsSphere(topN, topD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTL);
+                    p = HTL;
+                }
+            }
+            else if (!rayIntersectsSphere(camPos, camML, 1.0, FTL)
+                && !rayIntersectsSphere(camPos, camMR, 1.0, FTR)
+                && rayIntersectsSphere(CTR, TRTL, 1.0, HTR, true))
+            {
+                planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
+                p = HTR;
+                if (rayIntersectsSphere(CTL, -TRTL, 1.0, HTL, true))
+                {
+                    planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTL);
                     p = HTL;
                 }
             }
@@ -1098,9 +1106,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 if (isPointVisible(glm::dvec3(0.0),
                     topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, true, true, false, true))
                 {
-                    auto& p = HBR;
+                    auto p = HBR;
+                    int i = 0;
                     if (rayIntersectsSphere(MBR, BRTR, 1.0, VBR, true))
                     {
+                        i++;
                         planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VBR);
                         p = VBR;
                         if (rayIntersectsSphere(MTR, -BRTR, 1.0, VTR, true))
@@ -1110,8 +1120,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                             p = VTR;
                         }
                     }
-                    if (rayIntersectsSphere(MTR, TRTL, 1.0, HTR, true))
+                    if (!useMiddle && rayIntersectsSphere(MTR, TRTL, 1.0, HTR, true))
                     {
+                        i += 3;
                         planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
                         p = HTR;
                         if (rayIntersectsSphere(MTL, -TRTL, 1.0, HTL, true))
@@ -1120,8 +1131,23 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                             p = HTL;
                         }
                     }
+                    else if (!rayIntersectsSphere(camPos, camML, 1.0, FTL)
+                        && !rayIntersectsSphere(camPos, camMR, 1.0, FTR)
+                        && rayIntersectsSphere(CTR, TRTL, 1.0, HTR, true))
+                    {
+                        i += 3;
+                        planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
+                        p = HTR;
+                        if (rayIntersectsSphere(CTL, -TRTL, 1.0, HTL, true))
+                        {
+                            planeIntersectsSphere(
+                                backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTL);
+                            p = HTL;
+                        }
+                    }
                     if (rayIntersectsSphere(MTL, TLBL, 1.0, VTL, true))
                     {
+                        i += 2;
                         planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTL);
                         p = VTL;
                         if (rayIntersectsSphere(MBL, -TLBL, 1.0, VBL, true))
@@ -1131,18 +1157,56 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                             p = VBL;
                         }
                     }
+                    if (i < 3)
+                    {
+                        if ((i == 0 || i == 2) && rayIntersectsSphere(CTR, TRTL, 1.0, HTR, true))
+                        {
+                            planeIntersectsSphere(
+                                backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
+                            p = HTR;
+                        }
+                        if ((i == 0 || i == 1) && rayIntersectsSphere(CTL, -TRTL, 1.0, HTL, true))
+                        {
+                            planeIntersectsSphere(
+                                backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTL);
+                            p = HTL;
+                        }
+                    }
                     planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HBL);
                 }
                 else
                 {
-                    planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &HBR, &HBL);
+                    auto p = HBR;
+                    if (!useMiddle && rayIntersectsSphere(MTR, TRTL, 1.0, HTR, true))
+                    {
+                        planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
+                        p = HTR;
+                        if (rayIntersectsSphere(MTL, -TRTL, 1.0, HTL, true))
+                        {
+                            planeIntersectsSphere(topN, topD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTL);
+                            p = HTL;
+                        }
+                    }
+                    planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HBL);
                     checkExtra = true;
                 }
             }
             else if (rayIntersectsSphere(MBR, BRTR, 1.0, VBR, true) && rayIntersectsSphere(MTR, -BRTR, 1.0, VTR, true))
             {
                 planeIntersectsSphere(rightN, rightD, minVectorX, maxVectorX, minCoordY, maxCoordY, &VBR, &VTR);
-                auto& p = VTR;
+                auto p = VTR;
+                if (!rayIntersectsSphere(camPos, camML, 1.0, FTL)
+                    && !rayIntersectsSphere(camPos, camMR, 1.0, FTR)
+                    && rayIntersectsSphere(CTR, TRTL, 1.0, HTR, true))
+                {
+                    planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
+                    p = HTR;
+                    if (rayIntersectsSphere(CTL, -TRTL, 1.0, HTL, true))
+                    {
+                        planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTL);
+                        p = HTL;
+                    }
+                }
                 if (rayIntersectsSphere(MTL, TLBL, 1.0, VTL, true))
                 {
                     planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTL);
@@ -1158,7 +1222,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
             else if (rayIntersectsSphere(MTL, TLBL, 1.0, VTL, true) && rayIntersectsSphere(MBL, -TLBL, 1.0, VBL, true))
             {
                 planeIntersectsSphere(leftN, leftD, minVectorX, maxVectorX, minCoordY, maxCoordY, &VTL, &VBL);
-                auto& p = VBL;
+                auto p = VBL;
                 if (rayIntersectsSphere(MBR, BRTR, 1.0, VBR, true))
                 {
                     planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VBR);
@@ -1167,6 +1231,18 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     {
                         planeIntersectsSphere(rightN, rightD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTR);
                         p = VTR;
+                    }
+                }
+                if (!rayIntersectsSphere(camPos, camML, 1.0, FTL)
+                    && !rayIntersectsSphere(camPos, camMR, 1.0, FTR)
+                    && rayIntersectsSphere(CTR, TRTL, 1.0, HTR, true))
+                {
+                    planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
+                    p = HTR;
+                    if (rayIntersectsSphere(CTL, -TRTL, 1.0, HTL, true))
+                    {
+                        planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTL);
+                        p = HTL;
                     }
                 }
                 planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTL);
@@ -2135,8 +2211,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         else
             centralVisiblePoint = internalState->mGlobeRotationPrecise * radialVector * (globeRadius + midElevation)
                 - glm::dvec3(0.0, globeRadius, 0.0);
+        const glm::vec3 center(0.0f, midElevation, 0.0f);
+        visibleRadius -= glm::distance(centralVisiblePoint, center);
         const auto lightView =
-            glm::lookAt(glm::vec3(0.0f), lightDirection, lightUp) * glm::translate(-centralVisiblePoint);
+            glm::lookAt(glm::vec3(0.0f), lightDirection, lightUp) * glm::translate(-center);
         const auto pixelMargin = internalState->sizeOfPixelInWorld
             * internalState->distanceFromCameraToTarget / _zNear;
         const auto lightRadius =
