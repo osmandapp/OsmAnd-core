@@ -1957,6 +1957,14 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
                 hasLocalizedName = true;
             }
+            else if (!hasNativeName && !hasLocalizedName && hasEnglishName)
+            {
+                // Use English name as localized in case both native and localized are missing
+                localizedNameRuleId = attributeMapping->enNameAttributeId;
+                citLocalizedName = citEnglishName;
+                localizedNameOrder = captionsOrder.indexOf(localizedNameRuleId);
+                hasLocalizedName = true;
+            }
             break;
         }
 
@@ -1988,6 +1996,14 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
                 hasLocalizedName = true;
             }
+            else if (!hasLocalizedName && !hasNativeName && hasEnglishName)
+            {
+                // Use English name as localized in case both localized and native are missing
+                localizedNameRuleId = attributeMapping->enNameAttributeId;
+                citLocalizedName = citEnglishName;
+                localizedNameOrder = captionsOrder.indexOf(localizedNameRuleId);
+                hasLocalizedName = true;
+            }
             break;
         }
 
@@ -2003,7 +2019,15 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
                 hasLocalizedName = true;
             }
-            
+            else if (!hasLocalizedName && !hasNativeName && hasEnglishName)
+            {
+                // If there's no native name either, use English name (if exists)
+                localizedNameRuleId = attributeMapping->enNameAttributeId;
+                citLocalizedName = citEnglishName;
+                localizedNameOrder = captionsOrder.indexOf(localizedNameRuleId);
+                hasLocalizedName = true;
+            }
+
             // Only one should be shown, thus remove native if localized exist
             if (hasLocalizedName && hasNativeName)
             {
