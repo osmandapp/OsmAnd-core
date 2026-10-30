@@ -1842,6 +1842,18 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     const auto citLocalizedNameRuleId = attributeMapping->localizedNameAttributes.constFind(&localeLanguageId);
     if (citLocalizedNameRuleId != attributeMapping->localizedNameAttributes.cend())
         localizedNameRuleId = *citLocalizedNameRuleId;
+
+    // In transliterating modes, use English name as localized if both native and localized names are missing
+    const auto languagePreference = env->getLanguagePreference();
+    if ((languagePreference == MapPresentationEnvironment::LanguagePreference::NativeAndLocalizedOrTransliterated ||
+        languagePreference == MapPresentationEnvironment::LanguagePreference::LocalizedOrTransliteratedAndNative ||
+        languagePreference == MapPresentationEnvironment::LanguagePreference::LocalizedOrTransliterated) &&
+        !captions.contains(localizedNameRuleId) &&
+        !captions.contains(attributeMapping->nativeNameAttributeId) &&
+        captions.contains(attributeMapping->enNameAttributeId))
+    {
+        localizedNameRuleId = attributeMapping->enNameAttributeId;
+    }
     
     // sort captionsOrder by textOrder property
     QHash<uint32_t, int> textOrderMap;
@@ -1957,14 +1969,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
                 hasLocalizedName = true;
             }
-            else if (!hasNativeName && !hasLocalizedName && hasEnglishName)
-            {
-                // Use English name as localized in case both native and localized are missing
-                localizedNameRuleId = attributeMapping->enNameAttributeId;
-                citLocalizedName = citEnglishName;
-                localizedNameOrder = captionsOrder.indexOf(localizedNameRuleId);
-                hasLocalizedName = true;
-            }
             break;
         }
 
@@ -1996,14 +2000,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
                 hasLocalizedName = true;
             }
-            else if (!hasLocalizedName && !hasNativeName && hasEnglishName)
-            {
-                // Use English name as localized in case both localized and native are missing
-                localizedNameRuleId = attributeMapping->enNameAttributeId;
-                citLocalizedName = citEnglishName;
-                localizedNameOrder = captionsOrder.indexOf(localizedNameRuleId);
-                hasLocalizedName = true;
-            }
             break;
         }
 
@@ -2019,15 +2015,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
                 hasLocalizedName = true;
             }
-            else if (!hasLocalizedName && !hasNativeName && hasEnglishName)
-            {
-                // If there's no native name either, use English name (if exists)
-                localizedNameRuleId = attributeMapping->enNameAttributeId;
-                citLocalizedName = citEnglishName;
-                localizedNameOrder = captionsOrder.indexOf(localizedNameRuleId);
-                hasLocalizedName = true;
-            }
-
+            
             // Only one should be shown, thus remove native if localized exist
             if (hasLocalizedName && hasNativeName)
             {
