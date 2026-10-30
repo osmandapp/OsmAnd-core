@@ -30,12 +30,32 @@ bool OsmAnd::GPUAPI::initialize()
     return true;
 }
 
+bool OsmAnd::GPUAPI::initializeShadowmap(int resolution)
+{
+    return true;
+}
+
+bool OsmAnd::GPUAPI::attachShadowmap(int resolution)
+{
+    return true;
+}
+
+bool OsmAnd::GPUAPI::detachShadowmap()
+{
+    return true;
+}
+
 int OsmAnd::GPUAPI::checkElementVisibility(int queryIndex, float pointSize)
 {
     return 0;
 }
 
 bool OsmAnd::GPUAPI::elementIsVisible(int queryIndex)
+{
+    return true;
+}
+
+bool OsmAnd::GPUAPI::releaseShadowmap(bool gpuContextLost)
 {
     return true;
 }

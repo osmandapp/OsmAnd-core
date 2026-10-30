@@ -228,7 +228,7 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
 }
 
 OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSkyStage_OpenGL::render(
-    IMapRenderer_Metrics::Metric_renderFrame* const metric_)
+    IMapRenderer_Metrics::Metric_renderFrame* const metric_, ShadowMode shadowMode /* = ShadowMode::None */)
 {
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 

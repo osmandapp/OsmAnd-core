@@ -29,6 +29,7 @@ namespace
             INPUT vec2 in_vs_heights;
             
             %ColorInOutDeclaration%
+            %ShadowVertexDeclaration%
             
             uniform mat4 param_vs_mPerspectiveProjectionView;
             uniform vec4 param_vs_resultScale;
@@ -69,9 +70,63 @@ namespace
                 vec3 worldPos = vec3(offsetFromTarget.x, elevation, offsetFromTarget.y);
 
                 %ColorCalculation%
+                %ShadowVertexCalculation%
                 
                 vec4 v = param_vs_mPerspectiveProjectionView * vec4(worldPos, 1.0);
                 gl_Position = v * param_vs_resultScale;
+            }
+        )");
+
+    const QString shadowVertexDeclaration = QString(R"(
+            uniform mat4 param_vs_mDirectSunlightProjection;
+            PARAM_OUTPUT highp vec4 v2f_shadowPosition;
+        )");
+
+    const QString shadowVertexCalculation = QString(R"(
+                v2f_shadowPosition = param_vs_mDirectSunlightProjection * vec4(worldPos, 1.0);
+                v2f_shadowPosition.y *= param_vs_resultScale.y;
+        )");
+
+    const QString shadowFragmentShader = QString(R"(
+            PARAM_INPUT highp vec4 v2f_shadowPosition;
+            uniform highp sampler2DShadow param_fs_shadowmap;
+            uniform float param_fs_shadowmapEnabled;
+            uniform highp float param_fs_shadowmapTexelSize;
+
+            float inShadow()
+            {
+                if (param_fs_shadowmapEnabled < 0.5)
+                    return 0.0;
+
+                highp vec3 p = v2f_shadowPosition.xyz / max(v2f_shadowPosition.w, 1e-8);
+                p = p * 0.5 + 0.5;
+                highp vec3 dx = dFdx(p);
+                highp vec3 dy = dFdy(p);
+                if (v2f_shadowPosition.w <= 0.0 || !all(greaterThanEqual(p, vec3(0.0))) ||
+                    !all(lessThanEqual(p, vec3(1.0))))
+                    return 0.0;
+
+                highp vec3 plane = cross(dx, dy);
+                highp float scale = dot(dx.xy, dx.xy) + dot(dy.xy, dy.xy);
+                if (!(scale > 0.0 && abs(plane.z) > 1e-4 * scale))
+                    return SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, p);
+                highp vec2 gradient = -plane.xy / plane.z;
+                if (!all(lessThan(abs(gradient), vec2(1e20))))
+                    return SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, p);
+                highp float filterBias = param_fs_shadowmapTexelSize * (abs(gradient.x) + abs(gradient.y));
+
+                float shadow = 0.0;
+                for (int y = -1; y <= 1; y++)
+                {
+                    for (int x = -1; x <= 1; x++)
+                    {
+                        highp vec2 offset = vec2(float(x), float(y)) * param_fs_shadowmapTexelSize;
+                        highp float depth = p.z + dot(gradient, offset) - filterBias;
+                        shadow += SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, vec3(p.xy + offset, depth));
+                    }
+                }
+
+                return shadow / 9.0;
             }
         )");
 }
@@ -125,23 +180,28 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeSimpleProgram()
         auto vertexShader = vertexShaderBase;
         vertexShader.replace("%ColorInOutDeclaration%", colorInOutDeclaration);
         vertexShader.replace("%ColorCalculation%", colorCalculation);
+        vertexShader.replace("%ShadowVertexDeclaration%", shadowVertexDeclaration);
+        vertexShader.replace("%ShadowVertexCalculation%", shadowVertexCalculation);
 
-        const QString fragmentShader = R"(
+        auto fragmentShader = QString(R"(
             PARAM_INPUT highp vec3 v2f_pointNormal;
             PARAM_INPUT highp vec4 v2f_pointColor;
             
             uniform float param_fs_alpha;
             uniform vec3 param_fs_lightDirection;
+            %ShadowFragmentShader%
             
             void main()
             {
                 vec3 n = normalize(v2f_pointNormal);
                 float d = dot(-param_fs_lightDirection, n);
-                d = ((d < 0.0 ? -(d * d) : d * d) + 1.0) * 0.5 + 0.1;
+                float shadowed = inShadow();
+                d = ((d < 0.0 ? -(d * d) : mix(d * d, 0.0, shadowed)) + 1.0) * 0.5 + 0.1;
                 vec3 color = v2f_pointColor.rgb * d;
                 FRAGMENT_COLOR_OUTPUT = vec4(clamp(color, 0.0, 1.0), param_fs_alpha);
             }
-        )";
+        )");
+        fragmentShader.replace("%ShadowFragmentShader%", shadowFragmentShader);
 
         auto preprocessedVertexShader = vertexShader;
         gpuAPI->preprocessVertexShader(preprocessedVertexShader);
@@ -207,6 +267,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeSimpleProgram()
     ok = ok && lookup->lookupLocation(_program.vs.in.normal, "in_vs_normal", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.in.color, "in_vs_color", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.mDirectSunlightProjection, "param_vs_mDirectSunlightProjection", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.zoomLevel, "param_vs_zoomLevel", GlslVariableType::Uniform);
@@ -214,6 +275,9 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeSimpleProgram()
     ok = ok && lookup->lookupLocation(_program.vs.param.zScaleFactor, "param_vs_zScaleFactor", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.alpha, "param_fs_alpha", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.lightDirection, "param_fs_lightDirection", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.fs.param.shadowmap, "param_fs_shadowmap", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.fs.param.shadowmapEnabled, "param_fs_shadowmapEnabled", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.fs.param.shadowmapTexelSize, "param_fs_shadowmapTexelSize", GlslVariableType::Uniform);
 
     if (!ok)
     {
@@ -293,8 +357,10 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
         auto vertexShader = vertexShaderBase;
         vertexShader.replace("%ColorInOutDeclaration%", colorInOutDeclaration);
         vertexShader.replace("%ColorCalculation%", colorCalculation);
+        vertexShader.replace("%ShadowVertexDeclaration%", shadowVertexDeclaration);
+        vertexShader.replace("%ShadowVertexCalculation%", shadowVertexCalculation);
 
-        const QString fragmentShader = R"(
+        auto fragmentShader = QString(R"(
             PARAM_INPUT highp vec3 v2f_pointPosition;
             PARAM_INPUT highp vec3 v2f_pointNormal;
             PARAM_INPUT highp vec4 v2f_pointColor;
@@ -305,11 +371,13 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
             uniform float param_fs_fadeHeight;
             uniform vec3 param_fs_cameraPosition;
             uniform vec3 param_fs_lightDirection;
+            %ShadowFragmentShader%
             
             void main()
             {
                 vec3 v = normalize(param_fs_cameraPosition - v2f_pointPosition);
                 vec3 n = normalize(v2f_pointNormal);
+                float shadowed = inShadow();
                 bool top = abs(n.y) > 0.0;
                 float a = atan(n.x, n.z);
                 vec2 p = abs(v2f_sizes.zw) + 10.0;
@@ -321,15 +389,16 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
                 float qa = floor(a * 2.0) * 0.5;
                 vec2 s = top ? vec2(0.0, 0.0) : vec2(sin(qa), cos(qa)) + v2f_pointColor.a;
                 float d = dot(-param_fs_lightDirection, n);
-                d = ((d < 0.0 ? -(d * d) : d * d) + 1.0) * 0.5 + 0.1;
+                d = ((d < 0.0 ? -(d * d) : mix(d * d, 0.0, shadowed)) + 1.0) * 0.5 + 0.1;
                 d *= !top && v2f_sizes.z > 0.0 ? fract(sin(dot(s, vec2(12.9898, 78.233))) * 43758.5453) * 0.14 + 0.93 : 1.0;
                 d /= 1.0 + exp(-v2f_height * 0.05) * 0.2;
                 d *= 1.0 + pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 3.0) * 0.2;
-                vec3 color = mix(v2f_pointColor.rgb * d, vec3(1.0), h);
+                vec3 color = mix(v2f_pointColor.rgb * d, vec3(1.0), mix(h, 0.0, shadowed));
                 float alpha = param_fs_alpha * min(param_fs_fadeHeight / v2f_height, 1.0);
                 FRAGMENT_COLOR_OUTPUT = vec4(clamp(color, 0.0, 1.0), alpha);
             }
-        )";
+        )");
+        fragmentShader.replace("%ShadowFragmentShader%", shadowFragmentShader);
 
         auto preprocessedVertexShader = vertexShader;
         gpuAPI->preprocessVertexShader(preprocessedVertexShader);
@@ -396,6 +465,7 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
     ok = ok && lookup->lookupLocation(_colorProgram.vs.in.color, "in_vs_color", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_colorProgram.vs.in.sizes, "in_vs_sizes", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_colorProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_colorProgram.vs.param.mDirectSunlightProjection, "param_vs_mDirectSunlightProjection", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_colorProgram.vs.param.resultScale, "param_vs_resultScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_colorProgram.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_colorProgram.vs.param.zoomLevel, "param_vs_zoomLevel", GlslVariableType::Uniform);
@@ -405,6 +475,9 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
     ok = ok && lookup->lookupLocation(_colorProgram.fs.param.fadeHeight, "param_fs_fadeHeight", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_colorProgram.fs.param.cameraPosition, "param_fs_cameraPosition", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_colorProgram.fs.param.lightDirection, "param_fs_lightDirection", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_colorProgram.fs.param.shadowmap, "param_fs_shadowmap", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_colorProgram.fs.param.shadowmapEnabled, "param_fs_shadowmapEnabled", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_colorProgram.fs.param.shadowmapTexelSize, "param_fs_shadowmapTexelSize", GlslVariableType::Uniform);
 
     if (!ok)
     {
@@ -462,6 +535,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeDepthProgram()
         auto vertexShader = vertexShaderBase;
         vertexShader.replace("%ColorInOutDeclaration%", "");
         vertexShader.replace("%ColorCalculation%", "");
+        vertexShader.replace("%ShadowVertexDeclaration%", "");
+        vertexShader.replace("%ShadowVertexCalculation%", "");
 
         const QString fragmentShader = R"(
             void main()
@@ -873,15 +948,15 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::getResourcesInGPU(
     }
 }
 
-MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDepth(bool primaryOnly)
+void AtlasMapRendererMap3DObjectsStage_OpenGL::renderDepth(bool primaryOnly, bool forShadowmap)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
 
     glUseProgram(_depthProgram.id);
     GL_CHECK_RESULT;
-    glUniformMatrix4fv(*_depthProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE,
-        glm::value_ptr(internalState.mPerspectiveProjectionView));
+    glUniformMatrix4fv(*_depthProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(
+        forShadowmap ? internalState.mDirectSunlightProjection : internalState.mPerspectiveProjectionView));
     GL_CHECK_RESULT;
     glUniform4f(*_depthProgram.vs.param.resultScale, 1.0f, currentState.flip ? -1.0f : 1.0f, 1.0f, 1.0f);
     GL_CHECK_RESULT;
@@ -939,11 +1014,39 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderDe
         }
     }
     gpuAPI->unuseVAO();
-
-    return StageResult::Success;
 }
 
-MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderSimple(bool primaryOnly)
+void AtlasMapRendererMap3DObjectsStage_OpenGL::configureShadowmap(
+    const Model3DProgram& program, ShadowMode shadowMode)
+{
+    const auto gpuAPI = getGPUAPI();
+    const auto texture = gpuAPI->getShadowmapDepthTexture();
+    const auto resolution = gpuAPI->getShadowmapResolution();
+    const bool enabled = shadowMode == ShadowMode::Use
+        && currentState.castSunShadows && texture != 0 && resolution > 0;
+    const auto projection = enabled ? getInternalState().mDirectSunlightProjection : glm::mat4(1.0f);
+
+    glUniformMatrix4fv(program.vs.param.mDirectSunlightProjection, 1, GL_FALSE, glm::value_ptr(projection));
+    GL_CHECK_RESULT;
+    glUniform1i(program.fs.param.shadowmap, 0);
+    GL_CHECK_RESULT;
+    glUniform1f(program.fs.param.shadowmapEnabled, enabled ? 1.0f : 0.0f);
+    GL_CHECK_RESULT;
+    glUniform1f(program.fs.param.shadowmapTexelSize, enabled ? 1.0f / resolution : 1.0f);
+    GL_CHECK_RESULT;
+
+    glActiveTexture(GL_TEXTURE0);
+    GL_CHECK_RESULT;
+    glBindTexture(GL_TEXTURE_2D, enabled ? texture : 0);
+    GL_CHECK_RESULT;
+    if (enabled)
+    {
+        gpuAPI->setTextureBlockSampler(GL_TEXTURE0, GPUAPI_OpenGL::SamplerType::DepthBuffer);
+        gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0);
+    }
+}
+
+void AtlasMapRendererMap3DObjectsStage_OpenGL::renderSimple(bool primaryOnly, ShadowMode shadowMode)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -976,6 +1079,8 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderSi
         -qSin(zenith),
         qCos(azimuth) * cosZenith);
     GL_CHECK_RESULT;
+
+    configureShadowmap(_program, shadowMode);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
@@ -1031,12 +1136,10 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderSi
         }
     }
     gpuAPI->unuseVAO();
-
-    return StageResult::Success;
 }
 
-MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderColor(
-    bool primaryOnly, int64_t currentTime)
+void AtlasMapRendererMap3DObjectsStage_OpenGL::renderColor(
+    bool primaryOnly, int64_t currentTime, ShadowMode shadowMode)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -1074,6 +1177,8 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
         -qSin(zenith),
         qCos(azimuth) * cosZenith);
     GL_CHECK_RESULT;
+
+    configureShadowmap(_colorProgram, shadowMode);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
@@ -1137,14 +1242,13 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::renderCo
         }
     }
     gpuAPI->unuseVAO();
-
-    return StageResult::Success;
 }
 
 MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
-    IMapRenderer_Metrics::Metric_renderFrame* const metric)
+    IMapRenderer_Metrics::Metric_renderFrame* const metric, ShadowMode shadowMode /* = ShadowMode::None */)
 {
     bool ok = true;
+    const bool forShadowmap = shadowMode == ShadowMode::Build;
 
     if (_init3DObjectsType != Init3DObjectsType::Complete)
     {
@@ -1206,10 +1310,11 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     if (shouldInvalidateFrame)
         invalidateFrame();
 
-    const bool needsDepthPrepass = buildingsAlpha > 0.0 && buildingsAlpha < 1.0f;
+    const bool needsDepthPrepass = forShadowmap || (buildingsAlpha > 0.0 && buildingsAlpha < 1.0f);
 
     // Only draw where the stencil value is NOT 1 to make certain important symbols could be clearly seen through
-    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    if (!forShadowmap)
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
 
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
@@ -1220,8 +1325,6 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     glCullFace(currentState.flip ? GL_BACK : GL_FRONT);
     GL_CHECK_RESULT;
 
-    StageResult depthPrepassResult = StageResult::Success;
-
     if (needsDepthPrepass)
     {
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -1230,7 +1333,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
         glDisable(GL_BLEND);
         GL_CHECK_RESULT;
 
-        depthPrepassResult = renderDepth(true);
+        renderDepth(true, forShadowmap);
 
         glEnable(GL_BLEND);
         GL_CHECK_RESULT;
@@ -1242,7 +1345,10 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     GL_CHECK_RESULT;
 
-    auto colorPassResult = highDetalizationLevel ? renderColor(true, currentTime) : renderSimple(true);
+    if (!forShadowmap && highDetalizationLevel)
+        renderColor(true, currentTime, shadowMode);
+    else if (!forShadowmap)
+        renderSimple(true, shadowMode);
 
     if (needsDepthPrepass)
     {
@@ -1250,9 +1356,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
         GL_CHECK_RESULT;
     }
 
-    bool failed = depthPrepassResult == StageResult::Fail || colorPassResult == StageResult::Fail;
-
-    if (needsDepthPrepass && !failed)
+    if (needsDepthPrepass)
     {
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
         GL_CHECK_RESULT;
@@ -1260,7 +1364,7 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
         glDisable(GL_BLEND);
         GL_CHECK_RESULT;
 
-        depthPrepassResult = renderDepth(false);
+        renderDepth(false, forShadowmap);
 
         glEnable(GL_BLEND);
         GL_CHECK_RESULT;
@@ -1272,8 +1376,10 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     GL_CHECK_RESULT;
 
-    if (!failed)
-        colorPassResult = highDetalizationLevel ? renderColor(false, currentTime) : renderSimple(false);
+    if (!forShadowmap && highDetalizationLevel)
+        renderColor(false, currentTime, shadowMode);
+    else if (!forShadowmap)
+        renderSimple(false, shadowMode);
 
     if (needsDepthPrepass)
     {
@@ -1284,18 +1390,17 @@ MapRendererStage::StageResult AtlasMapRendererMap3DObjectsStage_OpenGL::render(
     glDisable(GL_CULL_FACE);
     GL_CHECK_RESULT;
 
+    if (!forShadowmap)
+    {
+        glActiveTexture(GL_TEXTURE0);
+        GL_CHECK_RESULT;
+        glBindTexture(GL_TEXTURE_2D, 0);
+        GL_CHECK_RESULT;
+    }
+
     // Disable testing stencil buffer
-    glStencilFunc(GL_ALWAYS, 0, 0xFF);
-
-    if (depthPrepassResult == StageResult::Fail || colorPassResult == StageResult::Fail)
-    {
-        return StageResult::Fail;
-    }
-
-    if (depthPrepassResult == StageResult::Wait || colorPassResult == StageResult::Wait)
-    {
-        return StageResult::Wait;
-    }
+    if (!forShadowmap)
+        glStencilFunc(GL_ALWAYS, 0, 0xFF);
 
     return StageResult::Success;
 }

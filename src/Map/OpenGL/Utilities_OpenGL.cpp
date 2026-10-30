@@ -257,11 +257,17 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
     glm::dvec3 minX, maxX, minY, maxY;
     if (qFuzzyIsNull(planeN.x) && qFuzzyIsNull(planeN.y))
     {
-        minVectorX = maxVectorX = glm::dvec2(0.0, -1.0);
         const auto mY = planeN.z > 0.0 ? planeD : -planeD;
-        minCoordY = qMin(minCoordY, mY);
-        maxCoordY = qMax(maxCoordY, mY);
-        return true;
+        if (point1 == nullptr || point2 == nullptr || pD == 1.0)
+        {
+            minVectorX = maxVectorX = glm::dvec2(0.0, -1.0);
+            minCoordY = qMin(minCoordY, mY);
+            maxCoordY = qMax(maxCoordY, mY);
+            return true;
+        }
+        sectX = false;
+        r = qSqrt(1.0 - pD * pD);
+        minY = maxY = glm::dvec3(0.0, 0.0, mY);
     }
     else if (qFuzzyIsNull(planeN.z))
     {
@@ -296,8 +302,7 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
             const auto deltaAngle = qAtan(r / scmb);
             const auto a1 = angleXY - deltaAngle;
             const auto a2 = angleXY + deltaAngle;
-            const auto absZ = qSqrt(1.0 - scmb * qSqrt(sr - sb + sc) / c);
-            const auto z = pN.z > 0 ? absZ : -absZ;
+            const auto z = pN.z / pD;
             const auto csy = qCos(-qAsin(qBound(-1.0, z, 1.0)));
             minX = glm::dvec3(csy * qSin(a1), csy * qCos(a1), z);
             maxX = glm::dvec3(csy * qSin(a2), csy * qCos(a2), z);

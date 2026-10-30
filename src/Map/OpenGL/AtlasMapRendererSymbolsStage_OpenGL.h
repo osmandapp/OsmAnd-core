@@ -194,7 +194,8 @@ namespace OsmAnd
 
         bool renderOnSurfaceSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-            AlphaChannelType &currentAlphaChannelType);
+            AlphaChannelType &currentAlphaChannelType,
+            bool forShadowmap);
 
         GLname _onSurfaceRasterSymbolVAO;
         GLname _onSurfaceRasterSymbolVBO;
@@ -294,7 +295,8 @@ namespace OsmAnd
         bool initializeOnSurfaceVector();
         bool renderOnSurfaceVectorSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-            AlphaChannelType &currentAlphaChannelType);
+            AlphaChannelType &currentAlphaChannelType,
+            bool forShadowmap);
         bool releaseOnSurfaceVector(bool gpuContextLost);
 
         // Terrain-related:
@@ -360,24 +362,22 @@ namespace OsmAnd
             const double tileSize,
             const int elevationDataSamplerIndex);
         void reportCommonParameters(QJsonObject& jsonObject, const RenderableSymbol& renderableSymbol);
-
-        void prepareSymbolsDrawing();
-        void endSymbolsDrawing(OsmAnd::GPUAPI_OpenGL* api);
     public:
         explicit AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer);
         ~AtlasMapRendererSymbolsStage_OpenGL() override;
 
         bool initialize() override;
-        bool preRender(QList< std::shared_ptr<const RenderableSymbol> >& preRenderableSymbols,
+        bool preRender(bool shadowmap, QList< std::shared_ptr<const RenderableSymbol> >& preRenderableSymbols,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) override;
-        bool preRenderWithVolume(
+        bool preRenderWithVolume(bool shadowmap,
             QList< std::shared_ptr<const RenderableSymbol> >& denseSymbolsBeforeBuildings,
             QList< std::shared_ptr<const RenderableSymbol> >& denseSymbolsAfterBuildings,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) override;
-        MapRendererStage::StageResult render(IMapRenderer_Metrics::Metric_renderFrame* metric) override;
+        bool renderSymbols(
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) override;
+        MapRendererStage::StageResult render(
+            IMapRenderer_Metrics::Metric_renderFrame* metric, ShadowMode shadowMode = ShadowMode::None) override;
         bool release(bool gpuContextLost) override;
-
-        void drawDebugMetricSymbol(IMapRenderer_Metrics::Metric_renderFrame* metric_) override;
 
     friend class AtlasMapRendererSymbolsStageModel3D_OpenGL;
     };

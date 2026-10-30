@@ -35,6 +35,13 @@ namespace OsmAnd
             Success
         };
 
+        enum class ShadowMode : int
+        {
+            None,
+            Build,
+            Use
+        };
+
         MapRenderer* const renderer;
 
         const MapRendererResourcesManager& getResources() const;
@@ -47,9 +54,11 @@ namespace OsmAnd
         const std::shared_ptr<const MapRendererDebugSettings>& debugSettings;
         QReadWriteLock& publishedMapSymbolsByOrderLock;
         const MapRenderer::PublishedMapSymbolsByOrder& publishedMapSymbolsByOrder;
+        const MapRenderer::PublishedMapSymbolsByOrder frameMapSymbolsByOrder;
 
         virtual bool initialize() = 0;
-        virtual StageResult render(IMapRenderer_Metrics::Metric_renderFrame* const metric) = 0;
+        virtual StageResult render(
+            IMapRenderer_Metrics::Metric_renderFrame* const metric, ShadowMode shadowMode = ShadowMode::None) = 0;
         virtual bool release(bool gpuContextLost) = 0;
     };
 }

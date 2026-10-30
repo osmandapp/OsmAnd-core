@@ -205,7 +205,8 @@ namespace OsmAnd
         virtual ~AtlasMapRendererDebugStage_OpenGL();
 
         virtual bool initialize();
-        virtual MapRendererStage::StageResult render(IMapRenderer_Metrics::Metric_renderFrame* const metric);
+        virtual MapRendererStage::StageResult render(
+            IMapRenderer_Metrics::Metric_renderFrame* const metric, ShadowMode shadowMode = ShadowMode::None);
         virtual bool release(bool gpuContextLost);
     };
 }

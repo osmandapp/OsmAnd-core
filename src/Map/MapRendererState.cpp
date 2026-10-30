@@ -5,6 +5,7 @@ OsmAnd::MapRendererState::MapRendererState()
     : isChanged(true)
     , flip(false)
     , flatEarth(true)
+    , castSunShadows(false)
     , fieldOfView(16.5f)
     , visibleDistance(3500.0f)
     , detailedDistance(0.5f)
@@ -57,6 +58,7 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     mapState.viewport = viewport;
     mapState.flip = flip;
     mapState.flatEarth = flatEarth;
+    mapState.castSunShadows = castSunShadows;
     mapState.fieldOfView = fieldOfView;
     mapState.visibleDistance = visibleDistance;
     mapState.detailedDistance = detailedDistance;

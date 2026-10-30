@@ -517,13 +517,142 @@ bool OsmAnd::GPUAPI_OpenGLES2plus::initialize()
         GL_CHECK_RESULT;
         glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
-        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         GL_CHECK_RESULT;
-        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_FUNC, GL_GEQUAL);
         GL_CHECK_RESULT;
     }
 
     return true;
+}
+
+bool OsmAnd::GPUAPI_OpenGLES2plus::initializeShadowmap(int resolution)
+{
+    if (resolution <= 0)
+        return false;
+
+    bool ok = GPUAPI_OpenGL::initializeShadowmap(resolution);
+    if (!ok)
+        return false;
+
+    GLint previousTexture = 0;
+    GLint previousDrawFramebuffer = 0;
+    GLint previousReadFramebuffer = 0;
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &previousTexture);
+    GL_CHECK_RESULT;
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &previousDrawFramebuffer);
+    GL_CHECK_RESULT;
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &previousReadFramebuffer);
+    GL_CHECK_RESULT;
+
+    GLuint depthTexture = 0;
+    glGenTextures(1, &depthTexture);
+    GL_CHECK_RESULT;
+    glBindTexture(GL_TEXTURE_2D, depthTexture);
+    GL_CHECK_RESULT;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, resolution, resolution, 0,
+        GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
+    GL_CHECK_RESULT;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    GL_CHECK_RESULT;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GL_CHECK_RESULT;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+    GL_CHECK_RESULT;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_GEQUAL);
+    GL_CHECK_RESULT;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    GL_CHECK_RESULT;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    GL_CHECK_RESULT;
+
+    GLuint framebuffer = 0;
+    glGenFramebuffers(1, &framebuffer);
+    GL_CHECK_RESULT;
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    GL_CHECK_RESULT;
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+    GL_CHECK_RESULT;
+    const GLenum drawBuffer = GL_NONE;
+    glDrawBuffers(1, &drawBuffer);
+    GL_CHECK_RESULT;
+    glReadBuffer(GL_NONE);
+    GL_CHECK_RESULT;
+    const auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    GL_CHECK_RESULT;
+
+    glBindTexture(GL_TEXTURE_2D, previousTexture);
+    GL_CHECK_RESULT;
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousDrawFramebuffer);
+    GL_CHECK_RESULT;
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, previousReadFramebuffer);
+    GL_CHECK_RESULT;
+
+    if (depthTexture == 0 || framebuffer == 0 || status != GL_FRAMEBUFFER_COMPLETE)
+    {
+        glDeleteFramebuffers(1, &framebuffer);
+        GL_CHECK_RESULT;
+        glDeleteTextures(1, &depthTexture);
+        GL_CHECK_RESULT;
+        LogPrintf(LogSeverityLevel::Error, "Failed to initialize shadowmap framebuffer (status 0x%08x)", status);
+        return false;
+    }
+
+    if (_shadowmapFramebuffer != 0)
+    {
+        glDeleteFramebuffers(1, &_shadowmapFramebuffer);
+        GL_CHECK_RESULT;
+    }
+    if (_shadowmapDepthTexture != 0)
+    {
+        glDeleteTextures(1, &_shadowmapDepthTexture);
+        GL_CHECK_RESULT;
+    }
+    _shadowmapDepthTexture = depthTexture;
+    _shadowmapFramebuffer = framebuffer;
+    _shadowmapResolution = resolution;
+
+    return true;
+}
+
+bool OsmAnd::GPUAPI_OpenGLES2plus::attachShadowmap(int resolution)
+{
+    if ((_shadowmapFramebuffer == 0 || _shadowmapResolution != resolution) && !initializeShadowmap(resolution))
+        return false;
+
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &_shadowmapPreviousDrawFramebuffer);
+    GL_CHECK_RESULT;
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &_shadowmapPreviousReadFramebuffer);
+    GL_CHECK_RESULT;
+
+    glBindFramebuffer(GL_FRAMEBUFFER, _shadowmapFramebuffer);
+    GL_CHECK_RESULT;
+
+    return true;
+}
+
+bool OsmAnd::GPUAPI_OpenGLES2plus::detachShadowmap()
+{
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _shadowmapPreviousDrawFramebuffer);
+    GL_CHECK_RESULT;
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, _shadowmapPreviousReadFramebuffer);
+    GL_CHECK_RESULT;
+
+    return true;
+}
+
+GLuint OsmAnd::GPUAPI_OpenGLES2plus::getShadowmapDepthTexture() const
+{
+    return _shadowmapDepthTexture;
+}
+
+int OsmAnd::GPUAPI_OpenGLES2plus::getShadowmapResolution() const
+{
+    return _shadowmapResolution;
 }
 
 int OsmAnd::GPUAPI_OpenGLES2plus::checkElementVisibility(int queryIndex, float pointSize)
@@ -579,8 +708,35 @@ bool OsmAnd::GPUAPI_OpenGLES2plus::elementIsVisible(int queryIndex)
     return queryResult == GL_FALSE;
 }
 
+bool OsmAnd::GPUAPI_OpenGLES2plus::releaseShadowmap(bool gpuContextLost)
+{
+    if (_shadowmapFramebuffer != 0)
+    {
+        if (!gpuContextLost)
+        {
+            glDeleteFramebuffers(1, &_shadowmapFramebuffer);
+            GL_CHECK_RESULT;
+        }
+        _shadowmapFramebuffer = 0;
+    }
+    if (_shadowmapDepthTexture != 0)
+    {
+        if (!gpuContextLost)
+        {
+            glDeleteTextures(1, &_shadowmapDepthTexture);
+            GL_CHECK_RESULT;
+        }
+        _shadowmapDepthTexture = 0;
+    }
+    _shadowmapResolution = 0;
+
+    return true;
+}
+
 bool OsmAnd::GPUAPI_OpenGLES2plus::release(bool gpuContextLost)
 {
+    releaseShadowmap(gpuContextLost);
+
     if (!gpuContextLost && _pointVisibilityCheckQueries.size() > 0)
     {
         GL_CHECK_PRESENT(glDeleteQueries);
@@ -942,6 +1098,7 @@ void OsmAnd::GPUAPI_OpenGLES2plus::preprocessShader(QString& code)
             // Features definitions
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D texture                                                                                  ""\n"
+            "#define SAMPLE_TEXTURE_2D_SHADOW texture                                                                           ""\n"
             "#define SAMPLE_TEXTURE_2D_LOD textureLod                                                                           ""\n"
             "                                                                                                                   ""\n");
     }
@@ -1183,9 +1340,13 @@ void OsmAnd::GPUAPI_OpenGLES2plus::applyTextureBlockToTexture(GLenum texture, GL
             GL_CHECK_RESULT;
             glTexParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             GL_CHECK_RESULT;
-            glTexParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             GL_CHECK_RESULT;
-            glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_COMPARE_FUNC, GL_GEQUAL);
             GL_CHECK_RESULT;
         }
     }

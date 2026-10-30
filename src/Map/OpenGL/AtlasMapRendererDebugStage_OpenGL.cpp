@@ -35,7 +35,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initialize()
 }
 
 OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererDebugStage_OpenGL::render(
-    IMapRenderer_Metrics::Metric_renderFrame* const metric_)
+    IMapRenderer_Metrics::Metric_renderFrame* const metric_, ShadowMode shadowMode /* = ShadowMode::None */)
 {
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 
