@@ -1842,6 +1842,18 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     const auto citLocalizedNameRuleId = attributeMapping->localizedNameAttributes.constFind(&localeLanguageId);
     if (citLocalizedNameRuleId != attributeMapping->localizedNameAttributes.cend())
         localizedNameRuleId = *citLocalizedNameRuleId;
+
+    // In transliterating modes, use English name as localized if both native and localized names are missing
+    const auto languagePreference = env->getLanguagePreference();
+    if ((languagePreference == MapPresentationEnvironment::LanguagePreference::NativeAndLocalizedOrTransliterated ||
+        languagePreference == MapPresentationEnvironment::LanguagePreference::LocalizedOrTransliteratedAndNative ||
+        languagePreference == MapPresentationEnvironment::LanguagePreference::LocalizedOrTransliterated) &&
+        !captions.contains(localizedNameRuleId) &&
+        !captions.contains(attributeMapping->nativeNameAttributeId) &&
+        captions.contains(attributeMapping->enNameAttributeId))
+    {
+        localizedNameRuleId = attributeMapping->enNameAttributeId;
+    }
     
     // sort captionsOrder by textOrder property
     QHash<uint32_t, int> textOrderMap;
