@@ -36,6 +36,77 @@ namespace OsmAnd
     protected:
         MapRasterizer_P(MapRasterizer* const owner);
 
+        // Lane layout of a road in meters, shared by all primitives of a tile
+        struct RoadLayout
+        {
+            bool valid = false;
+            bool buttCaps = false;
+            // Solid lines along the outer edges of the lanes (motorways and trunk roads)
+            bool edgeLines = false;
+            float width = 0.0f;
+            float laneWidth = 0.0f;
+            int lanesForward = 0;
+            int lanesBackward = 0;
+            // Explicit placement: constant shift of the carriageway centre to the right of the way line
+            bool hasPlacement = false;
+            float shift = 0.0f;
+            // Resolved shift at the first and the last point of the way. A shift other than the own one tapers
+            // into the own one within the taper length from the node where it is set; "done" is the part of that
+            // length already passed on the roads before (the taper goes on across joins of equal roads)
+            float shiftStart = 0.0f;
+            float shiftEnd = 0.0f;
+            float shiftStartDone = 0.0f;
+            float shiftEndDone = 0.0f;
+            // The shift at the end is set or used by a join rule
+            bool startFixed = false;
+            bool endFixed = false;
+            // Length of the way in meters
+            float length = 0.0f;
+            // Lanes that narrow down to nothing at the first or the last point of the way,
+            // counted from the left or the right edge in the way direction
+            int taperFirstLeft = 0;
+            int taperFirstRight = 0;
+            int taperLastLeft = 0;
+            int taperLastRight = 0;
+            // Cut of the carriageway at the first and the last point (unit normal to the right of the way
+            // direction), so that joined roads meet without gaps or overlaps
+            bool hasFirstNormal = false;
+            bool hasLastNormal = false;
+            PointD firstNormal;
+            PointD lastNormal;
+            // The next road continues the same lanes, so the turn arrows are painted there
+            bool noArrows = false;
+            // Branch on the left in the driving direction at a split or a merge: the gore area between
+            // the two branches is painted by this road
+            const MapObject* goreFirst = nullptr;
+            const MapObject* goreLast = nullptr;
+            QStringList turnForward;
+            QStringList turnBackward;
+            QStringList changeForward;
+            QStringList changeBackward;
+            QStringList busForward;
+            QStringList busBackward;
+        };
+
+        // Road geometry in pixels, in the way direction; offsets are to the right of the way line
+        struct RoadGeometry
+        {
+            QVector<PointF> vertices;
+            QVector<float> distances;
+            // Lane boundaries from the left edge to the right edge, lanes + 1 lines
+            QVector<QVector<float>> boundaries;
+            // Width of each lane relatively to the full lane width, per vertex
+            QVector<QVector<float>> laneFactors;
+            QVector<float> bodyLeft;
+            QVector<float> bodyRight;
+            bool hasFirstNormal = false;
+            bool hasLastNormal = false;
+            PointF firstNormal;
+            PointF lastNormal;
+            float blendLength = 0.0f;
+            bool tapered = false;
+        };
+
         struct Context
         {
             Context(
@@ -51,6 +122,13 @@ namespace OsmAnd
 
             MapPresentationEnvironment::ShadowMode shadowMode;
             ColorARGB shadowColor;
+
+            bool realisticRoads;
+            float pixelsPerMeter;
+            QHash<const MapObject*, RoadLayout> roadLayouts;
+            // Realistic roads whose markings wait until all roads of the same level are drawn
+            mutable QVector<std::shared_ptr<const MapPrimitiviser::Primitive>> pendingMarkings;
+            mutable int pendingMarkingsLayer = 0;
 
         private:
             Q_DISABLE_COPY_AND_MOVE(Context);
@@ -76,12 +154,80 @@ namespace OsmAnd
             Layer_5,
         };
 
+        struct RealisticRoad
+        {
+            bool valid = false;
+            const RoadLayout* layout = nullptr;
+            float styleWidth = 0.0f;
+            // Sizes in pixels
+            float width = 0.0f;
+            float laneWidth = 0.0f;
+            bool buttCaps = false;
+            // Draw the carriageway as a polygon: its width changes or its ends are cut to fit the neighbours
+            bool polygonBody = false;
+            RoadGeometry geometry;
+        };
+
+        static bool computeRoadLayout(
+            const std::shared_ptr<const MapObject>& mapObject,
+            const QString& highwayType,
+            RoadLayout& outLayout);
+        static void resolveRoadTransitions(Context& context);
         bool updatePaint(
             const Context& context,
             SkPaint& paint,
             const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
             const PaintValuesSet valueSetSelector,
-            const bool isArea);
+            const bool isArea,
+            const RealisticRoad* const road = nullptr);
+
+        void computeRealisticRoad(
+            const Context& context,
+            const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
+            RealisticRoad& outRoad) const;
+
+        bool computeRoadGeometry(
+            const Context& context,
+            const MapObject& mapObject,
+            const RoadLayout& layout,
+            RoadGeometry& outGeometry) const;
+        static QVector<PointF> offsetPoints(
+            const RoadGeometry& geometry,
+            const QVector<float>& offsets);
+        static SkPath buildOffsetPath(const RoadGeometry& geometry, const QVector<float>& offsets);
+        void drawRoadBody(
+            SkCanvas& canvas,
+            SkPaint& paint,
+            const SkPath& path,
+            const RealisticRoad& road) const;
+        void flushLaneMarkings(const Context& context, SkCanvas& canvas);
+        void rasterizeGore(
+            const Context& context,
+            SkCanvas& canvas,
+            const MapObject& mapObject,
+            const RealisticRoad& road,
+            const bool atFirst,
+            const SkColor color);
+        void rasterizeLaneMarkings(
+            const Context& context,
+            SkCanvas& canvas,
+            const RealisticRoad& road);
+        void getPixelVertices(const Context& context, const QVector<PointI>& points31, QVector<PointF>& outVertices) const;
+        static QVector<float> interpolateShifts(
+            const QVector<float>& distances,
+            const float own,
+            const float start,
+            const float startDone,
+            const float end,
+            const float endDone,
+            const float taperLength);
+        static void drawLaneArrows(
+            SkCanvas& canvas,
+            const QVector<PointF>& vertices,
+            const QVector<float>& offsets,
+            const QString& turn,
+            const float endGap,
+            const float pixelsPerMeter);
 
         void rasterizeMapPrimitives(
             const Context& context,
@@ -124,7 +270,8 @@ namespace OsmAnd
             const QVector<PointI>& points31,
             const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
             const PaintValuesSet valueSetSelector,
-            const IMapStyle::ValueDefinitionId hMarginId);
+            const IMapStyle::ValueDefinitionId hMarginId,
+            const RealisticRoad* const road);
         bool calculateLinePath(
             const Context& context,
             const QVector<PointI>& points31,

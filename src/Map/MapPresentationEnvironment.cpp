@@ -241,3 +241,13 @@ bool OsmAnd::MapPresentationEnvironment::getColoredBuildings() const
 }
 
 
+
+bool OsmAnd::MapPresentationEnvironment::isRealisticRoadsEnabled() const
+{
+    const auto valueDefId = mapStyle->getValueDefinitionIdByName(QStringLiteral("realisticRoads"));
+    if (valueDefId < 0)
+        return false;
+    const auto settings = getSettings();
+    const auto citSetting = settings.constFind(valueDefId);
+    return citSetting != settings.cend() && citSetting->asSimple.asInt != 0;
+}
