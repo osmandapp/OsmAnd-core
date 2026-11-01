@@ -289,7 +289,7 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
         const auto spD = pD * pD;
         const auto sr = 1.0 - spD;
         r = qSqrt(sr);
-        const auto xyL = qSqrt(1.0 - pN.z * pN.z);
+        const auto xyL = qSqrt(pN.x * pN.x + pN.y * pN.y);
         const auto c = pD * xyL;
         const auto b = r * pN.z;
         sectX = c > fabs(b);
@@ -315,17 +315,8 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
         const auto z2 = cz - bz;
         const auto xN = pN.x / xyL;
         const auto yN = pN.y / xyL;
-        const auto xYp1 = xN * xy1;
-        const auto yYp1 = yN * xy1;
-        const auto sxyYp1 = xYp1 * xYp1 + yYp1 * yYp1;
-        const auto same = fabs(sxyYp1 + z1 * z1 - 1.0) < fabs(sxyYp1 + z2 * z2 - 1.0);
-        const auto zYp1 = same ? z1 : z2;
-        const auto xYp2 = xN * xy2;
-        const auto yYp2 = yN * xy2;
-        const auto zYp2 = same ? z2 : z1;
-        const bool change = zYp1 < zYp2;
-        minY = change ? glm::dvec3(xYp1, yYp1, zYp1) : glm::dvec3(xYp2, yYp2, zYp2);
-        maxY = change ? glm::dvec3(xYp2, yYp2, zYp2) : glm::dvec3(xYp1, yYp1, zYp1);
+        minY = glm::dvec3(xN * xy1, yN * xy1, z2);
+        maxY = glm::dvec3(xN * xy2, yN * xy2, z1);
     }
 
     glm::dvec2 minXv, maxXv;
@@ -410,7 +401,9 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
         }
         else if (minVectorX != maxVectorX)
         {
-            const auto avg = glm::normalize(minXv + maxXv + minVectorX + maxVectorX);
+            const auto avg = glm::normalize((minXv + maxXv) * (minXv.x * maxXv.y - maxXv.x * minXv.y > 0.0 ? -1.0 : 1.0)
+                + (minVectorX + maxVectorX)
+                    * (minVectorX.x *  maxVectorX.y -  maxVectorX.x * minVectorX.y > 0.0 ? -1.0 : 1.0));
             minVectorX = glm::dot(avg, minXv) < glm::dot(avg, minVectorX) ? minXv : minVectorX;
             maxVectorX = glm::dot(avg, maxXv) < glm::dot(avg, maxVectorX) ? maxXv : maxVectorX;
         }

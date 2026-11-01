@@ -1218,9 +1218,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "                                                                                                                   ""\n"
             "float inShadow()                                                                                                   ""\n"
             "{                                                                                                                  ""\n"
-            "    if (param_fs_shadowmapParameters.y < 0.5)                                                                      ""\n"
-            "        return 0.0;                                                                                                ""\n"
-            "                                                                                                                   ""\n"
             "    highp vec3 p = v2f_shadowPosition.xyz / max(v2f_shadowPosition.w, 1e-8);                                       ""\n"
             "    p = p * 0.5 + 0.5;                                                                                             ""\n"
             "    highp vec3 dx = dFdx(p);                                                                                       ""\n"
@@ -1399,7 +1396,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    mixColors(finalColor, secondaryColor * param_fs_lastBatch);                                                    ""\n"
             "    mixColors(finalColor, primaryColor * param_fs_lastBatch);                                                      ""\n");
         fragmentShader.append(QStringLiteral(
-            "    if (param_fs_lastBatch > 0.0)                                                                                  ""\n"
+            "    if (param_fs_lastBatch > 0.0 && param_fs_shadowmapParameters.y > 0.5)                                          ""\n"
             "    {                                                                                                              ""\n"
             "        float shadowed = inShadow();                                                                               ""\n"
             "        float d = 1.0 + sunlight;                                                                                  ""\n"
