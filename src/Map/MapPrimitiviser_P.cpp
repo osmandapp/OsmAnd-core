@@ -1845,9 +1845,11 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
 
     // In transliterating modes, use English name as localized if both native and localized names are missing
     const auto languagePreference = env->getLanguagePreference();
-    if ((languagePreference == MapPresentationEnvironment::LanguagePreference::NativeAndLocalizedOrTransliterated ||
+    const bool transliterate =
+        languagePreference == MapPresentationEnvironment::LanguagePreference::NativeAndLocalizedOrTransliterated ||
         languagePreference == MapPresentationEnvironment::LanguagePreference::LocalizedOrTransliteratedAndNative ||
-        languagePreference == MapPresentationEnvironment::LanguagePreference::LocalizedOrTransliterated) &&
+        languagePreference == MapPresentationEnvironment::LanguagePreference::LocalizedOrTransliterated;
+    if (transliterate &&
         !captions.contains(localizedNameRuleId) &&
         !captions.contains(attributeMapping->nativeNameAttributeId) &&
         captions.contains(attributeMapping->enNameAttributeId))
