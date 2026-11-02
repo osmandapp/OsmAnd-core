@@ -113,7 +113,6 @@ namespace
                 highp vec2 gradient = -plane.xy / plane.z;
                 if (!all(lessThan(abs(gradient), vec2(1e20))))
                     return SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, p);
-                highp float filterBias = param_fs_shadowmapTexelSize * (abs(gradient.x) + abs(gradient.y));
 
                 float shadow = 0.0;
                 for (int y = -1; y <= 1; y++)
@@ -121,7 +120,7 @@ namespace
                     for (int x = -1; x <= 1; x++)
                     {
                         highp vec2 offset = vec2(float(x), float(y)) * param_fs_shadowmapTexelSize;
-                        highp float depth = p.z + dot(gradient, offset) - filterBias;
+                        highp float depth = p.z + dot(gradient, offset);
                         shadow += SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, vec3(p.xy + offset, depth));
                     }
                 }
