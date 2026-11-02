@@ -1913,7 +1913,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     
 
     // According to presentation settings, adjust set of captions
-    switch (env->getLanguagePreference())
+    switch (languagePreference)
     {
         case MapPresentationEnvironment::LanguagePreference::NativeOnly:
         {
