@@ -121,7 +121,8 @@ namespace
                     {
                         highp vec2 offset = vec2(float(x), float(y)) * param_fs_shadowmapTexelSize;
                         highp float depth = p.z + dot(gradient, offset);
-                        shadow += SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, vec3(p.xy + offset, depth));
+                        if (depth >= 0.0 && depth < 1.0)
+                            shadow += SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, vec3(p.xy + offset, depth));
                     }
                 }
 

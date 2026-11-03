@@ -210,7 +210,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
             glEnable(GL_POLYGON_OFFSET_FILL);
             GL_CHECK_RESULT;
 
-            if (!skip && !currentDebugSettings->disableMapLayersStage)
+            if (!skip && currentState.zoomLevel > 8 && !currentDebugSettings->disableMapLayersStage)
             {
                 glEnable(GL_CULL_FACE);
                 GL_CHECK_RESULT;
