@@ -48,6 +48,7 @@ namespace OsmAnd
         Viewport,
         Flip,
         FlatEarth,
+        Shadows,
         FieldOfView,
         VisibleDistance,
         DetailedDistance,
@@ -85,6 +86,7 @@ namespace OsmAnd
         AreaI viewport;
         bool flip;
         bool flatEarth;
+        bool castSunShadows;
         float fieldOfView;
         float visibleDistance;
         float detailedDistance;
@@ -156,6 +158,7 @@ namespace OsmAnd
         AreaI viewport;
         bool flip;
         bool flatEarth;
+        bool castSunShadows;
         float fieldOfView;
         float visibleDistance;
         float detailedDistance;

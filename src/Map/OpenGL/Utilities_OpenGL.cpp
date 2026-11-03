@@ -1,5 +1,7 @@
 #include "Utilities_OpenGL.h"
 
+#include "Utilities.h"
+
 float OsmAnd::Utilities_OpenGL_Common::calculateCameraDistance(const glm::mat4& P, const AreaI& viewport, const float Ax, const float Sx, const float k)
 {
     const float w = viewport.width();
@@ -66,6 +68,53 @@ bool OsmAnd::Utilities_OpenGL_Common::lineSegmentIntersectPlane(
     else
         return false;
 
+    return true;
+}
+
+bool OsmAnd::Utilities_OpenGL_Common::frustumIntersectsPlane(
+    const float elevation,
+    const glm::vec3& nTL, const glm::vec3& nTR, const glm::vec3& nBL, const glm::vec3& nBR,
+    const glm::vec3& fTL, const glm::vec3& fTR, const glm::vec3& fBL, const glm::vec3& fBR,
+    glm::vec2 (&intersectionPoints)[4])
+{
+    const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
+    const glm::vec3 planeO(0.0f, elevation, 0.0f);
+    auto intersectionPointsCounter = 0u;
+    glm::vec3 intersectionPoint;
+    glm::vec2 bottomIntersectionPoints[2];
+    glm::vec2 topIntersectionPoints[2];
+
+    if (lineSegmentIntersectPlane(planeN, planeO, nBL, fBL, intersectionPoint))
+        bottomIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+    if (lineSegmentIntersectPlane(planeN, planeO, nBR, fBR, intersectionPoint))
+        bottomIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+    if (intersectionPointsCounter < 2 && lineSegmentIntersectPlane(
+        planeN, planeO, nTL, nBL, intersectionPoint))
+        bottomIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+    if (intersectionPointsCounter < 2 && lineSegmentIntersectPlane(
+        planeN, planeO, nTR, nBR, intersectionPoint))
+        bottomIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+    if (intersectionPointsCounter != 2)
+        return false;
+
+    intersectionPointsCounter = 0;
+    if (lineSegmentIntersectPlane(planeN, planeO, nTR, fTR, intersectionPoint))
+        topIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+    if (lineSegmentIntersectPlane(planeN, planeO, nTL, fTL, intersectionPoint))
+        topIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+    if (intersectionPointsCounter < 2 && lineSegmentIntersectPlane(
+        planeN, planeO, fTR, fBR, intersectionPoint))
+        topIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+    if (intersectionPointsCounter < 2 && lineSegmentIntersectPlane(
+        planeN, planeO, fTL, fBL, intersectionPoint))
+        topIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+    if (intersectionPointsCounter != 2)
+        return false;
+
+    intersectionPoints[0] = bottomIntersectionPoints[0];
+    intersectionPoints[1] = bottomIntersectionPoints[1];
+    intersectionPoints[2] = topIntersectionPoints[0];
+    intersectionPoints[3] = topIntersectionPoints[1];
     return true;
 }
 
@@ -204,6 +253,80 @@ bool OsmAnd::Utilities_OpenGL_Common::lineSegmentIntersectsSphere(
     return true;
 }
 
+bool OsmAnd::Utilities_OpenGL_Common::frustumIntersectsSphere(
+    const glm::dvec3& camPos,
+    const glm::dvec3& camTL, const glm::dvec3& camTR, const glm::dvec3& camBL, const glm::dvec3& camBR,
+    const double cameraNearDistance, const double cameraFarDistance, const double radius,
+    PointI64 (&intersectionPoints)[4])
+{
+    const auto nTL = camPos + camTL * cameraNearDistance;
+    const auto nTR = camPos + camTR * cameraNearDistance;
+    const auto nBL = camPos + camBL * cameraNearDistance;
+    const auto nBR = camPos + camBR * cameraNearDistance;
+    const auto fTL = camPos + camTL * cameraFarDistance;
+    const auto fTR = camPos + camTR * cameraFarDistance;
+    const auto fBL = camPos + camBL * cameraFarDistance;
+    const auto fBR = camPos + camBR * cameraFarDistance;
+    auto bottomPointsCounter = 0;
+    auto topPointsCounter = 0;
+    PointI64 bottomIntersectionPoint[2];
+    PointI64 topIntersectionPoint[2];
+    PointD iAngles;
+    if (lineSegmentIntersectsSphere(nBL, fBL, radius, iAngles.x, iAngles.y))
+        bottomIntersectionPoint[bottomPointsCounter++] = Utilities::get31FromAngles(iAngles);
+    if (bottomPointsCounter < 1
+        && lineSegmentIntersectsSphere(nTL, nBL, radius, iAngles.x, iAngles.y))
+        bottomIntersectionPoint[bottomPointsCounter++] = Utilities::get31FromAngles(iAngles);
+    if (lineSegmentIntersectsSphere(nBR, fBR, radius, iAngles.x, iAngles.y))
+        bottomIntersectionPoint[bottomPointsCounter++] = Utilities::get31FromAngles(iAngles);
+    if (bottomPointsCounter < 2
+        && lineSegmentIntersectsSphere(nTR, nBR, radius, iAngles.x, iAngles.y))
+        bottomIntersectionPoint[bottomPointsCounter++] = Utilities::get31FromAngles(iAngles);
+    if (lineSegmentIntersectsSphere(nTR, fTR, radius, iAngles.x, iAngles.y))
+        topIntersectionPoint[topPointsCounter++] = Utilities::get31FromAngles(iAngles);
+    if (topPointsCounter < 1
+        && lineSegmentIntersectsSphere(fTR, fBR, radius, iAngles.x, iAngles.y))
+        topIntersectionPoint[topPointsCounter++] = Utilities::get31FromAngles(iAngles);
+    if (lineSegmentIntersectsSphere(nTL, fTL, radius, iAngles.x, iAngles.y))
+        topIntersectionPoint[topPointsCounter++] = Utilities::get31FromAngles(iAngles);
+    if (topPointsCounter < 2
+        && lineSegmentIntersectsSphere(fTL, fBL, radius, iAngles.x, iAngles.y))
+        topIntersectionPoint[topPointsCounter++] = Utilities::get31FromAngles(iAngles);
+    if (topPointsCounter != 2 || bottomPointsCounter != 2)
+        return false;
+
+    const auto intHalf = INT32_MAX / 2 + 1;
+    if (bottomIntersectionPoint[0].x > bottomIntersectionPoint[1].x
+        && bottomIntersectionPoint[0].x - bottomIntersectionPoint[1].x > intHalf)
+        bottomIntersectionPoint[0].x = bottomIntersectionPoint[0].x - INT32_MAX - 1;
+    else if (bottomIntersectionPoint[1].x > bottomIntersectionPoint[0].x
+        && bottomIntersectionPoint[1].x - bottomIntersectionPoint[0].x > intHalf)
+        bottomIntersectionPoint[1].x = bottomIntersectionPoint[1].x - INT32_MAX - 1;
+    if (topIntersectionPoint[0].x > topIntersectionPoint[1].x
+        && topIntersectionPoint[0].x - topIntersectionPoint[1].x > intHalf)
+        topIntersectionPoint[0].x = topIntersectionPoint[0].x - INT32_MAX - 1;
+    else if (topIntersectionPoint[1].x > topIntersectionPoint[0].x
+        && topIntersectionPoint[1].x - topIntersectionPoint[0].x > intHalf)
+        topIntersectionPoint[1].x = topIntersectionPoint[1].x - INT32_MAX - 1;
+    if (qMax(bottomIntersectionPoint[0].x, bottomIntersectionPoint[1].x)
+        - qMin(topIntersectionPoint[0].x, topIntersectionPoint[1].x) > intHalf)
+    {
+        bottomIntersectionPoint[0].x = bottomIntersectionPoint[0].x - INT32_MAX - 1;
+        bottomIntersectionPoint[1].x = bottomIntersectionPoint[1].x - INT32_MAX - 1;
+    }
+    else if (qMax(topIntersectionPoint[0].x, topIntersectionPoint[1].x)
+        - qMin(bottomIntersectionPoint[0].x, bottomIntersectionPoint[1].x) > intHalf)
+    {
+        topIntersectionPoint[0].x = topIntersectionPoint[0].x - INT32_MAX - 1;
+        topIntersectionPoint[1].x = topIntersectionPoint[1].x - INT32_MAX - 1;
+    }
+    intersectionPoints[0] = bottomIntersectionPoint[0];
+    intersectionPoints[1] = bottomIntersectionPoint[1];
+    intersectionPoints[2] = topIntersectionPoint[0];
+    intersectionPoints[3] = topIntersectionPoint[1];
+    return true;
+}
+
 bool OsmAnd::Utilities_OpenGL_Common::rayIntersectsCone(
     const glm::dvec3& p0, const glm::dvec3& v, const double nSqrTanLat, double& angleX, double& distance)
 {
@@ -257,11 +380,17 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
     glm::dvec3 minX, maxX, minY, maxY;
     if (qFuzzyIsNull(planeN.x) && qFuzzyIsNull(planeN.y))
     {
-        minVectorX = maxVectorX = glm::dvec2(0.0, -1.0);
         const auto mY = planeN.z > 0.0 ? planeD : -planeD;
-        minCoordY = qMin(minCoordY, mY);
-        maxCoordY = qMax(maxCoordY, mY);
-        return true;
+        if (point1 == nullptr || point2 == nullptr || pD == 1.0)
+        {
+            minVectorX = maxVectorX = glm::dvec2(0.0, -1.0);
+            minCoordY = qMin(minCoordY, mY);
+            maxCoordY = qMax(maxCoordY, mY);
+            return true;
+        }
+        sectX = false;
+        r = qSqrt(1.0 - pD * pD);
+        minY = maxY = glm::dvec3(0.0, 0.0, mY);
     }
     else if (qFuzzyIsNull(planeN.z))
     {
@@ -283,7 +412,7 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
         const auto spD = pD * pD;
         const auto sr = 1.0 - spD;
         r = qSqrt(sr);
-        const auto xyL = qSqrt(1.0 - pN.z * pN.z);
+        const auto xyL = qSqrt(pN.x * pN.x + pN.y * pN.y);
         const auto c = pD * xyL;
         const auto b = r * pN.z;
         sectX = c > fabs(b);
@@ -296,8 +425,7 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
             const auto deltaAngle = qAtan(r / scmb);
             const auto a1 = angleXY - deltaAngle;
             const auto a2 = angleXY + deltaAngle;
-            const auto absZ = qSqrt(1.0 - scmb * qSqrt(sr - sb + sc) / c);
-            const auto z = pN.z > 0 ? absZ : -absZ;
+            const auto z = pN.z / pD;
             const auto csy = qCos(-qAsin(qBound(-1.0, z, 1.0)));
             minX = glm::dvec3(csy * qSin(a1), csy * qCos(a1), z);
             maxX = glm::dvec3(csy * qSin(a2), csy * qCos(a2), z);
@@ -310,17 +438,8 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
         const auto z2 = cz - bz;
         const auto xN = pN.x / xyL;
         const auto yN = pN.y / xyL;
-        const auto xYp1 = xN * xy1;
-        const auto yYp1 = yN * xy1;
-        const auto sxyYp1 = xYp1 * xYp1 + yYp1 * yYp1;
-        const auto same = fabs(sxyYp1 + z1 * z1 - 1.0) < fabs(sxyYp1 + z2 * z2 - 1.0);
-        const auto zYp1 = same ? z1 : z2;
-        const auto xYp2 = xN * xy2;
-        const auto yYp2 = yN * xy2;
-        const auto zYp2 = same ? z2 : z1;
-        const bool change = zYp1 < zYp2;
-        minY = change ? glm::dvec3(xYp1, yYp1, zYp1) : glm::dvec3(xYp2, yYp2, zYp2);
-        maxY = change ? glm::dvec3(xYp2, yYp2, zYp2) : glm::dvec3(xYp1, yYp1, zYp1);
+        minY = glm::dvec3(xN * xy1, yN * xy1, z2);
+        maxY = glm::dvec3(xN * xy2, yN * xy2, z1);
     }
 
     glm::dvec2 minXv, maxXv;
@@ -405,7 +524,9 @@ bool OsmAnd::Utilities_OpenGL_Common::planeIntersectsSphere(const glm::dvec3& pl
         }
         else if (minVectorX != maxVectorX)
         {
-            const auto avg = glm::normalize(minXv + maxXv + minVectorX + maxVectorX);
+            const auto avg = glm::normalize((minXv + maxXv) * (minXv.x * maxXv.y - maxXv.x * minXv.y > 0.0 ? -1.0 : 1.0)
+                + (minVectorX + maxVectorX)
+                    * (minVectorX.x *  maxVectorX.y -  maxVectorX.x * minVectorX.y > 0.0 ? -1.0 : 1.0));
             minVectorX = glm::dot(avg, minXv) < glm::dot(avg, minVectorX) ? minXv : minVectorX;
             maxVectorX = glm::dot(avg, maxXv) < glm::dot(avg, maxVectorX) ? maxXv : maxVectorX;
         }

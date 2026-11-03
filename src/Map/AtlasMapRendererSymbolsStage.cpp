@@ -87,7 +87,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::release(bool gpuContextLost)
     return true;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Metric_renderFrame* const metric)
+void OsmAnd::AtlasMapRendererSymbolsStage::prepare(
+    const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric)
 {
     Stopwatch stopwatch(metric != nullptr);
 
@@ -114,10 +116,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
     else
         _previouslyInvalidated = false;
 
-    isLongPrepareStage = forceUpdate || needUpdatedSymbols;
-
     ScreenQuadTree intersections;
-    if (!obtainRenderableSymbols(renderableSymbolsBeforeBuildings, renderableSymbolsAfterBuildings,
+    if (!obtainRenderableSymbols(mapSymbolsByOrder, renderableSymbolsBeforeBuildings, renderableSymbolsAfterBuildings,
         intersections, metric, forceUpdate, needUpdatedSymbols))
     {
         // In case obtain failed due to lock, schedule another frame
@@ -161,6 +161,60 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
 
     if (metric)
         metric->elapsedTimeForPreparingSymbols = stopwatch.elapsed();
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage::drawSymbols(bool forShadowmap,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric)
+{
+    bool result = true;
+    if (step < 2)
+    {
+        if (frameSymbolsAreValid && step < 1)
+        {
+            frameSymbols.clear();
+            frameSymbolsAreValid = false;
+        }
+        if (!frameSymbolsAreValid)
+        {
+            if (publishedMapSymbolsByOrderLock.tryLockForRead())
+            {
+                frameSymbolsAreValid = true;
+                frameSymbols = publishedMapSymbolsByOrder;
+                publishedMapSymbolsByOrderLock.unlock();
+
+                // Obtain volumetric symbols to pre-render their depths
+                ScreenQuadTree dummyIntersections;
+                obtainRenderableSymbols(
+                    frameSymbols,
+                    true,
+                    denseSymbolsBeforeBuildings,
+                    denseSymbolsAfterBuildings,
+                    dummyIntersections,
+                    nullptr,
+                    metric);
+            }
+            else
+                invalidateFrame();
+        }
+
+        result = preRenderWithVolume(forShadowmap, denseSymbolsBeforeBuildings, denseSymbolsAfterBuildings, metric);
+        if (forShadowmap)
+            return result;
+    }
+
+    if (frameSymbolsAreValid && step < 2)
+        prepare(frameSymbols, metric);
+
+    if (result)
+        result = renderSymbols(metric);
+
+    if (frameSymbolsAreValid && step == 2)
+    {
+        frameSymbols.clear();
+        frameSymbolsAreValid = false;
+    }
+
+    return result;
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::convertRenderableSymbolsToMapSymbolInformation(
@@ -238,6 +292,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::queryLastVisibleSymbolsIn(
 #endif // !defined(OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE)
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
+    const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
     QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbolsBeforeBuildings,
     QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbolsAfterBuildings,
     ScreenQuadTree& outIntersections,
@@ -246,25 +301,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     bool needUpdatedSymbols)
 {
     bool result = false;
-    
-    if (!publishedMapSymbolsByOrderLock.tryLockForRead())
-    {
-        preRenderWithVolume(denseSymbolsBeforeBuildings, denseSymbolsAfterBuildings, metric);
-        return false;
-    }
-
-    // Obtain volumetric symbols to pre-render their depths
-    ScreenQuadTree dummyIntersections;
-    result = obtainRenderableSymbols(
-            publishedMapSymbolsByOrder,
-            true,
-            denseSymbolsBeforeBuildings,
-            denseSymbolsAfterBuildings,
-            dummyIntersections,
-            nullptr,
-            metric);
-
-    preRenderWithVolume(denseSymbolsBeforeBuildings, denseSymbolsAfterBuildings, metric);
     
     Stopwatch stopwatch(metric != nullptr);
     if (OsmAnd::isPerformanceMetricsEnabled())
@@ -284,7 +320,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             previouslyAccepted = *pLastAcceptedMapSymbolsByOrder;
         pLastAcceptedMapSymbolsByOrder->clear();
         result = obtainRenderableSymbols(
-            publishedMapSymbolsByOrder,
+            mapSymbolsByOrder,
             false,
             outRenderableSymbolsBeforeBuildings,
             outRenderableSymbolsAfterBuildings,
@@ -293,8 +329,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             metric);
         if (result && renderer->getSymbolsFadeDuration() > 0.0f)
             startSymbolFades(previouslyAccepted, *pLastAcceptedMapSymbolsByOrder);
-
-        publishedMapSymbolsByOrderLock.unlock();
 
         if (result)
         {
@@ -339,7 +373,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
     // Acquire selected objects from publishedMapSymbolsByOrder
     MapRenderer::PublishedMapSymbolsByOrder filteredPublishedMapSymbols;
-    for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(publishedMapSymbolsByOrder)))
+    for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(mapSymbolsByOrder)))
     {
         const auto order = mapSymbolsByOrderEntry.key();
         const auto& mapSymbols = mapSymbolsByOrderEntry.value();
@@ -422,8 +456,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             filteredLastAcceptedMapSymbols,
             metric);
 
-        publishedMapSymbolsByOrderLock.unlock();
-
         if (result)
         {
             if (renderer->getSymbolsFadeDuration() > 0.0f)
@@ -444,8 +476,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         outIntersections,
         nullptr,
         metric);
-
-    publishedMapSymbolsByOrderLock.unlock();
 
     return result;
 }

@@ -50,6 +50,7 @@ namespace OsmAnd
                 struct
                 {
                     GLlocation mPerspectiveProjectionView;
+                    GLlocation mDirectSunlightProjection;
                     GLlocation resultScale;
                     GLlocation target31;
                     GLlocation zoomLevel;
@@ -67,6 +68,9 @@ namespace OsmAnd
                     GLlocation fadeHeight;
                     GLlocation cameraPosition;
                     GLlocation lightDirection;
+                    GLlocation shadowmap;
+                    GLlocation shadowmapEnabled;
+                    GLlocation shadowmapTexelSize;
                 } param;
             } fs;
         } _program;
@@ -93,9 +97,10 @@ namespace OsmAnd
         void getResourcesInGPU(const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
             const int viewableDetalizationLevel, bool& highDetalizationLevel,
             const int64_t appearTime, bool& shouldInvalidateFrame);
-        StageResult renderDepth(bool primaryOnly);
-        StageResult renderSimple(bool primaryOnly);
-        StageResult renderColor(bool primaryOnly, int64_t currentTime);
+        void renderDepth(bool primaryOnly, bool forShadowmap);
+        void configureShadowmap(const Model3DProgram& program, ShadowMode shadowMode);
+        void renderSimple(bool primaryOnly, ShadowMode shadowMode);
+        void renderColor(bool primaryOnly, int64_t currentTime, ShadowMode shadowMode);
         std::shared_ptr<const GPUAPI::MeshInGPU> captureResourceInGPU(
             const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
             TileId normalizedTileId,
@@ -104,9 +109,10 @@ namespace OsmAnd
         explicit AtlasMapRendererMap3DObjectsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer);
         ~AtlasMapRendererMap3DObjectsStage_OpenGL() override;
 
-        bool initialize() override;
-        StageResult render(IMapRenderer_Metrics::Metric_renderFrame* const metric) override;
-        bool release(bool gpuContextLost) override;
+        virtual bool initialize();
+        virtual MapRendererStage::StageResult render(
+            IMapRenderer_Metrics::Metric_renderFrame* const metric, ShadowMode shadowMode = ShadowMode::None);
+        virtual bool release(bool gpuContextLost);
     };
 }
 

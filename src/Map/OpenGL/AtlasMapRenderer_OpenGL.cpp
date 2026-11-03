@@ -39,6 +39,8 @@
 #include <TargetConditionals.h>
 #endif
 
+#define MAX_SHADOWMAP_RESOLUTION 1024
+
 #define MIN_VISUAL_ZOOM_AT_ZERO_LEVEL 0.75
 
 #define MIN_COS_SURFACE 0.03
@@ -186,12 +188,98 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
 
-//    // Enable writing to color buffer
-//    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-//    GL_CHECK_RESULT;
+    bool withShadows = false;
+    if (currentState.castSunShadows)
+    {
+        auto mapResolution = qMin(MAX_SHADOWMAP_RESOLUTION, static_cast<int32_t>(
+            Utilities::getNextPowerOfTwo(qMax(currentState.viewport.width(), currentState.viewport.height()) / 2)));
+        
+        if (gpuAPI->attachShadowmap(mapResolution))
+        {
+            withShadows = true;
+
+            glViewport(0, 0, mapResolution, mapResolution);
+            GL_CHECK_RESULT;
+
+            glClear(GL_DEPTH_BUFFER_BIT);
+            GL_CHECK_RESULT;
+
+            glPolygonOffset(1.0f, 2.0f);
+            GL_CHECK_RESULT;
+
+            glEnable(GL_POLYGON_OFFSET_FILL);
+            GL_CHECK_RESULT;
+
+            if (!skip && currentState.zoomLevel > 8 && !currentDebugSettings->disableMapLayersStage)
+            {
+                glEnable(GL_CULL_FACE);
+                GL_CHECK_RESULT;
+
+                glCullFace(currentState.flip ? GL_BACK : GL_FRONT);
+                GL_CHECK_RESULT;
+
+                Stopwatch mapLayersStageStopwatch(metric != nullptr);
+                const auto stageResult = _mapLayersStage->render(metric, MapRendererStage::ShadowMode::Build);
+                if (stageResult == MapRendererStage::StageResult::Fail)
+                    ok = false;
+                if (metric)
+                    metric->elapsedTimeForMapLayersStageToShadow = mapLayersStageStopwatch.elapsed();
+
+                glDisable(GL_CULL_FACE);
+                GL_CHECK_RESULT;
+
+                if (!ok || stageResult == MapRendererStage::StageResult::Wait)
+                    skip = true;
+            }
+
+            if (!skip && _map3DObjectsStage && !currentDebugSettings->disable3DMapObjectsStage)
+            {
+                Stopwatch map3DStageStopwatch(metric != nullptr);
+
+                const auto stageResult = _map3DObjectsStage->render(metric, MapRendererStage::ShadowMode::Build);
+
+                if (stageResult == MapRendererStage::StageResult::Fail)
+                    ok = false;
+                if (metric)
+                    metric->elapsedTimeForObjects3DStageToShadow += map3DStageStopwatch.elapsed();
+
+                if (!ok || stageResult == MapRendererStage::StageResult::Wait)
+                    skip = true;
+            }
+
+            if (!skip && !currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
+            {
+                Stopwatch symbolsStageStopwatch(metric != nullptr);
+                _symbolsStage->step = 0;
+                const auto stageResult = _symbolsStage->render(metric, MapRendererStage::ShadowMode::Build);
+                if (stageResult == MapRendererStage::StageResult::Fail)
+                    ok = false;
+                if (metric)
+                    metric->elapsedTimeForSymbolsStageToShadow = symbolsStageStopwatch.elapsed();
+
+                glDepthMask(GL_TRUE);
+                GL_CHECK_RESULT;
+
+                if (!ok || stageResult == MapRendererStage::StageResult::Wait)
+                    skip = true;
+            }
+
+            glDisable(GL_POLYGON_OFFSET_FILL);
+            GL_CHECK_RESULT;
+
+            gpuAPI->detachShadowmap();
+
+            glViewport(x, y, w, h);
+            GL_CHECK_RESULT;
+        }
+    }
+    else
+        gpuAPI->releaseShadowmap(false);
+
+    const auto shadowMode = withShadows ? MapRendererStage::ShadowMode::Use : MapRendererStage::ShadowMode::None;
 
     // Raster map stage is rendered without blending, since it's done in fragment shader
-    if (!currentDebugSettings->disableMapLayersStage)
+    if (!skip && !currentDebugSettings->disableMapLayersStage)
     {
 
         // Don't render the inside of map surface
@@ -202,7 +290,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         GL_CHECK_RESULT;
 
         Stopwatch mapLayersStageStopwatch(metric != nullptr);
-        const auto stageResult = _mapLayersStage->render(metric);
+        const auto stageResult = _mapLayersStage->render(metric, shadowMode);
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
         if (metric)
@@ -220,6 +308,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glEnable(GL_BLEND);
     GL_CHECK_RESULT;
 
+    // Initially, preconfigure depth buffer offset for vector symbols (against z-fighting)
+    glPolygonOffset(0.0f, -2.0f);
+    GL_CHECK_RESULT;
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    GL_CHECK_RESULT;
+
     // Render map symbols
     if (!skip && !currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
     {
@@ -227,8 +321,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
         Stopwatch symbolsStageStopwatch(metric != nullptr);
-        _symbolsStage->step = 0;
-        const auto stageResult = _symbolsStage->render(metric);
+        _symbolsStage->step = withShadows ? 1 : 0;
+        const auto stageResult = _symbolsStage->render(metric, shadowMode);
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
         if (metric)
@@ -249,7 +343,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     {
         Stopwatch map3DStageStopwatch(metric != nullptr);
 
-        const auto stageResult = _map3DObjectsStage->render(metric);
+        const auto stageResult = _map3DObjectsStage->render(metric, shadowMode);
 
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
@@ -267,16 +361,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
         Stopwatch symbolsStageStopwatch(metric != nullptr);
-        _symbolsStage->step = 1;
-        const auto stageResult = _symbolsStage->render(metric);
+        _symbolsStage->step = 2;
+        const auto stageResult = _symbolsStage->render(metric, shadowMode);
         if (stageResult == MapRendererStage::StageResult::Fail)
             ok = false;
         if (metric)
-        {
             metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
-            // Disable for now
-            //_symbolsStage->drawDebugMetricSymbol(metric);
-        }
 
         glDepthMask(GL_TRUE);
         GL_CHECK_RESULT;
@@ -705,8 +795,6 @@ OsmAnd::AtlasMapRendererInternalState_OpenGL OsmAnd::AtlasMapRenderer_OpenGL::ge
     return _requiredInternalState;
 }
 
-
-
 void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internalState, const MapRendererState& state,
     const float lowerDetail, const double tiltFactor, const CalculationSteps neededSteps) const
 {
@@ -767,6 +855,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     internalState->backVisibleEdgeD = glm::dot(backVisibleEdgeN, mTR_g.xyz());
     internalState->extraElevation = 0.0f;
     internalState->maxElevation = 0.0f;
+    internalState->minElevation = std::numeric_limits<float>::max();
 
     const auto defPoint = PointI64(INT64_MIN, INT64_MIN);
     internalState->elevatedFrustum2D31.p0 = defPoint;
@@ -774,6 +863,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     internalState->elevatedFrustum2D31.p2 = defPoint;
     internalState->elevatedFrustum2D31.p3 = defPoint;
     internalState->targetOffset = PointI64(0, 0);
+
+    glm::dvec3 radialVector(0.0);
+    glm::vec3 centralVisiblePoint(0.0f);
+    float visibleRadius = 0.0f;
 
     // Calculate visible area for plane
     if (state.flatEarth)
@@ -829,11 +922,17 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         frustum2D.p2 = PointF(intersectionPoints[2].x, intersectionPoints[2].y);
         frustum2D.p3 = PointF(intersectionPoints[3].x, intersectionPoints[3].y);
 
-        const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomLevel));
-        frustum2D31.p0 = PointI64((frustum2D.p0 / TileSize3D) * static_cast<double>(tileSize31));
-        frustum2D31.p1 = PointI64((frustum2D.p1 / TileSize3D) * static_cast<double>(tileSize31));
-        frustum2D31.p2 = PointI64((frustum2D.p2 / TileSize3D) * static_cast<double>(tileSize31));
-        frustum2D31.p3 = PointI64((frustum2D.p3 / TileSize3D) * static_cast<double>(tileSize31));
+        AreaF visibleArea;
+        visibleArea.enlargeToInclude(frustum2D.p0);
+        visibleArea.enlargeToInclude(frustum2D.p1);
+        visibleArea.enlargeToInclude(frustum2D.p2);
+        visibleArea.enlargeToInclude(frustum2D.p3);
+
+        const auto tileSize31 = static_cast<double>(1u << (ZoomLevel::MaxZoomLevel - state.zoomLevel)) / TileSize3D;
+        frustum2D31.p0 = PointI64(frustum2D.p0 * tileSize31);
+        frustum2D31.p1 = PointI64(frustum2D.p1 * tileSize31);
+        frustum2D31.p2 = PointI64(frustum2D.p2 * tileSize31);
+        frustum2D31.p3 = PointI64(frustum2D.p3 * tileSize31);
 
         internalState->globalFrustum2D31 = frustum2D31 + state.target31;
 
@@ -864,20 +963,27 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
             frustum2D.p1 = PointF(extraIntersections[1].x, extraIntersections[1].y);
             frustum2D.p2 = PointF(extraIntersections[2].x, extraIntersections[2].y);
             frustum2D.p3 = PointF(extraIntersections[3].x, extraIntersections[3].y);
-            internalState->extraFrustum2D31.p0 =
-                PointI64((frustum2D.p0 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
-            internalState->extraFrustum2D31.p1 =
-                PointI64((frustum2D.p1 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
-            internalState->extraFrustum2D31.p2 =
-                PointI64((frustum2D.p2 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
-            internalState->extraFrustum2D31.p3 =
-                PointI64((frustum2D.p3 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
+            visibleArea.enlargeToInclude(frustum2D.p0);
+            visibleArea.enlargeToInclude(frustum2D.p1);
+            visibleArea.enlargeToInclude(frustum2D.p2);
+            visibleArea.enlargeToInclude(frustum2D.p3);
+            internalState->extraFrustum2D31.p0 = PointI64(frustum2D.p0 * tileSize31) + state.target31;
+            internalState->extraFrustum2D31.p1 = PointI64(frustum2D.p1 * tileSize31) + state.target31;
+            internalState->extraFrustum2D31.p2 = PointI64(frustum2D.p2 * tileSize31) + state.target31;
+            internalState->extraFrustum2D31.p3 = PointI64(frustum2D.p3 * tileSize31) + state.target31;
         }
         else
             internalState->extraFrustum2D31 = Frustum2D31();
 
         if (neededSteps == FullGeometry)
             return;
+
+        if (state.castSunShadows)
+        {
+            centralVisiblePoint = glm::vec3(
+                visibleArea.left() + visibleArea.right(), 0.0f, visibleArea.top() + visibleArea.bottom()) * 0.5f;
+            visibleRadius = glm::distance(centralVisiblePoint, glm::vec3(visibleArea.left(), 0.0f, visibleArea.top()));
+        }
     }
 
     const auto isNotTopDownProjection = internalState->isNotTopDownProjection;
@@ -912,25 +1018,21 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     {
         const auto backP = backN * (1.0 / cameraDistance);
         const auto backD = glm::dot(backN, backP);
-        double length;
-        auto rayD = camTL;
-        if (!rayIntersectPlane(backN, backP, rayD, camPos, length) || length < 0.0)
-        {
-            rayD = glm::normalize((camTL + camBL) / 2.0);
-            rayIntersectPlane(backN, backP, rayD, camPos, length);
-        }
-        const auto MTL = camPos + rayD * length;
-        rayD = camTR;
-        if (!rayIntersectPlane(backN, backP, rayD, camPos, length) || length < 0.0)
-        {
-            rayD = glm::normalize((camTR + camBR) / 2.0);
-            rayIntersectPlane(backN, backP, rayD, camPos, length);
-        }
-        const auto MTR = camPos + rayD * length;
-        rayIntersectPlane(backN, backP, camBL, camPos, length);
-        const auto MBL = camPos + camBL * length;
-        rayIntersectPlane(backN, backP, camBR, camPos, length);
-        const auto MBR = camPos + camBR * length;
+        double lengthL, lengthR;
+        const auto camML = glm::normalize(camTL + camBL);
+        const auto camMR = glm::normalize(camTR + camBR);
+        rayIntersectPlane(backN, backP, camML, camPos, lengthL);
+        rayIntersectPlane(backN, backP, camMR, camPos, lengthR);
+        const auto CTL = camPos + camML * lengthL;
+        const auto CTR = camPos + camMR * lengthR;
+        bool useMiddle = !rayIntersectPlane(backN, backP, camTL, camPos, lengthL) || lengthL < 0.0
+            || !rayIntersectPlane(backN, backP, camTR, camPos, lengthR) || lengthR < 0.0;
+        const auto MTL = useMiddle ? CTL : camPos + camTL * lengthL;
+        const auto MTR = useMiddle ? CTR : camPos + camTR * lengthR;
+        rayIntersectPlane(backN, backP, camBL, camPos, lengthL);
+        rayIntersectPlane(backN, backP, camBR, camPos, lengthR);
+        const auto MBL = camPos + camBL * lengthL;
+        const auto MBR = camPos + camBR * lengthR;
         auto minVectorX = glm::dvec2(0.0, 0.0);
         auto maxVectorX = minVectorX;
         auto minCoordY = std::numeric_limits<double>::infinity();
@@ -959,19 +1061,31 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         else if (withFBL && withFBR)
         {
             planeIntersectsSphere(bottomN, bottomD, minVectorX, maxVectorX, minCoordY, maxCoordY, &FBL, &FBR);
-            auto& p = FBR;
+            auto p = FBR;
             if (rayIntersectsSphere(MTR, -BRTR, 1.0, VTR, true))
             {
                 planeIntersectsSphere(rightN, rightD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTR);
                 p = VTR;
             }
-            if (rayIntersectsSphere(MTR, TRTL, 1.0, HTR, true))
+            if (!useMiddle && rayIntersectsSphere(MTR, TRTL, 1.0, HTR, true))
             {
                 planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
                 p = HTR;
                 if (rayIntersectsSphere(MTL, -TRTL, 1.0, HTL, true))
                 {
                     planeIntersectsSphere(topN, topD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTL);
+                    p = HTL;
+                }
+            }
+            else if (!rayIntersectsSphere(camPos, camML, 1.0, FTL)
+                && !rayIntersectsSphere(camPos, camMR, 1.0, FTR)
+                && rayIntersectsSphere(CTR, TRTL, 1.0, HTR, true))
+            {
+                planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
+                p = HTR;
+                if (rayIntersectsSphere(CTL, -TRTL, 1.0, HTL, true))
+                {
+                    planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTL);
                     p = HTL;
                 }
             }
@@ -992,9 +1106,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                 if (isPointVisible(glm::dvec3(0.0),
                     topN, leftN, bottomN, rightN, topD, leftD, bottomD, rightD, true, true, false, true))
                 {
-                    auto& p = HBR;
+                    auto p = HBR;
+                    int i = 0;
                     if (rayIntersectsSphere(MBR, BRTR, 1.0, VBR, true))
                     {
+                        i++;
                         planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VBR);
                         p = VBR;
                         if (rayIntersectsSphere(MTR, -BRTR, 1.0, VTR, true))
@@ -1004,8 +1120,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                             p = VTR;
                         }
                     }
-                    if (rayIntersectsSphere(MTR, TRTL, 1.0, HTR, true))
+                    if (!useMiddle && rayIntersectsSphere(MTR, TRTL, 1.0, HTR, true))
                     {
+                        i += 3;
                         planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
                         p = HTR;
                         if (rayIntersectsSphere(MTL, -TRTL, 1.0, HTL, true))
@@ -1014,8 +1131,23 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                             p = HTL;
                         }
                     }
+                    else if (!rayIntersectsSphere(camPos, camML, 1.0, FTL)
+                        && !rayIntersectsSphere(camPos, camMR, 1.0, FTR)
+                        && rayIntersectsSphere(CTR, TRTL, 1.0, HTR, true))
+                    {
+                        i += 3;
+                        planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
+                        p = HTR;
+                        if (rayIntersectsSphere(CTL, -TRTL, 1.0, HTL, true))
+                        {
+                            planeIntersectsSphere(
+                                backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTL);
+                            p = HTL;
+                        }
+                    }
                     if (rayIntersectsSphere(MTL, TLBL, 1.0, VTL, true))
                     {
+                        i += 2;
                         planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTL);
                         p = VTL;
                         if (rayIntersectsSphere(MBL, -TLBL, 1.0, VBL, true))
@@ -1025,45 +1157,72 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                             p = VBL;
                         }
                     }
+                    if (i < 3)
+                    {
+                        if ((i == 0 || i == 2) && rayIntersectsSphere(CTR, TRTL, 1.0, HTR, true))
+                        {
+                            planeIntersectsSphere(
+                                backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
+                            p = HTR;
+                        }
+                        if ((i == 0 || i == 1) && rayIntersectsSphere(CTL, -TRTL, 1.0, HTL, true))
+                        {
+                            planeIntersectsSphere(
+                                backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTL);
+                            p = HTL;
+                        }
+                    }
                     planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HBL);
                 }
                 else
                 {
-                    planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &HBR, &HBL);
+                    auto p = HBR;
+                    if (!useMiddle && rayIntersectsSphere(MTR, TRTL, 1.0, HTR, true))
+                    {
+                        planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
+                        p = HTR;
+                        if (rayIntersectsSphere(MTL, -TRTL, 1.0, HTL, true))
+                        {
+                            planeIntersectsSphere(topN, topD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTL);
+                            p = HTL;
+                        }
+                    }
+                    else if (!rayIntersectsSphere(camPos, camML, 1.0, FTL)
+                        && !rayIntersectsSphere(camPos, camMR, 1.0, FTR)
+                        && rayIntersectsSphere(CTR, TRTL, 1.0, HTR, true))
+                    {
+                        planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
+                        p = HTR;
+                        if (rayIntersectsSphere(CTL, -TRTL, 1.0, HTL, true))
+                        {
+                            planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTL);
+                            p = HTL;
+                        }
+                    }
+                    planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HBL);
                     checkExtra = true;
                 }
             }
-            else if (rayIntersectsSphere(MBR, BRTR, 1.0, VBR, true) && rayIntersectsSphere(MTR, -BRTR, 1.0, VTR, true))
+            else if (rayIntersectsSphere(MBR, BRTR, 1.0, VBR, true) && rayIntersectsSphere(MTR, -BRTR, 1.0, VTR, true)
+                && rayIntersectsSphere(MTL, TLBL, 1.0, VTL, true) && rayIntersectsSphere(MBL, -TLBL, 1.0, VBL, true))
             {
                 planeIntersectsSphere(rightN, rightD, minVectorX, maxVectorX, minCoordY, maxCoordY, &VBR, &VTR);
-                auto& p = VTR;
-                if (rayIntersectsSphere(MTL, TLBL, 1.0, VTL, true))
+                auto p = VTR;
+                if (!rayIntersectsSphere(camPos, camML, 1.0, FTL)
+                    && !rayIntersectsSphere(camPos, camMR, 1.0, FTR)
+                    && rayIntersectsSphere(CTR, TRTL, 1.0, HTR, true))
                 {
-                    planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTL);
-                    p = VTL;
-                    if (rayIntersectsSphere(MBL, -TLBL, 1.0, VBL, true))
+                    planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTR);
+                    p = HTR;
+                    if (rayIntersectsSphere(CTL, -TRTL, 1.0, HTL, true))
                     {
-                        planeIntersectsSphere(leftN, leftD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VBL);
-                        p = VBL;
-                    }
-                }
-                planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VBR);
-            }
-            else if (rayIntersectsSphere(MTL, TLBL, 1.0, VTL, true) && rayIntersectsSphere(MBL, -TLBL, 1.0, VBL, true))
-            {
-                planeIntersectsSphere(leftN, leftD, minVectorX, maxVectorX, minCoordY, maxCoordY, &VTL, &VBL);
-                auto& p = VBL;
-                if (rayIntersectsSphere(MBR, BRTR, 1.0, VBR, true))
-                {
-                    planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VBR);
-                    p = VBR;
-                    if (rayIntersectsSphere(MTR, -BRTR, 1.0, VTR, true))
-                    {
-                        planeIntersectsSphere(rightN, rightD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTR);
-                        p = VTR;
+                        planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &HTL);
+                        p = HTL;
                     }
                 }
                 planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &p, &VTL);
+                planeIntersectsSphere(leftN, leftD, minVectorX, maxVectorX, minCoordY, maxCoordY, &VTL, &VBL);
+                planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY, &VBL, &VBR);
             }
             else
                 planeIntersectsSphere(backN, backD, minVectorX, maxVectorX, minCoordY, maxCoordY);
@@ -1109,7 +1268,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         auto max64 = Utilities::get64FromAngles(PointD(maxAngleX, minAngleY));
         if (max64.x == 0)
             max64.x = INT32_MAX;
-        if (min64.x >= max64.x)
+        const bool unwrap = min64.x >= max64.x;
+        if (unwrap)
             min64.x = min64.x - INT32_MAX - 1;
 
         internalState->globalFrustum2D31.p0.x = min64.x;
@@ -1122,6 +1282,26 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
 
         if (neededSteps == FullGeometry)
             return;
+
+        if (state.castSunShadows)
+        {
+            const auto nextAngleX = unwrap ? maxAngleX + 2.0 * M_PI : maxAngleX;
+            radialVector = Utilities::getGlobeRadialVector(PointD(minAngleX + nextAngleX,
+                (withNorthPole ? maxAngleY : minAngleY) + (withSouthPole ? minAngleY : maxAngleY)) * 0.5);
+            const auto cornerVector = Utilities::getGlobeRadialVector(PointD(minAngleX,
+                qAbs(maxAngleY) > qAbs(minAngleY) ? minAngleY : maxAngleY));
+            auto minCos = glm::dot(radialVector, cornerVector);
+            if (nextAngleX - minAngleX > M_PI)
+            {
+                const auto nA = minAngleX + M_PI_2;
+                const glm::dvec2 nV(qSin(nA), qCos(nA));
+                const auto d = glm::dot(radialVector.xy(), nV);
+                const auto farVector = glm::normalize(glm::dvec3(nV * d - radialVector.xy(), -radialVector.z));
+                if (qAbs(farVector.z) < qAbs(cornerVector.z))
+                    minCos = qMin(minCos, glm::dot(radialVector, farVector));
+            }
+            visibleRadius = static_cast<float>(M_SQRT2 * qSqrt(1.0 - minCos) * globeRadius);
+        }
     }
 
     // Compute visible tileset
@@ -1704,6 +1884,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                         if (isTrulyVisible)
                         {
                             internalState->maxElevation = qMax(internalState->maxElevation, maxHeightInWorld);
+                            internalState->minElevation = qMin(internalState->minElevation, minHeightInWorld);
                             if (currentZoomLevel == zoomLevel)
                             {
                                 const auto mD = static_cast<double>(maxHeightInWorld) / globeRadius + 1.0;
@@ -1889,6 +2070,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
             std::swap(procTiles, nextTiles);
         }
     }
+    if (internalState->minElevation == std::numeric_limits<float>::max())
+        internalState->minElevation = 0.0f;
     // Normalize and make unique visible tiles
     internalState->visibleTilesCount = 0;
     internalState->visibleTiles.clear();
@@ -1996,54 +2179,120 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
             internalState->extraDetailedTiles.clear();
         }
     }
+
+    if (state.castSunShadows)
+    {
+        const auto sunAngle = glm::radians(state.elevationConfiguration.hillshadeSunAngle);
+        const auto sunAzimuth = glm::radians(state.elevationConfiguration.hillshadeSunAzimuth);
+        const auto sinAngle = static_cast<float>(qSin(sunAngle));
+        const auto cosAngle = static_cast<float>(qCos(sunAngle));
+        const auto sinAzimuth = static_cast<float>(qSin(sunAzimuth));
+        const auto cosAzimuth = static_cast<float>(qCos(sunAzimuth));
+        const glm::vec3 lightDirection(-sinAzimuth * cosAngle, -sinAngle, cosAzimuth * cosAngle);
+        const glm::vec3 lightUp(-sinAzimuth * sinAngle, cosAngle, cosAzimuth * sinAngle);
+        const auto midElevation = (internalState->minElevation + internalState->maxElevation) / 2.0f;
+        const auto extraDistance = internalState->maxElevation - midElevation
+            + qMin(static_cast<float>(1000.0 / internalState->metersPerUnit),
+            qMax(internalState->distanceFromCameraToGround - internalState->maxElevation, 0.0f));
+        glm::vec3 center(0.0f, midElevation, 0.0f);
+        if (state.flatEarth)
+        {
+            glm::vec2 intersectionPoints[4];
+            if (state.zoomLevel > ZoomLevel8 && internalState->worldCameraPosition.y > midElevation
+                && Utilities_OpenGL_Common::frustumIntersectsPlane(internalState->minElevation,
+                    nTL_g.xyz(), nTR_g.xyz(), nBL_g.xyz(), nBR_g.xyz(),
+                    mTL_g.xyz(), mTR_g.xyz(), mBL_g.xyz(), mBR_g.xyz(), intersectionPoints))
+            {
+                const auto c = (intersectionPoints[0] + intersectionPoints[1]
+                    + intersectionPoints[2] + intersectionPoints[3]) / 4.0f;
+                visibleRadius = qMax(
+                    qMax(glm::distance(c, intersectionPoints[0]),
+                        glm::distance(c, intersectionPoints[1])),
+                    qMax(glm::distance(c, intersectionPoints[2]),
+                        glm::distance(c, intersectionPoints[3])));
+                const auto gap = midElevation - internalState->minElevation;
+                visibleRadius = std::sqrt(visibleRadius * visibleRadius + gap * gap);
+                center.x  = c.x;
+                center.z  = c.y;
+            }
+            else
+            {
+                centralVisiblePoint.y = midElevation;
+                visibleRadius -= glm::distance(centralVisiblePoint, center);
+            }
+        }
+        else
+        {
+            const auto cornerCosine = glm::dot(camDir, camTL);
+            const auto cameraNearDistance = static_cast<double>(_zNear) / globeRadius / cornerCosine;
+            const auto cameraFarDistance = zLower / cornerCosine;
+            const auto minDistance = static_cast<double>(internalState->minElevation) / globeRadius + 1.0;
+            PointI64 intersectionPoints[4];
+            if (state.zoomLevel > ZoomLevel8 && !withNorthPole && !withSouthPole
+                && Utilities_OpenGL_Common::frustumIntersectsSphere(camPos, camTL, camTR, camBL, camBR,
+                cameraNearDistance, cameraFarDistance, minDistance, intersectionPoints))
+            {
+                radialVector = Utilities::getGlobeRadialVector(PointI((intersectionPoints[0] + intersectionPoints[1]
+                    + intersectionPoints[2] + intersectionPoints[3]) / 4));
+                visibleRadius = static_cast<float>(globeRadius * qMax(
+                    qMax(glm::distance(radialVector, Utilities::getGlobeRadialVector(PointI(intersectionPoints[0]))),
+                        glm::distance(radialVector, Utilities::getGlobeRadialVector(PointI(intersectionPoints[1])))),
+                    qMax(glm::distance(radialVector, Utilities::getGlobeRadialVector(PointI(intersectionPoints[2]))),
+                        glm::distance(radialVector, Utilities::getGlobeRadialVector(PointI(intersectionPoints[3]))))));
+                const auto gap = midElevation - internalState->minElevation;
+                visibleRadius = std::sqrt(visibleRadius * visibleRadius + gap * gap);
+                center = internalState->mGlobeRotationPrecise * radialVector * (globeRadius + midElevation)
+                    - glm::dvec3(0.0, globeRadius, 0.0);
+            }
+            else
+            {
+                centralVisiblePoint = internalState->mGlobeRotationPrecise * radialVector
+                    * (globeRadius + midElevation) - glm::dvec3(0.0, globeRadius, 0.0);
+                if (withNorthPole || withSouthPole)
+                {
+                    const auto radius = globeRadius + midElevation;
+                    const auto inverseDiameterSquared = 0.25 / (radius * radius);
+                    const auto centerDistance = static_cast<double>(glm::distance(centralVisiblePoint, center));
+                    visibleRadius = static_cast<float>(visibleRadius * std::sqrt(
+                            qMax(0.0, 1.0 - centerDistance * centerDistance * inverseDiameterSquared))
+                        - centerDistance * std::sqrt(
+                            qMax(0.0, 1.0 - visibleRadius * visibleRadius * inverseDiameterSquared)));
+                }
+                else
+                    visibleRadius -= glm::distance(centralVisiblePoint, center);
+            }
+        }
+        const auto lightView =
+            glm::lookAt(glm::vec3(0.0f), lightDirection, lightUp) * glm::translate(-center);
+        const auto pixelMargin = internalState->sizeOfPixelInWorld
+            * internalState->distanceFromCameraToTarget / _zNear;
+        const auto lightRadius =
+            qMax(1e-3f, std::sqrt(visibleRadius * visibleRadius + extraDistance * extraDistance) + pixelMargin);
+        internalState->mDirectSunlightProjection = glm::ortho(
+            -lightRadius, lightRadius, -lightRadius, lightRadius, -lightRadius, lightRadius) * lightView;
+    }
+
     // Compute visible area on elevated plane or bloated sphere if possible
     if (state.flatEarth)
     {
         if (internalState->worldCameraPosition.y > internalState->maxElevation)
         {
-            // Get (up to) 4 points of frustum edges & plane intersection
-            const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
-            const glm::vec3 planeE(0.0f, internalState->maxElevation, 0.0f);
-            auto intersectionPointsCounter = 0u;
-            glm::vec3 intersectionPoint;
-            glm::vec2 bottomIntersectionPoints[2];
-            glm::vec2 topIntersectionPoints[2];
-
-            if (intersectionPointsCounter < 2 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
-                planeN, planeE, nBL_g.xyz(), mBL_g.xyz(), intersectionPoint))
-                bottomIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
-            if (intersectionPointsCounter < 2 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
-                planeN, planeE, nBR_g.xyz(), mBR_g.xyz(), intersectionPoint))
-                bottomIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
-            if (intersectionPointsCounter < 2 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
-                planeN, planeE, nTL_g.xyz(), nBL_g.xyz(), intersectionPoint))
-                bottomIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
-            if (intersectionPointsCounter < 2 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
-                planeN, planeE, nTR_g.xyz(), nBR_g.xyz(), intersectionPoint))
-                bottomIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
-            intersectionPointsCounter = 0;
-            if (intersectionPointsCounter < 2 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
-                planeN, planeE, nTR_g.xyz(), mTR_g.xyz(), intersectionPoint))
-                topIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
-            if (intersectionPointsCounter < 2 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
-                planeN, planeE, nTL_g.xyz(), mTL_g.xyz(), intersectionPoint))
-                topIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
-            if (intersectionPointsCounter < 2 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
-                planeN, planeE, mTR_g.xyz(), mBR_g.xyz(), intersectionPoint))
-                topIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
-            if (intersectionPointsCounter < 2 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(
-                planeN, planeE, mTL_g.xyz(), mBL_g.xyz(), intersectionPoint))
-                topIntersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
-            const auto tileSize31 = static_cast<double>(1u << (ZoomLevel::MaxZoomLevel - state.zoomLevel));
-            internalState->elevatedFrustum2D31.p0 = PointI64((PointD(bottomIntersectionPoints[0].x,
-                bottomIntersectionPoints[0].y) / TileSize3D) * tileSize31) + state.target31;
-            internalState->elevatedFrustum2D31.p1 = PointI64((PointD(bottomIntersectionPoints[1].x,
-                bottomIntersectionPoints[1].y) / TileSize3D) * tileSize31) + state.target31;
-            internalState->elevatedFrustum2D31.p2 = PointI64((PointD(topIntersectionPoints[0].x,
-                topIntersectionPoints[0].y) / TileSize3D) * tileSize31) + state.target31;
-            internalState->elevatedFrustum2D31.p3 = PointI64((PointD(topIntersectionPoints[1].x,
-                topIntersectionPoints[1].y) / TileSize3D) * tileSize31) + state.target31;
-            internalState->targetOffset = internalState->elevatedFrustum2D31.clampCoordinates();
+            glm::vec2 intersectionPoints[4];
+            if (Utilities_OpenGL_Common::frustumIntersectsPlane(internalState->maxElevation,
+                nTL_g.xyz(), nTR_g.xyz(), nBL_g.xyz(), nBR_g.xyz(),
+                mTL_g.xyz(), mTR_g.xyz(), mBL_g.xyz(), mBR_g.xyz(), intersectionPoints))
+            {
+                const auto tileSize31 = static_cast<double>(1u << (ZoomLevel::MaxZoomLevel - state.zoomLevel));
+                internalState->elevatedFrustum2D31.p0 = PointI64((PointD(intersectionPoints[0].x,
+                    intersectionPoints[0].y) / TileSize3D) * tileSize31) + state.target31;
+                internalState->elevatedFrustum2D31.p1 = PointI64((PointD(intersectionPoints[1].x,
+                    intersectionPoints[1].y) / TileSize3D) * tileSize31) + state.target31;
+                internalState->elevatedFrustum2D31.p2 = PointI64((PointD(intersectionPoints[2].x,
+                    intersectionPoints[2].y) / TileSize3D) * tileSize31) + state.target31;
+                internalState->elevatedFrustum2D31.p3 = PointI64((PointD(intersectionPoints[3].x,
+                    intersectionPoints[3].y) / TileSize3D) * tileSize31) + state.target31;
+                internalState->targetOffset = internalState->elevatedFrustum2D31.clampCoordinates();
+            }
         }
     }
     else if (!withNorthPole && !withSouthPole)
@@ -2051,79 +2300,19 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
         const auto cornerCosine = glm::dot(camDir, camTL);
         const auto cameraNearDistance = static_cast<double>(_zNear) / globeRadius / cornerCosine;
         const auto cameraFarDistance = zFar / cornerCosine;
-        const auto nTL = camPos + camTL * cameraNearDistance;
-        const auto nTR = camPos + camTR * cameraNearDistance;
-        const auto nBL = camPos + camBL * cameraNearDistance;
-        const auto nBR = camPos + camBR * cameraNearDistance;
-        const auto fTL = camPos + camTL * cameraFarDistance;
-        const auto fTR = camPos + camTR * cameraFarDistance;
-        const auto fBL = camPos + camBL * cameraFarDistance;
-        const auto fBR = camPos + camBR * cameraFarDistance;
-        auto bottomPointsCounter = 0;
-        auto topPointsCounter = 0;
-        PointI64 bottomIntersectionPoint[2];
-        PointI64 topIntersectionPoint[2];
-        PointD iAngles;
-        if (lineSegmentIntersectsSphere(nBL, fBL, maxDistance, iAngles.x, iAngles.y))
-            bottomIntersectionPoint[bottomPointsCounter++] = Utilities::get31FromAngles(iAngles);
-        if (bottomPointsCounter < 1
-            && lineSegmentIntersectsSphere(nTL, nBL, maxDistance, iAngles.x, iAngles.y))
-            bottomIntersectionPoint[bottomPointsCounter++] = Utilities::get31FromAngles(iAngles);
-        if (lineSegmentIntersectsSphere(nBR, fBR, maxDistance, iAngles.x, iAngles.y))
-            bottomIntersectionPoint[bottomPointsCounter++] = Utilities::get31FromAngles(iAngles);
-        if (bottomPointsCounter < 2
-            && lineSegmentIntersectsSphere(nTR, nBR, maxDistance, iAngles.x, iAngles.y))
-            bottomIntersectionPoint[bottomPointsCounter++] = Utilities::get31FromAngles(iAngles);
-        if (lineSegmentIntersectsSphere(nTR, fTR, maxDistance, iAngles.x, iAngles.y))
-            topIntersectionPoint[topPointsCounter++] = Utilities::get31FromAngles(iAngles);
-        if (topPointsCounter < 1
-            && lineSegmentIntersectsSphere(fTR, fBR, maxDistance, iAngles.x, iAngles.y))
-            topIntersectionPoint[topPointsCounter++] = Utilities::get31FromAngles(iAngles);
-        if (lineSegmentIntersectsSphere(nTL, fTL, maxDistance, iAngles.x, iAngles.y))
-            topIntersectionPoint[topPointsCounter++] = Utilities::get31FromAngles(iAngles);
-        if (topPointsCounter < 2
-            && lineSegmentIntersectsSphere(fTL, fBL, maxDistance, iAngles.x, iAngles.y))
-            topIntersectionPoint[topPointsCounter++] = Utilities::get31FromAngles(iAngles);
-        if (topPointsCounter == 2 && bottomPointsCounter == 2)
+        PointI64 intersectionPoints[4];
+        if (Utilities_OpenGL_Common::frustumIntersectsSphere(camPos, camTL, camTR, camBL, camBR,
+            cameraNearDistance, cameraFarDistance, maxDistance, intersectionPoints))
         {
-            const auto intHalf = INT32_MAX / 2 + 1;
-            if (bottomIntersectionPoint[0].x > bottomIntersectionPoint[1].x
-                && bottomIntersectionPoint[0].x - bottomIntersectionPoint[1].x > intHalf)
-                bottomIntersectionPoint[0].x = bottomIntersectionPoint[0].x - INT32_MAX - 1;
-            else if (bottomIntersectionPoint[1].x > bottomIntersectionPoint[0].x
-                && bottomIntersectionPoint[1].x - bottomIntersectionPoint[0].x > intHalf)
-                bottomIntersectionPoint[1].x = bottomIntersectionPoint[1].x - INT32_MAX - 1;
-            if (topIntersectionPoint[0].x > topIntersectionPoint[1].x
-                && topIntersectionPoint[0].x - topIntersectionPoint[1].x > intHalf)
-                topIntersectionPoint[0].x = topIntersectionPoint[0].x - INT32_MAX - 1;
-            else if (topIntersectionPoint[1].x > topIntersectionPoint[0].x
-                && topIntersectionPoint[1].x - topIntersectionPoint[0].x > intHalf)
-                topIntersectionPoint[1].x = topIntersectionPoint[1].x - INT32_MAX - 1;
-            if (qMax(bottomIntersectionPoint[0].x, bottomIntersectionPoint[1].x)
-                - qMin(topIntersectionPoint[0].x, topIntersectionPoint[1].x) > intHalf)
-            {
-                if (bottomIntersectionPoint[1].x <= bottomIntersectionPoint[0].x)
-                    bottomIntersectionPoint[0].x = bottomIntersectionPoint[0].x - INT32_MAX - 1;
-                if (bottomIntersectionPoint[0].x <= bottomIntersectionPoint[1].x)
-                    bottomIntersectionPoint[1].x = bottomIntersectionPoint[1].x - INT32_MAX - 1;
-            }
-            else if (qMax(topIntersectionPoint[0].x, topIntersectionPoint[1].x)
-                - qMin(bottomIntersectionPoint[0].x, bottomIntersectionPoint[1].x) > intHalf)
-            {
-                if (topIntersectionPoint[1].x <= topIntersectionPoint[0].x)
-                    topIntersectionPoint[0].x = topIntersectionPoint[0].x - INT32_MAX - 1;
-                if (topIntersectionPoint[0].x <= topIntersectionPoint[1].x)
-                    topIntersectionPoint[1].x = topIntersectionPoint[1].x - INT32_MAX - 1;
-            }
-            internalState->elevatedFrustum2D31.p0 = bottomIntersectionPoint[0];
-            internalState->elevatedFrustum2D31.p1 = bottomIntersectionPoint[1];
-            internalState->elevatedFrustum2D31.p2 = topIntersectionPoint[0];
-            internalState->elevatedFrustum2D31.p3 = topIntersectionPoint[1];
-            const auto centerX = static_cast<int>((bottomIntersectionPoint[0].x + bottomIntersectionPoint[1].x
-                + topIntersectionPoint[0].x + topIntersectionPoint[1].x) / 4);
+            internalState->elevatedFrustum2D31.p0 = intersectionPoints[0];
+            internalState->elevatedFrustum2D31.p1 = intersectionPoints[1];
+            internalState->elevatedFrustum2D31.p2 = intersectionPoints[2];
+            internalState->elevatedFrustum2D31.p3 = intersectionPoints[3];
+            const auto centerX = static_cast<int>((intersectionPoints[0].x + intersectionPoints[1].x
+                + intersectionPoints[2].x + intersectionPoints[3].x) / 4);
             const auto targetX = state.target31.x - INT32_MAX - 1;
-            internalState->targetOffset =
-                PointI64(qAbs(centerX - state.target31.x) > qAbs(centerX - targetX) ? 1u + INT32_MAX : 0, 0);
+            internalState->targetOffset = PointI64(qAbs(static_cast<int64_t>(centerX) - state.target31.x)
+                > qAbs(static_cast<int64_t>(centerX) - targetX) ? 1u + INT32_MAX : 0, 0);
         }
     }
 }

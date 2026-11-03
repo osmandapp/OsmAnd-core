@@ -332,8 +332,12 @@ namespace OsmAnd
         QString getMemoryStats() const;
 
         virtual bool initialize() = 0;
+        virtual bool initializeShadowmap(int resolution) = 0;
+        virtual bool attachShadowmap(int resolution) = 0;
+        virtual bool detachShadowmap() = 0;
         virtual int checkElementVisibility(int queryIndex, float pointSize) = 0;
         virtual bool elementIsVisible(int queryIndex) = 0;
+        virtual bool releaseShadowmap(bool gpuContextLost) = 0;
         virtual bool release(bool gpuContextLost) = 0;
 
         virtual bool uploadTiledDataToGPU(

@@ -14,10 +14,6 @@ namespace OsmAnd
         {
         }
         ~AtlasMapRendererMap3DObjectsStage() override = default;
-
-        virtual bool initialize() override = 0;
-        virtual StageResult render(IMapRenderer_Metrics::Metric_renderFrame* const metric) override = 0;
-        virtual bool release(bool gpuContextLost) override = 0;
     };
 }
 

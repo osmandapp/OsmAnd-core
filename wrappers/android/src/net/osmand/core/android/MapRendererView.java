@@ -1596,6 +1596,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.get3DBuildingsDetalization();
     }
 
+    public final boolean castShadows(boolean enableShadows) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.castShadows(enableShadows);
+    }
+
     public final boolean setDateTime(long dateTime) {
         NativeCore.checkIfLoaded();
 

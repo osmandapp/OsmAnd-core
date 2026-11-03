@@ -212,6 +212,7 @@ namespace OsmAnd
         virtual bool hitSurface() const = 0;
         virtual bool set3DBuildingsAlpha(const float alpha, bool forcedUpdate = false) = 0;
         virtual float get3DBuildingsAlpha() const = 0;
+        virtual bool castShadows(bool enableShadows) = 0;
         virtual bool set3DBuildingsDetalization(const int detalization, bool forcedUpdate = false) = 0;
         virtual int get3DBuildingsDetalization() const = 0;
         virtual bool setDateTime(const int64_t dateTime, bool forcedUpdate = false) = 0;

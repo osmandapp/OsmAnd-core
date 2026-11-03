@@ -153,7 +153,14 @@ namespace OsmAnd
         };
 
     private:
+        MapRenderer::PublishedMapSymbolsByOrder frameSymbols;
+        bool frameSymbolsAreValid = false;
+
+        void prepare(
+            const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
         bool obtainRenderableSymbols(
+            const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbolsBeforeBuildings,
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbolsAfterBuildings,
             ScreenQuadTree& outIntersections,
@@ -304,11 +311,14 @@ namespace OsmAnd
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
 
         // Terrain-related:
-        virtual bool preRender(QList< std::shared_ptr<const RenderableSymbol> >& preRenderableSymbols,
+        virtual bool preRender(bool shadowmap,
+            QList< std::shared_ptr<const RenderableSymbol> >& preRenderableSymbols,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) = 0;
-        virtual bool preRenderWithVolume(
+        virtual bool preRenderWithVolume(bool shadowmap,
             QList< std::shared_ptr<const RenderableSymbol> >& denseSymbolsBeforeBuildings,
             QList< std::shared_ptr<const RenderableSymbol> >& denseSymbolsAfterBuildings,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) = 0;
+        virtual bool renderSymbols(
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) = 0;
         virtual void clearTerrainVisibilityFiltering() = 0;
         virtual int startTerrainVisibilityFiltering(
@@ -509,12 +519,11 @@ namespace OsmAnd
         QList< std::shared_ptr<const RenderableSymbol> > renderableSymbolsBeforeBuildings;
         QList< std::shared_ptr<const RenderableSymbol> > renderableSymbolsAfterBuildings;
 
-        void prepare(AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
+        bool drawSymbols(bool forShadowmap, AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
 
         std::shared_ptr<AtlasMapRendererSymbolsStageModel3D> _model3DSubstage;
         virtual void createSubstages() = 0;
 
-        bool isLongPrepareStage = false;
     public:
         AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer);
         virtual ~AtlasMapRendererSymbolsStage();
@@ -538,8 +547,6 @@ namespace OsmAnd
             const AreaI& screenArea,
             QList<IMapRenderer::MapSymbolInformation>& outMapSymbols,
             const bool strict = false) const;
-
-        virtual void drawDebugMetricSymbol(IMapRenderer_Metrics::Metric_renderFrame* metric_) = 0;
 
         friend class AtlasMapRendererSymbolsStageModel3D;
 

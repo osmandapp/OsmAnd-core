@@ -41,6 +41,18 @@ namespace OsmAnd
             glm::vec3& lineX,
             float* distance = nullptr);
 
+        bool frustumIntersectsPlane(
+            const float elevation,
+            const glm::vec3& nTL,
+            const glm::vec3& nTR,
+            const glm::vec3& nBL,
+            const glm::vec3& nBR,
+            const glm::vec3& fTL,
+            const glm::vec3& fTR,
+            const glm::vec3& fBL,
+            const glm::vec3& fBR,
+            glm::vec2 (&intersectionPoints)[4]);
+
         bool checkPlaneSegmentIntersection(
             const glm::vec3& planeN,
             const glm::vec3& planeO,
@@ -85,6 +97,17 @@ namespace OsmAnd
             const double radius,
             double& angleX,
             double& angleY);
+
+        bool frustumIntersectsSphere(
+            const glm::dvec3& camPos,
+            const glm::dvec3& camTL,
+            const glm::dvec3& camTR,
+            const glm::dvec3& camBL,
+            const glm::dvec3& camBR,
+            const double cameraNearDistance,
+            const double cameraFarDistance,
+            const double radius,
+            PointI64 (&intersectionPoints)[4]);
 
         bool rayIntersectsCone(
             const glm::dvec3& p0,

@@ -3666,6 +3666,25 @@ int OsmAnd::MapRenderer::get3DBuildingsDetalization() const
     return _buildings3DDetalization;
 }
 
+bool OsmAnd::MapRenderer::castShadows(const bool enableShadows)
+{
+    QMutexLocker scopedLocker1(&_initializationLock);
+
+    if (!_isRenderingInitialized)
+        return false;
+
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (_requestedState.castSunShadows == enableShadows)
+        return false;
+
+    _requestedState.castSunShadows = enableShadows;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Shadows);
+
+    return true;
+}
+
 bool OsmAnd::MapRenderer::setDateTime(const int64_t dateTime, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);

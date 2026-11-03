@@ -439,6 +439,8 @@ namespace OsmAnd
         enum {
             SamplerTypesCount = static_cast<int>(SamplerType::__LAST),
         };
+        virtual GLuint getShadowmapDepthTexture() const = 0;
+        virtual int getShadowmapResolution() const = 0;
         virtual void setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType) = 0;
         virtual void applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock) = 0;
 
