@@ -990,17 +990,20 @@ OsmAnd::ObfMapObjectsProvider_P::RetainableCacheMetadata::~RetainableCacheMetada
         referencedBinaryMapObjectsDataBlocks.clear();
     }
 
-    // Remove tile reference from collection. All checks here does not matter,
-    // since entry->tile reference is already expired (execution is already in destructor of OfflineMapDataTile!)
-    if (const auto tileEntry = tileEntryWeakRef.lock())
-    {
-        if (const auto link = tileEntry->link.lock())
-            link->collection.removeEntry(tileEntry->tileId, tileEntry->zoom);
-    }
-
-    // Dereference shared map objects
     if (const auto link = weakLink.lock())
     {
+        // Use the provider lifetime guard: the entry's link can be reset concurrently during removal.
+        if (const auto tileEntry = tileEntryWeakRef.lock())
+        {
+            link->_coastlineReferences.removeEntry(tileEntry->tileId, tileEntry->zoom,
+                [&tileEntry](const std::shared_ptr<TileSharedEntry>& entry)
+                {
+                    // Old metadata must not remove a replacement entry for the same tile.
+                    return entry == tileEntry;
+                });
+        }
+
+        // Dereference shared map objects
         for (auto& referencedBinaryMapObject : referencedBinaryMapObjects)
         {
             const UniqueBinaryMapObjectId id(referencedBinaryMapObject->blockId, referencedBinaryMapObject->id);
