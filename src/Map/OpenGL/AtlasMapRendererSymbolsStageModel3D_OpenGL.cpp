@@ -121,6 +121,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
         }
         if (_program.binaryCache.isEmpty() || !_program.id.isValid())
         {
+            LogPrintf(LogSeverityLevel::Info,
+                "Starting shader compilation for AtlasMapRendererSymbolsStageModel3D_OpenGL");
             const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
             if (vsId == 0)
             {
@@ -138,6 +140,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::initialize()
                     "Failed to compile Model3D fragment shader");
                 return false;
             }
+            LogPrintf(LogSeverityLevel::Info,
+                "Finished shader compilation for AtlasMapRendererSymbolsStageModel3D_OpenGL");
             const GLuint shaders[] = { vsId, fsId };
             _program.id = gpuAPI->linkProgram(
                 2, shaders, _program.binaryCache, _program.cacheFormat, true, &variablesMap);

@@ -221,6 +221,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeSimpleProgram()
         }
         if (_program.binaryCache.isEmpty() || !_program.id.isValid())
         {
+            LogPrintf(LogSeverityLevel::Info,
+                "Starting shader compilation for AtlasMapRendererMap3DObjectsStage_OpenGL::Simple");
             const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
             if (vsId == 0)
             {
@@ -238,6 +240,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeSimpleProgram()
                 return false;
             }
 
+            LogPrintf(LogSeverityLevel::Info,
+                "Finished shader compilation for AtlasMapRendererMap3DObjectsStage_OpenGL::Simple");
             const GLuint shaders[] = { vsId, fsId };
             _program.id = gpuAPI->linkProgram(
                 2, shaders, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
@@ -418,6 +422,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
         }
         if (_colorProgram.binaryCache.isEmpty() || !_colorProgram.id.isValid())
         {
+            LogPrintf(LogSeverityLevel::Info,
+                "Starting shader compilation for AtlasMapRendererMap3DObjectsStage_OpenGL::Color");
             const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
             if (vsId == 0)
             {
@@ -435,6 +441,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
                 return false;
             }
 
+            LogPrintf(LogSeverityLevel::Info,
+                "Finished shader compilation for AtlasMapRendererMap3DObjectsStage_OpenGL::Color");
             const GLuint shaders[] = { vsId, fsId };
             _colorProgram.id = gpuAPI->linkProgram(
                 2, shaders, _colorProgram.binaryCache, _colorProgram.cacheFormat, true, &variablesMap);
@@ -562,6 +570,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeDepthProgram()
         }
         if (_depthProgram.binaryCache.isEmpty() || !_depthProgram.id.isValid())
         {
+            LogPrintf(LogSeverityLevel::Info,
+                "Starting shader compilation for AtlasMapRendererMap3DObjectsStage_OpenGL::Depth");
             const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
             if (vsId == 0)
             {
@@ -579,6 +589,8 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeDepthProgram()
                 return false;
             }
 
+            LogPrintf(LogSeverityLevel::Info,
+                "Finished shader compilation for AtlasMapRendererMap3DObjectsStage_OpenGL::Depth");
             const GLuint shaders[] = { vsId, fsId };
             _depthProgram.id = gpuAPI->linkProgram(
                 2, shaders, _depthProgram.binaryCache, _depthProgram.cacheFormat, true, &variablesMap);

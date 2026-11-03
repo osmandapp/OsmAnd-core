@@ -167,6 +167,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializePoints2D()
         }
         if (_programPoint2D.binaryCache.isEmpty() || !_programPoint2D.id.isValid())
         {
+            LogPrintf(LogSeverityLevel::Info,
+                "Starting shader compilation for AtlasMapRendererDebugStage_OpenGL::Points2D");
             const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
             if (vsId == 0)
             {
@@ -184,6 +186,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializePoints2D()
                     "Failed to compile Point2D fragment shader");
                 return false;
             }
+            LogPrintf(LogSeverityLevel::Info,
+                "Finished shader compilation for AtlasMapRendererDebugStage_OpenGL::Points2D");
             GLuint shaders[] = { vsId, fsId };
             _programPoint2D.id = gpuAPI->linkProgram(2, shaders,
                 _programPoint2D.binaryCache, _programPoint2D.cacheFormat, true, &variablesMap);
@@ -482,6 +486,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
         }
         if (_programRect2D.binaryCache.isEmpty() || !_programRect2D.id.isValid())
         {
+            LogPrintf(LogSeverityLevel::Info,
+                "Starting shader compilation for AtlasMapRendererDebugStage_OpenGL::Rects2D");
             const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
             if (vsId == 0)
             {
@@ -499,6 +505,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
                     "Failed to compile Rect2D fragment shader");
                 return false;
             }
+            LogPrintf(LogSeverityLevel::Info,
+                "Finished shader compilation for AtlasMapRendererDebugStage_OpenGL::Rects2D");
             GLuint shaders[] = { vsId, fsId };
             _programRect2D.id = gpuAPI->linkProgram(2, shaders,
                 _programRect2D.binaryCache, _programRect2D.cacheFormat, true, &variablesMap);
@@ -780,6 +788,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
         }
         if (_programLine2D.binaryCache.isEmpty() || !_programLine2D.id.isValid())
         {
+            LogPrintf(LogSeverityLevel::Info,
+                "Starting shader compilation for AtlasMapRendererDebugStage_OpenGL::Lines2D");
             const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
             if (vsId == 0)
             {
@@ -797,6 +807,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
                     "Failed to compile Line2D fragment shader");
                 return false;
             }
+            LogPrintf(LogSeverityLevel::Info,
+                "Finished shader compilation for AtlasMapRendererDebugStage_OpenGL::Lines2D");
             GLuint shaders[] = { vsId, fsId };
             _programLine2D.id = gpuAPI->linkProgram(2, shaders,
                 _programLine2D.binaryCache, _programLine2D.cacheFormat, true, &variablesMap);
@@ -1078,6 +1090,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
         }
         if (_programLine3D.binaryCache.isEmpty() || !_programLine3D.id.isValid())
         {
+            LogPrintf(LogSeverityLevel::Info,
+                "Starting shader compilation for AtlasMapRendererDebugStage_OpenGL::Lines3D");
             const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
             if (vsId == 0)
             {
@@ -1095,6 +1109,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
                     "Failed to compile Line3D fragment shader");
                 return false;
             }
+            LogPrintf(LogSeverityLevel::Info,
+                "Finished shader compilation for AtlasMapRendererDebugStage_OpenGL::Lines3D");
             GLuint shaders[] = { vsId, fsId };
             _programLine3D.id = gpuAPI->linkProgram(2, shaders,
                 _programLine3D.binaryCache, _programLine3D.cacheFormat, true, &variablesMap);
@@ -1385,6 +1401,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
         }
         if (_programQuad3D.binaryCache.isEmpty() || !_programQuad3D.id.isValid())
         {
+            LogPrintf(LogSeverityLevel::Info,
+                "Starting shader compilation for AtlasMapRendererDebugStage_OpenGL::Quads3D");
             const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
             if (vsId == 0)
             {
@@ -1402,6 +1420,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
                     "Failed to compile Quad3D fragment shader");
                 return false;
             }
+            LogPrintf(LogSeverityLevel::Info,
+                "Finished shader compilation for AtlasMapRendererDebugStage_OpenGL::Quads3D");
             GLuint shaders[] = { vsId, fsId };
             _programQuad3D.id = gpuAPI->linkProgram(2, shaders,
                 _programQuad3D.binaryCache, _programQuad3D.cacheFormat, true, &variablesMap);

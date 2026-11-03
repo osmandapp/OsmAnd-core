@@ -109,6 +109,8 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
         }
         if (_program.binaryCache.isEmpty() || !_program.id.isValid())
         {
+            LogPrintf(LogSeverityLevel::Info,
+                "Starting shader compilation for AtlasMapRendererSkyStage_OpenGL");
             const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
             if (vsId == 0)
             {
@@ -126,6 +128,8 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
                     "Failed to compile AtlasMapRendererSkyStage_OpenGL fragment shader");
                 return false;
             }
+            LogPrintf(LogSeverityLevel::Info,
+                "Finished shader compilation for AtlasMapRendererSkyStage_OpenGL");
             const GLuint shaders[] = { vsId, fsId };
             _program.id = gpuAPI->linkProgram(
                 2, shaders, _program.binaryCache, _program.cacheFormat, true, &variablesMap);
