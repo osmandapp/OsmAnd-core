@@ -1842,6 +1842,20 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     const auto citLocalizedNameRuleId = attributeMapping->localizedNameAttributes.constFind(&localeLanguageId);
     if (citLocalizedNameRuleId != attributeMapping->localizedNameAttributes.cend())
         localizedNameRuleId = *citLocalizedNameRuleId;
+
+    // In transliterating modes, use English name as localized if both native and localized names are missing
+    const auto languagePreference = env->getLanguagePreference();
+    const bool transliterate =
+        languagePreference == MapPresentationEnvironment::LanguagePreference::NativeAndLocalizedOrTransliterated ||
+        languagePreference == MapPresentationEnvironment::LanguagePreference::LocalizedOrTransliteratedAndNative ||
+        languagePreference == MapPresentationEnvironment::LanguagePreference::LocalizedOrTransliterated;
+    if (transliterate &&
+        !captions.contains(localizedNameRuleId) &&
+        !captions.contains(attributeMapping->nativeNameAttributeId) &&
+        captions.contains(attributeMapping->enNameAttributeId))
+    {
+        localizedNameRuleId = attributeMapping->enNameAttributeId;
+    }
     
     // sort captionsOrder by textOrder property
     QHash<uint32_t, int> textOrderMap;
@@ -1899,7 +1913,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     
 
     // According to presentation settings, adjust set of captions
-    switch (env->getLanguagePreference())
+    switch (languagePreference)
     {
         case MapPresentationEnvironment::LanguagePreference::NativeOnly:
         {
