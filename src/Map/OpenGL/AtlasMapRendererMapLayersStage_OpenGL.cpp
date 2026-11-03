@@ -1573,6 +1573,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         }
         if (outRasterLayerTileProgram.binaryCache.isEmpty() || !outRasterLayerTileProgram.id.isValid())
         {
+            LogPrintf(LogSeverityLevel::Info,
+                "Starting shader compilation for AtlasMapRendererMapLayersStage_OpenGL (%u raster map layers, features %d)",
+                numberOfLayersInBatch, static_cast<int>(programFeatures));
             const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
             if (vsId == 0)
             {
@@ -1591,6 +1594,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
                     numberOfLayersInBatch);
                 return false;
             }
+            LogPrintf(LogSeverityLevel::Info,
+                "Finished shader compilation for AtlasMapRendererMapLayersStage_OpenGL (%u raster map layers, features %d)",
+                numberOfLayersInBatch, static_cast<int>(programFeatures));
             GLuint shaders[] = { vsId, fsId };
             outRasterLayerTileProgram.id = getGPUAPI()->linkProgram(2, shaders, variableLocations,
                 outRasterLayerTileProgram.binaryCache, outRasterLayerTileProgram.cacheFormat, true, &variablesMap);
