@@ -106,6 +106,7 @@ namespace
                     !all(lessThanEqual(p, vec3(1.0))))
                     return 0.0;
 
+                p.z -= 1e-5;
                 highp vec3 plane = cross(dx, dy);
                 highp float scale = dot(dx.xy, dx.xy) + dot(dy.xy, dy.xy);
                 if (!(scale > 0.0 && abs(plane.z) > 1e-4 * scale))

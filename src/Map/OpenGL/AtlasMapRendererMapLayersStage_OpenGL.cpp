@@ -1239,6 +1239,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "        !all(lessThanEqual(p, vec3(1.0))))                                                                         ""\n"
             "        return 0.0;                                                                                                ""\n"
             "                                                                                                                   ""\n"
+            "    p.z -= 1e-5;                                                                                                   ""\n"
             "    highp vec3 plane = cross(dx, dy);                                                                              ""\n"
             "    highp float scale = dot(dx.xy, dx.xy) + dot(dy.xy, dy.xy);                                                     ""\n"
             "    if (!(scale > 0.0 && abs(plane.z) > 1e-4 * scale))                                                             ""\n"
