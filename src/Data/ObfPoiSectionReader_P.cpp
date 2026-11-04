@@ -1575,15 +1575,14 @@ void OsmAnd::ObfPoiSectionReader_P::readPoiNameIndex(
         if (tileFilter && !tileFilter(dataBox.tileId, dataBox.zoom))
             continue;
 
-        PointI position31;
-        position31.x = dataBox.tileId.x << (31 - dataBox.zoom);
-        position31.y = dataBox.tileId.y << (31 - dataBox.zoom);
-        if (bbox31 && !bbox31->contains(position31))
+        const auto tileBBox31 = Utilities::tileBoundingBox31(dataBox.tileId, dataBox.zoom);
+        const auto tileTopLeft31 = tileBBox31.topLeft;
+        if (bbox31 && !bbox31->contains(tileTopLeft31) && !tileBBox31.contains(xy31 ? *xy31 : bbox31->center()))
             continue;
 
         uint32_t distance = 0;
         if (xy31)
-            distance = qAbs(xy31->x - position31.x) + qAbs(xy31->y - position31.y);
+            distance = qAbs(xy31->x - tileTopLeft31.x) + qAbs(xy31->y - tileTopLeft31.y);
         outDataOffsets.insert(dataBox.dataOffset, distance);
     }
 }
