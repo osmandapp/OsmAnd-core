@@ -1,6 +1,7 @@
 #include "AtlasMapRenderer_OpenGL.h"
 
 #include <cassert>
+#include <cmath>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -191,7 +192,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     bool withShadows = false;
     if (currentState.castSunShadows)
     {
-        auto mapResolution = qMin(MAX_SHADOWMAP_RESOLUTION, static_cast<int32_t>(
+        const auto mapResolution = qMin(MAX_SHADOWMAP_RESOLUTION, static_cast<int32_t>(
             Utilities::getNextPowerOfTwo(qMax(currentState.viewport.width(), currentState.viewport.height()) / 2)));
         
         if (gpuAPI->attachShadowmap(mapResolution))
@@ -2262,12 +2263,34 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                     visibleRadius -= glm::distance(centralVisiblePoint, center);
             }
         }
-        const auto lightView =
-            glm::lookAt(glm::vec3(0.0f), lightDirection, lightUp) * glm::translate(-center);
+        auto lightView = glm::lookAt(glm::vec3(0.0f), lightDirection, lightUp) * glm::translate(-center);
         const auto pixelMargin = internalState->sizeOfPixelInWorld
             * internalState->distanceFromCameraToTarget / _zNear;
-        const auto lightRadius =
+        auto lightRadius =
             qMax(1e-3f, std::sqrt(visibleRadius * visibleRadius + extraDistance * extraDistance) + pixelMargin);
+        auto unitsPer31 = static_cast<double>(TileSize3D) / (1u << (MaxZoomLevel - state.zoomLevel));
+        if (!state.flatEarth)
+        {
+            int radiusExponent;
+            std::frexp(lightRadius, &radiusExponent);
+            const auto radiusStep = qMax(std::ldexp(1.0f, radiusExponent - 9), 8.0f * static_cast<float>(unitsPer31));
+            auto stableRadius = 0.0f;
+            if (stableRadius < lightRadius || stableRadius > lightRadius + 3.0f * radiusStep)
+                stableRadius = (std::ceil(lightRadius / radiusStep) + 1.0f) * radiusStep;
+            lightRadius = stableRadius;
+            const auto angles = Utilities::getAnglesFrom31(state.target31);
+            unitsPer31 = globeRadius * qCos(angles.y) * (2.0 * M_PI / (1ull << 31));
+        }
+        const auto mapResolution = qMin(MAX_SHADOWMAP_RESOLUTION, static_cast<int32_t>(
+            Utilities::getNextPowerOfTwo(qMax(currentState.viewport.width(), currentState.viewport.height()) / 2)));
+        const auto texSize = static_cast<double>(lightRadius) * (2.0 / mapResolution);
+        const glm::dvec2 targetOffset(state.target31.x * unitsPer31, state.target31.y * unitsPer31);
+        const auto lightOffset = glm::dvec2(lightView[0].x, lightView[0].y) * targetOffset.x
+            + glm::dvec2(lightView[2].x, lightView[2].y) * targetOffset.y;
+        const auto translation = glm::dvec2(lightView[3].x, lightView[3].y) - lightOffset;
+        const auto offset = glm::floor(translation / texSize + glm::dvec2(0.5)) * texSize - translation;
+        lightView[3].x += static_cast<float>(offset.x);
+        lightView[3].y += static_cast<float>(offset.y);
         internalState->mDirectSunlightProjection = glm::ortho(
             -lightRadius, lightRadius, -lightRadius, lightRadius, -lightRadius, lightRadius) * lightView;
     }
