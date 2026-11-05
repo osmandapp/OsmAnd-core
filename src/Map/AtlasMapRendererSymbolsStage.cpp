@@ -566,19 +566,27 @@ void OsmAnd::AtlasMapRendererSymbolsStage::addFadingSymbols(const ScreenQuadTree
         renderableSymbolsBeforeBuildings.append(fadingBeforeBuildings);
         renderableSymbolsAfterBuildings.append(fadingAfterBuildings);
     }
+
+    bool hasDrawableFade = false;
     for (const auto renderables : { &renderableSymbolsBeforeBuildings, &renderableSymbolsAfterBuildings })
     {
         for (const auto& renderable : constOf(*renderables))
         {
             const auto itFade = _symbolFades.constFind(renderable->mapSymbol);
             if (itFade != _symbolFades.cend())
+            {
+                hasDrawableFade = true;
                 std::const_pointer_cast<RenderableSymbol>(renderable)->opacityFactor *=
                     getFadeOpacity(*itFade, nowMs, durationMs);
+            }
         }
     }
 
+    if (!hasDrawableFade)
+        _symbolFades.clear();
+
     // On the real clock the fades animate by themselves; on a set clock the caller renders each frame
-    if (renderer->getSymbolsFadeClock() < 0.0)
+    if (hasDrawableFade && renderer->getSymbolsFadeClock() < 0.0)
         invalidateFrame();
 }
 
@@ -3506,6 +3514,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(
         pointInWorld = currentState.flatEarth ? glm::vec3(sourcePoint.x, elevationInWorld, sourcePoint.y)
             : Utilities::sphericalWorldCoordinates(
                 point31, internalState.mGlobeRotationPrecise, internalState.globeRadius, elevationInWorld);
+        if (!points31)
+        {
+            pointInWorld.x = sourcePoint.x;
+            pointInWorld.z = sourcePoint.y;
+        }
         pointOnScreen = glm_extensions::project(
             pointInWorld,
             internalState.mPerspectiveProjectionView,
