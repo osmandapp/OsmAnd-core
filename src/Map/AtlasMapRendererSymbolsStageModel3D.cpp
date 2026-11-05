@@ -79,21 +79,13 @@ void OsmAnd::AtlasMapRendererSymbolsStageModel3D::obtainRenderables(
     const auto& position31 = model3DMapSymbol->getPosition31();
     const auto& direction = model3DMapSymbol->getDirection();
     
-    float scale;
-    if (model3DMapSymbol->maxSizeInPixels == 0)
-        scale = 1 / currentState.visualZoom;
-    else
-    {
-        scale = model3DMapSymbol->maxSizeInPixels * internalState.pixelInWorldProjectionScale;
-        const float preHeight = getRenderer()->getHeightOfLocation(currentState, position31);
-        const float cameraHeight = internalState.distanceFromCameraToGround;
-        if (cameraHeight > preHeight && !qFuzzyIsNull(cameraHeight))
-            scale *= (cameraHeight - preHeight) / cameraHeight;
-    }
-
     const auto offsetFromTarget31 = Utilities::shortestVector31(currentState.target31, position31);
     const auto offsetFromTarget = Utilities::convert31toFloat(offsetFromTarget31, currentState.zoomLevel);
     const auto positionOnPlane = offsetFromTarget * AtlasMapRenderer::TileSize3D;
+    float scale = model3DMapSymbol->maxSizeInPixels == 0 ? 1.0f / currentState.visualZoom
+        : model3DMapSymbol->maxSizeInPixels * glm::distance(internalState.worldCameraPosition,
+        glm::vec3(positionOnPlane.x, getRenderer()->getHeightOfLocation(currentState, position31), positionOnPlane.y))
+        / glm::length(internalState.worldCameraPosition) * internalState.pixelInWorldProjectionScale;
 
     const auto mScale = glm::scale(glm::vec3(scale));
     const auto directionAngle = static_cast<float>(Utilities::normalizedAngleDegrees(90.0f - direction));
