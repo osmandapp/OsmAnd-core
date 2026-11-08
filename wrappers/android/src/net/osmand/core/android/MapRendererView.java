@@ -10,7 +10,9 @@ import android.os.Looper;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.FrameLayout;
+import android.os.Build;
 import android.os.SystemClock;
+import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 
 import net.osmand.core.jni.AreaI;
@@ -67,6 +69,13 @@ public abstract class MapRendererView extends FrameLayout {
      * manage to do that in time, so that the main thread never hangs on a stalled GPU driver
      */
     private final static long RELEASE_STOP_TIMEOUT = 1500;
+
+    /**
+     * Maximum time the rendering view thread waits for the EGL thread to render a frame.
+     * The EGL thread is abandoned when it doesn't manage to do that in time, so that pausing
+     * the view never hangs on a stalled GPU driver
+     */
+    private final static long RENDER_FRAME_TIMEOUT = 2000;
 
     /**
      * Reference to OsmAndCore::IMapRenderer instance
@@ -338,9 +347,8 @@ public abstract class MapRendererView extends FrameLayout {
                 setupOptions.setGpuWorkerThreadPrologue(_gpuWorkerThreadPrologue.getBinding());
                 setupOptions.setGpuWorkerThreadEpilogue(_gpuWorkerThreadEpilogue.getBinding());
             } else {
+                // The callbacks are not reset: their SWIG setters crash on null, and a disabled worker never calls them
                 setupOptions.setGpuWorkerThreadEnabled(false);
-                setupOptions.setGpuWorkerThreadPrologue(null);
-                setupOptions.setGpuWorkerThreadEpilogue(null);
             }
             pinRenderRequestCallback();
             pinGpuWorkerCallbacks();
@@ -469,6 +477,10 @@ public abstract class MapRendererView extends FrameLayout {
         Log.v(TAG, "suspendRenderer()");
 
         if (_mapRenderer == null || !_mapRenderer.isRenderingInitialized() || _exportableMapRenderer == null) {
+            return null;
+        }
+        // The renderer of an abandoned EGL thread renders nothing, so the other view starts its own
+        if (eglThread != null && eglThread.abandoned) {
             return null;
         }
 
@@ -2418,9 +2430,8 @@ public abstract class MapRendererView extends FrameLayout {
                     setupOptions.setGpuWorkerThreadPrologue(_gpuWorkerThreadPrologue.getBinding());
                     setupOptions.setGpuWorkerThreadEpilogue(_gpuWorkerThreadEpilogue.getBinding());
                 } else {
+                    // The callbacks are not reset: their SWIG setters crash on null, and a disabled worker never calls them
                     setupOptions.setGpuWorkerThreadEnabled(false);
-                    setupOptions.setGpuWorkerThreadPrologue(null);
-                    setupOptions.setGpuWorkerThreadEpilogue(null);
                 }
                 pinRenderRequestCallback();
                 pinGpuWorkerCallbacks();
@@ -2460,6 +2471,11 @@ public abstract class MapRendererView extends FrameLayout {
         }
 
         public void onDrawFrame(GL10 gl) {
+            // An abandoned EGL thread renders nothing, while frames are still requested
+            EGLThread thread = eglThread;
+            if (thread != null && thread.abandoned) {
+                return;
+            }
             // In case rendering was not ready yet, don't do anything
             if (isSuspended || _mapRenderer == null || !_mapRenderer.isRenderingInitialized()) {
                 Log.w(TAG, "Can't draw a frame: renderer either suspended or isn't yet initialized");
@@ -2491,7 +2507,15 @@ public abstract class MapRendererView extends FrameLayout {
                 eglThread.mapRenderer = _mapRenderer;
                 eglThread.byteBuffer = _byteBuffer;
                 eglThread.renderingResultIsReady = false;
-                eglThread.startAndCompleteOperation(EGLThreadOperation.RENDER_FRAME);
+                if (!eglThread.startAndCompleteOperation(EGLThreadOperation.RENDER_FRAME, RENDER_FRAME_TIMEOUT)
+                        && !eglThread.stopThread) {
+                    // GLSurfaceView pauses by destroying the surface while it holds the lock the main
+                    // thread waits on, and that operation would wait for the stuck frame forever
+                    Log.e(TAG, "EGL thread didn't render the frame in time, abandoning it");
+                    eglThread.abandoned = true;
+                    eglThread.stopThread = true;
+                    eglThread.notifyAll();
+                }
                 if (eglThread.renderingResultIsReady) {
                     _renderingResultIsReady = true;
                 }
@@ -2897,6 +2921,14 @@ public abstract class MapRendererView extends FrameLayout {
                                     gpuWorkerFakeSurface = null;
                                 }
                             }
+                            // Samsung's ANGLE driver deadlocks the render thread against a GPU worker
+                            // in a shared context, so resources are uploaded by the render thread there
+                            if (gpuWorkerContext != null && isSamsungAngleDriver()) {
+                                egl.eglDestroySurface(display, gpuWorkerFakeSurface);
+                                egl.eglDestroyContext(display, gpuWorkerContext);
+                                gpuWorkerFakeSurface = null;
+                                gpuWorkerContext = null;
+                            }
                         }
                         // Create main EGL context
                         if (context == null) {
@@ -3027,12 +3059,38 @@ public abstract class MapRendererView extends FrameLayout {
                     }
                 }
             }
-            // An abandoned thread is the only owner of its EGL resources left
+            // An abandoned thread is the only owner of its renderer and EGL resources left. The renderer
+            // is released here, as destroying it with its GPU-worker thread still running aborts
+            if (abandoned && mapRenderer != null && mapRenderer.isRenderingInitialized()) {
+                mapRenderer.releaseRendering(true);
+            }
             destroyEglResources();
             synchronized (this) {
                 isStopped = true;
                 notifyAll();
             }
+        }
+
+        // NOTE: It's called from the EGL thread only, with the GPU-worker context created
+        private boolean isSamsungAngleDriver() {
+            if (!"samsung".equalsIgnoreCase(Build.MANUFACTURER)) {
+                return false;
+            }
+            EGLContext currentContext = egl.eglGetCurrentContext();
+            EGLSurface currentDrawSurface = egl.eglGetCurrentSurface(EGL10.EGL_DRAW);
+            EGLSurface currentReadSurface = egl.eglGetCurrentSurface(EGL10.EGL_READ);
+            if (!egl.eglMakeCurrent(display, gpuWorkerFakeSurface, gpuWorkerFakeSurface, gpuWorkerContext)) {
+                Log.e(TAG, "Failed to set GPU-worker EGL context active: " +
+                        getEglErrorString(egl.eglGetError()));
+                return false;
+            }
+            String shadingLanguageVersion = GLES20.glGetString(GLES20.GL_SHADING_LANGUAGE_VERSION);
+            egl.eglMakeCurrent(display, currentDrawSurface, currentReadSurface, currentContext);
+            boolean isAngle = shadingLanguageVersion != null && shadingLanguageVersion.contains("ANGLE");
+            if (isAngle) {
+                Log.w(TAG, "GPU-worker is disabled on Samsung ANGLE driver: " + shadingLanguageVersion);
+            }
+            return isAngle;
         }
 
         // NOTE: It's called from the EGL thread only
