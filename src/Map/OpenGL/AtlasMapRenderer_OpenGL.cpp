@@ -1000,6 +1000,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
     const auto camDir = -internalState->cameraRotatedDirection;
     const auto cameraDistance = glm::length(camPos);
     const auto cameraHeight = cameraDistance - 1.0;
+    const auto horizonAngle = qAcos(qMin(1.0, 1.0 / cameraDistance));
     const auto backN = camPos / cameraDistance;
     const auto camDown = -backN;
     const auto camTL = glm::normalize(internalState->mGlobeRotationPreciseInv * rayTL);
@@ -1462,12 +1463,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                             break;
                         }
 
-                        // Check occlusion of all corners of the tile:
-                        // a tile should be considered invisible if all its corners are hidden by the horizon
-                        if (glm::dot(glm::normalize(normalTL - camPos), normalTL) > 0.0
-                            && glm::dot(glm::normalize(normalTR - camPos), normalTR) > 0.0
-                            && glm::dot(glm::normalize(normalBL - camPos), normalBL) > 0.0
-                            && glm::dot(glm::normalize(normalBR - camPos), normalBR) > 0.0)
+                        // Bound the whole tile, including its curved edges and interior.
+                        const auto tileCenter = Utilities::getGlobeRadialVector((angTL + angBR) * 0.5);
+                        const auto tileAngle = qMin(M_PI, (angBR.x - angTL.x + angTL.y - angBR.y) * 0.5);
+                        const auto visibleAngle = horizonAngle + tileAngle;
+                        if (visibleAngle < M_PI && glm::dot(tileCenter, backN) < qCos(visibleAngle))
                             break;
 
                         // Check map border tiles near the poles
@@ -1510,13 +1510,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                             break;
                         }
 
-                        // Check distance of base corners of the tile:
-                        // a tile should be considered invisible if its base corners are too far
+                        // Reject only if the whole tile is beyond the far plane.
                         if (zoomLevel > MinZoomLevel
-                            && glm::dot(camDir, normalTL - camPos) > zFar
-                            && glm::dot(camDir, normalTR - camPos) > zFar
-                            && glm::dot(camDir, normalBL - camPos) > zFar
-                            && glm::dot(camDir, normalBR - camPos) > zFar)
+                            && glm::dot(camDir, tileCenter - camPos) - 2.0 * qSin(tileAngle * 0.5) > zFar)
                             break;
 
                         // Check visibility of base corners of the tile:
@@ -2067,7 +2063,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
                             qRound(static_cast<double>(targetTileId.x) + deltaX * distanceFromTarget),
                             qRound(static_cast<double>(targetTileId.y) + deltaY * distanceFromTarget));
                     }
-                    if (nearTileId.y >= 0 && nearTileId.y < static_cast<int32_t>(1u << zoomLevel))
+                    if (nearTileId.y >= 0 && nearTileId.y < static_cast<int32_t>(1u << zoomLevel)
+                        && (lookForStrictlyVisible
+                            || !tilesN[zoomLevel].contains(Utilities::normalizeTileId(nearTileId, zoomLevel))))
                     {
                         (*nextTiles)[zoomLevel].insert(nearTileId, NotTestedYet);
                         shouldRepeat = true;
