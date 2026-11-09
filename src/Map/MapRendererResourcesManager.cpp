@@ -824,20 +824,21 @@ bool OsmAnd::MapRendererResourcesManager::noLockObtainProviderFor(
     assert(resourcesRef != nullptr);
 
     const auto& bindings = _bindings[static_cast<int>(resourcesRef->type)];
-    for (const auto& bindingEntry : rangeOf(constOf(bindings.collectionsToProviders)))
-    {
-        if (bindingEntry.key().get() != resourcesRef)
-            continue;
 
-        const auto& testProvider = bindingEntry.value();
-        if (!testProvider)
-            return false;
+    // The bindings hash a collection by its address, so look it up instead of scanning all of them: this is called
+    // for every collection on every frame, and the scan made that quadratic in the number of providers
+    const std::shared_ptr<MapRendererBaseResourcesCollection> key(
+        std::shared_ptr<MapRendererBaseResourcesCollection>(), resourcesRef);
+    const auto citBinding = bindings.collectionsToProviders.constFind(key);
+    if (citBinding == bindings.collectionsToProviders.cend())
+        return false;
 
-        provider = testProvider;
-        return true;
-    }
+    const auto& testProvider = citBinding.value();
+    if (!testProvider)
+        return false;
 
-    return false;
+    provider = testProvider;
+    return true;
 }
 
 bool OsmAnd::MapRendererResourcesManager::isDataSourceAvailableFor(
