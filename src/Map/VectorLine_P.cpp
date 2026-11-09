@@ -40,6 +40,10 @@
 // so the clipping skips a block away from the visible area without visiting its points
 #define POINTS_BLOCK_SIZE 128
 
+// From this many visible points on, a rebuild keeps the points by the importance computed once
+// for the whole line instead of running Douglas-Peucker over the visible points again
+#define APPROXIMATION_BY_IMPORTANCE_MIN_POINTS 10000
+
 // Colorization shemes
 #define COLORIZATION_NONE 0
 #define COLORIZATION_GRADIENT 1
@@ -1059,12 +1063,79 @@ void OsmAnd::VectorLine_P::invalidatePreparedPoints()
     QMutexLocker scopedLocker(&_preparedPointsMutex);
 
     _preparedPoints.reset();
+    _pointsImportance.reset();
+}
+
+std::shared_ptr<const QVector<float>> OsmAnd::VectorLine_P::getPointsImportance(
+    const std::shared_ptr<const PreparedPoints>& prepared) const
+{
+    QMutexLocker scopedLocker(&_preparedPointsMutex);
+
+    if (_pointsImportance && _preparedPoints == prepared)
+        return _pointsImportance;
+
+    const auto& points = prepared->points64;
+    const int count = points.size();
+    const auto importance = std::make_shared<QVector<float>>(count, 0.0f);
+    auto& values = *importance;
+    if (count > 0)
+    {
+        values[0] = std::numeric_limits<float>::max();
+        values[count - 1] = std::numeric_limits<float>::max();
+    }
+
+    // Same split as simplifyDouglasPeucker() (farthest point, the first one on a tie), but iterative
+    // and without a tolerance: the split stops only when a range has no inner points
+    struct Range
+    {
+        int start;
+        int end;
+        float limit;
+    };
+    std::vector<Range> ranges;
+    if (count > 2)
+        ranges.push_back({ 0, count - 1, std::numeric_limits<float>::max() });
+    while (!ranges.empty())
+    {
+        const auto range = ranges.back();
+        ranges.pop_back();
+
+        const auto startPoint = PointD(points.at(range.start));
+        const auto endPoint = PointD(points.at(range.end));
+        double dmax = -1;
+        int index = -1;
+        for (int i = range.start + 1; i <= range.end - 1; i++)
+        {
+            const auto point = PointD(points.at(i));
+            const auto proj = getProjection(point, startPoint, endPoint);
+            const double d = qSqrt((point.x - proj.x) * (point.x - proj.x) + (point.y - proj.y) * (point.y - proj.y));
+            if (d > dmax)
+            {
+                dmax = d;
+                index = i;
+            }
+        }
+        if (index < 0)
+            continue;
+
+        const auto limit = qMin(range.limit, static_cast<float>(dmax));
+        values[index] = limit;
+        if (index - range.start > 1)
+            ranges.push_back({ range.start, index, limit });
+        if (range.end - index > 1)
+            ranges.push_back({ index, range.end, limit });
+    }
+
+    if (_preparedPoints == prepared)
+        _pointsImportance = importance;
+    return importance;
 }
 
 OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
     const PreparedPoints& prepared,
     const AreaI64& visibleArea64,
     std::vector<std::vector<PointI>>& segments,
+    std::vector<std::vector<int>>& segmentSources,
     QList<QList<float>>& segmentDistances,
     QList<QList<FColorARGB>>& segmentColors,
     QList<QList<FColorARGB>>& segmentOutlineColors,
@@ -1103,6 +1174,9 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
     float heightFrom, heightTo, heightSubFrom, heightSubTo, heightInterFrom, heightInterTo;
     float distanceFrom, distanceTo, distanceSubFrom, distanceSubTo, distanceInterFrom, distanceInterTo;
     std::vector<PointI> segment;
+    // Index in points64 of every point of the segment, -1 for a point made by clipping
+    std::vector<int> sources;
+    int drawFromSource, drawToSource;
     QList<FColorARGB> colors;
     QList<FColorARGB> outlineColors;
     QList<float> heights;
@@ -1134,6 +1208,7 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
         }
         drawFrom = points64.at(0);
         drawFrom.x -= shift;
+        drawFromSource = 0;
         auto prev = drawFrom;
         int prevIndex;
         nextIndex = 0;            
@@ -1186,6 +1261,7 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
                     prev = points64.at(lastI);
                     prev.x -= shift;
                     drawFrom = prev;
+                    drawFromSource = lastI;
                     i = lastI;
                     continue;
                 }
@@ -1193,6 +1269,7 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
 
             drawTo = points64.at(i);
             drawTo.x -= shift;
+            drawToSource = i;
             curr = drawTo;
             if (outFrom == outTo)
             {
@@ -1278,6 +1355,7 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
                 if (prevIn)
                 {
                     drawTo = inter1;
+                    drawToSource = -1;
                     const auto factor = static_cast<float>(
                         static_cast<double>((drawTo - prev).norm()) /
                         static_cast<double>((curr - prev).norm()));
@@ -1304,6 +1382,7 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
                 else if (currIn)
                 {
                     drawFrom = inter1;
+                    drawFromSource = -1;
                     segmentStarted = false;
                     const auto factor = static_cast<float>(
                         static_cast<double>((drawFrom - prev).norm()) /
@@ -1332,6 +1411,8 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
                 {
                     drawFrom = inter1;
                     drawTo = inter2;
+                    drawFromSource = -1;
+                    drawToSource = -1;
                     segmentStarted = false;
                     const auto firstFactor = static_cast<float>(
                         static_cast<double>((drawFrom - prev).norm()) /
@@ -1378,6 +1459,7 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
                         static_cast<double>(drawTo.x - drawFrom.x) * (border - drawFrom.y) / (drawTo.y - drawFrom.y));
                     inter1.y = isNorth ? (outTo ? -intHalf : -intHalf - 1) : (outTo ? intHalf - 1 : intHalf);
                     drawTo = inter1;
+                    drawToSource = -1;
                     const auto factor = static_cast<float>(
                         static_cast<double>((drawTo - prev).norm()) /
                         static_cast<double>((curr - prev).norm()));
@@ -1407,6 +1489,8 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
                     {
                         segments.push_back(segment);
                         segment = std::vector<PointI>();
+                        segmentSources.push_back(sources);
+                        sources.clear();
                         segmentDistances.push_back(distances);
                         distances.clear();
                         segmentColors.push_back(colors);
@@ -1423,6 +1507,7 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
                         isPositionFound = true;
                     }
                     segment.push_back(drawFrom31);
+                    sources.push_back(drawFromSource);
                     distances.push_back(distanceInterFrom);
                     if (withColors)
                         colors.push_back(colorInterFrom);
@@ -1441,6 +1526,7 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
                         isPositionFound = true;
                     }
                     segment.push_back(drawTo31);
+                    sources.push_back(drawToSource);
                     distances.push_back(distanceInterTo);
                     if (withColors)
                         colors.push_back(colorInterTo);
@@ -1460,15 +1546,19 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
                 prevIn = true;
                 prev = drawFrom = PointI64(drawTo.x, drawTo.y <= -intHalf
                     ? (outTo ? -intHalf - 1 : -intHalf) : (outTo ? intHalf : intHalf - 1));
+                drawFromSource = -1;
             }
             else
             {
                 prevIn = currIn;
                 prev = drawFrom = curr;
+                drawFromSource = i;
             }
         }
         if (!segment.empty())
             segments.push_back(segment);
+        if (!sources.empty())
+            segmentSources.push_back(sources);
         if (!distances.empty())
             segmentDistances.push_back(distances);
         if (!colors.empty())
@@ -1478,6 +1568,7 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
         if (!heights.empty())
             segmentHeights.push_back(heights);
         segment.clear();
+        sources.clear();
         distances.clear();
         colors.clear();
         outlineColors.clear();
@@ -1520,6 +1611,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
         return false;
 
     std::vector<std::vector<PointI>> segments;
+    std::vector<std::vector<int>> segmentSources;
     QList<QList<float>> distances;
     QList<QList<FColorARGB>> colors;
     QList<QList<FColorARGB>> outlineColors;
@@ -1527,7 +1619,7 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
     float distance;
     const auto prepared = getPreparedPoints();
     const auto startPoint = calculateVisibleSegments(
-        *prepared, visibleArea64, segments, distances, colors, outlineColors, heights, distance);
+        *prepared, visibleArea64, segments, segmentSources, distances, colors, outlineColors, heights, distance);
     if (segments.size() == 0)
         return false;
 
@@ -1546,6 +1638,17 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
     const auto z = (32.0 - zoom) / 32.0;
     const auto flattenD = 1.0 - z * z * z * z;
     const auto flatten = static_cast<float>(flattenD);
+
+    // Many visible points: keep them by the importance computed once for the whole line
+    std::shared_ptr<const QVector<float>> importance;
+    if (approximate)
+    {
+        size_t visiblePointsCount = 0;
+        for (const auto& segment : segments)
+            visiblePointsCount += segment.size();
+        if (visiblePointsCount >= APPROXIMATION_BY_IMPORTANCE_MIN_POINTS)
+            importance = getPointsImportance(prepared);
+    }
 
     vectorLine->order = owner->baseOrder + 1;
     vectorLine->primitiveType = VectorMapSymbol::PrimitiveType::Triangles;
@@ -1606,7 +1709,22 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
         if (approximate)
         {
             include[0] = true;
-            simplifyDouglasPeucker(points, 0, (uint) points.size() - 1, simplificationRadius, hY31, flattenD, include);
+            if (importance)
+            {
+                const auto& sources = segmentSources[segmentIndex];
+                include[pointsCount - 1] = true;
+                for (int pointIdx = 1; pointIdx < pointsCount - 1; pointIdx++)
+                {
+                    const auto source = sources[pointIdx];
+                    include[pointIdx] = source < 0 || importance->at(source)
+                        >= correctDistance(points[pointIdx].y, hY31, flattenD, simplificationRadius);
+                }
+            }
+            else
+            {
+                simplifyDouglasPeucker(
+                    points, 0, (uint) points.size() - 1, simplificationRadius, hY31, flattenD, include);
+            }
         }
 
         // Generate base points to draw a stripe around

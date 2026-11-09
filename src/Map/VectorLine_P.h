@@ -87,6 +87,13 @@ namespace OsmAnd
         mutable std::shared_ptr<const PreparedPoints> _preparedPoints;
         std::shared_ptr<const PreparedPoints> getPreparedPoints() const;
         void invalidatePreparedPoints();
+
+        // Douglas-Peucker over the whole unwrapped line, run once: for every point of points64 the
+        // smallest distance on its path in the split tree. A point is kept for a simplification
+        // tolerance when its value is not below it. Built only when a rebuild needs it
+        mutable std::shared_ptr<const QVector<float>> _pointsImportance;
+        std::shared_ptr<const QVector<float>> getPointsImportance(
+            const std::shared_ptr<const PreparedPoints>& prepared) const;
     protected:
         // Zoom-dependent part of the map state the line geometry is built for
         struct ZoomState
@@ -203,6 +210,7 @@ namespace OsmAnd
             const PreparedPoints& prepared,
             const AreaI64& visibleArea64,
             std::vector<std::vector<PointI>>& segments,
+            std::vector<std::vector<int>>& segmentSources,
             QList<QList<float>>& segmentDistances,
             QList<QList<FColorARGB>>& segmentColors,
             QList<QList<FColorARGB>>& segmentOutlineColors,
