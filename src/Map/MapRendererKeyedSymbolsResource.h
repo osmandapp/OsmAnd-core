@@ -32,6 +32,8 @@ namespace OsmAnd
 
         int64_t priority;
         std::shared_ptr<IMapKeyedSymbolsProvider::Data> _sourceData;
+        // Read every frame by the render thread, set and reset by worker threads
+        mutable QReadWriteLock _mapSymbolsGroupLock;
         std::shared_ptr<MapSymbolsGroup> _mapSymbolsGroup;
         QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPU;
         QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPUCache;
@@ -59,6 +61,7 @@ namespace OsmAnd
         virtual void finishResourcesRenewing() Q_DECL_OVERRIDE;
         
         int64_t getPriority() const;
+        std::shared_ptr<MapSymbolsGroup> getMapSymbolsGroup() const;
 
     public:
         virtual ~MapRendererKeyedSymbolsResource();

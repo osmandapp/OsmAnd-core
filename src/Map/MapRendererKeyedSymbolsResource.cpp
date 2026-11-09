@@ -31,7 +31,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::updatesPresent()
 {
     bool updatesPresent = MapRendererBaseKeyedResource::updatesPresent();
 
-    if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(_mapSymbolsGroup))
+    if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(getMapSymbolsGroup()))
     {
         if (updatableMapSymbolGroup->updatesPresent())
         {
@@ -46,7 +46,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::supportsResourcesRenew()
 {
     bool supportsResourcesRenew = MapRendererBaseKeyedResource::supportsResourcesRenew();
     
-    if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(_mapSymbolsGroup))
+    if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(getMapSymbolsGroup()))
     {
         if (updatableMapSymbolGroup->supportsResourcesRenew())
         {
@@ -61,7 +61,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::checkForUpdatesAndApply(const MapS
 {
     bool updatesApplied = MapRendererBaseKeyedResource::checkForUpdatesAndApply(mapState);
 
-    if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(_mapSymbolsGroup))
+    if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(getMapSymbolsGroup()))
     {
         IUpdatableMapSymbolsGroup::UpdateResult result = updatableMapSymbolGroup->update(mapState);
         switch (result)
@@ -146,17 +146,22 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(
     const auto symbolSubsection = resourcesManager->renderer->getSymbolsProviderSubsection(symbolsProvider);
 
     // Register all obtained symbols
-    _mapSymbolsGroup = _sourceData->symbolsGroup;
+    const auto mapSymbolsGroup = _sourceData->symbolsGroup;
+    {
+        QWriteLocker scopedLocker(&_mapSymbolsGroupLock);
+
+        _mapSymbolsGroup = mapSymbolsGroup;
+    }
     const auto self = shared_from_this();
     QList< PublishOrUnpublishMapSymbol > mapSymbolsToPublish;
-    mapSymbolsToPublish.reserve(_mapSymbolsGroup->symbols.size());
-    for (const auto& symbol : constOf(_mapSymbolsGroup->symbols))
+    mapSymbolsToPublish.reserve(mapSymbolsGroup->symbols.size());
+    for (const auto& symbol : constOf(mapSymbolsGroup->symbols))
     {
         // Set symbol subsection
         symbol->subsection = symbolSubsection;
 
         PublishOrUnpublishMapSymbol mapSymbolToPublish = {
-            _mapSymbolsGroup,
+            mapSymbolsGroup,
             std::static_pointer_cast<const MapSymbol>(symbol),
             self };
         mapSymbolsToPublish.push_back(mapSymbolToPublish);
@@ -258,14 +263,15 @@ void OsmAnd::MapRendererKeyedSymbolsResource::releaseData()
     const auto self = shared_from_this();
 
     // Unregister all obtained symbols, if it was ever published.
-    if (_mapSymbolsGroup)
+    const auto mapSymbolsGroup = getMapSymbolsGroup();
+    if (mapSymbolsGroup)
     {
         QList<PublishOrUnpublishMapSymbol> mapSymbolsToUnpublish;
-        mapSymbolsToUnpublish.reserve(_mapSymbolsGroup->symbols.size());
-        for (const auto &symbol : constOf(_mapSymbolsGroup->symbols))
+        mapSymbolsToUnpublish.reserve(mapSymbolsGroup->symbols.size());
+        for (const auto &symbol : constOf(mapSymbolsGroup->symbols))
         {
             PublishOrUnpublishMapSymbol mapSymbolToUnpublish = {
-                _mapSymbolsGroup,
+                mapSymbolsGroup,
                 std::static_pointer_cast<const MapSymbol>(symbol),
                 self
             };
@@ -273,7 +279,12 @@ void OsmAnd::MapRendererKeyedSymbolsResource::releaseData()
         }
         resourcesManager->batchUnpublishMapSymbols(mapSymbolsToUnpublish);
     }
-    _mapSymbolsGroup.reset();
+    {
+        QWriteLocker scopedLocker(&_mapSymbolsGroupLock);
+
+        // The local copy keeps the group alive, so that it is destroyed outside of the lock
+        _mapSymbolsGroup.reset();
+    }
 
     _retainableCacheMetadata.reset();
     _sourceData.reset();
@@ -333,4 +344,11 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererKeyedSym
 int64_t OsmAnd::MapRendererKeyedSymbolsResource::getPriority() const
 {
     return priority;
+}
+
+std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapRendererKeyedSymbolsResource::getMapSymbolsGroup() const
+{
+    QReadLocker scopedLocker(&_mapSymbolsGroupLock);
+
+    return _mapSymbolsGroup;
 }
