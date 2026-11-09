@@ -5,6 +5,7 @@
 
 #include "QtExtensions.h"
 #include <QReadWriteLock>
+#include <QMutex>
 #include <QHash>
 #include <QVector>
 #include <SkPath.h>
@@ -66,6 +67,26 @@ namespace OsmAnd
         bool hasColorizationMapping() const;
         bool hasOutlineColorizationMapping() const;
         bool hasHeights() const;
+
+        // What a rebuild needs from the points that depends neither on the zoom nor on the view.
+        // Built once after the points change instead of on every rebuild
+        struct PreparedPoints
+        {
+            // Points unwrapped across the antimeridian, with the points of the shortest path added
+            QVector<PointI64> points64;
+            // Index in points64 of every point of the line
+            QVector<int> pointIndices;
+            // Distance from the start to every point of the line
+            QVector<float> pointDistances;
+            // Bounding box of points64 and of every block of its edges (see POINTS_BLOCK_SIZE)
+            AreaI64 bbox;
+            QVector<AreaI64> blockBBoxes;
+            double distance;
+        };
+        mutable QMutex _preparedPointsMutex;
+        mutable std::shared_ptr<const PreparedPoints> _preparedPoints;
+        std::shared_ptr<const PreparedPoints> getPreparedPoints() const;
+        void invalidatePreparedPoints();
     protected:
         // Zoom-dependent part of the map state the line geometry is built for
         struct ZoomState
@@ -179,6 +200,7 @@ namespace OsmAnd
         bool isBigDiff(const ColorARGB& firstColor, const ColorARGB& secondColor) const;
         inline FColorARGB middleColor(const FColorARGB& first, const FColorARGB& last, const float factor) const;
         PointI calculateVisibleSegments(
+            const PreparedPoints& prepared,
             const AreaI64& visibleArea64,
             std::vector<std::vector<PointI>>& segments,
             QList<QList<float>>& segmentDistances,

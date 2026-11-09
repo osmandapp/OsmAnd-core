@@ -36,6 +36,10 @@
 // one, otherwise jitter on a boundary rebuilds on every update
 #define GEOMETRY_ZOOM_HYSTERESIS 0.01f
 
+// Edges of the unwrapped line are grouped in blocks of this size with a bounding box each,
+// so the clipping skips a block away from the visible area without visiting its points
+#define POINTS_BLOCK_SIZE 128
+
 // Colorization shemes
 #define COLORIZATION_NONE 0
 #define COLORIZATION_GRADIENT 1
@@ -224,6 +228,7 @@ void OsmAnd::VectorLine_P::setPoints(const QVector<PointI>& points)
     if (_points != points)
     {
         _points = points;
+        invalidatePreparedPoints();
 
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
@@ -976,30 +981,30 @@ OsmAnd::FColorARGB OsmAnd::VectorLine_P::middleColor(
         first.b + (last.b - first.b) * factor);
 }
 
-OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
-    const AreaI64& visibleArea64,
-    std::vector<std::vector<PointI>>& segments,
-    QList<QList<float>>& segmentDistances,
-    QList<QList<FColorARGB>>& segmentColors,
-    QList<QList<FColorARGB>>& segmentOutlineColors,
-    QList<QList<float>>& segmentHeights,
-    float& totalDistance)
+std::shared_ptr<const OsmAnd::VectorLine_P::PreparedPoints> OsmAnd::VectorLine_P::getPreparedPoints() const
 {
-    const AreaI visibleArea(visibleArea64);
+    QMutexLocker scopedLocker(&_preparedPointsMutex);
+
+    if (_preparedPoints)
+        return _preparedPoints;
+
+    const auto prepared = std::make_shared<PreparedPoints>();
+    auto& points64 = prepared->points64;
+    auto& pointIndices = prepared->pointIndices;
+    auto& pointDistances = prepared->pointDistances;
 
     // Calculate points unwrapped
-    auto pointsCount = _points.size();
+    const auto pointsCount = _points.size();
     int64_t intFull = INT32_MAX;
     intFull++;
     const auto intHalf = static_cast<int32_t>(intFull >> 1);
     const PointI shiftToCenter(intHalf, intHalf);
     auto point31 = _points.at(0);
     PointI64 point64(point31 - shiftToCenter);
-    QVector<PointI64> points64;
     points64.reserve(pointsCount);
     points64.push_back(point64);
-    QVector<int> pointIndices(pointsCount);
-    QVector<float> pointDistances(pointsCount);
+    pointIndices.resize(pointsCount);
+    pointDistances.resize(pointsCount);
     pointIndices[0] = 0;
     pointDistances[0] = 0.0f;
     int nextIndex = 0;
@@ -1028,6 +1033,59 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
         point31 = nextPoint31;
     }
     
+    prepared->bbox = bbox;
+    prepared->distance = distance;
+
+    // Block k holds the edges that end at points64[k * POINTS_BLOCK_SIZE + 1 .. (k + 1) * POINTS_BLOCK_SIZE]
+    const int count64 = points64.size();
+    const int blocksCount = count64 > 1 ? (count64 - 2) / POINTS_BLOCK_SIZE + 1 : 0;
+    prepared->blockBBoxes.reserve(blocksCount);
+    for (int block = 0; block < blocksCount; block++)
+    {
+        const int first = block * POINTS_BLOCK_SIZE;
+        const int last = qMin(first + POINTS_BLOCK_SIZE, count64 - 1);
+        AreaI64 blockBBox(points64.at(first), points64.at(first));
+        for (int k = first + 1; k <= last; k++)
+            blockBBox.enlargeToInclude(points64.at(k));
+        prepared->blockBBoxes.push_back(blockBBox);
+    }
+
+    _preparedPoints = prepared;
+    return prepared;
+}
+
+void OsmAnd::VectorLine_P::invalidatePreparedPoints()
+{
+    QMutexLocker scopedLocker(&_preparedPointsMutex);
+
+    _preparedPoints.reset();
+}
+
+OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
+    const PreparedPoints& prepared,
+    const AreaI64& visibleArea64,
+    std::vector<std::vector<PointI>>& segments,
+    QList<QList<float>>& segmentDistances,
+    QList<QList<FColorARGB>>& segmentColors,
+    QList<QList<FColorARGB>>& segmentOutlineColors,
+    QList<QList<float>>& segmentHeights,
+    float& totalDistance)
+{
+    const AreaI visibleArea(visibleArea64);
+
+    int64_t intFull = INT32_MAX;
+    intFull++;
+    const auto intHalf = static_cast<int32_t>(intFull >> 1);
+    const auto& points64 = prepared.points64;
+    const auto& pointIndices = prepared.pointIndices;
+    const auto& pointDistances = prepared.pointDistances;
+    const auto& bbox = prepared.bbox;
+    const double distance = prepared.distance;
+    int nextIndex = 0;
+
+    // A block of edges outside this area has no point inside the visible area and no edge crossing it
+    const auto skippableArea64 = visibleArea64.getEnlargedBy(static_cast<int64_t>(2));
+
     _bboxShifted = bbox;
 
     auto minShiftX = static_cast<int32_t>(bbox.topLeft.x / intFull - (bbox.topLeft.x % intFull < 0 ? 1 : 0));
@@ -1038,7 +1096,7 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
     const bool withColors = hasColorizationMapping();
     const bool withOutlineColors = hasOutlineColorizationMapping();
     const bool withHeights = hasHeights();
-    pointsCount = points64.size();
+    const int pointsCount = points64.size();
     PointI64 curr, drawFrom, drawTo, inter1, inter2;
     FColorARGB colorFrom, colorTo, colorSubFrom, colorSubTo, colorInterFrom, colorInterTo;
     FColorARGB colorOutFrom, colorOutTo, colorOutSubFrom, colorOutSubTo, colorOutInterFrom, colorOutInterTo;
@@ -1085,6 +1143,54 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
         bool outTo = false;
         for (int i = 1; i < pointsCount; i++)
         {
+            // Skip a block of edges that lies away from the visible area: none of them is drawn.
+            // The state is moved to the end of the block exactly as visiting its edges would leave it.
+            // Blocks outside the 32-bit range are visited, since the intersection test truncates to it
+            if (outFrom == outTo && (i - 1) % POINTS_BLOCK_SIZE == 0)
+            {
+                const int lastI = qMin(i - 1 + POINTS_BLOCK_SIZE, pointsCount - 1);
+                const auto blockBBox = prepared.blockBBoxes.at((i - 1) / POINTS_BLOCK_SIZE) - PointI64(shift, 0);
+                if (lastI > i && !blockBBox.intersects(skippableArea64)
+                    && blockBBox.left() >= INT32_MIN && blockBBox.right() <= INT32_MAX
+                    && blockBBox.top() >= INT32_MIN && blockBBox.bottom() <= INT32_MAX)
+                {
+                    j = static_cast<int>(
+                        std::lower_bound(pointIndices.cbegin(), pointIndices.cend(), lastI) - pointIndices.cbegin());
+                    prevIndex = pointIndices.at(j - 1);
+                    nextIndex = pointIndices.at(j);
+                    distanceFrom = pointDistances.at(j - 1);
+                    distanceTo = pointDistances.at(j);
+                    const auto quotient =
+                        static_cast<float>(lastI - prevIndex) / static_cast<float>(nextIndex - prevIndex);
+                    distanceSubTo = distanceFrom + (distanceTo - distanceFrom) * quotient;
+                    if (withColors)
+                    {
+                        colorFrom = _colorizationMapping.at(j - 1);
+                        colorTo = _colorizationMapping.at(j);
+                        colorSubTo = solidColors ? colorTo : middleColor(colorFrom, colorTo, quotient);
+                    }
+                    if (withOutlineColors)
+                    {
+                        colorOutFrom = _outlineColorizationMapping.at(j - 1);
+                        colorOutTo = _outlineColorizationMapping.at(j);
+                        colorOutSubTo = solidColors ? colorOutTo : middleColor(colorOutFrom, colorOutTo, quotient);
+                    }
+                    if (withHeights)
+                    {
+                        heightFrom = _heights.at(j - 1);
+                        heightTo = _heights.at(j);
+                        heightSubTo = heightFrom + (heightTo - heightFrom) * quotient;
+                    }
+                    segmentStarted = false;
+                    prevIn = false;
+                    prev = points64.at(lastI);
+                    prev.x -= shift;
+                    drawFrom = prev;
+                    i = lastI;
+                    continue;
+                }
+            }
+
             drawTo = points64.at(i);
             drawTo.x -= shift;
             curr = drawTo;
@@ -1380,7 +1486,7 @@ OsmAnd::PointI OsmAnd::VectorLine_P::calculateVisibleSegments(
     
     for (auto& attachedMarker : _attachedMarkers)
     {
-        attachedMarker->attachToVectorLine(qMove(points64));
+        attachedMarker->attachToVectorLine(points64);
     }
 
     totalDistance = static_cast<float>(distance);
@@ -1419,8 +1525,9 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
     QList<QList<FColorARGB>> outlineColors;
     QList<QList<float>> heights;
     float distance;
-    const auto startPoint =
-        calculateVisibleSegments(visibleArea64, segments, distances, colors, outlineColors, heights, distance);
+    const auto prepared = getPreparedPoints();
+    const auto startPoint = calculateVisibleSegments(
+        *prepared, visibleArea64, segments, distances, colors, outlineColors, heights, distance);
     if (segments.size() == 0)
         return false;
 
