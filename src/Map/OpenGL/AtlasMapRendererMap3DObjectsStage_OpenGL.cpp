@@ -90,14 +90,19 @@ namespace
     const QString shadowFragmentShader = QString(R"(
             PARAM_INPUT highp vec4 v2f_shadowPosition;
             uniform highp sampler2DShadow param_fs_shadowmap;
-            uniform float param_fs_shadowmapEnabled;
             uniform highp float param_fs_shadowmapTexelSize;
 
-            float inShadow()
+            float sampleShadowmap(highp vec3 p, float part)
             {
-                if (param_fs_shadowmapEnabled < 0.5)
-                    return 0.0;
+                highp float halfTexelSize = param_fs_shadowmapTexelSize * 0.5;
+                p.xy = clamp(p.xy, vec2(halfTexelSize), vec2(1.0 - halfTexelSize));
+                p.y = (p.y + part) / 2.0;
+                p.z = clamp(p.z, 0.0, 1.0 - 1e-5);
+                return SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, p);
+            }
 
+            float inShadow(float part)
+            {
                 highp vec3 p = v2f_shadowPosition.xyz / max(v2f_shadowPosition.w, 1e-8);
                 p = p * 0.5 + 0.5;
                 highp vec3 dx = dFdx(p);
@@ -108,12 +113,14 @@ namespace
 
                 p.z -= 1e-5;
                 highp vec3 plane = cross(dx, dy);
+                if (plane.z < 0.0)
+                    return 1.0;
                 highp float scale = dot(dx.xy, dx.xy) + dot(dy.xy, dy.xy);
                 if (!(scale > 0.0 && abs(plane.z) > 1e-4 * scale))
-                    return SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, p);
+                    return sampleShadowmap(p, part);
                 highp vec2 gradient = -plane.xy / plane.z;
                 if (!all(lessThan(abs(gradient), vec2(1e20))))
-                    return SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, p);
+                    return sampleShadowmap(p, part);
 
                 float shadow = 0.0;
                 for (int y = -1; y <= 1; y++)
@@ -122,8 +129,7 @@ namespace
                     {
                         highp vec2 offset = vec2(float(x), float(y)) * param_fs_shadowmapTexelSize;
                         highp float depth = p.z + dot(gradient, offset);
-                        if (depth >= 0.0 && depth < 1.0)
-                            shadow += SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, vec3(p.xy + offset, depth));
+                        shadow += sampleShadowmap(vec3(p.xy + offset, depth), part);
                     }
                 }
 
@@ -194,10 +200,16 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeSimpleProgram()
             
             void main()
             {
+                float shadow = 0.0;
+                if (param_fs_shadowmapTexelSize < 1.0)
+                {
+                    shadow = inShadow(0.0);
+                    if (param_fs_alpha > 0.0 && param_fs_alpha < 1.0)
+                        shadow = max(shadow, inShadow(1.0) * param_fs_alpha);
+                }
                 vec3 n = normalize(v2f_pointNormal);
                 float d = dot(-param_fs_lightDirection, n);
-                float shadowed = inShadow();
-                d = ((d < 0.0 ? -(d * d) : mix(d * d, 0.0, shadowed)) + 1.0) * 0.5 + 0.1;
+                d = ((d < 0.0 ? -(d * d) : mix(d * d, 0.0, shadow)) + 1.0) * 0.5 + 0.1;
                 vec3 color = v2f_pointColor.rgb * d;
                 FRAGMENT_COLOR_OUTPUT = vec4(clamp(color, 0.0, 1.0), param_fs_alpha);
             }
@@ -281,7 +293,6 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeSimpleProgram()
     ok = ok && lookup->lookupLocation(_program.fs.param.alpha, "param_fs_alpha", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.lightDirection, "param_fs_lightDirection", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.shadowmap, "param_fs_shadowmap", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_program.fs.param.shadowmapEnabled, "param_fs_shadowmapEnabled", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.shadowmapTexelSize, "param_fs_shadowmapTexelSize", GlslVariableType::Uniform);
 
     if (!ok)
@@ -382,7 +393,13 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
             {
                 vec3 v = normalize(param_fs_cameraPosition - v2f_pointPosition);
                 vec3 n = normalize(v2f_pointNormal);
-                float shadowed = inShadow();
+                float shadow = 0.0;
+                if (param_fs_shadowmapTexelSize < 1.0)
+                {
+                    shadow = inShadow(0.0);
+                    if (param_fs_alpha > 0.0 && param_fs_alpha < 1.0)
+                        shadow = max(shadow, inShadow(1.0) * param_fs_alpha);
+                }
                 bool top = abs(n.y) > 0.0;
                 float a = atan(n.x, n.z);
                 vec2 p = abs(v2f_sizes.zw) + 10.0;
@@ -394,11 +411,11 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
                 float qa = floor(a * 2.0) * 0.5;
                 vec2 s = top ? vec2(0.0, 0.0) : vec2(sin(qa), cos(qa)) + v2f_pointColor.a;
                 float d = dot(-param_fs_lightDirection, n);
-                d = ((d < 0.0 ? -(d * d) : mix(d * d, 0.0, shadowed)) + 1.0) * 0.5 + 0.1;
+                d = ((d < 0.0 ? -(d * d) : mix(d * d, 0.0, shadow)) + 1.0) * 0.5 + 0.1;
                 d *= !top && v2f_sizes.z > 0.0 ? fract(sin(dot(s, vec2(12.9898, 78.233))) * 43758.5453) * 0.14 + 0.93 : 1.0;
                 d /= 1.0 + exp(-v2f_height * 0.05) * 0.2;
                 d *= 1.0 + pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 3.0) * 0.2;
-                vec3 color = mix(v2f_pointColor.rgb * d, vec3(1.0), mix(h, 0.0, shadowed));
+                vec3 color = mix(v2f_pointColor.rgb * d, vec3(1.0), mix(h, 0.0, shadow));
                 float alpha = param_fs_alpha * min(param_fs_fadeHeight / v2f_height, 1.0);
                 FRAGMENT_COLOR_OUTPUT = vec4(clamp(color, 0.0, 1.0), alpha);
             }
@@ -485,7 +502,6 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
     ok = ok && lookup->lookupLocation(_colorProgram.fs.param.cameraPosition, "param_fs_cameraPosition", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_colorProgram.fs.param.lightDirection, "param_fs_lightDirection", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_colorProgram.fs.param.shadowmap, "param_fs_shadowmap", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_colorProgram.fs.param.shadowmapEnabled, "param_fs_shadowmapEnabled", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_colorProgram.fs.param.shadowmapTexelSize, "param_fs_shadowmapTexelSize", GlslVariableType::Uniform);
 
     if (!ok)
@@ -1042,8 +1058,6 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::configureShadowmap(
     glUniformMatrix4fv(program.vs.param.mDirectSunlightProjection, 1, GL_FALSE, glm::value_ptr(projection));
     GL_CHECK_RESULT;
     glUniform1i(program.fs.param.shadowmap, 0);
-    GL_CHECK_RESULT;
-    glUniform1f(program.fs.param.shadowmapEnabled, enabled ? 1.0f : 0.0f);
     GL_CHECK_RESULT;
     glUniform1f(program.fs.param.shadowmapTexelSize, enabled ? 1.0f / resolution : 1.0f);
     GL_CHECK_RESULT;

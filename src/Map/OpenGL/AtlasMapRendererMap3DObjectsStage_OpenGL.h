@@ -69,7 +69,6 @@ namespace OsmAnd
                     GLlocation cameraPosition;
                     GLlocation lightDirection;
                     GLlocation shadowmap;
-                    GLlocation shadowmapEnabled;
                     GLlocation shadowmapTexelSize;
                 } param;
             } fs;

@@ -354,7 +354,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*param_fs_mistConfiguration*/ +
         1 /*param_fs_mistColor*/ +
         1 /*param_fs_shadowmap*/ +
-        1 /*param_fs_shadowmapProperties*/;
+        1 /*param_fs_shadowmapParameters*/;
     const auto maxBatchSizeByUniforms =
         (gpuAPI->maxVertexUniformVectors - vsOtherUniforms - fsOtherUniforms) /
         (vsUniformsPerLayer + fsUniformsPerLayer);
@@ -1229,7 +1229,16 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    }                                                                                                              ""\n"
             "}                                                                                                                  ""\n"
             "                                                                                                                   ""\n"
-            "float inShadow()                                                                                                   ""\n"
+            "float sampleShadowmap(highp vec3 p, float part)                                                                    ""\n"
+            "{                                                                                                                  ""\n"
+            "    highp float halfTexel = 0.5 * param_fs_shadowmapParameters.y;                                                  ""\n"
+            "    p.xy = clamp(p.xy, vec2(halfTexel), vec2(1.0 - halfTexel));                                                    ""\n"
+            "    p.y = (p.y + part) / 2.0;                                                                                      ""\n"
+            "    p.z = clamp(p.z, 0.0, 1.0 - 1e-5);                                                                             ""\n"
+            "    return SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, p);                                                        ""\n"
+            "}                                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            "float inShadow(float part)                                                                                         ""\n"
             "{                                                                                                                  ""\n"
             "    highp vec3 p = v2f_shadowPosition.xyz / max(v2f_shadowPosition.w, 1e-8);                                       ""\n"
             "    p = p * 0.5 + 0.5;                                                                                             ""\n"
@@ -1241,22 +1250,23 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "                                                                                                                   ""\n"
             "    p.z -= 1e-5;                                                                                                   ""\n"
             "    highp vec3 plane = cross(dx, dy);                                                                              ""\n"
+            "    if (plane.z < 0.0)                                                                                             ""\n"
+            "        return 1.0;                                                                                                ""\n"
             "    highp float scale = dot(dx.xy, dx.xy) + dot(dy.xy, dy.xy);                                                     ""\n"
             "    if (!(scale > 0.0 && abs(plane.z) > 1e-4 * scale))                                                             ""\n"
-            "        return SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, p);                                                    ""\n"
+            "        return sampleShadowmap(p, part);                                                                           ""\n"
             "    highp vec2 gradient = -plane.xy / plane.z;                                                                     ""\n"
             "    if (!all(lessThan(abs(gradient), vec2(1e20))))                                                                 ""\n"
-            "        return SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, p);                                                    ""\n"
+            "        return sampleShadowmap(p, part);                                                                           ""\n"
             "                                                                                                                   ""\n"
             "    float shadow = 0.0;                                                                                            ""\n"
             "    for (int y = -1; y <= 1; y++)                                                                                  ""\n"
             "    {                                                                                                              ""\n"
             "        for (int x = -1; x <= 1; x++)                                                                              ""\n"
             "        {                                                                                                          ""\n"
-            "            highp vec2 offset = vec2(float(x), float(y)) * param_fs_shadowmapParameters.z;                         ""\n"
+            "            highp vec2 offset = vec2(float(x), float(y)) * param_fs_shadowmapParameters.y;                         ""\n"
             "            highp float depth = p.z + dot(gradient, offset);                                                       ""\n"
-            "            if (depth >= 0.0 && depth < 1.0)                                                                       ""\n"
-            "                shadow += SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, vec3(p.xy + offset, depth));                ""\n"
+            "            shadow += sampleShadowmap(vec3(p.xy + offset, depth), part);                                           ""\n"
             "        }                                                                                                          ""\n"
             "    }                                                                                                              ""\n"
             "                                                                                                                   ""\n"
@@ -1363,7 +1373,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "%UnrolledPerRasterLayerProcessingCode%                                                                             ""\n"
             "                                                                                                                   ""\n"));
         const auto& hillshadeInFragmentShader_3 = QStringLiteral(
-            "    if (param_fs_lastBatch > 0.0 && withElevation)                                                                 ""\n"
+            "    if (param_fs_lastBatch > 0.0 && withHillshade)                                                                 ""\n"
             "    {                                                                                                              ""\n"
             "#if __VERSION__ >= 140                                                                                             ""\n"
             "        vec2 c = v2f_hsCoords;                                                                                     ""\n"
@@ -1378,16 +1388,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "        vec3 hillshadeNormal = normalize(vec3(slopes.x, 1.0, -slopes.y));                                          ""\n"
             "        sunlight = dot(hillshadeNormal, -param_fs_hillshade.xyz);                                                  ""\n"
             "        float hsLight = sunlight * (1.0 - atan(lsl) / M_PI);                                                       ""\n"
-            "        float hsAlpha = clamp(hsLight < 0.7 ? (0.7 - hsLight) / 0.7 : (hsLight - 0.7) / 0.3 * 0.2, 0.0, 1.0);      ""\n"
-            "        vec4 hsColor = hsLight < 0.7 ? vec4(0.0, 0.0, 0.0, hsAlpha) : vec4(1.0, 1.0, 1.0, hsAlpha);                ""\n"
-            "        hsColor.a *= param_fs_hillshade.w;                                                                         ""\n"
-            "        mixColors(finalColor, hsColor);                                                                            ""\n"
-            "        withHillshade = true;                                                                                      ""\n"
+            "        hsFactor = min((0.7 - hsLight) / (hsLight < 0.7 ? 0.7 : 1.5), 1.0);                                        ""\n"
             "    }                                                                                                              ""\n");
         fragmentShader.append(QStringLiteral(
             "    float sunlight = dot(normalize(v2f_normal), -param_fs_hillshade.xyz);                                          ""\n"
-            "    bool withElevation = abs(param_fs_elevation_scale) > 0.0;                                                      ""\n"
-            "    bool withHillshade = false;                                                                                    ""\n"
+            "    float hsFactor = 0.0;                                                                                          ""\n"
+            "    bool withHillshade = abs(param_fs_elevation_scale) > 0.0 && param_fs_hillshade.w > 0.0;                        ""\n"
             "%HillshadeInFragmentShader_3%                                                                                      ""\n"
             "                                                                                                                   ""\n"
 #if 0
@@ -1410,13 +1416,31 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    mixColors(finalColor, secondaryColor * param_fs_lastBatch);                                                    ""\n"
             "    mixColors(finalColor, primaryColor * param_fs_lastBatch);                                                      ""\n");
         fragmentShader.append(QStringLiteral(
-            "    if (param_fs_lastBatch > 0.0 && param_fs_shadowmapParameters.y > 0.5)                                          ""\n"
+            "    if (param_fs_lastBatch > 0.0)                                                                                  ""\n"
             "    {                                                                                                              ""\n"
-            "        float shadowed = inShadow();                                                                               ""\n"
-            "        float d = 1.0 - sunlight;                                                                                  ""\n"
-            "        float a = withElevation ? 1.0 : 1.1;                                                                       ""\n"
-            "        float s = sunlight > 0.0 ? (withHillshade ? shadowed : max(shadowed, d * d)) : (withHillshade ? 0.0 : a);  ""\n"
-            "        mixColors(finalColor, vec4(0.0, 0.0, 0.0, clamp(0.4 * s, 0.0, 0.4)));                                      ""\n"
+            "        if (param_fs_shadowmapParameters.y < 1.0)                                                                  ""\n"
+            "        {                                                                                                          ""\n"
+            "            float shadow = inShadow(0.0);                                                                          ""\n"
+            "            if (param_fs_shadowmapParameters.z > 0.0 && param_fs_shadowmapParameters.z < 1.0)                      ""\n"
+            "                shadow = max(shadow, inShadow(1.0) * param_fs_shadowmapParameters.z);                              ""\n"
+            "            float d = 1.0 - sunlight;                                                                              ""\n"
+            "            vec4 shadowColor = vec4(0.0, 0.0, 0.0, (sunlight > 0.0 ? max(shadow, d * d) : 1.0) * 0.4);             ""\n"
+            "            if (withHillshade)                                                                                     ""\n"
+            "            {                                                                                                      ""\n"
+            "                shadow *= 0.4;                                                                                     ""\n"
+            "                float hillshade = hsFactor * param_fs_hillshade.w;                                                 ""\n"
+            "                float a = shadow > 0.0 ? max(shadow, hillshade) : hillshade;                                       ""\n"
+            "                vec4 hsColor = a < 0.0 ? vec4(1.0, 1.0, 1.0, -a) : vec4(0.0, 0.0, 0.0, a);                         ""\n"
+            "                shadowColor = mix(shadowColor, hsColor, param_fs_hillshade.w * param_fs_hillshade.w);              ""\n"
+            "            }                                                                                                      ""\n"
+            "            mixColors(finalColor, shadowColor);                                                                    ""\n"
+            "        }                                                                                                          ""\n"
+            "        else if (withHillshade)                                                                                    ""\n"
+            "        {                                                                                                          ""\n"
+            "            vec4 hsColor = hsFactor < 0.0 ? vec4(1.0, 1.0, 1.0, -hsFactor) : vec4(0.0, 0.0, 0.0, hsFactor);        ""\n"
+            "            hsColor.a *= param_fs_hillshade.w;                                                                     ""\n"
+            "            mixColors(finalColor, hsColor);                                                                        ""\n"
+            "        }                                                                                                          ""\n"
             "    }                                                                                                              ""\n"
             "%GridsInFragmentShader_4%                                                                                          ""\n"
             "    mixColors(finalColor, circle * param_fs_lastBatch);                                                            ""\n"
@@ -2506,6 +2530,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     const auto& internalState = getInternalState();
 
     const bool forShadowmap = shadowMode == ShadowMode::Build;
+    const bool withHillshade = currentState.elevationDataProvider &&
+        currentState.elevationConfiguration.visualizationStyle != ElevationConfiguration::VisualizationStyle::None;
     const bool withGrids = currentState.gridConfiguration.primaryGrid || currentState.gridConfiguration.secondaryGrid;
     const auto& program = _rasterLayerTilePrograms[numberOfLayersInBatch][programFeatures];
     const auto& vao = _rasterTileVAOs[numberOfLayersInBatch][programFeatures];
@@ -2540,8 +2566,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     GL_CHECK_RESULT;
     glUniform3f(program.fs.param.shadowmapParameters,
         forShadowmap ? 1.0f : 0.0f,
-        withShadows ? 1.0f : 0.0f,
-        withShadows ? 1.0f / shadowmapResolution : 1.0f);
+        withShadows ? 1.0f / shadowmapResolution : 1.0f,
+        currentState.map3DObjectsProvider ? renderer->get3DBuildingsAlpha() : 0.0f);
     GL_CHECK_RESULT;
     glActiveTexture(GL_TEXTURE0 + shadowmapSamplerIndex);
     GL_CHECK_RESULT;
@@ -2605,7 +2631,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         -qSin(azimuth) * cosZenith,
         -qSin(zenith),
         qCos(azimuth) * cosZenith,
-        currentState.elevationConfiguration.visualizationAlpha);
+        withHillshade ? currentState.elevationConfiguration.visualizationAlpha : 0.0f);
     GL_CHECK_RESULT;
 
     glUniform4f(program.fs.param.backgroundColor,

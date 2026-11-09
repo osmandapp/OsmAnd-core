@@ -192,15 +192,13 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     bool withShadows = false;
     if (currentState.castSunShadows)
     {
-        const auto mapResolution = qMin(MAX_SHADOWMAP_RESOLUTION, static_cast<int32_t>(
-            Utilities::getNextPowerOfTwo(qMax(currentState.viewport.width(), currentState.viewport.height()) / 2)));
+        const auto mapResolution = qMax(1, qMin(gpuAPI->maxTextureSize / 2,
+            qMin(MAX_SHADOWMAP_RESOLUTION, static_cast<int32_t>(Utilities::getNextPowerOfTwo(
+                qMax(currentState.viewport.width(), currentState.viewport.height()) / 2)))));
         
         if (gpuAPI->attachShadowmap(mapResolution))
         {
             withShadows = true;
-
-            glViewport(0, 0, mapResolution, mapResolution);
-            GL_CHECK_RESULT;
 
             glClear(GL_DEPTH_BUFFER_BIT);
             GL_CHECK_RESULT;
@@ -213,6 +211,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
 
             if (!skip && currentState.zoomLevel > 8 && !currentDebugSettings->disableMapLayersStage)
             {
+                glViewport(0, 0, mapResolution, mapResolution);
+                GL_CHECK_RESULT;
+
                 glEnable(GL_CULL_FACE);
                 GL_CHECK_RESULT;
 
@@ -235,6 +236,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
 
             if (!skip && _map3DObjectsStage && !currentDebugSettings->disable3DMapObjectsStage)
             {
+                glViewport(0, get3DBuildingsAlpha() < 1.0f ? mapResolution : 0, mapResolution, mapResolution);
+                GL_CHECK_RESULT;
+
                 Stopwatch map3DStageStopwatch(metric != nullptr);
 
                 const auto stageResult = _map3DObjectsStage->render(metric, MapRendererStage::ShadowMode::Build);
@@ -250,6 +254,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
 
             if (!skip && !currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
             {
+                glViewport(0, 0, mapResolution, mapResolution);
+                GL_CHECK_RESULT;
+
                 Stopwatch symbolsStageStopwatch(metric != nullptr);
                 _symbolsStage->step = 0;
                 const auto stageResult = _symbolsStage->render(metric, MapRendererStage::ShadowMode::Build);
@@ -2281,8 +2288,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
             const auto angles = Utilities::getAnglesFrom31(state.target31);
             unitsPer31 = globeRadius * qCos(angles.y) * (2.0 * M_PI / (1ull << 31));
         }
-        const auto mapResolution = qMin(MAX_SHADOWMAP_RESOLUTION, static_cast<int32_t>(
-            Utilities::getNextPowerOfTwo(qMax(currentState.viewport.width(), currentState.viewport.height()) / 2)));
+        const auto mapResolution = qMax(1, qMin(getGPUAPI()->maxTextureSize / 2,
+            qMin(MAX_SHADOWMAP_RESOLUTION, static_cast<int32_t>(Utilities::getNextPowerOfTwo(
+                qMax(state.viewport.width(), state.viewport.height()) / 2)))));
         const auto texSize = static_cast<double>(lightRadius) * (2.0 / mapResolution);
         const glm::dvec2 targetOffset(state.target31.x * unitsPer31, state.target31.y * unitsPer31);
         const auto lightOffset = glm::dvec2(lightView[0].x, lightView[0].y) * targetOffset.x

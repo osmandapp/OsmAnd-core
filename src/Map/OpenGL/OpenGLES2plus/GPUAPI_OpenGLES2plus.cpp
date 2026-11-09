@@ -532,7 +532,7 @@ bool OsmAnd::GPUAPI_OpenGLES2plus::initialize()
 
 bool OsmAnd::GPUAPI_OpenGLES2plus::initializeShadowmap(int resolution)
 {
-    if (resolution <= 0)
+    if (resolution <= 0 || resolution > maxTextureSize / 2)
         return false;
 
     bool ok = GPUAPI_OpenGL::initializeShadowmap(resolution);
@@ -554,7 +554,7 @@ bool OsmAnd::GPUAPI_OpenGLES2plus::initializeShadowmap(int resolution)
     GL_CHECK_RESULT;
     glBindTexture(GL_TEXTURE_2D, depthTexture);
     GL_CHECK_RESULT;
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, resolution, resolution, 0,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, resolution, 2 * resolution, 0,
         GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
     GL_CHECK_RESULT;
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
