@@ -4,9 +4,12 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.system.ErrnoException;
+import android.system.Os;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.FrameLayout;
@@ -60,6 +63,47 @@ import java.util.List;
  */
 public abstract class MapRendererView extends FrameLayout {
     private static final String TAG = "OsmAndCore:Android/MapRendererView";
+
+    static {
+        // Run before any EGL use in this class, including the static MSAA probe.
+        applyXclipse540PipelineCacheWorkaround();
+    }
+
+    private static void applyXclipse540PipelineCacheWorkaround() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S
+                || !"samsung".equalsIgnoreCase(Build.MANUFACTURER)) {
+            return;
+        }
+
+        // Exynos 1580 contains Xclipse 540. GL_RENDERER would require EGL initialization,
+        // which is too late to configure ANGLE's pipeline-cache loading.
+        String socModel = Build.SOC_MODEL.replace(" ", "");
+        if (!"exynos1580".equalsIgnoreCase(socModel)
+                && !"s5e8855".equalsIgnoreCase(socModel)
+                && !"s5e8855".equalsIgnoreCase(Build.HARDWARE)) {
+            return;
+        }
+
+        String variable = "ANGLE_FEATURE_OVERRIDES_ENABLED";
+        String feature = "disablePipelineCacheLoadForTesting";
+        String overrides = Os.getenv(variable);
+        if (overrides != null) {
+            for (String override : overrides.split(":")) {
+                if (feature.equalsIgnoreCase(override.trim())) {
+                    return;
+                }
+            }
+        }
+
+        // Preserve other feature overrides already present in the process environment.
+        String value = overrides == null || overrides.isEmpty() ? feature : overrides + ":" + feature;
+        try {
+            Os.setenv(variable, value, true);
+            Log.i(TAG, "Enabled ANGLE pipeline-cache loading workaround for Xclipse 540");
+        } catch (ErrnoException e) {
+            Log.w(TAG, "Failed to enable ANGLE pipeline-cache loading workaround", e);
+        }
+    }
 
     /**
      * Maximum time the calling thread is allowed to be blocked while waiting for the EGL
