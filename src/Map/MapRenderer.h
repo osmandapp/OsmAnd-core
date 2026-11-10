@@ -10,6 +10,7 @@
 #include <QHash>
 #include <QMap>
 #include <QReadWriteLock>
+#include <QSemaphore>
 #include <QSet>
 #include <QJsonDocument>
 #include "restore_internal_warnings.h"
@@ -147,6 +148,7 @@ namespace OsmAnd
         Qt::HANDLE _gpuWorkerThreadId;
         std::unique_ptr<Concurrent::Thread> _gpuWorkerThread;
         volatile bool _gpuWorkerThreadIsAlive;
+        QSemaphore _gpuWorkerThreadStarted;
         QMutex _gpuWorkerThreadWakeupMutex;
         QWaitCondition _gpuWorkerThreadWakeup;
         QAtomicInt _gpuWorkerIsSuspended;

@@ -345,11 +345,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderPoints2D()
         GL_CHECK_RESULT;
 
         // Draw the point actually
-        {
-            QMutexLocker scopedLocker(&gpuAPI->drawLock);
-
-            glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_SHORT, nullptr);
-        }
+        glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_SHORT, nullptr);
         GL_CHECK_RESULT;
     }
 
@@ -653,11 +649,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderRects2D()
         GL_CHECK_RESULT;
 
         // Draw the rectangle actually
-        {
-            QMutexLocker scopedLocker(&gpuAPI->drawLock);
-
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
-        }
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
         GL_CHECK_RESULT;
     }
 
@@ -956,11 +948,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines2D()
             GL_CHECK_RESULT;
 
             // Draw the line actually
-            {
-                QMutexLocker scopedLocker(&gpuAPI->drawLock);
-
-                glDrawElements(GL_LINES, 2, GL_UNSIGNED_SHORT, nullptr);
-            }
+            glDrawElements(GL_LINES, 2, GL_UNSIGNED_SHORT, nullptr);
             GL_CHECK_RESULT;
         }
     }
@@ -1258,11 +1246,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines3D()
             GL_CHECK_RESULT;
 
             // Draw the line actually
-            {
-                QMutexLocker scopedLocker(&gpuAPI->drawLock);
-
-                glDrawElements(GL_LINES, 2, GL_UNSIGNED_SHORT, nullptr);
-            }
+            glDrawElements(GL_LINES, 2, GL_UNSIGNED_SHORT, nullptr);
             GL_CHECK_RESULT;
         }
     }
@@ -1573,11 +1557,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderQuads3D()
         GL_CHECK_RESULT;
 
         // Draw the quad actually
-        {
-            QMutexLocker scopedLocker(&gpuAPI->drawLock);
-
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
-        }
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
         GL_CHECK_RESULT;
     }
 

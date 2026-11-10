@@ -254,6 +254,8 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
             _setupOptions.gpuWorkerThreadPrologue(this);
     }
 
+    _gpuWorkerThreadStarted.release();
+
     while (_gpuWorkerThreadIsAlive)
     {
         // Wait until we're unblocked by host
@@ -497,6 +499,7 @@ bool OsmAnd::MapRenderer::postInitializeRendering()
     {
         _gpuWorkerThreadIsAlive = true;
         _gpuWorkerThread->start();
+        _gpuWorkerThreadStarted.acquire();
     }
 
     return true;
