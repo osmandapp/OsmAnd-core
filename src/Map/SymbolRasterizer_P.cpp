@@ -23,6 +23,71 @@
 #include "Utilities.h"
 #include "Logging.h"
 
+#include <string>
+#include <QMutex>
+#if defined(__ANDROID__)
+#include <sys/system_properties.h>
+#endif
+
+namespace OsmAnd
+{
+    // zoom-bench E: zoom of the symbols request being rasterized on this thread
+    int& zbRasterZoomRef()
+    {
+        static thread_local int zoom = -1;
+        return zoom;
+    }
+}
+
+namespace
+{
+    bool zbFlagE()
+    {
+        static const bool enabled = []() -> bool
+        {
+            char buffer[96] = { 0 };
+#if defined(__ANDROID__)
+            __system_property_get("debug.osmand.zb", buffer);
+#endif
+            return std::string(buffer).find('E') != std::string::npos;
+        }();
+        return enabled;
+    }
+
+    bool zbFlagD()
+    {
+        static const bool enabled = []() -> bool
+        {
+            char buffer[96] = { 0 };
+#if defined(__ANDROID__)
+            __system_property_get("debug.osmand.zb", buffer);
+#endif
+            return std::string(buffer).find('D') != std::string::npos;
+        }();
+        return enabled;
+    }
+
+    struct ZbTextValue
+    {
+        sk_sp<SkImage> image;
+        QVector<SkScalar> glyphsWidth;
+        float extraTop = 0, extraBottom = 0, lineSpacing = 0, fontAscent = 0;
+    };
+    struct ZbTextCache
+    {
+        QMutex mutex;
+        QHash<QString, ZbTextValue> entries;
+        qint64 pixels = 0;
+        quint64 hits = 0, misses = 0;
+    };
+    ZbTextCache& zbTextCache()
+    {
+        static ZbTextCache cache;
+        return cache;
+    }
+}
+
+
 // #define OSMAND_DUMP_SYMBOLS 1
 #if !defined(OSMAND_DUMP_SYMBOLS)
 #   define OSMAND_DUMP_SYMBOLS 0
@@ -44,6 +109,45 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
     const FilterBySymbolsGroup filter,
     const std::shared_ptr<const IQueryController>& queryController) const
 {
+    // zoom-bench E: choose the captions worth rasterizing
+    QSet<const void*> zbKeepText;
+    const bool zbUseKeep = zbFlagE() && OsmAnd::zbRasterZoomRef() >= 0;
+    if (zbUseKeep)
+    {
+        const int shift = qMax(0, 31 - OsmAnd::zbRasterZoomRef() - 3);
+        QHash<quint64, QPair<int, const void*>> bestInCell;
+        QHash<QString, QVector<QPair<int, const void*>>> onPathByText;
+        for (const auto& entry : rangeOf(constOf(symbolsGroups)))
+        {
+            for (const auto& symbol : constOf(entry.value()->symbols))
+            {
+                const auto textSymbol = std::dynamic_pointer_cast<const MapPrimitiviser::TextSymbol>(symbol);
+                if (!textSymbol)
+                    continue;
+                if (!textSymbol->drawOnPath)
+                {
+                    const quint64 cell = (static_cast<quint64>(static_cast<quint32>(textSymbol->location31.x >> shift)) << 32)
+                        | static_cast<quint32>(textSymbol->location31.y >> shift);
+                    const auto it = bestInCell.find(cell);
+                    if (it == bestInCell.end() || textSymbol->order < it->first)
+                        bestInCell[cell] = qMakePair(textSymbol->order, static_cast<const void*>(textSymbol.get()));
+                }
+                else
+                    onPathByText[textSymbol->value].push_back(qMakePair(textSymbol->order, static_cast<const void*>(textSymbol.get())));
+            }
+        }
+        for (const auto& v : constOf(bestInCell))
+            zbKeepText.insert(v.second);
+        for (auto it = onPathByText.begin(); it != onPathByText.end(); ++it)
+        {
+            auto& list = it.value();
+            std::sort(list.begin(), list.end(),
+                [](const QPair<int, const void*>& l, const QPair<int, const void*>& r) { return l.first < r.first; });
+            for (int i = 0; i < list.size() && i < 2; i++)
+                zbKeepText.insert(list[i].second);
+        }
+    }
+
     for (const auto& symbolGroupEntry : rangeOf(constOf(symbolsGroups)))
     {
         if (queryController && queryController->isAborted())
@@ -99,6 +203,8 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
 
             if (const auto& textSymbol = std::dynamic_pointer_cast<const MapPrimitiviser::TextSymbol>(symbol))
             {
+                if (zbUseKeep && !zbKeepText.contains(textSymbol.get()))
+                    continue;
                 TextRasterizer::Style style;
                 if (!textSymbol->drawOnPath && textSymbol->shieldResourceName.isEmpty())
                     style.wrapWidth = textSymbol->wrapWidth;
@@ -153,14 +259,65 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 float symbolExtraTopSpace;
                 float symbolExtraBottomSpace;
                 QVector<SkScalar> glyphsWidth;
-                const auto rasterizedText = owner->textRasterizer->rasterize(
-                    textSymbol->value,
-                    style,
-                    textSymbol->drawOnPath ? &glyphsWidth : nullptr,
-                    &symbolExtraTopSpace,
-                    &symbolExtraBottomSpace,
-                    &lineSpacing,
-                    &fontAscent);
+                sk_sp<SkImage> rasterizedText;
+                QString zbKey;
+                bool zbHit = false;
+                if (zbFlagD())
+                {
+                    zbKey = QString::asprintf("%u|%d|%d|%u|%g|%u|%u|%p|%d|",
+                        style.wrapWidth, style.bold ? 1 : 0, style.italic ? 1 : 0, style.color.argb, (double)style.size,
+                        style.haloColor.argb, style.haloRadius, (const void*)style.backgroundImage.get(),
+                        textSymbol->drawOnPath ? 1 : 0) + textSymbol->value;
+                    auto& cache = zbTextCache();
+                    QMutexLocker locker(&cache.mutex);
+                    const auto it = cache.entries.constFind(zbKey);
+                    if (it != cache.entries.cend())
+                    {
+                        rasterizedText = it->image;
+                        glyphsWidth = it->glyphsWidth;
+                        symbolExtraTopSpace = it->extraTop;
+                        symbolExtraBottomSpace = it->extraBottom;
+                        lineSpacing = it->lineSpacing;
+                        fontAscent = it->fontAscent;
+                        zbHit = true;
+                        cache.hits++;
+                    }
+                    else
+                        cache.misses++;
+                    if (((cache.hits + cache.misses) % 2000) == 0)
+                        LogPrintf(LogSeverityLevel::Info, ">>>> 0 TEXTCACHE 0.0: hits=%llu misses=%llu entries=%d MBpx=%.1f",
+                            cache.hits, cache.misses, cache.entries.size(), cache.pixels * 4.0 / 1048576.0);
+                }
+                if (!zbHit)
+                {
+                    rasterizedText = owner->textRasterizer->rasterize(
+                        textSymbol->value,
+                        style,
+                        textSymbol->drawOnPath ? &glyphsWidth : nullptr,
+                        &symbolExtraTopSpace,
+                        &symbolExtraBottomSpace,
+                        &lineSpacing,
+                        &fontAscent);
+                    if (zbFlagD() && rasterizedText)
+                    {
+                        auto& cache = zbTextCache();
+                        QMutexLocker locker(&cache.mutex);
+                        if (cache.pixels > (16ll << 20))   // 16M pixels = 64 MB
+                        {
+                            cache.entries.clear();
+                            cache.pixels = 0;
+                        }
+                        ZbTextValue v;
+                        v.image = rasterizedText;
+                        v.glyphsWidth = glyphsWidth;
+                        v.extraTop = symbolExtraTopSpace;
+                        v.extraBottom = symbolExtraBottomSpace;
+                        v.lineSpacing = lineSpacing;
+                        v.fontAscent = fontAscent;
+                        cache.entries.insert(zbKey, v);
+                        cache.pixels += static_cast<qint64>(rasterizedText->width()) * rasterizedText->height();
+                    }
+                }
                 if (!rasterizedText)
                     continue;
 

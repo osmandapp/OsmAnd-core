@@ -1,4 +1,5 @@
 #include "MapObjectsSymbolsProvider_P.h"
+namespace OsmAnd { int& zbRasterZoomRef(); }
 #include "MapObjectsSymbolsProvider.h"
 
 #include "stdlib_common.h"
@@ -174,6 +175,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             return false;
         };
 
+    OsmAnd::zbRasterZoomRef() = request.zoom;   // zoom-bench E
     owner->symbolRasterizer->rasterize(
         primitivisedSymbolsGroups,
         mapPresentationEnvironment,

@@ -25,6 +25,117 @@
 #include "MapStyleBuiltinValueDefinitions.h"
 #include <QRegularExpression>
 
+#include <string>
+#if defined(__ANDROID__)
+#include <sys/system_properties.h>
+#endif
+
+namespace
+{
+    bool zbFlagC()
+    {
+        static const bool enabled = []() -> bool
+        {
+            char buffer[96] = { 0 };
+#if defined(__ANDROID__)
+            __system_property_get("debug.osmand.zb", buffer);
+#endif
+            return std::string(buffer).find('C') != std::string::npos;
+        }();
+        return enabled;
+    }
+}
+
+#include <vector>
+#include <map>
+#include <tuple>
+
+namespace
+{
+    bool zbFlagG()
+    {
+        static const bool enabled = []() -> bool
+        {
+            char buffer[96] = { 0 };
+#if defined(__ANDROID__)
+            __system_property_get("debug.osmand.zb", buffer);
+#endif
+            return std::string(buffer).find('G') != std::string::npos;
+        }();
+        return enabled;
+    }
+
+    // zoom of the current loadMapObjects() call on this thread
+    int& zbReadZoom()
+    {
+        static thread_local int zoom = -1;
+        return zoom;
+    }
+
+    // per thread: (mapping, environment, zoom) -> per attribute id: 0 unknown, 1 keep, 2 reject
+    struct ZbFilterMemo
+    {
+        const void* mapping = nullptr;
+        const void* environment = nullptr;
+        int zoom = -1;
+        std::vector<uint8_t>* table = nullptr;
+        std::map< std::tuple<const void*, const void*, int>, std::vector<uint8_t> > tables;
+    };
+    std::vector<uint8_t>& zbFilterTable(const void* mapping, const void* environment, int zoom, int size)
+    {
+        static thread_local ZbFilterMemo memo;
+        if (memo.table == nullptr || memo.mapping != mapping || memo.environment != environment || memo.zoom != zoom)
+        {
+            if (memo.tables.size() > 64)
+                memo.tables.clear();
+            memo.table = &memo.tables[std::make_tuple(mapping, environment, zoom)];
+            memo.mapping = mapping;
+            memo.environment = environment;
+            memo.zoom = zoom;
+        }
+        if (static_cast<int>(memo.table->size()) < size)
+            memo.table->resize(size, 0);
+        return *memo.table;
+    }
+
+    QVector<uint32_t>& zbTypesScratch()
+    {
+        static thread_local QVector<uint32_t> v;
+        return v;
+    }
+    QVector<uint32_t>& zbAdditionalScratch()
+    {
+        static thread_local QVector<uint32_t> v;
+        return v;
+    }
+}
+
+namespace
+{
+    // zoom-bench: raw bytes of the coordinates of the map object being read (one per reading thread)
+    std::vector<uint8_t>& deferredCoordsBuffer()
+    {
+        static thread_local std::vector<uint8_t> buffer;
+        return buffer;
+    }
+
+    inline int32_t readSInt32Raw(const uint8_t*& ptr, const uint8_t* const end)
+    {
+        uint32_t result = 0;
+        int shift = 0;
+        while (ptr < end)
+        {
+            const uint8_t b = *ptr++;
+            if (shift < 32)
+                result |= static_cast<uint32_t>(b & 0x7F) << shift;
+            if (!(b & 0x80))
+                break;
+            shift += 7;
+        }
+        return static_cast<int32_t>((result >> 1) ^ (~(result & 1) + 1));
+    }
+}
+
 // Filtering grid dimension in cells per tile side
 #define GRID_CELLS_PER_TILESIDE 32.0
 
@@ -701,6 +812,30 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
     const auto baseOffset = cis->CurrentPosition();
 
     bool isPresent = true;
+    bool hasDeferredCoords = false;
+    uint32_t deferredCoordsLength = 0;
+    // zoom-bench G: object is created only after the types passed the read filter
+    const bool zbG = zbFlagG();
+    bool zbIsArea = false;
+    bool zbHasAdditional = false;
+    const auto zbEnsureObject =
+        [&]()
+        {
+            if (mapObject)
+                return;
+            if (zbFlagC())
+                mapObject = std::make_shared<OsmAnd::BinaryMapObject>(section, treeNode->level);
+            else
+                mapObject.reset(new OsmAnd::BinaryMapObject(section, treeNode->level));
+            mapObject->isArea = zbIsArea;
+            if (zbHasAdditional)
+            {
+                const auto& add = zbAdditionalScratch();
+                mapObject->additionalAttributeIds.reserve(add.size());
+                for (const auto id : add)
+                    mapObject->additionalAttributeIds.push_back(id);
+            }
+        };
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -711,9 +846,61 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
             {
                 if (mapObject && !isPresent)
                     mapObject.reset();
+                if (zbG && isPresent && !mapObject && hasDeferredCoords)
+                    zbEnsureObject();
 
                 if (!ObfReaderUtilities::reachedDataEnd(cis) || !mapObject)
                     return;
+
+                if (hasDeferredCoords)
+                {
+                    // zoom-bench: the object passed the type filter, decode its geometry now
+                    const auto& buffer = deferredCoordsBuffer();
+                    const uint8_t* ptr = buffer.data();
+                    const uint8_t* const end = ptr + deferredCoordsLength;
+
+                    PointI pt;
+                    pt.x = treeNode->area31.left() & MaskToRead;
+                    pt.y = treeNode->area31.top() & MaskToRead;
+                    AreaI objectBBox;
+                    objectBBox.top() = objectBBox.left() = std::numeric_limits<int32_t>::max();
+                    objectBBox.bottom() = objectBBox.right() = 0;
+
+                    QVector< PointI > points31(deferredCoordsLength / 2 + 1);
+                    auto pPoint = points31.data();
+                    int verticesCount = 0;
+                    bool shouldNotSkip = (bbox31 == nullptr);
+                    while (ptr < end)
+                    {
+                        PointI d;
+                        d.x = readSInt32Raw(ptr, end) << ShiftCoordinates;
+                        d.y = readSInt32Raw(ptr, end) << ShiftCoordinates;
+                        pt += d;
+                        *(pPoint++) = pt;
+                        verticesCount++;
+                        objectBBox.enlargeToInclude(pt);
+                        if (!shouldNotSkip)
+                            shouldNotSkip = bbox31->contains(pt);
+                    }
+                    points31.resize(verticesCount);
+
+                    if (points31.isEmpty())
+                    {
+                        shouldNotSkip = true;
+                        objectBBox = treeNode->area31;
+                    }
+                    if (!shouldNotSkip && bbox31)
+                        shouldNotSkip = objectBBox.contains(*bbox31) || bbox31->intersects(objectBBox);
+                    if (!shouldNotSkip)
+                    {
+                        if (metric)
+                            metric->skippedMapObjectsPoints += points31.size();
+                        mapObject.reset();
+                        return;
+                    }
+                    mapObject->points31 = qMove(points31);
+                    mapObject->bbox31 = objectBBox;
+                }
 
                 if (mapObject->points31.isEmpty())
                 {
@@ -774,140 +961,41 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
             case OBF::MapData::kAreaCoordinatesFieldNumber:
             case OBF::MapData::kCoordinatesFieldNumber:
             {
-                const Stopwatch mapObjectPointsStopwatch(metric != nullptr);
-
+                // zoom-bench: keep the raw bytes, decode only if the object survives the type filter
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto oldLimit = cis->PushLimit(length);
-
-                PointI p;
-                p.x = treeNode->area31.left() & MaskToRead;
-                p.y = treeNode->area31.top() & MaskToRead;
-
-                AreaI objectBBox;
-                objectBBox.top() = objectBBox.left() = std::numeric_limits<int32_t>::max();
-                objectBBox.bottom() = objectBBox.right() = 0;
-                auto lastUnprocessedVertexForBBox = 0;
-
-                // In protobuf, a sint32 can be encoded using [1..4] bytes,
-                // so try to guess size of array, and preallocate it.
-                // (BytesUntilLimit/2) is ~= number of vertices, and is always larger than needed.
-                // So it's impossible that a buffer overflow will ever happen. But assert on that.
-                const auto probableVerticesCount = (cis->BytesUntilLimit() / 2);
-                QVector< PointI > points31(probableVerticesCount);
-
-                auto pPoint = points31.data();
-                auto verticesCount = 0;
-                bool shouldNotSkip = (bbox31 == nullptr);
-                while (cis->BytesUntilLimit() > 0)
+                auto& buffer = deferredCoordsBuffer();
+                if (buffer.size() < length)
+                    buffer.resize(length);
+                if (length > 0)
+                    cis->ReadRaw(buffer.data(), length);
+                deferredCoordsLength = length;
+                hasDeferredCoords = true;
+                zbIsArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
+                if (zbG)
                 {
-                    PointI d;
-                    d.x = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
-                    d.y = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
-
-                    p += d;
-
-                    // Save point into storage
-                    assert(points31.size() > verticesCount);
-                    *(pPoint++) = p;
-                    verticesCount++;
-
-                    // Check if map object should be maintained
-                    if (!shouldNotSkip && bbox31)
-                    {
-                        const Stopwatch mapObjectBboxStopwatch(metric != nullptr);
-
-                        shouldNotSkip = bbox31->contains(p);
-                        objectBBox.enlargeToInclude(p);
-
-                        if (metric)
-                            metric->elapsedTimeForMapObjectsBbox += mapObjectBboxStopwatch.elapsed();
-
-                        lastUnprocessedVertexForBBox = verticesCount;
-                    }
-                }
-
-                cis->PopLimit(oldLimit);
-
-                // Since reserved space may be larger than actual amount of data,
-                // shrink the vertices array
-                points31.resize(verticesCount);
-
-                // If map object has no vertices, retain it in a special way to report later, when
-                // it's identifier will be known
-                if (points31.isEmpty())
-                {
-                    // Fake that this object is inside bbox
-                    shouldNotSkip = true;
-                    objectBBox = treeNode->area31;
-                }
-
-                // Even if no vertex lays inside bbox, an edge
-                // may intersect the bbox
-                if (!shouldNotSkip && bbox31)
-                {
-                    assert(lastUnprocessedVertexForBBox == points31.size());
-
-                    shouldNotSkip =
-                        objectBBox.contains(*bbox31) ||
-                        bbox31->intersects(objectBBox);
-                }
-
-                // If map object didn't fit, skip it's entire content
-                if (!shouldNotSkip)
-                {
-                    if (metric)
-                    {
-                        metric->elapsedTimeForSkippedMapObjectsPoints += mapObjectPointsStopwatch.elapsed();
-                        metric->skippedMapObjectsPoints += points31.size();
-                    }
-
-                    cis->Skip(cis->BytesUntilLimit());
+                    if (mapObject)
+                        mapObject->isArea = zbIsArea;
                     break;
                 }
 
-                // Update metric
-                if (metric)
-                {
-                    metric->elapsedTimeForNotSkippedMapObjectsPoints += mapObjectPointsStopwatch.elapsed();
-                    metric->notSkippedMapObjectsPoints =
-                        std::max(metric->notSkippedMapObjectsPoints, static_cast<uint32_t>(points31.size()));
-                }
-
-                // In case bbox is not fully calculated, complete this task
-                auto pPointForBBox = points31.data() + lastUnprocessedVertexForBBox;
-                while (lastUnprocessedVertexForBBox < points31.size())
-                {
-                    const Stopwatch mapObjectBboxStopwatch(metric != nullptr);
-
-                    objectBBox.enlargeToInclude(*pPointForBBox);
-
-                    if (metric)
-                        metric->elapsedTimeForMapObjectsBbox += mapObjectBboxStopwatch.elapsed();
-
-                    lastUnprocessedVertexForBBox++;
-                    pPointForBBox++;
-                }
-
-                // Finally, create the object
                 if (!mapObject)
-                    mapObject.reset(new OsmAnd::BinaryMapObject(section, treeNode->level));
+                    if (zbFlagC())
+                        mapObject = std::make_shared<OsmAnd::BinaryMapObject>(section, treeNode->level);
+                    else
+                        mapObject.reset(new OsmAnd::BinaryMapObject(section, treeNode->level));
                 mapObject->isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
-                mapObject->points31 = qMove(points31);
-                mapObject->bbox31 = objectBBox;
-                assert(treeNode->area31.top() - mapObject->bbox31.top() <= 32);
-                assert(treeNode->area31.left() - mapObject->bbox31.left() <= 32);
-                assert(mapObject->bbox31.bottom() - treeNode->area31.bottom() <= 1);
-                assert(mapObject->bbox31.right() - treeNode->area31.right() <= 1);
-                assert(mapObject->bbox31.right() >= mapObject->bbox31.left());
-                assert(mapObject->bbox31.bottom() >= mapObject->bbox31.top());
-
                 break;
             }
             case OBF::MapData::kPolygonInnerCoordinatesFieldNumber:
             {
+                if (zbG)
+                    zbEnsureObject();
                 if (!mapObject)
-                    mapObject.reset(new OsmAnd::BinaryMapObject(section, treeNode->level));
+                    if (zbFlagC())
+                        mapObject = std::make_shared<OsmAnd::BinaryMapObject>(section, treeNode->level);
+                    else
+                        mapObject.reset(new OsmAnd::BinaryMapObject(section, treeNode->level));
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -948,8 +1036,85 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
             case OBF::MapData::kAdditionalTypesFieldNumber:
             case OBF::MapData::kTypesFieldNumber:
             {
+                if (zbG && !mapObject)
+                {
+                    gpb::uint32 length;
+                    cis->ReadVarint32(&length);
+                    auto oldLimit = cis->PushLimit(length);
+                    const bool additional = (tgn == OBF::MapData::kAdditionalTypesFieldNumber);
+                    auto& ids = additional ? zbAdditionalScratch() : zbTypesScratch();
+                    ids.resize(0);
+                    while (cis->BytesUntilLimit() > 0)
+                    {
+                        gpb::uint32 attributeId;
+                        cis->ReadVarint32(&attributeId);
+                        ids.push_back(attributeId);
+                    }
+                    cis->PopLimit(oldLimit);
+                    if (additional)
+                    {
+                        zbHasAdditional = true;
+                        break;
+                    }
+
+                    // read filter with memo
+                    bool rejected = false;
+                    if (environment)
+                    {
+                        const auto& mapping = section->_p->_attributeMapping;
+                        const auto& decRules = mapping->decodeMap;
+                        auto& table = zbFilterTable(mapping.get(), environment.get(), zbReadZoom(), decRules.size());
+                        for (const auto attributeId : constOf(ids))
+                        {
+                            if (attributeId >= static_cast<uint32_t>(table.size()))
+                                continue;
+                            auto state = table[attributeId];
+                            if (state == 0)
+                            {
+                                zbEnsureObject();
+                                const auto& attr = decRules[attributeId];
+                                evaluator.setStringValue(environment->styleBuiltinValueDefs->id_INPUT_TAG, attr.tag);
+                                evaluator.setStringValue(environment->styleBuiltinValueDefs->id_INPUT_VALUE, attr.value);
+                                evaluationResult.clear();
+                                state = 1;
+                                if (evaluator.evaluate(mapObject, MapStyleRulesetType::Optimization, &evaluationResult))
+                                {
+                                    int zOrder = -1;
+                                    if (evaluationResult.getIntegerValue(
+                                        environment->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder) && zOrder < 0)
+                                        state = 2;
+                                }
+                                table[attributeId] = state;
+                            }
+                            if (state == 2)
+                            {
+                                rejected = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (rejected)
+                    {
+                        cis->Skip(cis->BytesUntilLimit());
+                        mapObject.reset();
+                        isPresent = false;
+                        if (metric)
+                            metric->rejectedMapObjects++;
+                        break;
+                    }
+                    zbEnsureObject();
+                    mapObject->attributeIds.reserve(ids.size());
+                    for (const auto id : constOf(ids))
+                        mapObject->attributeIds.push_back(id);
+                    break;
+                }
+                if (zbG)
+                    zbEnsureObject();
                 if (!mapObject)
-                    mapObject.reset(new OsmAnd::BinaryMapObject(section, treeNode->level));
+                    if (zbFlagC())
+                        mapObject = std::make_shared<OsmAnd::BinaryMapObject>(section, treeNode->level);
+                    else
+                        mapObject.reset(new OsmAnd::BinaryMapObject(section, treeNode->level));
 
                 auto& attributeIds = (tgn == OBF::MapData::kAdditionalTypesFieldNumber)
                     ? mapObject->additionalAttributeIds
@@ -994,9 +1159,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
                 cis->PopLimit(oldLimit);
 
-                if (isPresent)
-                    attributeIds.squeeze();
-                else
+                if (!isPresent)
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     if (mapObject)
@@ -1095,6 +1258,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const AreaI* surfaceBBox31)
 {
     const auto cis = reader.getCodedInputStream().get();
+    zbReadZoom() = static_cast<int>(zoom);   // zoom-bench G
 
     if (!surfaceBBox31)
         surfaceBBox31 = requestedBBox31;

@@ -26,6 +26,123 @@
 #include "Logging.h"
 #include "multipolygons.h"
 
+#include <string>
+#if defined(__ANDROID__)
+#include <sys/system_properties.h>
+#endif
+
+namespace
+{
+    bool zbFlagB()
+    {
+        static const bool enabled = []() -> bool
+        {
+            char buffer[96] = { 0 };
+#if defined(__ANDROID__)
+            __system_property_get("debug.osmand.zb", buffer);
+#endif
+            return std::string(buffer).find('B') != std::string::npos;
+        }();
+        return enabled;
+    }
+
+    struct ZbEvalKey
+    {
+        quint64 signature;
+        quint32 tag;
+        quint32 value;
+        int ruleset;
+        const void* env;
+        int zoom;
+        bool operator==(const ZbEvalKey& o) const
+        {
+            return signature == o.signature && tag == o.tag && value == o.value && ruleset == o.ruleset
+                && env == o.env && zoom == o.zoom;
+        }
+    };
+    inline uint qHash(const ZbEvalKey& k, uint seed = 0)
+    {
+        quint64 h = k.signature * 0x9E3779B97F4A7C15ull;
+        h ^= (static_cast<quint64>(k.tag) << 32) | k.value;
+        h ^= static_cast<quint64>(k.ruleset) << 56 ^ static_cast<quint64>(k.zoom) << 48;
+        h ^= reinterpret_cast<quintptr>(k.env);
+        return ::qHash(h, seed);
+    }
+    struct ZbEvalValue
+    {
+        bool ok;
+        OsmAnd::MapStyleEvaluationResult::Packed packed;
+    };
+    QHash<ZbEvalKey, ZbEvalValue>& zbEvalMemo()
+    {
+        static thread_local QHash<ZbEvalKey, ZbEvalValue> memo;
+        return memo;
+    }
+
+    inline void zbMix(quint64& h, const quint64 v)
+    {
+        h ^= v + 0x9E3779B97F4A7C15ull + (h << 6) + (h >> 2);
+    }
+    quint64 zbObjectSignature(const std::shared_ptr<const OsmAnd::MapObject>& o)
+    {
+        quint64 h = reinterpret_cast<quintptr>(o->attributeMapping.get());
+        for (const auto id : OsmAnd::constOf(o->attributeIds))
+            zbMix(h, id);
+        zbMix(h, 0xFFFFFFFFull);
+        for (const auto id : OsmAnd::constOf(o->additionalAttributeIds))
+            zbMix(h, id);
+        zbMix(h, static_cast<quint64>(o->getLayerType()) + 7);
+        zbMix(h, (o->isArea ? 1 : 0) | (o->points31.size() == 1 ? 2 : 0) | (o->isClosedFigure() ? 4 : 0));
+        for (auto it = o->captions.cbegin(); it != o->captions.cend(); ++it)
+        {
+            zbMix(h, it.key());
+            zbMix(h, static_cast<quint64>(it.value().length()));
+        }
+        return h;
+    }
+
+    bool zbEvaluate(
+        const OsmAnd::MapStyleEvaluator& evaluator,
+        const std::shared_ptr<const OsmAnd::MapObject>& mapObject,
+        const OsmAnd::MapStyleRulesetType ruleset,
+        OsmAnd::MapStyleEvaluationResult& result,
+        const quint64 signature,
+        const quint32 tag,
+        const quint32 value,
+        const void* env,
+        const int zoom)
+    {
+        if (!zbFlagB())
+            return evaluator.evaluate(mapObject, ruleset, &result);
+        auto& memo = zbEvalMemo();
+        const ZbEvalKey key{ signature, tag, value, static_cast<int>(ruleset), env, zoom };
+        const auto it = memo.constFind(key);
+        if (it != memo.cend())
+        {
+            result.clear();
+            for (const auto& entry : OsmAnd::constOf(it->packed.entries))
+                result.setValue(entry.first, entry.second);
+            return it->ok;
+        }
+        const bool ok = evaluator.evaluate(mapObject, ruleset, &result);
+        if (memo.size() > 200000)
+            memo.clear();
+        ZbEvalValue v;
+        v.ok = ok;
+        result.pack(v.packed);
+        memo.insert(key, v);
+        return ok;
+    }
+
+    // parseValue memo per decoded attribute address (decodeMap entries live as long as the section)
+    QHash<QPair<const void*, const void*>, QPair<quint32, quint32>>& zbParsedTagValues()
+    {
+        static thread_local QHash<QPair<const void*, const void*>, QPair<quint32, quint32>> memo;
+        return memo;
+    }
+}
+
+
 #define USE_V1_COASTLINES 0
 
 //#define OSMAND_VERBOSE_MAP_PRIMITIVISER 1
@@ -864,6 +981,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
 
     // Setup mapObject-specific input data
     const auto layerType = mapObject->getLayerType();
+    const quint64 zbSignature = zbFlagB() ? zbObjectSignature(mapObject) : 0;
     orderEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_LAYER, static_cast<int>(layerType));
     orderEvaluator.setBooleanValue(env->styleBuiltinValueDefs->id_INPUT_AREA, mapObject->isArea);
     orderEvaluator.setBooleanValue(env->styleBuiltinValueDefs->id_INPUT_POINT, mapObject->points31.size() == 1);
@@ -888,25 +1006,39 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
         const Stopwatch orderEvaluationStopwatch(metric != nullptr);
 
         // Setup tag+value-specific input data
+        IMapStyle::StringId tagStringId;
+        IMapStyle::StringId valueStringId;
+        const QPair<const void*, const void*> zbAttrKey(&decodedAttribute, env.get());
+        const auto zbParsed = zbFlagB() ? zbParsedTagValues().constFind(zbAttrKey) : zbParsedTagValues().cend();
+        if (zbFlagB() && zbParsed != zbParsedTagValues().cend())
+        {
+            tagStringId = zbParsed->first;
+            valueStringId = zbParsed->second;
+        }
+        else
+        {
         MapStyleConstantValue parsedTag;
-        const auto tagStringId = env->mapStyle->parseValue(
+        tagStringId = env->mapStyle->parseValue(
             decodedAttribute.tag,
             env->styleBuiltinValueDefs->id_INPUT_TAG,
             parsedTag)
             ? parsedTag.asSimple.asUInt
             : std::numeric_limits<IMapStyle::StringId>::max();
         MapStyleConstantValue parsedValue;
-        const auto valueStringId = env->mapStyle->parseValue(
+        valueStringId = env->mapStyle->parseValue(
             decodedAttribute.value,
             env->styleBuiltinValueDefs->id_INPUT_VALUE,
             parsedValue)
             ? parsedValue.asSimple.asUInt
             : std::numeric_limits<IMapStyle::StringId>::max();
+            if (zbFlagB())
+                zbParsedTagValues().insert(zbAttrKey, qMakePair<quint32, quint32>(tagStringId, valueStringId));
+        }
         orderEvaluator.setStringIdValue(env->styleBuiltinValueDefs->id_INPUT_TAG, tagStringId);
         orderEvaluator.setStringIdValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, valueStringId);
 
         evaluationResult.clear();
-        ok = orderEvaluator.evaluate(mapObject, MapStyleRulesetType::Order, &evaluationResult);
+        ok = zbEvaluate(orderEvaluator, mapObject, MapStyleRulesetType::Order, evaluationResult, zbSignature, tagStringId, valueStringId, env.get(), context.zoom);
 
         if (metric)
         {
@@ -1044,7 +1176,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
 
                 // Evaluate style for this primitive to check if it passes (for Polygon)
                 evaluationResult.clear();
-                ok = polygonEvaluator.evaluate(mapObject, MapStyleRulesetType::Polygon, &evaluationResult);
+                ok = zbEvaluate(polygonEvaluator, mapObject, MapStyleRulesetType::Polygon, evaluationResult, zbSignature, tagStringId, valueStringId, env.get(), context.zoom);
 
                 if (metric)
                 {
@@ -1107,7 +1239,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
 
                 // Evaluate Point rules
                 evaluationResult.clear();
-                const auto hasIcon = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, &evaluationResult);
+                const auto hasIcon = zbEvaluate(pointEvaluator, mapObject, MapStyleRulesetType::Point, evaluationResult, zbSignature, tagStringId, valueStringId, env.get(), context.zoom);
 
                 // Update metric
                 if (metric)
@@ -1177,7 +1309,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
 
             // Evaluate style for this primitive to check if it passes
             evaluationResult.clear();
-            ok = polylineEvaluator.evaluate(mapObject, MapStyleRulesetType::Polyline, &evaluationResult);
+            ok = zbEvaluate(polylineEvaluator, mapObject, MapStyleRulesetType::Polyline, evaluationResult, zbSignature, tagStringId, valueStringId, env.get(), context.zoom);
 
             if (metric)
             {
@@ -1248,7 +1380,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
 
             // Evaluate Point rules
             evaluationResult.clear();
-            const bool hasIcon = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, &evaluationResult);
+            const bool hasIcon = zbEvaluate(pointEvaluator, mapObject, MapStyleRulesetType::Point, evaluationResult, zbSignature, tagStringId, valueStringId, env.get(), context.zoom);
 
             // Update metric
             if (metric)

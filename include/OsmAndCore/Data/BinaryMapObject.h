@@ -22,11 +22,11 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(BinaryMapObject);
     private:
-    protected:
+    public:
+        // zoom-bench prototype: public for std::make_shared (one allocation per object)
         BinaryMapObject(
             const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<const ObfMapSectionLevel>& level);
-    public:
         virtual ~BinaryMapObject();
 
         // General information
