@@ -1311,7 +1311,13 @@ void OsmAnd::MapRenderer::doUnpublishMapSymbol(
     if (publishedMapSymbolsByGroup.size() == 0)
         _publishedMapSymbolsByOrder.erase(itPublishedMapSymbolsByGroup);
 
+    // The counter is missing if an exception interrupted doPublishMapSymbol() before it was added
     const auto itGroupRefsCounter = _publishedMapSymbolsGroups.find(symbolGroup);
+    if (itGroupRefsCounter == _publishedMapSymbolsGroups.end())
+    {
+        assert(false);
+        return;
+    }
     auto& groupRefsCounter = *itGroupRefsCounter;
     groupRefsCounter -= 1;
 #if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE

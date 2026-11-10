@@ -3744,15 +3744,24 @@ void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::execute()
 
     // Ask resource to obtain it's data
     bool dataAvailable = false;
-    const std::shared_ptr<FunctorQueryController> obtainDataQueryController(new FunctorQueryController(
-        [this]
-        (const FunctorQueryController* const queryController) -> bool
-        {
-            return isCancellationRequested();
-        }));
-    const auto requestSucceeded =
-        requestedResource->obtainData(dataAvailable, obtainDataQueryController) &&
-        !isCancellationRequested();
+    bool requestSucceeded = false;
+    try
+    {
+        const std::shared_ptr<FunctorQueryController> obtainDataQueryController(new FunctorQueryController(
+            [this]
+            (const FunctorQueryController* const queryController) -> bool
+            {
+                return isCancellationRequested();
+            }));
+        requestSucceeded =
+            requestedResource->obtainData(dataAvailable, obtainDataQueryController) &&
+            !isCancellationRequested();
+    }
+    catch (...)
+    {
+        // Treat it as a failed request: a resource left in a processing state blocks its release forever
+        LogPrintf(LogSeverityLevel::Error, "Exception while obtaining data of resource %p", requestedResource.get());
+    }
 
     manager->endResourceRequestProcessing(requestedResource, requestSucceeded, dataAvailable);
 
