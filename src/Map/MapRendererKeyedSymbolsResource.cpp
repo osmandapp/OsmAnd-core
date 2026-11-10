@@ -233,6 +233,9 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
         _resourcesInGPU.insert(symbol, qMove(resource));
     }
 
+    if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(_mapSymbolsGroup))
+        updatableMapSymbolGroup->onUploadedToGPU();
+
     return true;
 }
 

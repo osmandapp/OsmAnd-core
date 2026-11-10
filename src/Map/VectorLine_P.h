@@ -55,8 +55,17 @@ namespace OsmAnd
             const QList<float>& segmentHeights,
             const std::vector<bool>& includedPoints,
             const float distance);
+
+        int getDashesPerArrow(double dashPeriod31) const;
+
+        void addArrowOnDash(const std::vector<PointD>& dash, const PointD& origin, const float distance);
+
+        PointI getArrowPosition31(const PointD& point) const;
             
         QList<VectorLine::OnPathSymbolData> _arrowsOnPath;
+        // The arrows of the primitive that is on the GPU: the renderer keeps drawing the previous primitive
+        // while a new one is uploaded, and its arrows have to stay with it
+        QList<VectorLine::OnPathSymbolData> _shownArrowsOnPath;
         sk_sp<const SkImage> _scaledPathIcon;
         
         double getRadius(double width) const;
@@ -161,6 +170,7 @@ namespace OsmAnd
         
         void clearArrowsOnPath();
         const QList<OsmAnd::VectorLine::OnPathSymbolData> getArrowsOnPath() const;
+        void showArrowsOfUploadedPrimitive();
 
         double correctDistance(double y, double startY31, double flatten, double radius) const;
         

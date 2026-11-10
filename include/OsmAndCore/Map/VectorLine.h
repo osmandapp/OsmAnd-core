@@ -53,6 +53,7 @@ namespace OsmAnd
             virtual UpdateResult update(const MapState& mapState);
 
             virtual bool supportsResourcesRenew();
+            virtual void onUploadedToGPU();
 
         friend class OsmAnd::VectorLine;
         friend class OsmAnd::VectorLine_P;

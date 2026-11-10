@@ -1532,7 +1532,11 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
             }
         }
 
-        if (_showArrows && owner->pathIcon)
+        const bool withArrows = _showArrows && owner->pathIcon;
+        // On a dashed line the arrows are placed on its dashes below. Dashes move with the zoom and the visible
+        // area, so arrows fixed on the path keep their own placement.
+        const bool arrowsOnDashes = withArrows && !_dashPattern.empty() && !_arrowsFixedOnPath;
+        if (withArrows && !arrowsOnDashes)
         {
             const auto arrowsOrigin = segments.back().back();
             if (_flatEarth)
@@ -1545,6 +1549,8 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
         // generate triangles
         if (patternLength > 0)
         {
+            const auto arrowDistances = filteredDistances;
+
             // Dashed line does not support distances yet, thus clear distances
             filteredDistances.clear();
 
@@ -1575,6 +1581,15 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
             double dashPhase = 0;
             int patternIndex = 0;
             bool firstDash = true;
+            int dashIndex = 0;
+            int dashesPerArrow = 1;
+            if (arrowsOnDashes)
+            {
+                double dashPeriod = 0.0;
+                for (const auto dashLength : dashPattern)
+                    dashPeriod += dashLength;
+                dashesPerArrow = getDashesPerArrow(dashPeriod * correctDistance(start.y, startY31, flatten, scale));
+            }
             for (auto pointIdx = 1u; pointIdx < includedPointsCount; pointIdx++)
             {
                 OsmAnd::PointD pnt = original[pointIdx];
@@ -1611,6 +1626,18 @@ bool OsmAnd::VectorLine_P::generatePrimitive(
 
                         if (!gap)
                         {
+                            if (arrowsOnDashes)
+                            {
+                                const bool arrowDash = dashIndex % dashesPerArrow == dashesPerArrow / 2;
+                                if (arrowDash)
+                                {
+                                    const auto prevDistance = arrowDistances[pointIdx - 1];
+                                    const auto dashEndDistance = prevDistance
+                                        + (arrowDistances[pointIdx] - prevDistance) * static_cast<float>(deltaLength / segLength);
+                                    addArrowOnDash(origTar, startPos, dashEndDistance);
+                                }
+                                dashIndex++;
+                            }
                             createVertices(*vertices, vertex, origTar, thickness, startY31, flatten, filteredDistances,
                                 fillColor, filteredColorsMap, filteredOutlineColorsMap, filteredHeights);
                             origTar.clear();
@@ -1813,7 +1840,27 @@ const QList<OsmAnd::VectorLine::OnPathSymbolData> OsmAnd::VectorLine_P::getArrow
 {
     QReadLocker scopedLocker(&_arrowsOnPathLock);
 
-    return detachedOf(_arrowsOnPath);
+    return detachedOf(_shownArrowsOnPath);
+}
+
+void OsmAnd::VectorLine_P::showArrowsOfUploadedPrimitive()
+{
+    // The owner is destroyed only after it is marked as lost, which waits for this lock
+    QReadLocker scopedLocker(&_lock);
+
+    if (_ownerIsLost)
+        return;
+
+    {
+        QWriteLocker scopedArrowsLocker(&_arrowsOnPathLock);
+
+        if (_shownArrowsOnPath.isEmpty() && _arrowsOnPath.isEmpty())
+            return;
+
+        _shownArrowsOnPath = _arrowsOnPath;
+    }
+    // Called from the upload of the frame, the arrow markers are rebuilt outside of it
+    owner->updatedObservable.postNotify(owner);
 }
 
 void OsmAnd::VectorLine_P::addArrowsOnFlatSegmentPath(
@@ -1903,9 +1950,6 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
     const std::vector<bool>& includedPoints,
     const float distance)
 {
-    const auto intFull = 1ll + INT32_MAX;
-    const auto intHalf = intFull >> 1;
-    const auto intTwo = intFull << 1;
     const bool withHeights = !segmentHeights.isEmpty();
     const auto step = getArrowsStep();
     const auto halfStep = step / 2.0f;
@@ -1943,12 +1987,7 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
             const auto midPoint = prevPoint + lineN * static_cast<double>(delta);
             const auto midDistance = prevDistance - delta;
             const auto midHeight = withHeights ? prevHeight + (nextHeight - prevHeight) * delta / lineLength : NAN;
-            const PointI64 origPos(
-                static_cast<int64_t>(midPoint.x) + intHalf,
-                static_cast<int64_t>(midPoint.y) + intHalf);
-            const PointI position31(
-                origPos.x + (origPos.x >= intFull ? -intTwo : (origPos.x < -intFull ? intFull : 0)),
-                origPos.y + (origPos.y >= intFull ? -intTwo : (origPos.y < -intFull ? intFull : 0)));
+            const auto position31 = getArrowPosition31(midPoint);
             // Get mirrored direction
             float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-lineN.x, lineN.y)) - 180);
             const VectorLine::OnPathSymbolData arrowSymbol(
@@ -1960,6 +1999,54 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
         prevHeight = nextHeight;
         prevCount = nextCount;
     }
+}
+
+int OsmAnd::VectorLine_P::getDashesPerArrow(const double dashPeriod31) const
+{
+    const auto step31 = correctDistance(_target31.y, 0.0, 0.0, Utilities::metersToY31(getArrowsStep()));
+    return dashPeriod31 > 0.0 ? qMax(1, qRound(step31 / dashPeriod31)) : 1;
+}
+
+void OsmAnd::VectorLine_P::addArrowOnDash(const std::vector<PointD>& dash, const PointD& origin, const float distance)
+{
+    double dashLength = 0.0;
+    for (size_t i = 1; i < dash.size(); i++)
+        dashLength += (dash[i] - dash[i - 1]).norm();
+    if (dashLength <= 0.0)
+        return;
+
+    auto remaining = dashLength / 2.0;
+    for (size_t i = 1; i < dash.size(); i++)
+    {
+        const auto edge = dash[i] - dash[i - 1];
+        const auto edgeLength = edge.norm();
+        if (edgeLength > 0.0 && remaining <= edgeLength)
+        {
+            const auto forward = edge / edgeLength;
+            const auto position31 = getArrowPosition31(origin + dash[i - 1] + forward * remaining);
+            // Get mirrored direction
+            const float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(forward.x, -forward.y)) - 180);
+            const VectorLine::OnPathSymbolData arrowSymbol(position31, distance, direction, NAN, _elevationScaleFactor);
+
+            QWriteLocker scopedLocker(&_arrowsOnPathLock);
+            _arrowsOnPath.push_back(arrowSymbol);
+            return;
+        }
+        remaining -= edgeLength;
+    }
+}
+
+OsmAnd::PointI OsmAnd::VectorLine_P::getArrowPosition31(const PointD& point) const
+{
+    const auto intFull = 1ll + INT32_MAX;
+    const auto intHalf = intFull >> 1;
+    const auto intTwo = intFull << 1;
+    const PointI64 origPos(
+        static_cast<int64_t>(point.x) + intHalf,
+        static_cast<int64_t>(point.y) + intHalf);
+    return PointI(
+        origPos.x + (origPos.x >= intFull ? -intTwo : (origPos.x < -intFull ? intFull : 0)),
+        origPos.y + (origPos.y >= intFull ? -intTwo : (origPos.y < -intFull ? intFull : 0)));
 }
 
 bool OsmAnd::VectorLine_P::useSpecialArrow() const

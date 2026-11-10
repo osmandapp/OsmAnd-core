@@ -324,6 +324,12 @@ bool OsmAnd::VectorLine::SymbolsGroup::supportsResourcesRenew()
     return true;
 }
 
+void OsmAnd::VectorLine::SymbolsGroup::onUploadedToGPU()
+{
+    if (_vectorLineP)
+        _vectorLineP->showArrowsOfUploadedPrimitive();
+}
+
 OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::VectorLine::SymbolsGroup::update(const MapState& mapState)
 {
     UpdateResult result = UpdateResult::None;
