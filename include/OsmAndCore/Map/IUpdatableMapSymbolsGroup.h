@@ -34,6 +34,9 @@ namespace OsmAnd
         virtual UpdateResult update(const MapState& mapState) = 0;
 
         virtual bool supportsResourcesRenew() = 0;
+
+        // Called after the symbols of the group are uploaded to the GPU, so they are drawn from the next frame
+        virtual void onUploadedToGPU();
 };
 }
 
