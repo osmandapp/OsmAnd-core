@@ -134,7 +134,11 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     const quint64 cell = (static_cast<quint64>(static_cast<quint32>(textSymbol->location31.x >> shift)) << 32)
                         | static_cast<quint32>(textSymbol->location31.y >> shift);
                     const auto it = bestInCell.find(cell);
-                    if (it == bestInCell.end() || textSymbol->order < it->first)
+                    const auto prev = it == bestInCell.end() ? nullptr
+                        : static_cast<const MapPrimitiviser::TextSymbol*>(it->second);
+                    if (!prev || textSymbol->order < prev->order
+                        || (textSymbol->order == prev->order && (textSymbol->value < prev->value
+                            || (textSymbol->value == prev->value && textSymbol->location31.x < prev->location31.x))))
                         bestInCell[cell] = qMakePair(textSymbol->order, static_cast<const void*>(textSymbol.get()));
                 }
                 else
@@ -147,7 +151,14 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         {
             auto& list = it.value();
             std::sort(list.begin(), list.end(),
-                [](const QPair<int, const void*>& l, const QPair<int, const void*>& r) { return l.first < r.first; });
+                [](const QPair<int, const void*>& l, const QPair<int, const void*>& r)
+                {
+                    if (l.first != r.first)
+                        return l.first < r.first;
+                    const auto a = static_cast<const MapPrimitiviser::TextSymbol*>(l.second)->location31;
+                    const auto b = static_cast<const MapPrimitiviser::TextSymbol*>(r.second)->location31;
+                    return a.x != b.x ? a.x < b.x : a.y < b.y;
+                });
             for (int i = 0; i < list.size() && i < 2; i++)
                 zbKeepText.insert(list[i].second);
         }

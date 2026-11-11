@@ -3817,7 +3817,24 @@ namespace
             p->y = y;
         }
     }
-    const quint32 kZbMagic = 0x5A425033;
+    const quint32 kZbMagic = 0x5A425034;
+}
+
+namespace
+{
+    // zoom-bench N: M without the rotation overlap prefilter (E rules only)
+    bool zbNoOverlapFilter()
+    {
+        static const bool enabled = []() -> bool
+        {
+            char buffer[96] = { 0 };
+#if defined(__ANDROID__)
+            __system_property_get("debug.osmand.zb", buffer);
+#endif
+            return std::string(buffer).find('N') != std::string::npos;
+        }();
+        return enabled;
+    }
 }
 
 QByteArray OsmAnd::MapPrimitiviser_P::zbSerialize(
@@ -3868,11 +3885,15 @@ QByteArray OsmAnd::MapPrimitiviser_P::zbSerialize(
                     const quint64 cell = (static_cast<quint64>(static_cast<quint32>(text->location31.x >> shift)) << 32)
                         | static_cast<quint32>(text->location31.y >> shift);
                     const auto c = bestInCell.find(cell);
-                    if (c == bestInCell.end() || text->order < c->first)
+                    const auto prev = c == bestInCell.end() ? nullptr
+                        : static_cast<const MapPrimitiviser::TextSymbol*>(c->second);
+                    if (!prev || text->order < prev->order
+                        || (text->order == prev->order && (text->value < prev->value
+                            || (text->value == prev->value && text->location31.x < prev->location31.x))))
                         bestInCell[cell] = qMakePair(text->order, static_cast<const MapPrimitiviser::Symbol*>(sym.get()));
                 }
                 else
-                    onPathByText[text->value].push_back(qMakePair(text->order, static_cast<const MapPrimitiviser::Symbol*>(sym.get())));
+                    zbKeepSym.insert(sym.get());   // on-path: all segments are needed to combine the street path
             }
         for (const auto& v : bestInCell)
             zbKeepSym.insert(v.second);
@@ -3881,7 +3902,12 @@ QByteArray OsmAnd::MapPrimitiviser_P::zbSerialize(
             auto& list = it.value();
             std::sort(list.begin(), list.end(),
                 [](const QPair<int, const MapPrimitiviser::Symbol*>& l, const QPair<int, const MapPrimitiviser::Symbol*>& r)
-                { return l.first < r.first; });
+                {
+                    if (l.first != r.first)
+                        return l.first < r.first;
+                    const auto a = l.second->location31, b = r.second->location31;
+                    return a.x != b.x ? a.x < b.x : a.y < b.y;
+                });
             for (int i = 0; i < list.size() && i < 2; i++)
                 zbKeepSym.insert(list[i].second);
         }
@@ -3934,7 +3960,7 @@ QByteArray OsmAnd::MapPrimitiviser_P::zbSerialize(
         {
             const auto& c = cands[i];
             bool drop = false;
-            if (!c.path && !c.classes.isEmpty())
+            if (!c.path && !c.classes.isEmpty() && !zbNoOverlapFilter())
             {
                 for (const int j : kept)
                 {
@@ -4000,6 +4026,13 @@ QByteArray OsmAnd::MapPrimitiviser_P::zbSerialize(
     zbWriteDouble(s, prim->scaleDivisor31ToPixel.x);
     zbWriteDouble(s, prim->scaleDivisor31ToPixel.y);
 
+    // section names once, objects refer to them by index
+    QStringList secNames;
+    for (const auto& o : objs)
+        if (const auto b = std::dynamic_pointer_cast<const BinaryMapObject>(o))
+            if (!secNames.contains(b->section->name))
+                secNames.push_back(b->section->name);
+    s << secNames;
     s << static_cast<quint32>(objs.size()) << static_cast<quint32>(symbolsOnly ? 0 : tileObjects.size());
     for (const auto& o : objs)
     {
@@ -4016,7 +4049,7 @@ QByteArray OsmAnd::MapPrimitiviser_P::zbSerialize(
         s << kind;
         if (b)
         {
-            s << b->section->name << static_cast<qint32>(b->level->minZoom) << static_cast<qint32>(b->level->maxZoom)
+            s << static_cast<qint32>(secNames.indexOf(b->section->name)) << static_cast<qint32>(b->level->minZoom) << static_cast<qint32>(b->level->maxZoom)
               << static_cast<quint64>(b->id.id) << static_cast<quint64>(b->blockId.id);
         }
         s << o->attributeIds << o->additionalAttributeIds << o->isArea << o->isCoastline;
@@ -4034,7 +4067,11 @@ QByteArray OsmAnd::MapPrimitiviser_P::zbSerialize(
         }
         s << static_cast<qint32>(o->bbox31.top()) << static_cast<qint32>(o->bbox31.left())
           << static_cast<qint32>(o->bbox31.bottom()) << static_cast<qint32>(o->bbox31.right());
-        s << o->captions << o->captionsOrder << static_cast<qint32>(o->labelX) << static_cast<qint32>(o->labelY);
+        if (symbolsOnly)
+            s << QHash<uint32_t, QString>() << QList<uint32_t>();
+        else
+            s << o->captions << o->captionsOrder;
+        s << static_cast<qint32>(o->labelX) << static_cast<qint32>(o->labelY);
     }
 
     // value definition ids differ between processes: write a table of their names first
@@ -4161,6 +4198,8 @@ bool OsmAnd::MapPrimitiviser_P::zbDeserialize(
     scaleDivisor.x = zbReadDouble(s);
     scaleDivisor.y = zbReadDouble(s);
 
+    QStringList secNames;
+    s >> secNames;
     quint32 objCount, tileObjCount;
     s >> objCount >> tileObjCount;
     QVector< std::shared_ptr<MapObject> > objs(objCount);
@@ -4171,10 +4210,11 @@ bool OsmAnd::MapPrimitiviser_P::zbDeserialize(
         std::shared_ptr<MapObject> o;
         if (kind == 0)
         {
-            QString sectionName;
+            qint32 secIndex;
             qint32 minZoom, maxZoom;
             quint64 id, blockId;
-            s >> sectionName >> minZoom >> maxZoom >> id >> blockId;
+            s >> secIndex >> minZoom >> maxZoom >> id >> blockId;
+            const QString sectionName = secNames.value(secIndex);
             const auto section = sections.value(sectionName);
             // the attribute mapping is read lazily with the first map block: until a normal read happened, miss
             if (!section || !section->getAttributeMapping())
