@@ -22,6 +22,7 @@
 
 #include <list>
 #include <string>
+#include <cstring>
 #include <QMutex>
 #include <QWaitCondition>
 #if defined(__ANDROID__)
@@ -38,6 +39,8 @@ namespace
             char buffer[96] = { 0 };
 #if defined(__ANDROID__)
             __system_property_get("debug.osmand.zb", buffer);
+            if (!buffer[0])
+                memcpy(buffer, "BCDEGKLM", 9);  // zoom-bench: default variants on Android, "-" turns all off
 #endif
             OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, ">>>> 0 ZBFLAGS 0.0: %s", buffer);
             return std::string(buffer);

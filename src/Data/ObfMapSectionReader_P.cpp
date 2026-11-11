@@ -26,6 +26,7 @@
 #include <QRegularExpression>
 
 #include <string>
+#include <cstring>
 #if defined(__ANDROID__)
 #include <sys/system_properties.h>
 #endif
@@ -39,6 +40,8 @@ namespace
             char buffer[96] = { 0 };
 #if defined(__ANDROID__)
             __system_property_get("debug.osmand.zb", buffer);
+            if (!buffer[0])
+                memcpy(buffer, "BCDEGKLM", 9);  // zoom-bench: default variants on Android, "-" turns all off
 #endif
             return std::string(buffer).find('C') != std::string::npos;
         }();
@@ -59,6 +62,8 @@ namespace
             char buffer[96] = { 0 };
 #if defined(__ANDROID__)
             __system_property_get("debug.osmand.zb", buffer);
+            if (!buffer[0])
+                memcpy(buffer, "BCDEGKLM", 9);  // zoom-bench: default variants on Android, "-" turns all off
 #endif
             return std::string(buffer).find('G') != std::string::npos;
         }();

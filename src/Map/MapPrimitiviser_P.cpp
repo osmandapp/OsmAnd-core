@@ -41,6 +41,8 @@ namespace
             char buffer[96] = { 0 };
 #if defined(__ANDROID__)
             __system_property_get("debug.osmand.zb", buffer);
+            if (!buffer[0])
+                memcpy(buffer, "BCDEGKLM", 9);  // zoom-bench: default variants on Android, "-" turns all off
 #endif
             return std::string(buffer).find('B') != std::string::npos;
         }();
