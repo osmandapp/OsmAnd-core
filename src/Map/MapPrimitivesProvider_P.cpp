@@ -53,6 +53,20 @@ namespace
         h ^= v + 0x9E3779B97F4A7C15ull + (h << 6) + (h >> 2);
     }
 
+    // append-only pack file: [magic u32][rawLen u32][key u64][dataLen u32][check u32][data]
+    struct ZbPack
+    {
+        const char* tag = "";
+        bool compress = true;
+        int fd = -1;
+        QMutex appendMutex;
+        quint64 end = 0;
+        QReadWriteLock indexLock;
+        QHash< quint64, QPair<quint64, quint32> > index; // key -> (data offset, data length)
+        QAtomicInteger<qint64> rawBytes, packedBytes;
+        QAtomicInt writes;
+    };
+
     struct ZbKState
     {
         QMutex mutex;
@@ -60,14 +74,9 @@ namespace
         quint64 mapsHash = 0;
         QHash< QString, std::shared_ptr<const OsmAnd::ObfMapSectionInfo> > sections;
         QString dir;
-        QAtomicInt hits, misses, writes;
-        // single pack file
-        int fd = -1;
-        QMutex appendMutex;
-        quint64 end = 0;
-        QReadWriteLock indexLock;
-        QHash< quint64, QPair<quint64, quint32> > index; // key -> (data offset, data length)
-        QAtomicInteger<qint64> rawBytes, packedBytes;
+        QAtomicInt hits, misses;
+        ZbPack prim;
+        ZbPack image;
     };
 
     ZbKState& zbKState();
@@ -78,9 +87,8 @@ namespace
         return rawLen ^ dataLen ^ static_cast<quint32>(key) ^ static_cast<quint32>(key >> 32) ^ 0xA5C3F00Du;
     }
 
-    void zbPackOpen(ZbKState& st)
+    void zbPackOpen(ZbPack& st, const QString& path)
     {
-        const auto path = st.dir + QLatin1String("zbprim.pack");
         st.fd = ::open(path.toUtf8().constData(), O_RDWR | O_CREAT, 0644);
         if (st.fd < 0)
             return;
@@ -110,13 +118,12 @@ namespace
             (void)ftruncate(st.fd, static_cast<off_t>(off));
         st.end = off;
         const auto ms = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, ">>>> 0 PRIMPACK %f: open %d records %lld bytes (raw %lld)",
-            ms, st.index.size(), static_cast<long long>(off), static_cast<long long>(st.rawBytes.loadAcquire()));
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, ">>>> 0 %sPACK %f: open %d records %lld bytes (raw %lld)",
+            st.tag, ms, st.index.size(), static_cast<long long>(off), static_cast<long long>(st.rawBytes.loadAcquire()));
     }
 
-    QByteArray zbPackRead(const quint64 key)
+    QByteArray zbPackRead(ZbPack& st, const quint64 key)
     {
-        auto& st = zbKState();
         QPair<quint64, quint32> loc;
         {
             QReadLocker locker(&st.indexLock);
@@ -128,15 +135,14 @@ namespace
         QByteArray packed(static_cast<int>(loc.second), Qt::Uninitialized);
         if (pread(st.fd, packed.data(), loc.second, static_cast<off_t>(loc.first)) != static_cast<ssize_t>(loc.second))
             return QByteArray();
-        return qUncompress(packed);
+        return st.compress ? qUncompress(packed) : packed;
     }
 
-    void zbPackWrite(const quint64 key, const QByteArray& raw)
+    void zbPackWrite(ZbPack& st, const quint64 key, const QByteArray& raw)
     {
-        auto& st = zbKState();
         if (st.fd < 0)
             return;
-        const auto packed = qCompress(raw, 1);
+        const auto packed = st.compress ? qCompress(raw, 1) : raw;
         quint32 h[6];
         h[0] = ZB_PACK_MAGIC;
         h[1] = static_cast<quint32>(raw.size());
@@ -175,7 +181,11 @@ namespace
         st.ready = true;
         st.dir = QLatin1String("/sdcard/Android/data/net.osmand.dev/cache/zbprim/");
         QDir().mkpath(st.dir);
-        zbPackOpen(st);
+        st.prim.tag = "PRIM";
+        st.image.tag = "TILE";
+        st.image.compress = false;
+        zbPackOpen(st.prim, st.dir + QLatin1String("zbprim.pack"));
+        zbPackOpen(st.image, st.dir + QLatin1String("zbtile.pack"));
         const auto obfProvider = std::dynamic_pointer_cast<const OsmAnd::ObfMapObjectsProvider>(mapObjectsProvider);
         if (!obfProvider)
             return;
@@ -204,9 +214,16 @@ namespace
         }
     }
 
+    struct ZbKRequest
+    {
+        OsmAnd::TileId tileId;
+        OsmAnd::ZoomLevel zoom;
+        OsmAnd::ZoomLevel detailedZoom;
+    };
+
     quint64 zbKKey(
         const OsmAnd::MapPrimitivesProvider* owner,
-        const OsmAnd::MapPrimitivesProvider::Request& request)
+        const ZbKRequest& request)
     {
         auto& st = zbKState();
         quint64 h = st.mapsHash;
@@ -255,6 +272,46 @@ namespace
         zbMixK(h, static_cast<quint64>(request.detailedZoom));
         zbMixK(h, static_cast<quint64>(static_cast<quint32>(request.tileId.x)) << 32 | static_cast<quint32>(request.tileId.y));
         return h;
+    }
+}
+
+namespace OsmAnd
+{
+    // zoom-bench L: rasterized tile cache, shares the K key and directory
+    bool zbFlagL()
+    {
+        static const bool enabled = []() -> bool
+        {
+            char buffer[96] = { 0 };
+#if defined(__ANDROID__)
+            __system_property_get("debug.osmand.zb", buffer);
+#endif
+            return std::string(buffer).find('L') != std::string::npos;
+        }();
+        return enabled;
+    }
+
+    quint64 zbTileImageKey(const MapPrimitivesProvider* owner, const TileId tileId, const ZoomLevel zoom)
+    {
+        zbKPrepare(owner->mapObjectsProvider);
+        quint64 h = zbKKey(owner, ZbKRequest{ tileId, zoom, zoom });
+        zbMixK(h, 0x4C49u); // 'LI'
+        return h;
+    }
+
+    QByteArray zbTileImageRead(const quint64 key)
+    {
+        return zbPackRead(zbKState().image, key);
+    }
+
+    void zbTileImageWrite(const quint64 key, const QByteArray& encoded, qint64* outTotal, int* outCount)
+    {
+        auto& pack = zbKState().image;
+        zbPackWrite(pack, key, encoded);
+        if (outTotal)
+            *outTotal = pack.packedBytes.loadAcquire();
+        if (outCount)
+            *outCount = pack.index.size();
     }
 }
 
@@ -439,9 +496,9 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
     if (zbUse)
     {
         zbKPrepare(owner->mapObjectsProvider);
-        zbKey = zbKKey(owner, request);
+        zbKey = zbKKey(owner, ZbKRequest{ request.tileId, request.zoom, request.detailedZoom });
         const auto t0 = std::chrono::steady_clock::now();
-        const auto bytes = zbPackRead(zbKey);
+        const auto bytes = zbPackRead(zbKState().prim, zbKey);
         if (!bytes.isEmpty())
         {
             std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects> cachedPrimitives;
@@ -601,12 +658,12 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         const auto bytes = MapPrimitiviser_P::zbSerialize(primitivisedObjects, dataTile->mapObjects, dataTile->tileSurfaceType);
         if (!bytes.isEmpty())
         {
-            zbPackWrite(zbKey, bytes);
+            zbPackWrite(zbKState().prim, zbKey, bytes);
             const auto ms = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
             LogPrintf(LogSeverityLevel::Info, ">>>> 0 PRIMPACKW %f: %d raw bytes @%d (pack raw %lld packed %lld)",
                 ms, bytes.size(), static_cast<int>(request.zoom),
-                static_cast<long long>(zbKState().rawBytes.loadAcquire()),
-                static_cast<long long>(zbKState().packedBytes.loadAcquire()));
+                static_cast<long long>(zbKState().prim.rawBytes.loadAcquire()),
+                static_cast<long long>(zbKState().prim.packedBytes.loadAcquire()));
         }
     }
 
