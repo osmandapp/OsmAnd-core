@@ -3770,3 +3770,463 @@ void OsmAnd::MapPrimitiviser_P::debugCoastline(const AreaI & area31, const QList
         }
     }
 }
+
+
+// ---------------- zoom-bench K: disk cache of primitivised tiles ----------------
+#include <QDataStream>
+#include "MapStyleValueDefinition.h"
+#include <cstring>
+#include "ObfMapSectionInfo.h"
+
+namespace
+{
+    inline void zbWriteDouble(QDataStream& s, const double v)
+    {
+        quint64 bits;
+        memcpy(&bits, &v, sizeof(bits));
+        s << bits;
+    }
+    inline double zbReadDouble(QDataStream& s)
+    {
+        quint64 bits;
+        s >> bits;
+        double v;
+        memcpy(&v, &bits, sizeof(v));
+        return v;
+    }
+    void zbWritePoints(QDataStream& s, const QVector<OsmAnd::PointI>& pts)
+    {
+        s << static_cast<quint32>(pts.size());
+        for (const auto& pt : pts)
+            s << static_cast<qint32>(pt.x) << static_cast<qint32>(pt.y);
+    }
+    void zbReadPoints(QDataStream& s, QVector<OsmAnd::PointI>& pts)
+    {
+        quint32 n;
+        s >> n;
+        pts.resize(n);
+        auto p = pts.data();
+        for (quint32 i = 0; i < n; i++, p++)
+        {
+            qint32 x, y;
+            s >> x >> y;
+            p->x = x;
+            p->y = y;
+        }
+    }
+    const quint32 kZbMagic = 0x5A425033;
+}
+
+QByteArray OsmAnd::MapPrimitiviser_P::zbSerialize(
+    const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& prim,
+    const QList< std::shared_ptr<const MapObject> >& tileObjects,
+    const MapSurfaceType surfaceType)
+{
+    QByteArray out;
+    QDataStream s(&out, QIODevice::WriteOnly);
+    s.setVersion(QDataStream::Qt_5_6);
+    s.setFloatingPointPrecision(QDataStream::SinglePrecision);
+
+    QHash<const MapObject*, quint32> objIndex;
+    QList< std::shared_ptr<const MapObject> > objs;
+    const auto addObj =
+        [&objIndex, &objs](const std::shared_ptr<const MapObject>& o) -> quint32
+        {
+            const auto it = objIndex.constFind(o.get());
+            if (it != objIndex.cend())
+                return *it;
+            const quint32 i = objs.size();
+            objIndex.insert(o.get(), i);
+            objs.push_back(o);
+            return i;
+        };
+    for (const auto& o : tileObjects)
+        addObj(o);
+    for (const auto& g : prim->primitivesGroups)
+        addObj(g->sourceObject);
+    for (auto it = prim->symbolsGroups.cbegin(); it != prim->symbolsGroups.cend(); ++it)
+    {
+        addObj(it.key());
+        addObj(it.value()->sourceObject);
+    }
+
+    QHash<const MapPrimitiviser::Primitive*, quint64> primRef;
+    for (int gi = 0; gi < prim->primitivesGroups.size(); gi++)
+    {
+        const auto& g = prim->primitivesGroups[gi];
+        const MapPrimitiviser::PrimitivesCollection* lists[3] = { &g->polygons, &g->polylines, &g->points };
+        for (quint64 k = 0; k < 3; k++)
+            for (int i = 0; i < lists[k]->size(); i++)
+                primRef.insert((*lists[k])[i].get(), (static_cast<quint64>(gi) << 34) | (k << 32) | static_cast<quint64>(i));
+    }
+
+    s << kZbMagic << static_cast<qint32>(prim->zoom) << static_cast<qint32>(surfaceType) << prim->coastlineMistake;
+    zbWriteDouble(s, prim->scaleDivisor31ToPixel.x);
+    zbWriteDouble(s, prim->scaleDivisor31ToPixel.y);
+
+    s << static_cast<quint32>(objs.size()) << static_cast<quint32>(tileObjects.size());
+    for (const auto& o : objs)
+    {
+        qint32 kind = 3;
+        const auto b = std::dynamic_pointer_cast<const BinaryMapObject>(o);
+        if (b)
+            kind = 0;
+        else if (std::dynamic_pointer_cast<const MapPrimitiviser::SurfaceMapObject>(o))
+            kind = 1;
+        else if (std::dynamic_pointer_cast<const MapPrimitiviser::CoastlineMapObject>(o))
+            kind = 2;
+        if (kind == 3)
+            return QByteArray();  // unknown object kind: do not cache this tile
+        s << kind;
+        if (b)
+        {
+            s << b->section->name << static_cast<qint32>(b->level->minZoom) << static_cast<qint32>(b->level->maxZoom)
+              << static_cast<quint64>(b->id.id) << static_cast<quint64>(b->blockId.id);
+        }
+        s << o->attributeIds << o->additionalAttributeIds << o->isArea << o->isCoastline;
+        zbWritePoints(s, o->points31);
+        s << static_cast<quint32>(o->innerPolygonsPoints31.size());
+        for (const auto& inner : o->innerPolygonsPoints31)
+            zbWritePoints(s, inner);
+        s << static_cast<qint32>(o->bbox31.top()) << static_cast<qint32>(o->bbox31.left())
+          << static_cast<qint32>(o->bbox31.bottom()) << static_cast<qint32>(o->bbox31.right());
+        s << o->captions << o->captionsOrder << static_cast<qint32>(o->labelX) << static_cast<qint32>(o->labelY);
+    }
+
+    // value definition ids differ between processes: write a table of their names first
+    QHash<qint32, qint32> defIndex;
+    QStringList defNames;
+    for (const auto& g : prim->primitivesGroups)
+        for (const auto* list : { &g->polygons, &g->polylines, &g->points })
+            for (const auto& pr : *list)
+                for (const auto& e : pr->evaluationResult.entries)
+                    if (!defIndex.contains(e.first))
+                    {
+                        const auto& def = prim->mapPresentationEnvironment->mapStyle->getValueDefinitionRefById(e.first);
+                        if (!def)
+                            return QByteArray();
+                        defIndex.insert(e.first, defNames.size());
+                        defNames.push_back(def->name);
+                    }
+    s << defNames;
+    const auto writePrimitive =
+        [&s, &defIndex](const std::shared_ptr<const MapPrimitiviser::Primitive>& pr)
+        {
+            s << static_cast<quint32>(pr->type) << static_cast<quint32>(pr->attributeIdIndex) << static_cast<qint32>(pr->zOrder)
+              << static_cast<qint64>(pr->doubledArea) << pr->detailScaleFactor;
+            s << static_cast<quint32>(pr->evaluationResult.entries.size());
+            for (const auto& e : pr->evaluationResult.entries)
+                s << static_cast<qint32>(defIndex.value(e.first)) << e.second;
+        };
+    s << static_cast<quint32>(prim->primitivesGroups.size());
+    for (const auto& g : prim->primitivesGroups)
+    {
+        s << objIndex.value(g->sourceObject.get());
+        for (const auto* list : { &g->polygons, &g->polylines, &g->points })
+        {
+            s << static_cast<quint32>(list->size());
+            for (const auto& pr : *list)
+                writePrimitive(pr);
+        }
+    }
+    for (const auto* list : { &prim->polygons, &prim->polylines, &prim->points })
+    {
+        s << static_cast<quint32>(list->size());
+        for (const auto& pr : *list)
+        {
+            const auto it = primRef.constFind(pr.get());
+            if (it == primRef.cend())
+                return QByteArray();
+            s << *it;
+        }
+    }
+
+    s << static_cast<quint32>(prim->symbolsGroups.size());
+    for (auto it = prim->symbolsGroups.cbegin(); it != prim->symbolsGroups.cend(); ++it)
+    {
+        const auto& sg = it.value();
+        s << objIndex.value(it.key().get()) << objIndex.value(sg->sourceObject.get()) << sg->canBeShownWithoutIcon;
+        s << static_cast<quint32>(sg->symbols.size());
+        for (const auto& sym : sg->symbols)
+        {
+            const auto pit = primRef.constFind(sym->primitive.get());
+            if (pit == primRef.cend())
+                return QByteArray();
+            const auto text = std::dynamic_pointer_cast<const MapPrimitiviser::TextSymbol>(sym);
+            const auto icon = std::dynamic_pointer_cast<const MapPrimitiviser::IconSymbol>(sym);
+            if (!text && !icon)
+                return QByteArray();
+            s << static_cast<qint32>(text ? 1 : 2) << *pit;
+            s << static_cast<qint32>(sym->location31.x) << static_cast<qint32>(sym->location31.y) << static_cast<qint32>(sym->order)
+              << sym->drawAlongPath << sym->intersectsWith << sym->intersectionSizeFactor << sym->intersectionSize
+              << sym->intersectionMargin << sym->minDistance << sym->scaleFactor << sym->ignoreClick;
+            if (text)
+            {
+                s << text->baseValue << text->value << static_cast<qint32>(text->languageId) << text->drawOnPath << text->topSide
+                  << static_cast<qint32>(text->placement);
+                s << static_cast<quint32>(text->additionalPlacements.size());
+                for (const auto pl : text->additionalPlacements)
+                    s << static_cast<qint32>(pl);
+                s << static_cast<qint32>(text->verticalOffset) << static_cast<quint32>(text->color.argb)
+                  << static_cast<qint32>(text->size) << static_cast<qint32>(text->shadowRadius)
+                  << static_cast<quint32>(text->shadowColor.argb) << static_cast<qint32>(text->wrapWidth)
+                  << text->isBold << text->isItalic << text->shieldResourceName << text->underlayIconResourceNames;
+            }
+            else
+            {
+                s << icon->resourceName << icon->underlayResourceNames << icon->overlayResourceNames
+                  << icon->offsetFactor.x << icon->offsetFactor.y << icon->shieldResourceName;
+            }
+        }
+    }
+    return out;
+}
+
+bool OsmAnd::MapPrimitiviser_P::zbDeserialize(
+    const QByteArray& data,
+    const std::shared_ptr<const MapPresentationEnvironment>& env,
+    const QHash< QString, std::shared_ptr<const ObfMapSectionInfo> >& sections,
+    std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& outPrimitivised,
+    QList< std::shared_ptr<const MapObject> >& outTileObjects,
+    MapSurfaceType& outSurfaceType)
+{
+    QDataStream s(data);
+    s.setVersion(QDataStream::Qt_5_6);
+    s.setFloatingPointPrecision(QDataStream::SinglePrecision);
+    quint32 magic;
+    qint32 zoom, surface;
+    bool coastlineMistake;
+    s >> magic;
+    if (magic != kZbMagic)
+        return false;
+    s >> zoom >> surface >> coastlineMistake;
+    PointD scaleDivisor;
+    scaleDivisor.x = zbReadDouble(s);
+    scaleDivisor.y = zbReadDouble(s);
+
+    quint32 objCount, tileObjCount;
+    s >> objCount >> tileObjCount;
+    QVector< std::shared_ptr<MapObject> > objs(objCount);
+    for (quint32 i = 0; i < objCount; i++)
+    {
+        qint32 kind;
+        s >> kind;
+        std::shared_ptr<MapObject> o;
+        if (kind == 0)
+        {
+            QString sectionName;
+            qint32 minZoom, maxZoom;
+            quint64 id, blockId;
+            s >> sectionName >> minZoom >> maxZoom >> id >> blockId;
+            const auto section = sections.value(sectionName);
+            // the attribute mapping is read lazily with the first map block: until a normal read happened, miss
+            if (!section || !section->getAttributeMapping())
+                return false;
+            std::shared_ptr<const ObfMapSectionLevel> level;
+            for (const auto& l : section->levels)
+            {
+                if (static_cast<int>(l->minZoom) == minZoom && static_cast<int>(l->maxZoom) == maxZoom)
+                {
+                    level = l.shared_ptr();
+                    break;
+                }
+            }
+            if (!level)
+                return false;
+            const auto b = std::make_shared<BinaryMapObject>(section, level);
+            b->id.id = id;
+            b->blockId.id = blockId;
+            o = b;
+        }
+        else if (kind == 1)
+            o = std::make_shared<MapPrimitiviser::SurfaceMapObject>();
+        else if (kind == 2)
+            o = std::make_shared<MapPrimitiviser::CoastlineMapObject>();
+        else
+            return false;
+        s >> o->attributeIds >> o->additionalAttributeIds >> o->isArea >> o->isCoastline;
+        zbReadPoints(s, o->points31);
+        quint32 inner;
+        s >> inner;
+        for (quint32 k = 0; k < inner; k++)
+        {
+            QVector<PointI> pts;
+            zbReadPoints(s, pts);
+            o->innerPolygonsPoints31.push_back(qMove(pts));
+        }
+        qint32 top, left, bottom, right;
+        s >> top >> left >> bottom >> right;
+        o->bbox31 = AreaI(top, left, bottom, right);
+        qint32 labelX, labelY;
+        s >> o->captions >> o->captionsOrder >> labelX >> labelY;
+        o->labelX = labelX;
+        o->labelY = labelY;
+        if (!o->isArea && o->points31.size() >= MIN_POINTS_TO_USE_SIMPLIFIED)
+        {
+            o->vapItems[0] = new VisibleAreaPoints(0, AreaI(), QVector<PointI>());
+            o->vapCounts[0].storeRelease(1);
+            o->vapItems[1] = new VisibleAreaPoints(0, AreaI(), QVector<PointI>());
+            o->vapCounts[1].storeRelease(1);
+        }
+        objs[i] = o;
+    }
+    if (s.status() != QDataStream::Ok)
+        return false;
+
+    const std::shared_ptr<MapPrimitiviser::PrimitivisedObjects> prim(new MapPrimitiviser::PrimitivisedObjects(
+        env, nullptr, static_cast<ZoomLevel>(zoom), scaleDivisor));
+    prim->coastlineMistake = coastlineMistake;
+    const int defsCount = env->mapStyle->getValueDefinitionsCount();
+
+    QStringList defNames;
+    s >> defNames;
+    QVector<qint32> defIds(defNames.size());
+    for (int i = 0; i < defNames.size(); i++)
+    {
+        defIds[i] = env->mapStyle->getValueDefinitionIdByName(defNames[i]);
+        if (defIds[i] < 0)
+            return false;
+    }
+
+    QVector< std::shared_ptr<MapPrimitiviser::PrimitivesGroup> > groups;
+    quint32 groupCount;
+    s >> groupCount;
+    groups.reserve(groupCount);
+    for (quint32 gi = 0; gi < groupCount; gi++)
+    {
+        quint32 oi;
+        s >> oi;
+        if (oi >= objCount)
+            return false;
+        const std::shared_ptr<MapPrimitiviser::PrimitivesGroup> g(new MapPrimitiviser::PrimitivesGroup(objs[oi]));
+        for (int k = 0; k < 3; k++)
+        {
+            quint32 n;
+            s >> n;
+            auto& list = k == 0 ? g->polygons : k == 1 ? g->polylines : g->points;
+            list.reserve(n);
+            for (quint32 i = 0; i < n; i++)
+            {
+                quint32 type, idx, entries;
+                qint32 zOrder;
+                qint64 doubledArea;
+                float dsf;
+                s >> type >> idx >> zOrder >> doubledArea >> dsf >> entries;
+                MapStyleEvaluationResult result(defsCount);
+                for (quint32 e = 0; e < entries; e++)
+                {
+                    qint32 defId;
+                    QVariant v;
+                    s >> defId >> v;
+                    if (defId < 0 || defId >= defIds.size())
+                        return false;
+                    result.setValue(defIds[defId], v);
+                }
+                const std::shared_ptr<MapPrimitiviser::Primitive> pr(new MapPrimitiviser::Primitive(
+                    g, static_cast<MapPrimitiviser::PrimitiveType>(type), idx, result, dsf));
+                pr->zOrder = zOrder;
+                pr->doubledArea = doubledArea;
+                list.push_back(pr);
+            }
+        }
+        groups.push_back(g);
+        prim->primitivesGroups.push_back(g);
+    }
+    const auto resolve =
+        [&groups](const quint64 ref) -> std::shared_ptr<const MapPrimitiviser::Primitive>
+        {
+            const auto gi = static_cast<int>(ref >> 34);
+            const auto k = static_cast<int>((ref >> 32) & 3);
+            const auto i = static_cast<int>(ref & 0xFFFFFFFFull);
+            if (gi >= groups.size())
+                return nullptr;
+            const auto& list = k == 0 ? groups[gi]->polygons : k == 1 ? groups[gi]->polylines : groups[gi]->points;
+            return i < list.size() ? list[i] : nullptr;
+        };
+    for (int k = 0; k < 3; k++)
+    {
+        quint32 n;
+        s >> n;
+        auto& list = k == 0 ? prim->polygons : k == 1 ? prim->polylines : prim->points;
+        list.reserve(n);
+        for (quint32 i = 0; i < n; i++)
+        {
+            quint64 ref;
+            s >> ref;
+            const auto pr = resolve(ref);
+            if (!pr)
+                return false;
+            list.push_back(pr);
+        }
+    }
+
+    quint32 sgCount;
+    s >> sgCount;
+    for (quint32 gi = 0; gi < sgCount; gi++)
+    {
+        quint32 keyIndex, sourceIndex, n;
+        bool canBeShownWithoutIcon;
+        s >> keyIndex >> sourceIndex >> canBeShownWithoutIcon >> n;
+        if (keyIndex >= objCount || sourceIndex >= objCount)
+            return false;
+        const std::shared_ptr<MapPrimitiviser::SymbolsGroup> sg(new MapPrimitiviser::SymbolsGroup(objs[sourceIndex], canBeShownWithoutIcon));
+        for (quint32 i = 0; i < n; i++)
+        {
+            qint32 kind, x, y, order;
+            quint64 ref;
+            s >> kind >> ref;
+            const auto pr = resolve(ref);
+            if (!pr)
+                return false;
+            std::shared_ptr<MapPrimitiviser::Symbol> sym;
+            std::shared_ptr<MapPrimitiviser::TextSymbol> text;
+            std::shared_ptr<MapPrimitiviser::IconSymbol> icon;
+            if (kind == 1)
+                sym = text = std::shared_ptr<MapPrimitiviser::TextSymbol>(new MapPrimitiviser::TextSymbol(pr));
+            else
+                sym = icon = std::shared_ptr<MapPrimitiviser::IconSymbol>(new MapPrimitiviser::IconSymbol(pr));
+            s >> x >> y >> order >> sym->drawAlongPath >> sym->intersectsWith >> sym->intersectionSizeFactor
+              >> sym->intersectionSize >> sym->intersectionMargin >> sym->minDistance >> sym->scaleFactor >> sym->ignoreClick;
+            sym->location31 = PointI(x, y);
+            sym->order = order;
+            if (text)
+            {
+                qint32 languageId, placement, verticalOffset, size, shadowRadius, wrapWidth;
+                quint32 color, shadowColor, additional;
+                s >> text->baseValue >> text->value >> languageId >> text->drawOnPath >> text->topSide >> placement >> additional;
+                for (quint32 a = 0; a < additional; a++)
+                {
+                    qint32 pl;
+                    s >> pl;
+                    text->additionalPlacements.push_back(static_cast<MapPrimitiviser::TextSymbol::Placement>(pl));
+                }
+                s >> verticalOffset >> color >> size >> shadowRadius >> shadowColor >> wrapWidth
+                  >> text->isBold >> text->isItalic >> text->shieldResourceName >> text->underlayIconResourceNames;
+                text->languageId = static_cast<LanguageId>(languageId);
+                text->placement = static_cast<MapPrimitiviser::TextSymbol::Placement>(placement);
+                text->verticalOffset = verticalOffset;
+                text->color.argb = color;
+                text->size = size;
+                text->shadowRadius = shadowRadius;
+                text->shadowColor.argb = shadowColor;
+                text->wrapWidth = wrapWidth;
+            }
+            else
+            {
+                s >> icon->resourceName >> icon->underlayResourceNames >> icon->overlayResourceNames
+                  >> icon->offsetFactor.x >> icon->offsetFactor.y >> icon->shieldResourceName;
+            }
+            sg->symbols.push_back(sym);
+        }
+        prim->symbolsGroups.insert(objs[keyIndex], sg);
+    }
+    if (s.status() != QDataStream::Ok)
+        return false;
+
+    outTileObjects.clear();
+    for (quint32 i = 0; i < tileObjCount && i < objCount; i++)
+        outTileObjects.push_back(objs[i]);
+    outSurfaceType = static_cast<MapSurfaceType>(surface);
+    outPrimitivised = prim;
+    return true;
+}

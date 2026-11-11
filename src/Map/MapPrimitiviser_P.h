@@ -5,6 +5,8 @@
 #include <deque>
 #include "QtExtensions.h"
 #include <QList>
+#include <QHash>
+#include <QByteArray>
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
@@ -17,12 +19,26 @@
 
 namespace OsmAnd
 {
+    class ObfMapSectionInfo;
     class MapPrimitiviser;
     class MapPrimitiviser_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY_AND_MOVE(MapPrimitiviser_P);
 
     public:
+        // zoom-bench K: disk cache of primitivised tiles
+        static QByteArray zbSerialize(
+            const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivised,
+            const QList< std::shared_ptr<const MapObject> >& tileObjects,
+            const MapSurfaceType surfaceType);
+        static bool zbDeserialize(
+            const QByteArray& data,
+            const std::shared_ptr<const MapPresentationEnvironment>& env,
+            const QHash< QString, std::shared_ptr<const ObfMapSectionInfo> >& sections,
+            std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& outPrimitivised,
+            QList< std::shared_ptr<const MapObject> >& outTileObjects,
+            MapSurfaceType& outSurfaceType);
+
         typedef MapPrimitiviser::CoastlineMapObject CoastlineMapObject;
         typedef MapPrimitiviser::SurfaceMapObject SurfaceMapObject;
         typedef MapPrimitiviser::PrimitiveType PrimitiveType;
