@@ -132,6 +132,14 @@ uint64_t OsmAnd::MapPrimitivesProvider_P::computeDiskCacheEnvironment() const
     hash.add(env->symbolsScaleFactor);
     hash.add(static_cast<uint64_t>(owner->tileSize));
     hash.add(static_cast<uint64_t>(owner->mode));
+
+    if (_diskCacheLastEnvironment.fetchAndStoreOrdered(hash.value) != hash.value)
+    {
+        LogPrintf(LogSeverityLevel::Info, "Map tile disk cache environment %016llx: lang=%s/%d density=%.3f/%.3f/%.3f %s",
+            static_cast<unsigned long long>(hash.value), qPrintable(env->getLocaleLanguageId()),
+            static_cast<int>(env->getLanguagePreference()), env->displayDensityFactor, env->mapScaleFactor,
+            env->symbolsScaleFactor, qPrintable(settings.join(QLatin1Char(' '))));
+    }
     return hash.value;
 }
 
@@ -253,6 +261,9 @@ void OsmAnd::MapPrimitivesProvider_P::storeCachedSymbols(
     const QList< std::shared_ptr<const MapObject> >& mapObjects,
     const MapSurfaceType surfaceType)
 {
+    // primitives with the detail of another zoom serve a zoom animation only, see MapRasterLayerProvider_P
+    if (request.detailedZoom != InvalidZoomLevel && request.detailedZoom != request.zoom)
+        return;
     uint64_t environment;
     const auto diskCache = getDiskCache(request.zoom, environment);
     if (!diskCache || !primitivisedObjects)

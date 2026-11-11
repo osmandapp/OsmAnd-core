@@ -226,7 +226,9 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
         return false;
     }
 
-    if (diskCache)
+    // a tile drawn with the detail of another zoom is shown only while the zoom changes: it is rendered again
+    // with its own detail once the zoom settles, so it is not worth keeping
+    if (diskCache && (request.detailedZoom == InvalidZoomLevel || request.detailedZoom == request.zoom))
         tileEncoder().enqueue(diskCache, diskCacheKey, image);
 
     // Or supply newly rasterized tile

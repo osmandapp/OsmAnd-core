@@ -85,6 +85,7 @@ namespace OsmAnd
         mutable bool _diskCacheMapsSynced;
         mutable QElapsedTimer _diskCacheMapsCheck;
         mutable QHash< QString, std::shared_ptr<const ObfMapSectionInfo> > _diskCacheSections;
+        mutable QAtomicInteger<quint64> _diskCacheLastEnvironment;
         uint64_t computeDiskCacheEnvironment() const;
         bool syncDiskCacheMaps(const std::shared_ptr<MapTileDiskCache>& diskCache) const;
         bool obtainCachedSymbols(
