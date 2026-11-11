@@ -1,4 +1,5 @@
 #include "MapPrimitiviser_P.h"
+#include <limits>
 #include "MapPrimitiviser.h"
 
 #include "stdlib_common.h"
@@ -3820,7 +3821,9 @@ namespace
 QByteArray OsmAnd::MapPrimitiviser_P::zbSerialize(
     const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& prim,
     const QList< std::shared_ptr<const MapObject> >& tileObjects,
-    const MapSurfaceType surfaceType)
+    const MapSurfaceType surfaceType,
+    const bool symbolsOnly,
+    int* outDroppedGroups)
 {
     QByteArray out;
     QDataStream s(&out, QIODevice::WriteOnly);
@@ -3840,20 +3843,151 @@ QByteArray OsmAnd::MapPrimitiviser_P::zbSerialize(
             objs.push_back(o);
             return i;
         };
-    for (const auto& o : tileObjects)
-        addObj(o);
+    // zoom-bench M: labels only, prefiltered by guaranteed overlaps
+    QSet<const MapObject*> keptGroups, keepObj, pathObjs;
+    QSet<const MapPrimitiviser::Symbol*> zbKeepSym;
+    if (symbolsOnly)
+    {
+        // E rules: best point caption per 8x8 cell of the tile, 2 best on-path captions per text; icons always
+        const int shift = qMax(0, 31 - static_cast<int>(prim->zoom) - 3);
+        QHash<quint64, QPair<int, const MapPrimitiviser::Symbol*>> bestInCell;
+        QHash<QString, QVector<QPair<int, const MapPrimitiviser::Symbol*>>> onPathByText;
+        for (auto it = prim->symbolsGroups.cbegin(); it != prim->symbolsGroups.cend(); ++it)
+            for (const auto& sym : it.value()->symbols)
+            {
+                const auto text = std::dynamic_pointer_cast<const MapPrimitiviser::TextSymbol>(sym);
+                if (!text)
+                {
+                    zbKeepSym.insert(sym.get());
+                    continue;
+                }
+                if (!text->drawOnPath)
+                {
+                    const quint64 cell = (static_cast<quint64>(static_cast<quint32>(text->location31.x >> shift)) << 32)
+                        | static_cast<quint32>(text->location31.y >> shift);
+                    const auto c = bestInCell.find(cell);
+                    if (c == bestInCell.end() || text->order < c->first)
+                        bestInCell[cell] = qMakePair(text->order, static_cast<const MapPrimitiviser::Symbol*>(sym.get()));
+                }
+                else
+                    onPathByText[text->value].push_back(qMakePair(text->order, static_cast<const MapPrimitiviser::Symbol*>(sym.get())));
+            }
+        for (const auto& v : bestInCell)
+            zbKeepSym.insert(v.second);
+        for (auto it = onPathByText.begin(); it != onPathByText.end(); ++it)
+        {
+            auto& list = it.value();
+            std::sort(list.begin(), list.end(),
+                [](const QPair<int, const MapPrimitiviser::Symbol*>& l, const QPair<int, const MapPrimitiviser::Symbol*>& r)
+                { return l.first < r.first; });
+            for (int i = 0; i < list.size() && i < 2; i++)
+                zbKeepSym.insert(list[i].second);
+        }
+
+        struct Cand
+        {
+            std::shared_ptr<const MapObject> key, src;
+            double x, y, h;
+            int order;
+            QSet<QString> classes;
+            bool path;
+        };
+        QVector<Cand> cands;
+        const auto density = prim->mapPresentationEnvironment->displayDensityFactor;
+        for (auto it = prim->symbolsGroups.cbegin(); it != prim->symbolsGroups.cend(); ++it)
+        {
+            const auto& sg = it.value();
+            if (sg->symbols.isEmpty())
+                continue;
+            Cand c;
+            c.key = it.key();
+            c.src = sg->sourceObject;
+            c.path = false;
+            c.h = 0;
+            c.order = std::numeric_limits<int>::max();
+            const MapPrimitiviser::Symbol* firstKept = nullptr;
+            for (const auto& sym : sg->symbols)
+            {
+                if (!zbKeepSym.contains(sym.get()))
+                    continue;
+                if (!firstKept)
+                    firstKept = sym.get();
+                const auto text = std::dynamic_pointer_cast<const MapPrimitiviser::TextSymbol>(sym);
+                if (sym->drawAlongPath || (text && text->drawOnPath))
+                    c.path = true;
+                c.h = qMax(c.h, text ? static_cast<double>(text->size) : 20.0 * density);
+                c.order = qMin(c.order, sym->order);
+                c.classes.unite(sym->intersectsWith);
+            }
+            if (!firstKept)
+                continue;
+            c.x = firstKept->location31.x / prim->scaleDivisor31ToPixel.x;
+            c.y = firstKept->location31.y / prim->scaleDivisor31ToPixel.y;
+            cands.push_back(c);
+        }
+        std::stable_sort(cands.begin(), cands.end(), [](const Cand& l, const Cand& r) { return l.order < r.order; });
+        QVector<int> kept;
+        int dropped = 0;
+        for (int i = 0; i < cands.size(); i++)
+        {
+            const auto& c = cands[i];
+            bool drop = false;
+            if (!c.path && !c.classes.isEmpty())
+            {
+                for (const int j : kept)
+                {
+                    const auto& k = cands[j];
+                    if (k.path || !k.classes.intersects(c.classes))
+                        continue;
+                    const double lim = (c.h + k.h) / 4.0;
+                    const double dx = c.x - k.x, dy = c.y - k.y;
+                    if (dx * dx + dy * dy < lim * lim)
+                    {
+                        drop = true;
+                        break;
+                    }
+                }
+            }
+            if (drop)
+            {
+                dropped++;
+                continue;
+            }
+            kept.push_back(i);
+            keptGroups.insert(c.key.get());
+            keepObj.insert(c.key.get());
+            keepObj.insert(c.src.get());
+            if (c.path)
+            {
+                pathObjs.insert(c.key.get());
+                pathObjs.insert(c.src.get());
+            }
+        }
+        if (outDroppedGroups)
+            *outDroppedGroups = prim->symbolsGroups.size() - keptGroups.size();
+    }
+    MapPrimitiviser::PrimitivesGroupsCollection groups;
     for (const auto& g : prim->primitivesGroups)
+        if (!symbolsOnly || keepObj.contains(g->sourceObject.get()))
+            groups.push_back(g);
+
+    if (!symbolsOnly)
+        for (const auto& o : tileObjects)
+            addObj(o);
+    for (const auto& g : groups)
         addObj(g->sourceObject);
     for (auto it = prim->symbolsGroups.cbegin(); it != prim->symbolsGroups.cend(); ++it)
     {
+        if (symbolsOnly && !keptGroups.contains(it.key().get()))
+            continue;
         addObj(it.key());
         addObj(it.value()->sourceObject);
     }
 
     QHash<const MapPrimitiviser::Primitive*, quint64> primRef;
-    for (int gi = 0; gi < prim->primitivesGroups.size(); gi++)
+    for (int gi = 0; gi < groups.size(); gi++)
     {
-        const auto& g = prim->primitivesGroups[gi];
+        const auto& g = groups[gi];
         const MapPrimitiviser::PrimitivesCollection* lists[3] = { &g->polygons, &g->polylines, &g->points };
         for (quint64 k = 0; k < 3; k++)
             for (int i = 0; i < lists[k]->size(); i++)
@@ -3864,7 +3998,7 @@ QByteArray OsmAnd::MapPrimitiviser_P::zbSerialize(
     zbWriteDouble(s, prim->scaleDivisor31ToPixel.x);
     zbWriteDouble(s, prim->scaleDivisor31ToPixel.y);
 
-    s << static_cast<quint32>(objs.size()) << static_cast<quint32>(tileObjects.size());
+    s << static_cast<quint32>(objs.size()) << static_cast<quint32>(symbolsOnly ? 0 : tileObjects.size());
     for (const auto& o : objs)
     {
         qint32 kind = 3;
@@ -3884,10 +4018,18 @@ QByteArray OsmAnd::MapPrimitiviser_P::zbSerialize(
               << static_cast<quint64>(b->id.id) << static_cast<quint64>(b->blockId.id);
         }
         s << o->attributeIds << o->additionalAttributeIds << o->isArea << o->isCoastline;
-        zbWritePoints(s, o->points31);
-        s << static_cast<quint32>(o->innerPolygonsPoints31.size());
-        for (const auto& inner : o->innerPolygonsPoints31)
-            zbWritePoints(s, inner);
+        if (symbolsOnly && !pathObjs.contains(o.get()))
+        {
+            zbWritePoints(s, QVector<PointI>());
+            s << static_cast<quint32>(0);
+        }
+        else
+        {
+            zbWritePoints(s, o->points31);
+            s << static_cast<quint32>(o->innerPolygonsPoints31.size());
+            for (const auto& inner : o->innerPolygonsPoints31)
+                zbWritePoints(s, inner);
+        }
         s << static_cast<qint32>(o->bbox31.top()) << static_cast<qint32>(o->bbox31.left())
           << static_cast<qint32>(o->bbox31.bottom()) << static_cast<qint32>(o->bbox31.right());
         s << o->captions << o->captionsOrder << static_cast<qint32>(o->labelX) << static_cast<qint32>(o->labelY);
@@ -3896,7 +4038,7 @@ QByteArray OsmAnd::MapPrimitiviser_P::zbSerialize(
     // value definition ids differ between processes: write a table of their names first
     QHash<qint32, qint32> defIndex;
     QStringList defNames;
-    for (const auto& g : prim->primitivesGroups)
+    for (const auto& g : groups)
         for (const auto* list : { &g->polygons, &g->polylines, &g->points })
             for (const auto& pr : *list)
                 for (const auto& e : pr->evaluationResult.entries)
@@ -3918,8 +4060,8 @@ QByteArray OsmAnd::MapPrimitiviser_P::zbSerialize(
             for (const auto& e : pr->evaluationResult.entries)
                 s << static_cast<qint32>(defIndex.value(e.first)) << e.second;
         };
-    s << static_cast<quint32>(prim->primitivesGroups.size());
-    for (const auto& g : prim->primitivesGroups)
+    s << static_cast<quint32>(groups.size());
+    for (const auto& g : groups)
     {
         s << objIndex.value(g->sourceObject.get());
         for (const auto* list : { &g->polygons, &g->polylines, &g->points })
@@ -3931,6 +4073,11 @@ QByteArray OsmAnd::MapPrimitiviser_P::zbSerialize(
     }
     for (const auto* list : { &prim->polygons, &prim->polylines, &prim->points })
     {
+        if (symbolsOnly)
+        {
+            s << static_cast<quint32>(0);
+            continue;
+        }
         s << static_cast<quint32>(list->size());
         for (const auto& pr : *list)
         {
@@ -3941,14 +4088,22 @@ QByteArray OsmAnd::MapPrimitiviser_P::zbSerialize(
         }
     }
 
-    s << static_cast<quint32>(prim->symbolsGroups.size());
+    s << static_cast<quint32>(symbolsOnly ? keptGroups.size() : prim->symbolsGroups.size());
     for (auto it = prim->symbolsGroups.cbegin(); it != prim->symbolsGroups.cend(); ++it)
     {
+        if (symbolsOnly && !keptGroups.contains(it.key().get()))
+            continue;
         const auto& sg = it.value();
         s << objIndex.value(it.key().get()) << objIndex.value(sg->sourceObject.get()) << sg->canBeShownWithoutIcon;
-        s << static_cast<quint32>(sg->symbols.size());
+        quint32 symCount = 0;
+        for (const auto& sym : sg->symbols)
+            if (!symbolsOnly || zbKeepSym.contains(sym.get()))
+                symCount++;
+        s << symCount;
         for (const auto& sym : sg->symbols)
         {
+            if (symbolsOnly && !zbKeepSym.contains(sym.get()))
+                continue;
             const auto pit = primRef.constFind(sym->primitive.get());
             if (pit == primRef.cend())
                 return QByteArray();

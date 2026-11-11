@@ -30,7 +30,9 @@ namespace OsmAnd
         static QByteArray zbSerialize(
             const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivised,
             const QList< std::shared_ptr<const MapObject> >& tileObjects,
-            const MapSurfaceType surfaceType);
+            const MapSurfaceType surfaceType,
+            const bool symbolsOnly = false,
+            int* outDroppedGroups = nullptr);
         static bool zbDeserialize(
             const QByteArray& data,
             const std::shared_ptr<const MapPresentationEnvironment>& env,

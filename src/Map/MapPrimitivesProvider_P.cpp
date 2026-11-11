@@ -19,6 +19,7 @@
 #include "MapStyleValueDefinition.h"
 #include "IMapStyle.h"
 #include "MapPresentationEnvironment.h"
+#include "IMapTiledSymbolsProvider.h"
 #include <QFile>
 #include <QReadWriteLock>
 #include <fcntl.h>
@@ -77,6 +78,7 @@ namespace
         QAtomicInt hits, misses;
         ZbPack prim;
         ZbPack image;
+        ZbPack label;
     };
 
     ZbKState& zbKState();
@@ -186,6 +188,8 @@ namespace
         st.image.compress = false;
         zbPackOpen(st.prim, st.dir + QLatin1String("zbprim.pack"));
         zbPackOpen(st.image, st.dir + QLatin1String("zbtile.pack"));
+        st.label.tag = "LABEL";
+        zbPackOpen(st.label, st.dir + QLatin1String("zblabel.pack"));
         const auto obfProvider = std::dynamic_pointer_cast<const OsmAnd::ObfMapObjectsProvider>(mapObjectsProvider);
         if (!obfProvider)
             return;
@@ -271,6 +275,36 @@ namespace
         zbMixK(h, static_cast<quint64>(request.zoom));
         zbMixK(h, static_cast<quint64>(request.detailedZoom));
         zbMixK(h, static_cast<quint64>(static_cast<quint32>(request.tileId.x)) << 32 | static_cast<quint32>(request.tileId.y));
+        return h;
+    }
+
+    bool zbFlagM()
+    {
+        static const bool enabled = []() -> bool
+        {
+            char buffer[96] = { 0 };
+#if defined(__ANDROID__)
+            __system_property_get("debug.osmand.zb", buffer);
+#endif
+            return std::string(buffer).find('M') != std::string::npos;
+        }();
+        return enabled;
+    }
+
+    // same key as the L raster cache (both fillBackground variants)
+    bool zbTileImageHas(const OsmAnd::MapPrimitivesProvider* owner, const OsmAnd::TileId tileId, const OsmAnd::ZoomLevel zoom)
+    {
+        quint64 h = zbKKey(owner, ZbKRequest{ tileId, zoom, zoom });
+        zbMixK(h, 0x4C49u);
+        auto& pack = zbKState().image;
+        QReadLocker locker(&pack.indexLock);
+        return pack.index.contains(h * 31) || pack.index.contains(h * 31 + 1);
+    }
+
+    quint64 zbLabelKey(const quint64 key)
+    {
+        quint64 h = key;
+        zbMixK(h, 0x4D4Cu); // 'ML'
         return h;
     }
 }
@@ -498,7 +532,17 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         zbKPrepare(owner->mapObjectsProvider);
         zbKey = zbKKey(owner, ZbKRequest{ request.tileId, request.zoom, request.detailedZoom });
         const auto t0 = std::chrono::steady_clock::now();
-        const auto bytes = zbPackRead(zbKState().prim, zbKey);
+        // zoom-bench M: labels only, when the raster tile of this request comes from the L cache
+        bool zbLabel = false;
+        QByteArray bytes;
+        if (zbFlagM() && dynamic_cast<const IMapTiledSymbolsProvider::Request*>(&request)
+            && zbTileImageHas(owner, request.tileId, request.zoom))
+        {
+            bytes = zbPackRead(zbKState().label, zbLabelKey(zbKey));
+            zbLabel = !bytes.isEmpty();
+        }
+        if (bytes.isEmpty())
+            bytes = zbPackRead(zbKState().prim, zbKey);
         if (!bytes.isEmpty())
         {
             std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects> cachedPrimitives;
@@ -528,8 +572,9 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
                 const auto ms = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
                 const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::system_clock::now().time_since_epoch()).count();
-                LogPrintf(LogSeverityLevel::Info, ">>>> %lld PRIMCACHE %f: hit %d objects %d bytes from %dx%d@%d (hits %d misses %d)",
-                    static_cast<long long>(now), ms, cachedObjects.size(), bytes.size(),
+                LogPrintf(LogSeverityLevel::Info, ">>>> %lld %s %f: hit %d objects %d bytes from %dx%d@%d (hits %d misses %d)",
+                    static_cast<long long>(now), zbLabel ? "LABELCACHE" : "PRIMCACHE", ms,
+                    zbLabel ? cachedPrimitives->symbolsGroups.size() : cachedObjects.size(), bytes.size(),
                     request.tileId.x, request.tileId.y, static_cast<int>(request.zoom), hits, zbKState().misses.loadAcquire());
                 return true;
             }
@@ -659,6 +704,20 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         if (!bytes.isEmpty())
         {
             zbPackWrite(zbKState().prim, zbKey, bytes);
+            if (zbFlagM())
+            {
+                int dropped = 0;
+                const auto labels = MapPrimitiviser_P::zbSerialize(primitivisedObjects, dataTile->mapObjects,
+                    dataTile->tileSurfaceType, true, &dropped);
+                if (!labels.isEmpty())
+                {
+                    zbPackWrite(zbKState().label, zbLabelKey(zbKey), labels);
+                    LogPrintf(LogSeverityLevel::Info, ">>>> 0 LABELPACKW 0.0: %d raw bytes @%d groups %d dropped %d (pack raw %lld packed %lld)",
+                        labels.size(), static_cast<int>(request.zoom), primitivisedObjects->symbolsGroups.size() - dropped, dropped,
+                        static_cast<long long>(zbKState().label.rawBytes.loadAcquire()),
+                        static_cast<long long>(zbKState().label.packedBytes.loadAcquire()));
+                }
+            }
             const auto ms = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
             LogPrintf(LogSeverityLevel::Info, ">>>> 0 PRIMPACKW %f: %d raw bytes @%d (pack raw %lld packed %lld)",
                 ms, bytes.size(), static_cast<int>(request.zoom),
