@@ -3677,11 +3677,6 @@ int OsmAnd::MapRenderer::get3DBuildingsDetalization() const
 
 bool OsmAnd::MapRenderer::castShadows(const bool enableShadows)
 {
-    QMutexLocker scopedLocker1(&_initializationLock);
-
-    if (!_isRenderingInitialized)
-        return false;
-
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     if (_requestedState.castSunShadows == enableShadows)
