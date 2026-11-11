@@ -15,6 +15,16 @@
 #include "QKeyValueIterator.h"
 #include "Logging.h"
 
+namespace OsmAnd
+{
+    // zoom-bench H: set when a rule reads the map object (not only the evaluator inputs)
+    bool& zbStyleTouched()
+    {
+        static thread_local bool touched = false;
+        return touched;
+    }
+}
+
 OsmAnd::MapStyleEvaluator_P::MapStyleEvaluator_P(MapStyleEvaluator* owner_)
     : _builtinValueDefs(MapStyleBuiltinValueDefinitions::get())
     , owner(owner_)
@@ -192,6 +202,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
                 evaluationResult = constantRuleValue.asSimple.asInt == inputValue.asInt;
             else
             {
+                zbStyleTouched() = true;
                 assert(!constantRuleValue.isComplex);
                 const auto valueString = owner->mapStyle->getStringById(constantRuleValue.asSimple.asUInt);
                 auto equalSignIdx = valueString.indexOf(QLatin1Char('='));
@@ -303,7 +314,10 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
                 if (valueDefId > -1 && inputValues->get(valueDefId, inputValue))
                     classNameTailPart = owner->mapStyle->getStringById(inputValue.asUInt);
                 else if (mapObject)
+                {
+                    zbStyleTouched() = true;
                     classNameTailPart = mapObject->getResolvedAttribute(QStringRef(&classNameTagName));
+                }
 
                 const auto& className = classNameTailPart.isEmpty() ? classNameHeadPart : classNameHeadPart + QLatin1Char('.') + classNameTailPart;
                 const auto& symbolClassDefId = owner->mapStyle->getValueDefinitionIdByName(className);
