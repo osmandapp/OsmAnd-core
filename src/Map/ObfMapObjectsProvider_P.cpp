@@ -20,6 +20,191 @@
 #include "Logging.h"
 #include "MapRendererPerformanceMetrics.h"
 
+#include <list>
+#include <string>
+#include <QMutex>
+#include <QWaitCondition>
+#if defined(__ANDROID__)
+#include <sys/system_properties.h>
+#endif
+
+namespace
+{
+    // zoom-bench: runtime switches, Android property debug.osmand.zb (e.g. "ABC"), read once per process
+    bool zbFlag(const char flag)
+    {
+        static const std::string value = []() -> std::string
+        {
+            char buffer[96] = { 0 };
+#if defined(__ANDROID__)
+            __system_property_get("debug.osmand.zb", buffer);
+#endif
+            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, ">>>> 0 ZBFLAGS 0.0: %s", buffer);
+            return std::string(buffer);
+        }();
+        return value.find(flag) != std::string::npos;
+    }
+
+    // zoom-bench A: 4x4 metatiles of map objects
+    struct ZbMetatile
+    {
+        QList< std::shared_ptr<const OsmAnd::BinaryMapObject> > buckets[4];
+        OsmAnd::MapSurfaceType surfaceType = OsmAnd::MapSurfaceType::Undefined;
+        QVector<const OsmAnd::ObfMapSectionInfo*> sections;
+        bool ready = false;
+    };
+    struct ZbMetatileKey
+    {
+        const void* owner;
+        int zoom;
+        int mx;
+        int my;
+        bool operator==(const ZbMetatileKey& o) const
+        {
+            return owner == o.owner && zoom == o.zoom && mx == o.mx && my == o.my;
+        }
+    };
+    struct ZbMetatileCache
+    {
+        QMutex mutex;
+        QWaitCondition loaded;
+        std::list< std::pair<ZbMetatileKey, std::shared_ptr<ZbMetatile>> > lru; // front = newest
+        static constexpr size_t kMaxEntries = 16;
+    };
+    ZbMetatileCache& zbMetatileCache()
+    {
+        static ZbMetatileCache cache;
+        return cache;
+    }
+
+    std::shared_ptr<ZbMetatile> zbMetatile(
+        const void* owner,
+        const std::shared_ptr<OsmAnd::ObfDataInterface>& dataInterface,
+        const std::shared_ptr<const OsmAnd::MapPresentationEnvironment>& environment,
+        const OsmAnd::ZoomLevel zoom,
+        const OsmAnd::TileId tileId)
+    {
+        const ZbMetatileKey key{ owner, static_cast<int>(zoom), tileId.x >> 1, tileId.y >> 1 };
+        auto& cache = zbMetatileCache();
+        std::shared_ptr<ZbMetatile> entry;
+        {
+            QMutexLocker locker(&cache.mutex);
+            for (;;)
+            {
+                auto it = cache.lru.begin();
+                for (; it != cache.lru.end(); ++it)
+                    if (it->first == key)
+                        break;
+                if (it == cache.lru.end())
+                    break;
+                cache.lru.splice(cache.lru.begin(), cache.lru, it);
+                if (it->second->ready)
+                    return it->second;
+                cache.loaded.wait(&cache.mutex);
+            }
+            entry = std::make_shared<ZbMetatile>();
+            cache.lru.emplace_front(key, entry);
+            while (cache.lru.size() > ZbMetatileCache::kMaxEntries)
+                cache.lru.pop_back();
+        }
+
+        const auto zoomShift = OsmAnd::ZoomLevel31 - zoom;
+        const int mx0 = key.mx << 1;
+        const int my0 = key.my << 1;
+        const auto first = OsmAnd::Utilities::tileBoundingBox31(OsmAnd::TileId::fromXY(mx0, my0), zoom);
+        const auto last = OsmAnd::Utilities::tileBoundingBox31(OsmAnd::TileId::fromXY(mx0 + 1, my0 + 1), zoom);
+        const OsmAnd::AreaI bbox31(first.top(), first.left(), last.bottom(), last.right());
+
+        QList< std::shared_ptr<const OsmAnd::BinaryMapObject> > objects;
+        QList< std::shared_ptr<const OsmAnd::Road> > unusedRoads;
+        auto sections = &entry->sections;
+        const auto filter =
+            [sections]
+            (const std::shared_ptr<const OsmAnd::ObfMapSectionInfo>& section,
+                const OsmAnd::ObfMapSectionReader::DataBlockId& blockId,
+                const OsmAnd::ObfObjectId objectId,
+                const OsmAnd::AreaI& bbox,
+                const OsmAnd::ZoomLevel firstZoomLevel,
+                const OsmAnd::ZoomLevel lastZoomLevel,
+                const OsmAnd::ZoomLevel requestedZoom) -> bool
+            {
+                const auto ptr = section.get();
+                if (sections->isEmpty() || sections->last() != ptr)
+                {
+                    if (!sections->contains(ptr))
+                        sections->push_back(ptr);
+                }
+                return true;
+            };
+        dataInterface->loadMapObjects(
+            &objects,
+            &unusedRoads,
+            &entry->surfaceType,
+            environment,
+            zoom,
+            &bbox31,
+            filter,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr,
+            true);
+
+        for (int i = 0; i < 4; i++)
+            entry->buckets[i].reserve(objects.size() / 2 + 16);
+        QSet<uint> grids[4];
+        for (const auto& obj : OsmAnd::constOf(objects))
+        {
+            const auto& b = obj->bbox31;
+            int x0 = (b.left() >> zoomShift) - mx0;
+            int x1 = (b.right() >> zoomShift) - mx0;
+            int y0 = (b.top() >> zoomShift) - my0;
+            int y1 = (b.bottom() >> zoomShift) - my0;
+            x0 = qBound(0, x0, 1); x1 = qBound(0, x1, 1);
+            y0 = qBound(0, y0, 1); y1 = qBound(0, y1, 1);
+            // label grid per tile (as readMapObject does per request): one single-point label per 1/128 tile cell
+            const bool isLabel = !obj->isArea && obj->attributeIds.size() == 1 && obj->additionalAttributeIds.isEmpty()
+                && obj->points31.size() == 1 && obj->captions.size() > 0;
+            for (int y = y0; y <= y1; y++)
+                for (int x = x0; x <= x1; x++)
+                {
+                    if (isLabel && zoomShift >= 7)
+                    {
+                        const auto& p = obj->points31.first();
+                        const uint cx = static_cast<uint>(p.x >> (zoomShift - 7)) & 127u;
+                        const uint cy = static_cast<uint>(p.y >> (zoomShift - 7)) & 127u;
+                        const uint code = ((cy << 25) | (cx << 18) | ((static_cast<uint>(obj->getLayerType()) + 1) << 16))
+                            ^ obj->attributeIds.first();
+                        auto& grid = grids[y * 2 + x];
+                        if (grid.contains(code))
+                            continue;
+                        grid.insert(code);
+                    }
+                    entry->buckets[y * 2 + x].push_back(obj);
+                }
+        }
+
+        {
+            qint64 bytes = 0;
+            for (const auto& obj : OsmAnd::constOf(objects))
+                bytes += 280 + obj->points31.size() * 8
+                    + (obj->attributeIds.size() + obj->additionalAttributeIds.size()) * 4 + obj->captions.size() * 64;
+            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, ">>>> 0 METATILE 0.0: z=%d objects=%d estMB=%.1f",
+                static_cast<int>(zoom), objects.size(), bytes / 1048576.0);
+        }
+        {
+            QMutexLocker locker(&cache.mutex);
+            entry->ready = true;
+            cache.loaded.wakeAll();
+        }
+        return entry;
+    }
+}
+
 static QSemaphore readLimiter1(1);
 static QSemaphore readLimiter2(2);
 
@@ -471,6 +656,17 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             metric->submetrics.push_back(loadRoadsMetric);
         }
 
+        if (zbFlag('A'))
+        {
+            // zoom-bench A: this tile's bucket of its 4x4 metatile
+            const auto metatile = zbMetatile(this, dataInterface, owner->environment, request.zoom, request.tileId);
+            loadedBinaryMapObjects = metatile->buckets[(request.tileId.y & 1) * 2 + (request.tileId.x & 1)];
+            tileSurfaceType = metatile->surfaceType;
+            for (const auto sectionPtr : constOf(metatile->sections))
+                if (!tileMapSections.contains(sectionPtr))
+                    tileMapSections.append(sectionPtr);
+        }
+        else
         dataInterface->loadMapObjects(
             &loadedBinaryMapObjects,
             &loadedRoads,
