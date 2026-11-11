@@ -44,7 +44,7 @@ namespace
 #if defined(__ANDROID__)
             __system_property_get("debug.osmand.zb", buffer);
             if (!buffer[0])
-                memcpy(buffer, "BCDEGKLM", 9);  // zoom-bench: default variants on Android, "-" turns all off
+                memcpy(buffer, "BCDEGLM", 8);  // zoom-bench: default variants on Android, "-" turns all off
 #endif
             return std::string(buffer).find('K') != std::string::npos;
         }();
@@ -288,7 +288,7 @@ namespace
 #if defined(__ANDROID__)
             __system_property_get("debug.osmand.zb", buffer);
             if (!buffer[0])
-                memcpy(buffer, "BCDEGKLM", 9);  // zoom-bench: default variants on Android, "-" turns all off
+                memcpy(buffer, "BCDEGLM", 8);  // zoom-bench: default variants on Android, "-" turns all off
 #endif
             return std::string(buffer).find('M') != std::string::npos;
         }();
@@ -324,7 +324,7 @@ namespace OsmAnd
 #if defined(__ANDROID__)
             __system_property_get("debug.osmand.zb", buffer);
             if (!buffer[0])
-                memcpy(buffer, "BCDEGKLM", 9);  // zoom-bench: default variants on Android, "-" turns all off
+                memcpy(buffer, "BCDEGLM", 8);  // zoom-bench: default variants on Android, "-" turns all off
 #endif
             return std::string(buffer).find('L') != std::string::npos;
         }();
@@ -531,7 +531,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
     // Obtain map objects data tile
     // zoom-bench K: restore the whole tile (objects + primitives + symbols) from the disk cache
     // only zoom <= 15 is cached
-    bool zbUse = zbFlagK() && request.zoom <= ZoomLevel15;
+    bool zbUse = (zbFlagK() || zbFlagM()) && request.zoom <= ZoomLevel15;
     quint64 zbKey = 0;
     if (zbUse)
     {
@@ -547,7 +547,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
             bytes = zbPackRead(zbKState().label, zbLabelKey(zbKey));
             zbLabel = !bytes.isEmpty();
         }
-        if (bytes.isEmpty())
+        if (bytes.isEmpty() && zbFlagK())
             bytes = zbPackRead(zbKState().prim, zbKey);
         if (!bytes.isEmpty())
         {
@@ -705,30 +705,33 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
     // Create tile
     if (zbUse && primitivisedObjects)
     {
-        const auto t0 = std::chrono::steady_clock::now();
-        const auto bytes = MapPrimitiviser_P::zbSerialize(primitivisedObjects, dataTile->mapObjects, dataTile->tileSurfaceType);
-        if (!bytes.isEmpty())
+        if (zbFlagK())
         {
-            zbPackWrite(zbKState().prim, zbKey, bytes);
-            if (zbFlagM())
+            const auto t0 = std::chrono::steady_clock::now();
+            const auto bytes = MapPrimitiviser_P::zbSerialize(primitivisedObjects, dataTile->mapObjects, dataTile->tileSurfaceType);
+            if (!bytes.isEmpty())
             {
-                int dropped = 0;
-                const auto labels = MapPrimitiviser_P::zbSerialize(primitivisedObjects, dataTile->mapObjects,
-                    dataTile->tileSurfaceType, true, &dropped);
-                if (!labels.isEmpty())
-                {
-                    zbPackWrite(zbKState().label, zbLabelKey(zbKey), labels);
-                    LogPrintf(LogSeverityLevel::Info, ">>>> 0 LABELPACKW 0.0: %d raw bytes @%d groups %d dropped %d (pack raw %lld packed %lld)",
-                        labels.size(), static_cast<int>(request.zoom), primitivisedObjects->symbolsGroups.size() - dropped, dropped,
-                        static_cast<long long>(zbKState().label.rawBytes.loadAcquire()),
-                        static_cast<long long>(zbKState().label.packedBytes.loadAcquire()));
-                }
+                zbPackWrite(zbKState().prim, zbKey, bytes);
+                const auto ms = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+                LogPrintf(LogSeverityLevel::Info, ">>>> 0 PRIMPACKW %f: %d raw bytes @%d (pack raw %lld packed %lld)",
+                    ms, bytes.size(), static_cast<int>(request.zoom),
+                    static_cast<long long>(zbKState().prim.rawBytes.loadAcquire()),
+                    static_cast<long long>(zbKState().prim.packedBytes.loadAcquire()));
             }
-            const auto ms = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
-            LogPrintf(LogSeverityLevel::Info, ">>>> 0 PRIMPACKW %f: %d raw bytes @%d (pack raw %lld packed %lld)",
-                ms, bytes.size(), static_cast<int>(request.zoom),
-                static_cast<long long>(zbKState().prim.rawBytes.loadAcquire()),
-                static_cast<long long>(zbKState().prim.packedBytes.loadAcquire()));
+        }
+        if (zbFlagM())
+        {
+            int dropped = 0;
+            const auto labels = MapPrimitiviser_P::zbSerialize(primitivisedObjects, dataTile->mapObjects,
+                dataTile->tileSurfaceType, true, &dropped);
+            if (!labels.isEmpty())
+            {
+                zbPackWrite(zbKState().label, zbLabelKey(zbKey), labels);
+                LogPrintf(LogSeverityLevel::Info, ">>>> 0 LABELPACKW 0.0: %d raw bytes @%d groups %d dropped %d (pack raw %lld packed %lld)",
+                    labels.size(), static_cast<int>(request.zoom), primitivisedObjects->symbolsGroups.size() - dropped, dropped,
+                    static_cast<long long>(zbKState().label.rawBytes.loadAcquire()),
+                    static_cast<long long>(zbKState().label.packedBytes.loadAcquire()));
+            }
         }
     }
 
