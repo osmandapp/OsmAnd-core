@@ -22,6 +22,9 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/giflib" "core/externals/giflib")
 # External : jpeg
 add_subdirectory("${OSMAND_ROOT}/core/externals/jpeg" "core/externals/jpeg")
 
+# External : webp
+add_subdirectory("${OSMAND_ROOT}/core/externals/libwebp" "core/externals/libwebp")
+
 # External : protobuf
 add_subdirectory("${OSMAND_ROOT}/core/externals/protobuf" "core/externals/protobuf")
 
