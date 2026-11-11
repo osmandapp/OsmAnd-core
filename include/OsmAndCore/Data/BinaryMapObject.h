@@ -17,6 +17,7 @@ namespace OsmAnd
     class ObfMapSectionInfo;
     class ObfMapSectionLevel;
     class ObfMapSectionReader_P;
+    class MapPrimitiviser_P;
 
     class OSMAND_CORE_API BinaryMapObject Q_DECL_FINAL : public ObfMapObject
     {
@@ -46,6 +47,7 @@ namespace OsmAnd
         virtual bool isDeleted() const;
 
     friend class OsmAnd::ObfMapSectionReader_P;
+    friend class OsmAnd::MapPrimitiviser_P;
     };
 }
 

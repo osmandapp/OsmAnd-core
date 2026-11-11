@@ -13,6 +13,7 @@
 #include <QMutex>
 #include <QReadWriteLock>
 #include <QWaitCondition>
+#include <QElapsedTimer>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
@@ -25,6 +26,7 @@
 #include "MapPrimitiviser.h"
 #include "MapPrimitivesProvider.h"
 #include "MapPrimitivesProvider_Metrics.h"
+#include "MapTileDiskCache.h"
 
 namespace OsmAnd
 {
@@ -75,6 +77,25 @@ namespace OsmAnd
             std::shared_ptr<const IMapDataProvider::RetainableCacheMetadata> binaryMapRetainableCacheMetadata;
         };
     private:
+        // disk cache: tiles of z <= 15 and their filtered symbols
+        mutable QMutex _diskCacheMutex;
+        std::shared_ptr<MapTileDiskCache> _diskCache;
+        QString _diskCacheStyleKey;
+        mutable uint64_t _diskCacheMapsSignature;
+        mutable bool _diskCacheMapsSynced;
+        mutable QElapsedTimer _diskCacheMapsCheck;
+        mutable QHash< QString, std::shared_ptr<const ObfMapSectionInfo> > _diskCacheSections;
+        uint64_t computeDiskCacheEnvironment() const;
+        bool syncDiskCacheMaps(const std::shared_ptr<MapTileDiskCache>& diskCache) const;
+        bool obtainCachedSymbols(
+            const MapPrimitivesProvider::Request& request,
+            std::shared_ptr<MapPrimitivesProvider::Data>& outTiledPrimitives);
+        void storeCachedSymbols(
+            const MapPrimitivesProvider::Request& request,
+            const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
+            const QList< std::shared_ptr<const MapObject> >& mapObjects,
+            const MapSurfaceType surfaceType);
+
         void collectPolygons(QList<std::shared_ptr<const OsmAnd::MapObject>> & polygons, 
                              const std::shared_ptr<const MapObject> & mapObj,
                              const MapPrimitiviser::PrimitiveType & type, const PointI & point);
@@ -92,6 +113,9 @@ namespace OsmAnd
             std::shared_ptr<MapPrimitivesProvider::Data>& outTiledPrimitives,
             MapPrimitivesProvider_Metrics::Metric_obtainData* const metric_);
         QList<std::shared_ptr<const OsmAnd::MapObject>> retreivePolygons(PointI point, ZoomLevel zoom);
+
+        void setDiskCache(const std::shared_ptr<MapTileDiskCache>& diskCache, const QString& styleKey);
+        std::shared_ptr<MapTileDiskCache> getDiskCache(const ZoomLevel zoom, uint64_t& outEnvironment) const;
 
     friend class OsmAnd::MapPrimitivesProvider;
     };

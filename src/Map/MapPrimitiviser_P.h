@@ -5,6 +5,8 @@
 #include <deque>
 #include "QtExtensions.h"
 #include <QList>
+#include <QHash>
+#include <QByteArray>
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
@@ -17,12 +19,30 @@
 
 namespace OsmAnd
 {
+    class ObfMapSectionInfo;
     class MapPrimitiviser;
     class MapPrimitiviser_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY_AND_MOVE(MapPrimitiviser_P);
 
     public:
+        // Map tile disk cache, see MapPrimitiviser_P_SymbolsCache.cpp
+        // bump when the stored symbols or the rasterization change: older entries are not read again
+        static const int DiskCacheFormatVersion = 2;
+        // Only the symbols that can reach the screen, without names and with geometry for on-path text only
+        static QByteArray serializeSymbols(
+            const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivised,
+            const MapSurfaceType surfaceType);
+        static bool deserializeSymbols(
+            const QByteArray& data,
+            const std::shared_ptr<const MapPresentationEnvironment>& env,
+            const QHash< QString, std::shared_ptr<const ObfMapSectionInfo> >& sections,
+            std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& outPrimitivised,
+            QList< std::shared_ptr<const MapObject> >& outMapObjects,
+            MapSurfaceType& outSurfaceType);
+        // a map section the same in every process: name, place in the file and the file date
+        static QString getDiskCacheSectionKey(const ObfMapSectionInfo& section);
+
         typedef MapPrimitiviser::CoastlineMapObject CoastlineMapObject;
         typedef MapPrimitiviser::SurfaceMapObject SurfaceMapObject;
         typedef MapPrimitiviser::PrimitiveType PrimitiveType;

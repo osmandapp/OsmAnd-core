@@ -48,6 +48,18 @@ QList<std::shared_ptr<const OsmAnd::MapObject>> OsmAnd::MapPrimitivesProvider::r
     return _p->retreivePolygons(point, zoom);
 }
 
+void OsmAnd::MapPrimitivesProvider::setDiskCache(const std::shared_ptr<MapTileDiskCache>& diskCache, const QString& styleKey)
+{
+    _p->setDiskCache(diskCache, styleKey);
+}
+
+std::shared_ptr<OsmAnd::MapTileDiskCache> OsmAnd::MapPrimitivesProvider::getDiskCache(
+    const ZoomLevel zoom,
+    uint64_t& outEnvironment) const
+{
+    return _p->getDiskCache(zoom, outEnvironment);
+}
+
 bool OsmAnd::MapPrimitivesProvider::supportsNaturalObtainData() const
 {
     return true;

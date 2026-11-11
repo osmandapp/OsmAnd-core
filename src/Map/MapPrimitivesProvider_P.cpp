@@ -7,11 +7,267 @@
 #include "Logging.h"
 #include "ObfMapObject.h"
 #include "MapRendererPerformanceMetrics.h"
+#include "MapPrimitiviser_P.h"
+#include "MapPresentationEnvironment.h"
+#include "MapStyleValueDefinition.h"
+#include "IMapStyle.h"
+#include "IMapTiledSymbolsProvider.h"
+#include "ObfMapObjectsProvider.h"
+#include "IObfsCollection.h"
+#include "ObfDataInterface.h"
+#include "ObfReader.h"
+#include "ObfFile.h"
+#include "ObfInfo.h"
+#include "ObfMapSectionInfo.h"
+
+namespace
+{
+    // FNV-1a: qHash() is seeded per process, the disk cache keys must survive restarts
+    struct DiskCacheHash
+    {
+        uint64_t value = 1469598103934665603ull;
+
+        void add(const QByteArray& bytes)
+        {
+            for (const char c : bytes)
+            {
+                value ^= static_cast<uint8_t>(c);
+                value *= 1099511628211ull;
+            }
+            add(static_cast<uint64_t>(bytes.size()));
+        }
+
+        void add(const uint64_t v)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                value ^= static_cast<uint8_t>(v >> (i * 8));
+                value *= 1099511628211ull;
+            }
+        }
+
+        void add(const float v)
+        {
+            uint32_t bits;
+            memcpy(&bits, &v, sizeof(bits));
+            add(static_cast<uint64_t>(bits));
+        }
+    };
+
+    // the maps are looked at again at most this often
+    const qint64 kDiskCacheMapsCheckMs = 3000;
+}
 
 OsmAnd::MapPrimitivesProvider_P::MapPrimitivesProvider_P(MapPrimitivesProvider* owner_)
-    : _primitiviserCache(new MapPrimitiviser::Cache())
+    : _diskCacheMapsSignature(0)
+    , _diskCacheMapsSynced(false)
+    , _primitiviserCache(new MapPrimitiviser::Cache())
     , owner(owner_)
 {
+}
+
+void OsmAnd::MapPrimitivesProvider_P::setDiskCache(const std::shared_ptr<MapTileDiskCache>& diskCache, const QString& styleKey)
+{
+    QMutexLocker scopedLocker(&_diskCacheMutex);
+    _diskCache = diskCache;
+    _diskCacheStyleKey = styleKey;
+    _diskCacheMapsSynced = false;
+    _diskCacheMapsSignature = 0;
+}
+
+std::shared_ptr<OsmAnd::MapTileDiskCache> OsmAnd::MapPrimitivesProvider_P::getDiskCache(
+    const ZoomLevel zoom,
+    uint64_t& outEnvironment) const
+{
+    if (!MapTileDiskCache::isZoomCached(zoom) || owner->mode != MapPrimitivesProvider::Mode::WithSurface)
+        return nullptr;
+    std::shared_ptr<MapTileDiskCache> diskCache;
+    {
+        QMutexLocker scopedLocker(&_diskCacheMutex);
+        diskCache = _diskCache;
+    }
+    if (!diskCache || !diskCache->isOpen() || !syncDiskCacheMaps(diskCache))
+        return nullptr;
+    outEnvironment = computeDiskCacheEnvironment();
+    diskCache->useEnvironment(outEnvironment);
+    return diskCache;
+}
+
+uint64_t OsmAnd::MapPrimitivesProvider_P::computeDiskCacheEnvironment() const
+{
+    const auto& env = owner->primitiviser->environment;
+    DiskCacheHash hash;
+    hash.add(static_cast<uint64_t>(MapPrimitiviser_P::DiskCacheFormatVersion));
+    {
+        QMutexLocker scopedLocker(&_diskCacheMutex);
+        hash.add(_diskCacheStyleKey.toUtf8());
+    }
+
+    // ids of value definitions and strings are given out per process: use names and textual values
+    QStringList settings;
+    const auto values = env->getSettings();
+    for (auto it = values.cbegin(); it != values.cend(); ++it)
+    {
+        const auto& definition = env->mapStyle->getValueDefinitionRefById(it.key());
+        QString text = definition ? definition->name : QString::number(it.key());
+        text += QLatin1Char('=');
+        if (it.value().isComplex)
+            text += QStringLiteral("complex");
+        else if (definition && definition->dataType == MapStyleValueDataType::String)
+            text += env->mapStyle->getStringById(it.value().asSimple.asUInt);
+        else
+            text += QString::number(it.value().asSimple.asUInt);
+        settings.push_back(text);
+    }
+    settings.sort();
+    hash.add(settings.join(QLatin1Char('\n')).toUtf8());
+
+    QStringList disabled = env->disabledAttributes.values();
+    disabled.sort();
+    hash.add(disabled.join(QLatin1Char('\n')).toUtf8());
+    hash.add(env->getLocaleLanguageId().toUtf8());
+    hash.add(static_cast<uint64_t>(env->getLanguagePreference()));
+    hash.add(env->displayDensityFactor);
+    hash.add(env->mapScaleFactor);
+    hash.add(env->symbolsScaleFactor);
+    hash.add(static_cast<uint64_t>(owner->tileSize));
+    hash.add(static_cast<uint64_t>(owner->mode));
+    return hash.value;
+}
+
+bool OsmAnd::MapPrimitivesProvider_P::syncDiskCacheMaps(const std::shared_ptr<MapTileDiskCache>& diskCache) const
+{
+    QMutexLocker scopedLocker(&_diskCacheMutex);
+    if (_diskCacheMapsSynced && _diskCacheMapsCheck.isValid() && _diskCacheMapsCheck.elapsed() < kDiskCacheMapsCheckMs)
+        return true;
+    _diskCacheMapsCheck.start();
+
+    const auto obfProvider = std::dynamic_pointer_cast<const ObfMapObjectsProvider>(owner->mapObjectsProvider);
+    if (!obfProvider)
+        return false;
+    QStringList files;
+    for (const auto& file : obfProvider->obfsCollection->getObfFiles())
+        files.push_back(file->filePath + QLatin1Char(':') + QString::number(file->fileSize));
+    files.sort();
+    DiskCacheHash signature;
+    signature.add(files.join(QLatin1Char('\n')).toUtf8());
+    if (_diskCacheMapsSynced && signature.value == _diskCacheMapsSignature)
+        return true;
+
+    // a map that is being installed or updated right now is left out: its area is dropped now and when it is back
+    const auto dataInterface = obfProvider->obfsCollection->obtainDataInterface(
+        nullptr, MinZoomLevel, MaxZoomLevel, ObfDataTypesMask().set(ObfDataType::Map), false);
+    QList<MapTileDiskCache::MapFile> maps;
+    QHash< QString, std::shared_ptr<const ObfMapSectionInfo> > sections;
+    for (const auto& reader : dataInterface->obfReaders)
+    {
+        const auto info = reader->obtainInfo();
+        if (!info)
+            continue;
+        bool hasArea = false;
+        AreaI bbox31;
+        for (const auto& section : info->mapSections)
+        {
+            sections.insert(MapPrimitiviser_P::getDiskCacheSectionKey(*section), section.shared_ptr());
+            for (const auto& level : section->levels)
+            {
+                if (!hasArea)
+                    bbox31 = level->area31;
+                bbox31.top() = qMin(bbox31.top(), level->area31.top());
+                bbox31.left() = qMin(bbox31.left(), level->area31.left());
+                bbox31.bottom() = qMax(bbox31.bottom(), level->area31.bottom());
+                bbox31.right() = qMax(bbox31.right(), level->area31.right());
+                hasArea = true;
+            }
+        }
+        const auto& path = reader->obfFile->filePath;
+        // OsmAnd Live updates come every hour or day and would wipe whole regions: their changes reach the
+        // cached zooms with the next map update or when the tile is evicted
+        if (!hasArea || path.contains(QStringLiteral("/live/")))
+            continue;
+        MapTileDiskCache::MapFile map;
+        map.path = path;
+        map.size = static_cast<int64_t>(reader->obfFile->fileSize);
+        map.timestamp = static_cast<int64_t>(info->creationTimestamp);
+        map.bbox31 = bbox31;
+        maps.push_back(map);
+    }
+    const auto deleted = diskCache->syncMaps(maps);
+    if (deleted > 0)
+    {
+        LogPrintf(LogSeverityLevel::Info, "Map tile disk cache: %d entries dropped after map changes (%d maps)",
+            deleted, maps.size());
+    }
+    _diskCacheSections = sections;
+    _diskCacheMapsSignature = signature.value;
+    _diskCacheMapsSynced = true;
+    return true;
+}
+
+bool OsmAnd::MapPrimitivesProvider_P::obtainCachedSymbols(
+    const MapPrimitivesProvider::Request& request,
+    std::shared_ptr<MapPrimitivesProvider::Data>& outTiledPrimitives)
+{
+    uint64_t environment;
+    const auto diskCache = getDiskCache(request.zoom, environment);
+    if (!diskCache)
+        return false;
+    MapTileDiskCache::Key key;
+    key.environment = environment;
+    key.kind = MapTileDiskCache::DataKind::Symbols;
+    key.tileId = request.tileId;
+    key.zoom = request.zoom;
+    key.variant = request.detailedZoom != InvalidZoomLevel ? request.detailedZoom : request.zoom;
+    const auto data = diskCache->get(key);
+    if (data.isEmpty())
+        return false;
+
+    QHash< QString, std::shared_ptr<const ObfMapSectionInfo> > sections;
+    {
+        QMutexLocker scopedLocker(&_diskCacheMutex);
+        sections = _diskCacheSections;
+    }
+    std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects> primitivisedObjects;
+    QList< std::shared_ptr<const MapObject> > mapObjects;
+    MapSurfaceType surfaceType = MapSurfaceType::Undefined;
+    if (!MapPrimitiviser_P::deserializeSymbols(data, owner->primitiviser->environment, sections,
+        primitivisedObjects, mapObjects, surfaceType))
+    {
+        return false;
+    }
+    // not published in the tile collection: these primitives hold symbols only and may not reach a raster tile
+    const std::shared_ptr<IMapObjectsProvider::Data> mapObjectsData(new IMapObjectsProvider::Data(
+        request.tileId, request.zoom, surfaceType, mapObjects));
+    outTiledPrimitives.reset(new MapPrimitivesProvider::Data(
+        request.tileId,
+        request.zoom,
+        static_cast<ZoomLevel>(key.variant),
+        mapObjectsData,
+        primitivisedObjects));
+    return true;
+}
+
+void OsmAnd::MapPrimitivesProvider_P::storeCachedSymbols(
+    const MapPrimitivesProvider::Request& request,
+    const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
+    const QList< std::shared_ptr<const MapObject> >& mapObjects,
+    const MapSurfaceType surfaceType)
+{
+    uint64_t environment;
+    const auto diskCache = getDiskCache(request.zoom, environment);
+    if (!diskCache || !primitivisedObjects)
+        return;
+    MapTileDiskCache::Key key;
+    key.environment = environment;
+    key.kind = MapTileDiskCache::DataKind::Symbols;
+    key.tileId = request.tileId;
+    key.zoom = request.zoom;
+    key.variant = request.detailedZoom != InvalidZoomLevel ? request.detailedZoom : request.zoom;
+    if (diskCache->contains(key))
+        return;
+    const auto data = MapPrimitiviser_P::serializeSymbols(primitivisedObjects, surfaceType);
+    if (!data.isEmpty())
+        diskCache->put(key, data);
 }
 
 OsmAnd::MapPrimitivesProvider_P::~MapPrimitivesProvider_P()
@@ -111,6 +367,15 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         return false;
 
     const Stopwatch totalStopwatch(metric != nullptr);
+
+    // a symbols request is served from the disk cache when it can, the raster tile comes from its own entry
+    const bool isSymbolsRequest = dynamic_cast<const IMapTiledSymbolsProvider::Request*>(&request) != nullptr;
+    if (isSymbolsRequest && obtainCachedSymbols(request, outTiledPrimitives))
+    {
+        if (metric)
+            metric->elapsedTime = totalStopwatch.elapsed();
+        return true;
+    }
 
     std::shared_ptr<TileEntry> tileEntry;
 
@@ -295,6 +560,8 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
 
         return false;
     }
+
+    storeCachedSymbols(request, primitivisedObjects, dataTile->mapObjects, dataTile->tileSurfaceType);
 
     // Create tile
     const std::shared_ptr<MapPrimitivesProvider::Data> newTiledData(new MapPrimitivesProvider::Data(
