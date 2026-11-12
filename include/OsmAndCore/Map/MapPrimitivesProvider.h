@@ -46,6 +46,8 @@ namespace OsmAnd
 
             std::shared_ptr<const IMapObjectsProvider::Data> mapObjectsData;
             std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects> primitivisedObjects;
+            // CPU time of reading and styling the tile, ms
+            float generationTimeMs;
         };
 
         enum class Mode

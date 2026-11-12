@@ -258,8 +258,8 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainCachedSymbols(
 void OsmAnd::MapPrimitivesProvider_P::storeCachedSymbols(
     const MapPrimitivesProvider::Request& request,
     const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
-    const QList< std::shared_ptr<const MapObject> >& mapObjects,
-    const MapSurfaceType surfaceType)
+    const MapSurfaceType surfaceType,
+    const float generationTimeMs)
 {
     // primitives with the detail of another zoom serve a zoom animation only, see MapRasterLayerProvider_P
     if (request.detailedZoom != InvalidZoomLevel && request.detailedZoom != request.zoom)
@@ -276,9 +276,14 @@ void OsmAnd::MapPrimitivesProvider_P::storeCachedSymbols(
     key.variant = request.detailedZoom != InvalidZoomLevel ? request.detailedZoom : request.zoom;
     if (diskCache->contains(key))
         return;
-    const auto data = MapPrimitiviser_P::serializeSymbols(primitivisedObjects, surfaceType);
-    if (!data.isEmpty())
-        diskCache->put(key, data);
+    // serialized and compressed on the cache's thread
+    diskCache->putLater(key,
+        [primitivisedObjects, surfaceType]
+        () -> QByteArray
+        {
+            return MapPrimitiviser_P::serializeSymbols(primitivisedObjects, surfaceType);
+        },
+        qRound(generationTimeMs));
 }
 
 OsmAnd::MapPrimitivesProvider_P::~MapPrimitivesProvider_P()
@@ -457,6 +462,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         return false;
     }
 
+    const auto generationStart = MapTileDiskCache::getThreadTimeMs();
     // Obtain map objects data tile
     std::shared_ptr<IMapObjectsProvider::Data> dataTile;
     std::shared_ptr<Metric> submetric;
@@ -572,7 +578,8 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         return false;
     }
 
-    storeCachedSymbols(request, primitivisedObjects, dataTile->mapObjects, dataTile->tileSurfaceType);
+    const auto generationTimeMs = static_cast<float>(MapTileDiskCache::getThreadTimeMs() - generationStart);
+    storeCachedSymbols(request, primitivisedObjects, dataTile->tileSurfaceType, generationTimeMs);
 
     // Create tile
     const std::shared_ptr<MapPrimitivesProvider::Data> newTiledData(new MapPrimitivesProvider::Data(
@@ -582,6 +589,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         dataTile,
         primitivisedObjects,
         new RetainableCacheMetadata(tileEntry, dataTile->retainableCacheMetadata)));
+    newTiledData->generationTimeMs = generationTimeMs;
 
     // Publish new tile
     outTiledPrimitives = newTiledData;

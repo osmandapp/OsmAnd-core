@@ -97,6 +97,7 @@ OsmAnd::MapPrimitivesProvider::Data::Data(
     , detailedZoom(detailedZoom_)
     , mapObjectsData(mapObjectsData_)
     , primitivisedObjects(primitivisedObjects_)
+    , generationTimeMs(0.0f)
 {
 }
 

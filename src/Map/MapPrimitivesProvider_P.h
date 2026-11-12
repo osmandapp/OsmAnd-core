@@ -94,8 +94,8 @@ namespace OsmAnd
         void storeCachedSymbols(
             const MapPrimitivesProvider::Request& request,
             const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
-            const QList< std::shared_ptr<const MapObject> >& mapObjects,
-            const MapSurfaceType surfaceType);
+            const MapSurfaceType surfaceType,
+            const float generationTimeMs);
 
         void collectPolygons(QList<std::shared_ptr<const OsmAnd::MapObject>> & polygons, 
                              const std::shared_ptr<const MapObject> & mapObj,

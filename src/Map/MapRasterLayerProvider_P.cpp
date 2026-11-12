@@ -11,8 +11,6 @@
 #include "MapTileDiskCache.h"
 
 #include "ignore_warnings_on_external_includes.h"
-#include <QMutex>
-#include <QWaitCondition>
 #include <SkData.h>
 #include <SkImage.h>
 #include <SkPixmap.h>
@@ -20,14 +18,9 @@
 #include <include/encode/SkWebpEncoder.h>
 #include "restore_internal_warnings.h"
 
-#include <deque>
-#include <thread>
-
 namespace
 {
     const float kWebpQuality = 80.0f;
-    // tiles waiting for WebP encoding; more are dropped, they are encoded the next time they are rendered
-    const size_t kEncodeQueueLimit = 64;
 
     QByteArray encodeWebp(const sk_sp<SkImage>& image)
     {
@@ -49,64 +42,6 @@ namespace
         const auto encoded = SkImage::MakeFromEncoded(SkData::MakeWithCopy(bytes.constData(), bytes.size()));
         // decode here, on the worker thread, not when the texture is uploaded
         return encoded ? encoded->makeRasterImage() : nullptr;
-    }
-
-    // one background encoder, so a tile rendered for the first time does not wait for WebP
-    class TileEncoder
-    {
-        struct Item
-        {
-            std::weak_ptr<OsmAnd::MapTileDiskCache> diskCache;
-            OsmAnd::MapTileDiskCache::Key key;
-            sk_sp<SkImage> image;
-        };
-        QMutex _mutex;
-        QWaitCondition _condition;
-        std::deque<Item> _queue;
-        bool _started = false;
-
-        void run()
-        {
-            for (;;)
-            {
-                Item item;
-                {
-                    QMutexLocker scopedLocker(&_mutex);
-                    while (_queue.empty())
-                        _condition.wait(&_mutex);
-                    item = _queue.front();
-                    _queue.pop_front();
-                }
-                const auto diskCache = item.diskCache.lock();
-                if (!diskCache)
-                    continue;
-                const auto bytes = encodeWebp(item.image);
-                if (!bytes.isEmpty())
-                    diskCache->put(item.key, bytes);
-            }
-        }
-    public:
-        void enqueue(const std::shared_ptr<OsmAnd::MapTileDiskCache>& diskCache,
-            const OsmAnd::MapTileDiskCache::Key& key, const sk_sp<SkImage>& image)
-        {
-            QMutexLocker scopedLocker(&_mutex);
-            if (_queue.size() >= kEncodeQueueLimit)
-                return;
-            _queue.push_back(Item{ diskCache, key, image });
-            if (!_started)
-            {
-                _started = true;
-                std::thread([this]() { run(); }).detach();
-            }
-            _condition.wakeOne();
-        }
-    };
-
-    TileEncoder& tileEncoder()
-    {
-        // never destroyed: the encoder thread may still be waiting on it at exit
-        static TileEncoder* const encoder = new TileEncoder();
-        return *encoder;
     }
 }
 
@@ -213,7 +148,10 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
         OsmAnd::getPerformanceMetrics().rasterStart(request.tileId);
 
     // Perform actual rasterization
+    const auto rasterizationStart = MapTileDiskCache::getThreadTimeMs();
     const auto image = rasterize(request, primitivesTile, metric);
+    const auto generationTimeMs = primitivesTile->generationTimeMs
+        + static_cast<float>(MapTileDiskCache::getThreadTimeMs() - rasterizationStart);
 
     if (queryController->isAborted())
         return false;
@@ -228,8 +166,17 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
 
     // a tile drawn with the detail of another zoom is shown only while the zoom changes: it is rendered again
     // with its own detail once the zoom settles, so it is not worth keeping
+    // encoded to WebP on the cache's thread, so a tile rendered for the first time does not wait for it
     if (diskCache && (request.detailedZoom == InvalidZoomLevel || request.detailedZoom == request.zoom))
-        tileEncoder().enqueue(diskCache, diskCacheKey, image);
+    {
+        diskCache->putLater(diskCacheKey,
+            [image]
+            () -> QByteArray
+            {
+                return encodeWebp(image);
+            },
+            qRound(generationTimeMs));
+    }
 
     // Or supply newly rasterized tile
     outData.reset(new MapRasterLayerProvider::Data(
