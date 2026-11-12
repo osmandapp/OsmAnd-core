@@ -143,8 +143,11 @@ namespace OsmAnd
         QHash<WeatherSource, std::shared_ptr<TileSqliteDatabase>> _geoTilesDbMap;
 
         mutable QReadWriteLock _rasterDbLock;
-        QHash<QPair<WeatherSource, BandIndex>, std::shared_ptr<TileSqliteDatabase>> _rasterTilesDbMap;
-        std::shared_ptr<OsmAnd::TileSqliteDatabase> createRasterTilesDatabase(BandIndex band, WeatherSource weatherSource);
+        QHash<WeatherSource, std::shared_ptr<TileSqliteDatabase>> _rasterTilesDbMap;
+        QString getRasterTilesDatabasePath(WeatherSource weatherSource) const;
+        std::shared_ptr<OsmAnd::TileSqliteDatabase> createRasterTilesDatabase(WeatherSource weatherSource);
+        std::shared_ptr<TileSqliteDatabase> getRasterTilesDatabase(WeatherSource weatherSource, bool create);
+        void removeObsoleteCacheFiles();
         std::shared_ptr<OsmAnd::TileSqliteDatabase> createGeoTilesDatabase(WeatherSource weatherSource);
 
         mutable QMutex _contourTilesInProcessMutex;
@@ -168,7 +171,8 @@ namespace OsmAnd
             const QList<TileId>& tileIds,
             const QList<TileId>& excludeTileIds,
             const ZoomLevel zoom,
-            const int64_t dateTime);
+            const int64_t dateTime,
+            const bool compact = true);
 
     protected:
         WeatherTileResourceProvider_P(
@@ -266,7 +270,10 @@ namespace OsmAnd
         void unlockContourTile(const TileId tileId, const ZoomLevel zoom);
 
         std::shared_ptr<TileSqliteDatabase> getGeoTilesDatabase();
-        std::shared_ptr<TileSqliteDatabase> getRasterTilesDatabase(BandIndex band);
+        std::shared_ptr<TileSqliteDatabase> getRasterTilesDatabase();
+        // All raster tiles of a weather source are kept in one file: the band (or band combination)
+        // is stored next to the forecast time in the tile specification
+        static int64_t getRasterSpecification(const int64_t dateTime, const BandIndex band);
 
         bool importTileData(const QString& dbFilePath);
 
