@@ -837,8 +837,9 @@ bool OsmAnd::GeoTiffCollection_P::removeOlderTilesFromCache(
         default:
             cacheDatabase = heightmapCache;
     }
+    // Compact the file, otherwise it keeps its size after the tiles are removed
     if (cacheDatabase)
-        return cacheDatabase->removeOlderTilesData(time);
+        return cacheDatabase->removeOlderTilesData(time) && cacheDatabase->compact();
     return false;
 }
 
