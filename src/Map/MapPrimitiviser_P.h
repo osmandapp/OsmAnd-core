@@ -20,6 +20,8 @@
 namespace OsmAnd
 {
     class ObfMapSectionInfo;
+    class ObfMapSectionLevel;
+    class BinaryMapObject;
     class MapPrimitiviser;
     class MapPrimitiviser_P Q_DECL_FINAL
     {
@@ -30,9 +32,34 @@ namespace OsmAnd
         // bump when the stored symbols or the rasterization change: older entries are not read again
         static const int DiskCacheFormatVersion = 2;
         // Only the symbols that can reach the screen, without names and with geometry for on-path text only
+        enum
+        {
+            GridSymbolsFilter = 1,     // the best caption per 1/16 of a tile
+            OverlapSymbolsFilter = 2,  // groups covered by a group of lower order
+            AllSymbolsFilters = GridSymbolsFilter | OverlapSymbolsFilter,
+        };
         static QByteArray serializeSymbols(
             const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivised,
-            const MapSurfaceType surfaceType);
+            const MapSurfaceType surfaceType,
+            const unsigned filters = AllSymbolsFilters);
+        // for the disk cache reader: the constructors are open to this class only
+        static std::shared_ptr<BinaryMapObject> newBinaryMapObject(
+            const std::shared_ptr<const ObfMapSectionInfo>& section,
+            const std::shared_ptr<const ObfMapSectionLevel>& level);
+        static std::shared_ptr<MapPrimitiviser::PrimitivesGroup> newPrimitivesGroup(
+            const std::shared_ptr<const MapObject>& sourceObject);
+        static std::shared_ptr<MapPrimitiviser::Primitive> newPrimitive(
+            const std::shared_ptr<const MapPrimitiviser::PrimitivesGroup>& group,
+            const MapPrimitiviser::PrimitiveType type,
+            const uint32_t attributeIdIndex,
+            const MapStyleEvaluationResult& evaluationResult,
+            const float detailScaleFactor);
+        static std::shared_ptr<MapPrimitiviser::SymbolsGroup> newSymbolsGroup(
+            const std::shared_ptr<const MapObject>& sourceObject, const bool canBeShownWithoutIcon);
+        static std::shared_ptr<MapPrimitiviser::TextSymbol> newTextSymbol(
+            const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive);
+        static std::shared_ptr<MapPrimitiviser::IconSymbol> newIconSymbol(
+            const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive);
         static bool deserializeSymbols(
             const QByteArray& data,
             const std::shared_ptr<const MapPresentationEnvironment>& env,
