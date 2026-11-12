@@ -6,9 +6,7 @@
 #include <QSet>
 #include "restore_internal_warnings.h"
 
-#include <algorithm>
 #include <cstring>
-#include <limits>
 
 #include "MapPresentationEnvironment.h"
 #include "MapStyleEvaluationResult.h"
@@ -26,9 +24,9 @@
 //    closer than 1/16 of a tile (less than a line of text) overlap and the renderer keeps only the first one;
 //    text of a group with an icon (a POI or station name) stays with its icon;
 //  - text on a path: all of it, the renderer joins street segments before it chooses;
-//  - icons: all of them;
-//  - then a symbol group is dropped when a group of lower order and a shared intersection class is closer than
-//    a quarter of their summed sizes: such pairs overlap at any rotation and any reasonable font scale.
+//  - icons: all of them.
+// The grid saves ~30% at z9-z12 (where captions crowd), little at z13-z15; dropping groups that overlap a
+// group of lower order was tried and saved ~1%, the renderer does that on every frame anyway.
 // Objects keep their ids, tags and bbox (a tap finds the object, its name comes from the drawn caption);
 // geometry is kept only for objects with text on a path.
 
@@ -142,56 +140,6 @@ namespace
         return kept;
     }
 
-    // a symbols group as a disk on the screen
-    struct GroupDisk
-    {
-        const OsmAnd::MapObject* key;
-        const OsmAnd::MapObject* source;
-        double x, y, size;
-        int order;
-        QSet<QString> classes;
-        bool onPath;
-
-        bool overlaps(const GroupDisk& other) const
-        {
-            // text on a path is placed by the renderer along the joined street, its position here means nothing
-            if (onPath || other.onPath || !classes.intersects(other.classes))
-                return false;
-            const double limit = (size + other.size) / 4.0;
-            const double dx = x - other.x, dy = y - other.y;
-            return dx * dx + dy * dy < limit * limit;
-        }
-    };
-
-    bool makeGroupDisk(const MP::PrimitivisedObjects& prim, const QSet<const Symbol*>& keptSymbols,
-        const std::shared_ptr<const OsmAnd::MapObject>& key, const MP::SymbolsGroup& group, GroupDisk& outDisk)
-    {
-        const auto density = prim.mapPresentationEnvironment->displayDensityFactor;
-        outDisk.key = key.get();
-        outDisk.source = group.sourceObject.get();
-        outDisk.onPath = false;
-        outDisk.size = 0;
-        outDisk.order = std::numeric_limits<int>::max();
-        const Symbol* first = nullptr;
-        for (const auto& symbol : group.symbols)
-        {
-            if (!keptSymbols.contains(symbol.get()))
-                continue;
-            if (!first)
-                first = symbol.get();
-            const auto text = std::dynamic_pointer_cast<const TextSymbol>(symbol);
-            outDisk.onPath = outDisk.onPath || symbol->drawAlongPath || (text && text->drawOnPath);
-            outDisk.size = qMax(outDisk.size, text ? static_cast<double>(text->size) : 20.0 * density);
-            outDisk.order = qMin(outDisk.order, symbol->order);
-            outDisk.classes.unite(symbol->intersectsWith);
-        }
-        if (!first)
-            return false;
-        outDisk.x = first->location31.x / prim.scaleDivisor31ToPixel.x;
-        outDisk.y = first->location31.y / prim.scaleDivisor31ToPixel.y;
-        return true;
-    }
-
     struct KeptGroups
     {
         QSet<const OsmAnd::MapObject*> groups;      // symbols groups, by key object
@@ -199,48 +147,32 @@ namespace
         QSet<const OsmAnd::MapObject*> pathObjects; // objects whose geometry is needed
     };
 
-    // Step 2: drop a group that a group of lower order covers at any rotation
-    KeptGroups selectGroups(const MP::PrimitivisedObjects& prim, const QSet<const Symbol*>& keptSymbols,
-        const bool overlapFilter)
+    // Step 2: groups with at least one kept symbol; text on a path needs its object's geometry
+    KeptGroups selectGroups(const MP::PrimitivisedObjects& prim, const QSet<const Symbol*>& keptSymbols)
     {
-        QVector<GroupDisk> disks;
+        KeptGroups result;
         for (auto it = prim.symbolsGroups.cbegin(); it != prim.symbolsGroups.cend(); ++it)
         {
-            GroupDisk disk;
-            if (makeGroupDisk(prim, keptSymbols, it.key(), *it.value(), disk))
-                disks.push_back(disk);
-        }
-        std::stable_sort(disks.begin(), disks.end(),
-            []
-            (const GroupDisk& l, const GroupDisk& r) -> bool
+            bool kept = false, onPath = false;
+            for (const auto& symbol : it.value()->symbols)
             {
-                if (l.order != r.order)
-                    return l.order < r.order;
-                if (l.x != r.x)
-                    return l.x < r.x;
-                return l.y < r.y;
-            });
-
-        KeptGroups result;
-        QVector<const GroupDisk*> placed;
-        for (const auto& disk : disks)
-        {
-            const bool covered = overlapFilter && std::any_of(placed.cbegin(), placed.cend(),
-                [&disk]
-                (const GroupDisk* other) -> bool
-                {
-                    return disk.overlaps(*other);
-                });
-            if (covered)
+                if (!keptSymbols.contains(symbol.get()))
+                    continue;
+                kept = true;
+                const auto text = std::dynamic_pointer_cast<const TextSymbol>(symbol);
+                onPath = onPath || symbol->drawAlongPath || (text && text->drawOnPath);
+            }
+            if (!kept)
                 continue;
-            placed.push_back(&disk);
-            result.groups.insert(disk.key);
-            result.objects.insert(disk.key);
-            result.objects.insert(disk.source);
-            if (disk.onPath)
+            const auto key = it.key().get();
+            const auto source = it.value()->sourceObject.get();
+            result.groups.insert(key);
+            result.objects.insert(key);
+            result.objects.insert(source);
+            if (onPath)
             {
-                result.pathObjects.insert(disk.key);
-                result.pathObjects.insert(disk.source);
+                result.pathObjects.insert(key);
+                result.pathObjects.insert(source);
             }
         }
         return result;
@@ -728,7 +660,7 @@ QByteArray OsmAnd::MapPrimitiviser_P::serializeSymbols(
     const unsigned filters /*= AllSymbolsFilters*/)
 {
     const auto keptSymbols = selectSymbols(*prim, filters & GridSymbolsFilter);
-    const auto kept = selectGroups(*prim, keptSymbols, filters & OverlapSymbolsFilter);
+    const auto kept = selectGroups(*prim, keptSymbols);
     const auto record = collectRecord(*prim, kept);
 
     QByteArray out;

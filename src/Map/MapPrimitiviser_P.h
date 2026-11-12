@@ -35,8 +35,7 @@ namespace OsmAnd
         enum
         {
             GridSymbolsFilter = 1,     // the best caption per 1/16 of a tile
-            OverlapSymbolsFilter = 2,  // groups covered by a group of lower order
-            AllSymbolsFilters = GridSymbolsFilter | OverlapSymbolsFilter,
+            AllSymbolsFilters = GridSymbolsFilter,
         };
         static QByteArray serializeSymbols(
             const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivised,
