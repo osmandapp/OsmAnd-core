@@ -15,6 +15,7 @@
 #include <OsmAndCore/Map/MapPrimitiviser.h>
 #include <OsmAndCore/Map/IMapObjectsProvider.h>
 #include <OsmAndCore/Map/MapPrimitivesProvider_Metrics.h>
+#include <OsmAndCore/Map/MapTileDiskCache.h>
 #include <OsmAndCore/Data/MapObject.h>
 
 namespace OsmAnd
@@ -45,6 +46,8 @@ namespace OsmAnd
 
             std::shared_ptr<const IMapObjectsProvider::Data> mapObjectsData;
             std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects> primitivisedObjects;
+            // CPU time of reading and styling the tile, ms
+            float generationTimeMs;
         };
 
         enum class Mode
@@ -91,6 +94,17 @@ namespace OsmAnd
             const IMapDataProvider::ObtainDataAsyncCallback callback,
             const bool collectMetric = false) Q_DECL_OVERRIDE;
         virtual QList<std::shared_ptr<const OsmAnd::MapObject>> retreivePolygons(PointI point, ZoomLevel zoom);
+        // The map object of a symbol restored from the disk cache keeps only what drawing needs: this reads it
+        // again from its map (points, names, all tags). Any other object is returned as it is.
+        std::shared_ptr<const MapObject> obtainFullMapObject(const std::shared_ptr<const MapObject>& mapObject) const;
+
+        // Keeps rendered tiles and their filtered symbols of z <= 15 on disk. styleKey stands for what the style
+        // settings do not show: the style file and its version (name, file date, app version)
+        void setDiskCache(const std::shared_ptr<MapTileDiskCache>& diskCache, const QString& styleKey);
+#if !defined(SWIG)
+        // The disk cache for this zoom with the environment hash of the current rendering settings, or null
+        std::shared_ptr<MapTileDiskCache> getDiskCache(const ZoomLevel zoom, uint64_t& outEnvironment) const;
+#endif // !defined(SWIG)
     };
 }
 

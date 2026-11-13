@@ -5,6 +5,8 @@
 #include <deque>
 #include "QtExtensions.h"
 #include <QList>
+#include <QHash>
+#include <QByteArray>
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
@@ -17,12 +19,50 @@
 
 namespace OsmAnd
 {
+    class ObfMapSectionInfo;
+    class ObfMapSectionLevel;
+    class BinaryMapObject;
     class MapPrimitiviser;
     class MapPrimitiviser_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY_AND_MOVE(MapPrimitiviser_P);
 
     public:
+        // Map tile disk cache, see MapPrimitiviser_P_SymbolsCache.cpp
+        // bump when the stored symbols or the rasterization change: older entries are not read again
+        static const int DiskCacheFormatVersion = 4;
+        // All symbols of the tile, without names and with geometry for on-path text only
+        static QByteArray serializeSymbols(
+            const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivised,
+            const MapSurfaceType surfaceType);
+        // for the disk cache reader: the constructors are open to this class only
+        static std::shared_ptr<BinaryMapObject> newBinaryMapObject(
+            const std::shared_ptr<const ObfMapSectionInfo>& section,
+            const std::shared_ptr<const ObfMapSectionLevel>& level);
+        static std::shared_ptr<MapPrimitiviser::PrimitivesGroup> newPrimitivesGroup(
+            const std::shared_ptr<const MapObject>& sourceObject);
+        static std::shared_ptr<MapPrimitiviser::Primitive> newPrimitive(
+            const std::shared_ptr<const MapPrimitiviser::PrimitivesGroup>& group,
+            const MapPrimitiviser::PrimitiveType type,
+            const uint32_t attributeIdIndex,
+            const MapStyleEvaluationResult& evaluationResult,
+            const float detailScaleFactor);
+        static std::shared_ptr<MapPrimitiviser::SymbolsGroup> newSymbolsGroup(
+            const std::shared_ptr<const MapObject>& sourceObject, const bool canBeShownWithoutIcon);
+        static std::shared_ptr<MapPrimitiviser::TextSymbol> newTextSymbol(
+            const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive);
+        static std::shared_ptr<MapPrimitiviser::IconSymbol> newIconSymbol(
+            const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive);
+        static bool deserializeSymbols(
+            const QByteArray& data,
+            const std::shared_ptr<const MapPresentationEnvironment>& env,
+            const QHash< QString, std::shared_ptr<const ObfMapSectionInfo> >& sections,
+            std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& outPrimitivised,
+            QList< std::shared_ptr<const MapObject> >& outMapObjects,
+            MapSurfaceType& outSurfaceType);
+        // a map section the same in every process: name, place in the file and the file date
+        static QString getDiskCacheSectionKey(const ObfMapSectionInfo& section);
+
         typedef MapPrimitiviser::CoastlineMapObject CoastlineMapObject;
         typedef MapPrimitiviser::SurfaceMapObject SurfaceMapObject;
         typedef MapPrimitiviser::PrimitiveType PrimitiveType;

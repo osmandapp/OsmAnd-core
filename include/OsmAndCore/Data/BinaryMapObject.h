@@ -17,6 +17,7 @@ namespace OsmAnd
     class ObfMapSectionInfo;
     class ObfMapSectionLevel;
     class ObfMapSectionReader_P;
+    class MapPrimitiviser_P;
 
     class OSMAND_CORE_API BinaryMapObject Q_DECL_FINAL : public ObfMapObject
     {
@@ -33,6 +34,9 @@ namespace OsmAnd
         const std::shared_ptr<const ObfMapSectionInfo> section;
         const std::shared_ptr<const ObfMapSectionLevel> level;
         ObfMapSectionDataBlockId blockId;
+        // restored from the map tile disk cache: it keeps what drawing its symbols needs, not its points or
+        // names; MapPrimitivesProvider::obtainFullMapObject() reads it again from the map
+        bool isRestoredFromCache;
         
         virtual QString toString() const;
         virtual bool obtainSharingKey(SharingKey& outKey) const;
@@ -46,6 +50,7 @@ namespace OsmAnd
         virtual bool isDeleted() const;
 
     friend class OsmAnd::ObfMapSectionReader_P;
+    friend class OsmAnd::MapPrimitiviser_P;
     };
 }
 

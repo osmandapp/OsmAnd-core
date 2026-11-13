@@ -10,6 +10,7 @@ OsmAnd::BinaryMapObject::BinaryMapObject(
     , section(section_)
     , level(level_)
     , blockId(ObfMapSectionDataBlockId::invalidId())
+    , isRestoredFromCache(false)
 {
     attributeMapping = section->getAttributeMapping();
 }
