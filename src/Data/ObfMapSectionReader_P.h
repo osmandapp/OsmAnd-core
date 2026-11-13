@@ -137,6 +137,15 @@ namespace OsmAnd
             const AreaI* bbox31,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 
+        // Decodes the coordinates of a map object; false if the object lies outside bbox31
+        static bool readCoordinates(
+            const uint8_t* const data,
+            const int64_t length,
+            const AreaI& treeNodeArea31,
+            const AreaI* bbox31,
+            QVector<PointI>& outPoints31,
+            AreaI& outBBox31);
+
         enum : uint32_t {
             ShiftCoordinates = 5,
             MaskToRead = ~((1u << ShiftCoordinates) - 1),
