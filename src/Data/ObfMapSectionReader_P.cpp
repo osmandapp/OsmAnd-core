@@ -30,6 +30,16 @@
 
 using google::protobuf::internal::WireFormatLite;
 
+namespace
+{
+    // Raw coordinates of the map object being read, kept until its types passed the read filter
+    std::vector<uint8_t>& getCoordinatesBuffer()
+    {
+        static thread_local std::vector<uint8_t> buffer;
+        return buffer;
+    }
+}
+
 OsmAnd::ObfMapSectionReader_P::ObfMapSectionReader_P()
 {
 }
@@ -701,6 +711,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
     const auto baseOffset = cis->CurrentPosition();
 
     bool isPresent = true;
+    // length of the coordinates kept in getCoordinatesBuffer(), -1 if there were none
+    int64_t coordinatesLength = -1;
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -714,6 +726,30 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
                 if (!ObfReaderUtilities::reachedDataEnd(cis) || !mapObject)
                     return;
+
+                if (coordinatesLength >= 0)
+                {
+                    const Stopwatch mapObjectPointsStopwatch(metric != nullptr);
+                    const auto& buffer = getCoordinatesBuffer();
+                    const bool inside = readCoordinates(buffer.data(), coordinatesLength, treeNode->area31, bbox31,
+                        mapObject->points31, mapObject->bbox31);
+                    if (!inside)
+                    {
+                        if (metric)
+                        {
+                            metric->elapsedTimeForSkippedMapObjectsPoints += mapObjectPointsStopwatch.elapsed();
+                            metric->skippedMapObjectsPoints += mapObject->points31.size();
+                        }
+                        mapObject.reset();
+                        return;
+                    }
+                    if (metric)
+                    {
+                        metric->elapsedTimeForNotSkippedMapObjectsPoints += mapObjectPointsStopwatch.elapsed();
+                        metric->notSkippedMapObjectsPoints = std::max(metric->notSkippedMapObjectsPoints,
+                            static_cast<uint32_t>(mapObject->points31.size()));
+                    }
+                }
 
                 if (mapObject->points31.isEmpty())
                 {
@@ -774,133 +810,23 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
             case OBF::MapData::kAreaCoordinatesFieldNumber:
             case OBF::MapData::kCoordinatesFieldNumber:
             {
-                const Stopwatch mapObjectPointsStopwatch(metric != nullptr);
-
+                // Coordinates come before the types: keep their bytes and decode them only if the object
+                // passes the read filter, most rejected objects never need them
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto oldLimit = cis->PushLimit(length);
-
-                PointI p;
-                p.x = treeNode->area31.left() & MaskToRead;
-                p.y = treeNode->area31.top() & MaskToRead;
-
-                AreaI objectBBox;
-                objectBBox.top() = objectBBox.left() = std::numeric_limits<int32_t>::max();
-                objectBBox.bottom() = objectBBox.right() = 0;
-                auto lastUnprocessedVertexForBBox = 0;
-
-                // In protobuf, a sint32 can be encoded using [1..4] bytes,
-                // so try to guess size of array, and preallocate it.
-                // (BytesUntilLimit/2) is ~= number of vertices, and is always larger than needed.
-                // So it's impossible that a buffer overflow will ever happen. But assert on that.
-                const auto probableVerticesCount = (cis->BytesUntilLimit() / 2);
-                QVector< PointI > points31(probableVerticesCount);
-
-                auto pPoint = points31.data();
-                auto verticesCount = 0;
-                bool shouldNotSkip = (bbox31 == nullptr);
-                while (cis->BytesUntilLimit() > 0)
+                auto& buffer = getCoordinatesBuffer();
+                if (buffer.size() < length)
+                    buffer.resize(length);
+                if (length > 0 && !cis->ReadRaw(buffer.data(), length))
                 {
-                    PointI d;
-                    d.x = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
-                    d.y = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
-
-                    p += d;
-
-                    // Save point into storage
-                    assert(points31.size() > verticesCount);
-                    *(pPoint++) = p;
-                    verticesCount++;
-
-                    // Check if map object should be maintained
-                    if (!shouldNotSkip && bbox31)
-                    {
-                        const Stopwatch mapObjectBboxStopwatch(metric != nullptr);
-
-                        shouldNotSkip = bbox31->contains(p);
-                        objectBBox.enlargeToInclude(p);
-
-                        if (metric)
-                            metric->elapsedTimeForMapObjectsBbox += mapObjectBboxStopwatch.elapsed();
-
-                        lastUnprocessedVertexForBBox = verticesCount;
-                    }
+                    mapObject.reset();
+                    return;
                 }
+                coordinatesLength = length;
 
-                cis->PopLimit(oldLimit);
-
-                // Since reserved space may be larger than actual amount of data,
-                // shrink the vertices array
-                points31.resize(verticesCount);
-
-                // If map object has no vertices, retain it in a special way to report later, when
-                // it's identifier will be known
-                if (points31.isEmpty())
-                {
-                    // Fake that this object is inside bbox
-                    shouldNotSkip = true;
-                    objectBBox = treeNode->area31;
-                }
-
-                // Even if no vertex lays inside bbox, an edge
-                // may intersect the bbox
-                if (!shouldNotSkip && bbox31)
-                {
-                    assert(lastUnprocessedVertexForBBox == points31.size());
-
-                    shouldNotSkip =
-                        objectBBox.contains(*bbox31) ||
-                        bbox31->intersects(objectBBox);
-                }
-
-                // If map object didn't fit, skip it's entire content
-                if (!shouldNotSkip)
-                {
-                    if (metric)
-                    {
-                        metric->elapsedTimeForSkippedMapObjectsPoints += mapObjectPointsStopwatch.elapsed();
-                        metric->skippedMapObjectsPoints += points31.size();
-                    }
-
-                    cis->Skip(cis->BytesUntilLimit());
-                    break;
-                }
-
-                // Update metric
-                if (metric)
-                {
-                    metric->elapsedTimeForNotSkippedMapObjectsPoints += mapObjectPointsStopwatch.elapsed();
-                    metric->notSkippedMapObjectsPoints =
-                        std::max(metric->notSkippedMapObjectsPoints, static_cast<uint32_t>(points31.size()));
-                }
-
-                // In case bbox is not fully calculated, complete this task
-                auto pPointForBBox = points31.data() + lastUnprocessedVertexForBBox;
-                while (lastUnprocessedVertexForBBox < points31.size())
-                {
-                    const Stopwatch mapObjectBboxStopwatch(metric != nullptr);
-
-                    objectBBox.enlargeToInclude(*pPointForBBox);
-
-                    if (metric)
-                        metric->elapsedTimeForMapObjectsBbox += mapObjectBboxStopwatch.elapsed();
-
-                    lastUnprocessedVertexForBBox++;
-                    pPointForBBox++;
-                }
-
-                // Finally, create the object
                 if (!mapObject)
                     mapObject.reset(new OsmAnd::BinaryMapObject(section, treeNode->level));
                 mapObject->isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
-                mapObject->points31 = qMove(points31);
-                mapObject->bbox31 = objectBBox;
-                assert(treeNode->area31.top() - mapObject->bbox31.top() <= 32);
-                assert(treeNode->area31.left() - mapObject->bbox31.left() <= 32);
-                assert(mapObject->bbox31.bottom() - treeNode->area31.bottom() <= 1);
-                assert(mapObject->bbox31.right() - treeNode->area31.right() <= 1);
-                assert(mapObject->bbox31.right() >= mapObject->bbox31.left());
-                assert(mapObject->bbox31.bottom() >= mapObject->bbox31.top());
 
                 break;
             }
@@ -1071,6 +997,74 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 break;
         }
     }
+}
+
+bool OsmAnd::ObfMapSectionReader_P::readCoordinates(
+    const uint8_t* const data,
+    const int64_t length,
+    const AreaI& treeNodeArea31,
+    const AreaI* bbox31,
+    QVector<PointI>& outPoints31,
+    AreaI& outBBox31)
+{
+    gpb::io::CodedInputStream cis(data, static_cast<int>(length));
+
+    PointI p;
+    p.x = treeNodeArea31.left() & MaskToRead;
+    p.y = treeNodeArea31.top() & MaskToRead;
+
+    AreaI objectBBox;
+    objectBBox.top() = objectBBox.left() = std::numeric_limits<int32_t>::max();
+    objectBBox.bottom() = objectBBox.right() = 0;
+
+    // In protobuf, a sint32 takes [1..5] bytes, so (length / 2) is always more than the vertices count
+    QVector< PointI > points31(static_cast<int>(length / 2));
+    auto pPoint = points31.data();
+    auto verticesCount = 0;
+    bool shouldNotSkip = (bbox31 == nullptr);
+    while (cis.CurrentPosition() < length)
+    {
+        PointI d;
+        d.x = (ObfReaderUtilities::readSInt32(&cis) << ShiftCoordinates);
+        d.y = (ObfReaderUtilities::readSInt32(&cis) << ShiftCoordinates);
+
+        p += d;
+
+        assert(points31.size() > verticesCount);
+        *(pPoint++) = p;
+        verticesCount++;
+
+        objectBBox.enlargeToInclude(p);
+        if (!shouldNotSkip)
+            shouldNotSkip = bbox31->contains(p);
+    }
+    points31.resize(verticesCount);
+
+    // If map object has no vertices, retain it in a special way to report later, when
+    // it's identifier will be known
+    if (points31.isEmpty())
+    {
+        // Fake that this object is inside bbox
+        shouldNotSkip = true;
+        objectBBox = treeNodeArea31;
+    }
+
+    // Even if no vertex lays inside bbox, an edge may intersect the bbox
+    if (!shouldNotSkip)
+        shouldNotSkip = objectBBox.contains(*bbox31) || bbox31->intersects(objectBBox);
+
+    outPoints31 = qMove(points31);
+    if (!shouldNotSkip)
+        return false;
+
+    outBBox31 = objectBBox;
+    assert(treeNodeArea31.top() - outBBox31.top() <= 32);
+    assert(treeNodeArea31.left() - outBBox31.left() <= 32);
+    assert(outBBox31.bottom() - treeNodeArea31.bottom() <= 1);
+    assert(outBBox31.right() - treeNodeArea31.right() <= 1);
+    assert(outBBox31.right() >= outBBox31.left());
+    assert(outBBox31.bottom() >= outBBox31.top());
+    return true;
 }
 
 bool OsmAnd::ObfMapSectionReader_P::isCoastline(const std::shared_ptr<const BinaryMapObject> & mObj) {
