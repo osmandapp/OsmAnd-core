@@ -101,7 +101,7 @@ namespace
                 return SAMPLE_TEXTURE_2D_SHADOW(param_fs_shadowmap, p);
             }
 
-            float inShadow(float part)
+            float inShadow(float part, bool isLit)
             {
                 highp vec3 p = v2f_shadowPosition.xyz / max(v2f_shadowPosition.w, 1e-8);
                 p = p * 0.5 + 0.5;
@@ -113,7 +113,7 @@ namespace
 
                 p.z -= 1e-5;
                 highp vec3 plane = cross(dx, dy);
-                if (plane.z < 0.0)
+                if (plane.z < 0.0 && !isLit)
                     return 1.0;
                 highp float scale = dot(dx.xy, dx.xy) + dot(dy.xy, dy.xy);
                 if (!(scale > 0.0 && abs(plane.z) > 1e-4 * scale))
@@ -122,7 +122,7 @@ namespace
                 if (!all(lessThan(abs(gradient), vec2(1e20))))
                     return sampleShadowmap(p, part);
 
-                p.z -= dot(abs(gradient), vec2(param_fs_shadowmapTexelSize));
+                p.z -= min(dot(abs(gradient), vec2(param_fs_shadowmapTexelSize)), param_fs_shadowmapTexelSize);
 
                 float shadow = 0.0;
                 for (int y = -1; y <= 1; y++)
@@ -130,7 +130,9 @@ namespace
                     for (int x = -1; x <= 1; x++)
                     {
                         highp vec2 offset = vec2(float(x), float(y)) * param_fs_shadowmapTexelSize;
-                        highp float depth = p.z + dot(gradient, offset);
+                        highp float depthCorrection = clamp(dot(gradient, offset),
+                            -param_fs_shadowmapTexelSize, param_fs_shadowmapTexelSize);
+                        highp float depth = p.z + depthCorrection;
                         shadow += sampleShadowmap(vec3(p.xy + offset, depth), part);
                     }
                 }
@@ -202,16 +204,17 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeSimpleProgram()
             
             void main()
             {
+                vec3 n = normalize(v2f_pointNormal);
+                float d = dot(-param_fs_lightDirection, n);
+                bool isLit = d > 0.0;
                 float shadow = 0.0;
                 if (param_fs_shadowmapTexelSize < 1.0)
                 {
-                    shadow = inShadow(0.0);
+                    shadow = inShadow(0.0, isLit);
                     if (param_fs_alpha > 0.0 && param_fs_alpha < 1.0)
-                        shadow = max(shadow, inShadow(1.0) * param_fs_alpha);
+                        shadow = max(shadow, inShadow(1.0, isLit) * param_fs_alpha);
                 }
-                vec3 n = normalize(v2f_pointNormal);
-                float d = dot(-param_fs_lightDirection, n);
-                d = ((d < 0.0 ? -(d * d) : mix(d * d, 0.0, shadow)) + 1.0) * 0.5 + 0.1;
+                d = ((isLit ? mix(d * d, 0.0, shadow) : -(d * d)) + 1.0) * 0.5 + 0.1;
                 vec3 color = v2f_pointColor.rgb * d;
                 FRAGMENT_COLOR_OUTPUT = vec4(clamp(color, 0.0, 1.0), param_fs_alpha);
             }
@@ -395,13 +398,6 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
             {
                 vec3 v = normalize(param_fs_cameraPosition - v2f_pointPosition);
                 vec3 n = normalize(v2f_pointNormal);
-                float shadow = 0.0;
-                if (param_fs_shadowmapTexelSize < 1.0)
-                {
-                    shadow = inShadow(0.0);
-                    if (param_fs_alpha > 0.0 && param_fs_alpha < 1.0)
-                        shadow = max(shadow, inShadow(1.0) * param_fs_alpha);
-                }
                 bool top = abs(n.y) > 0.0;
                 float a = atan(n.x, n.z);
                 vec2 p = abs(v2f_sizes.zw) + 10.0;
@@ -413,7 +409,15 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
                 float qa = floor(a * 2.0) * 0.5;
                 vec2 s = top ? vec2(0.0, 0.0) : vec2(sin(qa), cos(qa)) + v2f_pointColor.a;
                 float d = dot(-param_fs_lightDirection, n);
-                d = ((d < 0.0 ? -(d * d) : mix(d * d, 0.0, shadow)) + 1.0) * 0.5 + 0.1;
+                bool isLit = d > 0.0;
+                float shadow = 0.0;
+                if (param_fs_shadowmapTexelSize < 1.0)
+                {
+                    shadow = inShadow(0.0, isLit);
+                    if (param_fs_alpha > 0.0 && param_fs_alpha < 1.0)
+                        shadow = max(shadow, inShadow(1.0, isLit) * param_fs_alpha);
+                }
+                d = ((isLit ? mix(d * d, 0.0, shadow) : -(d * d)) + 1.0) * 0.5 + 0.1;
                 d *= !top && v2f_sizes.z > 0.0 ? fract(sin(dot(s, vec2(12.9898, 78.233))) * 43758.5453) * 0.14 + 0.93 : 1.0;
                 d /= 1.0 + exp(-v2f_height * 0.05) * 0.2;
                 d *= 1.0 + pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 3.0) * 0.2;
