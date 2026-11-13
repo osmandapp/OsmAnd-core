@@ -6,6 +6,7 @@
 #include <QSet>
 #include "restore_internal_warnings.h"
 
+#include <algorithm>
 #include <cstring>
 
 #include "MapPresentationEnvironment.h"
@@ -19,21 +20,16 @@
 
 // Map symbols of one tile for the map tile disk cache.
 //
-// Only what can reach the screen is kept:
-//  - text not on a path: the best one (lowest order) per cell of a 16x16 grid over the tile, since two captions
-//    closer than 1/16 of a tile (less than a line of text) overlap and the renderer keeps only the first one;
-//    text of a group with an icon (a POI or station name) stays with its icon;
-//  - text on a path: all of it, the renderer joins street segments before it chooses;
-//  - icons: all of them.
-// The grid saves ~30% at z9-z12 (where captions crowd), little at z13-z15; dropping groups that overlap a
-// group of lower order was tried and saved ~1%, the renderer does that on every frame anyway.
+// All symbols groups of the tile are kept, as the primitiviser made them (labels are already thinned by the
+// OBF reader); the renderer places them as for a tile that was not cached.
 // Objects keep their ids, tags and bbox (a tap finds the object, its name comes from the drawn caption);
-// geometry is kept only for objects with text on a path.
+// geometry is kept only for objects with text on a path, which the renderer lays out along it.
+// Tried and dropped: one caption per 1/16-tile cell (-29% bytes, ~1 ms faster restore per tile, but captions
+// such as station names went missing) and dropping groups overlapped by a lower-order group (-1%).
 
 namespace
 {
     const quint32 kMagic = 0x4F534D53; // 'OSMS'
-    const int kGridShift = 4;          // 16x16 cells per tile
 
     inline void writeDouble(QDataStream& s, const double v)
     {
@@ -75,18 +71,6 @@ namespace
         return s.status() == QDataStream::Ok;
     }
 
-    // equal order: text, then position, so the choice does not depend on hash order
-    bool isBetterCaption(const OsmAnd::MapPrimitiviser::TextSymbol& l, const OsmAnd::MapPrimitiviser::TextSymbol& r)
-    {
-        if (l.order != r.order)
-            return l.order < r.order;
-        if (l.value != r.value)
-            return l.value < r.value;
-        if (l.location31.x != r.location31.x)
-            return l.location31.x < r.location31.x;
-        return l.location31.y < r.location31.y;
-    }
-
     typedef OsmAnd::MapPrimitiviser MP;
     typedef MP::Symbol Symbol;
     typedef MP::TextSymbol TextSymbol;
@@ -103,43 +87,6 @@ namespace
         return k == 0 ? group.polygons : k == 1 ? group.polylines : group.points;
     }
 
-    bool hasIcon(const MP::SymbolsGroup& group)
-    {
-        for (const auto& symbol : group.symbols)
-            if (!std::dynamic_pointer_cast<const TextSymbol>(symbol))
-                return true;
-        return false;
-    }
-
-    // Step 1: symbols that can reach the screen. Captions (not on a path, not with an icon): the best per grid cell
-    QSet<const Symbol*> selectSymbols(const MP::PrimitivisedObjects& prim, const bool gridFilter)
-    {
-        QSet<const Symbol*> kept;
-        const int shift = qMax(0, 31 - static_cast<int>(prim.zoom) - kGridShift);
-        QHash<quint64, const TextSymbol*> bestInCell;
-        for (const auto& group : prim.symbolsGroups)
-        {
-            const bool withIcon = hasIcon(*group);
-            for (const auto& symbol : group->symbols)
-            {
-                const auto text = std::dynamic_pointer_cast<const TextSymbol>(symbol);
-                if (!gridFilter || !text || text->drawOnPath || withIcon)
-                {
-                    kept.insert(symbol.get());
-                    continue;
-                }
-                const quint64 cell = (static_cast<quint64>(static_cast<quint32>(text->location31.x >> shift)) << 32)
-                    | static_cast<quint32>(text->location31.y >> shift);
-                auto& best = bestInCell[cell];
-                if (!best || isBetterCaption(*text, *best))
-                    best = text.get();
-            }
-        }
-        for (const auto text : bestInCell)
-            kept.insert(text);
-        return kept;
-    }
-
     struct KeptGroups
     {
         QSet<const OsmAnd::MapObject*> groups;      // symbols groups, by key object
@@ -147,23 +94,22 @@ namespace
         QSet<const OsmAnd::MapObject*> pathObjects; // objects whose geometry is needed
     };
 
-    // Step 2: groups with at least one kept symbol; text on a path needs its object's geometry
-    KeptGroups selectGroups(const MP::PrimitivisedObjects& prim, const QSet<const Symbol*>& keptSymbols)
+    // Step 1: groups with symbols; text on a path needs its object's geometry
+    KeptGroups selectGroups(const MP::PrimitivisedObjects& prim)
     {
         KeptGroups result;
         for (auto it = prim.symbolsGroups.cbegin(); it != prim.symbolsGroups.cend(); ++it)
         {
-            bool kept = false, onPath = false;
-            for (const auto& symbol : it.value()->symbols)
-            {
-                if (!keptSymbols.contains(symbol.get()))
-                    continue;
-                kept = true;
-                const auto text = std::dynamic_pointer_cast<const TextSymbol>(symbol);
-                onPath = onPath || symbol->drawAlongPath || (text && text->drawOnPath);
-            }
-            if (!kept)
+            const auto& symbols = it.value()->symbols;
+            if (symbols.isEmpty())
                 continue;
+            const bool onPath = std::any_of(symbols.cbegin(), symbols.cend(),
+                []
+                (const std::shared_ptr<const Symbol>& symbol) -> bool
+                {
+                    const auto text = std::dynamic_pointer_cast<const TextSymbol>(symbol);
+                    return symbol->drawAlongPath || (text && text->drawOnPath);
+                });
             const auto key = it.key().get();
             const auto source = it.value()->sourceObject.get();
             result.groups.insert(key);
@@ -178,7 +124,7 @@ namespace
         return result;
     }
 
-    // Step 3: what gets written
+    // Step 2: what gets written
     struct SymbolsRecord
     {
         MP::PrimitivesGroupsCollection groups;
@@ -351,7 +297,7 @@ namespace
     }
 
     bool writeSymbolsGroups(QDataStream& s, const MP::PrimitivisedObjects& prim, const SymbolsRecord& record,
-        const QSet<const Symbol*>& keptSymbols, const KeptGroups& kept)
+        const KeptGroups& kept)
     {
         s << static_cast<quint32>(kept.groups.size());
         for (auto it = prim.symbolsGroups.cbegin(); it != prim.symbolsGroups.cend(); ++it)
@@ -361,12 +307,8 @@ namespace
             const auto& group = it.value();
             s << record.objectIndex.value(it.key().get()) << record.objectIndex.value(group->sourceObject.get())
               << group->canBeShownWithoutIcon;
-            QList< std::shared_ptr<const Symbol> > symbols;
+            s << static_cast<quint32>(group->symbols.size());
             for (const auto& symbol : group->symbols)
-                if (keptSymbols.contains(symbol.get()))
-                    symbols.push_back(symbol);
-            s << static_cast<quint32>(symbols.size());
-            for (const auto& symbol : symbols)
                 if (!writeSymbol(s, record, symbol))
                     return false;
         }
@@ -656,11 +598,9 @@ QString OsmAnd::MapPrimitiviser_P::getDiskCacheSectionKey(const ObfMapSectionInf
 
 QByteArray OsmAnd::MapPrimitiviser_P::serializeSymbols(
     const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& prim,
-    const MapSurfaceType surfaceType,
-    const unsigned filters /*= AllSymbolsFilters*/)
+    const MapSurfaceType surfaceType)
 {
-    const auto keptSymbols = selectSymbols(*prim, filters & GridSymbolsFilter);
-    const auto kept = selectGroups(*prim, keptSymbols);
+    const auto kept = selectGroups(*prim);
     const auto record = collectRecord(*prim, kept);
 
     QByteArray out;
@@ -672,7 +612,7 @@ QByteArray OsmAnd::MapPrimitiviser_P::serializeSymbols(
     writeDouble(s, prim->scaleDivisor31ToPixel.y);
     if (!writeObjects(s, record, kept)
         || !writePrimitives(s, record, *prim->mapPresentationEnvironment->mapStyle)
-        || !writeSymbolsGroups(s, *prim, record, keptSymbols, kept)
+        || !writeSymbolsGroups(s, *prim, record, kept)
         || s.status() != QDataStream::Ok)
     {
         return QByteArray();
