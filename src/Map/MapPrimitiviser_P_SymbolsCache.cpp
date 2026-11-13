@@ -23,7 +23,8 @@
 // All symbols groups of the tile are kept, as the primitiviser made them (labels are already thinned by the
 // OBF reader); the renderer places them as for a tile that was not cached.
 // Objects keep their ids, tags and bbox (a tap finds the object, its name comes from the drawn caption);
-// geometry is kept only for objects with text on a path, which the renderer lays out along it.
+// geometry is kept only for objects with text on a path, which the renderer lays out along it; any other
+// object keeps one point, its label point, so the tapped object is placed where it was drawn.
 // Tried and dropped: one caption per 1/16-tile cell (-29% bytes, ~1 ms faster restore per tile, but captions
 // such as station names went missing) and dropping groups overlapped by a lower-order group (-1%).
 
@@ -205,14 +206,19 @@ namespace
             }
             s << object->attributeIds << object->additionalAttributeIds << object->isArea << object->isCoastline;
             const bool withGeometry = kept.pathObjects.contains(object.get());
-            writePoints(s, withGeometry ? object->points31 : QVector<OsmAnd::PointI>());
+            // without geometry the label point stands for the object: a tap reads it (getLabelCoordinateX/Y
+            // average the points) and the context menu is placed there
+            const QVector<OsmAnd::PointI> labelPoint(1,
+                OsmAnd::PointI(object->getLabelCoordinateX(), object->getLabelCoordinateY()));
+            writePoints(s, withGeometry ? object->points31 : labelPoint);
             s << static_cast<quint32>(withGeometry ? object->innerPolygonsPoints31.size() : 0);
             if (withGeometry)
                 for (const auto& inner : object->innerPolygonsPoints31)
                     writePoints(s, inner);
             s << static_cast<qint32>(object->bbox31.top()) << static_cast<qint32>(object->bbox31.left())
               << static_cast<qint32>(object->bbox31.bottom()) << static_cast<qint32>(object->bbox31.right())
-              << static_cast<qint32>(object->labelX) << static_cast<qint32>(object->labelY);
+              << static_cast<qint32>(withGeometry ? object->labelX : 0)
+              << static_cast<qint32>(withGeometry ? object->labelY : 0);
         }
         return true;
     }

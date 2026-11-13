@@ -30,7 +30,7 @@ namespace OsmAnd
     public:
         // Map tile disk cache, see MapPrimitiviser_P_SymbolsCache.cpp
         // bump when the stored symbols or the rasterization change: older entries are not read again
-        static const int DiskCacheFormatVersion = 3;
+        static const int DiskCacheFormatVersion = 4;
         // All symbols of the tile, without names and with geometry for on-path text only
         static QByteArray serializeSymbols(
             const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivised,
