@@ -38,6 +38,19 @@ namespace
         static thread_local std::vector<uint8_t> buffer;
         return buffer;
     }
+
+    // Types and additional types of the map object being read, kept until its types passed the read filter
+    QVector<uint32_t>& getTypesBuffer()
+    {
+        static thread_local QVector<uint32_t> buffer;
+        return buffer;
+    }
+
+    QVector<uint32_t>& getAdditionalTypesBuffer()
+    {
+        static thread_local QVector<uint32_t> buffer;
+        return buffer;
+    }
 }
 
 OsmAnd::ObfMapSectionReader_P::ObfMapSectionReader_P()
@@ -522,6 +535,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     const std::shared_ptr<const MapPresentationEnvironment>& environment,
     MapStyleEvaluator& evaluator,
     MapStyleEvaluationResult& evaluationResult,
+    ReadFilterMemo* const readFilterMemo,
     QSet<uint>& filteringGrid,
     const PointD& tileCoords,
     const double tileFactor,
@@ -606,7 +620,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 std::shared_ptr<OsmAnd::BinaryMapObject> mapObject;
                 auto oldLimit = cis->PushLimit(length);
                 
-                readMapObject(reader, section, environment, evaluator, evaluationResult,
+                readMapObject(reader, section, environment, evaluator, evaluationResult, readFilterMemo,
                     filteringGrid, tileCoords, tileFactor, baseId, tree, mapObject, bbox31, metric);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
@@ -698,6 +712,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
     const std::shared_ptr<const MapPresentationEnvironment>& environment,
     MapStyleEvaluator& evaluator,
     MapStyleEvaluationResult& evaluationResult,
+    ReadFilterMemo* const readFilterMemo,
     QSet<uint>& filteringGrid,
     const PointD& tileCoords,
     const double tileFactor,
@@ -713,6 +728,34 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
     bool isPresent = true;
     // length of the coordinates kept in getCoordinatesBuffer(), -1 if there were none
     int64_t coordinatesLength = -1;
+    // With the read filter memo the object is created only after its types passed the filter
+    const bool createObjectLater = readFilterMemo != nullptr;
+    bool isArea = false;
+    bool hasAdditionalTypes = false;
+    const auto& attributeMapping = section->_p->_attributeMapping;
+    const auto createObject =
+        [&]()
+        {
+            if (mapObject)
+                return;
+            mapObject.reset(new OsmAnd::BinaryMapObject(section, treeNode->level));
+            mapObject->isArea = isArea;
+            if (hasAdditionalTypes)
+                mapObject->additionalAttributeIds = getAdditionalTypesBuffer();
+        };
+    const auto isRejectedByReadFilter =
+        [&](const uint32_t attributeId) -> bool
+        {
+            const auto& attr = attributeMapping->decodeMap[attributeId];
+            evaluator.setStringValue(environment->styleBuiltinValueDefs->id_INPUT_TAG, attr.tag);
+            evaluator.setStringValue(environment->styleBuiltinValueDefs->id_INPUT_VALUE, attr.value);
+            evaluationResult.clear();
+            if (!evaluator.evaluate(mapObject, MapStyleRulesetType::Optimization, &evaluationResult))
+                return false;
+            int zOrder = -1;
+            return evaluationResult.getIntegerValue(environment->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder)
+                && zOrder < 0;
+        };
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -824,16 +867,17 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 }
                 coordinatesLength = length;
 
-                if (!mapObject)
-                    mapObject.reset(new OsmAnd::BinaryMapObject(section, treeNode->level));
-                mapObject->isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
+                isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
+                if (!createObjectLater)
+                    createObject();
+                if (mapObject)
+                    mapObject->isArea = isArea;
 
                 break;
             }
             case OBF::MapData::kPolygonInnerCoordinatesFieldNumber:
             {
-                if (!mapObject)
-                    mapObject.reset(new OsmAnd::BinaryMapObject(section, treeNode->level));
+                createObject();
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -874,8 +918,63 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
             case OBF::MapData::kAdditionalTypesFieldNumber:
             case OBF::MapData::kTypesFieldNumber:
             {
-                if (!mapObject)
-                    mapObject.reset(new OsmAnd::BinaryMapObject(section, treeNode->level));
+                if (createObjectLater && !mapObject)
+                {
+                    const bool additional = (tgn == OBF::MapData::kAdditionalTypesFieldNumber);
+                    auto& attributeIds = additional ? getAdditionalTypesBuffer() : getTypesBuffer();
+                    attributeIds.resize(0);
+
+                    gpb::uint32 length;
+                    cis->ReadVarint32(&length);
+                    auto oldLimit = cis->PushLimit(length);
+                    while (cis->BytesUntilLimit() > 0)
+                    {
+                        gpb::uint32 attributeId;
+                        cis->ReadVarint32(&attributeId);
+                        attributeIds.push_back(attributeId);
+                    }
+                    cis->PopLimit(oldLimit);
+
+                    if (additional)
+                    {
+                        hasAdditionalTypes = true;
+                        break;
+                    }
+
+                    auto& states = readFilterMemo->states;
+                    bool isPresent = true;
+                    for (const auto attributeId : constOf(attributeIds))
+                    {
+                        if (attributeId >= static_cast<uint32_t>(states.size()))
+                            states.resize(attributeId + 1);
+                        auto& state = states[attributeId];
+                        if (state == ReadFilterMemo::Unknown)
+                        {
+                            createObject();
+                            state = isRejectedByReadFilter(attributeId) ? ReadFilterMemo::Rejected : ReadFilterMemo::Kept;
+                        }
+                        if (state == ReadFilterMemo::Rejected)
+                        {
+                            isPresent = false;
+                            break;
+                        }
+                    }
+                    if (!isPresent)
+                    {
+                        cis->Skip(cis->BytesUntilLimit());
+                        mapObject.reset();
+                        if (metric)
+                            metric->rejectedMapObjects++;
+                        break;
+                    }
+
+                    createObject();
+                    mapObject->attributeIds.reserve(attributeIds.size());
+                    for (const auto attributeId : constOf(attributeIds))
+                        mapObject->attributeIds.push_back(attributeId);
+                    break;
+                }
+                createObject();
 
                 auto& attributeIds = (tgn == OBF::MapData::kAdditionalTypesFieldNumber)
                     ? mapObject->additionalAttributeIds
@@ -889,7 +988,6 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 attributeIds.reserve(cis->BytesUntilLimit());
 
                 bool isPresent = true;
-                const auto& decRules = mapObject->attributeMapping->decodeMap;
                 while (cis->BytesUntilLimit() > 0)
                 {
                     gpb::uint32 attributeId;
@@ -900,21 +998,11 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     if (!isPresent || !environment || tgn == OBF::MapData::kAdditionalTypesFieldNumber)
                         continue;
 
-                    const auto& attr = decRules[attributeId];
-                    evaluator.setStringValue(environment->styleBuiltinValueDefs->id_INPUT_TAG, attr.tag);
-                    evaluator.setStringValue(environment->styleBuiltinValueDefs->id_INPUT_VALUE, attr.value);
-                    evaluationResult.clear();
-                    if (evaluator.evaluate(
-                        mapObject, MapStyleRulesetType::Optimization, &evaluationResult))
+                    if (isRejectedByReadFilter(attributeId))
                     {
-                        int zOrder = -1;
-                        if (evaluationResult.getIntegerValue(
-                            environment->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder) && zOrder < 0)
-                        {
-                            isPresent = false;
-                            cis->Skip(cis->BytesUntilLimit());
-                            break;
-                        }
+                        isPresent = false;
+                        cis->Skip(cis->BytesUntilLimit());
+                        break;
                     }
                 }
 
@@ -935,6 +1023,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
             }
             case OBF::MapData::kLabelcoordinatesFieldNumber:
             {
+                createObject();
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
@@ -954,6 +1043,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
             }
             case OBF::MapData::kStringNamesFieldNumber:
             {
+                createObject();
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
@@ -979,6 +1069,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
             }
             case OBF::MapData::kIdFieldNumber:
             {
+                createObject();
                 const auto d = ObfReaderUtilities::readSInt64(cis);
                 const auto rawId = static_cast<uint64_t>(d + baseId);
                 mapObject->id = ObfObjectId::generateUniqueId(rawId, baseOffset, section);
@@ -997,6 +1088,44 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 break;
         }
     }
+}
+
+bool OsmAnd::ObfMapSectionReader_P::isReadFilterMemoizable(
+    const std::shared_ptr<const MapPresentationEnvironment>& environment)
+{
+    // The evaluator looks at the map object itself only for these values
+    const auto& builtinValueDefs = environment->styleBuiltinValueDefs;
+    const std::function<bool(const std::shared_ptr<const IMapStyle::IRuleNode>&)> readsObject =
+        [&builtinValueDefs, &readsObject]
+        (const std::shared_ptr<const IMapStyle::IRuleNode>& node) -> bool
+        {
+            const auto& values = node->getValuesRef();
+            if (values.contains(builtinValueDefs->id_INPUT_ADDITIONAL)
+                || values.contains(builtinValueDefs->id_OUTPUT_CLASS)
+                || values.contains(builtinValueDefs->id_OUTPUT_DISABLE))
+            {
+                return true;
+            }
+            for (const auto& subnode : constOf(node->getOneOfConditionalSubnodesRef()))
+            {
+                if (readsObject(subnode))
+                    return true;
+            }
+            for (const auto& subnode : constOf(node->getApplySubnodesRef()))
+            {
+                if (readsObject(subnode))
+                    return true;
+            }
+            return false;
+        };
+
+    const auto ruleset = environment->mapStyle->getRuleset(MapStyleRulesetType::Optimization);
+    for (const auto& rule : constOf(ruleset))
+    {
+        if (readsObject(rule->getRootNodeRef()))
+            return false;
+    }
+    return true;
 }
 
 bool OsmAnd::ObfMapSectionReader_P::readCoordinates(
@@ -1134,6 +1263,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         evaluator.setIntegerValue(environment->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
         evaluator.setIntegerValue(environment->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
     }
+    ReadFilterMemo readFilterMemo;
+    const auto pReadFilterMemo = environment && isReadFilterMemoizable(environment) ? &readFilterMemo : nullptr;
 
     // Use an OBF-grid-aligned bbox to load geometry from adjacent data blocks,
     // but keep the requested bbox for label filtering and surfaceBBox31 for surface aggregation.
@@ -1377,6 +1508,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                         environment,
                         evaluator,
                         evaluationResult,
+                        pReadFilterMemo,
                         filteringGrid,
                         tileCoords,
                         tileFactor,
@@ -1475,6 +1607,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                                     environment,
                                     evaluator,
                                     evaluationResult,
+                                    pReadFilterMemo,
                                     filteringGrid,
                                     tileCoords,
                                     tileFactor,

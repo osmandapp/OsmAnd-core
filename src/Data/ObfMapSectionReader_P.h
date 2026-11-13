@@ -97,12 +97,26 @@ namespace OsmAnd
             const AreaI& bbox,
             const ZoomLevel firstZoomLevel,
             const ZoomLevel lastZoomLevel) > FilterReadingByIdFunction;
+        // Result of the read filter (style rules with optimize="read") per attribute id of a map section.
+        // Within one loadMapObjects() call it depends only on the tag and the value of the attribute.
+        struct ReadFilterMemo
+        {
+            enum : uint8_t
+            {
+                Unknown = 0,
+                Kept,
+                Rejected,
+            };
+            QVector<uint8_t> states;
+        };
+
         static void readMapObjectsBlock(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<const MapPresentationEnvironment>& environment,
             MapStyleEvaluator& evaluator,
             MapStyleEvaluationResult& evaluationResult,
+            ReadFilterMemo* const readFilterMemo,
             QSet<uint>& filteringGrid,
             const PointD& tileCoords,
             const double tileFactor,
@@ -128,6 +142,7 @@ namespace OsmAnd
             const std::shared_ptr<const MapPresentationEnvironment>& environment,
             MapStyleEvaluator& evaluator,
             MapStyleEvaluationResult& evaluationResult,
+            ReadFilterMemo* const readFilterMemo,
             QSet<uint>& filteringGrid,
             const PointD& tileCoords,
             const double tileFactor,
@@ -136,6 +151,9 @@ namespace OsmAnd
             std::shared_ptr<OsmAnd::BinaryMapObject>& mapObjectOut,
             const AreaI* bbox31,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
+
+        // Tells if the read filter rules look only at the tag and value, so their result can be kept per attribute
+        static bool isReadFilterMemoizable(const std::shared_ptr<const MapPresentationEnvironment>& environment);
 
         // Decodes the coordinates of a map object; false if the object lies outside bbox31
         static bool readCoordinates(
