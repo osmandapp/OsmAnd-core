@@ -276,8 +276,7 @@ namespace OsmAnd
             const PointF& texCoordsOffsetN,
             const PointF& texCoordsScaleN,
             const double tileSize,
-            const int elevationDataSamplerIndex,
-            const bool withHillshade);
+            const int elevationDataSamplerIndex);
         void cancelElevation(
             const RasterLayerTileProgram& program,
             const int elevationDataSamplerIndex);

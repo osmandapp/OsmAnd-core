@@ -1053,7 +1053,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "PARAM_FLAT_INPUT highp vec2 v2f_hsBL;                                                                              ""\n"
             "PARAM_FLAT_INPUT highp vec2 v2f_hsBR;                                                                              ""\n"
             "PARAM_FLAT_INPUT highp vec2 v2f_hsCoordsDir;                                                                       ""\n"
-            "PARAM_INPUT highp vec2 v2f_hsCoords;                                                                               ""\n");
+            "PARAM_INPUT highp vec2 v2f_hsCoords;                                                                               ""\n"
+            "uniform float param_fs_elevation_scale;                                                                            ""\n");
         const auto& gridsInFragmentShader_1 = QStringLiteral(
             "PARAM_INPUT highp vec4 v2f_primaryLocation;                                                                        ""\n"
             "PARAM_INPUT highp vec4 v2f_secondaryLocation;                                                                      ""\n");
@@ -1075,7 +1076,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "uniform lowp vec4 param_fs_primaryGridColor;                                                                       ""\n"
             "uniform lowp vec4 param_fs_secondaryGridColor;                                                                     ""\n");
         fragmentShader.append(QStringLiteral(
-            "uniform float param_fs_elevation_scale;                                                                            ""\n"
             "uniform vec4 param_fs_hillshade;                                                                                   ""\n"
             "%GridsInFragmentShader_2%                                                                                          ""\n"
             "uniform vec4 param_fs_worldCameraPosition;                                                                         ""\n"
@@ -1376,7 +1376,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "                                                                                                                   ""\n"
             "%UnrolledPerRasterLayerProcessingCode%                                                                             ""\n"
             "                                                                                                                   ""\n"));
-        const auto& hillshadeInFragmentShader_3 = QStringLiteral(
+        const auto& HillshadeInFragmentShader_2 = QStringLiteral(
             "    if (param_fs_lastBatch > 0.0 && withHillshade)                                                                 ""\n"
             "    {                                                                                                              ""\n"
             "#if __VERSION__ >= 140                                                                                             ""\n"
@@ -1390,15 +1390,20 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "        float M_PI = 3.1415926535897932384626433832795;                                                            ""\n"
             "        float lsl = length(slopes);                                                                                ""\n"
             "        vec3 hillshadeNormal = normalize(vec3(slopes.x, 1.0, -slopes.y));                                          ""\n"
-            "        sunlight = dot(hillshadeNormal, -param_fs_hillshade.xyz);                                                  ""\n"
-            "        float hsLight = sunlight * (1.0 - atan(lsl) / M_PI);                                                       ""\n"
+            "        float sunFactor = dot(hillshadeNormal, -param_fs_hillshade.xyz);                                           ""\n"
+            "        float hsLight = sunlight;                                                                                  ""\n"
+            "        if (abs(param_fs_elevation_scale) > 0.0)                                                                   ""\n"
+            "        {                                                                                                          ""\n"
+            "            hsLight = sunFactor * (1.0 - atan(lsl) / M_PI);                                                        ""\n"
+            "            sunlight = sunFactor;                                                                                  ""\n"
+            "        }                                                                                                          ""\n"
             "        hsFactor = min((0.7 - hsLight) / (hsLight < 0.7 ? 0.7 : 1.5), 1.0);                                        ""\n"
             "    }                                                                                                              ""\n");
         fragmentShader.append(QStringLiteral(
             "    float sunlight = dot(normalize(v2f_normal), -param_fs_hillshade.xyz);                                          ""\n"
             "    float hsFactor = 0.0;                                                                                          ""\n"
-            "    bool withHillshade = abs(param_fs_elevation_scale) > 0.0 && param_fs_hillshade.w > 0.0;                        ""\n"
-            "%HillshadeInFragmentShader_3%                                                                                      ""\n"
+            "    bool withHillshade = param_fs_hillshade.w > 0.0;                                                               ""\n"
+            "%HillshadeInFragmentShader_2%                                                                                      ""\n"
             "                                                                                                                   ""\n"
 #if 0
             //   NOTE: Useful for debugging mipmap levels
@@ -1428,13 +1433,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "            float shadow = inShadow(0.0, isLit);                                                                   ""\n"
             "            if (param_fs_shadowmapParameters.z > 0.0 && param_fs_shadowmapParameters.z < 1.0)                      ""\n"
             "                shadow = max(shadow, inShadow(1.0, isLit) * param_fs_shadowmapParameters.z);                       ""\n"
-            "            float d = 1.0 - sunlight;                                                                              ""\n"
-            "            vec4 shadowColor = vec4(0.0, 0.0, 0.0, (isLit ? max(shadow, d * d) : 1.0) * 0.4);                      ""\n"
+            "            shadow *= 0.4;                                                                                         ""\n"
+            "            float hillshade = min((0.7 - sunlight) / (sunlight < 0.7 ? 0.7 : 1.5), 1.0) * 0.4;                     ""\n"
+            "            float a = shadow > 0.0 ? max(shadow, hillshade) : hillshade;                                           ""\n"
+            "            vec4 shadowColor = a < 0.0 ? vec4(1.0, 1.0, 1.0, -a) : vec4(0.0, 0.0, 0.0, a);                         ""\n"
             "            if (withHillshade)                                                                                     ""\n"
             "            {                                                                                                      ""\n"
-            "                shadow *= 0.4;                                                                                     ""\n"
-            "                float hillshade = hsFactor * param_fs_hillshade.w;                                                 ""\n"
-            "                float a = shadow > 0.0 ? max(shadow, hillshade) : hillshade;                                       ""\n"
+            "                hillshade = hsFactor * param_fs_hillshade.w;                                                       ""\n"
+            "                a = shadow > 0.0 ? max(shadow, hillshade) : hillshade;                                             ""\n"
             "                vec4 hsColor = a < 0.0 ? vec4(1.0, 1.0, 1.0, -a) : vec4(0.0, 0.0, 0.0, a);                         ""\n"
             "                shadowColor = mix(shadowColor, hsColor, param_fs_hillshade.w);                                     ""\n"
             "            }                                                                                                      ""\n"
@@ -1562,13 +1568,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         if ((programFeatures & RenderingFeatures::Hillshade) > 0)
         {
             preprocessedFragmentShader.replace("%HillshadeInFragmentShader_1%", hillshadeInFragmentShader_1);
-            preprocessedFragmentShader.replace("%HillshadeInFragmentShader_3%", hillshadeInFragmentShader_3);
+            preprocessedFragmentShader.replace("%HillshadeInFragmentShader_2%", HillshadeInFragmentShader_2);
         }
         else
         {
             const auto emptyString = QString();
             preprocessedFragmentShader.replace("%HillshadeInFragmentShader_1%", emptyString);
-            preprocessedFragmentShader.replace("%HillshadeInFragmentShader_3%", emptyString);
+            preprocessedFragmentShader.replace("%HillshadeInFragmentShader_2%", emptyString);
         }
         if ((programFeatures & RenderingFeatures::Grids) > 0)
         {
@@ -1876,10 +1882,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         outRasterLayerTileProgram.fs.param.myDirection,
         "param_fs_myDirection",
         GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.fs.param.elevation_scale,
-        "param_fs_elevation_scale",
-        GlslVariableType::Uniform);
+    if ((programFeatures & RenderingFeatures::Hillshade) > 0)
+    {
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.fs.param.elevation_scale,
+            "param_fs_elevation_scale",
+            GlslVariableType::Uniform);
+    }
     ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.fs.param.hillshade,
         "param_fs_hillshade",
@@ -2015,8 +2024,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     GL_PUSH_GROUP_MARKER(QStringLiteral("%1x%2@%3").arg(batch->tileId.x).arg(batch->tileId.y).arg(zoomLevel));
 
     // Activate proper program depending on number of captured layers
-    const bool withHillshade = currentState.elevationDataProvider &&
-        currentState.elevationConfiguration.visualizationStyle != ElevationConfiguration::VisualizationStyle::None;
+    const bool withHillshade = currentState.elevationDataProvider
+        && currentState.elevationConfiguration.visualizationStyle != ElevationConfiguration::VisualizationStyle::None
+        && currentState.elevationConfiguration.visualizationAlpha > 0.0f;
     const bool withGrids = currentState.gridConfiguration.primaryGrid || currentState.gridConfiguration.secondaryGrid;
     const auto programFeatures = (withHillshade ? static_cast<int>(RenderingFeatures::Hillshade) : 0)
         | (withGrids ? static_cast<int>(RenderingFeatures::Grids) : 0)
@@ -2318,8 +2328,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                     elevationResource->texCoordsOffset,
                     elevationResource->texCoordsScale,
                     elevationResource->tileSize,
-                    elevationDataSamplerIndex,
-                    withHillshade);
+                    elevationDataSamplerIndex);
             }
             else
                 cancelElevation(program, elevationDataSamplerIndex);
@@ -2332,8 +2341,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             zScaleFactor,
             hasElevation ? dataScaleFactor : 0.0f);
         GL_CHECK_RESULT;
-        glUniform1f(program.fs.param.elevation_scale, hasElevation ? dataScaleFactor : 0.0f);
-        GL_CHECK_RESULT;
+        if (withHillshade)
+        {
+            glUniform1f(program.fs.param.elevation_scale, hasElevation ? dataScaleFactor : 0.0f);
+            GL_CHECK_RESULT;
+        }
 
         for (int layerIndexInBatch = 0; layerIndexInBatch < batchedLayersCount; layerIndexInBatch++)
         {
@@ -2531,8 +2543,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     const auto& internalState = getInternalState();
 
     const bool forShadowmap = shadowMode == ShadowMode::Build;
-    const bool withHillshade = currentState.elevationDataProvider &&
-        currentState.elevationConfiguration.visualizationStyle != ElevationConfiguration::VisualizationStyle::None;
+    const bool withHillshade = currentState.elevationDataProvider
+        && currentState.elevationConfiguration.visualizationStyle != ElevationConfiguration::VisualizationStyle::None
+        && currentState.elevationConfiguration.visualizationAlpha > 0.0f;
     const bool withGrids = currentState.gridConfiguration.primaryGrid || currentState.gridConfiguration.secondaryGrid;
     const auto& program = _rasterLayerTilePrograms[numberOfLayersInBatch][programFeatures];
     const auto& vao = _rasterTileVAOs[numberOfLayersInBatch][programFeatures];
@@ -3153,8 +3166,7 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
     const PointF& texCoordsOffsetN,
     const PointF& texCoordsScaleN,
     const double tileSize,
-    const int elevationDataSamplerIndex,
-    const bool withHillshade)
+    const int elevationDataSamplerIndex)
 {
     const auto gpuAPI = getGPUAPI();
 
