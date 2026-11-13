@@ -325,16 +325,19 @@ std::shared_ptr<const OsmAnd::MapObject> OsmAnd::MapPrimitivesProvider_P::obtain
     if (!obfProvider)
         return mapObject;
 
-    // the same section, the same level, by id within the object's bbox
+    // the same section, the same level, by id. The object sits in the tree node whose bounds hold its whole bbox,
+    // so one point of the bbox leads to that node and reads only the nodes on the way, not every block under a
+    // large object
     const auto zoom = binary->level->minZoom;
-    const auto bbox31 = binary->bbox31;
+    const auto center = binary->bbox31.center();
+    const AreaI point31(center, center);
     const auto& section = *binary->section;
     const auto id = binary->id;
     const auto dataInterface = obfProvider->obfsCollection->obtainDataInterface(
-        &bbox31, zoom, zoom, ObfDataTypesMask().set(ObfDataType::Map));
+        &point31, zoom, zoom, ObfDataTypesMask().set(ObfDataType::Map));
     QList< std::shared_ptr<const BinaryMapObject> > objects;
     MapSurfaceType surfaceType = MapSurfaceType::Undefined;
-    dataInterface->loadBinaryMapObjects(&objects, &surfaceType, owner->primitiviser->environment, zoom, &bbox31,
+    dataInterface->loadBinaryMapObjects(&objects, &surfaceType, owner->primitiviser->environment, zoom, &point31,
         [&section, id]
         (const std::shared_ptr<const ObfMapSectionInfo>& objectSection,
             const ObfMapSectionReader::DataBlockId& blockId,
