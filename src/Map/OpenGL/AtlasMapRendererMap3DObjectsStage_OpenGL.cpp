@@ -122,6 +122,8 @@ namespace
                 if (!all(lessThan(abs(gradient), vec2(1e20))))
                     return sampleShadowmap(p, part);
 
+                p.z -= dot(abs(gradient), vec2(param_fs_shadowmapTexelSize));
+
                 float shadow = 0.0;
                 for (int y = -1; y <= 1; y++)
                 {

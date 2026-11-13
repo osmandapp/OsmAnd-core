@@ -1259,6 +1259,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "    if (!all(lessThan(abs(gradient), vec2(1e20))))                                                                 ""\n"
             "        return sampleShadowmap(p, part);                                                                           ""\n"
             "                                                                                                                   ""\n"
+            "    p.z -= dot(abs(gradient), vec2(param_fs_shadowmapParameters.y));                                               ""\n"
+            "                                                                                                                   ""\n"
             "    float shadow = 0.0;                                                                                            ""\n"
             "    for (int y = -1; y <= 1; y++)                                                                                  ""\n"
             "    {                                                                                                              ""\n"
