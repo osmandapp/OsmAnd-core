@@ -553,7 +553,9 @@ std::shared_ptr<OsmAnd::BinaryMapObject> OsmAnd::MapPrimitiviser_P::newBinaryMap
     const std::shared_ptr<const ObfMapSectionInfo>& section,
     const std::shared_ptr<const ObfMapSectionLevel>& level)
 {
-    return std::shared_ptr<BinaryMapObject>(new BinaryMapObject(section, level));
+    const std::shared_ptr<BinaryMapObject> object(new BinaryMapObject(section, level));
+    object->isRestoredFromCache = true;
+    return object;
 }
 
 std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivesGroup> OsmAnd::MapPrimitiviser_P::newPrimitivesGroup(

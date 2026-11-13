@@ -19,6 +19,9 @@
 #include "ObfFile.h"
 #include "ObfInfo.h"
 #include "ObfMapSectionInfo.h"
+#include "ObfMapSectionReader.h"
+#include "BinaryMapObject.h"
+#include "FunctorQueryController.h"
 
 namespace
 {
@@ -312,6 +315,47 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
     return result;
 }
 
+std::shared_ptr<const OsmAnd::MapObject> OsmAnd::MapPrimitivesProvider_P::obtainFullMapObject(
+    const std::shared_ptr<const MapObject>& mapObject) const
+{
+    const auto binary = std::dynamic_pointer_cast<const BinaryMapObject>(mapObject);
+    if (!binary || !binary->isRestoredFromCache)
+        return mapObject;
+    const auto obfProvider = std::dynamic_pointer_cast<const ObfMapObjectsProvider>(owner->mapObjectsProvider);
+    if (!obfProvider)
+        return mapObject;
+
+    // the same section, the same level, by id within the object's bbox
+    const auto zoom = binary->level->minZoom;
+    const auto bbox31 = binary->bbox31;
+    const auto& section = *binary->section;
+    const auto id = binary->id;
+    const auto dataInterface = obfProvider->obfsCollection->obtainDataInterface(
+        &bbox31, zoom, zoom, ObfDataTypesMask().set(ObfDataType::Map));
+    QList< std::shared_ptr<const BinaryMapObject> > objects;
+    MapSurfaceType surfaceType = MapSurfaceType::Undefined;
+    dataInterface->loadBinaryMapObjects(&objects, &surfaceType, owner->primitiviser->environment, zoom, &bbox31,
+        [&section, id]
+        (const std::shared_ptr<const ObfMapSectionInfo>& objectSection,
+            const ObfMapSectionReader::DataBlockId& blockId,
+            const ObfObjectId objectId,
+            const AreaI& bbox,
+            const ZoomLevel firstZoomLevel,
+            const ZoomLevel lastZoomLevel,
+            const ZoomLevel requestedZoomLevel) -> bool
+        {
+            return objectId.id == id.id && objectSection->offset == section.offset && objectSection->name == section.name;
+        });
+    for (const auto& object : objects)
+    {
+        if (object->id.id == id.id)
+            return object;
+    }
+    LogPrintf(LogSeverityLevel::Warning, "Map object %s of a cached tile is not in its map any more",
+        qPrintable(id.toString()));
+    return mapObject;
+}
+
 QList<std::shared_ptr<const OsmAnd::MapObject>> OsmAnd::MapPrimitivesProvider_P::retreivePolygons(PointI point, ZoomLevel zoom)
 {
     std::shared_ptr<TileEntry> tileEntry;
@@ -324,15 +368,33 @@ QList<std::shared_ptr<const OsmAnd::MapObject>> OsmAnd::MapPrimitivesProvider_P:
         {
             return new TileEntry(collection, tileId, zoom);
         });
-    if (tileEntry->getState() != TileState::Loaded)
+    if (tileEntry->getState() == TileState::Loaded && tileEntry->dataIsPresent)
+        outTiledPrimitives = tileEntry->dataWeakRef.lock();
+    if (!outTiledPrimitives)
     {
-        return polygons;
+        // a tile drawn from the disk cache has no primitives in memory: build them now
+        bool hasDiskCache;
+        {
+            QMutexLocker scopedLocker(&_diskCacheMutex);
+            hasDiskCache = _diskCache != nullptr;
+        }
+        if (!hasDiskCache)
+            return polygons;
+        MapPrimitivesProvider::Request request;
+        request.tileId = tile;
+        request.zoom = zoom;
+        request.detailedZoom = zoom;
+        request.visibleArea31 = Utilities::tileBoundingBox31(tile, zoom);
+        request.queryController = std::make_shared<FunctorQueryController>(
+            []
+            (const FunctorQueryController* const) -> bool
+            {
+                return false;
+            });
+        obtainTiledPrimitives(request, outTiledPrimitives, nullptr);
     }
 
-    if (tileEntry->dataIsPresent)
     {
-        // Otherwise, try to lock tile reference
-        outTiledPrimitives = tileEntry->dataWeakRef.lock();
         if (outTiledPrimitives && outTiledPrimitives->primitivisedObjects)
         {
             for (const auto & p : outTiledPrimitives->primitivisedObjects->polygons)

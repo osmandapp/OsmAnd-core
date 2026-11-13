@@ -94,6 +94,9 @@ namespace OsmAnd
             const IMapDataProvider::ObtainDataAsyncCallback callback,
             const bool collectMetric = false) Q_DECL_OVERRIDE;
         virtual QList<std::shared_ptr<const OsmAnd::MapObject>> retreivePolygons(PointI point, ZoomLevel zoom);
+        // The map object of a symbol restored from the disk cache keeps only what drawing needs: this reads it
+        // again from its map (points, names, all tags). Any other object is returned as it is.
+        std::shared_ptr<const MapObject> obtainFullMapObject(const std::shared_ptr<const MapObject>& mapObject) const;
 
         // Keeps rendered tiles and their filtered symbols of z <= 15 on disk. styleKey stands for what the style
         // settings do not show: the style file and its version (name, file date, app version)

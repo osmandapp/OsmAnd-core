@@ -116,6 +116,7 @@ namespace OsmAnd
         QList<std::shared_ptr<const OsmAnd::MapObject>> retreivePolygons(PointI point, ZoomLevel zoom);
 
         void setDiskCache(const std::shared_ptr<MapTileDiskCache>& diskCache, const QString& styleKey);
+        std::shared_ptr<const MapObject> obtainFullMapObject(const std::shared_ptr<const MapObject>& mapObject) const;
         std::shared_ptr<MapTileDiskCache> getDiskCache(const ZoomLevel zoom, uint64_t& outEnvironment) const;
 
     friend class OsmAnd::MapPrimitivesProvider;
