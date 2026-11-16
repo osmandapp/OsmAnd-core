@@ -115,6 +115,30 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     auto ecmwfDb = createGeoTilesDatabase(WeatherSource::ECMWF);
     if (ecmwfDb)
         _geoTilesDbMap.insert(WeatherSource::ECMWF, ecmwfDb);
+
+    removeObsoleteCacheFiles();
+}
+
+void OsmAnd::WeatherTileResourceProvider_P::removeObsoleteCacheFiles()
+{
+    // Raster caches of the old layout (one file per band and per band combination) and downloads
+    // that were interrupted before their temporary files were removed
+    const auto staleTime = QDateTime::currentDateTime().addSecs(-600);
+    QFileInfoList fileInfos;
+    Utilities::findFiles(QDir(localCachePath),
+        QStringList() << QStringLiteral("*weather_cache_*.db") << QStringLiteral("*.tiff.gz")
+            << QStringLiteral("*.tiff"), fileInfos, false);
+    for (const auto& fileInfo : constOf(fileInfos))
+    {
+        if (!fileInfo.fileName().endsWith(QStringLiteral(".db")) && fileInfo.lastModified() > staleTime)
+            continue;
+
+        if (!QFile(fileInfo.absoluteFilePath()).remove())
+        {
+            LogPrintf(LogSeverityLevel::Warning,
+                "Failed to remove obsolete weather cache file: %s", qPrintable(fileInfo.absoluteFilePath()));
+        }
+    }
 }
 
 OsmAnd::WeatherTileResourceProvider_P::~WeatherTileResourceProvider_P()
@@ -251,17 +275,25 @@ std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_
     return nullptr;
 }
 
-std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::createRasterTilesDatabase(
-    BandIndex band, WeatherSource weatherSource)
+QString OsmAnd::WeatherTileResourceProvider_P::getRasterTilesDatabasePath(WeatherSource weatherSource) const
 {
-    auto rasterDbCachePath = localCachePath
+    return localCachePath
         + QDir::separator()
         + getWeatherSourcePrefix(weatherSource)
-        + QStringLiteral("weather_cache_")
-        + QString::number(band)
-        + QStringLiteral(".db");
+        + QStringLiteral("weather_raster.db");
+}
 
-    auto db = std::make_shared<TileSqliteDatabase>(rasterDbCachePath);
+int64_t OsmAnd::WeatherTileResourceProvider_P::getRasterSpecification(const int64_t dateTime, const BandIndex band)
+{
+    // Band combinations take up to 16 bits; ordering by time is kept, so removing the data
+    // before some time works for all bands at once
+    return (dateTime << 16) | (static_cast<int64_t>(band) & 0xFFFF);
+}
+
+std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::createRasterTilesDatabase(
+    WeatherSource weatherSource)
+{
+    auto db = std::make_shared<TileSqliteDatabase>(getRasterTilesDatabasePath(weatherSource));
     if (db->open(true))
     {
         TileSqliteDatabase::Meta meta;
@@ -386,11 +418,12 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
                         }
                     }
                 }
-                QFile(filePathGz).remove();
-                QFile(filePath).remove();
             }
             else if (hasData)
                 geoDb->updateTileTimestamp(tileId, zoom, dateTime, currentTime);
+            // A failed or cancelled download leaves a partial file behind
+            QFile(filePathGz).remove();
+            QFile(filePath).remove();
 
             {
                 QWriteLocker scopedLocker(&_lock);
@@ -600,29 +633,33 @@ std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_
     }
 }
 
-std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::getRasterTilesDatabase(
-    BandIndex band)
+std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::getRasterTilesDatabase()
 {
-    auto currentWeatherSource = getStorageWeatherSource();
-    auto key = QPair<WeatherSource, BandIndex>(currentWeatherSource, band);
-    
+    return getRasterTilesDatabase(getStorageWeatherSource(), true);
+}
+
+std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::getRasterTilesDatabase(
+    WeatherSource weatherSource, bool create)
+{
     {
         QReadLocker scopedLocker(&_rasterDbLock);
         
-        const auto citRasterDb = _rasterTilesDbMap.constFind(key);
+        const auto citRasterDb = _rasterTilesDbMap.constFind(weatherSource);
         if (citRasterDb != _rasterTilesDbMap.cend())
             return *citRasterDb;
     }
+    if (!create && !QFile(getRasterTilesDatabasePath(weatherSource)).exists())
+        return nullptr;
     {
         QWriteLocker scopedLocker(&_rasterDbLock);
         
-        const auto citRasterDb = _rasterTilesDbMap.constFind(key);
+        const auto citRasterDb = _rasterTilesDbMap.constFind(weatherSource);
         if (citRasterDb != _rasterTilesDbMap.cend())
             return *citRasterDb;
 
-        auto db = createRasterTilesDatabase(band, currentWeatherSource);
+        auto db = createRasterTilesDatabase(weatherSource);
         if (db)
-            _rasterTilesDbMap.insert(key, db);
+            _rasterTilesDbMap.insert(weatherSource, db);
         
         return db;
     }
@@ -720,56 +757,47 @@ uint64_t OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
         }
     }
 
-    const auto values = getAllBandCombinations();
-    for (auto band : values)
+    auto rasterDb = getRasterTilesDatabase(getStorageWeatherSource(), false);
+    if (rasterDb)
     {
-        auto rasterDbCachePath = localCachePath
-            + QDir::separator()
-            + getWeatherSourcePrefix(getWeatherSource())
-            + QStringLiteral("weather_cache_")
-            + QString::number(band)
-            + QStringLiteral(".db");
+        QReadLocker geoScopedLocker(&_rasterDbLock);
 
-        if (QFile(rasterDbCachePath).exists())
+        const auto values = getAllBandCombinations();
+        for (auto band : values)
         {
-            auto rasterDb = getRasterTilesDatabase(band);
-            if (rasterDb)
+            const auto specification = getRasterSpecification(dateTime, band);
+            QList<TileId> rasterDBTileIds;
+            if (!rasterDb->getTileIds(rasterDBTileIds, zoom, specification))
             {
-                QReadLocker geoScopedLocker(&_rasterDbLock);
-
-                QList<TileId> rasterDBTileIds;
-                if (!rasterDb->getTileIds(rasterDBTileIds, zoom, dateTime))
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to get tile ids from weather raster cache db file: %s", qPrintable(rasterDb->filename));
+            }
+            else
+            {
+                QList<TileId> rasterTileIdsToCalculate = QList<TileId>();
+                const auto maxZoom = WeatherTileResourceProvider::getTileZoom(WeatherLayer::High);
+                int zoomShift = maxZoom - zoom;
+                for (const auto &rasterDBTileId : constOf(rasterDBTileIds))
                 {
-                    LogPrintf(LogSeverityLevel::Error,
-                        "Failed to get tile ids from weather raster cache db file: %s", qPrintable(rasterDbCachePath));
-                }
-                else
-                {
-                    QList<TileId> rasterTileIdsToCalculate = QList<TileId>();
-                    const auto maxZoom = WeatherTileResourceProvider::getTileZoom(WeatherLayer::High);
-                    int zoomShift = maxZoom - zoom;
-                    for (const auto &rasterDBTileId : constOf(rasterDBTileIds))
+                    if (((hasTileIds && tileIds.contains(rasterDBTileId))
+                        || !hasTileIds) && !excludeTileIds.contains(rasterDBTileId))
                     {
-                        if (((hasTileIds && tileIds.contains(rasterDBTileId))
-                            || !hasTileIds) && !excludeTileIds.contains(rasterDBTileId))
+                        rasterTileIdsToCalculate.append(rasterDBTileId);
+                        if (zoomShift > 0)
                         {
-                            rasterTileIdsToCalculate.append(rasterDBTileId);
-                            if (zoomShift > 0)
-                            {
-                                const auto highZoomTiles =
-                                    Utilities::getTileIdsUnderscaledByZoomShift(rasterDBTileId, zoomShift).toList();
-                                uint64_t highZoomTilesSize = 0;
-                                if (rasterDb->getTilesSize(highZoomTiles, highZoomTilesSize, maxZoom, dateTime))
-                                    size += highZoomTilesSize;
-                            }
+                            const auto highZoomTiles =
+                                Utilities::getTileIdsUnderscaledByZoomShift(rasterDBTileId, zoomShift).toList();
+                            uint64_t highZoomTilesSize = 0;
+                            if (rasterDb->getTilesSize(highZoomTiles, highZoomTilesSize, maxZoom, specification))
+                                size += highZoomTilesSize;
                         }
                     }
-                    if (!rasterTileIdsToCalculate.isEmpty())
-                    {
-                        uint64_t rasterTilesSize = 0;
-                        if (rasterDb->getTilesSize(rasterTileIdsToCalculate, rasterTilesSize, zoom, dateTime))
-                            size += rasterTilesSize;
-                    }
+                }
+                if (!rasterTileIdsToCalculate.isEmpty())
+                {
+                    uint64_t rasterTilesSize = 0;
+                    if (rasterDb->getTilesSize(rasterTileIdsToCalculate, rasterTilesSize, zoom, specification))
+                        size += rasterTilesSize;
                 }
             }
         }
@@ -781,35 +809,26 @@ uint64_t OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
 bool OsmAnd::WeatherTileResourceProvider_P::removeTileDataBefore(
     const int64_t dateTime)
 {
+    // Outdated forecasts are removed for every weather source, not only for the selected one
     bool res = true;
-    auto geoDb = getGeoTilesDatabase();
-    if (geoDb)
     {
         QWriteLocker geoScopedLocker(&_geoDbLock);
 
-        res &= geoDb->removePreviousTilesData(dateTime);
+        for (const auto& geoDb : constOf(_geoTilesDbMap))
+        {
+            if (geoDb)
+                res &= geoDb->removePreviousTilesData(dateTime);
+        }
     }
 
-    auto dateTiemStr = Utilities::getDateTimeString(dateTime);
-    const auto values = getAllBandCombinations();
-    for (auto band : values)
+    for (const auto weatherSource : { WeatherSource::GFS, WeatherSource::ECMWF })
     {
-        auto rasterDbCachePath = localCachePath
-            + QDir::separator()
-            + getWeatherSourcePrefix(getWeatherSource())
-            + QStringLiteral("weather_cache_")
-            + QString::number(band)
-            + QStringLiteral(".db");
-
-        if (QFile(rasterDbCachePath).exists())
+        auto rasterTileDb = getRasterTilesDatabase(weatherSource, false);
+        if (rasterTileDb)
         {
-            auto rasterTileDb = getRasterTilesDatabase(band);
-            if (rasterTileDb)
-            {
-                QWriteLocker rasterScopedLocker(&_rasterDbLock);
+            QWriteLocker rasterScopedLocker(&_rasterDbLock);
 
-                res &= rasterTileDb->removePreviousTilesData(dateTime);
-            }
+            res &= rasterTileDb->removePreviousTilesData(getRasterSpecification(dateTime, 0));
         }
     }
 
@@ -831,27 +850,19 @@ bool OsmAnd::WeatherTileResourceProvider_P::removeTileData(
         res &= removeTileIds(geoDb, tileIds, excludeTileIds, zoom, dateTime);
     }
 
-    auto dateTiemStr = Utilities::getDateTimeString(dateTime);
-    const auto values = getAllBandCombinations();
-    for (auto band : values)
+    auto rasterTileDb = getRasterTilesDatabase(getStorageWeatherSource(), false);
+    if (rasterTileDb)
     {
-        auto rasterDbCachePath = localCachePath
-            + QDir::separator()
-            + getWeatherSourcePrefix(getWeatherSource())
-            + QStringLiteral("weather_cache_")
-            + QString::number(band)
-            + QStringLiteral(".db");
+        QWriteLocker rasterScopedLocker(&_rasterDbLock);
 
-        if (QFile(rasterDbCachePath).exists())
+        const auto values = getAllBandCombinations();
+        for (auto band : values)
         {
-            auto rasterTileDb = getRasterTilesDatabase(band);
-            if (rasterTileDb)
-            {
-                QWriteLocker rasterScopedLocker(&_rasterDbLock);
-
-                res &= removeTileIds(rasterTileDb, tileIds, excludeTileIds, zoom, dateTime);
-            }
+            res &= removeTileIds(rasterTileDb, tileIds, excludeTileIds, zoom,
+                getRasterSpecification(dateTime, band), false);
         }
+        if (res)
+            rasterTileDb->compact();
     }
 
     return res;
@@ -862,7 +873,8 @@ bool OsmAnd::WeatherTileResourceProvider_P::removeTileIds(
     const QList<TileId>& tileIds,
     const QList<TileId>& excludeTileIds,
     const ZoomLevel zoom,
-    const int64_t dateTime)
+    const int64_t dateTime,
+    const bool compact /*= true*/)
 {
     bool res = true;
     if (!tilesDb->isEmpty())
@@ -906,7 +918,7 @@ bool OsmAnd::WeatherTileResourceProvider_P::removeTileIds(
                     }
                 }
             }
-            if (res)
+            if (res && compact)
                 tilesDb->compact();
         }
     }
@@ -1190,13 +1202,14 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
 
     if  (withWindVectors)
     {
-        auto db = provider->getRasterTilesDatabase(combination);
+        auto db = provider->getRasterTilesDatabase();
         if (db && db->isOpened())
         {
             QByteArray data;
             int64_t rasterTime = 0;
             int64_t rasterTimestamp = 0;
-            if (db->retrieveTileData(tileId, zoom, dateTime, data, &rasterTime, &rasterTimestamp) && !data.isEmpty())
+            if (db->retrieveTileData(tileId, zoom, getRasterSpecification(dateTime, combination),
+                data, &rasterTime, &rasterTimestamp) && !data.isEmpty())
             {
                 int64_t geoTileTime = 0;
                 if (provider->obtainGeoTileTime(geoTileId, geoTileZoom, dateTime, geoTileTime)
@@ -1217,13 +1230,14 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
 
     for (auto band : bands)
     {
-        auto db = provider->getRasterTilesDatabase(band);
+        auto db = provider->getRasterTilesDatabase();
         if (db && db->isOpened())
         {
             QByteArray data;
             int64_t rasterTime = 0;
             int64_t rasterTimestamp = 0;
-            if (db->retrieveTileData(tileId, zoom, dateTime, data, &rasterTime, &rasterTimestamp) && !data.isEmpty())
+            if (db->retrieveTileData(tileId, zoom, getRasterSpecification(dateTime, band),
+                data, &rasterTime, &rasterTimestamp) && !data.isEmpty())
             {
                 int64_t geoTileTime = 0;
                 if (provider->obtainGeoTileTime(geoTileId, geoTileZoom, dateTime, geoTileTime)
@@ -1256,10 +1270,11 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
             const auto data = SkiaUtilities::getRawDataFromImage(image);
             if (!data.isEmpty())
             {
-                auto db = provider->getRasterTilesDatabase(combination);
+                auto db = provider->getRasterTilesDatabase();
                 if (db && db->isOpened())
                 {
-                    if (!db->storeTileData(tileId, zoom, dateTime, data, minTimeOfRaster, currentTime))
+                    if (!db->storeTileData(tileId, zoom, getRasterSpecification(dateTime, combination),
+                        data, minTimeOfRaster, currentTime))
                     {
                         LogPrintf(LogSeverityLevel::Error,
                             "Failed to store tile image of combined weather tile %dx%dx%d for time %lld",
@@ -1302,16 +1317,16 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
         // Refresh timestamp in raster cache
         for (auto band : bands)
         {
-            auto db = provider->getRasterTilesDatabase(band);
+            auto db = provider->getRasterTilesDatabase();
             if (db && db->isOpened())
-                db->updateTileTimestamp(tileId, zoom, dateTime, currentTime);
+                db->updateTileTimestamp(tileId, zoom, getRasterSpecification(dateTime, band), currentTime);
         }
 
         if (withWindVectors)
         {
-            auto db = provider->getRasterTilesDatabase(combination);
+            auto db = provider->getRasterTilesDatabase();
             if (db && db->isOpened())
-                db->updateTileTimestamp(tileId, zoom, dateTime, currentTime);
+                db->updateTileTimestamp(tileId, zoom, getRasterSpecification(dateTime, combination), currentTime);
         }
 
         auto image = createTileImage(images, bands, withWindAnimation);
@@ -1356,10 +1371,10 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
         const auto& bandImageDataEntry = itBandImageData.next();
         const auto& band = bandImageDataEntry.key();
         const auto& data = bandImageDataEntry.value();
-        auto db = provider->getRasterTilesDatabase(band);
+        auto db = provider->getRasterTilesDatabase();
         if (db && db->isOpened())
         {
-            if (!db->storeTileData(tileId, zoom, dateTime, data, geoTileTime, currentTime))
+            if (!db->storeTileData(tileId, zoom, getRasterSpecification(dateTime, band), data, geoTileTime, currentTime))
             {
                 LogPrintf(LogSeverityLevel::Error,
                     "Failed to store tile image of rasterized weather tile %dx%dx%d for time %lld",
