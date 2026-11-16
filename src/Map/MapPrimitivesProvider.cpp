@@ -43,9 +43,27 @@ bool OsmAnd::MapPrimitivesProvider::obtainTiledPrimitives(
     return _p->obtainTiledPrimitives(request, outTiledPrimitives, metric);
 }
 
+std::shared_ptr<const OsmAnd::MapObject> OsmAnd::MapPrimitivesProvider::obtainFullMapObject(
+    const std::shared_ptr<const MapObject>& mapObject) const
+{
+    return _p->obtainFullMapObject(mapObject);
+}
+
 QList<std::shared_ptr<const OsmAnd::MapObject>> OsmAnd::MapPrimitivesProvider::retreivePolygons(PointI point, ZoomLevel zoom)
 {
     return _p->retreivePolygons(point, zoom);
+}
+
+void OsmAnd::MapPrimitivesProvider::setDiskCache(const std::shared_ptr<MapTileDiskCache>& diskCache, const QString& styleKey)
+{
+    _p->setDiskCache(diskCache, styleKey);
+}
+
+std::shared_ptr<OsmAnd::MapTileDiskCache> OsmAnd::MapPrimitivesProvider::getDiskCache(
+    const ZoomLevel zoom,
+    uint64_t& outEnvironment) const
+{
+    return _p->getDiskCache(zoom, outEnvironment);
 }
 
 bool OsmAnd::MapPrimitivesProvider::supportsNaturalObtainData() const
@@ -85,6 +103,7 @@ OsmAnd::MapPrimitivesProvider::Data::Data(
     , detailedZoom(detailedZoom_)
     , mapObjectsData(mapObjectsData_)
     , primitivisedObjects(primitivisedObjects_)
+    , generationTimeMs(0.0f)
 {
 }
 
