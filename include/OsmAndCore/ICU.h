@@ -37,6 +37,14 @@ namespace OsmAnd
         OSMAND_CORE_API bool OSMAND_CORE_CALL ccontains(const QString& _base, const QString& _part);
         OSMAND_CORE_API bool OSMAND_CORE_CALL cstartsWith(const QString& _searchInParam, const QString& _theStart,
                                 bool checkBeginning, bool checkSpaces, bool equals);
+        enum class MatchResult { Unavailable, NoMatch, Match };
+        // Buffers are borrowed for the call. A null pointer is valid only with zero length/count.
+        // Invalid lengths or spans return Unavailable, even if an earlier span matches.
+        OSMAND_CORE_API MatchResult OSMAND_CORE_CALL containsAligned(const QString& locale,
+                const uint16_t* base, int baseLength, const uint16_t* part, int partLength);
+        OSMAND_CORE_API MatchResult OSMAND_CORE_CALL equalsAtAny(const QString& locale,
+                const uint16_t* base, int baseLength, const uint16_t* part, int partLength,
+                int length, const int32_t* offsets, int count);
         OSMAND_CORE_API int OSMAND_CORE_CALL ccompare(const QString& _base, const QString& _part);
         OSMAND_CORE_API QString OSMAND_CORE_CALL toNFC(const QString& s);
     }
