@@ -43,7 +43,16 @@ QReadWriteLock icuResourcesLock;
 bool g_icuInitialized = false;
 
 QReadWriteLock collatorsLock;
-QHash<Qt::HANDLE, Collator*> collatorsMap;
+struct ThreadCollators
+{
+    QMetaObject::Connection finished;
+    ~ThreadCollators() { QObject::disconnect(finished); }
+    std::unique_ptr<Collator> defaultCollator;
+    QString locale;
+    std::unique_ptr<Collator> searchCollator;
+};
+
+QHash<Qt::HANDLE, ThreadCollators*> collatorsMap;
 static std::bitset<65536> s_isUnsafeChar;
 
 // RAII wrapper for ICU Transliterator
@@ -71,40 +80,46 @@ inline bool ensureIcuInitializedLocked()
 }
 
 // Thread-safe and fast wrapper over Collator->clone() @alex-osm version
-const Collator* getThreadSafeCollator()
+const Collator* getThreadSafeCollator(const QString& locale = QString())
 {
     const auto threadId = QThread::currentThreadId();
-
     {
-        QReadLocker readLocker(&collatorsLock);
-
-        const auto citCollator = collatorsMap.constFind(threadId);
-        if (citCollator != collatorsMap.cend())
-            return *citCollator;
-    }
-
-    {
-        QWriteLocker readLocker(&collatorsLock);
-
-        if (g_pIcuCollator)
+        QReadLocker locker(&collatorsLock);
+        const auto entry = collatorsMap.value(threadId);
+        if (entry)
         {
-            const auto clone = g_pIcuCollator->clone();
-            if (clone)
-            {
-                collatorsMap.insert(threadId, clone);
-
-                QObject::connect(QThread::currentThread(), &QThread::finished, [=](){
-                    QWriteLocker writeLocker(&collatorsLock);
-
-                    if (auto collator = collatorsMap.take(threadId))
-                        delete collator;
-                });
-                return clone;
-            }
+            if (locale.isEmpty() && entry->defaultCollator)
+                return entry->defaultCollator.get();
+            if (!locale.isEmpty() && entry->locale == locale)
+                return entry->searchCollator.get();
         }
     }
 
-    return nullptr;
+    QWriteLocker locker(&collatorsLock);
+    auto entry = collatorsMap.value(threadId);
+    if (!entry)
+    {
+        entry = new ThreadCollators();
+        collatorsMap.insert(threadId, entry);
+        entry->finished = QObject::connect(QThread::currentThread(), &QThread::finished, [threadId]() {
+            QWriteLocker locker(&collatorsLock);
+            delete collatorsMap.take(threadId);
+        });
+    }
+    if (locale.isEmpty())
+    {
+        entry->defaultCollator.reset(g_pIcuCollator->clone());
+        return entry->defaultCollator.get();
+    }
+    UErrorCode status = U_ZERO_ERROR;
+    auto canonical = Locale::createCanonical(locale.toUtf8().constData());
+    std::unique_ptr<Collator> collator(Collator::createInstance(canonical, status));
+    if (U_FAILURE(status) || !collator)
+        return nullptr;
+    collator->setStrength(Collator::PRIMARY);
+    entry->locale = locale;
+    entry->searchCollator = std::move(collator);
+    return entry->searchCollator.get();
 }
 
 void initializeCharFilter()
@@ -816,6 +831,69 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
     }
     
     return result;
+}
+
+static constexpr uint16_t emptySearchText = 0;
+
+OSMAND_CORE_API OsmAnd::ICU::MatchResult OSMAND_CORE_CALL OsmAnd::ICU::equalsAtAny(
+    const QString& locale, const uint16_t* base, int baseLength, const uint16_t* part, int partLength, int length, const int32_t* offsets, int count)
+{
+    if (baseLength < 0 || partLength < 0 || (!base && baseLength) || (!part && partLength) ||
+        length < 0 || length > baseLength || count < 0 || (!offsets && count))
+        return MatchResult::Unavailable;
+    for (int i = 0; i < count; ++i)
+    {
+        if (offsets[i] < 0 || offsets[i] > baseLength - length)
+            return MatchResult::Unavailable;
+    }
+    if (!base) base = &emptySearchText;
+    if (!part) part = &emptySearchText;
+    QReadLocker locker(&icuResourcesLock);
+    const auto collator = g_icuInitialized ? getThreadSafeCollator(locale) : nullptr;
+    if (!collator)
+        return MatchResult::Unavailable;
+    UErrorCode status = U_ZERO_ERROR;
+    for (int i = 0; i < count; ++i)
+    {
+        const int start = offsets[i];
+        const auto result = collator->compare(base + start, length, part, partLength, status);
+        if (U_FAILURE(status))
+            return MatchResult::Unavailable;
+        if (result == UCOL_EQUAL)
+            return MatchResult::Match;
+    }
+    return MatchResult::NoMatch;
+}
+
+OSMAND_CORE_API OsmAnd::ICU::MatchResult OSMAND_CORE_CALL OsmAnd::ICU::containsAligned(
+    const QString& locale, const uint16_t* base, int baseLength, const uint16_t* part, int partLength)
+{
+    if (baseLength < 0 || partLength < 0 || (!base && baseLength) || (!part && partLength))
+        return MatchResult::Unavailable;
+    if (!base) base = &emptySearchText;
+    QReadLocker locker(&icuResourcesLock);
+    const auto collator = g_icuInitialized ? getThreadSafeCollator(locale) : nullptr;
+    if (!collator)
+        return MatchResult::Unavailable;
+    if (partLength == 0)
+        return MatchResult::Match;
+    UErrorCode status = U_ZERO_ERROR;
+    const int last = baseLength <= partLength ? 0 : baseLength - partLength + 1;
+    for (int64_t start = 0; start <= last; ++start)
+    {
+        const int remaining = static_cast<int>(baseLength - start);
+        const auto longest = remaining / 2 < partLength ? remaining : 2 * partLength;
+        const auto shortest = baseLength <= partLength ? remaining : 0;
+        for (int len = longest; len >= shortest; --len)
+        {
+            const auto result = collator->compare(base + start, len, part, partLength, status);
+            if (U_FAILURE(status))
+                return MatchResult::Unavailable;
+            if (result == UCOL_EQUAL)
+                return MatchResult::Match;
+        }
+    }
+    return MatchResult::NoMatch;
 }
 
 OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::ICU::ccompare(const QString& _s1, const QString& _s2)
