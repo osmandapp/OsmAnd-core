@@ -47,6 +47,7 @@ namespace OsmAnd
                 const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
             virtual ~Data();
 
+            // Present when the tile was rasterized. An image-only disk hit leaves this empty.
             std::shared_ptr<const MapPrimitivesProvider::Data> binaryMapData;
         };
 

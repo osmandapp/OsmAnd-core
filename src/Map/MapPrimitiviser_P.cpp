@@ -1442,6 +1442,18 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
     //NOTE: Since 2 tiles with same MapObject may have different set of polylines, generated from it,
     //NOTE: then set of symbols also should differ, but it won't.
     const auto pSharedSymbolGroups = cache ? cache->getSymbolsGroupsPtr(primitivisedObjects->zoom) : nullptr;
+    const auto addGroup = [&](const std::shared_ptr<const SymbolsGroup>& group, bool holdsSharedReference)
+    {
+        if (group->symbols.isEmpty())
+        {
+            primitivisedObjects->hasEmptySymbolGroups = true;
+            // The graph destructor releases references acquired from the shared cache.
+            if (!holdsSharedReference)
+                return;
+        }
+        assert(!primitivisedObjects->symbolsGroups.contains(group->sourceObject));
+        primitivisedObjects->symbolsGroups.insert(group->sourceObject, group);
+    };
     QList< proper::shared_future< std::shared_ptr<const SymbolsGroup> > > futureSharedSymbolGroups;
     for (const auto& primitivesGroup : constOf(primitivisedObjects->primitivesGroups))
     {
@@ -1472,8 +1484,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
                 if (group)
                 {
                     // Add shared group to current context
-                    assert(!primitivisedObjects->symbolsGroups.contains(group->sourceObject));
-                    primitivisedObjects->symbolsGroups.insert(group->sourceObject, qMove(group));
+                    addGroup(group, true);
                 }
                 else
                 {
@@ -1541,9 +1552,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
         if (pSharedSymbolGroups && canBeShared)
             pSharedSymbolGroups->fulfilPromiseAndReference(sharingKey, group);
         
-        // Empty groups are also inserted, to indicate that they are empty
-        assert(!primitivisedObjects->symbolsGroups.contains(group->sourceObject));
-        primitivisedObjects->symbolsGroups.insert(group->sourceObject, group);
+        addGroup(group, pSharedSymbolGroups && canBeShared);
     }
 
     int failCounter = 0;
@@ -1555,8 +1564,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             const auto group = futureGroup.get();
 
             // Add shared group to current context
-            assert(!primitivisedObjects->symbolsGroups.contains(group->sourceObject));
-            primitivisedObjects->symbolsGroups.insert(group->sourceObject, group);
+            addGroup(group, true);
         }
         else
         {

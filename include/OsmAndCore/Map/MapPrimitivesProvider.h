@@ -5,6 +5,7 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
+#include <QByteArray>
 #include <QList>
 #include <QSet>
 
@@ -20,6 +21,9 @@
 namespace OsmAnd
 {
     class MapPrimitivesProvider_P;
+    class MapRasterLayerCache;
+    class MapRasterLayerProvider_Software;
+    class MapRasterLayerProvider_Software_P;
     class OSMAND_CORE_API MapPrimitivesProvider
         : public std::enable_shared_from_this<MapPrimitivesProvider>
         , public IMapTiledDataProvider
@@ -30,6 +34,11 @@ namespace OsmAnd
         {
             Q_DISABLE_COPY_AND_MOVE(Data);
         private:
+            std::weak_ptr<MapRasterLayerCache> rasterCache;
+            QByteArray rasterCacheKey;
+
+            friend class MapPrimitivesProvider_P;
+            friend class MapRasterLayerProvider_Software_P;
         protected:
         public:
             Data(
@@ -57,6 +66,8 @@ namespace OsmAnd
 
     private:
         PrivateImplementation<MapPrimitivesProvider_P> _p;
+        friend class MapRasterLayerProvider_Software;
+        friend class MapRasterLayerProvider_Software_P;
     protected:
     public:
         MapPrimitivesProvider(

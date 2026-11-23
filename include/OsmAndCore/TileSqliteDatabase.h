@@ -16,11 +16,20 @@
 
 namespace OsmAnd
 {
+    class MapRasterLayerCache;
     class TileSqliteDatabase_P;
     class OSMAND_CORE_API TileSqliteDatabase
     {
         Q_DISABLE_COPY_AND_MOVE(TileSqliteDatabase);
     public:
+        // Optional raster-cache columns stored atomically with the image BLOB.
+        struct OSMAND_CORE_API RasterTileData
+        {
+            QByteArray primitives;
+            ZoomLevel detailedZoom = InvalidZoomLevel;
+            QByteArray cacheKey;
+        };
+
         struct OSMAND_CORE_API Meta Q_DECL_FINAL
         {
             Meta();
@@ -97,6 +106,13 @@ namespace OsmAnd
             void setTileSize(int64_t tileSize);
         };
     private:
+        friend class MapRasterLayerCache;
+        friend class TileSqliteDatabase_P;
+        enum class RasterPayload { Image, Primitives };
+        bool retrieveRasterPayload(TileId tileId, ZoomLevel zoom, int64_t specification,
+            RasterPayload payload, ZoomLevel detailedZoom, const QByteArray& cacheKey, int maxBytes,
+            QByteArray& outData, int64_t& outTimestamp) const;
+        bool close(bool compact, bool saveMeta);
         PrivateImplementation<TileSqliteDatabase_P> _p;
     protected:
     public:
@@ -118,6 +134,7 @@ namespace OsmAnd
         bool isTileTimestampSupported() const;
         bool hasTimestampColumn() const;
         bool enableTileTimestampSupport(bool force = false);
+        bool enableRasterTileSupport();
 
         bool isTileSpecificationSupported() const;
         bool hasSpecificationColumn() const;
@@ -158,8 +175,10 @@ namespace OsmAnd
         bool obtainTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
             void* outData, int64_t* pOutTime = nullptr) const;
         bool storeTileData(TileId tileId, ZoomLevel zoom, const QByteArray& data, int64_t time = 0);
+        // Dedicated caches may skip BBox recomputation; min/max zoom remains current.
         bool storeTileData(TileId tileId, ZoomLevel zoom, int64_t specification, const QByteArray& data,
-            int64_t time = 0, int64_t timestamp = 0, float minValue = 0, float maxValue = 0);
+            int64_t time = 0, int64_t timestamp = 0, float minValue = 0, float maxValue = 0,
+            const RasterTileData* pRasterData = nullptr, bool updateTileBounds = true);
         bool updateTileTimestamp(TileId tileId, ZoomLevel zoom, int64_t specification, int64_t timestamp);
         bool updateTileDataFrom(const QString& dbFilePath, const QString* specName = nullptr);
         bool removeTileData(TileId tileId, ZoomLevel zoom, int64_t specification = 0);
@@ -170,6 +189,11 @@ namespace OsmAnd
         bool removeSpecificTilesData(int64_t specification);
         bool removePreviousTilesData(int64_t specification);
         bool removeOlderTilesData(int64_t time);
+        // Limit total image, primitives and cache-key BLOB bytes, evicting least recently used tiles.
+        // When above maxBytes, reduce to targetBytes; freed pages are reused by later writes.
+        // Raster caches can defer exact scans until checkIntervalBytes have been written.
+        // Between checks the payload can exceed maxBytes by less than that interval.
+        bool trimToSize(uint64_t maxBytes, uint64_t targetBytes, uint64_t checkIntervalBytes = 0);
         bool removeTilesData(AreaI bbox31, bool strict = true);
         bool removeTilesData(AreaI bbox31, ZoomLevel zoom, bool strict = true);
 

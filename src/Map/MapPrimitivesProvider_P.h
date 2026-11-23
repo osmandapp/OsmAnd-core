@@ -46,6 +46,7 @@ namespace OsmAnd
             TileEntry(const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom)
                 : TiledEntriesCollectionEntryWithState(collection, tileId, zoom)
                 , dataIsPresent(false)
+                , detailedZoom(InvalidZoomLevel)
             {
             }
 
@@ -54,13 +55,25 @@ namespace OsmAnd
                 safeUnlink();
             }
 
+            bool matches(const std::shared_ptr<MapRasterLayerCache>& cache, const QByteArray& key,
+                const MapPrimitivesProvider::Request& request) const
+            {
+                const auto detail = request.detailedZoom == InvalidZoomLevel ? request.zoom : request.detailedZoom;
+                return rasterCache.lock() == cache && rasterCacheKey == key
+                    && (detailedZoom == detail || (!cache && request.detailedZoom == InvalidZoomLevel));
+            }
+
             bool dataIsPresent;
             std::weak_ptr<MapPrimitivesProvider::Data> dataWeakRef;
+            std::weak_ptr<MapRasterLayerCache> rasterCache;
+            QByteArray rasterCacheKey;
+            ZoomLevel detailedZoom;
 
             QReadWriteLock loadedConditionLock;
             QWaitCondition loadedCondition;
         };
         mutable TiledEntriesCollection<TileEntry> _tileReferences;
+        mutable TiledEntriesCollection<TileEntry> _symbolTileReferences;
 
         const std::shared_ptr<MapPrimitiviser::Cache> _primitiviserCache;
 
@@ -75,13 +88,31 @@ namespace OsmAnd
             std::shared_ptr<const IMapDataProvider::RetainableCacheMetadata> binaryMapRetainableCacheMetadata;
         };
     private:
-        void collectPolygons(QList<std::shared_ptr<const OsmAnd::MapObject>> & polygons, 
-                             const std::shared_ptr<const MapObject> & mapObj,
-                             const MapPrimitiviser::PrimitiveType & type, const PointI & point);
+        mutable QMutex _rasterCacheMutex;
+        std::shared_ptr<MapRasterLayerCache> _rasterCache;
+        using RasterRequest = std::shared_ptr<const MapPrimitivesProvider::Request>;
+        QMultiHash<QPair<int, quint64>, RasterRequest> _rasterHits;
+
+        bool loadPrimitives(const MapPrimitivesProvider::Request& request,
+            std::shared_ptr<MapPrimitivesProvider::Data>& outTiledPrimitives,
+            MapPrimitivesProvider_Metrics::Metric_obtainData* metric, bool allowSymbolsOnly);
     public:
+        // Retain the visible tile's detail zoom and viewport for polygon queries after an image-only hit.
+        struct RasterHitMetadata final : IMapDataProvider::RetainableCacheMetadata
+        {
+            RasterHitMetadata(const std::shared_ptr<MapPrimitivesProvider_P>& provider,
+                const std::shared_ptr<MapRasterLayerCache>& cache, const MapPrimitivesProvider::Request& request);
+            ~RasterHitMetadata() Q_DECL_OVERRIDE;
+            std::weak_ptr<MapPrimitivesProvider_P> provider;
+            RasterRequest request;
+        };
         ~MapPrimitivesProvider_P();
 
         ImplementationInterface<MapPrimitivesProvider> owner;
+
+        std::shared_ptr<MapRasterLayerCache> getRasterCache() const;
+        void setRasterCache(const std::shared_ptr<MapRasterLayerCache>& cache);
+        void clearRasterCache(const std::shared_ptr<MapRasterLayerCache>& cache);
 
         bool obtainData(
             const IMapDataProvider::Request& request,

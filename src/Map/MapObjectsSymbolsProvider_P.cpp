@@ -69,7 +69,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
     MapPrimitiviser::SymbolsGroupsCollection primitivisedSymbolsGroups;
     std::shared_ptr<const MapPresentationEnvironment> mapPresentationEnvironment;
     PointD scaleDivisor31ToPixel;
-    bool anyTilePrimitivesObtained = false;
+    bool originalTileHasEmptySymbolGroups = false;
 
     QSet<MapObject::SharingKey> addedObjectsSymbolsKeys;
     for (const auto tileId : tilesIds)
@@ -79,6 +79,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         const auto requestClone = request.clone();
         auto& tileRequest = *dynamic_cast<MapObjectsSymbolsProvider::Request*>(requestClone.get());
         tileRequest.tileId = tileId;
+        tileRequest.allowSymbolsOnly = true;
 
         std::shared_ptr<MapPrimitivesProvider::Data> tilePrimitives;
         owner->primitivesProvider->obtainTiledPrimitives(tileRequest, tilePrimitives); 
@@ -88,20 +89,28 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
         if (tilePrimitives)
         {
-            if (!anyTilePrimitivesObtained)
+            const auto& graph = *tilePrimitives->primitivisedObjects;
+            if (!mapPresentationEnvironment)
             {
-                anyTilePrimitivesObtained = true;
-                mapPresentationEnvironment = tilePrimitives->primitivisedObjects->mapPresentationEnvironment;
-                scaleDivisor31ToPixel = tilePrimitives->primitivisedObjects->scaleDivisor31ToPixel;
+                mapPresentationEnvironment = graph.mapPresentationEnvironment;
+                scaleDivisor31ToPixel = graph.scaleDivisor31ToPixel;
             }
 
-            const auto& symbolsGroups = tilePrimitives->primitivisedObjects->symbolsGroups;
+            if (originalTile)
+                originalTileHasEmptySymbolGroups = graph.hasEmptySymbolGroups;
+            const auto& symbolsGroups = graph.symbolsGroups;
             for (const auto& symbolsGroupEntry : rangeOf(constOf(symbolsGroups)))
             {
                 const auto& mapObject = symbolsGroupEntry.key();
                 const auto& symbolsGroup = symbolsGroupEntry.value();
+                if (symbolsGroup->symbols.isEmpty())
+                {
+                    // Combined requests take only on-path symbols from sibling tiles.
+                    if (originalTile)
+                        originalTileHasEmptySymbolGroups = true;
+                    continue;
+                }
 
-                MapObject::SharingKey key;
                 bool accept = false;
                 if (owner->isMetaTiled())
                 {
@@ -111,12 +120,16 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                 }
                 else
                     accept = true;
-                accept = accept && (!mapObject->obtainSharingKey(key) || !addedObjectsSymbolsKeys.contains(key));
-
                 if (!accept)
                     continue;
 
-                addedObjectsSymbolsKeys.insert(key);
+                MapObject::SharingKey key;
+                if (mapObject->obtainSharingKey(key))
+                {
+                    if (addedObjectsSymbolsKeys.contains(key))
+                        continue;
+                    addedObjectsSymbolsKeys.insert(key);
+                }
                 primitivisedSymbolsGroups.insert(mapObject, symbolsGroup);
             }
         }
@@ -128,11 +141,18 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
     if (queryController->isAborted())
         return false;
 
-    // If tile has nothing to be rasterized, mark that data is not available for it
-    if (!anyTilePrimitivesObtained || primitivisedSymbolsGroups.isEmpty())
+    const auto makeTile = [&](const QList<std::shared_ptr<MapSymbolsGroup>>& groups)
     {
-        // Mark tile as empty
-        outData.reset();
+        outData.reset(new MapObjectsSymbolsProvider::Data(
+            request.tileId, request.zoom, groups, primitivesTile,
+            primitivesTile ? new RetainableCacheMetadata(primitivesTile->retainableCacheMetadata) : nullptr));
+    };
+    if (primitivisedSymbolsGroups.isEmpty())
+    {
+        if (originalTileHasEmptySymbolGroups)
+            makeTile({});
+        else
+            outData.reset();
         return true;
     }
 
@@ -534,13 +554,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         symbolsGroups.push_back(qMove(group));
     }
 
-    // Create output tile
-    outData.reset(new MapObjectsSymbolsProvider::Data(
-        request.tileId,
-        request.zoom,
-        symbolsGroups,
-        primitivesTile,
-        primitivesTile ? new RetainableCacheMetadata(primitivesTile->retainableCacheMetadata) : nullptr));
+    makeTile(symbolsGroups);
 
     if (OsmAnd::isPerformanceMetricsEnabled())
         OsmAnd::getPerformanceMetrics().textFinish(request.tileId, request.zoom, spriteSymbols, onPathSymbols, allocationTime);

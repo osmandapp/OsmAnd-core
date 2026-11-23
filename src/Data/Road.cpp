@@ -169,7 +169,7 @@ QString OsmAnd::Road::getValue(uint32_t pnt, const QString & tag) const
 
 QString OsmAnd::Road::getRefInNativeLanguage() const
 {
-    const auto citName = captions.constFind(section->getAttributeMapping()->refAttributeId);
+    const auto citName = captions.constFind(attributeMapping->refAttributeId);
     if (citName == captions.cend())
         return {};
     return *citName;
@@ -177,8 +177,10 @@ QString OsmAnd::Road::getRefInNativeLanguage() const
 
 QString OsmAnd::Road::getRefInLanguage(const QString& lang) const
 {
-    const auto citNameAttributeId = section->getAttributeMapping()->localizedRefAttributes.constFind(&lang);
-    if (citNameAttributeId == section->getAttributeMapping()->localizedRefAttributes.cend())
+    const auto& refs =
+        std::static_pointer_cast<const ObfRoutingSectionAttributeMapping>(attributeMapping)->localizedRefAttributes;
+    const auto citNameAttributeId = refs.constFind(&lang);
+    if (citNameAttributeId == refs.cend())
         return {};
     
     const auto citCaption = captions.constFind(*citNameAttributeId);
@@ -218,12 +220,12 @@ QString OsmAnd::Road::getDestinationRef(bool direction) const
         for(int i = 0 ; i < kt.size(); i++)
         {
             auto k = kt[i];
-            if (section->getAttributeMapping()->decodeMap.size() > k)
+            if (attributeMapping->decodeMap.size() > k)
             {
-                if (refTag == section->getAttributeMapping()->decodeMap[k].tag)
+                if (refTag == attributeMapping->decodeMap[k].tag)
                     return Utilities::splitAndClearRepeats(captions[k], ";");
                 
-                if (refTagDefault == section->getAttributeMapping()->decodeMap[k].tag)
+                if (refTagDefault == attributeMapping->decodeMap[k].tag)
                     refDefault = captions[k];
             }
         }
@@ -267,7 +269,7 @@ QString OsmAnd::Road::getDestinationName(const QString lang, bool transliterate,
         for(int i = 0 ; i < kt.size(); i++)
         {
             auto k = kt[i];
-            if (section->getAttributeMapping()->decodeMap.size() > k)
+            if (attributeMapping->decodeMap.size() > k)
             {
                 QString value;
                 if (transliterate)
@@ -283,16 +285,16 @@ QString OsmAnd::Road::getDestinationName(const QString lang, bool transliterate,
                     value = captions[k];
                 }
                 
-                if (!lang.isEmpty() && destinationTagLangFB == section->getAttributeMapping()->decodeMap[k].tag)
+                if (!lang.isEmpty() && destinationTagLangFB == attributeMapping->decodeMap[k].tag)
                     return destRef1 + value;
                 
-                if (destinationTagFB == section->getAttributeMapping()->decodeMap[k].tag)
+                if (destinationTagFB == attributeMapping->decodeMap[k].tag)
                     return destRef1 + value;
             
-                if (!lang.isEmpty() && destinationTagLang == section->getAttributeMapping()->decodeMap[k].tag)
+                if (!lang.isEmpty() && destinationTagLang == attributeMapping->decodeMap[k].tag)
                     return destRef1 + value;
             
-                if (destinationTagDefault == section->getAttributeMapping()->decodeMap[k].tag)
+                if (destinationTagDefault == attributeMapping->decodeMap[k].tag)
                     destinationDefault = captions[k];
             }
         }
@@ -304,7 +306,8 @@ QString OsmAnd::Road::getDestinationName(const QString lang, bool transliterate,
 
 float OsmAnd::Road::getMaximumSpeed(bool direction) const
 {
-    const auto& decodeMap = section->getAttributeMapping()->routingDecodeMap;
+    const auto& decodeMap =
+        std::static_pointer_cast<const ObfRoutingSectionAttributeMapping>(attributeMapping)->routingDecodeMap;
     float maxSpeed = 0;
     for (int i = 0; i < attributeIds.size(); i++) {
         const auto r = decodeMap.getRef(attributeIds[i]);
@@ -330,7 +333,8 @@ float OsmAnd::Road::getMaximumSpeed(bool direction) const
 
 bool OsmAnd::Road::isDeleted() const
 {
-    const auto& decodeMap = section->getAttributeMapping()->routingDecodeMap;
+    const auto& decodeMap =
+        std::static_pointer_cast<const ObfRoutingSectionAttributeMapping>(attributeMapping)->routingDecodeMap;
     for (int i = 0; i < attributeIds.size(); i++)
     {
         const auto r = decodeMap.getRef(attributeIds[i]);

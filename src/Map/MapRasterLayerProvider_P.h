@@ -39,6 +39,9 @@ namespace OsmAnd
             std::shared_ptr<const IMapDataProvider::RetainableCacheMetadata> binaryMapPrimitivesRetainableCacheMetadata;
         };
 
+        virtual std::shared_ptr<MapRasterLayerProvider::Data> readCachedRaster(
+            const MapRasterLayerProvider::Request&) { return nullptr; }
+
         virtual sk_sp<SkImage> rasterize(
             const MapRasterLayerProvider::Request& request,
             const std::shared_ptr<const MapPrimitivesProvider::Data>& primitivesTile,

@@ -40,6 +40,7 @@ namespace OsmAnd
                 const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
             virtual ~Data();
 
+            // A SQLite hit contains symbol primitives and polygon query objects.
             std::shared_ptr<const MapPrimitivesProvider::Data> mapPrimitivesData;
         };
 
