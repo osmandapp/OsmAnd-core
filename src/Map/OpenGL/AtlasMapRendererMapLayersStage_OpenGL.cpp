@@ -354,7 +354,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*param_fs_mistConfiguration*/ +
         1 /*param_fs_mistColor*/ +
         1 /*param_fs_shadowmap*/ +
-        1 /*param_fs_shadowmapParameters*/;
+        1 /*param_fs_shadowmapParameters*/ +
+        1 /*param_fs_showShadows*/;
     const auto maxBatchSizeByUniforms =
         (gpuAPI->maxVertexUniformVectors - vsOtherUniforms - fsOtherUniforms) /
         (vsUniformsPerLayer + fsUniformsPerLayer);
@@ -1083,6 +1084,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "uniform vec4 param_fs_mistColor;                                                                                   ""\n"
             "uniform highp sampler2DShadow param_fs_shadowmap;                                                                  ""\n"
             "uniform vec3 param_fs_shadowmapParameters;                                                                         ""\n"
+            "uniform lowp float param_fs_showShadows;                                                                           ""\n"
             // Parameters: per-layer data
             "struct FsRasterLayerTile                                                                                           ""\n"
             "{                                                                                                                  ""\n"
@@ -1427,7 +1429,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         fragmentShader.append(QStringLiteral(
             "    if (param_fs_lastBatch > 0.0)                                                                                  ""\n"
             "    {                                                                                                              ""\n"
-            "        if (param_fs_shadowmapParameters.y < 1.0)                                                                  ""\n"
+            "        if (param_fs_showShadows > 0.0 && param_fs_shadowmapParameters.y < 1.0)                                    ""\n"
             "        {                                                                                                          ""\n"
             "            bool isLit = sunlight > 0.0;                                                                           ""\n"
             "            float shadow = inShadow(0.0, isLit);                                                                   ""\n"
@@ -1923,6 +1925,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         outRasterLayerTileProgram.fs.param.shadowmapParameters,
         "param_fs_shadowmapParameters",
         GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(
+        outRasterLayerTileProgram.fs.param.showShadows,
+        "param_fs_showShadows",
+        GlslVariableType::Uniform);
     outRasterLayerTileProgram.vs.param.rasterTileLayers.resize(numberOfLayersInBatch);
     outRasterLayerTileProgram.fs.param.rasterTileLayers.resize(numberOfLayersInBatch);
     for (auto layerIndex = 0u; layerIndex < numberOfLayersInBatch; layerIndex++)
@@ -2306,6 +2312,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     glUniform1f(program.fs.param.blendingEnabled, (blendingEnabled ? 1.0f : 0.0f));
     GL_CHECK_RESULT;
 
+    bool shouldElevate = withElevation && currentState.elevationDataProvider
+        && elevatedTiles.value(zoomLevel).contains(tileIdN);
+
     // Perform rendering of exact-scale, overscale and underscale cases. All cases support batching
     const auto indicesPerSubtile = _rasterTileIndicesCount / subtilesPerTile;
     for (auto subtileIndex = 0; subtileIndex < subtilesPerTile; subtileIndex++)
@@ -2341,6 +2350,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             glUniform1f(program.fs.param.elevation_scale, hasElevation ? dataScaleFactor : 0.0f);
             GL_CHECK_RESULT;
         }
+        glUniform1f(program.fs.param.showShadows, hasElevation || !shouldElevate ? 1.0f : 0.0f);
+        GL_CHECK_RESULT;
 
         for (int layerIndexInBatch = 0; layerIndexInBatch < batchedLayersCount; layerIndexInBatch++)
         {
