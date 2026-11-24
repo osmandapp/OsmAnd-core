@@ -238,6 +238,7 @@ namespace OsmAnd
                     GLlocation mistColor;
                     GLlocation shadowmap;
                     GLlocation shadowmapParameters;
+                    GLlocation showShadows;
                     // Per-tile-per-layer data
                     struct FsPerTilePerLayerParameters
                     {
