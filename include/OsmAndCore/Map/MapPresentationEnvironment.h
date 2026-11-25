@@ -98,6 +98,7 @@ namespace OsmAnd
         QHash< OsmAnd::IMapStyle::ValueDefinitionId, MapStyleConstantValue > getSettings() const;
         void setSettings(const QHash< OsmAnd::IMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings);
         void setSettings(const QHash< QString, QString >& newSettings);
+        bool isRealisticRoadsEnabled() const;
 
         void applyTo(MapStyleEvaluator& evaluator) const;
 

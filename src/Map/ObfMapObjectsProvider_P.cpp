@@ -1,5 +1,6 @@
 #include "ObfMapObjectsProvider_P.h"
 #include "ObfMapObjectsProvider.h"
+#include "MapPresentationEnvironment.h"
 
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
@@ -173,10 +174,17 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     const auto zoom = request.zoom;
     const auto tileBBox31 = Utilities::tileBoundingBox31(request.tileId, zoom);
 
+    // Realistic roads line up their lanes with the roads joined to them, so read the neighbours of a tile too
+    const bool realisticRoads = zoom >= ZoomLevel17 && owner->environment && owner->environment->isRealisticRoadsEnabled();
+    const auto queryBBox31 = realisticRoads
+        ? tileBBox31.getEnlargedBy(PointI(
+            static_cast<int32_t>(Utilities::metersToX31(REALISTIC_ROADS_NEIGHBOURS_AREA_METERS)),
+            static_cast<int32_t>(Utilities::metersToY31(REALISTIC_ROADS_NEIGHBOURS_AREA_METERS))))
+        : tileBBox31;
     // Obtain OBF data interface
     const Stopwatch obtainObfInterfaceStopwatch(metric != nullptr);
     const auto& dataInterface = owner->obfsCollection->obtainDataInterface(
-        &tileBBox31,
+        &queryBBox31,
         request.zoom,
         request.zoom,
         ObfDataTypesMask().set(ObfDataType::Map).set(ObfDataType::Routing));
@@ -408,7 +416,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             &tileSurfaceType,
             owner->environment,
             request.zoom,
-            &tileBBox31,
+            &queryBBox31,
             binaryMapObjectsFilteringFunctor,
             _binaryMapObjectsDataBlocksCache.get(),
             &referencedBinaryMapObjectsDataBlocks,
@@ -459,7 +467,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             &tileSurfaceType,
             owner->environment,
             request.zoom,
-            &tileBBox31,
+            &queryBBox31,
             binaryMapObjectsFilteringFunctor,
             _binaryMapObjectsDataBlocksCache.get(),
             &referencedBinaryMapObjectsDataBlocks,
