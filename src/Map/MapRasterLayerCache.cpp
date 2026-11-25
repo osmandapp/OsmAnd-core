@@ -472,7 +472,7 @@ OsmAnd::MapRasterLayerCache::MapRasterLayerCache(
     , _maxBytes(maxBytes)
     , _minZoom(minZoom)
     , _maxZoom(maxZoom)
-    , _database(filename)
+    , _database(filename, false)
 {
     _writePool.setMaxThreadCount(OSMAND_RASTER_CACHE_WRITE_THREADS);
     if (!_obfProvider || _environmentKey.isEmpty() || _mode != MapPrimitivesProvider::Mode::WithSurface
@@ -592,7 +592,7 @@ QByteArray OsmAnd::MapRasterLayerCache::key(const IMapTiledDataProvider::Request
     for (const auto& file : _obfProvider->obfsCollection->getObfFiles())
     {
         if (!file->obfInfo)
-            return {}; // Until source metadata is loaded, use the normal OBF path.
+            continue;
         if (!file->obfInfo->isBasemap && !file->obfInfo->isBasemapWithCoastlines
             && !file->obfInfo->containsDataFor(&bbox, MinZoomLevel, MaxZoomLevel,
             ObfDataTypesMask().set(ObfDataType::Map).set(ObfDataType::Routing)))
@@ -620,7 +620,7 @@ template<class Decode>
 bool OsmAnd::MapRasterLayerCache::readPayload(const IMapTiledDataProvider::Request& request,
     const QByteArray& cacheKey, TileSqliteDatabase::RasterPayload payload, Decode decode)
 {
-    if (cacheKey.size() != 40 || cacheKey != key(request))
+    if (cacheKey.size() != 40 || !isOpened())
         return false;
     QByteArray bytes;
     int64_t lastAccess = 0;

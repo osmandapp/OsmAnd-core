@@ -118,6 +118,7 @@ namespace OsmAnd
     public:
         TileSqliteDatabase();
         TileSqliteDatabase(QString filename);
+        TileSqliteDatabase(QString filename, bool updateBoundsAfterEviction);
         virtual ~TileSqliteDatabase();
 
         const QString filename;

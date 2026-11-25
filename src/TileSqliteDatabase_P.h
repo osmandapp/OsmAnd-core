@@ -33,6 +33,7 @@ namespace OsmAnd
         mutable QReadWriteLock _lock;
         std::shared_ptr<sqlite3> _database;
         QAtomicInt _isOpened;
+        const bool _updateBoundsAfterEviction;
 
         mutable QMutex _metaLock;
         mutable std::shared_ptr<Meta> _meta;
@@ -49,10 +50,11 @@ namespace OsmAnd
         mutable AreaI _cachedBbox31;
         mutable std::array<AreaI, ZoomLevelsCount> _cachedBboxes31;
         void resetCachedInfo();
+        void refreshBoundsAfterEviction();
         bool setMinMaxZoom(OsmAnd::ZoomLevel minZoom, OsmAnd::ZoomLevel maxZoom);
 
     protected:
-        TileSqliteDatabase_P(TileSqliteDatabase* owner);
+        TileSqliteDatabase_P(TileSqliteDatabase* owner, bool updateBoundsAfterEviction = true);
 
         bool configureStatement(bool invertedY, int invertedZoomValue, const std::shared_ptr<sqlite3_stmt>& statement,
             AreaI bbox, ZoomLevel zoom) const;

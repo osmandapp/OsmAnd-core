@@ -8,10 +8,9 @@
 
 #include "Logging.h"
 
-OsmAnd::TileSqliteDatabase_P::TileSqliteDatabase_P(
-    TileSqliteDatabase* owner_
-)
+OsmAnd::TileSqliteDatabase_P::TileSqliteDatabase_P(TileSqliteDatabase* owner_, bool updateBoundsAfterEviction)
     : _isOpened(0)
+    , _updateBoundsAfterEviction(updateBoundsAfterEviction)
     , owner(owner_)
 {
 }
@@ -2450,8 +2449,7 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData()
         }
     }
 
-    recomputeMinMaxZoom();
-    recomputeBBoxes31();
+    refreshBoundsAfterEviction();
 
     return true;
 }
@@ -2699,11 +2697,17 @@ bool OsmAnd::TileSqliteDatabase_P::trimToSize(
         }
     }
     if (removed)
+        refreshBoundsAfterEviction();
+    return true;
+}
+
+void OsmAnd::TileSqliteDatabase_P::refreshBoundsAfterEviction()
+{
+    if (_updateBoundsAfterEviction)
     {
         recomputeMinMaxZoom();
         recomputeBBoxes31();
     }
-    return true;
 }
 
 bool OsmAnd::TileSqliteDatabase_P::removeOlderTilesData(int64_t time)
@@ -2740,8 +2744,7 @@ bool OsmAnd::TileSqliteDatabase_P::removeOlderTilesData(int64_t time)
         }
     }
 
-    recomputeMinMaxZoom();
-    recomputeBBoxes31();
+    refreshBoundsAfterEviction();
 
     return true;
 }

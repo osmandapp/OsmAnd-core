@@ -7,10 +7,13 @@ OsmAnd::TileSqliteDatabase::TileSqliteDatabase()
 {
 }
 
-OsmAnd::TileSqliteDatabase::TileSqliteDatabase(
-    QString filename_
-)
-    : _p(new TileSqliteDatabase_P(this))
+OsmAnd::TileSqliteDatabase::TileSqliteDatabase(QString filename_)
+    : TileSqliteDatabase(qMove(filename_), true)
+{
+}
+
+OsmAnd::TileSqliteDatabase::TileSqliteDatabase(QString filename_, bool updateBoundsAfterEviction)
+    : _p(new TileSqliteDatabase_P(this, updateBoundsAfterEviction))
     , filename(qMove(filename_))
 {
 }
