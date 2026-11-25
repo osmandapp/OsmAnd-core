@@ -92,6 +92,7 @@
 #include <OsmAndCore/Map/IMapObjectsProvider.h>
 #include <OsmAndCore/Map/MapObjectsProvider.h>
 #include <OsmAndCore/Map/ObfMapObjectsProvider.h>
+#include <OsmAndCore/Map/MapTileDiskCache.h>
 #include <OsmAndCore/Map/MapPrimitivesProvider.h>
 #include <OsmAndCore/Map/Map3DObjectsProvider.h>
 #include <OsmAndCore/Map/MapObjectsSymbolsProvider.h>
@@ -351,6 +352,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::IMapObjectsProvider)
 	%shared_ptr(OsmAnd::ObfMapObjectsProvider)
 	%shared_ptr(OsmAnd::MapObjectsProvider)
+    %shared_ptr(OsmAnd::MapTileDiskCache)
     %shared_ptr(OsmAnd::MapPrimitivesProvider)
 	%shared_ptr(OsmAnd::Map3DObjectsProvider)
 	%shared_ptr(OsmAnd::MapObjectsSymbolsProvider)
@@ -590,6 +592,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapPrimitiviser.h>
 %include <OsmAndCore/Map/IMapObjectsProvider.h>
 %include <OsmAndCore/Map/ObfMapObjectsProvider.h>
+%include <OsmAndCore/Map/MapTileDiskCache.h>
 %include <OsmAndCore/Map/MapPrimitivesProvider.h>
 %include <OsmAndCore/Map/Map3DObjectsProvider.h>
 %include <OsmAndCore/Map/MapObjectsSymbolsProvider.h>
