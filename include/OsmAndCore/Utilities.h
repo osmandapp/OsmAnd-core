@@ -502,13 +502,13 @@ namespace OsmAnd
 
         inline static PointD getSunAnglesFromTarget31(const PointI& target31, const int64_t timeInMs = 0)
         {
-            // Approximate solar coordinates from days since J2000 (2000-01-01 12:00 UTC).
+            // Approximate solar coordinates from days since epoch (1970-01-01 00:00:00 UTC).
             const auto days = static_cast<double>(
-                (timeInMs > 0 ? timeInMs : QDateTime::currentMSecsSinceEpoch()) - 946728000000LL) / 86400000.0;
-            const auto anomaly = qDegreesToRadians(357.529 + 0.98560028 * days);
+                timeInMs > 0 ? timeInMs : QDateTime::currentMSecsSinceEpoch()) / 86400000.0;
+            const auto anomaly = qDegreesToRadians(357.8139319 + 0.98560028 * days);
             const auto longitude = qDegreesToRadians(
-                280.459 + 0.98564736 * days + 1.915 * std::sin(anomaly) + 0.020 * std::sin(2.0 * anomaly));
-            const auto obliquity = qDegreesToRadians(23.439 - 0.00000036 * days);
+                280.2280528 + 0.98564736 * days + 1.915 * std::sin(anomaly) + 0.020 * std::sin(2.0 * anomaly));
+            const auto obliquity = qDegreesToRadians(23.4429447 - 0.00000036 * days);
             const auto sinLongitude = std::sin(longitude);
             const auto sunX = std::cos(longitude);
             const auto sunY = sinLongitude * std::cos(obliquity);
@@ -516,7 +516,7 @@ namespace OsmAnd
 
             // Project the equatorial Sun vector onto the target's east, north and up axes.
             const auto location = getAnglesFrom31(target31);
-            const auto sidereal = qDegreesToRadians(280.46061837 + 360.98564736629 * days) + location.x;
+            const auto sidereal = qDegreesToRadians(100.229602247325 + 360.98564736629 * days) + location.x;
             const auto sinSidereal = std::sin(sidereal);
             const auto cosSidereal = std::cos(sidereal);
             const auto sinLatitude = std::sin(location.y);
