@@ -14,6 +14,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.FrameLayout;
 import android.os.SystemClock;
+import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 
 import net.osmand.core.jni.AreaI;
@@ -381,6 +382,8 @@ public abstract class MapRendererView extends FrameLayout {
                 setupOptions.setGpuWorkerThreadEnabled(true);
                 setupOptions.setGpuWorkerThreadPrologue(_gpuWorkerThreadPrologue.getBinding());
                 setupOptions.setGpuWorkerThreadEpilogue(_gpuWorkerThreadEpilogue.getBinding());
+                // A frame waits for the suspended worker only up to the end of a slice, not of the whole queue
+                setupOptions.setGpuWorkerUploadSliceSize(eglThread.serializeWorkerWithFrame ? 4 : 0);
             } else {
                 setupOptions.setGpuWorkerThreadEnabled(false);
                 setupOptions.setGpuWorkerThreadPrologue(null);
@@ -2496,6 +2499,8 @@ public abstract class MapRendererView extends FrameLayout {
                     setupOptions.setGpuWorkerThreadEnabled(true);
                     setupOptions.setGpuWorkerThreadPrologue(_gpuWorkerThreadPrologue.getBinding());
                     setupOptions.setGpuWorkerThreadEpilogue(_gpuWorkerThreadEpilogue.getBinding());
+                    // A frame waits for the suspended worker only up to the end of a slice, not of the whole queue
+                    setupOptions.setGpuWorkerUploadSliceSize(eglThread.serializeWorkerWithFrame ? 4 : 0);
                 } else {
                     setupOptions.setGpuWorkerThreadEnabled(false);
                     setupOptions.setGpuWorkerThreadPrologue(null);
@@ -2814,6 +2819,13 @@ public abstract class MapRendererView extends FrameLayout {
         protected volatile boolean isStopped;
         protected volatile boolean abandoned;
 
+        /**
+         * Samsung's ANGLE driver (Galaxy A56) deadlocks a frame against a GPU-worker upload in the shared
+         * context (OsmAnd-Issues#3392), so there the worker is suspended while a frame is rendered,
+         * as iOS does on ANGLE (OSMAND_SERIALIZE_WORKER_WITH_FRAME)
+         */
+        protected volatile boolean serializeWorkerWithFrame;
+
         private final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
 
         /**
@@ -3029,6 +3041,7 @@ public abstract class MapRendererView extends FrameLayout {
                                 Log.e(TAG, "Failed to set main EGL context to window active", e);
                             }
                             gl = (GL10) context.getGL();
+                            serializeWorkerWithFrame = isSamsungAngleDriver();
                         }
                         break;
 
@@ -3058,6 +3071,7 @@ public abstract class MapRendererView extends FrameLayout {
                                 Log.e(TAG, "Failed to set main EGL context to pixelbuffer active", e);
                             }
                             gl = (GL10) context.getGL();
+                            serializeWorkerWithFrame = isSamsungAngleDriver();
                         }
                         break;
 
@@ -3068,6 +3082,7 @@ public abstract class MapRendererView extends FrameLayout {
                         case RENDER_FRAME:
                         mapRenderer.update();
                         boolean isReady = mapRenderer.prepareFrame();
+                        boolean workerSuspended = isReady && serializeWorkerWithFrame && mapRenderer.suspendGpuWorker();
                         _isRenderingActive = isReady ? mapRenderer.renderFrame() : false;
                         preFlushTime = SystemClock.uptimeMillis();
                         if (isReady) {
@@ -3086,6 +3101,9 @@ public abstract class MapRendererView extends FrameLayout {
                             } else {
                                 egl.eglSwapBuffers(display, surface);
                             }
+                        }
+                        if (workerSuspended) {
+                            mapRenderer.resumeGpuWorker();
                         }
                         break;
 
@@ -3123,6 +3141,19 @@ public abstract class MapRendererView extends FrameLayout {
                 isStopped = true;
                 notifyAll();
             }
+        }
+
+        // NOTE: It's called from the EGL thread only, with the main context current
+        private boolean isSamsungAngleDriver() {
+            if (!"samsung".equalsIgnoreCase(Build.MANUFACTURER)) {
+                return false;
+            }
+            String glslVersion = GLES20.glGetString(GLES20.GL_SHADING_LANGUAGE_VERSION);
+            boolean angle = glslVersion != null && glslVersion.contains("ANGLE");
+            if (angle) {
+                Log.w(TAG, "GPU worker is suspended during frames on Samsung ANGLE driver: " + glslVersion);
+            }
+            return angle;
         }
 
         // NOTE: It's called from the EGL thread only
