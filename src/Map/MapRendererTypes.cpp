@@ -19,7 +19,7 @@ OsmAnd::SymbolSubsectionConfiguration::SymbolSubsectionConfiguration()
 OsmAnd::ElevationConfiguration::ElevationConfiguration()
     : dataScaleFactor(1.0f)
     , visualizationStyle(VisualizationStyle::HillshadeCombined)
-    , visualizationAlpha(1.0f)
+    , visualizationAlpha(0.4f)
     , visualizationZ(1.0f)
     , zScaleFactor(1.0f)
 {
