@@ -234,8 +234,8 @@ OsmAnd::MapRendererStage::StageResult OsmAnd::AtlasMapRendererSymbolsStageModel3
             internalState.worldCameraPosition.z);
         GL_CHECK_RESULT;
 
-        const auto zenith = glm::radians(currentState.elevationConfiguration.hillshadeSunAngle);
-        const auto azimuth = glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth);
+        const auto zenith = glm::radians(currentState.sunAngle);
+        const auto azimuth = glm::radians(currentState.sunAzimuth);
         const auto cosZenith = qCos(zenith);
 
         // Set light direction

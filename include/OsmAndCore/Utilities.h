@@ -500,6 +500,36 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
+        inline static PointD getSunAnglesFromTarget31(const PointI& target31, const int64_t timeInMs = 0)
+        {
+            // Approximate solar coordinates from days since J2000 (2000-01-01 12:00 UTC).
+            const auto days = static_cast<double>(
+                (timeInMs > 0 ? timeInMs : QDateTime::currentMSecsSinceEpoch()) - 946728000000LL) / 86400000.0;
+            const auto anomaly = qDegreesToRadians(357.529 + 0.98560028 * days);
+            const auto longitude = qDegreesToRadians(
+                280.459 + 0.98564736 * days + 1.915 * std::sin(anomaly) + 0.020 * std::sin(2.0 * anomaly));
+            const auto obliquity = qDegreesToRadians(23.439 - 0.00000036 * days);
+            const auto sinLongitude = std::sin(longitude);
+            const auto sunX = std::cos(longitude);
+            const auto sunY = sinLongitude * std::cos(obliquity);
+            const auto sunZ = sinLongitude * std::sin(obliquity);
+
+            // Project the equatorial Sun vector onto the target's east, north and up axes.
+            const auto location = getAnglesFrom31(target31);
+            const auto sidereal = qDegreesToRadians(280.46061837 + 360.98564736629 * days) + location.x;
+            const auto sinSidereal = std::sin(sidereal);
+            const auto cosSidereal = std::cos(sidereal);
+            const auto sinLatitude = std::sin(location.y);
+            const auto cosLatitude = std::cos(location.y);
+            const auto meridian = sunX * cosSidereal + sunY * sinSidereal;
+            const auto east = sunY * cosSidereal - sunX * sinSidereal;
+            const auto north = sunZ * cosLatitude - meridian * sinLatitude;
+            const auto up = sunZ * sinLatitude + meridian * cosLatitude;
+            const auto altitude = qRadiansToDegrees(std::asin(qBound(-1.0, up, 1.0)));
+            const auto azimuth = qRadiansToDegrees(std::atan2(east, north));
+            return PointD(altitude, azimuth < 0.0 ? azimuth + 360.0 : azimuth);
+        }
+
         inline static PointD getZoneUTM(const PointD& location, double* refLonDeg)
         {
             auto result = location * 180.0 / M_PI;

@@ -159,6 +159,9 @@ namespace OsmAnd
         bool flip;
         bool flatEarth;
         bool castSunShadows;
+        float sunAngle;
+        float sunAzimuth;
+        int64_t sunTime;
         float fieldOfView;
         float visibleDistance;
         float detailedDistance;

@@ -2188,8 +2188,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleArea(InternalState* internal
 
     if (state.castSunShadows)
     {
-        const auto sunAngle = glm::radians(state.elevationConfiguration.hillshadeSunAngle);
-        const auto sunAzimuth = glm::radians(state.elevationConfiguration.hillshadeSunAzimuth);
+        const auto sunAngle = glm::radians(state.sunAngle);
+        const auto sunAzimuth = glm::radians(state.sunAzimuth);
         const auto sinAngle = static_cast<float>(qSin(sunAngle));
         const auto cosAngle = static_cast<float>(qCos(sunAngle));
         const auto sinAzimuth = static_cast<float>(qSin(sunAzimuth));
