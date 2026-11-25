@@ -732,6 +732,8 @@ void OsmAnd::MapObject::AttributeMapping::registerMapping(
         onewayAttributeId = id;
     else if (QLatin1String("oneway") == tag && QLatin1String("-1") == value)
         onewayReverseAttributeId = id;
+    else if (QLatin1String("layer") == tag && QString::number(std::numeric_limits<int32_t>::min()) == value)
+        layerLowestAttributeId = id;
 }
 
 OsmAnd::MapObject::AttributeMapping::TagValue::TagValue()

@@ -22,6 +22,9 @@ namespace OsmAnd
     protected:
         MapRasterLayerProvider_Software_P(MapRasterLayerProvider_Software* owner);
 
+        std::shared_ptr<MapRasterLayerProvider::Data> readCachedRaster(
+            const MapRasterLayerProvider::Request& request) Q_DECL_OVERRIDE;
+
         virtual sk_sp<SkImage> rasterize(
             const MapRasterLayerProvider::Request& request,
             const std::shared_ptr<const MapPrimitivesProvider::Data>& primitivesTile,

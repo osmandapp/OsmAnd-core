@@ -20,6 +20,7 @@
 
 namespace OsmAnd
 {
+    class MapPrimitivesCache;
     class MapObject;
     class MapPresentationEnvironment;
 
@@ -84,6 +85,7 @@ namespace OsmAnd
             PrimitivesCollection polylines;
             PrimitivesCollection points;
 
+        friend class OsmAnd::MapPrimitivesCache;
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;
         };
@@ -118,6 +120,7 @@ namespace OsmAnd
             int64_t doubledArea;
             float detailScaleFactor;
 
+        friend class OsmAnd::MapPrimitivesCache;
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;
         };
@@ -143,6 +146,7 @@ namespace OsmAnd
 
             SymbolsCollection symbols;
         
+        friend class OsmAnd::MapPrimitivesCache;
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;
         };
@@ -163,6 +167,7 @@ namespace OsmAnd
             const bool canBeShared;
             const MapObject::SharingKey sharingKey;
         
+        friend class OsmAnd::MapPrimitivesCache;
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;
         };
@@ -195,6 +200,7 @@ namespace OsmAnd
             bool hasSameContentAs(const Symbol& that) const;
             bool hasDifferentContentAs(const Symbol& that) const;
 
+        friend class OsmAnd::MapPrimitivesCache;
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;
         };
@@ -241,6 +247,7 @@ namespace OsmAnd
 
             static Placement placementFromString(const QString& placement);
             
+        friend class OsmAnd::MapPrimitivesCache;
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;
         };
@@ -266,6 +273,7 @@ namespace OsmAnd
             bool hasSameContentAs(const IconSymbol& that) const;
             bool hasDifferentContentAs(const IconSymbol& that) const;
 
+        friend class OsmAnd::MapPrimitivesCache;
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;
         };
@@ -318,6 +326,13 @@ namespace OsmAnd
             // coastlines or to reverse a full-land/full-water surface classification.
             // Set by primitiviseWithSurface(); false for the other entry points.
             bool coastlineMistake;
+            // An empty symbol group makes this tile available even when it has no drawable symbols.
+            bool hasEmptySymbolGroups = false;
+
+            // SQLite symbol reads carry only the primitives reached from symbols.
+            bool isSymbolsOnly = false;
+            QList<std::shared_ptr<const MapObject>> polygonQueryObjects;
+            QList<std::shared_ptr<const MapObject>> getPolygonObjects() const;
 
             PrimitivesGroupsCollection primitivesGroups;
             PrimitivesCollection polygons;
@@ -328,6 +343,7 @@ namespace OsmAnd
 
             bool isEmpty() const;
 
+        friend class OsmAnd::MapPrimitivesCache;
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;
         };

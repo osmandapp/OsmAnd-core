@@ -1,6 +1,7 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 200
+# Bump this number each time a new source file is committed to repository,
+# source file removed from repository or renamed: 201
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -351,6 +352,7 @@ set(merged_compile_definitions_private
 )
 
 set(merged_include_dirs_private
+	${webp_include_dirs}
 	"${OSMAND_ROOT}/core/include/OsmAndCore"
 	"${OSMAND_ROOT}/core/include/OsmAndCore/Concurrent"
 	"${OSMAND_ROOT}/core/include/OsmAndCore/Data"

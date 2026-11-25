@@ -14,6 +14,7 @@
 #include "MapRendererInternalState.h"
 #include "MapRendererResourcesManager.h"
 #include "IMapLayerProvider.h"
+#include "MapRasterLayerProvider_Software.h"
 #include "IMapElevationDataProvider.h"
 #include "MapSymbol.h"
 #include "GPUAPI.h"
@@ -84,6 +85,9 @@ OsmAnd::MapRenderer::~MapRenderer()
         LogPrintf(LogSeverityLevel::Error, "MapRenderer is destroyed before releaseRendering() was called");
         assert(false);
     }
+    for (const auto& provider : constOf(_requestedState.mapLayersProviders))
+        if (const auto raster = std::dynamic_pointer_cast<MapRasterLayerProvider_Software>(provider))
+            raster->detachFromRenderer();
 }
 
 bool OsmAnd::MapRenderer::isRenderingInitialized() const
@@ -1581,6 +1585,15 @@ bool OsmAnd::MapRenderer::setMapLayerProvider(
     if (!update)
         return false;
 
+    if (!isSet || *itMapLayerProvider != provider)
+    {
+        if (isSet)
+            if (const auto raster = std::dynamic_pointer_cast<MapRasterLayerProvider_Software>(*itMapLayerProvider))
+                raster->detachFromRenderer();
+        if (const auto raster = std::dynamic_pointer_cast<MapRasterLayerProvider_Software>(provider))
+            raster->attachToRenderer();
+    }
+
     if (isSet)
         *itMapLayerProvider = provider;
     else
@@ -1601,7 +1614,12 @@ bool OsmAnd::MapRenderer::resetMapLayerProvider(const int layerIndex, bool force
     if (!update)
         return false;
 
-    _requestedState.mapLayersProviders.erase(itMapLayerProvider);
+    if (itMapLayerProvider != _requestedState.mapLayersProviders.end())
+    {
+        if (const auto raster = std::dynamic_pointer_cast<MapRasterLayerProvider_Software>(*itMapLayerProvider))
+            raster->detachFromRenderer();
+        _requestedState.mapLayersProviders.erase(itMapLayerProvider);
+    }
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::MapLayers_Providers);
 

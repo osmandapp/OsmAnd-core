@@ -3,6 +3,7 @@
 
 #include "MapPresentationEnvironment.h"
 #include "MapObject.h"
+#include "ObfMapObject.h"
 
 OsmAnd::MapPrimitiviser::MapPrimitiviser(const std::shared_ptr<const MapPresentationEnvironment>& environment_)
     : _p(new MapPrimitiviser_P(this))
@@ -481,7 +482,33 @@ OsmAnd::MapPrimitiviser::PrimitivisedObjects::~PrimitivisedObjects()
     }
 }
 
+QList<std::shared_ptr<const OsmAnd::MapObject>> OsmAnd::MapPrimitiviser::PrimitivisedObjects::getPolygonObjects() const
+{
+    if (isSymbolsOnly)
+        return polygonQueryObjects;
+
+    QList<std::shared_ptr<const MapObject>> objects;
+    QSet<const MapObject*> seen;
+    // A polygon primitive can also appear in the polyline draw list.
+    for (const auto* drawList : { &polygons, &polylines })
+    {
+        for (const auto& primitive : *drawList)
+        {
+            if (!primitive || primitive->type != PrimitiveType::Polygon)
+                continue;
+            const auto& object = primitive->sourceObject;
+            if (dynamic_cast<const ObfMapObject*>(object.get()) && !seen.contains(object.get()))
+            {
+                seen.insert(object.get());
+                objects.push_back(object);
+            }
+        }
+    }
+    return objects;
+}
+
 bool OsmAnd::MapPrimitiviser::PrimitivisedObjects::isEmpty() const
 {
-    return primitivesGroups.isEmpty() && symbolsGroups.isEmpty();
+    return primitivesGroups.isEmpty() && symbolsGroups.isEmpty()
+        && !hasEmptySymbolGroups && polygonQueryObjects.isEmpty();
 }

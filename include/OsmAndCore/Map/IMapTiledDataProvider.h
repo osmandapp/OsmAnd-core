@@ -52,6 +52,11 @@ namespace OsmAnd
 
         protected:
             Request(const Request& that);
+        private:
+            // Set only on the symbols provider's private request to the primitives provider.
+            bool allowSymbolsOnly = false;
+            friend class MapObjectsSymbolsProvider_P;
+            friend class MapPrimitivesProvider_P;
         };
 
     private:

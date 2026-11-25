@@ -14,6 +14,7 @@
 
 namespace OsmAnd
 {
+    class MapPrimitivesCache;
     class ObfMapSectionInfo;
     class ObfMapSectionLevel;
     class ObfMapSectionReader_P;
@@ -45,6 +46,7 @@ namespace OsmAnd
         QString debugInfo(long id, bool all) const;
         virtual bool isDeleted() const;
 
+    friend class OsmAnd::MapPrimitivesCache;
     friend class OsmAnd::ObfMapSectionReader_P;
     };
 }

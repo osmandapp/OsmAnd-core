@@ -53,6 +53,16 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
 
     const Stopwatch totalStopwatch(metric != nullptr);
 
+    if (auto cached = readCachedRaster(request))
+    {
+        if (queryController->isAborted())
+            return false;
+        outData = std::move(cached);
+        if (metric)
+            metric->elapsedTime += totalStopwatch.elapsed();
+        return true;
+    }
+
     // Obtain offline map primitives tile
     std::shared_ptr<MapPrimitivesProvider::Data> primitivesTile;
     owner->primitivesProvider->obtainTiledPrimitives(

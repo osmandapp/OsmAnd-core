@@ -330,7 +330,6 @@ file(GLOB src_codec "upstream.patched/src/codec/*")
 file(GLOB src_codec__remove
 	"upstream.patched/src/codec/SkAndroid*"
 	"upstream.patched/src/codec/SkRaw*"
-	"upstream.patched/src/codec/SkWebp*"
 	"upstream.patched/src/codec/SkWuffs*"
 )
 list(REMOVE_ITEM src_codec ${src_codec__remove})
@@ -450,6 +449,7 @@ add_library(skia_static STATIC
 	${src_utils_debugger}
 	${target_specific_sources}
 	${thirdparty_skcms}
+	${webp_sources}
 )
 
 add_dependencies(skia_static
@@ -467,6 +467,9 @@ target_compile_definitions(skia_static
 		-DSK_CODEC_DECODES_PNG
 		-DSK_ENCODE_JPEG
 		-DSK_ENCODE_PNG
+		-DSK_CODEC_DECODES_WEBP
+		-DSK_ENCODE_WEBP
+		${webp_definitions}
 		${target_specific_definitions_private}
 	PUBLIC
 		-DSK_RELEASE
@@ -491,6 +494,7 @@ target_include_directories(skia_static
 		#"upstream.patched/src/gpu"
 		#"upstream.patched/src/opts"
 		${target_specific_include_dirs_private}
+		${webp_include_dirs}
 	PUBLIC
 		"upstream.patched"
 		"upstream.patched/include/core"

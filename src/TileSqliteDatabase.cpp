@@ -7,10 +7,13 @@ OsmAnd::TileSqliteDatabase::TileSqliteDatabase()
 {
 }
 
-OsmAnd::TileSqliteDatabase::TileSqliteDatabase(
-    QString filename_
-)
-    : _p(new TileSqliteDatabase_P(this))
+OsmAnd::TileSqliteDatabase::TileSqliteDatabase(QString filename_)
+    : TileSqliteDatabase(qMove(filename_), true)
+{
+}
+
+OsmAnd::TileSqliteDatabase::TileSqliteDatabase(QString filename_, bool updateBoundsAfterEviction)
+    : _p(new TileSqliteDatabase_P(this, updateBoundsAfterEviction))
     , filename(qMove(filename_))
 {
 }
@@ -32,6 +35,11 @@ bool OsmAnd::TileSqliteDatabase::open(const bool withSpecification /* = false */
 bool OsmAnd::TileSqliteDatabase::close(bool compact /* = true */)
 {
     return _p->close(compact);
+}
+
+bool OsmAnd::TileSqliteDatabase::close(bool compact, bool saveMeta)
+{
+    return _p->close(compact, saveMeta);
 }
 
 bool OsmAnd::TileSqliteDatabase::isOnlineTileSource() const
@@ -67,6 +75,11 @@ bool OsmAnd::TileSqliteDatabase::hasTimestampColumn() const
 bool OsmAnd::TileSqliteDatabase::enableTileTimestampSupport(bool force /* = false */)
 {
     return _p->enableTileTimestampSupport(force);
+}
+
+bool OsmAnd::TileSqliteDatabase::enableRasterTileSupport()
+{
+    return _p->enableRasterTileSupport();
 }
 
 bool OsmAnd::TileSqliteDatabase::isTileSpecificationSupported() const
@@ -203,6 +216,14 @@ bool OsmAnd::TileSqliteDatabase::retrieveTileData(
     return _p->retrieveTileData(tileId, zoom, specification, outData, pOutTime, pOutTimestamp);
 }
 
+bool OsmAnd::TileSqliteDatabase::retrieveRasterPayload(
+    TileId tileId, ZoomLevel zoom, int64_t specification, RasterPayload payload,
+    ZoomLevel detailedZoom, const QByteArray& cacheKey, int maxBytes, QByteArray& outData, int64_t& outTimestamp) const
+{
+    return _p->retrieveRasterPayload(tileId, zoom, specification, payload, detailedZoom, cacheKey, maxBytes,
+        outData, outTimestamp);
+}
+
 bool OsmAnd::TileSqliteDatabase::obtainTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
@@ -249,9 +270,12 @@ bool OsmAnd::TileSqliteDatabase::storeTileData(
     int64_t time /* = 0*/,
     int64_t timestamp /* = 0*/,
     float minValue /* = 0*/,
-    float maxValue /* = 0*/)
+    float maxValue /* = 0*/,
+    const RasterTileData* pRasterData /* = nullptr */,
+    bool updateTileBounds /* = true */)
 {
-    return _p->storeTileData(tileId, zoom, specification, data, time, timestamp, minValue, maxValue);
+    return _p->storeTileData(tileId, zoom, specification, data, time, timestamp,
+        minValue, maxValue, pRasterData, updateTileBounds);
 }
 
 bool OsmAnd::TileSqliteDatabase::updateTileTimestamp(
@@ -313,6 +337,12 @@ bool OsmAnd::TileSqliteDatabase::removePreviousTilesData(int64_t specification)
 bool OsmAnd::TileSqliteDatabase::removeOlderTilesData(int64_t time)
 {
     return _p->removeOlderTilesData(time);
+}
+
+bool OsmAnd::TileSqliteDatabase::trimToSize(
+    uint64_t maxBytes, uint64_t targetBytes, uint64_t checkIntervalBytes /* = 0 */)
+{
+    return _p->trimToSize(maxBytes, targetBytes, checkIntervalBytes);
 }
 
 bool OsmAnd::TileSqliteDatabase::removeTilesData(AreaI bbox31, bool strict /* = true */ )

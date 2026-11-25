@@ -8,10 +8,9 @@
 
 #include "Logging.h"
 
-OsmAnd::TileSqliteDatabase_P::TileSqliteDatabase_P(
-    TileSqliteDatabase* owner_
-)
+OsmAnd::TileSqliteDatabase_P::TileSqliteDatabase_P(TileSqliteDatabase* owner_, bool updateBoundsAfterEviction)
     : _isOpened(0)
+    , _updateBoundsAfterEviction(updateBoundsAfterEviction)
     , owner(owner_)
 {
 }
@@ -167,18 +166,18 @@ bool OsmAnd::TileSqliteDatabase_P::open(const bool withSpecification /* = false 
     return true;
 }
 
-bool OsmAnd::TileSqliteDatabase_P::close(bool compact /* = true */)
+bool OsmAnd::TileSqliteDatabase_P::close(bool compact, bool saveMeta)
 {
     if (isOpened())
     {
-        bool onlineTileSource = isOnlineTileSource();
+        const bool onlineTileSource = compact && isOnlineTileSource();
         
         QWriteLocker scopedLocker(&_lock);
 
         if (!isOpened())
             return true;
 
-        if (_meta && !writeMeta(_database, *_meta))
+        if (saveMeta && _meta && !writeMeta(_database, *_meta))
         {
             return false;
         }
@@ -453,6 +452,54 @@ bool OsmAnd::TileSqliteDatabase_P::enableTileTimestampSupport(bool force /* = fa
 
     _cachedIsTileTimestampSupported.storeRelease(1);
 
+    return true;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::enableRasterTileSupport()
+{
+    if (!isOpened())
+        return false;
+    QWriteLocker lock(&_lock);
+    if (!execStatement(_database, QStringLiteral("SELECT primitives FROM tiles LIMIT 0"), true)
+        && !execStatement(_database, QStringLiteral("ALTER TABLE tiles ADD COLUMN primitives BLOB")))
+        return false;
+    if (!execStatement(_database, QStringLiteral("SELECT detailed_zoom FROM tiles LIMIT 0"), true)
+        && !execStatement(_database, QStringLiteral("ALTER TABLE tiles ADD COLUMN detailed_zoom INTEGER")))
+        return false;
+    if (!execStatement(_database, QStringLiteral("SELECT cache_key FROM tiles LIMIT 0"), true)
+        && !execStatement(_database, QStringLiteral("ALTER TABLE tiles ADD COLUMN cache_key BLOB")))
+        return false;
+
+    auto initialized = prepareStatement(_database,
+        QStringLiteral("SELECT 1 FROM raster_tile_size WHERE id=1 AND "
+            "(SELECT COUNT(*) FROM sqlite_master WHERE type='trigger' AND name IN "
+            "('raster_tile_size_insert','raster_tile_size_update'))=2"), true);
+    if (initialized && stepStatement(initialized) > 0)
+        return true;
+    initialized.reset();
+    if (!execStatement(_database, QStringLiteral("BEGIN IMMEDIATE")))
+        return false;
+    const auto bytes = QStringLiteral("COALESCE(length(image),0) + COALESCE(length(primitives),0)"
+        " + COALESCE(length(cache_key),0)");
+    const auto added = QStringLiteral("COALESCE(length(NEW.image),0) + COALESCE(length(NEW.primitives),0)"
+        " + COALESCE(length(NEW.cache_key),0)");
+    // Count all newly written bytes, including replacements. Ignoring removed bytes
+    // keeps this an upper bound even when SQLite does not fire REPLACE delete triggers.
+    const bool initializedSize = execStatement(_database,
+        QStringLiteral("CREATE TABLE IF NOT EXISTS raster_tile_size ("
+            "id INTEGER PRIMARY KEY CHECK(id=1), size INTEGER NOT NULL, added INTEGER NOT NULL)"))
+        && execStatement(_database, QStringLiteral("INSERT OR REPLACE INTO raster_tile_size "
+            "SELECT 1, COALESCE(SUM(%1),0), 0 FROM tiles").arg(bytes))
+        && execStatement(_database, QStringLiteral("CREATE TRIGGER IF NOT EXISTS raster_tile_size_insert "
+            "AFTER INSERT ON tiles BEGIN UPDATE raster_tile_size SET added=added+(%1) WHERE id=1; END").arg(added))
+        && execStatement(_database, QStringLiteral("CREATE TRIGGER IF NOT EXISTS raster_tile_size_update "
+            "AFTER UPDATE OF image,primitives,cache_key ON tiles BEGIN "
+            "UPDATE raster_tile_size SET added=added+(%1) WHERE id=1; END").arg(added));
+    if (!initializedSize || !execStatement(_database, QStringLiteral("COMMIT")))
+    {
+        execStatement(_database, QStringLiteral("ROLLBACK"));
+        return false;
+    }
     return true;
 }
 
@@ -1027,14 +1074,13 @@ bool OsmAnd::TileSqliteDatabase_P::storeMeta(const OsmAnd::TileSqliteDatabase_P:
     {
         QMutexLocker scopedLocker(&_metaLock);
 
-        _meta = std::make_shared<Meta>(meta);
-
         QWriteLocker scopedLocker2(&_lock);
 
         if (!writeMeta(_database, meta))
         {
             return false;
         }
+        _meta = std::make_shared<Meta>(meta);
         resetCachedInfo();
     }
 
@@ -1535,7 +1581,7 @@ bool OsmAnd::TileSqliteDatabase_P::retrieveTileData(
             if (timestampSupported && pOutTimestamp)
             {
                 int64_t timestamp = 0;
-                const auto timestampValue = readStatementValue(statement, 2);
+                const auto timestampValue = readStatementValue(statement, 1 + int(timeSupported));
                 if (!timestampValue.isNull())
                 {
                     bool ok = false;
@@ -1552,6 +1598,43 @@ bool OsmAnd::TileSqliteDatabase_P::retrieveTileData(
     }
 
     return true;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::retrieveRasterPayload(
+    TileId tileId, ZoomLevel zoom, int64_t specification, TileSqliteDatabase::RasterPayload payload,
+    ZoomLevel detailedZoom, const QByteArray& cacheKey, int maxBytes, QByteArray& outData, int64_t& outTimestamp) const
+{
+    if (!isOpened() || zoom < getMinZoom() || zoom > getMaxZoom())
+        return false;
+    const auto invertedY = isInvertedY();
+    const auto invertedZoom = getInvertedZoomValue();
+    const auto column = payload == TileSqliteDatabase::RasterPayload::Image
+        ? QStringLiteral("image") : QStringLiteral("primitives");
+
+    QReadLocker lock(&_lock);
+    const auto statement = prepareStatement(_database, QStringLiteral(
+        "SELECT %1, timestamp FROM tiles WHERE x=:x AND y=:y AND z=:z AND s=:s "
+        "AND detailed_zoom=:detail AND cache_key=:key AND typeof(%1)='blob' "
+        "AND length(%1) BETWEEN 1 AND :max").arg(column));
+    if (!statement || !configureStatement(invertedY, invertedZoom, statement, tileId, zoom, specification)
+        || !bindStatementParameter(statement, QStringLiteral(":detail"), int(detailedZoom))
+        || !bindStatementParameter(statement, QStringLiteral(":key"), cacheKey)
+        || !bindStatementParameter(statement, QStringLiteral(":max"), maxBytes))
+        return false;
+    const auto result = stepStatement(statement);
+    if (result < 0)
+        LogPrintf(LogSeverityLevel::Error, "Failed to read raster payload for %dx%d@%d: %s",
+            tileId.x, tileId.y, zoom, sqlite3_errmsg(_database.get()));
+    if (result <= 0)
+        return false;
+
+    const auto timestamp = readStatementValue(statement, 1);
+    bool ok = false;
+    outTimestamp = timestamp.toLongLong(&ok);
+    if (!ok && !timestamp.isNull())
+        return false;
+    outData = readStatementValue(statement, 0).toByteArray();
+    return !outData.isEmpty();
 }
 
 bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
@@ -1892,8 +1975,14 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
     int64_t time /* = 0 */,
     int64_t timestamp /* = 0 */,
     float minValue /* = 0 */,
-    float maxValue /* = 0 */)
+    float maxValue /* = 0 */,
+    const RasterTileData* pRasterData /* = nullptr */,
+    bool updateTileBounds /* = true */)
 {
+    if (pRasterData && (data.isEmpty() || pRasterData->primitives.isEmpty()
+        || pRasterData->cacheKey.size() != 32
+        || pRasterData->detailedZoom < MinZoomLevel || pRasterData->detailedZoom > MaxZoomLevel))
+        return false;
     if (!isOpened())
     {
         return false;
@@ -1929,6 +2018,11 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
             head += QStringLiteral(", minvalue, maxvalue");
             tail += QStringLiteral(", :minvalue, :maxvalue");
         }
+        if (pRasterData)
+        {
+            head += QStringLiteral(", primitives, detailed_zoom, cache_key");
+            tail += QStringLiteral(", :primitives, :detailed_zoom, :cache_key");
+        }
         const auto statement = prepareStatement(_database, head + tail + QStringLiteral(")"));
         if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileId, zoom, specification))
         {
@@ -1952,6 +2046,10 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
                 specification);
             return false;
         }
+        if (pRasterData && (!bindStatementParameter(statement, QStringLiteral(":primitives"), pRasterData->primitives)
+            || !bindStatementParameter(statement, QStringLiteral(":detailed_zoom"), int(pRasterData->detailedZoom))
+            || !bindStatementParameter(statement, QStringLiteral(":cache_key"), pRasterData->cacheKey)))
+            return false;
         if (timeSupported && !bindStatementParameter(
             statement, QStringLiteral(":time"), QVariant(static_cast<qint64>(time))))
         {
@@ -2019,7 +2117,8 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
     {
         recomputeMinMaxZoom();
     }
-    recomputeBBox31(zoom);
+    if (updateTileBounds)
+        recomputeBBox31(zoom);
 
     return true;
 }
@@ -2100,6 +2199,10 @@ bool OsmAnd::TileSqliteDatabase_P::updateTileDataFrom(
 
     {
         QWriteLocker scopedLocker(&_lock);
+
+        // This import path only copies image/time; raster companion columns must stay in sync.
+        if (execStatement(_database, QStringLiteral("SELECT primitives FROM tiles LIMIT 0"), true))
+            return false;
 
         const auto statement = prepareStatement(_database, QStringLiteral("ATTACH DATABASE :importdb AS importdb"));
         if (!statement
@@ -2346,8 +2449,7 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData()
         }
     }
 
-    recomputeMinMaxZoom();
-    recomputeBBoxes31();
+    refreshBoundsAfterEviction();
 
     return true;
 }
@@ -2516,6 +2618,98 @@ bool OsmAnd::TileSqliteDatabase_P::removePreviousTilesData(int64_t specification
     return true;
 }
 
+bool OsmAnd::TileSqliteDatabase_P::trimToSize(
+    uint64_t maxBytes, uint64_t targetBytes, uint64_t checkIntervalBytes /* = 0 */)
+{
+    if (!isOpened() || targetBytes > maxBytes)
+        return false;
+    const auto order = isTileTimestampSupported() ? QStringLiteral("timestamp, rowid")
+        : (isTileTimeSupported() ? QStringLiteral("time, rowid") : QStringLiteral("rowid"));
+    bool removed = false;
+    {
+        QWriteLocker lock(&_lock);
+        const bool raster = execStatement(_database,
+            QStringLiteral("SELECT primitives, cache_key FROM tiles LIMIT 0"), true);
+        const auto bytes = raster
+            ? QStringLiteral("COALESCE(length(image),0) + COALESCE(length(primitives),0)"
+                " + COALESCE(length(cache_key),0)")
+            : QStringLiteral("COALESCE(length(image),0)");
+        bool tracked = false;
+        if (raster)
+        {
+            auto accounting = prepareStatement(_database,
+                QStringLiteral("SELECT size,added FROM raster_tile_size WHERE id=1"), true);
+            tracked = accounting && stepStatement(accounting) > 0;
+            if (tracked && sqlite3_column_type(accounting.get(), 0) == SQLITE_INTEGER
+                && sqlite3_column_type(accounting.get(), 1) == SQLITE_INTEGER)
+            {
+                const auto size = sqlite3_column_int64(accounting.get(), 0);
+                const auto added = sqlite3_column_int64(accounting.get(), 1);
+                if (size >= 0 && added >= 0 && uint64_t(size) <= maxBytes
+                    && (uint64_t(added) <= maxBytes - uint64_t(size)
+                        || uint64_t(added) < checkIntervalBytes))
+                    return true;
+            }
+        }
+        // Reconcile and reset the shared counter in the same write transaction as
+        // eviction, so concurrent connections cannot lose newly accounted writes.
+        if (!execStatement(_database, QStringLiteral("BEGIN IMMEDIATE")))
+            return false;
+        const bool trimmed = [&]()
+        {
+            auto total = prepareStatement(_database,
+                QStringLiteral("SELECT COALESCE(SUM(%1), 0) FROM tiles").arg(bytes));
+            if (!total || stepStatement(total) <= 0)
+                return false;
+            auto size = readStatementValue(total, 0).toULongLong();
+            total.reset();
+            if (size > maxBytes)
+            {
+                auto oldest = prepareStatement(_database,
+                    QStringLiteral("SELECT rowid, %1 FROM tiles ORDER BY ").arg(bytes) + order);
+                if (!oldest)
+                    return false;
+                QStringList rows;
+                while (size > targetBytes)
+                {
+                    if (stepStatement(oldest) <= 0)
+                        return false;
+                    rows.append(QString::number(readStatementValue(oldest, 0).toLongLong()));
+                    size -= qMin(size, readStatementValue(oldest, 1).toULongLong());
+                }
+                oldest.reset();
+                // Keep SQL statements bounded even for caches containing many tiny tiles.
+                for (int i = 0; i < rows.size(); i += 256)
+                {
+                    if (!execStatement(_database, QStringLiteral("DELETE FROM tiles WHERE rowid IN (%1)")
+                        .arg(rows.mid(i, 256).join(QStringLiteral(",")))))
+                        return false;
+                }
+                removed = true;
+            }
+            return !tracked || execStatement(_database,
+                QStringLiteral("UPDATE raster_tile_size SET size=%1,added=0 WHERE id=1").arg(size));
+        }();
+        if (!trimmed || !execStatement(_database, QStringLiteral("COMMIT")))
+        {
+            execStatement(_database, QStringLiteral("ROLLBACK"));
+            return false;
+        }
+    }
+    if (removed)
+        refreshBoundsAfterEviction();
+    return true;
+}
+
+void OsmAnd::TileSqliteDatabase_P::refreshBoundsAfterEviction()
+{
+    if (_updateBoundsAfterEviction)
+    {
+        recomputeMinMaxZoom();
+        recomputeBBoxes31();
+    }
+}
+
 bool OsmAnd::TileSqliteDatabase_P::removeOlderTilesData(int64_t time)
 {
     if (!isOpened())
@@ -2550,8 +2744,7 @@ bool OsmAnd::TileSqliteDatabase_P::removeOlderTilesData(int64_t time)
         }
     }
 
-    recomputeMinMaxZoom();
-    recomputeBBoxes31();
+    refreshBoundsAfterEviction();
 
     return true;
 }
@@ -3004,6 +3197,19 @@ std::shared_ptr<OsmAnd::TileSqliteDatabase_P::Meta> OsmAnd::TileSqliteDatabase_P
 }
 
 bool OsmAnd::TileSqliteDatabase_P::writeMeta(
+    const std::shared_ptr<sqlite3>& db,
+    const OsmAnd::TileSqliteDatabase_P::Meta& meta)
+{
+    // Keep the cache format marker intact if writing the replacement info table fails.
+    if (!execStatement(db, QStringLiteral("BEGIN IMMEDIATE")))
+        return false;
+    if (replaceMetaTable(db, meta) && execStatement(db, QStringLiteral("COMMIT")))
+        return true;
+    execStatement(db, QStringLiteral("ROLLBACK"));
+    return false;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::replaceMetaTable(
     const std::shared_ptr<sqlite3>& db,
     const OsmAnd::TileSqliteDatabase_P::Meta& meta)
 {

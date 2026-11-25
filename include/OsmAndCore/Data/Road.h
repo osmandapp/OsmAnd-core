@@ -16,6 +16,7 @@
 
 namespace OsmAnd
 {
+    class MapPrimitivesCache;
     class ObfRoutingSectionReader_P;
 
     enum class RoadDirection : int32_t
@@ -75,6 +76,7 @@ namespace OsmAnd
         const bool hasGeocodingAccess() const;
         QVector<float> calculateHeightArray() const;
 
+    friend class OsmAnd::MapPrimitivesCache;
     friend class OsmAnd::ObfRoutingSectionReader_P;
     };
 }

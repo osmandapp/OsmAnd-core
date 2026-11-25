@@ -27,11 +27,13 @@ namespace OsmAnd
     {
     public:
         typedef TileSqliteDatabase::Meta Meta;
+        typedef TileSqliteDatabase::RasterTileData RasterTileData;
 
     private:
         mutable QReadWriteLock _lock;
         std::shared_ptr<sqlite3> _database;
         QAtomicInt _isOpened;
+        const bool _updateBoundsAfterEviction;
 
         mutable QMutex _metaLock;
         mutable std::shared_ptr<Meta> _meta;
@@ -48,10 +50,11 @@ namespace OsmAnd
         mutable AreaI _cachedBbox31;
         mutable std::array<AreaI, ZoomLevelsCount> _cachedBboxes31;
         void resetCachedInfo();
+        void refreshBoundsAfterEviction();
         bool setMinMaxZoom(OsmAnd::ZoomLevel minZoom, OsmAnd::ZoomLevel maxZoom);
 
     protected:
-        TileSqliteDatabase_P(TileSqliteDatabase* owner);
+        TileSqliteDatabase_P(TileSqliteDatabase* owner, bool updateBoundsAfterEviction = true);
 
         bool configureStatement(bool invertedY, int invertedZoomValue, const std::shared_ptr<sqlite3_stmt>& statement,
             AreaI bbox, ZoomLevel zoom) const;
@@ -77,6 +80,7 @@ namespace OsmAnd
 
         static std::shared_ptr<Meta> readMeta(const std::shared_ptr<sqlite3>& db);
         static bool writeMeta(const std::shared_ptr<sqlite3>& db, const Meta& meta);
+        static bool replaceMetaTable(const std::shared_ptr<sqlite3>& db, const Meta& meta);
 
         static bool vacuum(const std::shared_ptr<sqlite3>& db);
 
@@ -89,7 +93,7 @@ namespace OsmAnd
 
         bool isOpened() const;
         bool open(const bool withSpecification = false);
-        bool close(bool compact = true);
+        bool close(bool compact = true, bool saveMeta = true);
 
         bool isTileTimeSupported() const;
         bool hasTimeColumn() const;
@@ -98,6 +102,7 @@ namespace OsmAnd
         bool isTileTimestampSupported() const;
         bool hasTimestampColumn() const;
         bool enableTileTimestampSupport(bool force = false);
+        bool enableRasterTileSupport();
 
         bool isTileSpecificationSupported() const;
         bool hasSpecificationColumn() const;
@@ -134,13 +139,17 @@ namespace OsmAnd
         bool retrieveTileData(TileId tileId, ZoomLevel zoom, QByteArray& outData, int64_t* pOutTime = nullptr) const;
         bool retrieveTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
             QByteArray& outData, int64_t* pOutTime = nullptr, int64_t* pOutTimestamp = nullptr) const;
+        bool retrieveRasterPayload(TileId tileId, ZoomLevel zoom, int64_t specification,
+            TileSqliteDatabase::RasterPayload payload, ZoomLevel detailedZoom, const QByteArray& cacheKey,
+            int maxBytes, QByteArray& outData, int64_t& outTimestamp) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, void* outData, int64_t* pOutTime = nullptr) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, void* outData, float& minValue, float& maxValue) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
             void* outData, int64_t* pOutTime = nullptr) const;
         bool storeTileData(TileId tileId, ZoomLevel zoom, const QByteArray& data, int64_t time = 0);
         bool storeTileData(TileId tileId, ZoomLevel zoom, int64_t specification, const QByteArray& data,
-            int64_t time = 0, int64_t timestamp = 0, float minValue = 0, float maxValue = 0);
+            int64_t time = 0, int64_t timestamp = 0, float minValue = 0, float maxValue = 0,
+            const RasterTileData* pRasterData = nullptr, bool updateTileBounds = true);
         bool updateTileTimestamp(TileId tileId, ZoomLevel zoom, int64_t specification, int64_t timestamp);
         bool updateTileDataFrom(const QString& dbFilePath, const QString* specName = nullptr);
         bool removeTileData(TileId tileId, ZoomLevel zoom, int64_t specification = 0);
@@ -151,6 +160,7 @@ namespace OsmAnd
         bool removeSpecificTilesData(int64_t specification);
         bool removePreviousTilesData(int64_t specification);
         bool removeOlderTilesData(int64_t time);
+        bool trimToSize(uint64_t maxBytes, uint64_t targetBytes, uint64_t checkIntervalBytes = 0);
         bool removeTilesData(AreaI bbox31, bool strict = true);
         bool removeTilesData(AreaI bbox31, ZoomLevel zoom, bool strict = true);
         
