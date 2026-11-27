@@ -138,7 +138,9 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
                 REPEAT_UNTIL(tileEntry->loadedCondition.wait(&tileEntry->loadedConditionLock));
         }
 
-        if (!tileEntry->dataIsPresent)
+        // A tile entry that is not loaded was cancelled by the request that was loading it. It says nothing about the
+        // data, so it must be loaded again: reporting it as a tile without data left the area without labels
+        if (tileEntry->getState() == TileState::Loaded && !tileEntry->dataIsPresent)
         {
             // If there was no data, return same
             outTiledPrimitives.reset();
@@ -158,9 +160,11 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
                     outTiledPrimitives.reset();
             }
 
-            // Otherwise consider this tile entry as expired, remove it from collection (it's safe to do that right now)
-            // This will enable creation of new entry on next loop cycle
-            _tileReferences.removeEntry(request.tileId, request.zoom);
+            // Otherwise consider this tile entry as expired or cancelled, remove it from collection (it's safe to do
+            // that right now). This will enable creation of new entry on next loop cycle. Remove only this entry:
+            // another request may have already replaced it
+            _tileReferences.removeEntry(request.tileId, request.zoom,
+                [&tileEntry](const std::shared_ptr<TileEntry>& entry) { return entry == tileEntry; });
             tileEntry.reset();
 
             if (queryController->isAborted())
