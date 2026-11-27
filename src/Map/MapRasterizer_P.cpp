@@ -217,6 +217,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
     int valueDefId_cap = -1;
     int valueDefId_join = -1;
     int valueDefId_pathEffect = -1;
+    int valueDefId_pathEffectPhase = -1;
     switch (valueSetSelector)
     {
         case PaintValuesSet::Layer_minus2:
@@ -225,6 +226,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP__2;
             valueDefId_join = env->styleBuiltinValueDefs->id_OUTPUT_JOIN__2;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT__2;
+            valueDefId_pathEffectPhase = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_PHASE__2;
             break;
         case PaintValuesSet::Layer_minus1:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR__1;
@@ -232,6 +234,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP__1;
             valueDefId_join = env->styleBuiltinValueDefs->id_OUTPUT_JOIN__1;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT__1;
+            valueDefId_pathEffectPhase = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_PHASE__1;
             break;
         case PaintValuesSet::Layer_0:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_0;
@@ -239,6 +242,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_0;
             valueDefId_join = env->styleBuiltinValueDefs->id_OUTPUT_JOIN_0;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_0;
+            valueDefId_pathEffectPhase = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_PHASE_0;
             break;
         case PaintValuesSet::Layer_1:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR;
@@ -246,6 +250,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP;
             valueDefId_join = env->styleBuiltinValueDefs->id_OUTPUT_JOIN;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT;
+            valueDefId_pathEffectPhase = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_PHASE;
             break;
         case PaintValuesSet::Layer_2:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_2;
@@ -253,6 +258,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_2;
             valueDefId_join = env->styleBuiltinValueDefs->id_OUTPUT_JOIN_2;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_2;
+            valueDefId_pathEffectPhase = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_PHASE_2;
             break;
         case PaintValuesSet::Layer_3:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_3;
@@ -260,6 +266,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_3;
             valueDefId_join = env->styleBuiltinValueDefs->id_OUTPUT_JOIN_3;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_3;
+            valueDefId_pathEffectPhase = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_PHASE_3;
             break;
         case PaintValuesSet::Layer_4:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_4;
@@ -267,6 +274,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_4;
             valueDefId_join = env->styleBuiltinValueDefs->id_OUTPUT_JOIN_4;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_4;
+            valueDefId_pathEffectPhase = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_PHASE_4;
             break;
         case PaintValuesSet::Layer_5:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_5;
@@ -274,6 +282,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_5;
             valueDefId_join = env->styleBuiltinValueDefs->id_OUTPUT_JOIN_5;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_5;
+            valueDefId_pathEffectPhase = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_PHASE_5;
             break;
         default:
             return false;
@@ -328,8 +337,11 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
         }
         else
         {
+            QString encodedPathEffectPhase;
+            evalResult.getStringValue(valueDefId_pathEffectPhase, encodedPathEffectPhase);
+
             sk_sp<SkPathEffect> pathEffect;
-            ok = obtainPathEffect(encodedPathEffect, pathEffect);
+            ok = obtainPathEffect(encodedPathEffect, encodedPathEffectPhase, pathEffect);
 
             if (ok && pathEffect)
                 paint.setPathEffect(pathEffect);
@@ -849,11 +861,30 @@ void OsmAnd::MapRasterizer_P::calculateVertex(const Context& context, const Poin
     vertex += PointF(context.pixelArea.topLeft);
 }
 
-bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect, sk_sp<SkPathEffect> &outPathEffect) const
+bool OsmAnd::MapRasterizer_P::obtainPathEffect(
+    const QString& encodedPathEffect,
+    const QString& encodedPathEffectPhase,
+    sk_sp<SkPathEffect> &outPathEffect) const
 {
     QMutexLocker scopedLocker(&_pathEffectsMutex);
 
-    auto itPathEffects = _pathEffects.constFind(encodedPathEffect);
+    // "pt" or "pt:px", the same units for the intervals and the phase
+    const auto displayDensityFactor = owner->mapPresentationEnvironment->displayDensityFactor;
+    const auto parseLength =
+        [displayDensityFactor]
+        (const QString& strValue) -> float
+        {
+            if (!strValue.contains(QLatin1Char(':')))
+                return strValue.toFloat() * displayDensityFactor;
+
+            const auto& complexValue = strValue.split(QLatin1Char(':'), QString::KeepEmptyParts);
+            return complexValue[0].toFloat() * displayDensityFactor + complexValue[1].toFloat();
+        };
+
+    const auto pathEffectKey = encodedPathEffectPhase.isEmpty()
+        ? encodedPathEffect
+        : encodedPathEffect + QLatin1Char('@') + encodedPathEffectPhase;
+    auto itPathEffects = _pathEffects.constFind(pathEffectKey);
     if (itPathEffects == _pathEffects.cend())
     {
         const auto& strIntervals = encodedPathEffect.split(QLatin1Char('_'), QString::SkipEmptyParts);
@@ -862,23 +893,7 @@ bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect,
         const auto intervals = new SkScalar[intervalsCount];
         auto pInterval = intervals;
         for (const auto& strInterval : constOf(strIntervals))
-        {
-            float computedValue = 0.0f;
-
-            if (!strInterval.contains(QLatin1Char(':')))
-            {
-                computedValue = strInterval.toFloat()*owner->mapPresentationEnvironment->displayDensityFactor;
-            }
-            else
-            {
-                // "pt:px" format
-                const auto& complexValue = strInterval.split(QLatin1Char(':'), QString::KeepEmptyParts);
-
-                computedValue = complexValue[0].toFloat()*owner->mapPresentationEnvironment->displayDensityFactor + complexValue[1].toFloat();
-            }
-
-            *(pInterval++) = computedValue;
-        }
+            *(pInterval++) = parseLength(strInterval);
 
         // Validate
         if (intervalsCount < 2 || intervalsCount % 2 != 0)
@@ -890,10 +905,11 @@ bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect,
             return false;
         }
 
-        const auto pathEffect = SkDashPathEffect::Make(intervals, intervalsCount, 0);
+        const auto phase = encodedPathEffectPhase.isEmpty() ? 0.0f : parseLength(encodedPathEffectPhase);
+        const auto pathEffect = SkDashPathEffect::Make(intervals, intervalsCount, phase);
         delete[] intervals;
 
-        itPathEffects = _pathEffects.insert(encodedPathEffect, pathEffect);
+        itPathEffects = _pathEffects.insert(pathEffectKey, pathEffect);
     }
 
     outPathEffect = *itPathEffects;
