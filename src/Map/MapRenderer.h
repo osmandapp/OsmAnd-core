@@ -496,6 +496,9 @@ namespace OsmAnd
         virtual bool set3DBuildingsDetalization(const int detalization, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual int get3DBuildingsDetalization() const Q_DECL_OVERRIDE;
         virtual bool castShadows(bool enableShadows) Q_DECL_OVERRIDE;
+        virtual bool setSunAngle(float sunAngle, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setSunAzimuth(float sunAzimuth, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setSunTime(int64_t sunTime, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setDateTime(const int64_t dateTime, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool changeTimePeriod() Q_DECL_OVERRIDE;
         virtual bool getMapTargetLocation(PointI& location31) const Q_DECL_OVERRIDE;

@@ -1429,25 +1429,34 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         fragmentShader.append(QStringLiteral(
             "    if (param_fs_lastBatch > 0.0)                                                                                  ""\n"
             "    {                                                                                                              ""\n"
-            "        if (param_fs_showShadows > 0.0 && param_fs_shadowmapParameters.y < 1.0)                                    ""\n"
+            "        bool withShadows = param_fs_showShadows > 0.0 && param_fs_shadowmapParameters.y < 1.0;                     ""\n"
+            "        if (withShadows || withHillshade)                                                                          ""\n"
             "        {                                                                                                          ""\n"
-            "            bool isLit = sunlight > 0.0;                                                                           ""\n"
-            "            float shadow = inShadow(0.0, isLit);                                                                   ""\n"
-            "            if (param_fs_shadowmapParameters.z > 0.0 && param_fs_shadowmapParameters.z < 1.0)                      ""\n"
-            "                shadow = max(shadow, inShadow(1.0, isLit) * param_fs_shadowmapParameters.z);                       ""\n"
-            "            shadow *= 0.4;                                                                                         ""\n"
-            "            float hillshade = hsFactor * param_fs_hillshade.w;                                                     ""\n"
-            "            if (!withHillshade)                                                                                    ""\n"
-            "                hillshade = min((0.7 - sunlight) / (sunlight < 0.7 ? 0.7 : 1.5), 1.0) * 0.4;                       ""\n"
-            "            float a = shadow > 0.0 ? max(shadow, hillshade) : hillshade;                                           ""\n"
+            "            float a;                                                                                               ""\n"
+            "            if (withShadows)                                                                                       ""\n"
+            "            {                                                                                                      ""\n"
+            "                bool isLit = sunlight > 0.0;                                                                       ""\n"
+            "                float shadow = inShadow(0.0, isLit);                                                               ""\n"
+            "                if (param_fs_shadowmapParameters.z > 0.0 && param_fs_shadowmapParameters.z < 1.0)                  ""\n"
+            "                    shadow = max(shadow, inShadow(1.0, isLit) * param_fs_shadowmapParameters.z);                   ""\n"
+            "                shadow *= 0.4;                                                                                     ""\n"
+            "                float hillshade = hsFactor * param_fs_hillshade.w;                                                 ""\n"
+            "                if (!withHillshade)                                                                                ""\n"
+            "                    hillshade = min((0.7 - sunlight) / (sunlight < 0.7 ? 0.7 : 1.5), 1.0) * 0.4;                   ""\n"
+            "                a = shadow > 0.0 ? max(shadow, hillshade) : hillshade;                                             ""\n"
+            "            }                                                                                                      ""\n"
+            "            else                                                                                                   ""\n"
+            "                a = hsFactor * param_fs_hillshade.w;                                                               ""\n"
+            "            if (withHillshade)                                                                                     ""\n"
+            "            {                                                                                                      ""\n"
+            "                float q = 1.0 - clamp(-param_fs_hillshade.y, 0.0, 1.0);                                            ""\n"
+            "                q *= q;                                                                                            ""\n"
+            "                float distFactor = param_fs_worldCameraPosition.w * param_fs_worldCameraPosition.w;                ""\n"
+            "                a *= mix(1.0, 1.0 - q, distFactor);                                                                ""\n"
+            "                a += mix(0.0, q * q * q * q * 0.4, distFactor);                                                    ""\n"
+            "            }                                                                                                      ""\n"
             "            vec4 shadowColor = a < 0.0 ? vec4(1.0, 1.0, 1.0, -a) : vec4(0.0, 0.0, 0.0, a);                         ""\n"
             "            mixColors(finalColor, shadowColor);                                                                    ""\n"
-            "        }                                                                                                          ""\n"
-            "        else if (withHillshade)                                                                                    ""\n"
-            "        {                                                                                                          ""\n"
-            "            vec4 hsColor = hsFactor < 0.0 ? vec4(1.0, 1.0, 1.0, -hsFactor) : vec4(0.0, 0.0, 0.0, hsFactor);        ""\n"
-            "            hsColor.a *= param_fs_hillshade.w;                                                                     ""\n"
-            "            mixColors(finalColor, hsColor);                                                                        ""\n"
             "        }                                                                                                          ""\n"
             "    }                                                                                                              ""\n"
             "%GridsInFragmentShader_4%                                                                                          ""\n"
@@ -2644,8 +2653,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         GL_CHECK_RESULT;
     }
 
-    const auto zenith = glm::radians(currentState.elevationConfiguration.hillshadeSunAngle);
-    const auto azimuth = glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth);
+    const auto zenith = glm::radians(currentState.sunAngle);
+    const auto azimuth = glm::radians(currentState.sunAzimuth);
     const auto cosZenith = qCos(zenith);
     glUniform4f(program.fs.param.hillshade,
         -qSin(azimuth) * cosZenith,
