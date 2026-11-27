@@ -295,7 +295,7 @@ void OsmAnd::MapRenderer::processGpuWorker()
     {
         if (OsmAnd::isPerformanceMetricsEnabled())
             OsmAnd::getPerformanceMetrics().syncStart();
-            
+
         unsigned int resourcesUploadedCount = 0u;
         unsigned int resourcesUnloadedCount = 0u;
 
@@ -332,7 +332,7 @@ void OsmAnd::MapRenderer::processGpuWorker()
                 resourcesUnloadedCount += resourcesUnloaded;
             }
             unprocessedRequests = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
-            
+
         } while (_gpuWorkerThreadIsAlive
             && unprocessedRequests > 0
             && _gpuWorkerYieldRequested.loadAcquire() < 1);
@@ -656,7 +656,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
         if (isNew && !_ignoreTargetElevation && getExtraZoomAndTiltForRelief(_requestedState, zoomAndTilt))
         {
             _requestedState.isChanged = true;
-            const auto zoom = zoomAndTilt.x + 
+            const auto zoom = zoomAndTilt.x +
                 _requestedState.zoomLevel + Utilities::visualZoomToFraction(_requestedState.visualZoom);
             const auto elevationAngle = zoomAndTilt.y + _requestedState.elevationAngle;
             float minVisualZoom;
@@ -757,7 +757,7 @@ bool OsmAnd::MapRenderer::renderFrame(IMapRenderer_Metrics::Metric_renderFrame* 
     bool ok = true;
 
     Stopwatch totalStopwatch(metric != nullptr);
-    
+
     if (currentDebugSettings->debugStageEnabled && metric == nullptr)
     {
         auto atlasRendererMetrics = std::make_shared<AtlasMapRenderer_Metrics::Metric_renderFrame>();
@@ -870,7 +870,7 @@ bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
     if (_gpuWorkerThread)
     {
         QWaitCondition gpuResourcesSyncStageExecutedOnceCondition;
-        QMutex gpuResourcesSyncStageExecutedOnceMutex;       
+        QMutex gpuResourcesSyncStageExecutedOnceMutex;
         {
             QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
 
@@ -2449,6 +2449,22 @@ bool OsmAnd::MapRenderer::setElevationAngle(const float elevationAngle, bool for
     return true;
 }
 
+static void updateSunAngles(OsmAnd::MapRendererState& state)
+{
+    if (state.sunTime < 0)
+        return;
+
+    const auto sun = OsmAnd::Utilities::getSunAnglesFromTarget31(state.target31, state.sunTime);
+    state.sunAngle = static_cast<float>(sun.x);
+    state.sunAzimuth = static_cast<float>(sun.y);
+}
+
+static void setTarget31(OsmAnd::MapRendererState& state, const OsmAnd::PointI& target31)
+{
+    state.target31 = target31;
+    updateSunAngles(state);
+}
+
 bool OsmAnd::MapRenderer::setTarget(
     const PointI& target31_, bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {
@@ -2459,7 +2475,7 @@ bool OsmAnd::MapRenderer::setTarget(
     if (!update)
         return false;
 
-    _requestedState.target31 = target31;
+    setTarget31(_requestedState, target31);
     _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
     _requestedState.surfaceZoomLevelToBe = _requestedState.surfaceZoomLevel;
     _requestedState.surfaceVisualZoomToBe = _requestedState.surfaceVisualZoom;
@@ -2486,7 +2502,7 @@ bool OsmAnd::MapRenderer::setTargetWithFlatZoom(const PointI& target31_, const Z
     if (!update)
         return false;
 
-    _requestedState.target31 = target31;
+    setTarget31(_requestedState, target31);
     _requestedState.zoomLevel = zoomLevel;
     _requestedState.visualZoom = visualZoom;
     _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
@@ -2540,7 +2556,7 @@ bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI&
     _requestedState.fixedLocation31 = location31;
     _requestedState.fixedHeight = height;
     _requestedState.fixedZoomLevel = _requestedState.zoomLevel;
-    _requestedState.target31 = target31;
+    setTarget31(_requestedState, target31);
 
     if (forcedUpdate || _requestedState.zoomLevel != zoomLevel
         || _requestedState.visualZoom != visualZoom)
@@ -2578,7 +2594,7 @@ bool OsmAnd::MapRenderer::setMapTargetLocationToState(MapRendererState& state,
 
     if (toTarget)
     {
-        state.target31 = location31;
+        setTarget31(state, location31);
         state.surfaceZoomLevel = state.zoomLevel;
         state.surfaceVisualZoom = state.visualZoom;
         state.surfaceZoomLevelToBe = state.surfaceZoomLevel;
@@ -2711,7 +2727,7 @@ bool OsmAnd::MapRenderer::setMapTargetOnly(MapRendererState& state,
     if (!update)
         return false;
 
-    state.target31 = target31;
+    setTarget31(state, target31);
     state.isChanged = true;
 
     if (forcedUpdate || state.zoomLevel != zoomLevel
@@ -2936,7 +2952,7 @@ bool OsmAnd::MapRenderer::setMapTargetPixelCoordinates(const PointI& screenPoint
     if (!update)
         return false;
 
-    _requestedState.target31 = target31;
+    setTarget31(_requestedState, target31);
 
     if (forcedUpdate || _requestedState.zoomLevel != zoomLevel
         || _requestedState.visualZoom != visualZoom)
@@ -2987,7 +3003,7 @@ bool OsmAnd::MapRenderer::setSecondaryTarget(MapRendererState& state,
     const auto aimingActions = state.aimingActions;
     if (aimingActions.none())
         return false;
-    
+
     bool isTiltAndRotation = false;
     bool isZoomAndRotation = false;
     PointD tiltAndRotation;
@@ -3033,7 +3049,7 @@ bool OsmAnd::MapRenderer::setSecondaryTarget(MapRendererState& state,
             {
                 state.elevationAngleToBe = elevAngle;
                 state.elevationAngle = elevAngle;
-            }            
+            }
             state.azimuth = static_cast<float>(halfRotation);
             state.isChanged = true;
             setMapTarget(state, forcedUpdate, disableUpdate, true);
@@ -3090,7 +3106,7 @@ bool OsmAnd::MapRenderer::setSecondaryTarget(MapRendererState& state,
     bool azimuthIsModified = startAzimuth != azimuth;
     bool zoomIsModified = state.zoomLevel != zoomLevel || !qFuzzyCompare(state.visualZoom, visualZoom);
     bool elevationAngleIsModified = startElevationAngle != elevationAngle;
-    
+
     bool result = azimuthIsModified || zoomIsModified || elevationAngleIsModified;
     bool update = forcedUpdate || result;
     if (!update)
@@ -3472,8 +3488,8 @@ bool OsmAnd::MapRenderer::restoreFlatZoom(const float heightInMeters, bool force
         QMutexLocker scopedLocker(&_requestedStateMutex);
 
         // Store current zoom level
-        const auto zoom = _requestedState.zoomLevel; 
-        
+        const auto zoom = _requestedState.zoomLevel;
+
         // Set the safe zoom level
         _requestedState.zoomLevel = qMax(ZoomLevel10, _requestedState.elevationDataProvider->getMinZoom());
 
@@ -3707,6 +3723,49 @@ bool OsmAnd::MapRenderer::castShadows(const bool enableShadows)
     return true;
 }
 
+bool OsmAnd::MapRenderer::setSunAngle(float sunAngle, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (!forcedUpdate && qFuzzyCompare(_requestedState.sunAngle, sunAngle))
+        return false;
+
+    _requestedState.sunAngle = sunAngle;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Shadows);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setSunAzimuth(float sunAzimuth, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (!forcedUpdate && qFuzzyCompare(_requestedState.sunAzimuth, sunAzimuth))
+        return false;
+
+    _requestedState.sunAzimuth = sunAzimuth;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Shadows);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setSunTime(int64_t sunTime, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+    if (!forcedUpdate && _requestedState.sunTime == sunTime)
+        return false;
+
+    _requestedState.sunTime = sunTime;
+
+    updateSunAngles(_requestedState);
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Shadows);
+
+    return true;
+}
+
 bool OsmAnd::MapRenderer::setDateTime(const int64_t dateTime, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
@@ -3807,7 +3866,7 @@ float OsmAnd::MapRenderer::getSurfaceZoomAfterPinchWithParams(
         + Utilities::visualZoomToFraction(state.visualZoom)
         + static_cast<float>(zoomAndRotation.x);
     setFlatZoomToState(state, expectedFlatZoom, false, true);
-    
+
     state.surfaceZoomLevel = getSurfaceZoom(state, state.surfaceVisualZoom);
     return state.surfaceZoomLevel + Utilities::visualZoomToFraction(state.surfaceVisualZoom);
 }

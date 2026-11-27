@@ -84,30 +84,13 @@ namespace OsmAnd
 
     struct OSMAND_CORE_API ElevationConfiguration Q_DECL_FINAL
     {
-        enum class SlopeAlgorithm {
-            None = 0,
-            ZevenbergenThorne = 4,
-            Horn = 8,
-        };
-
         enum class VisualizationStyle {
             None = 0,
-            SlopeDegrees = 10,
-            SlopePercents = 11,
-            HillshadeTraditional = 20,
-            HillshadeIgor = 21,
-            HillshadeCombined = 22,
-            HillshadeMultidirectional = 23,
-        };
-
-        enum class ColorMapPreset {
-            GrayscaleHillshade,
-            GrayscaleSlopeDegrees,
-            TerrainSlopeDegrees,
+            HillshadeCombined = 22
         };
 
         enum {
-            MaxColorMapEntries = 8,
+            MaxColorMapEntries = 4,
         };
 
         ElevationConfiguration();
@@ -117,16 +100,6 @@ namespace OsmAnd
         inline ElevationConfiguration& setDataScaleFactor(const float newDataScaleFactor)
         {
             dataScaleFactor = newDataScaleFactor;
-
-            return *this;
-        }
-#endif // !defined(SWIG)
-
-        SlopeAlgorithm slopeAlgorithm;
-#if !defined(SWIG)
-        inline ElevationConfiguration& setSlopeAlgorithm(const SlopeAlgorithm newSlopeAlgorithm)
-        {
-            slopeAlgorithm = newSlopeAlgorithm;
 
             return *this;
         }
@@ -162,30 +135,10 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
-        float hillshadeSunAngle;
-#if !defined(SWIG)
-        inline ElevationConfiguration& setHillshadeSunAngle(const float newHillshadeSunAngle)
-        {
-            hillshadeSunAngle = newHillshadeSunAngle;
-
-            return *this;
-        }
-#endif // !defined(SWIG)
-
-        float hillshadeSunAzimuth;
-#if !defined(SWIG)
-        inline ElevationConfiguration& setHillshadeSunAzimuth(const float newHillshadeSunAzimuth)
-        {
-            hillshadeSunAzimuth = newHillshadeSunAzimuth;
-
-            return *this;
-        }
-#endif // !defined(SWIG)
-
         std::array<std::pair<float, FColorRGBA>, MaxColorMapEntries> visualizationColorMap;
 #if !defined(SWIG)
         ElevationConfiguration& resetVisualizationColorMap();
-        ElevationConfiguration& setVisualizationColorMapPreset(ColorMapPreset colorMapPreset);
+        ElevationConfiguration& setVisualizationColorMapPreset();
 #endif // !defined(SWIG)
 
         float zScaleFactor;
@@ -204,13 +157,10 @@ namespace OsmAnd
         {
             return
                 qFuzzyCompare(dataScaleFactor, r.dataScaleFactor) &&
-                slopeAlgorithm == r.slopeAlgorithm &&
                 visualizationStyle == r.visualizationStyle &&
                 qFuzzyCompare(visualizationAlpha, r.visualizationAlpha) &&
                 qFuzzyCompare(visualizationZ, r.visualizationZ) &&
                 visualizationColorMap == r.visualizationColorMap &&
-                qFuzzyCompare(hillshadeSunAngle, r.hillshadeSunAngle) &&
-                qFuzzyCompare(hillshadeSunAzimuth, r.hillshadeSunAzimuth) &&
                 qFuzzyCompare(zScaleFactor, r.zScaleFactor);
         }
 
@@ -218,13 +168,10 @@ namespace OsmAnd
         {
             return
                 !qFuzzyCompare(dataScaleFactor, r.dataScaleFactor) ||
-                slopeAlgorithm != r.slopeAlgorithm ||
                 visualizationStyle != r.visualizationStyle ||
                 !qFuzzyCompare(visualizationAlpha, r.visualizationAlpha) ||
                 !qFuzzyCompare(visualizationZ, r.visualizationZ) ||
                 visualizationColorMap != r.visualizationColorMap ||
-                !qFuzzyCompare(hillshadeSunAngle, r.hillshadeSunAngle) ||
-                !qFuzzyCompare(hillshadeSunAzimuth, r.hillshadeSunAzimuth) ||
                 !qFuzzyCompare(zScaleFactor, r.zScaleFactor);
         }
     };

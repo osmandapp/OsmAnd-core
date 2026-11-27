@@ -79,7 +79,7 @@ namespace OsmAnd
         OSMAND_OBSERVER_CALLABLE(FramePrepared,
             IMapRenderer* mapRenderer);
         const ObservableAs<IMapRenderer::FramePrepared> framePreparedObservable;
-        
+
         OSMAND_OBSERVER_CALLABLE(TargetChanged,
             IMapRenderer* mapRenderer);
         const ObservableAs<IMapRenderer::TargetChanged> targetChangedObservable;
@@ -213,6 +213,11 @@ namespace OsmAnd
         virtual bool set3DBuildingsAlpha(const float alpha, bool forcedUpdate = false) = 0;
         virtual float get3DBuildingsAlpha() const = 0;
         virtual bool castShadows(bool enableShadows) = 0;
+        virtual bool setSunAngle(float sunAngle, bool forcedUpdate = false) = 0;
+        virtual bool setSunAzimuth(float sunAzimuth, bool forcedUpdate = false) = 0;
+        // Recalculate sun angles when the time or target changes. Time is in Unix milliseconds.
+        // Zero uses the current time and negative values preserve the angles.
+        virtual bool setSunTime(int64_t sunTime, bool forcedUpdate = false) = 0;
         virtual bool set3DBuildingsDetalization(const int detalization, bool forcedUpdate = false) = 0;
         virtual int get3DBuildingsDetalization() const = 0;
         virtual bool setDateTime(const int64_t dateTime, bool forcedUpdate = false) = 0;

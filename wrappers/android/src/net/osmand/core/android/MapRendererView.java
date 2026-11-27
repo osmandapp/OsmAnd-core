@@ -1646,6 +1646,24 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.castShadows(enableShadows);
     }
 
+    public final boolean setSunAngle(float sunAngle) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setSunAngle(sunAngle);
+    }
+
+    public final boolean setSunAzimuth(float sunAzimuth) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setSunAzimuth(sunAzimuth);
+    }
+
+    public final boolean setSunTime(long sunTime) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setSunTime(sunTime);
+    }
+
     public final boolean setDateTime(long dateTime) {
         NativeCore.checkIfLoaded();
 

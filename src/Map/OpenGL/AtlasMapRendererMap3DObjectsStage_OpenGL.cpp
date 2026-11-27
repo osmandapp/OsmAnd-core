@@ -213,6 +213,10 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeSimpleProgram()
                     shadow = inShadow(0.0, isLit);
                     if (param_fs_alpha > 0.0 && param_fs_alpha < 1.0)
                         shadow = max(shadow, inShadow(1.0, isLit) * param_fs_alpha);
+                    float q = 1.0 - clamp(-param_fs_lightDirection.y, 0.0, 1.0);
+                    q *= q;
+                    shadow *= 1.0 - q;
+                    shadow += q * q * q * q;
                 }
                 d = ((isLit ? mix(d * d, 0.0, shadow) : -(d * d)) + 1.0) * 0.5 + 0.1;
                 vec3 color = v2f_pointColor.rgb * d;
@@ -416,6 +420,10 @@ bool AtlasMapRendererMap3DObjectsStage_OpenGL::initializeColorProgram()
                     shadow = inShadow(0.0, isLit);
                     if (param_fs_alpha > 0.0 && param_fs_alpha < 1.0)
                         shadow = max(shadow, inShadow(1.0, isLit) * param_fs_alpha);
+                    float q = 1.0 - clamp(-param_fs_lightDirection.y, 0.0, 1.0);
+                    q *= q;
+                    shadow *= 1.0 - q;
+                    shadow += q * q * q * q;
                 }
                 d = ((isLit ? mix(d * d, 0.0, shadow) : -(d * d)) + 1.0) * 0.5 + 0.1;
                 d *= !top && v2f_sizes.z > 0.0 ? fract(sin(dot(s, vec2(12.9898, 78.233))) * 43758.5453) * 0.14 + 0.93 : 1.0;
@@ -1083,8 +1091,8 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::renderSimple(bool primaryOnly, Sh
 
     float buildingAlpha = renderer->get3DBuildingsAlpha();
 
-    const auto zenith = glm::radians(currentState.elevationConfiguration.hillshadeSunAngle);
-    const auto azimuth = glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth);
+    const auto zenith = glm::radians(currentState.sunAngle);
+    const auto azimuth = glm::radians(currentState.sunAzimuth);
     const auto cosZenith = qCos(zenith);
 
     glUseProgram(_program.id);
@@ -1173,8 +1181,8 @@ void AtlasMapRendererMap3DObjectsStage_OpenGL::renderColor(
 
     float buildingAlpha = renderer->get3DBuildingsAlpha();
 
-    const auto zenith = glm::radians(currentState.elevationConfiguration.hillshadeSunAngle);
-    const auto azimuth = glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth);
+    const auto zenith = glm::radians(currentState.sunAngle);
+    const auto azimuth = glm::radians(currentState.sunAzimuth);
     const auto cosZenith = qCos(zenith);
 
     glUseProgram(_colorProgram.id);
