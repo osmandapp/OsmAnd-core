@@ -257,6 +257,11 @@ void OsmAnd::ObfAddressSectionReader_P::readCityHeader(
                 break;
             case OBF::CityIndex::kNameFieldNumber:
                 ObfReaderUtilities::readQString(cis, nativeName);
+                if (!outStreetGroup)
+                {
+                    type = ObfAddressStreetGroupSubtype::Postcode;
+                    outStreetGroup.reset(new StreetGroup(section));
+                }
                 break;
             case OBF::CityIndex::kNameEnFieldNumber:
             {
